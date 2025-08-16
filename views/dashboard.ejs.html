@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-phone-alt text-2xl"></i>
+                    <h1 class="text-2xl font-bold">Twilio Voice Bot CRM</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm">
+                        <i class="fas fa-circle text-xs"></i> Online
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Status Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-500 text-white">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">Total Contacts</p>
+                        <p class="text-2xl font-semibold" id="total-contacts">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-500 text-white">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">Appointments Today</p>
+                        <p class="text-2xl font-semibold" id="appointments-today">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-500 text-white">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">Messages Today</p>
+                        <p class="text-2xl font-semibold" id="messages-today">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-500 text-white">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">Calls Today</p>
+                        <p class="text-2xl font-semibold" id="calls-today">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Test Twilio Connection -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">
+                    <i class="fas fa-plug mr-2"></i>Twilio Connection Test
+                </h2>
+                <button id="test-twilio" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                    <i class="fas fa-play mr-2"></i>Test Connection
+                </button>
+                <div id="twilio-status" class="mt-4 p-4 rounded-lg hidden"></div>
+            </div>
+
+            <!-- Send Test SMS -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">
+                    <i class="fas fa-paper-plane mr-2"></i>Send Test SMS
+                </h2>
+                <div class="space-y-4">
+                    <input type="tel" id="test-phone" placeholder="+1234567890" 
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <textarea id="test-message" placeholder="Enter your test message..." 
+                              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-24"></textarea>
+                    <button id="send-sms" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                        <i class="fas fa-paper-plane mr-2"></i>Send SMS
+                    </button>
+                </div>
+                <div id="sms-status" class="mt-4 p-4 rounded-lg hidden"></div>
+            </div>
+
+            <!-- Webhook URLs -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">
+                    <i class="fas fa-link mr-2"></i>Webhook URLs
+                </h2>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Voice Webhook:</label>
+                        <div class="flex items-center">
+                            <input type="text" id="voice-webhook" readonly 
+                                   class="flex-1 p-2 border border-gray-300 rounded-l-lg bg-gray-50 text-sm">
+                            <button onclick="copyToClipboard('voice-webhook')" 
+                                    class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-r-lg transition duration-200">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">SMS Webhook:</label>
+                        <div class="flex items-center">
+                            <input type="text" id="sms-webhook" readonly 
+                                   class="flex-1 p-2 border border-gray-300 rounded-l-lg bg-gray-50 text-sm">
+                            <button onclick="copyToClipboard('sms-webhook')" 
+                                    class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-r-lg transition duration-200">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">
+                    <i class="fas fa-server mr-2"></i>System Status
+                </h2>
+                <div id="system-status" class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span>Server Status</span>
+                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">Online</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>Database</span>
+                        <span id="db-status" class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm">Checking...</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>Twilio</span>
+                        <span id="twilio-connection-status" class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm">Checking...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">
+                <i class="fas fa-clock mr-2"></i>Recent Activity
+            </h2>
+            <div id="recent-activity" class="text-gray-500 text-center py-8">
+                No recent activity to display
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const apiUrl = '<%= apiUrl %>';
+
+        // Set webhook URLs
+        document.getElementById('voice-webhook').value = `${apiUrl}/webhook/twilio/voice`;
+        document.getElementById('sms-webhook').value = `${apiUrl}/webhook/twilio/sms`;
+
+        // Copy to clipboard function
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            element.select();
+            document.execCommand('copy');
+            
+            // Show feedback
+            const button = element.nextElementSibling;
+            const originalContent = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i>';
+            button.className = button.className.replace('bg-gray-500 hover:bg-gray-600', 'bg-green-500');
+            
+            setTimeout(() => {
+                button.innerHTML = originalContent;
+                button.className = button.className.replace('bg-green-500', 'bg-gray-500 hover:bg-gray-600');
+            }, 2000);
+        }
+
+        // Test Twilio connection
+        document.getElementById('test-twilio').addEventListener('click', async function() {
+            const button = this;
+            const status = document.getElementById('twilio-status');
+            
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Testing...';
+            
+            try {
+                const response = await fetch('/api/messages/test');
+                const data = await response.json();
+                
+                if (data.success) {
+                    status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
+                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Connected! Account: ${data.account.friendlyName} (${data.account.status})`;
+                    document.getElementById('twilio-connection-status').className = 'bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm';
+                    document.getElementById('twilio-connection-status').textContent = 'Connected';
+                } else {
+                    throw new Error(data.error || 'Connection failed');
+                }
+            } catch (error) {
+                status.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
+                status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                document.getElementById('twilio-connection-status').className = 'bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm';
+                document.getElementById('twilio-connection-status').textContent = 'Error';
+            }
+            
+            status.classList.remove('hidden');
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-play mr-2"></i>Test Connection';
+        });
+
+        // Send test SMS
+        document.getElementById('send-sms').addEventListener('click', async function() {
+            const button = this;
+            const status = document.getElementById('sms-status');
+            const phone = document.getElementById('test-phone').value;
+            const message = document.getElementById('test-message').value;
+            
+            if (!phone || !message) {
+                status.className = 'mt-4 p-4 rounded-lg bg-yellow-100 text-yellow-800';
+                status.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Please enter both phone number and message';
+                status.classList.remove('hidden');
+                return;
+            }
+            
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+            
+            try {
+                const response = await fetch('/api/messages/sms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ to: phone, message: message })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
+                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>SMS sent successfully! Message SID: ${data.messageSid}`;
+                    document.getElementById('test-phone').value = '';
+                    document.getElementById('test-message').value = '';
+                } else {
+                    throw new Error(data.error || 'Failed to send SMS');
+                }
+            } catch (error) {
+                status.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
+                status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+            }
+            
+            status.classList.remove('hidden');
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send SMS';
+        });
+
+        // Check health status on load
+        async function checkHealth() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                
+                if (data.status === 'OK') {
+                    document.getElementById('db-status').className = 'bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm';
+                    document.getElementById('db-status').textContent = 'Connected';
+                }
+            } catch (error) {
+                document.getElementById('db-status').className = 'bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm';
+                document.getElementById('db-status').textContent = 'Error';
+            }
+        }
+
+        // Initialize
+        checkHealth();
+    </script>
+</body>
+</html>
