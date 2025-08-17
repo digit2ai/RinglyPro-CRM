@@ -2785,92 +2785,141 @@ cleanupSectionStates();
             });
         }
         
-        function setupQuickCreateAppointmentForm() {
-            const form = document.getElementById('quickCreateAppointmentForm');
-            if (!form) return;
+// REPLACE your existing setupQuickCreateAppointmentForm() function with this fixed version:
+
+function setupQuickCreateAppointmentForm() {
+    // First add the debouncer for appointments if not already added
+    if (typeof debouncedAppointmentCreate === 'undefined') {
+        window.debouncedAppointmentCreate = createDebouncer(2000);
+    }
+    
+    const form = document.getElementById('quickCreateAppointmentForm');
+    if (!form) return;
+    
+    // Remove existing listeners to prevent duplicates
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    
+    newForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Prevent double submission with debouncing
+        return debouncedAppointmentCreate(async () => {
+            const submitButton = newForm.querySelector('button[type="submit"]');
             
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const title = document.getElementById('quickAppointmentTitle').value;
-                
-                // Get contact from either dropdown selection or manual input
-                const contactSelect = document.getElementById('quickAppointmentContactSelect');
-                const contactInput = document.getElementById('quickAppointmentContact');
-                
-                let contact = contactInput.value.trim();
-                let contactPhone = '';
-                
-                // If a contact was selected from dropdown, get the details
-                if (contactSelect.value && contactSelect.value !== 'manual') {
-                    try {
-                        const contactData = JSON.parse(contactSelect.value);
-                        contact = contactData.name;
-                        contactPhone = contactData.phone || '+1234567890'; // Fallback phone
-                    } catch (e) {
-                        // Fallback to manual input
-                        contact = contactInput.value.trim();
-                        contactPhone = '+1234567890'; // Placeholder phone
-                    }
-                }
-                
-                const date = document.getElementById('quickAppointmentDate').value;
-                const time = document.getElementById('quickAppointmentTime').value;
-                const duration = document.getElementById('quickAppointmentDuration').value;
-                const status = document.getElementById('quickCreateAppointmentStatus');
-                
-                if (!title || !contact || !date || !time || !duration) {
-                    status.className = 'mt-4 p-3 rounded bg-yellow-100 text-yellow-800';
-                    status.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Please fill in all fields';
-                    status.classList.remove('hidden');
-                    showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
-                    return;
-                }
-                
+            // Disable submit button to prevent double clicks
+            if (submitButton && submitButton.disabled) {
+                console.warn('Appointment form already submitting, ignoring duplicate');
+                return;
+            }
+            
+            const title = document.getElementById('quickAppointmentTitle').value;
+            
+            // Get contact from either dropdown selection or manual input
+            const contactSelect = document.getElementById('quickAppointmentContactSelect');
+            const contactInput = document.getElementById('quickAppointmentContact');
+            
+            let contact = contactInput.value.trim();
+            let contactPhone = '';
+            
+            // If a contact was selected from dropdown, get the details
+            if (contactSelect.value && contactSelect.value !== 'manual') {
                 try {
-                    // Simulate API call for demo - replace with actual endpoint
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    
-                    // Add to appointments array for demo
-                    const newAppointment = {
-                        id: appointments.length + 1,
-                        time: time,
-                        duration: parseInt(duration),
-                        contact: contact,
-                        phone: contactPhone,
-                        purpose: title,
-                        status: 'confirmed'
-                    };
-                    
-                    appointments.push(newAppointment);
-                    appointments.sort((a, b) => a.time.localeCompare(b.time));
-                    updateAllAppointmentsDisplay();
-                    updateAppointmentsCount();
-                    
+                    const contactData = JSON.parse(contactSelect.value);
+                    contact = contactData.name;
+                    contactPhone = contactData.phone || '+1234567890'; // Fallback phone
+                } catch (e) {
+                    // Fallback to manual input
+                    contact = contactInput.value.trim();
+                    contactPhone = '+1234567890'; // Placeholder phone
+                }
+            }
+            
+            const date = document.getElementById('quickAppointmentDate').value;
+            const time = document.getElementById('quickAppointmentTime').value;
+            const duration = document.getElementById('quickAppointmentDuration').value;
+            const status = document.getElementById('quickCreateAppointmentStatus');
+            
+            if (!title || !contact || !date || !time || !duration) {
+                showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+                return;
+            }
+            
+            // Disable submit button and show loading state
+            if (submitButton) {
+                submitButton.disabled = true;
+                const originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating...';
+                
+                // Re-enable after delay to prevent rapid clicks
+                setTimeout(() => {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalText;
+                }, 3000);
+            }
+            
+            // Show loading status
+            if (status) {
+                status.className = 'mt-4 p-3 rounded bg-blue-100 text-blue-800';
+                status.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating appointment...';
+                status.classList.remove('hidden');
+            }
+            
+            try {
+                // Simulate API call with realistic delay
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Add to appointments array for demo
+                const newAppointment = {
+                    id: appointments.length + 1,
+                    time: time,
+                    duration: parseInt(duration),
+                    contact: contact,
+                    phone: contactPhone,
+                    purpose: title,
+                    status: 'confirmed'
+                };
+                
+                appointments.push(newAppointment);
+                appointments.sort((a, b) => a.time.localeCompare(b.time));
+                updateAllAppointmentsDisplay();
+                updateAppointmentsCount();
+                
+                // Show success status
+                if (status) {
                     status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
                     status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Appointment "${title}" created for ${contact}!`;
-                    status.classList.remove('hidden');
-                    
-                    form.reset();
-                    
-                    // Reset dropdown
-                    const select = document.getElementById('quickAppointmentContactSelect');
-                    if (select) select.selectedIndex = 0;
-                    
-                    showToast(`Appointment created for ${contact}`, 'success', '<i class="fas fa-calendar-plus"></i>');
-                    
-                    setTimeout(() => {
-                        closeModal('quickCreateAppointmentModal');
-                    }, 2000);
-                } catch (error) {
+                }
+                
+                // Reset form
+                newForm.reset();
+                
+                // Reset dropdown
+                const select = document.getElementById('quickAppointmentContactSelect');
+                if (select) select.selectedIndex = 0;
+                
+                // Single toast notification (no duplicates)
+                showToast(`Appointment created for ${contact}`, 'success', '<i class="fas fa-calendar-plus"></i>', 3000);
+                
+                // Auto-close modal after short delay
+                setTimeout(() => {
+                    closeModal('quickCreateAppointmentModal');
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error creating appointment:', error);
+                
+                if (status) {
                     status.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
                     status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
-                    status.classList.remove('hidden');
-                    
-                    showToast('Failed to create appointment', 'error', '<i class="fas fa-exclamation-circle"></i>');
                 }
-            });
-        }
+                
+                showToast('Failed to create appointment', 'error', '<i class="fas fa-exclamation-circle"></i>');
+            }
+        });
+    });
+}
         
         function setupQuickSMSForm() {
             const form = document.getElementById('quickSMSForm');
