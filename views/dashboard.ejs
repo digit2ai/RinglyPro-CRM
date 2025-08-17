@@ -335,6 +335,8 @@
     </div>
 
     <script>
+        const apiUrl = window.location.origin; // For production use
+
         // Global state
         let contacts = [];
         let totalContacts = 0;
@@ -474,53 +476,22 @@
             saveSectionStates();
         }
 
-        // Load contacts from database (simulated for demo)
+        // Load contacts from database
         async function loadContacts() {
             try {
                 console.log('Loading contacts from database...');
+                const response = await fetch('/api/contacts?limit=10&sortBy=createdAt&sortOrder=DESC');
+                const result = await response.json();
                 
-                // Simulate loading delay
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Simulated contact data for demo
-                contacts = [
-                    {
-                        id: 1,
-                        firstName: "John",
-                        lastName: "Doe",
-                        fullName: "John Doe",
-                        phone: "+1234567890",
-                        email: "john.doe@example.com",
-                        notes: "Interested in premium package",
-                        createdAt: new Date().toISOString()
-                    },
-                    {
-                        id: 2,
-                        firstName: "Jane",
-                        lastName: "Smith",
-                        fullName: "Jane Smith",
-                        phone: "+1987654321",
-                        email: "jane.smith@example.com",
-                        notes: "Follow up next week",
-                        createdAt: new Date(Date.now() - 86400000).toISOString()
-                    },
-                    {
-                        id: 3,
-                        firstName: "Bob",
-                        lastName: "Johnson",
-                        fullName: "Bob Johnson",
-                        phone: "+1555123456",
-                        email: "bob.johnson@example.com",
-                        notes: "",
-                        createdAt: new Date(Date.now() - 172800000).toISOString()
-                    }
-                ];
-                
-                totalContacts = contacts.length;
-                updateContactsList();
-                updateContactCount();
-                console.log(`Loaded ${contacts.length} contacts`);
-                
+                if (result.success) {
+                    contacts = result.data.contacts;
+                    totalContacts = result.data.pagination.totalContacts;
+                    updateContactsList();
+                    updateContactCount();
+                    console.log(`Loaded ${contacts.length} contacts`);
+                } else {
+                    throw new Error(result.error || 'Failed to load contacts');
+                }
             } catch (error) {
                 console.error('Error loading contacts:', error);
                 const contactsList = document.getElementById('contacts-list');
@@ -713,36 +684,29 @@
                 button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding to Database...';
                 
                 try {
-                    // Simulate API call
-                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    const response = await fetch('/api/contacts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
                     
-                    // Simulate success
-                    const newContact = {
-                        id: contacts.length + 1,
-                        firstName: formData.firstName,
-                        lastName: formData.lastName,
-                        fullName: `${formData.firstName} ${formData.lastName}`,
-                        phone: formData.phone,
-                        email: formData.email,
-                        notes: formData.notes,
-                        createdAt: new Date().toISOString()
-                    };
+                    const result = await response.json();
                     
-                    contacts.unshift(newContact);
-                    totalContacts++;
-                    
-                    // Show success message
-                    status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
-                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Contact ${newContact.fullName} added successfully!`;
-                    status.classList.remove('hidden');
-                    
-                    // Clear form
-                    form.reset();
-                    
-                    // Update displays
-                    updateContactsList();
-                    updateContactCount();
-                    
+                    if (result.success) {
+                        // Show success message
+                        status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
+                        status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${result.message}`;
+                        status.classList.remove('hidden');
+                        
+                        // Clear form
+                        form.reset();
+                        
+                        // Reload contacts from database
+                        await loadContacts();
+                        
+                    } else {
+                        throw new Error(result.error || 'Failed to create contact');
+                    }
                 } catch (error) {
                     console.error('Error creating contact:', error);
                     status.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
@@ -762,40 +726,40 @@
             if (!query) return;
 
             try {
-                // Simulate search
-                const results = contacts.filter(contact => 
-                    contact.fullName.toLowerCase().includes(query.toLowerCase()) ||
-                    contact.phone.includes(query) ||
-                    contact.email.toLowerCase().includes(query.toLowerCase())
-                );
+                const response = await fetch(`/api/contacts/search/${encodeURIComponent(query)}`);
+                const result = await response.json();
                 
-                const searchResults = document.getElementById('search-results');
-                const searchList = document.getElementById('search-contacts-list');
-                
-                if (!searchResults || !searchList) return;
-                
-                if (results.length === 0) {
-                    searchList.innerHTML = '<p class="text-gray-500 text-center py-4">No contacts found matching your search</p>';
+                if (result.success) {
+                    const searchResults = document.getElementById('search-results');
+                    const searchList = document.getElementById('search-contacts-list');
+                    
+                    if (!searchResults || !searchList) return;
+                    
+                    if (result.data.contacts.length === 0) {
+                        searchList.innerHTML = '<p class="text-gray-500 text-center py-4">No contacts found matching your search</p>';
+                    } else {
+                        searchList.innerHTML = result.data.contacts.map(contact => `
+                            <div class="border border-gray-200 rounded-lg p-3 flex items-center justify-between hover:bg-gray-50 transition duration-200">
+                                <div>
+                                    <h4 class="font-semibold">${contact.fullName}</h4>
+                                    <p class="text-sm text-gray-600">${contact.phone} • ${contact.email}</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button onclick="callContact('${contact.phone}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600" title="Call ${contact.fullName}">
+                                        <i class="fas fa-phone"></i>
+                                    </button>
+                                    <button onclick="textContact('${contact.phone}')" class="bg-green-500 text-white px-2 py-1 rounded text-sm hover:bg-green-600" title="Text ${contact.fullName}">
+                                        <i class="fas fa-sms"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                    
+                    searchResults.classList.remove('hidden');
                 } else {
-                    searchList.innerHTML = results.map(contact => `
-                        <div class="border border-gray-200 rounded-lg p-3 flex items-center justify-between hover:bg-gray-50 transition duration-200">
-                            <div>
-                                <h4 class="font-semibold">${contact.fullName}</h4>
-                                <p class="text-sm text-gray-600">${contact.phone} • ${contact.email}</p>
-                            </div>
-                            <div class="flex space-x-2">
-                                <button onclick="callContact('${contact.phone}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600" title="Call ${contact.fullName}">
-                                    <i class="fas fa-phone"></i>
-                                </button>
-                                <button onclick="textContact('${contact.phone}')" class="bg-green-500 text-white px-2 py-1 rounded text-sm hover:bg-green-600" title="Text ${contact.fullName}">
-                                    <i class="fas fa-sms"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `).join('');
+                    throw new Error(result.error);
                 }
-                
-                searchResults.classList.remove('hidden');
             } catch (error) {
                 console.error('Search error:', error);
                 alert('Search failed: ' + error.message);
@@ -892,17 +856,17 @@
         // Update last contacted timestamp
         async function updateLastContacted(contactId) {
             try {
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 500));
+                const response = await fetch(`/api/contacts/${contactId}/contact`, {
+                    method: 'PATCH'
+                });
+                const result = await response.json();
                 
-                // Update contact in local array
-                const contact = contacts.find(c => c.id === contactId);
-                if (contact) {
-                    contact.lastContacted = new Date().toISOString();
+                if (result.success) {
+                    await loadContacts(); // Refresh the list
+                    alert('Contact timestamp updated!');
+                } else {
+                    throw new Error(result.error);
                 }
-                
-                updateContactsList();
-                alert('Contact timestamp updated!');
             } catch (error) {
                 console.error('Error updating contact:', error);
                 alert('Failed to update contact: ' + error.message);
@@ -953,21 +917,32 @@
                 button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending via Twilio...';
                 
                 try {
-                    // Simulate SMS sending
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    const response = await fetch('/api/messages/sms', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ to: phone, message: message })
+                    });
                     
-                    if (status) {
-                        status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
-                        status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>✅ SMS sent successfully! Message delivered to ${phone}`;
-                        status.classList.remove('hidden');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        if (status) {
+                            status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
+                            status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>✅ SMS sent successfully! Message SID: ${data.messageSid}`;
+                            status.classList.remove('hidden');
+                        }
+                        
+                        // Clear form
+                        const phoneInput = document.getElementById('test-phone');
+                        const messageInput = document.getElementById('test-message');
+                        if (phoneInput) phoneInput.value = '';
+                        if (messageInput) messageInput.value = '';
+                        
+                    } else {
+                        throw new Error(data.error || 'Failed to send SMS');
                     }
-                    
-                    // Clear form
-                    const phoneInput = document.getElementById('test-phone');
-                    const messageInput = document.getElementById('test-message');
-                    if (phoneInput) phoneInput.value = '';
-                    if (messageInput) messageInput.value = '';
-                    
                 } catch (error) {
                     if (status) {
                         status.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
