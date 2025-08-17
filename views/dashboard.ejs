@@ -69,7 +69,7 @@
     <div class="container mx-auto px-4 py-8">
         <!-- Status Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200" onclick="showTodaysContacts()">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-blue-500 text-white">
                         <i class="fas fa-users"></i>
@@ -83,7 +83,7 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200" onclick="showTodaysAppointments()">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-green-500 text-white">
                         <i class="fas fa-calendar-check"></i>
@@ -97,7 +97,7 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200" onclick="showTodaysMessages()">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-purple-500 text-white">
                         <i class="fas fa-comments"></i>
@@ -109,7 +109,7 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200" onclick="showTodaysCalls()">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-yellow-500 text-white">
                         <i class="fas fa-phone"></i>
@@ -313,8 +313,8 @@
                         <p class="text-sm text-gray-500">Your latest contacts from the database</p>
                     </div>
                 </div>
-                <button onclick="loadContacts()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition duration-200">
-                    <i class="fas fa-sync-alt mr-1"></i> Refresh List
+                <button onclick="refreshData()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition duration-200">
+                    <i class="fas fa-sync-alt mr-1"></i> Refresh
                 </button>
             </div>
             <div id="contacts-list" class="space-y-3">
@@ -333,6 +333,270 @@
         let contacts = [];
         let totalContacts = 0;
         let appointments = [];
+        let currentView = 'contacts'; // Track which view is active: 'contacts', 'appointments', 'messages', 'calls'
+
+        // Card click handlers for different views
+        function showTodaysContacts() {
+            currentView = 'contacts';
+            updateActivitiesSection();
+        }
+
+        function showTodaysAppointments() {
+            currentView = 'appointments';
+            updateActivitiesSection();
+        }
+
+        function showTodaysMessages() {
+            currentView = 'messages';
+            updateActivitiesSection();
+        }
+
+        function showTodaysCalls() {
+            currentView = 'calls';
+            updateActivitiesSection();
+        }
+
+        // Update the Recent Activities section based on current view
+        function updateActivitiesSection() {
+            const headerElement = document.querySelector('#contacts-list').parentElement.querySelector('h2');
+            const subtitleElement = document.querySelector('#contacts-list').parentElement.querySelector('p');
+            const listElement = document.getElementById('contacts-list');
+            
+            if (!headerElement || !subtitleElement || !listElement) return;
+
+            const today = new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            switch(currentView) {
+                case 'contacts':
+                    headerElement.textContent = 'Recent Activities';
+                    subtitleElement.textContent = 'Your latest contacts from the database';
+                    updateContactsList();
+                    break;
+                    
+                case 'appointments':
+                    headerElement.textContent = `Today's Appointments`;
+                    subtitleElement.textContent = `Appointments scheduled for ${today}`;
+                    displayAppointmentsInActivities();
+                    break;
+                    
+                case 'messages':
+                    headerElement.textContent = `Today's Messages`;
+                    subtitleElement.textContent = `SMS messages sent and received today`;
+                    displayMessagesInActivities();
+                    break;
+                    
+                case 'calls':
+                    headerElement.textContent = `Today's Calls`;
+                    subtitleElement.textContent = `Phone calls made and received today`;
+                    displayCallsInActivities();
+                    break;
+            }
+        }
+
+        // Display appointments in the activities section
+        function displayAppointmentsInActivities() {
+            const listElement = document.getElementById('contacts-list');
+            if (!listElement) return;
+            
+            if (appointments.length === 0) {
+                listElement.innerHTML = `
+                    <div class="text-gray-500 text-center py-8">
+                        <i class="fas fa-calendar text-4xl mb-4 opacity-50"></i>
+                        <p class="text-lg">No appointments scheduled for today</p>
+                        <p class="text-sm">Click on "Today's Appointments" section above to book a new appointment</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            listElement.innerHTML = appointments.map(apt => `
+                <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:bg-gray-50 transition duration-200">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg">${apt.contact}</h3>
+                                <p class="text-sm text-gray-600">${apt.time} • ${apt.duration} minutes • ${apt.phone}</p>
+                                <p class="text-sm text-gray-500">${apt.purpose}</p>
+                                <span class="inline-block px-2 py-1 rounded-full text-xs ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} mt-1">
+                                    ${apt.status}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="callContact('${apt.phone}')" 
+                                class="bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200" 
+                                title="Call ${apt.contact}">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button onclick="textContact('${apt.phone}')" 
+                                class="bg-green-500 text-white px-3 py-2 rounded text-sm hover:bg-green-600 transition duration-200"
+                                title="Text ${apt.contact}">
+                            <i class="fas fa-sms"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Display messages in the activities section
+        function displayMessagesInActivities() {
+            const listElement = document.getElementById('contacts-list');
+            if (!listElement) return;
+            
+            // Simulated message data for demo
+            const todaysMessages = [
+                {
+                    id: 1,
+                    contact: 'John Doe',
+                    phone: '+1234567890',
+                    message: 'Thank you for the information about your services.',
+                    time: '09:15 AM',
+                    direction: 'incoming',
+                    status: 'delivered'
+                },
+                {
+                    id: 2,
+                    contact: 'Jane Smith',
+                    phone: '+1987654321',
+                    message: 'Your appointment is confirmed for tomorrow at 2 PM.',
+                    time: '11:30 AM',
+                    direction: 'outgoing',
+                    status: 'delivered'
+                }
+            ];
+            
+            if (todaysMessages.length === 0) {
+                listElement.innerHTML = `
+                    <div class="text-gray-500 text-center py-8">
+                        <i class="fas fa-comments text-4xl mb-4 opacity-50"></i>
+                        <p class="text-lg">No messages sent or received today</p>
+                        <p class="text-sm">Use the "Send Test SMS" tool above to send messages</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            listElement.innerHTML = todaysMessages.map(msg => `
+                <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:bg-gray-50 transition duration-200">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 ${msg.direction === 'incoming' ? 'bg-purple-500' : 'bg-blue-500'} rounded-full flex items-center justify-center text-white font-semibold">
+                                <i class="fas ${msg.direction === 'incoming' ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg">${msg.contact}</h3>
+                                <p class="text-sm text-gray-600">${msg.time} • ${msg.phone}</p>
+                                <p class="text-sm text-gray-700 mt-1">"${msg.message}"</p>
+                                <span class="inline-block px-2 py-1 rounded-full text-xs ${msg.direction === 'incoming' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'} mt-1">
+                                    ${msg.direction} • ${msg.status}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="textContact('${msg.phone}')" 
+                                class="bg-purple-500 text-white px-3 py-2 rounded text-sm hover:bg-purple-600 transition duration-200"
+                                title="Reply to ${msg.contact}">
+                            <i class="fas fa-reply"></i>
+                        </button>
+                        <button onclick="callContact('${msg.phone}')" 
+                                class="bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200" 
+                                title="Call ${msg.contact}">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Display calls in the activities section
+        function displayCallsInActivities() {
+            const listElement = document.getElementById('contacts-list');
+            if (!listElement) return;
+            
+            // Simulated call data for demo
+            const todaysCalls = [
+                {
+                    id: 1,
+                    contact: 'John Doe',
+                    phone: '+1234567890',
+                    time: '08:45 AM',
+                    duration: '05:23',
+                    direction: 'incoming',
+                    status: 'completed'
+                },
+                {
+                    id: 2,
+                    contact: 'Jane Smith',
+                    phone: '+1987654321',
+                    time: '10:15 AM',
+                    duration: '02:45',
+                    direction: 'outgoing',
+                    status: 'completed'
+                },
+                {
+                    id: 3,
+                    contact: 'Unknown',
+                    phone: '+1555999888',
+                    time: '02:30 PM',
+                    duration: '00:00',
+                    direction: 'incoming',
+                    status: 'missed'
+                }
+            ];
+            
+            if (todaysCalls.length === 0) {
+                listElement.innerHTML = `
+                    <div class="text-gray-500 text-center py-8">
+                        <i class="fas fa-phone text-4xl mb-4 opacity-50"></i>
+                        <p class="text-lg">No calls made or received today</p>
+                        <p class="text-sm">Call activity will appear here when calls are made through your system</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            listElement.innerHTML = todaysCalls.map(call => `
+                <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:bg-gray-50 transition duration-200">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 ${call.status === 'missed' ? 'bg-red-500' : call.direction === 'incoming' ? 'bg-green-500' : 'bg-yellow-500'} rounded-full flex items-center justify-center text-white font-semibold">
+                                <i class="fas ${call.status === 'missed' ? 'fa-phone-slash' : call.direction === 'incoming' ? 'fa-phone-volume' : 'fa-phone'}"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg">${call.contact}</h3>
+                                <p class="text-sm text-gray-600">${call.time} • ${call.phone}</p>
+                                <p class="text-sm text-gray-500">Duration: ${call.duration}</p>
+                                <span class="inline-block px-2 py-1 rounded-full text-xs ${call.status === 'missed' ? 'bg-red-100 text-red-800' : call.direction === 'incoming' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} mt-1">
+                                    ${call.direction} • ${call.status}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="callContact('${call.phone}')" 
+                                class="bg-green-500 text-white px-3 py-2 rounded text-sm hover:bg-green-600 transition duration-200" 
+                                title="Call back ${call.contact}">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button onclick="textContact('${call.phone}')" 
+                                class="bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200"
+                                title="Text ${call.contact}">
+                            <i class="fas fa-sms"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
 
         // Collapsible section management - ALL COLLAPSED BY DEFAULT
         const sectionStates = {
@@ -478,8 +742,11 @@
                 if (result.success) {
                     contacts = result.data.contacts;
                     totalContacts = result.data.pagination.totalContacts;
-                    updateContactsList();
                     updateContactCount();
+                    // Update the activities section if we're viewing contacts
+                    if (currentView === 'contacts') {
+                        updateContactsList();
+                    }
                     console.log(`Loaded ${contacts.length} contacts`);
                 } else {
                     throw new Error(result.error || 'Failed to load contacts');
@@ -487,7 +754,7 @@
             } catch (error) {
                 console.error('Error loading contacts:', error);
                 const contactsList = document.getElementById('contacts-list');
-                if (contactsList) {
+                if (contactsList && currentView === 'contacts') {
                     contactsList.innerHTML = `
                         <div class="text-center py-8 text-red-500">
                             <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
@@ -696,6 +963,9 @@
                         // Reload contacts from database
                         await loadContacts();
                         
+                        // If we're viewing contacts, the list will already be updated
+                        // If we're viewing something else, keep that view
+                        
                     } else {
                         throw new Error(result.error || 'Failed to create contact');
                     }
@@ -760,6 +1030,9 @@
 
         // Update contacts list display
         function updateContactsList() {
+            // Only update if we're in contacts view
+            if (currentView !== 'contacts') return;
+            
             const listElement = document.getElementById('contacts-list');
             if (!listElement) return;
             
@@ -854,7 +1127,7 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    await loadContacts(); // Refresh the list
+                    await loadContacts(); // This will refresh the view if we're on contacts
                     alert('Contact timestamp updated!');
                 } else {
                     throw new Error(result.error);
@@ -871,6 +1144,8 @@
                 loadContacts(),
                 loadAppointments()
             ]);
+            // Refresh the current view
+            updateActivitiesSection();
         }
 
         // Setup search on Enter key
@@ -962,6 +1237,9 @@
             // Load initial data
             loadContacts();
             loadAppointments();
+            
+            // Set initial view to contacts
+            currentView = 'contacts';
             
             console.log('✅ RinglyPro CRM Dashboard initialized successfully');
         });
