@@ -408,56 +408,122 @@
                 </div>
             </div>
         </div>
-        <!-- Status Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200" onclick="showTodaysContacts()">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-blue-500 text-white">
-                        <i class="fas fa-users"></i>
+        <!-- Status Cards - Now Interactive Content Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Card 1: Contacts List -->
+            <div class="bg-white rounded-lg shadow-md border-l-4 border-blue-500">
+                <div class="p-4 border-b border-gray-200 cursor-pointer" onclick="toggleCard('contacts-card')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-blue-500 text-white">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600">Total Contacts</p>
+                                <p class="text-2xl font-semibold" id="total-contacts">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </p>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down transition-transform duration-200" id="contacts-card-icon"></i>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm text-gray-600">Total Contacts</p>
-                        <p class="text-2xl font-semibold" id="total-contacts">
-                            <i class="fas fa-spinner fa-spin"></i>
-                        </p>
+                </div>
+                <div id="contacts-card-content" class="hidden p-4 max-h-96 overflow-y-auto">
+                    <div id="contacts-card-list" class="space-y-3">
+                        <div class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin text-gray-400"></i>
+                            <p class="text-gray-500 mt-2">Loading contacts...</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200" onclick="showTodaysAppointments()">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-green-500 text-white">
-                        <i class="fas fa-calendar-check"></i>
+            <!-- Card 2: Today's Appointments -->
+            <div class="bg-white rounded-lg shadow-md border-l-4 border-green-500">
+                <div class="p-4 border-b border-gray-200 cursor-pointer" onclick="toggleCard('appointments-card')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-500 text-white">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600">Appointments Today</p>
+                                <p class="text-2xl font-semibold" id="appointments-today">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </p>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down transition-transform duration-200" id="appointments-card-icon"></i>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm text-gray-600">Appointments Today</p>
-                        <p class="text-2xl font-semibold" id="appointments-today">
-                            <i class="fas fa-spinner fa-spin"></i>
-                        </p>
+                </div>
+                <div id="appointments-card-content" class="hidden p-4 max-h-96 overflow-y-auto">
+                    <div class="mb-3">
+                        <button onclick="showQuickCreateAppointment()" class="w-full bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm transition duration-200">
+                            <i class="fas fa-plus mr-2"></i>New Appointment
+                        </button>
+                    </div>
+                    <div id="appointments-card-list" class="space-y-3">
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar text-2xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-500">No appointments today</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200" onclick="showTodaysMessages()">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-purple-500 text-white">
-                        <i class="fas fa-comments"></i>
+            <!-- Card 3: Today's Messages -->
+            <div class="bg-white rounded-lg shadow-md border-l-4 border-purple-500">
+                <div class="p-4 border-b border-gray-200 cursor-pointer" onclick="toggleCard('messages-card')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-purple-500 text-white">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600">Messages Today</p>
+                                <p class="text-2xl font-semibold" id="messages-today">0</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down transition-transform duration-200" id="messages-card-icon"></i>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm text-gray-600">Messages Today</p>
-                        <p class="text-2xl font-semibold" id="messages-today">0</p>
+                </div>
+                <div id="messages-card-content" class="hidden p-4 max-h-96 overflow-y-auto">
+                    <div class="mb-3">
+                        <button onclick="showQuickSMS()" class="w-full bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded text-sm transition duration-200">
+                            <i class="fas fa-paper-plane mr-2"></i>Send SMS
+                        </button>
+                    </div>
+                    <div id="messages-card-list" class="space-y-3">
+                        <div class="text-center py-4">
+                            <i class="fas fa-comments text-2xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-500">No messages today</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200" onclick="showTodaysCalls()">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-yellow-500 text-white">
-                        <i class="fas fa-phone"></i>
+            <!-- Card 4: Today's Calls -->
+            <div class="bg-white rounded-lg shadow-md border-l-4 border-yellow-500">
+                <div class="p-4 border-b border-gray-200 cursor-pointer" onclick="toggleCard('calls-card')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-yellow-500 text-white">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600">Calls Today</p>
+                                <p class="text-2xl font-semibold" id="calls-today">0</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down transition-transform duration-200" id="calls-card-icon"></i>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm text-gray-600">Calls Today</p>
-                        <p class="text-2xl font-semibold" id="calls-today">0</p>
+                </div>
+                <div id="calls-card-content" class="hidden p-4 max-h-96 overflow-y-auto">
+                    <div id="calls-card-list" class="space-y-3">
+                        <div class="text-center py-4">
+                            <i class="fas fa-phone text-2xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-500">No calls today</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -641,30 +707,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Contact List - Always Visible -->
-        <div class="mt-8 bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center">
-                    <div class="p-2 bg-blue-100 rounded-lg mr-3">
-                        <i class="fas fa-address-book text-blue-600 text-lg"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-semibold text-gray-800">Recent Activities</h2>
-                        <p class="text-sm text-gray-500">Your latest contacts from the database</p>
-                    </div>
-                </div>
-                <button onclick="refreshData()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition duration-200">
-                    <i class="fas fa-sync-alt mr-1"></i> Refresh
-                </button>
-            </div>
-            <div id="contacts-list" class="space-y-3">
-                <div class="text-center py-8">
-                    <i class="fas fa-spinner fa-spin text-gray-400 text-2xl mb-2"></i>
-                    <p class="text-gray-500">Loading contacts...</p>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -674,7 +716,212 @@
         let contacts = [];
         let totalContacts = 0;
         let appointments = [];
-        let currentView = 'contacts'; // Track which view is active: 'contacts', 'appointments', 'messages', 'calls'
+        let todaysMessages = [];
+        let todaysCalls = [];
+
+        // Card management
+        function toggleCard(cardId) {
+            const content = document.getElementById(`${cardId}-content`);
+            const icon = document.getElementById(`${cardId}-icon`);
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+                
+                // Load appropriate data when card is expanded
+                switch(cardId) {
+                    case 'contacts-card':
+                        updateContactsCard();
+                        break;
+                    case 'appointments-card':
+                        updateAppointmentsCard();
+                        break;
+                    case 'messages-card':
+                        updateMessagesCard();
+                        break;
+                    case 'calls-card':
+                        updateCallsCard();
+                        break;
+                }
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+        
+        // Update individual card content
+        function updateContactsCard() {
+            const listElement = document.getElementById('contacts-card-list');
+            if (!listElement) return;
+            
+            if (contacts.length === 0) {
+                listElement.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-users text-2xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500">No contacts found</p>
+                        <button onclick="showQuickCreateContact()" class="mt-2 bg-blue-500 text-white px-3 py-2 rounded text-sm">
+                            <i class="fas fa-plus mr-1"></i> Add Contact
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            listElement.innerHTML = contacts.slice(0, 5).map(contact => `
+                <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition duration-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                                ${contact.firstName.charAt(0)}${contact.lastName.charAt(0)}
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-sm">${contact.fullName}</h4>
+                                <p class="text-xs text-gray-600">${contact.phone} • ${contact.email}</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-1">
+                            <button onclick="callContact('${contact.phone}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600" title="Call">
+                                <i class="fas fa-phone"></i>
+                            </button>
+                            <button onclick="textContact('${contact.phone}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600" title="Text">
+                                <i class="fas fa-sms"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            if (contacts.length > 5) {
+                listElement.innerHTML += `
+                    <div class="text-center pt-2">
+                        <button onclick="showQuickSearchContact()" class="text-blue-500 hover:text-blue-600 text-sm">
+                            <i class="fas fa-search mr-1"></i> View all ${totalContacts} contacts
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        function updateAppointmentsCard() {
+            const listElement = document.getElementById('appointments-card-list');
+            if (!listElement) return;
+            
+            if (appointments.length === 0) {
+                listElement.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar text-2xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500">No appointments today</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            listElement.innerHTML = appointments.map(apt => `
+                <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition duration-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="text-center">
+                                <div class="text-sm font-bold text-green-600">${apt.time}</div>
+                                <div class="text-xs text-gray-500">${apt.duration}min</div>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-sm">${apt.contact}</h4>
+                                <p class="text-xs text-gray-600">${apt.purpose}</p>
+                                <span class="inline-block px-2 py-1 rounded-full text-xs ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${apt.status}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex space-x-1">
+                            <button onclick="callContact('${apt.phone}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600" title="Call">
+                                <i class="fas fa-phone"></i>
+                            </button>
+                            <button onclick="textContact('${apt.phone}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600" title="Text">
+                                <i class="fas fa-sms"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateMessagesCard() {
+            const listElement = document.getElementById('messages-card-list');
+            if (!listElement) return;
+            
+            if (todaysMessages.length === 0) {
+                listElement.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-comments text-2xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500">No messages today</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            listElement.innerHTML = todaysMessages.map(msg => `
+                <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition duration-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 ${msg.direction === 'incoming' ? 'bg-purple-500' : 'bg-blue-500'} rounded-full flex items-center justify-center text-white text-xs">
+                                <i class="fas ${msg.direction === 'incoming' ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-sm">${msg.contact}</h4>
+                                <p class="text-xs text-gray-600">${msg.time} • ${msg.phone}</p>
+                                <p class="text-xs text-gray-700 mt-1 truncate">"${msg.message}"</p>
+                            </div>
+                        </div>
+                        <button onclick="textContact('${msg.phone}')" class="bg-purple-500 text-white px-2 py-1 rounded text-xs hover:bg-purple-600" title="Reply">
+                            <i class="fas fa-reply"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateCallsCard() {
+            const listElement = document.getElementById('calls-card-list');
+            if (!listElement) return;
+            
+            if (todaysCalls.length === 0) {
+                listElement.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-phone text-2xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500">No calls today</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            listElement.innerHTML = todaysCalls.map(call => `
+                <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition duration-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 ${call.status === 'missed' ? 'bg-red-500' : call.direction === 'incoming' ? 'bg-green-500' : 'bg-yellow-500'} rounded-full flex items-center justify-center text-white text-xs">
+                                <i class="fas ${call.status === 'missed' ? 'fa-phone-slash' : call.direction === 'incoming' ? 'fa-phone-volume' : 'fa-phone'}"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-sm">${call.contact}</h4>
+                                <p class="text-xs text-gray-600">${call.time} • ${call.phone}</p>
+                                <p class="text-xs text-gray-500">Duration: ${call.duration}</p>
+                                <span class="inline-block px-2 py-1 rounded-full text-xs ${call.status === 'missed' ? 'bg-red-100 text-red-800' : call.direction === 'incoming' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${call.direction} • ${call.status}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex space-x-1">
+                            <button onclick="callContact('${call.phone}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600" title="Call back">
+                                <i class="fas fa-phone"></i>
+                            </button>
+                            <button onclick="textContact('${call.phone}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600" title="Text">
+                                <i class="fas fa-sms"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
 
         // Card click handlers for different views
         function showTodaysContacts() {
@@ -1084,9 +1331,10 @@
                     contacts = result.data.contacts;
                     totalContacts = result.data.pagination.totalContacts;
                     updateContactCount();
-                    // Update the activities section if we're viewing contacts
-                    if (currentView === 'contacts') {
-                        updateContactsList();
+                    
+                    // Update contacts card if it's expanded
+                    if (!document.getElementById('contacts-card-content').classList.contains('hidden')) {
+                        updateContactsCard();
                     }
                     
                     // Update any open modal dropdowns
@@ -1098,17 +1346,21 @@
                 }
             } catch (error) {
                 console.error('Error loading contacts:', error);
-                const contactsList = document.getElementById('contacts-list');
-                if (contactsList && currentView === 'contacts') {
-                    contactsList.innerHTML = `
-                        <div class="text-center py-8 text-red-500">
-                            <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
-                            <p>Error loading contacts: ${error.message}</p>
-                            <button onclick="loadContacts()" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded">
-                                Try Again
-                            </button>
-                        </div>
-                    `;
+                // Show error in contacts card if it's expanded
+                const contactsCardContent = document.getElementById('contacts-card-content');
+                if (contactsCardContent && !contactsCardContent.classList.contains('hidden')) {
+                    const contactsList = document.getElementById('contacts-card-list');
+                    if (contactsList) {
+                        contactsList.innerHTML = `
+                            <div class="text-center py-4 text-red-500">
+                                <i class="fas fa-exclamation-triangle text-xl mb-2"></i>
+                                <p class="text-sm">Error loading contacts: ${error.message}</p>
+                                <button onclick="loadContacts()" class="mt-2 bg-blue-500 text-white px-3 py-2 rounded text-sm">
+                                    Try Again
+                                </button>
+                            </div>
+                        `;
+                    }
                 }
             }
         }
@@ -1391,60 +1643,8 @@
             }
         }
 
-        // Update contacts list display
-        function updateContactsList() {
-            // Only update if we're in contacts view
-            if (currentView !== 'contacts') return;
-            
-            const listElement = document.getElementById('contacts-list');
-            if (!listElement) return;
-            
-            if (contacts.length === 0) {
-                listElement.innerHTML = `
-                    <div class="text-gray-500 text-center py-8">
-                        <i class="fas fa-users text-4xl mb-4 opacity-50"></i>
-                        <p class="text-lg">No contacts found</p>
-                        <p class="text-sm">Add your first contact using the "Add New Contact" tool above!</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            listElement.innerHTML = contacts.map(contact => `
-                <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:bg-gray-50 transition duration-200">
-                    <div class="flex-1">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                                ${contact.firstName.charAt(0)}${contact.lastName.charAt(0)}
-                            </div>
-                            <div>
-                                <h3 class="font-semibold text-lg">${contact.fullName}</h3>
-                                <p class="text-sm text-gray-600">${contact.phone} • ${contact.email}</p>
-                                ${contact.notes ? `<p class="text-xs text-gray-500 mt-1">${contact.notes}</p>` : ''}
-                                <p class="text-xs text-gray-400">Added: ${new Date(contact.createdAt).toLocaleString()}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex space-x-2">
-                        <button onclick="callContact('${contact.phone}')" 
-                                class="bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200" 
-                                title="Call ${contact.fullName}">
-                            <i class="fas fa-phone"></i>
-                        </button>
-                        <button onclick="textContact('${contact.phone}')" 
-                                class="bg-green-500 text-white px-3 py-2 rounded text-sm hover:bg-green-600 transition duration-200"
-                                title="Text ${contact.fullName}">
-                            <i class="fas fa-sms"></i>
-                        </button>
-                        <button onclick="updateLastContacted(${contact.id})" 
-                                class="bg-yellow-500 text-white px-3 py-2 rounded text-sm hover:bg-yellow-600 transition duration-200"
-                                title="Mark as contacted">
-                            <i class="fas fa-clock"></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
+        // Update contacts list display (removed since we use cards now)
+        // This function is no longer needed as we use updateContactsCard()
 
         // Update contact count
         function updateContactCount() {
@@ -1507,8 +1707,27 @@
                 loadContacts(),
                 loadAppointments()
             ]);
-            // Refresh the current view
-            updateActivitiesSection();
+            // Load today's data
+            loadTodaysData();
+            
+            // Update any expanded cards
+            updateExpandedCards();
+        }
+        
+        // Update any currently expanded cards
+        function updateExpandedCards() {
+            if (!document.getElementById('contacts-card-content').classList.contains('hidden')) {
+                updateContactsCard();
+            }
+            if (!document.getElementById('appointments-card-content').classList.contains('hidden')) {
+                updateAppointmentsCard();
+            }
+            if (!document.getElementById('messages-card-content').classList.contains('hidden')) {
+                updateMessagesCard();
+            }
+            if (!document.getElementById('calls-card-content').classList.contains('hidden')) {
+                updateCallsCard();
+            }
         }
 
         // Setup search on Enter key
