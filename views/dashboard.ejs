@@ -57,7 +57,7 @@
                         <div class="relative">
                             <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68a15064d7c434d8cab7644b.png" 
                                  alt="RinglyPro Logo" 
-                                 class="w-10 h-10 object-contain bg-white rounded-lg shadow-lg p-1">
+                                 class="w-16 h-16 object-contain bg-white rounded-lg shadow-lg p-2">
                         </div>
                         <div class="text-2xl font-bold">
                             <span class="text-white">Ringly</span><span class="text-blue-200">Pro</span>
@@ -725,6 +725,22 @@
                 </div>
             </div>
         </div>
+
+        <!-- Large Logo at Bottom -->
+        <div class="mt-16 mb-8 text-center">
+            <div class="flex flex-col items-center space-y-4">
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68a15064d7c434d8cab7644b.png" 
+                     alt="RinglyPro Logo" 
+                     class="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 object-contain bg-white rounded-2xl shadow-2xl p-4">
+                <div class="text-center">
+                    <div class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-2">
+                        <span class="text-blue-600">Ringly</span><span class="text-blue-400">Pro</span>
+                    </div>
+                    <p class="text-xl sm:text-2xl font-medium text-gray-600">Customer Relationship Management</p>
+                    <p class="text-sm sm:text-base text-gray-500 mt-2">Professional CRM Solution for Modern Businesses</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -990,7 +1006,7 @@
                     Object.assign(sectionStates, JSON.parse(saved));
                 }
                 
-                // Apply saved states with error checking
+                // Apply saved states with error checking - Default is COLLAPSED
                 Object.keys(sectionStates).forEach(sectionId => {
                     const content = document.getElementById(`${sectionId}-content`);
                     
@@ -1007,6 +1023,7 @@
                         return;
                     }
                     
+                    // Default behavior: COLLAPSED
                     if (sectionStates[sectionId]) {
                         content.classList.add('expanded');
                         content.classList.remove('collapsed');
@@ -1018,7 +1035,7 @@
                     }
                 });
                 
-                // Update toggle all button text
+                // Update toggle all button text - Default to "Expand All"
                 const toggleAllText = document.getElementById('toggle-all-text');
                 if (toggleAllText) {
                     const allExpanded = Object.values(sectionStates).every(state => state);
@@ -1026,10 +1043,15 @@
                 }
             } catch (error) {
                 console.error('Error loading section states:', error);
-                // Reset to default states if there's an error
+                // Reset to default states if there's an error - ALL COLLAPSED
                 Object.keys(sectionStates).forEach(key => {
                     sectionStates[key] = false;
                 });
+                // Ensure button shows "Expand All"
+                const toggleAllText = document.getElementById('toggle-all-text');
+                if (toggleAllText) {
+                    toggleAllText.textContent = 'Expand All';
+                }
             }
         }
 
