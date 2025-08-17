@@ -2213,7 +2213,267 @@
                 }
             });
         }
+
+// ==================== FIXES FOR RINGLYPRO CRM DASHBOARD ====================
+
+// INSTRUCTIONS: Add these functions to your existing dashboard.ejs file
+// Place them in the JavaScript section after the existing contact selection handlers
+
+// 1. FIX: Add missing contact selection handlers for update forms
+function handleUpdateEmailContactSelection() {
+    const select = document.getElementById('quickUpdateEmailContactSelect');
+    const nameInput = document.getElementById('quickUpdateEmailName');
+    const currentEmailInput = document.getElementById('quickUpdateEmailCurrent');
+    
+    if (!select || !nameInput || !currentEmailInput) return;
+    
+    select.addEventListener('change', function() {
+        const selectedValue = this.value;
         
+        if (selectedValue === 'manual') {
+            nameInput.value = '';
+            currentEmailInput.value = '';
+            nameInput.focus();
+            nameInput.placeholder = 'Enter contact name';
+            currentEmailInput.placeholder = 'Current email will appear here';
+        } else if (selectedValue) {
+            try {
+                const contactData = JSON.parse(selectedValue);
+                nameInput.value = contactData.name;
+                currentEmailInput.value = contactData.email || 'No email on file';
+                nameInput.placeholder = `Selected: ${contactData.name}`;
+                currentEmailInput.placeholder = contactData.email || 'No current email';
+            } catch (e) {
+                console.error('Error parsing contact data:', e);
+                nameInput.value = '';
+                currentEmailInput.value = '';
+            }
+        } else {
+            nameInput.value = '';
+            currentEmailInput.value = '';
+            nameInput.placeholder = 'Contact Name';
+            currentEmailInput.placeholder = 'Current email will appear here';
+        }
+    });
+}
+
+function handleUpdatePhoneContactSelection() {
+    const select = document.getElementById('quickUpdatePhoneContactSelect');
+    const nameInput = document.getElementById('quickUpdatePhoneName');
+    const currentPhoneInput = document.getElementById('quickUpdatePhoneCurrent');
+    
+    if (!select || !nameInput || !currentPhoneInput) return;
+    
+    select.addEventListener('change', function() {
+        const selectedValue = this.value;
+        
+        if (selectedValue === 'manual') {
+            nameInput.value = '';
+            currentPhoneInput.value = '';
+            nameInput.focus();
+            nameInput.placeholder = 'Enter contact name';
+            currentPhoneInput.placeholder = 'Current phone will appear here';
+        } else if (selectedValue) {
+            try {
+                const contactData = JSON.parse(selectedValue);
+                nameInput.value = contactData.name;
+                currentPhoneInput.value = contactData.phone || 'No phone on file';
+                nameInput.placeholder = `Selected: ${contactData.name}`;
+                currentPhoneInput.placeholder = contactData.phone || 'No current phone';
+            } catch (e) {
+                console.error('Error parsing contact data:', e);
+                nameInput.value = '';
+                currentPhoneInput.value = '';
+            }
+        } else {
+            nameInput.value = '';
+            currentPhoneInput.value = '';
+            nameInput.placeholder = 'Contact Name';
+            currentPhoneInput.placeholder = 'Current phone will appear here';
+        }
+    });
+}
+
+// 2. FIX: Improved loadSectionStates function with better error handling
+function loadSectionStates() {
+    try {
+        const saved = localStorage.getItem('crm-section-states');
+        if (saved) {
+            Object.assign(sectionStates, JSON.parse(saved));
+        }
+        
+        // Apply saved states with error checking - Default is COLLAPSED
+        Object.keys(sectionStates).forEach(sectionId => {
+            const content = document.getElementById(`${sectionId}-content`);
+            
+            // Check if element exists before proceeding
+            if (!content) {
+                console.warn(`Section content not found: ${sectionId}-content - skipping`);
+                return;
+            }
+            
+            const header = content.parentElement?.querySelector('.section-header');
+            
+            if (!header) {
+                console.warn(`Section header not found for: ${sectionId} - skipping`);
+                return;
+            }
+            
+            // Default behavior: COLLAPSED
+            if (sectionStates[sectionId]) {
+                content.classList.add('expanded');
+                content.classList.remove('collapsed');
+                header.classList.remove('collapsed');
+            } else {
+                content.classList.add('collapsed');
+                content.classList.remove('expanded');
+                header.classList.add('collapsed');
+            }
+        });
+        
+        // Update toggle all button text - Default to "Expand All"
+        const toggleAllText = document.getElementById('toggle-all-text');
+        if (toggleAllText) {
+            const allExpanded = Object.values(sectionStates).every(state => state);
+            toggleAllText.textContent = allExpanded ? 'Collapse All' : 'Expand All';
+        }
+    } catch (error) {
+        console.error('Error loading section states:', error);
+        // Reset to default states if there's an error - ALL COLLAPSED
+        Object.keys(sectionStates).forEach(key => {
+            sectionStates[key] = false;
+        });
+        // Ensure button shows "Expand All"
+        const toggleAllText = document.getElementById('toggle-all-text');
+        if (toggleAllText) {
+            toggleAllText.textContent = 'Expand All';
+        }
+    }
+}
+
+// 3. FIX: Add error handling for missing DOM elements in initialization
+function safeInitialization() {
+    // Safely initialize each component with error handling
+    const initTasks = [
+        { name: 'Theme', fn: initDarkMode },
+        { name: 'Section States', fn: loadSectionStates },
+        { name: 'Contact Form', fn: setupContactForm },
+        { name: 'Appointment Form', fn: setupAppointmentForm },
+        { name: 'Search Input', fn: setupSearchInput },
+        { name: 'SMS Form', fn: setupSMSForm },
+        { name: 'Quick Create Form', fn: setupQuickCreateForm },
+        { name: 'Quick Update Email Form', fn: setupQuickUpdateEmailForm },
+        { name: 'Quick Update Phone Form', fn: setupQuickUpdatePhoneForm },
+        { name: 'Quick Create Appointment Form', fn: setupQuickCreateAppointmentForm },
+        { name: 'Quick SMS Form', fn: setupQuickSMSForm },
+        { name: 'Quick Email Form', fn: setupQuickEmailForm },
+        { name: 'SMS Contact Selection', fn: handleSMSContactSelection },
+        { name: 'Email Contact Selection', fn: handleEmailContactSelection },
+        { name: 'Appointment Contact Selection', fn: handleAppointmentContactSelection },
+        { name: 'Update Email Contact Selection', fn: handleUpdateEmailContactSelection },
+        { name: 'Update Phone Contact Selection', fn: handleUpdatePhoneContactSelection }
+    ];
+    
+    initTasks.forEach(task => {
+        try {
+            task.fn();
+            console.log(`✅ ${task.name} initialized`);
+        } catch (error) {
+            console.warn(`⚠️ Failed to initialize ${task.name}:`, error);
+        }
+    });
+}
+
+// 4. FIX: Improved DOMContentLoaded event listener
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 RinglyPro CRM Dashboard loaded');
+    
+    // Safe initialization with error handling
+    safeInitialization();
+    
+    // Initialize voice recognition with error handling
+    try {
+        if (initVoiceRecognition()) {
+            console.log('🎤 Voice recognition initialized');
+        } else {
+            console.log('⚠️ Voice recognition not available');
+        }
+    } catch (error) {
+        console.warn('⚠️ Voice recognition initialization failed:', error);
+    }
+    
+    // Load initial data with error handling
+    try {
+        loadContacts();
+        loadAppointments();
+        loadTodaysData();
+    } catch (error) {
+        console.error('Error loading initial data:', error);
+    }
+    
+    // Setup additional event listeners safely
+    try {
+        // Setup search input for quick search modal
+        const quickSearchInput = document.getElementById('quickSearchInput');
+        if (quickSearchInput) {
+            quickSearchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performQuickSearch();
+                }
+            });
+        }
+        
+        // Setup contact search input
+        const contactsSearch = document.getElementById('contacts-search');
+        if (contactsSearch) {
+            contactsSearch.addEventListener('input', function(e) {
+                filterContacts(e.target.value);
+            });
+        }
+    } catch (error) {
+        console.warn('⚠️ Error setting up additional event listeners:', error);
+    }
+    
+    // Show welcome toast
+    setTimeout(() => {
+        try {
+            showToast('Welcome to RinglyPro CRM!', 'success', '<i class="fas fa-rocket"></i>');
+        } catch (error) {
+            console.warn('⚠️ Welcome toast failed:', error);
+        }
+    }, 1500);
+    
+    console.log('✅ RinglyPro CRM Dashboard initialized successfully');
+});
+
+// 5. FIX: Add cleanup function for localStorage issues
+function cleanupSectionStates() {
+    try {
+        // Clean up any invalid section states
+        const validSections = ['add-contact', 'search-contacts', 'appointments-today', 'send-sms'];
+        const cleanedStates = {};
+        
+        validSections.forEach(sectionId => {
+            cleanedStates[sectionId] = sectionStates[sectionId] || false;
+        });
+        
+        // Update global state
+        Object.keys(sectionStates).forEach(key => {
+            if (!validSections.includes(key)) {
+                delete sectionStates[key];
+            }
+        });
+        
+        // Save cleaned states
+        localStorage.setItem('crm-section-states', JSON.stringify(cleanedStates));
+        console.log('✅ Section states cleaned up');
+    } catch (error) {
+        console.error('Error cleaning up section states:', error);
+    }
+}
+
+// Call cleanup on initialization
+cleanupSectionStates();        
         // Handle contact selection for Email
         function handleEmailContactSelection() {
             const select = document.getElementById('quickEmailContactSelect');
