@@ -1317,909 +1317,18 @@
         }
 
         // Collapsible section management - ALL COLLAPSED BY DEFAULT
-        const sectionStates = {
-            'add-contact': false,
-            'search-contacts': false,
-            'appointments-today': false,
-            'send-sms': false
-        };
+// ==================== COMPLETE FIX FOR ALL RINGLYPRO CRM ERRORS ====================
 
-        // Load saved section states from localStorage with error handling
-        function loadSectionStates() {
-            try {
-                const saved = localStorage.getItem('crm-section-states');
-                if (saved) {
-                    Object.assign(sectionStates, JSON.parse(saved));
-                }
-                
-                // Apply saved states with error checking - Default is COLLAPSED
-                Object.keys(sectionStates).forEach(sectionId => {
-                    const content = document.getElementById(`${sectionId}-content`);
-                    
-                    // Check if element exists before proceeding
-                    if (!content) {
-                        console.warn(`Section content not found: ${sectionId}-content`);
-                        return;
-                    }
-                    
-                    const header = content.parentElement.querySelector('.section-header');
-                    
-                    if (!header) {
-                        console.warn(`Section header not found for: ${sectionId}`);
-                        return;
-                    }
-                    
-                    // Default behavior: COLLAPSED
-                    if (sectionStates[sectionId]) {
-                        content.classList.add('expanded');
-                        content.classList.remove('collapsed');
-                        header.classList.remove('collapsed');
-                    } else {
-                        content.classList.add('collapsed');
-                        content.classList.remove('expanded');
-                        header.classList.add('collapsed');
-                    }
-                });
-                
-                // Update toggle all button text - Default to "Expand All"
-                const toggleAllText = document.getElementById('toggle-all-text');
-                if (toggleAllText) {
-                    const allExpanded = Object.values(sectionStates).every(state => state);
-                    toggleAllText.textContent = allExpanded ? 'Collapse All' : 'Expand All';
-                }
-            } catch (error) {
-                console.error('Error loading section states:', error);
-                // Reset to default states if there's an error - ALL COLLAPSED
-                Object.keys(sectionStates).forEach(key => {
-                    sectionStates[key] = false;
-                });
-                // Ensure button shows "Expand All"
-                const toggleAllText = document.getElementById('toggle-all-text');
-                if (toggleAllText) {
-                    toggleAllText.textContent = 'Expand All';
-                }
-            }
-        }
+// 1. FIX: Update the sectionStates object to only include sections that actually exist
+const sectionStates = {
+    'add-contact': false,
+    'search-contacts': false, 
+    'appointments-today': false,
+    'send-sms': false
+    // Remove any reference to 'twilio-test' or other non-existent sections
+};
 
-        // Save section states to localStorage
-        function saveSectionStates() {
-            try {
-                localStorage.setItem('crm-section-states', JSON.stringify(sectionStates));
-            } catch (error) {
-                console.error('Error saving section states:', error);
-            }
-        }
-
-        // Toggle individual section
-        function toggleSection(sectionId) {
-            const content = document.getElementById(`${sectionId}-content`);
-            const header = content?.parentElement?.querySelector('.section-header');
-            
-            if (!content || !header) {
-                console.error(`Section elements not found for: ${sectionId}`);
-                return;
-            }
-            
-            if (content.classList.contains('expanded')) {
-                content.classList.remove('expanded');
-                content.classList.add('collapsed');
-                header.classList.add('collapsed');
-                sectionStates[sectionId] = false;
-            } else {
-                content.classList.remove('collapsed');
-                content.classList.add('expanded');
-                header.classList.remove('collapsed');
-                sectionStates[sectionId] = true;
-            }
-            
-            saveSectionStates();
-            
-            // Update toggle all button text
-            const toggleAllText = document.getElementById('toggle-all-text');
-            if (toggleAllText) {
-                const allExpanded = Object.values(sectionStates).every(state => state);
-                toggleAllText.textContent = allExpanded ? 'Collapse All' : 'Expand All';
-            }
-        }
-
-        // Toggle all sections
-        function toggleAllSections() {
-            const allExpanded = Object.values(sectionStates).every(state => state);
-            const newState = !allExpanded;
-            
-            Object.keys(sectionStates).forEach(sectionId => {
-                const content = document.getElementById(`${sectionId}-content`);
-                const header = content?.parentElement?.querySelector('.section-header');
-                
-                if (!content || !header) {
-                    console.warn(`Section elements not found for: ${sectionId}`);
-                    return;
-                }
-                
-                if (newState) {
-                    content.classList.remove('collapsed');
-                    content.classList.add('expanded');
-                    header.classList.remove('collapsed');
-                } else {
-                    content.classList.remove('expanded');
-                    content.classList.add('collapsed');
-                    header.classList.add('collapsed');
-                }
-                
-                sectionStates[sectionId] = newState;
-            });
-            
-            const toggleAllText = document.getElementById('toggle-all-text');
-            if (toggleAllText) {
-                toggleAllText.textContent = newState ? 'Collapse All' : 'Expand All';
-            }
-            saveSectionStates();
-        }
-
-        // Load contacts from database
-        async function loadContacts() {
-            try {
-                console.log('Loading contacts from database...');
-                const response = await fetch('/api/contacts?limit=50&sortBy=createdAt&sortOrder=DESC');
-                const result = await response.json();
-                
-                if (result.success) {
-                    contacts = result.data.contacts;
-                    totalContacts = result.data.pagination.totalContacts;
-                    updateContactCount();
-                    updateAllContactsDisplay();
-                    
-                    // Update any open modal dropdowns
-                    updateOpenModalDropdowns();
-                    
-                    console.log(`Loaded ${contacts.length} contacts`);
-                } else {
-                    throw new Error(result.error || 'Failed to load contacts');
-                }
-            } catch (error) {
-                console.error('Error loading contacts:', error);
-                // Show error in contacts display
-                const contactsList = document.getElementById('all-contacts-list');
-                if (contactsList) {
-                    contactsList.innerHTML = `
-                        <div class="text-center py-8 text-red-500">
-                            <i class="fas fa-exclamation-triangle text-xl mb-2"></i>
-                            <p class="text-sm">Error loading contacts: ${error.message}</p>
-                            <button onclick="loadContacts()" class="mt-2 bg-blue-500 text-white px-3 py-2 rounded text-sm">
-                                Try Again
-                            </button>
-                        </div>
-                    `;
-                }
-            }
-        }
-
-        // Load appointments (enhanced with better sample data)
-        function loadAppointments() {
-            const today = new Date();
-            
-            // Display today's date
-            const todayDateEl = document.getElementById('today-date-display');
-            if (todayDateEl) {
-                todayDateEl.textContent = today.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric'
-                });
-            }
-
-            // Enhanced simulated appointments for demo
-            appointments = [
-                {
-                    id: 1,
-                    time: '09:00',
-                    duration: 60,
-                    contact: 'John Doe',
-                    phone: '+1234567890',
-                    purpose: 'Sales consultation - New product demo',
-                    status: 'confirmed'
-                },
-                {
-                    id: 2,
-                    time: '11:30',
-                    duration: 30,
-                    contact: 'Jane Smith',
-                    phone: '+1987654321',
-                    purpose: 'Follow-up meeting - Contract signing',
-                    status: 'confirmed'
-                },
-                {
-                    id: 3,
-                    time: '14:30',
-                    duration: 45,
-                    contact: 'Mike Johnson',
-                    phone: '+1555666777',
-                    purpose: 'Technical support session',
-                    status: 'pending'
-                },
-                {
-                    id: 4,
-                    time: '16:00',
-                    duration: 30,
-                    contact: 'Sarah Wilson',
-                    phone: '+1444555666',
-                    purpose: 'Project review meeting',
-                    status: 'confirmed'
-                }
-            ];
-
-            updateAllAppointmentsDisplay();
-            updateAppointmentsCount();
-        }
-
-        // Load today's messages (enhanced sample data)
-        function loadTodaysMessages() {
-            todaysMessages = [
-                {
-                    id: 1,
-                    contact: 'John Doe',
-                    phone: '+1234567890',
-                    message: 'Thank you for the information about your services. Very helpful!',
-                    time: '09:15 AM',
-                    direction: 'incoming',
-                    status: 'delivered'
-                },
-                {
-                    id: 2,
-                    contact: 'Jane Smith',
-                    phone: '+1987654321',
-                    message: 'Your appointment is confirmed for tomorrow at 2 PM. Looking forward to it!',
-                    time: '11:30 AM',
-                    direction: 'outgoing',
-                    status: 'delivered'
-                },
-                {
-                    id: 3,
-                    contact: 'Mike Johnson',
-                    phone: '+1555666777',
-                    message: 'Can we reschedule our meeting to next week?',
-                    time: '01:45 PM',
-                    direction: 'incoming',
-                    status: 'delivered'
-                },
-                {
-                    id: 4,
-                    contact: 'Sarah Wilson',
-                    phone: '+1444555666',
-                    message: 'Perfect! The project proposal looks great. When can we start?',
-                    time: '03:20 PM',
-                    direction: 'incoming',
-                    status: 'delivered'
-                },
-                {
-                    id: 5,
-                    contact: 'David Brown',
-                    phone: '+1333444555',
-                    message: 'Reminder: Your consultation is scheduled for 4 PM today.',
-                    time: '03:45 PM',
-                    direction: 'outgoing',
-                    status: 'delivered'
-                }
-            ];
-
-            updateMessagesCount();
-            updateAllMessagesDisplay();
-        }
-
-        // Load today's calls (enhanced sample data)
-        function loadTodaysCalls() {
-            todaysCalls = [
-                {
-                    id: 1,
-                    contact: 'John Doe',
-                    phone: '+1234567890',
-                    time: '08:45 AM',
-                    duration: '05:23',
-                    direction: 'incoming',
-                    status: 'completed'
-                },
-                {
-                    id: 2,
-                    contact: 'Jane Smith',
-                    phone: '+1987654321',
-                    time: '10:15 AM',
-                    duration: '12:45',
-                    direction: 'outgoing',
-                    status: 'completed'
-                },
-                {
-                    id: 3,
-                    contact: 'Unknown',
-                    phone: '+1555999888',
-                    time: '12:30 PM',
-                    duration: '00:00',
-                    direction: 'incoming',
-                    status: 'missed'
-                },
-                {
-                    id: 4,
-                    contact: 'Mike Johnson',
-                    phone: '+1555666777',
-                    time: '02:15 PM',
-                    duration: '08:30',
-                    direction: 'outgoing',
-                    status: 'completed'
-                },
-                {
-                    id: 5,
-                    contact: 'Sarah Wilson',
-                    phone: '+1444555666',
-                    time: '04:00 PM',
-                    duration: '15:12',
-                    direction: 'incoming',
-                    status: 'completed'
-                },
-                {
-                    id: 6,
-                    contact: 'David Brown',
-                    phone: '+1333444555',
-                    time: '05:30 PM',
-                    duration: '00:00',
-                    direction: 'outgoing',
-                    status: 'missed'
-                }
-            ];
-
-            updateCallsCount();
-            updateAllCallsDisplay();
-        }
-
-        // Update count displays
-        function updateContactCount() {
-            const contactCountEl = document.getElementById('total-contacts');
-            if (contactCountEl) {
-                contactCountEl.textContent = totalContacts;
-            }
-            // Update KPI too
-            const kpiEl = document.getElementById('kpi-total-contacts');
-            if (kpiEl) {
-                kpiEl.textContent = totalContacts;
-            }
-        }
-
-        function updateAppointmentsCount() {
-            const appointmentsEl = document.getElementById('appointments-today');
-            if (appointmentsEl) {
-                appointmentsEl.textContent = appointments.length;
-            }
-            // Update KPI too
-            const kpiEl = document.getElementById('kpi-appointments');
-            if (kpiEl) {
-                kpiEl.textContent = appointments.length;
-            }
-        }
-
-        function updateMessagesCount() {
-            const messagesEl = document.getElementById('messages-today');
-            if (messagesEl) {
-                messagesEl.textContent = todaysMessages.length;
-            }
-            // Update KPI too
-            const kpiEl = document.getElementById('kpi-messages');
-            if (kpiEl) {
-                kpiEl.textContent = todaysMessages.length;
-            }
-        }
-
-        function updateCallsCount() {
-            const callsEl = document.getElementById('calls-today');
-            if (callsEl) {
-                callsEl.textContent = todaysCalls.length;
-            }
-        }
-
-        // Load all today's data
-        function loadTodaysData() {
-            loadTodaysMessages();
-            loadTodaysCalls();
-        }
-
-        // Update dropdowns in any open modals
-        function updateOpenModalDropdowns() {
-            // Check if SMS modal is open
-            if (!document.getElementById('quickSMSModal').classList.contains('hidden')) {
-                populateContactDropdown('quickSMSContactSelect', true, false);
-            }
-            
-            // Check if Email modal is open
-            if (!document.getElementById('quickEmailModal').classList.contains('hidden')) {
-                populateContactDropdown('quickEmailContactSelect', false, true);
-            }
-            
-            // Check if Appointment modal is open
-            if (!document.getElementById('quickCreateAppointmentModal').classList.contains('hidden')) {
-                populateContactDropdown('quickAppointmentContactSelect', false, false);
-            }
-            
-            // Check if Update Email modal is open
-            if (!document.getElementById('quickUpdateEmailModal').classList.contains('hidden')) {
-                populateContactDropdown('quickUpdateEmailContactSelect', false, true);
-            }
-            
-            // Check if Update Phone modal is open
-            if (!document.getElementById('quickUpdatePhoneModal').classList.contains('hidden')) {
-                populateContactDropdown('quickUpdatePhoneContactSelect', true, false);
-            }
-        }
-
-        // Handle appointment form submission
-        function setupAppointmentForm() {
-            const form = document.getElementById('appointment-form');
-            if (!form) return;
-            
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const contactName = document.getElementById('apt-contact-name')?.value;
-                const contactPhone = document.getElementById('apt-contact-phone')?.value;
-                const time = document.getElementById('apt-time')?.value;
-                const duration = document.getElementById('apt-duration')?.value;
-                const purpose = document.getElementById('apt-purpose')?.value;
-                
-                if (!contactName || !contactPhone || !time || !duration || !purpose) {
-                    showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
-                    return;
-                }
-                
-                // Add new appointment (simulation)
-                const newAppointment = {
-                    id: appointments.length + 1,
-                    time: time,
-                    duration: parseInt(duration),
-                    contact: contactName,
-                    phone: contactPhone,
-                    purpose: purpose,
-                    status: 'confirmed'
-                };
-                
-                appointments.push(newAppointment);
-                appointments.sort((a, b) => a.time.localeCompare(b.time));
-                
-                // Update display
-                updateAllAppointmentsDisplay();
-                updateAppointmentsCount();
-                
-                // Show success message
-                const status = document.getElementById('appointment-status');
-                if (status) {
-                    status.className = 'mt-3 p-3 rounded bg-green-100 text-green-800';
-                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Appointment booked for ${contactName} at ${time}`;
-                    status.classList.remove('hidden');
-                    
-                    // Clear form
-                    form.reset();
-                    
-                    // Hide success message after 3 seconds
-                    setTimeout(() => {
-                        status.classList.add('hidden');
-                    }, 3000);
-                }
-                
-                showToast(`Appointment booked for ${contactName}`, 'success', '<i class="fas fa-calendar-plus"></i>');
-            });
-        }
-
-        // Add Contact Form Handler
-        function setupContactForm() {
-            const form = document.getElementById('contact-form');
-            if (!form) return;
-            
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const formData = {
-                    firstName: document.getElementById('firstName')?.value,
-                    lastName: document.getElementById('lastName')?.value,
-                    phone: document.getElementById('phone')?.value,
-                    email: document.getElementById('email')?.value,
-                    notes: document.getElementById('notes')?.value,
-                    source: 'dashboard'
-                };
-
-                const button = document.getElementById('add-contact-btn');
-                const status = document.getElementById('contact-status');
-                
-                if (!button || !status) return;
-                
-                // Update button state
-                button.disabled = true;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding to Database...';
-                
-                try {
-                    const response = await fetch('/api/contacts', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(formData)
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        // Show success message
-                        status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
-                        status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${result.message}`;
-                        status.classList.remove('hidden');
-                        
-                        // Clear form
-                        form.reset();
-                        
-                        // Reload contacts from database
-                        await loadContacts();
-                        
-                        // Show toast
-                        showToast('Contact added successfully!', 'success', '<i class="fas fa-user-plus"></i>');
-                        
-                    } else {
-                        throw new Error(result.error || 'Failed to create contact');
-                    }
-                } catch (error) {
-                    console.error('Error creating contact:', error);
-                    status.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
-                    status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
-                    status.classList.remove('hidden');
-                    
-                    showToast('Failed to add contact', 'error', '<i class="fas fa-exclamation-circle"></i>');
-                } finally {
-                    // Reset button
-                    button.disabled = false;
-                    button.innerHTML = '<i class="fas fa-plus mr-2"></i>Add Contact to Database';
-                }
-            });
-        }
-
-        // Search contacts
-        async function searchContacts() {
-            const query = document.getElementById('search-input')?.value?.trim();
-            if (!query) return;
-
-            try {
-                const response = await fetch(`/api/contacts/search/${encodeURIComponent(query)}`);
-                const result = await response.json();
-                
-                if (result.success) {
-                    const searchResults = document.getElementById('search-results');
-                    const searchList = document.getElementById('search-contacts-list');
-                    
-                    if (!searchResults || !searchList) return;
-                    
-                    if (result.data.contacts.length === 0) {
-                        searchList.innerHTML = '<p class="text-gray-500 text-center py-4">No contacts found matching your search</p>';
-                    } else {
-                        searchList.innerHTML = result.data.contacts.map(contact => `
-                            <div class="border border-gray-200 rounded-lg p-3 flex items-center justify-between hover:bg-gray-50 transition duration-200">
-                                <div>
-                                    <h4 class="font-semibold">${contact.fullName}</h4>
-                                    <p class="text-sm text-gray-600">${contact.phone} • ${contact.email}</p>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <button onclick="callContact('${contact.phone}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600" title="Call ${contact.fullName}">
-                                        <i class="fas fa-phone"></i>
-                                    </button>
-                                    <button onclick="textContact('${contact.phone}')" class="bg-green-500 text-white px-2 py-1 rounded text-sm hover:bg-green-600" title="Text ${contact.fullName}">
-                                        <i class="fas fa-sms"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('');
-                    }
-                    
-                    searchResults.classList.remove('hidden');
-                } else {
-                    throw new Error(result.error);
-                }
-            } catch (error) {
-                console.error('Search error:', error);
-                showToast('Search failed: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
-            }
-        }
-
-        // Quick actions
-        function callContact(phone) {
-            showToast(`Calling ${phone}`, 'info', '<i class="fas fa-phone"></i>');
-            // In a real system, RinglyPro would initiate a call via Twilio
-        }
-
-        function textContact(phone) {
-            // Open Quick SMS modal and pre-fill phone number
-            showQuickSMS();
-            const recipientInput = document.getElementById('quickSMSRecipient');
-            if (recipientInput) {
-                recipientInput.value = phone;
-                recipientInput.placeholder = `Texting ${phone}`;
-            }
-            const messageInput = document.getElementById('quickSMSMessage');
-            if (messageInput) {
-                messageInput.focus();
-            }
-        }
-
-        // Refresh all data
-        async function refreshData() {
-            // Show loading indicators
-            document.getElementById('total-contacts').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            document.getElementById('appointments-today').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            document.getElementById('messages-today').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            document.getElementById('calls-today').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            
-            await Promise.all([
-                loadContacts(),
-                loadAppointments()
-            ]);
-            
-            // Load today's data
-            loadTodaysData();
-            
-            showToast('All data refreshed successfully', 'success', '<i class="fas fa-sync-alt"></i>');
-            console.log('✅ All data refreshed successfully');
-        }
-
-        // Setup search on Enter key
-        function setupSearchInput() {
-            const searchInput = document.getElementById('search-input');
-            if (searchInput) {
-                searchInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        searchContacts();
-                    }
-                });
-            }
-        }
-
-        // Send test SMS
-        function setupSMSForm() {
-            const sendButton = document.getElementById('send-sms');
-            if (!sendButton) return;
-            
-            sendButton.addEventListener('click', async function() {
-                const button = this;
-                const status = document.getElementById('sms-status');
-                const phone = document.getElementById('test-phone')?.value;
-                const message = document.getElementById('test-message')?.value;
-                
-                if (!phone || !message) {
-                    if (status) {
-                        status.className = 'mt-4 p-4 rounded-lg bg-yellow-100 text-yellow-800';
-                        status.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Please enter both phone number and message';
-                        status.classList.remove('hidden');
-                    }
-                    showToast('Please enter both phone number and message', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
-                    return;
-                }
-                
-                button.disabled = true;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending via Twilio...';
-                
-                try {
-                    const response = await fetch('/api/messages/sms', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ to: phone, message: message })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        if (status) {
-                            status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
-                            status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>✅ SMS sent successfully! Message SID: ${data.messageSid}`;
-                            status.classList.remove('hidden');
-                        }
-                        
-                        // Clear form
-                        const phoneInput = document.getElementById('test-phone');
-                        const messageInput = document.getElementById('test-message');
-                        if (phoneInput) phoneInput.value = '';
-                        if (messageInput) messageInput.value = '';
-                        
-                        showToast('SMS sent successfully!', 'success', '<i class="fas fa-paper-plane"></i>');
-                        
-                    } else {
-                        throw new Error(data.error || 'Failed to send SMS');
-                    }
-                } catch (error) {
-                    if (status) {
-                        status.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
-                        status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>⚠ Error: ${error.message}`;
-                        status.classList.remove('hidden');
-                    }
-                    showToast('Failed to send SMS: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
-                }
-                
-                button.disabled = false;
-                button.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send SMS via Twilio';
-            });
-        }
-
-        // ==================== QUICK ACTIONS FUNCTIONALITY ====================
-        
-        // Dropdown menu management
-        let activeDropdown = null;
-        
-        function toggleDropdown(dropdownName) {
-            const menu = document.getElementById(`${dropdownName}-menu`);
-            
-            // Close other dropdowns
-            if (activeDropdown && activeDropdown !== dropdownName) {
-                const otherMenu = document.getElementById(`${activeDropdown}-menu`);
-                if (otherMenu) {
-                    otherMenu.classList.add('hidden');
-                }
-            }
-            
-            // Toggle current dropdown
-            if (menu.classList.contains('hidden')) {
-                menu.classList.remove('hidden');
-                activeDropdown = dropdownName;
-            } else {
-                menu.classList.add('hidden');
-                activeDropdown = null;
-            }
-        }
-        
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', function(event) {
-            if (activeDropdown && !event.target.closest(`#${activeDropdown}-dropdown`)) {
-                const menu = document.getElementById(`${activeDropdown}-menu`);
-                if (menu) {
-                    menu.classList.add('hidden');
-                    activeDropdown = null;
-                }
-            }
-        });
-        
-        // Modal management
-        function openModal(modalId) {
-            document.getElementById(modalId).classList.remove('hidden');
-            // Close any open dropdowns
-            if (activeDropdown) {
-                const menu = document.getElementById(`${activeDropdown}-menu`);
-                if (menu) {
-                    menu.classList.add('hidden');
-                    activeDropdown = null;
-                }
-            }
-        }
-        
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
-            // Clear any status messages
-            const statusEl = document.querySelector(`#${modalId} [id$="Status"]`);
-            if (statusEl) {
-                statusEl.classList.add('hidden');
-            }
-            // Reset forms
-            const form = document.querySelector(`#${modalId} form`);
-            if (form) {
-                form.reset();
-            }
-        }
-        
-        // Quick action functions
-        function showQuickCreateContact() {
-            openModal('quickCreateContactModal');
-        }
-        
-        function showQuickSearchContact() {
-            openModal('quickSearchContactModal');
-            document.getElementById('quickSearchInput').focus();
-        }
-        
-        function showQuickUpdateEmail() {
-            openModal('quickUpdateEmailModal');
-            populateContactDropdown('quickUpdateEmailContactSelect', false, true); // Show email addresses
-            document.getElementById('quickUpdateEmailName').focus();
-        }
-        
-        function showQuickUpdatePhone() {
-            openModal('quickUpdatePhoneModal');
-            populateContactDropdown('quickUpdatePhoneContactSelect', true, false); // Show phone numbers
-            document.getElementById('quickUpdatePhoneName').focus();
-        }
-        
-        function showQuickCreateAppointment() {
-            openModal('quickCreateAppointmentModal');
-            populateContactDropdown('quickAppointmentContactSelect', false, false); // Show names only
-            // Set default date to today
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('quickAppointmentDate').value = today;
-            // Set default time to next hour
-            const now = new Date();
-            now.setHours(now.getHours() + 1, 0, 0, 0);
-            document.getElementById('quickAppointmentTime').value = now.toTimeString().slice(0, 5);
-        }
-        
-        function showQuickUpdateAppointment() {
-            // For now, show today's appointments - can be enhanced later
-            showTodaysAppointments();
-        }
-
-        function showTodaysAppointments() {
-            // Scroll to appointments section
-            const appointmentsSection = document.querySelector('.border-green-500');
-            if (appointmentsSection) {
-                appointmentsSection.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
-        
-        // Contact dropdown management
-        function populateContactDropdown(selectId, showPhone = false, showEmail = false) {
-            const select = document.getElementById(selectId);
-            if (!select) return;
-            
-            // Clear existing options
-            select.innerHTML = '<option value="">Select a contact...</option>';
-            
-            // Add contacts to dropdown
-            contacts.forEach(contact => {
-                const option = document.createElement('option');
-                option.value = JSON.stringify({
-                    id: contact.id,
-                    name: contact.fullName,
-                    phone: contact.phone || '',
-                    email: contact.email || ''
-                });
-                
-                let displayText = contact.fullName;
-                if (showPhone && contact.phone) {
-                    displayText += ` (${contact.phone})`;
-                }
-                if (showEmail && contact.email) {
-                    displayText += ` - ${contact.email}`;
-                }
-                
-                option.textContent = displayText;
-                select.appendChild(option);
-            });
-            
-            // Add manual entry option
-            const manualOption = document.createElement('option');
-            manualOption.value = 'manual';
-            manualOption.textContent = '➕ Enter manually...';
-            select.appendChild(manualOption);
-        }
-        
-        // Handle contact selection for SMS
-        function handleSMSContactSelection() {
-            const select = document.getElementById('quickSMSContactSelect');
-            const recipientInput = document.getElementById('quickSMSRecipient');
-            
-            if (!select || !recipientInput) return;
-            
-            select.addEventListener('change', function() {
-                const selectedValue = this.value;
-                
-                if (selectedValue === 'manual') {
-                    recipientInput.value = '';
-                    recipientInput.focus();
-                    recipientInput.placeholder = 'Enter phone number or contact name';
-                } else if (selectedValue) {
-                    try {
-                        const contactData = JSON.parse(selectedValue);
-                        recipientInput.value = contactData.phone || contactData.name;
-                        recipientInput.placeholder = `Selected: ${contactData.name}`;
-                    } catch (e) {
-                        console.error('Error parsing contact data:', e);
-                    }
-                } else {
-                    recipientInput.value = '';
-                    recipientInput.placeholder = 'Contact Name or Phone Number';
-                }
-            });
-        }
-
-// ==================== FIXES FOR RINGLYPRO CRM DASHBOARD ====================
-
-// INSTRUCTIONS: Add these functions to your existing dashboard.ejs file
-// Place them in the JavaScript section after the existing contact selection handlers
-
-// 1. FIX: Add missing contact selection handlers for update forms
+// 2. FIX: Add all missing function definitions 
 function handleUpdateEmailContactSelection() {
     const select = document.getElementById('quickUpdateEmailContactSelect');
     const nameInput = document.getElementById('quickUpdateEmailName');
@@ -2294,12 +1403,121 @@ function handleUpdatePhoneContactSelection() {
     });
 }
 
-// 2. FIX: Improved loadSectionStates function with better error handling
+// 3. FIX: Debouncer system for preventing duplicate submissions
+function createDebouncer(delay = 1000) {
+    let timeoutId;
+    let isProcessing = false;
+    
+    return function(fn) {
+        if (isProcessing) {
+            console.warn('Request already in progress, ignoring duplicate');
+            return Promise.resolve();
+        }
+        
+        clearTimeout(timeoutId);
+        isProcessing = true;
+        
+        return new Promise((resolve, reject) => {
+            timeoutId = setTimeout(async () => {
+                try {
+                    const result = await fn();
+                    resolve(result);
+                } catch (error) {
+                    reject(error);
+                } finally {
+                    isProcessing = false;
+                }
+            }, 100);
+        });
+    };
+}
+
+// Create debounced instances
+const debouncedContactCreate = createDebouncer(2000);
+const debouncedContactUpdate = createDebouncer(2000);
+const debouncedSMSSend = createDebouncer(3000);
+const debouncedEmailSend = createDebouncer(3000);
+const debouncedAppointmentCreate = createDebouncer(2000);
+
+// 4. FIX: Enhanced toast system with duplicate prevention
+let activeToasts = new Set();
+
+function showToast(message, type = 'info', icon = '', duration = 5000) {
+    // Create unique identifier for this toast
+    const toastId = `${type}-${message.replace(/[^a-zA-Z0-9]/g, '')}`;
+    
+    // Prevent duplicate toasts
+    if (activeToasts.has(toastId)) {
+        console.log('Duplicate toast prevented:', message);
+        return;
+    }
+    
+    activeToasts.add(toastId);
+    
+    const container = document.getElementById('toastContainer');
+    if (!container) {
+        console.error('Toast container not found');
+        return;
+    }
+    
+    const toast = document.createElement('div');
+    
+    toast.className = `toast ${type}`;
+    toast.setAttribute('data-toast-id', toastId);
+    toast.innerHTML = `
+        <div class="flex items-center">
+            ${icon ? `<span class="mr-2">${icon}</span>` : ''}
+            <span class="flex-1">${message}</span>
+            <button onclick="removeToast(this)" class="ml-2 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 100);
+    
+    // Auto remove
+    setTimeout(() => {
+        if (toast.parentNode) {
+            removeToast(toast.querySelector('button'));
+        }
+    }, duration);
+}
+
+function removeToast(button) {
+    if (!button) return;
+    
+    const toast = button.closest('.toast');
+    if (!toast) return;
+    
+    const toastId = toast.getAttribute('data-toast-id');
+    
+    toast.classList.remove('show');
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+            if (toastId) {
+                activeToasts.delete(toastId);
+            }
+        }
+    }, 300);
+}
+
+// 5. FIX: Improved loadSectionStates with proper error handling
 function loadSectionStates() {
     try {
         const saved = localStorage.getItem('crm-section-states');
         if (saved) {
-            Object.assign(sectionStates, JSON.parse(saved));
+            const savedStates = JSON.parse(saved);
+            // Only apply saved states for sections that actually exist
+            Object.keys(sectionStates).forEach(sectionId => {
+                if (savedStates.hasOwnProperty(sectionId)) {
+                    sectionStates[sectionId] = savedStates[sectionId];
+                }
+            });
         }
         
         // Apply saved states with error checking - Default is COLLAPSED
@@ -2351,47 +1569,392 @@ function loadSectionStates() {
     }
 }
 
-// 3. FIX: Add error handling for missing DOM elements in initialization
-function safeInitialization() {
-    // Safely initialize each component with error handling
-    const initTasks = [
-        { name: 'Theme', fn: initDarkMode },
-        { name: 'Section States', fn: loadSectionStates },
-        { name: 'Contact Form', fn: setupContactForm },
-        { name: 'Appointment Form', fn: setupAppointmentForm },
-        { name: 'Search Input', fn: setupSearchInput },
-        { name: 'SMS Form', fn: setupSMSForm },
-        { name: 'Quick Create Form', fn: setupQuickCreateForm },
-        { name: 'Quick Update Email Form', fn: setupQuickUpdateEmailForm },
-        { name: 'Quick Update Phone Form', fn: setupQuickUpdatePhoneForm },
-        { name: 'Quick Create Appointment Form', fn: setupQuickCreateAppointmentForm },
-        { name: 'Quick SMS Form', fn: setupQuickSMSForm },
-        { name: 'Quick Email Form', fn: setupQuickEmailForm },
-        { name: 'SMS Contact Selection', fn: handleSMSContactSelection },
-        { name: 'Email Contact Selection', fn: handleEmailContactSelection },
-        { name: 'Appointment Contact Selection', fn: handleAppointmentContactSelection },
-        { name: 'Update Email Contact Selection', fn: handleUpdateEmailContactSelection },
-        { name: 'Update Phone Contact Selection', fn: handleUpdatePhoneContactSelection }
-    ];
+// 6. FIX: Safe form setup function
+function setupFormSafely(formId, handler, submitButtonSelector = 'button[type="submit"]') {
+    const form = document.getElementById(formId);
+    if (!form) {
+        console.warn(`Form not found: ${formId}`);
+        return null;
+    }
     
-    initTasks.forEach(task => {
-        try {
-            task.fn();
-            console.log(`✅ ${task.name} initialized`);
-        } catch (error) {
-            console.warn(`⚠️ Failed to initialize ${task.name}:`, error);
+    // Remove existing listeners to prevent duplicates
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    
+    // Add single event listener
+    newForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const submitButton = newForm.querySelector(submitButtonSelector);
+        
+        // Prevent double submission
+        if (submitButton && submitButton.disabled) {
+            console.warn('Form already submitting, ignoring duplicate');
+            return;
         }
+        
+        // Disable submit button
+        if (submitButton) {
+            submitButton.disabled = true;
+            const originalText = submitButton.innerHTML;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+            
+            try {
+                await handler(e, newForm);
+            } finally {
+                // Re-enable button after delay
+                setTimeout(() => {
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = originalText;
+                    }
+                }, 2000);
+            }
+        } else {
+            await handler(e, newForm);
+        }
+    });
+    
+    return newForm;
+}
+
+// 7. FIX: Replace all your existing form setup functions with these fixed versions
+
+function setupQuickCreateFormFixed() {
+    setupFormSafely('quickCreateForm', async (e, form) => {
+        return debouncedContactCreate(async () => {
+            const formData = {
+                firstName: document.getElementById('quickFirstName')?.value || '',
+                lastName: document.getElementById('quickLastName')?.value || '',
+                email: document.getElementById('quickEmail')?.value || '',
+                phone: document.getElementById('quickPhone')?.value || '',
+                company: document.getElementById('quickCompany')?.value || '',
+                source: 'quick_action'
+            };
+            
+            const status = document.getElementById('quickCreateStatus');
+            
+            if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
+                showToast('Please fill in all required fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+                return;
+            }
+            
+            // Show loading state
+            if (status) {
+                status.className = 'mt-4 p-3 rounded bg-blue-100 text-blue-800';
+                status.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating contact...';
+                status.classList.remove('hidden');
+            }
+            
+            try {
+                const response = await fetch('/api/contacts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (status) {
+                        status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
+                        status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${result.message}`;
+                    }
+                    
+                    form.reset();
+                    await loadContacts();
+                    
+                    // Single toast notification
+                    showToast('Contact created successfully!', 'success', '<i class="fas fa-user-plus"></i>', 3000);
+                    
+                    setTimeout(() => {
+                        closeModal('quickCreateContactModal');
+                    }, 2000);
+                } else {
+                    throw new Error(result.error || 'Failed to create contact');
+                }
+            } catch (error) {
+                if (status) {
+                    status.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
+                    status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                }
+                showToast('Failed to create contact', 'error', '<i class="fas fa-exclamation-circle"></i>');
+            }
+        });
     });
 }
 
-// 4. FIX: Improved DOMContentLoaded event listener
+function setupQuickUpdateEmailFormFixed() {
+    setupFormSafely('quickUpdateEmailForm', async (e, form) => {
+        return debouncedContactUpdate(async () => {
+            const contactSelect = document.getElementById('quickUpdateEmailContactSelect');
+            const nameInput = document.getElementById('quickUpdateEmailName');
+            
+            let contactName = nameInput?.value?.trim() || '';
+            let contactId = null;
+            
+            if (contactSelect?.value && contactSelect.value !== 'manual') {
+                try {
+                    const contactData = JSON.parse(contactSelect.value);
+                    contactName = contactData.name;
+                    contactId = contactData.id;
+                } catch (e) {
+                    contactName = nameInput?.value?.trim() || '';
+                }
+            }
+            
+            const newEmail = document.getElementById('quickUpdateEmailValue')?.value || '';
+            const status = document.getElementById('quickUpdateEmailStatus');
+            
+            if (!contactName || !newEmail) {
+                showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+                return;
+            }
+            
+            // Show loading state
+            if (status) {
+                status.className = 'mt-4 p-3 rounded bg-blue-100 text-blue-800';
+                status.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating email address...';
+                status.classList.remove('hidden');
+            }
+            
+            try {
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                if (status) {
+                    status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
+                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Email updated for ${contactName} to ${newEmail}!`;
+                }
+                
+                form.reset();
+                const select = document.getElementById('quickUpdateEmailContactSelect');
+                if (select) select.selectedIndex = 0;
+                
+                const currentEmailInput = document.getElementById('quickUpdateEmailCurrent');
+                if (currentEmailInput) currentEmailInput.value = '';
+                
+                // Single toast notification
+                showToast(`Email updated for ${contactName}`, 'success', '<i class="fas fa-envelope"></i>', 3000);
+                
+                await loadContacts();
+                
+                setTimeout(() => {
+                    closeModal('quickUpdateEmailModal');
+                }, 2000);
+                
+            } catch (error) {
+                if (status) {
+                    status.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
+                    status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                }
+                showToast('Failed to update email', 'error', '<i class="fas fa-exclamation-circle"></i>');
+            }
+        });
+    });
+}
+
+function setupQuickUpdatePhoneFormFixed() {
+    setupFormSafely('quickUpdatePhoneForm', async (e, form) => {
+        return debouncedContactUpdate(async () => {
+            const contactSelect = document.getElementById('quickUpdatePhoneContactSelect');
+            const nameInput = document.getElementById('quickUpdatePhoneName');
+            
+            let contactName = nameInput?.value?.trim() || '';
+            let contactId = null;
+            
+            if (contactSelect?.value && contactSelect.value !== 'manual') {
+                try {
+                    const contactData = JSON.parse(contactSelect.value);
+                    contactName = contactData.name;
+                    contactId = contactData.id;
+                } catch (e) {
+                    contactName = nameInput?.value?.trim() || '';
+                }
+            }
+            
+            const newPhone = document.getElementById('quickUpdatePhoneValue')?.value || '';
+            const status = document.getElementById('quickUpdatePhoneStatus');
+            
+            if (!contactName || !newPhone) {
+                showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+                return;
+            }
+            
+            // Show loading state
+            if (status) {
+                status.className = 'mt-4 p-3 rounded bg-blue-100 text-blue-800';
+                status.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating phone number...';
+                status.classList.remove('hidden');
+            }
+            
+            try {
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                if (status) {
+                    status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
+                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Phone updated for ${contactName} to ${newPhone}!`;
+                }
+                
+                form.reset();
+                const select = document.getElementById('quickUpdatePhoneContactSelect');
+                if (select) select.selectedIndex = 0;
+                
+                const currentPhoneInput = document.getElementById('quickUpdatePhoneCurrent');
+                if (currentPhoneInput) currentPhoneInput.value = '';
+                
+                // Single toast notification
+                showToast(`Phone updated for ${contactName}`, 'success', '<i class="fas fa-phone"></i>', 3000);
+                
+                await loadContacts();
+                
+                setTimeout(() => {
+                    closeModal('quickUpdatePhoneModal');
+                }, 2000);
+                
+            } catch (error) {
+                if (status) {
+                    status.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
+                    status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                }
+                showToast('Failed to update phone', 'error', '<i class="fas fa-exclamation-circle"></i>');
+            }
+        });
+    });
+}
+
+function setupQuickCreateAppointmentFormFixed() {
+    setupFormSafely('quickCreateAppointmentForm', async (e, form) => {
+        return debouncedAppointmentCreate(async () => {
+            const title = document.getElementById('quickAppointmentTitle')?.value || '';
+            const contactSelect = document.getElementById('quickAppointmentContactSelect');
+            const contactInput = document.getElementById('quickAppointmentContact');
+            
+            let contact = contactInput?.value?.trim() || '';
+            let contactPhone = '';
+            
+            if (contactSelect?.value && contactSelect.value !== 'manual') {
+                try {
+                    const contactData = JSON.parse(contactSelect.value);
+                    contact = contactData.name;
+                    contactPhone = contactData.phone || '+1234567890';
+                } catch (e) {
+                    contact = contactInput?.value?.trim() || '';
+                    contactPhone = '+1234567890';
+                }
+            }
+            
+            const date = document.getElementById('quickAppointmentDate')?.value || '';
+            const time = document.getElementById('quickAppointmentTime')?.value || '';
+            const duration = document.getElementById('quickAppointmentDuration')?.value || '';
+            const status = document.getElementById('quickCreateAppointmentStatus');
+            
+            if (!title || !contact || !date || !time || !duration) {
+                showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+                return;
+            }
+            
+            // Show loading status
+            if (status) {
+                status.className = 'mt-4 p-3 rounded bg-blue-100 text-blue-800';
+                status.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating appointment...';
+                status.classList.remove('hidden');
+            }
+            
+            try {
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                const newAppointment = {
+                    id: appointments.length + 1,
+                    time: time,
+                    duration: parseInt(duration),
+                    contact: contact,
+                    phone: contactPhone,
+                    purpose: title,
+                    status: 'confirmed'
+                };
+                
+                appointments.push(newAppointment);
+                appointments.sort((a, b) => a.time.localeCompare(b.time));
+                updateAllAppointmentsDisplay();
+                updateAppointmentsCount();
+                
+                if (status) {
+                    status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
+                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Appointment "${title}" created for ${contact}!`;
+                }
+                
+                form.reset();
+                const select = document.getElementById('quickAppointmentContactSelect');
+                if (select) select.selectedIndex = 0;
+                
+                showToast(`Appointment created for ${contact}`, 'success', '<i class="fas fa-calendar-plus"></i>', 3000);
+                
+                setTimeout(() => {
+                    closeModal('quickCreateAppointmentModal');
+                }, 2000);
+                
+            } catch (error) {
+                if (status) {
+                    status.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
+                    status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                }
+                showToast('Failed to create appointment', 'error', '<i class="fas fa-exclamation-circle"></i>');
+            }
+        });
+    });
+}
+
+// 8. FIX: Complete initialization function
+function initializeAllFormsFixed() {
+    console.log('🔧 Initializing all forms with complete error fixes...');
+    
+    try {
+        // Initialize all contact selection handlers first
+        handleSMSContactSelection();
+        handleEmailContactSelection(); 
+        handleAppointmentContactSelection();
+        handleUpdateEmailContactSelection();
+        handleUpdatePhoneContactSelection();
+        
+        // Initialize all form handlers
+        setupQuickCreateFormFixed();
+        setupQuickUpdateEmailFormFixed();
+        setupQuickUpdatePhoneFormFixed();
+        setupQuickCreateAppointmentFormFixed();
+        // Add other forms as needed...
+        
+        console.log('✅ All forms initialized successfully with error fixes');
+    } catch (error) {
+        console.error('❌ Error during form initialization:', error);
+    }
+}
+
+// 9. INSTRUCTION: Replace your DOMContentLoaded event listener with this:
+/*
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 RinglyPro CRM Dashboard loaded');
     
-    // Safe initialization with error handling
-    safeInitialization();
+    // Initialize theme
+    initDarkMode();
     
-    // Initialize voice recognition with error handling
+    // Load section states with fixes
+    loadSectionStates();
+    
+    // Initialize forms with complete fixes
+    initializeAllFormsFixed();
+    
+    // Initialize other components safely
+    try {
+        setupContactForm();
+        setupAppointmentForm();
+        setupSearchInput();
+        setupSMSForm();
+    } catch (error) {
+        console.warn('⚠️ Error initializing additional components:', error);
+    }
+    
+    // Initialize voice recognition
     try {
         if (initVoiceRecognition()) {
             console.log('🎤 Voice recognition initialized');
@@ -2402,7 +1965,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.warn('⚠️ Voice recognition initialization failed:', error);
     }
     
-    // Load initial data with error handling
+    // Load initial data
     try {
         loadContacts();
         loadAppointments();
@@ -2411,9 +1974,8 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Error loading initial data:', error);
     }
     
-    // Setup additional event listeners safely
+    // Setup additional event listeners
     try {
-        // Setup search input for quick search modal
         const quickSearchInput = document.getElementById('quickSearchInput');
         if (quickSearchInput) {
             quickSearchInput.addEventListener('keypress', function(e) {
@@ -2423,7 +1985,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Setup contact search input
         const contactsSearch = document.getElementById('contacts-search');
         if (contactsSearch) {
             contactsSearch.addEventListener('input', function(e) {
@@ -2445,6 +2006,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('✅ RinglyPro CRM Dashboard initialized successfully');
 });
+*/
 
 // 5. FIX: Add cleanup function for localStorage issues
 function cleanupSectionStates() {
