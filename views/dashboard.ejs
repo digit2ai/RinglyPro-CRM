@@ -1373,6 +1373,226 @@ function handleUpdateEmailContactSelection() {
     });
 }
 
+// ==================== SETUP CONTACT FORM FUNCTION ====================
+
+// SEARCH FOR: "setupContactForm" in your dashboard.ejs file
+// If you can't find it, ADD this function (around line 1800-2000):
+
+function setupContactForm() {
+    const form = document.getElementById('contact-form');
+    if (!form) return;
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            firstName: document.getElementById('firstName')?.value,
+            lastName: document.getElementById('lastName')?.value,
+            phone: document.getElementById('phone')?.value,
+            email: document.getElementById('email')?.value,
+            notes: document.getElementById('notes')?.value,
+            source: 'dashboard'
+        };
+
+        const button = document.getElementById('add-contact-btn');
+        const status = document.getElementById('contact-status');
+        
+        if (!button || !status) return;
+        
+        // Update button state
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding to Database...';
+        
+        try {
+            const response = await fetch('/api/contacts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Show success message
+                status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
+                status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${result.message}`;
+                status.classList.remove('hidden');
+                
+                // Clear form
+                form.reset();
+                
+                // Reload contacts from database
+                await loadContacts();
+                
+                // Show toast
+                showToast('Contact added successfully!', 'success', '<i class="fas fa-user-plus"></i>');
+                
+            } else {
+                throw new Error(result.error || 'Failed to create contact');
+            }
+        } catch (error) {
+            console.error('Error creating contact:', error);
+            status.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
+            status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+            status.classList.remove('hidden');
+            
+            showToast('Failed to add contact', 'error', '<i class="fas fa-exclamation-circle"></i>');
+        } finally {
+            // Reset button
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-plus mr-2"></i>Add Contact to Database';
+        }
+    });
+}
+
+// ALSO CHECK FOR THESE OTHER FUNCTIONS - if missing, add them too:
+
+function setupAppointmentForm() {
+    const form = document.getElementById('appointment-form');
+    if (!form) return;
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const contactName = document.getElementById('apt-contact-name')?.value;
+        const contactPhone = document.getElementById('apt-contact-phone')?.value;
+        const time = document.getElementById('apt-time')?.value;
+        const duration = document.getElementById('apt-duration')?.value;
+        const purpose = document.getElementById('apt-purpose')?.value;
+        
+        if (!contactName || !contactPhone || !time || !duration || !purpose) {
+            showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+            return;
+        }
+        
+        // Add new appointment (simulation)
+        const newAppointment = {
+            id: appointments.length + 1,
+            time: time,
+            duration: parseInt(duration),
+            contact: contactName,
+            phone: contactPhone,
+            purpose: purpose,
+            status: 'confirmed'
+        };
+        
+        appointments.push(newAppointment);
+        appointments.sort((a, b) => a.time.localeCompare(b.time));
+        
+        // Update display
+        updateAllAppointmentsDisplay();
+        updateAppointmentsCount();
+        
+        // Show success message
+        const status = document.getElementById('appointment-status');
+        if (status) {
+            status.className = 'mt-3 p-3 rounded bg-green-100 text-green-800';
+            status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Appointment booked for ${contactName} at ${time}`;
+            status.classList.remove('hidden');
+            
+            // Clear form
+            form.reset();
+            
+            // Hide success message after 3 seconds
+            setTimeout(() => {
+                status.classList.add('hidden');
+            }, 3000);
+        }
+        
+        showToast(`Appointment booked for ${contactName}`, 'success', '<i class="fas fa-calendar-plus"></i>');
+    });
+}
+
+function setupSearchInput() {
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchContacts();
+            }
+        });
+    }
+}
+
+function setupSMSForm() {
+    const sendButton = document.getElementById('send-sms');
+    if (!sendButton) return;
+    
+    sendButton.addEventListener('click', async function() {
+        const button = this;
+        const status = document.getElementById('sms-status');
+        const phone = document.getElementById('test-phone')?.value;
+        const message = document.getElementById('test-message')?.value;
+        
+        if (!phone || !message) {
+            if (status) {
+                status.className = 'mt-4 p-4 rounded-lg bg-yellow-100 text-yellow-800';
+                status.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Please enter both phone number and message';
+                status.classList.remove('hidden');
+            }
+            showToast('Please enter both phone number and message', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+            return;
+        }
+        
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending via Twilio...';
+        
+        try {
+            const response = await fetch('/api/messages/sms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ to: phone, message: message })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                if (status) {
+                    status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
+                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>✅ SMS sent successfully! Message SID: ${data.messageSid}`;
+                    status.classList.remove('hidden');
+                }
+                
+                // Clear form
+                const phoneInput = document.getElementById('test-phone');
+                const messageInput = document.getElementById('test-message');
+                if (phoneInput) phoneInput.value = '';
+                if (messageInput) messageInput.value = '';
+                
+                showToast('SMS sent successfully!', 'success', '<i class="fas fa-paper-plane"></i>');
+                
+            } else {
+                throw new Error(data.error || 'Failed to send SMS');
+            }
+        } catch (error) {
+            if (status) {
+                status.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
+                status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>⚠️ Error: ${error.message}`;
+                status.classList.remove('hidden');
+            }
+            showToast('Failed to send SMS: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
+        }
+        
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send SMS via Twilio';
+    });
+}
+
+// INSTRUCTIONS:
+/*
+1. SEARCH for "setupContactForm" in your dashboard.ejs file
+2. If it doesn't exist, ADD the setupContactForm function above
+3. Check if you also have these functions:
+   - setupAppointmentForm
+   - setupSearchInput  
+   - setupSMSForm
+4. If any are missing, add them from the code above
+5. Save and refresh
+
+These are the basic form setup functions that were working in your original dashboard.
+*/
 function handleUpdatePhoneContactSelection() {
     const select = document.getElementById('quickUpdatePhoneContactSelect');
     const nameInput = document.getElementById('quickUpdatePhoneName');
