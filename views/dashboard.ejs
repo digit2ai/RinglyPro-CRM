@@ -68,9 +68,6 @@
                     <button onclick="refreshData()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full text-sm transition duration-200">
                         <i class="fas fa-sync-alt mr-1"></i> Refresh
                     </button>
-                    <button onclick="toggleAllSections()" class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded-full text-sm transition duration-200">
-                        <i class="fas fa-expand-arrows-alt mr-1"></i> <span id="toggle-all-text">Expand All</span>
-                    </button>
                 </div>
             </div>
         </div>
@@ -408,142 +405,9 @@
             </div>
         </div>
 
-        <!-- Main Display Cards - Mobile Responsive -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-            <!-- Card 1: All Contacts Display -->
-            <div class="bg-white rounded-lg shadow-lg border-l-4 border-blue-500 min-h-[500px] flex flex-col">
-                <div class="p-3 sm:p-4 border-b border-gray-200 bg-blue-50">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="p-2 sm:p-3 rounded-full bg-blue-500 text-white">
-                                <i class="fas fa-users text-sm sm:text-base"></i>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-sm sm:text-base font-semibold text-gray-800">All Contacts</h3>
-                                <p class="text-xs sm:text-sm text-gray-600">Total: <span id="total-contacts" class="font-bold">0</span></p>
-                            </div>
-                        </div>
-                        <button onclick="showQuickCreateContact()" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition duration-200">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="flex-1 overflow-hidden">
-                    <div class="p-2 sm:p-3 border-b border-gray-100">
-                        <input type="text" id="contacts-search" placeholder="Search contacts..." 
-                               class="w-full p-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                               onkeyup="filterContacts(this.value)">
-                    </div>
-                    <div id="all-contacts-list" class="p-2 sm:p-3 space-y-2 overflow-y-auto max-h-[400px]">
-                        <div class="text-center py-8">
-                            <i class="fas fa-spinner fa-spin text-gray-400 text-xl"></i>
-                            <p class="text-gray-500 mt-2 text-sm">Loading contacts...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 2: Today's Appointments Display -->
-            <div class="bg-white rounded-lg shadow-lg border-l-4 border-green-500 min-h-[500px] flex flex-col">
-                <div class="p-3 sm:p-4 border-b border-gray-200 bg-green-50">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="p-2 sm:p-3 rounded-full bg-green-500 text-white">
-                                <i class="fas fa-calendar-check text-sm sm:text-base"></i>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-sm sm:text-base font-semibold text-gray-800">Today's Appointments</h3>
-                                <p class="text-xs sm:text-sm text-gray-600">Count: <span id="appointments-today" class="font-bold">0</span></p>
-                            </div>
-                        </div>
-                        <button onclick="showQuickCreateAppointment()" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition duration-200">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                    <div class="mt-2">
-                        <p class="text-xs text-gray-600" id="today-date-display"></p>
-                    </div>
-                </div>
-                <div class="flex-1 overflow-hidden">
-                    <div id="all-appointments-list" class="p-2 sm:p-3 space-y-2 overflow-y-auto max-h-[430px]">
-                        <div class="text-center py-8">
-                            <i class="fas fa-calendar text-gray-400 text-xl mb-2"></i>
-                            <p class="text-gray-500 text-sm">No appointments today</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 3: Today's SMS Messages Display -->
-            <div class="bg-white rounded-lg shadow-lg border-l-4 border-purple-500 min-h-[500px] flex flex-col">
-                <div class="p-3 sm:p-4 border-b border-gray-200 bg-purple-50">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="p-2 sm:p-3 rounded-full bg-purple-500 text-white">
-                                <i class="fas fa-sms text-sm sm:text-base"></i>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-sm sm:text-base font-semibold text-gray-800">SMS Today</h3>
-                                <p class="text-xs sm:text-sm text-gray-600">Count: <span id="messages-today" class="font-bold">0</span></p>
-                            </div>
-                        </div>
-                        <button onclick="showQuickSMS()" class="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs transition duration-200">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="flex-1 overflow-hidden">
-                    <div class="p-2 border-b border-gray-100">
-                        <div class="flex space-x-1 text-xs">
-                            <button onclick="filterMessages('all')" class="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition" id="filter-all-messages">All</button>
-                            <button onclick="filterMessages('sent')" class="px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition" id="filter-sent-messages">Sent</button>
-                            <button onclick="filterMessages('received')" class="px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition" id="filter-received-messages">Received</button>
-                        </div>
-                    </div>
-                    <div id="all-messages-list" class="p-2 sm:p-3 space-y-2 overflow-y-auto max-h-[400px]">
-                        <div class="text-center py-8">
-                            <i class="fas fa-sms text-gray-400 text-xl mb-2"></i>
-                            <p class="text-gray-500 text-sm">No SMS messages today</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 4: Today's Calls Display -->
-            <div class="bg-white rounded-lg shadow-lg border-l-4 border-yellow-500 min-h-[500px] flex flex-col">
-                <div class="p-3 sm:p-4 border-b border-gray-200 bg-yellow-50">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="p-2 sm:p-3 rounded-full bg-yellow-500 text-white">
-                                <i class="fas fa-phone text-sm sm:text-base"></i>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-sm sm:text-base font-semibold text-gray-800">Calls Today</h3>
-                                <p class="text-xs sm:text-sm text-gray-600">Count: <span id="calls-today" class="font-bold">0</span></p>
-                            </div>
-                        </div>
-                        <button onclick="initiateCall()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs transition duration-200">
-                            <i class="fas fa-phone"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="flex-1 overflow-hidden">
-                    <div class="p-2 border-b border-gray-100">
-                        <div class="flex space-x-1 text-xs">
-                            <button onclick="filterCalls('all')" class="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition" id="filter-all-calls">All</button>
-                            <button onclick="filterCalls('incoming')" class="px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition" id="filter-incoming-calls">Incoming</button>
-                            <button onclick="filterCalls('outgoing')" class="px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition" id="filter-outgoing-calls">Outgoing</button>
-                            <button onclick="filterCalls('missed')" class="px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition" id="filter-missed-calls">Missed</button>
-                        </div>
-                    </div>
-                    <div id="all-calls-list" class="p-2 sm:p-3 space-y-2 overflow-y-auto max-h-[400px]">
-                        <div class="text-center py-8">
-                            <i class="fas fa-phone text-gray-400 text-xl mb-2"></i>
-                            <p class="text-gray-500 text-sm">No calls today</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Main Display Cards - Hidden -->
+        <div class="hidden">
+            <!-- Cards hidden as requested -->
         </div>
 
         <!-- Tools Section Header -->
@@ -1034,23 +898,12 @@
                     }
                 });
                 
-                // Update toggle all button text - Default to "Expand All"
-                const toggleAllText = document.getElementById('toggle-all-text');
-                if (toggleAllText) {
-                    const allExpanded = Object.values(sectionStates).every(state => state);
-                    toggleAllText.textContent = allExpanded ? 'Collapse All' : 'Expand All';
-                }
             } catch (error) {
                 console.error('Error loading section states:', error);
                 // Reset to default states if there's an error - ALL COLLAPSED
                 Object.keys(sectionStates).forEach(key => {
                     sectionStates[key] = false;
                 });
-                // Ensure button shows "Expand All"
-                const toggleAllText = document.getElementById('toggle-all-text');
-                if (toggleAllText) {
-                    toggleAllText.textContent = 'Expand All';
-                }
             }
         }
 
@@ -1085,47 +938,6 @@
                 sectionStates[sectionId] = true;
             }
             
-            saveSectionStates();
-            
-            // Update toggle all button text
-            const toggleAllText = document.getElementById('toggle-all-text');
-            if (toggleAllText) {
-                const allExpanded = Object.values(sectionStates).every(state => state);
-                toggleAllText.textContent = allExpanded ? 'Collapse All' : 'Expand All';
-            }
-        }
-
-        // Toggle all sections
-        function toggleAllSections() {
-            const allExpanded = Object.values(sectionStates).every(state => state);
-            const newState = !allExpanded;
-            
-            Object.keys(sectionStates).forEach(sectionId => {
-                const content = document.getElementById(`${sectionId}-content`);
-                const header = content?.parentElement?.querySelector('.section-header');
-                
-                if (!content || !header) {
-                    console.warn(`Section elements not found for: ${sectionId}`);
-                    return;
-                }
-                
-                if (newState) {
-                    content.classList.remove('collapsed');
-                    content.classList.add('expanded');
-                    header.classList.remove('collapsed');
-                } else {
-                    content.classList.remove('expanded');
-                    content.classList.add('collapsed');
-                    header.classList.add('collapsed');
-                }
-                
-                sectionStates[sectionId] = newState;
-            });
-            
-            const toggleAllText = document.getElementById('toggle-all-text');
-            if (toggleAllText) {
-                toggleAllText.textContent = newState ? 'Collapse All' : 'Expand All';
-            }
             saveSectionStates();
         }
 
