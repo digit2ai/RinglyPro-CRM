@@ -6,8 +6,6 @@
     <title>RinglyPro CRM - Professional Customer Management</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#2563eb">
     <style>
         :root {
             --primary-color: #2563eb;
@@ -89,8 +87,8 @@
             transition: all 0.3s ease;
         }
         .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
         /* Toast notifications */
@@ -147,13 +145,6 @@
             }
         }
 
-        /* Chart container */
-        .chart-container {
-            position: relative;
-            height: 200px;
-            width: 100%;
-        }
-
         /* KPI metrics styling */
         .kpi-card {
             background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
@@ -170,36 +161,6 @@
         [data-theme="dark"] .mobile-action-bar {
             background: var(--card-background);
             border-color: var(--border-color);
-        }
-
-        /* Progress bars */
-        .progress-bar {
-            background: #e5e7eb;
-            border-radius: 9999px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            background: linear-gradient(90deg, #3b82f6, #10b981);
-            height: 100%;
-            transition: width 0.5s ease;
-        }
-
-        /* Loading skeletons */
-        .skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        [data-theme="dark"] .skeleton {
-            background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-            background-size: 200% 100%;
         }
 
         /* Fix for voice indicator animation */
@@ -221,7 +182,7 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <!-- Header -->
-    <header class="bg-blue-600 text-white shadow-lg sticky top-0 z-50 transition-colors duration-300">
+    <header class="bg-blue-600 text-white shadow-lg">
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
@@ -267,21 +228,17 @@
                             </button>
                             <div id="contacts-menu" class="hidden absolute left-0 mt-1 w-64 bg-white rounded-lg shadow-lg z-50 border card">
                                 <div class="py-2">
-                                    <button onclick="showQuickCreateContact()" class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center transition duration-200" style="color: var(--text-primary);">
+                                    <button onclick="showQuickCreateContact()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
                                         <i class="fas fa-user-plus text-green-500 mr-3"></i>Create New Contact
                                     </button>
-                                    <button onclick="showQuickSearchContact()" class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center transition duration-200" style="color: var(--text-primary);">
+                                    <button onclick="showQuickSearchContact()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
                                         <i class="fas fa-search text-blue-500 mr-3"></i>Search Contact
                                     </button>
-                                    <button onclick="showQuickUpdateEmail()" class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center transition duration-200" style="color: var(--text-primary);">
+                                    <button onclick="showQuickUpdateEmail()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
                                         <i class="fas fa-envelope text-orange-500 mr-3"></i>Update Email
                                     </button>
-                                    <button onclick="showQuickUpdatePhone()" class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center transition duration-200" style="color: var(--text-primary);">
+                                    <button onclick="showQuickUpdatePhone()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
                                         <i class="fas fa-phone text-purple-500 mr-3"></i>Update Phone
-                                    </button>
-                                    <hr class="my-2">
-                                    <button onclick="showImportModal()" class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center transition duration-200" style="color: var(--text-primary);">
-                                        <i class="fas fa-upload text-indigo-500 mr-3"></i>Import CSV
                                     </button>
                                 </div>
                             </div>
@@ -295,13 +252,13 @@
                             </button>
                             <div id="appointments-menu" class="hidden absolute left-0 mt-1 w-64 bg-white rounded-lg shadow-lg z-50 border card">
                                 <div class="py-2">
-                                    <button onclick="showQuickCreateAppointment()" class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center transition duration-200" style="color: var(--text-primary);">
+                                    <button onclick="showQuickCreateAppointment()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
                                         <i class="fas fa-calendar-plus text-green-500 mr-3"></i>Create Appointment
                                     </button>
-                                    <button onclick="showTodaysAppointments()" class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center transition duration-200" style="color: var(--text-primary);">
+                                    <button onclick="showTodaysAppointments()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
                                         <i class="fas fa-clock text-blue-500 mr-3"></i>Today's Appointments
                                     </button>
-                                    <button onclick="showQuickUpdateAppointment()" class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center transition duration-200" style="color: var(--text-primary);">
+                                    <button onclick="showQuickUpdateAppointment()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
                                         <i class="fas fa-edit text-orange-500 mr-3"></i>Update Appointment
                                     </button>
                                 </div>
@@ -334,109 +291,28 @@
                 <div class="text-2xl font-bold" id="kpi-total-contacts">0</div>
                 <div class="text-sm opacity-90">Total Contacts</div>
                 <div class="text-xs opacity-75 mt-1">
-                    <i class="fas fa-arrow-up mr-1"></i><span id="contacts-growth">+5.2%</span>
+                    <i class="fas fa-arrow-up mr-1"></i><span>+5.2%</span>
                 </div>
             </div>
             <div class="bg-green-500 rounded-lg p-4 text-center text-white">
                 <div class="text-2xl font-bold" id="kpi-appointments">0</div>
                 <div class="text-sm opacity-90">Appointments</div>
                 <div class="text-xs opacity-75 mt-1">
-                    <i class="fas fa-arrow-up mr-1"></i><span id="appointments-growth">+12.1%</span>
+                    <i class="fas fa-arrow-up mr-1"></i><span>+12.1%</span>
                 </div>
             </div>
             <div class="bg-purple-500 rounded-lg p-4 text-center text-white">
                 <div class="text-2xl font-bold" id="kpi-messages">0</div>
                 <div class="text-sm opacity-90">Messages Sent</div>
                 <div class="text-xs opacity-75 mt-1">
-                    <i class="fas fa-arrow-up mr-1"></i><span id="messages-growth">+8.7%</span>
+                    <i class="fas fa-arrow-up mr-1"></i><span>+8.7%</span>
                 </div>
             </div>
             <div class="bg-yellow-500 rounded-lg p-4 text-center text-white">
-                <div class="text-2xl font-bold" id="kpi-conversion">89%</div>
+                <div class="text-2xl font-bold">89%</div>
                 <div class="text-sm opacity-90">Response Rate</div>
                 <div class="text-xs opacity-75 mt-1">
-                    <i class="fas fa-arrow-up mr-1"></i><span id="response-growth">+3.1%</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Analytics Dashboard Card -->
-        <div class="card rounded-lg shadow-lg border-l-4 border-indigo-500 mb-8 fade-in card-hover">
-            <div class="section-header p-4 border-b flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('analytics-dashboard')" style="border-color: var(--border-color);">
-                <div class="flex items-center space-x-3">
-                    <div class="p-2 bg-indigo-100 rounded-lg">
-                        <i class="fas fa-chart-line text-indigo-600 text-lg"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold">Analytics Dashboard</h3>
-                        <p class="text-sm" style="color: var(--text-secondary);">Business insights and performance metrics</p>
-                    </div>
-                </div>
-                <button class="collapse-btn transition duration-200" style="color: var(--text-secondary);">
-                    <i class="fas fa-chevron-down text-lg"></i>
-                </button>
-            </div>
-            <div id="analytics-dashboard-content" class="collapse-content collapsed p-6">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Activity Chart -->
-                    <div class="card rounded-lg p-4">
-                        <h4 class="font-semibold mb-4 flex items-center">
-                            <i class="fas fa-chart-area mr-2 text-blue-500"></i>
-                            Weekly Activity
-                        </h4>
-                        <div class="chart-container">
-                            <canvas id="activityChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <!-- Communication Breakdown -->
-                    <div class="card rounded-lg p-4">
-                        <h4 class="font-semibold mb-4 flex items-center">
-                            <i class="fas fa-chart-pie mr-2 text-green-500"></i>
-                            Communication Channels
-                        </h4>
-                        <div class="chart-container">
-                            <canvas id="communicationChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <!-- Performance Metrics -->
-                    <div class="card rounded-lg p-4 lg:col-span-2">
-                        <h4 class="font-semibold mb-4 flex items-center">
-                            <i class="fas fa-tachometer-alt mr-2 text-purple-500"></i>
-                            Performance Metrics
-                        </h4>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div class="text-center">
-                                <div class="text-sm font-medium mb-2">Response Time</div>
-                                <div class="progress-bar h-2 mb-2">
-                                    <div class="progress-fill" style="width: 85%"></div>
-                                </div>
-                                <div class="text-xs" style="color: var(--text-secondary);">2.3 minutes avg</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-sm font-medium mb-2">Client Satisfaction</div>
-                                <div class="progress-bar h-2 mb-2">
-                                    <div class="progress-fill" style="width: 92%"></div>
-                                </div>
-                                <div class="text-xs" style="color: var(--text-secondary);">4.6/5.0 rating</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-sm font-medium mb-2">Follow-up Rate</div>
-                                <div class="progress-bar h-2 mb-2">
-                                    <div class="progress-fill" style="width: 78%"></div>
-                                </div>
-                                <div class="text-xs" style="color: var(--text-secondary);">78% completed</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-sm font-medium mb-2">Conversion Rate</div>
-                                <div class="progress-bar h-2 mb-2">
-                                    <div class="progress-fill" style="width: 89%"></div>
-                                </div>
-                                <div class="text-xs" style="color: var(--text-secondary);">89% success</div>
-                            </div>
-                        </div>
-                    </div>
+                    <i class="fas fa-arrow-up mr-1"></i><span>+3.1%</span>
                 </div>
             </div>
         </div>
@@ -445,31 +321,31 @@
         
         <!-- Quick Create Contact Modal -->
         <div id="quickCreateContactModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div class="card rounded-lg p-6 w-full max-w-md mx-4 slide-up">
+            <div class="card rounded-lg p-6 w-full max-w-md mx-4">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Quick Create Contact</h3>
-                    <button onclick="closeModal('quickCreateContactModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
+                    <h3 class="text-lg font-semibold text-gray-900">Quick Create Contact</h3>
+                    <button onclick="closeModal('quickCreateContactModal')" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 <form id="quickCreateForm" class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <input type="text" id="quickFirstName" placeholder="First Name" required
-                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                         <input type="text" id="quickLastName" placeholder="Last Name" required
-                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     </div>
                     <input type="email" id="quickEmail" placeholder="Email" required
-                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <input type="tel" id="quickPhone" placeholder="Phone" required
-                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <input type="text" id="quickCompany" placeholder="Company (optional)"
-                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <div class="flex space-x-3">
-                        <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg transition duration-200">
+                        <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg">
                             <i class="fas fa-plus mr-2"></i>Create Contact
                         </button>
-                        <button type="button" onclick="closeModal('quickCreateContactModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg transition duration-200">
+                        <button type="button" onclick="closeModal('quickCreateContactModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg">
                             Cancel
                         </button>
                     </div>
@@ -480,17 +356,17 @@
 
         <!-- Quick Search Contact Modal -->
         <div id="quickSearchContactModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div class="card rounded-lg p-6 w-full max-w-lg mx-4 slide-up">
+            <div class="card rounded-lg p-6 w-full max-w-lg mx-4">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Search Contact</h3>
-                    <button onclick="closeModal('quickSearchContactModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
+                    <h3 class="text-lg font-semibold text-gray-900">Search Contact</h3>
+                    <button onclick="closeModal('quickSearchContactModal')" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 <div class="space-y-4">
                     <input type="text" id="quickSearchInput" placeholder="Search by name, email, or phone..."
-                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
-                    <button onclick="performQuickSearch()" class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg transition duration-200">
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <button onclick="performQuickSearch()" class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg">
                         <i class="fas fa-search mr-2"></i>Search
                     </button>
                     <div id="quickSearchResults" class="space-y-2 max-h-64 overflow-y-auto"></div>
@@ -500,23 +376,23 @@
 
         <!-- Quick Update Email Modal -->
         <div id="quickUpdateEmailModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div class="card rounded-lg p-6 w-full max-w-md mx-4 slide-up">
+            <div class="card rounded-lg p-6 w-full max-w-md mx-4">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Update Contact Email</h3>
-                    <button onclick="closeModal('quickUpdateEmailModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
+                    <h3 class="text-lg font-semibold text-gray-900">Update Contact Email</h3>
+                    <button onclick="closeModal('quickUpdateEmailModal')" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 <form id="quickUpdateEmailForm" class="space-y-4">
                     <input type="text" id="quickUpdateEmailName" placeholder="Contact Name" required
-                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <input type="email" id="quickUpdateEmailValue" placeholder="New Email Address" required
-                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <div class="flex space-x-3">
-                        <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg transition duration-200">
+                        <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg">
                             <i class="fas fa-save mr-2"></i>Update Email
                         </button>
-                        <button type="button" onclick="closeModal('quickUpdateEmailModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg transition duration-200">
+                        <button type="button" onclick="closeModal('quickUpdateEmailModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg">
                             Cancel
                         </button>
                     </div>
@@ -527,23 +403,23 @@
 
         <!-- Quick Update Phone Modal -->
         <div id="quickUpdatePhoneModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div class="card rounded-lg p-6 w-full max-w-md mx-4 slide-up">
+            <div class="card rounded-lg p-6 w-full max-w-md mx-4">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Update Contact Phone</h3>
-                    <button onclick="closeModal('quickUpdatePhoneModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
+                    <h3 class="text-lg font-semibold text-gray-900">Update Contact Phone</h3>
+                    <button onclick="closeModal('quickUpdatePhoneModal')" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 <form id="quickUpdatePhoneForm" class="space-y-4">
                     <input type="text" id="quickUpdatePhoneName" placeholder="Contact Name" required
-                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <input type="tel" id="quickUpdatePhoneValue" placeholder="New Phone Number" required
-                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <div class="flex space-x-3">
-                        <button type="submit" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white px-4 py-3 rounded-lg transition duration-200">
+                        <button type="submit" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white px-4 py-3 rounded-lg">
                             <i class="fas fa-save mr-2"></i>Update Phone
                         </button>
-                        <button type="button" onclick="closeModal('quickUpdatePhoneModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg transition duration-200">
+                        <button type="button" onclick="closeModal('quickUpdatePhoneModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg">
                             Cancel
                         </button>
                     </div>
@@ -554,35 +430,35 @@
 
         <!-- Quick Create Appointment Modal -->
         <div id="quickCreateAppointmentModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div class="card rounded-lg p-6 w-full max-w-md mx-4 slide-up">
+            <div class="card rounded-lg p-6 w-full max-w-md mx-4">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Quick Create Appointment</h3>
-                    <button onclick="closeModal('quickCreateAppointmentModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
+                    <h3 class="text-lg font-semibold text-gray-900">Quick Create Appointment</h3>
+                    <button onclick="closeModal('quickCreateAppointmentModal')" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 <form id="quickCreateAppointmentForm" class="space-y-4">
                     <input type="text" id="quickAppointmentTitle" placeholder="Appointment Title" required
-                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <div>
-                        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">Select Contact</label>
-                        <select id="quickAppointmentContactSelect" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Contact</label>
+                        <select id="quickAppointmentContactSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                             <option value="">Loading contacts...</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">Or Enter Contact Name</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Or Enter Contact Name</label>
                         <input type="text" id="quickAppointmentContact" placeholder="Contact Name"
-                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <input type="date" id="quickAppointmentDate" required
-                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                         <input type="time" id="quickAppointmentTime" required
-                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     </div>
                     <select id="quickAppointmentDuration" required
-                            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                         <option value="">Select Duration</option>
                         <option value="30">30 minutes</option>
                         <option value="60">1 hour</option>
@@ -590,10 +466,10 @@
                         <option value="120">2 hours</option>
                     </select>
                     <div class="flex space-x-3">
-                        <button type="submit" class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg transition duration-200">
+                        <button type="submit" class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg">
                             <i class="fas fa-calendar-plus mr-2"></i>Create Appointment
                         </button>
-                        <button type="button" onclick="closeModal('quickCreateAppointmentModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg transition duration-200">
+                        <button type="button" onclick="closeModal('quickCreateAppointmentModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg">
                             Cancel
                         </button>
                     </div>
@@ -604,32 +480,32 @@
 
         <!-- Quick SMS Modal -->
         <div id="quickSMSModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div class="card rounded-lg p-6 w-full max-w-md mx-4 slide-up">
+            <div class="card rounded-lg p-6 w-full max-w-md mx-4">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Quick SMS</h3>
-                    <button onclick="closeModal('quickSMSModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
+                    <h3 class="text-lg font-semibold text-gray-900">Quick SMS</h3>
+                    <button onclick="closeModal('quickSMSModal')" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 <form id="quickSMSForm" class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">Select Contact</label>
-                        <select id="quickSMSContactSelect" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Contact</label>
+                        <select id="quickSMSContactSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                             <option value="">Loading contacts...</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">Or Enter Phone Number</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Or Enter Phone Number</label>
                         <input type="text" id="quickSMSRecipient" placeholder="Contact Name or Phone Number"
-                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     </div>
                     <textarea id="quickSMSMessage" placeholder="Message..." rows="4" required
-                              class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);"></textarea>
+                              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
                     <div class="flex space-x-3">
-                        <button type="submit" class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg transition duration-200">
+                        <button type="submit" class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg">
                             <i class="fas fa-paper-plane mr-2"></i>Send SMS
                         </button>
-                        <button type="button" onclick="closeModal('quickSMSModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg transition duration-200">
+                        <button type="button" onclick="closeModal('quickSMSModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg">
                             Cancel
                         </button>
                     </div>
@@ -640,34 +516,34 @@
 
         <!-- Quick Email Modal -->
         <div id="quickEmailModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div class="card rounded-lg p-6 w-full max-w-md mx-4 slide-up">
+            <div class="card rounded-lg p-6 w-full max-w-md mx-4">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Quick Email</h3>
-                    <button onclick="closeModal('quickEmailModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
+                    <h3 class="text-lg font-semibold text-gray-900">Quick Email</h3>
+                    <button onclick="closeModal('quickEmailModal')" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 <form id="quickEmailForm" class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">Select Contact</label>
-                        <select id="quickEmailContactSelect" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Contact</label>
+                        <select id="quickEmailContactSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                             <option value="">Loading contacts...</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">Or Enter Email</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Or Enter Email</label>
                         <input type="text" id="quickEmailRecipient" placeholder="Contact Name or Email"
-                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     </div>
                     <input type="text" id="quickEmailSubject" placeholder="Subject" required
-                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <textarea id="quickEmailMessage" placeholder="Message..." rows="4" required
-                              class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);"></textarea>
+                              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
                     <div class="flex space-x-3">
-                        <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg transition duration-200">
+                        <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg">
                             <i class="fas fa-envelope mr-2"></i>Send Email
                         </button>
-                        <button type="button" onclick="closeModal('quickEmailModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg transition duration-200">
+                        <button type="button" onclick="closeModal('quickEmailModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg">
                             Cancel
                         </button>
                     </div>
@@ -676,46 +552,12 @@
             </div>
         </div>
 
-        <!-- Import CSV Modal -->
-        <div id="importModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div class="card rounded-lg p-6 w-full max-w-md mx-4 slide-up">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Import Contacts from CSV</h3>
-                    <button onclick="closeModal('importModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="space-y-4">
-                    <div class="border-2 border-dashed rounded-lg p-6 text-center transition duration-200" style="border-color: var(--border-color);" id="dropZone">
-                        <i class="fas fa-cloud-upload-alt text-3xl mb-2" style="color: var(--text-secondary);"></i>
-                        <p class="mb-2" style="color: var(--text-secondary);">Drag and drop your CSV file here, or</p>
-                        <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleFileSelect(event)">
-                        <button onclick="document.getElementById('csvFileInput').click()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition duration-200">
-                            Choose File
-                        </button>
-                    </div>
-                    <div id="fileInfo" class="hidden">
-                        <div class="flex items-center justify-between p-3 rounded" style="background-color: var(--background-color);">
-                            <span id="fileName" class="text-sm"></span>
-                            <button onclick="removeFile()" class="text-red-500 hover:text-red-700">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <button id="importBtn" onclick="importCSV()" disabled class="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg transition duration-200">
-                        <i class="fas fa-upload mr-2"></i>Import Contacts
-                    </button>
-                    <div id="importStatus" class="p-3 rounded hidden"></div>
-                </div>
-            </div>
-        </div>
-
         <!-- Voice Command Modal -->
         <div id="voiceCommandModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div class="card rounded-lg p-6 w-full max-w-lg mx-4 slide-up">
+            <div class="card rounded-lg p-6 w-full max-w-lg mx-4">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Voice Command</h3>
-                    <button onclick="closeModal('voiceCommandModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
+                    <h3 class="text-lg font-semibold text-gray-900">Voice Command</h3>
+                    <button onclick="closeModal('voiceCommandModal')" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -723,16 +565,16 @@
                     <div id="voiceIndicator" class="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl mx-auto">
                         <i class="fas fa-microphone"></i>
                     </div>
-                    <div id="voiceStatus" style="color: var(--text-secondary);">Click "Start Listening" to begin</div>
+                    <div id="voiceStatus" class="text-gray-600">Click "Start Listening" to begin</div>
                     <div class="space-x-3">
-                        <button id="startVoiceBtn" onclick="startVoiceListening()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                        <button id="startVoiceBtn" onclick="startVoiceListening()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">
                             <i class="fas fa-microphone mr-2"></i>Start Listening
                         </button>
-                        <button id="stopVoiceBtn" onclick="stopVoiceListening()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-200" disabled>
+                        <button id="stopVoiceBtn" onclick="stopVoiceListening()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg" disabled>
                             <i class="fas fa-stop mr-2"></i>Stop
                         </button>
                     </div>
-                    <div id="voiceTranscript" class="p-4 rounded-lg min-h-16 text-left" style="background-color: var(--background-color);"></div>
+                    <div id="voiceTranscript" class="bg-gray-100 p-4 rounded-lg min-h-16 text-left"></div>
                     <div id="voiceCommandStatus" class="p-3 rounded hidden"></div>
                 </div>
             </div>
@@ -741,16 +583,16 @@
         <!-- Main Display Cards - Mobile Responsive -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
             <!-- Card 1: All Contacts Display -->
-            <div class="card rounded-lg shadow-lg border-l-4 border-blue-500 min-h-[500px] flex flex-col card-hover fade-in">
-                <div class="p-3 sm:p-4 border-b bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20" style="border-color: var(--border-color);">
+            <div class="card rounded-lg shadow-lg border-l-4 border-blue-500 min-h-[500px] flex flex-col card-hover">
+                <div class="p-3 sm:p-4 border-b border-gray-200 bg-blue-50">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             <div class="p-2 sm:p-3 rounded-full bg-blue-500 text-white">
                                 <i class="fas fa-users text-sm sm:text-base"></i>
                             </div>
                             <div class="ml-3">
-                                <h3 class="text-sm sm:text-base font-semibold">All Contacts</h3>
-                                <p class="text-xs sm:text-sm" style="color: var(--text-secondary);">Total: <span id="total-contacts" class="font-bold">0</span></p>
+                                <h3 class="text-sm sm:text-base font-semibold text-gray-800">All Contacts</h3>
+                                <p class="text-xs sm:text-sm text-gray-600">Total: <span id="total-contacts" class="font-bold">0</span></p>
                             </div>
                         </div>
                         <button onclick="showQuickCreateContact()" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition duration-200">
@@ -759,10 +601,9 @@
                     </div>
                 </div>
                 <div class="flex-1 overflow-hidden">
-                    <div class="p-2 sm:p-3 border-b" style="border-color: var(--border-color);">
+                    <div class="p-2 sm:p-3 border-b border-gray-100">
                         <input type="text" id="contacts-search" placeholder="Search contacts..." 
-                               class="w-full p-2 text-xs border rounded focus:ring-2 focus:ring-blue-500 transition duration-200"
-                               style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);"
+                               class="w-full p-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
                                onkeyup="filterContacts(this.value)">
                     </div>
                     <div id="all-contacts-list" class="p-2 sm:p-3 space-y-2 overflow-y-auto max-h-[400px]">
@@ -775,16 +616,16 @@
             </div>
 
             <!-- Card 2: Today's Appointments Display -->
-            <div class="card rounded-lg shadow-lg border-l-4 border-green-500 min-h-[500px] flex flex-col card-hover fade-in">
-                <div class="p-3 sm:p-4 border-b bg-green-50 dark:bg-green-900 dark:bg-opacity-20" style="border-color: var(--border-color);">
+            <div class="card rounded-lg shadow-lg border-l-4 border-green-500 min-h-[500px] flex flex-col card-hover">
+                <div class="p-3 sm:p-4 border-b border-gray-200 bg-green-50">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             <div class="p-2 sm:p-3 rounded-full bg-green-500 text-white">
                                 <i class="fas fa-calendar-check text-sm sm:text-base"></i>
                             </div>
                             <div class="ml-3">
-                                <h3 class="text-sm sm:text-base font-semibold">Today's Appointments</h3>
-                                <p class="text-xs sm:text-sm" style="color: var(--text-secondary);">Count: <span id="appointments-today" class="font-bold">0</span></p>
+                                <h3 class="text-sm sm:text-base font-semibold text-gray-800">Today's Appointments</h3>
+                                <p class="text-xs sm:text-sm text-gray-600">Count: <span id="appointments-today" class="font-bold">0</span></p>
                             </div>
                         </div>
                         <button onclick="showQuickCreateAppointment()" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition duration-200">
@@ -792,7 +633,7 @@
                         </button>
                     </div>
                     <div class="mt-2">
-                        <p class="text-xs" style="color: var(--text-secondary);" id="today-date-display"></p>
+                        <p class="text-xs text-gray-600" id="today-date-display"></p>
                     </div>
                 </div>
                 <div class="flex-1 overflow-hidden">
@@ -806,16 +647,16 @@
             </div>
 
             <!-- Card 3: Today's SMS Messages Display -->
-            <div class="card rounded-lg shadow-lg border-l-4 border-purple-500 min-h-[500px] flex flex-col card-hover fade-in">
-                <div class="p-3 sm:p-4 border-b bg-purple-50 dark:bg-purple-900 dark:bg-opacity-20" style="border-color: var(--border-color);">
+            <div class="card rounded-lg shadow-lg border-l-4 border-purple-500 min-h-[500px] flex flex-col card-hover">
+                <div class="p-3 sm:p-4 border-b border-gray-200 bg-purple-50">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             <div class="p-2 sm:p-3 rounded-full bg-purple-500 text-white">
                                 <i class="fas fa-sms text-sm sm:text-base"></i>
                             </div>
                             <div class="ml-3">
-                                <h3 class="text-sm sm:text-base font-semibold">SMS Today</h3>
-                                <p class="text-xs sm:text-sm" style="color: var(--text-secondary);">Count: <span id="messages-today" class="font-bold">0</span></p>
+                                <h3 class="text-sm sm:text-base font-semibold text-gray-800">SMS Today</h3>
+                                <p class="text-xs sm:text-sm text-gray-600">Count: <span id="messages-today" class="font-bold">0</span></p>
                             </div>
                         </div>
                         <button onclick="showQuickSMS()" class="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs transition duration-200">
@@ -824,7 +665,7 @@
                     </div>
                 </div>
                 <div class="flex-1 overflow-hidden">
-                    <div class="p-2 border-b" style="border-color: var(--border-color);">
+                    <div class="p-2 border-b border-gray-100">
                         <div class="flex space-x-1 text-xs">
                             <button onclick="filterMessages('all')" class="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition" id="filter-all-messages">All</button>
                             <button onclick="filterMessages('sent')" class="px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition" id="filter-sent-messages">Sent</button>
@@ -841,16 +682,16 @@
             </div>
 
             <!-- Card 4: Today's Calls Display -->
-            <div class="card rounded-lg shadow-lg border-l-4 border-yellow-500 min-h-[500px] flex flex-col card-hover fade-in">
-                <div class="p-3 sm:p-4 border-b bg-yellow-50 dark:bg-yellow-900 dark:bg-opacity-20" style="border-color: var(--border-color);">
+            <div class="card rounded-lg shadow-lg border-l-4 border-yellow-500 min-h-[500px] flex flex-col card-hover">
+                <div class="p-3 sm:p-4 border-b border-gray-200 bg-yellow-50">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             <div class="p-2 sm:p-3 rounded-full bg-yellow-500 text-white">
                                 <i class="fas fa-phone text-sm sm:text-base"></i>
                             </div>
                             <div class="ml-3">
-                                <h3 class="text-sm sm:text-base font-semibold">Calls Today</h3>
-                                <p class="text-xs sm:text-sm" style="color: var(--text-secondary);">Count: <span id="calls-today" class="font-bold">0</span></p>
+                                <h3 class="text-sm sm:text-base font-semibold text-gray-800">Calls Today</h3>
+                                <p class="text-xs sm:text-sm text-gray-600">Count: <span id="calls-today" class="font-bold">0</span></p>
                             </div>
                         </div>
                         <button onclick="initiateCall()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs transition duration-200">
@@ -859,7 +700,7 @@
                     </div>
                 </div>
                 <div class="flex-1 overflow-hidden">
-                    <div class="p-2 border-b" style="border-color: var(--border-color);">
+                    <div class="p-2 border-b border-gray-100">
                         <div class="flex space-x-1 text-xs">
                             <button onclick="filterCalls('all')" class="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition" id="filter-all-calls">All</button>
                             <button onclick="filterCalls('incoming')" class="px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition" id="filter-incoming-calls">Incoming</button>
@@ -879,27 +720,27 @@
 
         <!-- Tools Section Header -->
         <div class="mb-6">
-            <h2 class="text-2xl font-bold mb-2">
-                <i class="fas fa-tools mr-2" style="color: var(--text-secondary);"></i>RinglyPro CRM Tools & Features
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-tools mr-2 text-gray-600"></i>RinglyPro CRM Tools & Features
             </h2>
-            <p style="color: var(--text-secondary);">Click on any tool below to expand and use its features</p>
+            <p class="text-gray-600">Click on any tool below to expand and use its features</p>
         </div>
 
         <!-- Main Content -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Add New Contact Form -->
-            <div class="card rounded-lg shadow-md border-l-4 border-blue-500 card-hover fade-in">
-                <div class="section-header p-4 border-b flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('add-contact')" style="border-color: var(--border-color);">
+            <div class="card rounded-lg shadow-md border-l-4 border-blue-500 card-hover">
+                <div class="section-header p-4 border-b border-gray-200 flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('add-contact')">
                     <div class="flex items-center space-x-3">
                         <div class="p-2 bg-blue-100 rounded-lg">
                             <i class="fas fa-user-plus text-blue-600 text-lg"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-semibold">Add New Contact</h3>
-                            <p class="text-sm" style="color: var(--text-secondary);">Create and save customer contacts to database</p>
+                            <h3 class="text-lg font-semibold text-gray-800">Add New Contact</h3>
+                            <p class="text-sm text-gray-500">Create and save customer contacts to database</p>
                         </div>
                     </div>
-                    <button class="collapse-btn transition duration-200" style="color: var(--text-secondary);">
+                    <button class="collapse-btn text-gray-400 hover:text-gray-600 transition duration-200">
                         <i class="fas fa-chevron-down text-lg"></i>
                     </button>
                 </div>
@@ -907,16 +748,16 @@
                     <form id="contact-form" class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <input type="text" id="firstName" placeholder="First Name" required
-                                   class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                             <input type="text" id="lastName" placeholder="Last Name" required
-                                   class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
                         <input type="tel" id="phone" placeholder="+1234567890" required
-                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <input type="email" id="email" placeholder="email@example.com" required
-                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <textarea id="notes" placeholder="Notes (optional)" rows="3"
-                                  class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);"></textarea>
+                                  class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
                         <button type="submit" id="add-contact-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg transition duration-200">
                             <i class="fas fa-plus mr-2"></i>Add Contact to Database
                         </button>
@@ -926,70 +767,70 @@
             </div>
 
             <!-- Contact Search -->
-            <div class="card rounded-lg shadow-md border-l-4 border-purple-500 card-hover fade-in">
-                <div class="section-header p-4 border-b flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('search-contacts')" style="border-color: var(--border-color);">
+            <div class="card rounded-lg shadow-md border-l-4 border-purple-500 card-hover">
+                <div class="section-header p-4 border-b border-gray-200 flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('search-contacts')">
                     <div class="flex items-center space-x-3">
                         <div class="p-2 bg-purple-100 rounded-lg">
                             <i class="fas fa-search text-purple-600 text-lg"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-semibold">Search Contacts</h3>
-                            <p class="text-sm" style="color: var(--text-secondary);">Find contacts by name, phone, or email address</p>
+                            <h3 class="text-lg font-semibold text-gray-800">Search Contacts</h3>
+                            <p class="text-sm text-gray-500">Find contacts by name, phone, or email address</p>
                         </div>
                     </div>
-                    <button class="collapse-btn transition duration-200" style="color: var(--text-secondary);">
+                    <button class="collapse-btn text-gray-400 hover:text-gray-600 transition duration-200">
                         <i class="fas fa-chevron-down text-lg"></i>
                     </button>
                 </div>
                 <div id="search-contacts-content" class="collapse-content collapsed p-6">
                     <div class="space-y-4">
                         <input type="text" id="search-input" placeholder="Search by name, phone, or email..." 
-                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
                         <button onclick="searchContacts()" class="w-full bg-purple-500 hover:bg-purple-600 text-white px-4 py-3 rounded-lg transition duration-200">
                             <i class="fas fa-search mr-2"></i>Search Database
                         </button>
                     </div>
                     <div id="search-results" class="mt-4 space-y-2 hidden">
-                        <h3 class="font-semibold">Search Results:</h3>
+                        <h3 class="font-semibold text-gray-700">Search Results:</h3>
                         <div id="search-contacts-list" class="space-y-2"></div>
                     </div>
                 </div>
             </div>
 
             <!-- Appointments Today -->
-            <div class="card rounded-lg shadow-md border-l-4 border-green-500 card-hover fade-in">
-                <div class="section-header p-4 border-b flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('appointments-today')" style="border-color: var(--border-color);">
+            <div class="card rounded-lg shadow-md border-l-4 border-green-500 card-hover">
+                <div class="section-header p-4 border-b border-gray-200 flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('appointments-today')">
                     <div class="flex items-center space-x-3">
                         <div class="p-2 bg-green-100 rounded-lg">
                             <i class="fas fa-calendar-alt text-green-600 text-lg"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-semibold">Today's Appointments</h3>
-                            <p class="text-sm" style="color: var(--text-secondary);">View and manage appointments scheduled for today</p>
+                            <h3 class="text-lg font-semibold text-gray-800">Today's Appointments</h3>
+                            <p class="text-sm text-gray-500">View and manage appointments scheduled for today</p>
                         </div>
                     </div>
-                    <button class="collapse-btn transition duration-200" style="color: var(--text-secondary);">
+                    <button class="collapse-btn text-gray-400 hover:text-gray-600 transition duration-200">
                         <i class="fas fa-chevron-down text-lg"></i>
                     </button>
                 </div>
                 <div id="appointments-today-content" class="collapse-content collapsed p-6">
                     <!-- Quick Appointment Form -->
-                    <div class="mb-6 p-4 bg-green-50 rounded-lg border border-green-200" style="background-color: var(--background-color); border-color: var(--border-color);">
-                        <h4 class="font-semibold mb-3" style="color: var(--text-primary);">
+                    <div class="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                        <h4 class="font-semibold text-green-800 mb-3">
                             <i class="fas fa-plus-circle mr-2"></i>Quick Appointment Booking
                         </h4>
                         <form id="appointment-form" class="space-y-3">
                             <div class="grid grid-cols-2 gap-3">
                                 <input type="text" id="apt-contact-name" placeholder="Contact Name" required
-                                       class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                                       class="w-full p-2 border border-green-300 rounded focus:ring-2 focus:ring-green-500">
                                 <input type="tel" id="apt-contact-phone" placeholder="+1234567890" required
-                                       class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                                       class="w-full p-2 border border-green-300 rounded focus:ring-2 focus:ring-green-500">
                             </div>
                             <div class="grid grid-cols-2 gap-3">
                                 <input type="time" id="apt-time" required
-                                       class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                                       class="w-full p-2 border border-green-300 rounded focus:ring-2 focus:ring-green-500">
                                 <select id="apt-duration" required
-                                        class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                                        class="w-full p-2 border border-green-300 rounded focus:ring-2 focus:ring-green-500">
                                     <option value="">Duration</option>
                                     <option value="30">30 minutes</option>
                                     <option value="60">1 hour</option>
@@ -998,7 +839,7 @@
                                 </select>
                             </div>
                             <input type="text" id="apt-purpose" placeholder="Appointment purpose" required
-                                   class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                                   class="w-full p-2 border border-green-300 rounded focus:ring-2 focus:ring-green-500">
                             <button type="submit" id="book-appointment-btn" class="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition duration-200">
                                 <i class="fas fa-calendar-plus mr-2"></i>Book Appointment
                             </button>
@@ -1009,13 +850,13 @@
                     <!-- Today's Appointments List -->
                     <div>
                         <div class="flex items-center justify-between mb-4">
-                            <h4 class="font-semibold">
+                            <h4 class="font-semibold text-gray-800">
                                 <i class="fas fa-clock mr-2"></i>Scheduled for Today
                             </h4>
-                            <span class="text-sm" style="color: var(--text-secondary);" id="today-date"></span>
+                            <span class="text-sm text-gray-500" id="today-date"></span>
                         </div>
                         <div id="appointments-list" class="space-y-3">
-                            <div class="text-center py-6" style="color: var(--text-secondary);">
+                            <div class="text-center py-6 text-gray-500">
                                 <i class="fas fa-calendar text-2xl mb-2 opacity-50"></i>
                                 <p>No appointments scheduled for today</p>
                                 <p class="text-sm">Use the form above to book a new appointment</p>
@@ -1026,27 +867,27 @@
             </div>
 
             <!-- Send Test SMS -->
-            <div class="card rounded-lg shadow-md border-l-4 border-orange-500 card-hover fade-in">
-                <div class="section-header p-4 border-b flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('send-sms')" style="border-color: var(--border-color);">
+            <div class="card rounded-lg shadow-md border-l-4 border-orange-500 card-hover">
+                <div class="section-header p-4 border-b border-gray-200 flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('send-sms')">
                     <div class="flex items-center space-x-3">
                         <div class="p-2 bg-orange-100 rounded-lg">
                             <i class="fas fa-paper-plane text-orange-600 text-lg"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-semibold">Send Test SMS</h3>
-                            <p class="text-sm" style="color: var(--text-secondary);">Send SMS messages via Twilio integration</p>
+                            <h3 class="text-lg font-semibold text-gray-800">Send Test SMS</h3>
+                            <p class="text-sm text-gray-500">Send SMS messages via Twilio integration</p>
                         </div>
                     </div>
-                    <button class="collapse-btn transition duration-200" style="color: var(--text-secondary);">
+                    <button class="collapse-btn text-gray-400 hover:text-gray-600 transition duration-200">
                         <i class="fas fa-chevron-down text-lg"></i>
                     </button>
                 </div>
                 <div id="send-sms-content" class="collapse-content collapsed p-6">
                     <div class="space-y-4">
                         <input type="tel" id="test-phone" placeholder="+1234567890" 
-                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
                         <textarea id="test-message" placeholder="Enter your test message..." 
-                                  class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent h-24 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);"></textarea>
+                                  class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent h-24"></textarea>
                         <button id="send-sms" class="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg transition duration-200">
                             <i class="fas fa-paper-plane mr-2"></i>Send SMS via Twilio
                         </button>
@@ -1079,24 +920,22 @@
         </div>
 
         <!-- Large Logo at Bottom -->
-        <div class="mt-16 mb-8 text-center fade-in">
+        <div class="mt-16 mb-8 text-center">
             <div class="flex flex-col items-center space-y-4">
                 <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68a15064d7c434d8cab7644b.png" 
                      alt="RinglyPro Logo" 
                      class="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 object-contain bg-white rounded-2xl shadow-2xl p-4">
                 <div class="text-center">
-                    <div class="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">
+                    <div class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-2">
                         <span class="text-blue-600">Ringly</span><span class="text-blue-400">Pro</span>
                     </div>
-                    <p class="text-xl sm:text-2xl font-medium" style="color: var(--text-secondary);">Customer Relationship Management</p>
-                    <p class="text-sm sm:text-base mt-2" style="color: var(--text-secondary);">Professional CRM Solution for Modern Businesses</p>
+                    <p class="text-xl sm:text-2xl font-medium text-gray-600">Customer Relationship Management</p>
+                    <p class="text-sm sm:text-base text-gray-500 mt-2">Professional CRM Solution for Modern Businesses</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Enhanced JavaScript with all original functionality preserved -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const apiUrl = window.location.origin; // For production use
 
@@ -1109,7 +948,6 @@
         let filteredContacts = [];
         let messageFilter = 'all';
         let callFilter = 'all';
-        let charts = {};
 
         // Dark Mode Management
         function initDarkMode() {
@@ -1125,9 +963,6 @@
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             updateThemeUI(newTheme);
-            
-            // Update charts with new theme
-            updateChartThemes();
             
             showToast(
                 `Switched to ${newTheme} mode`, 
@@ -1177,140 +1012,7 @@
             }, 5000);
         }
 
-        // Enhanced Analytics Dashboard
-        function initCharts() {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            const textColor = isDark ? '#d1d5db' : '#374151';
-            const gridColor = isDark ? '#374151' : '#e5e7eb';
-
-            // Activity Chart
-            const activityCtx = document.getElementById('activityChart');
-            if (activityCtx) {
-                charts.activity = new Chart(activityCtx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                        datasets: [{
-                            label: 'Contacts Added',
-                            data: [12, 19, 3, 5, 2, 8, 15],
-                            borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            tension: 0.4
-                        }, {
-                            label: 'Appointments',
-                            data: [5, 8, 12, 7, 14, 6, 9],
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            tension: 0.4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                labels: { color: textColor }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                ticks: { color: textColor },
-                                grid: { color: gridColor }
-                            },
-                            y: {
-                                ticks: { color: textColor },
-                                grid: { color: gridColor }
-                            }
-                        }
-                    }
-                });
-            }
-
-            // Communication Chart
-            const commCtx = document.getElementById('communicationChart');
-            if (commCtx) {
-                charts.communication = new Chart(commCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['SMS', 'Email', 'Calls', 'Meetings'],
-                        datasets: [{
-                            data: [45, 25, 20, 10],
-                            backgroundColor: ['#8b5cf6', '#06b6d4', '#f59e0b', '#10b981'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: { color: textColor, padding: 20 }
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        function updateChartThemes() {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            const textColor = isDark ? '#d1d5db' : '#374151';
-            const gridColor = isDark ? '#374151' : '#e5e7eb';
-
-            Object.values(charts).forEach(chart => {
-                if (chart) {
-                    // Update legend colors
-                    chart.options.plugins.legend.labels.color = textColor;
-                    
-                    // Update scale colors if they exist
-                    if (chart.options.scales) {
-                        if (chart.options.scales.x) {
-                            chart.options.scales.x.ticks.color = textColor;
-                            chart.options.scales.x.grid.color = gridColor;
-                        }
-                        if (chart.options.scales.y) {
-                            chart.options.scales.y.ticks.color = textColor;
-                            chart.options.scales.y.grid.color = gridColor;
-                        }
-                    }
-                    
-                    chart.update();
-                }
-            });
-        }
-
-        // Enhanced KPI Updates
-        function updateKPIs() {
-            // Simulate real-time KPI updates
-            document.getElementById('kpi-total-contacts').textContent = totalContacts;
-            document.getElementById('kpi-appointments').textContent = appointments.length;
-            document.getElementById('kpi-messages').textContent = todaysMessages.length;
-            
-            // Add some animation to the numbers
-            animateNumber('kpi-total-contacts', totalContacts);
-            animateNumber('kpi-appointments', appointments.length);
-            animateNumber('kpi-messages', todaysMessages.length);
-        }
-
-        function animateNumber(elementId, finalValue) {
-            const element = document.getElementById(elementId);
-            const duration = 1000; // 1 second
-            const steps = 30;
-            const increment = finalValue / steps;
-            let current = 0;
-            
-            const timer = setInterval(() => {
-                current += increment;
-                if (current >= finalValue) {
-                    current = finalValue;
-                    clearInterval(timer);
-                }
-                element.textContent = Math.floor(current);
-            }, duration / steps);
-        }
-
-        // Export/Import Functionality
+        // Export Functionality
         function exportContacts() {
             if (contacts.length === 0) {
                 showToast('No contacts to export', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
@@ -1346,147 +1048,7 @@
             return csvRows.join('\n');
         }
 
-        function showImportModal() {
-            openModal('importModal');
-            setupDragAndDrop();
-        }
-
-        function setupDragAndDrop() {
-            const dropZone = document.getElementById('dropZone');
-            
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                dropZone.addEventListener(eventName, preventDefaults, false);
-            });
-
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropZone.addEventListener(eventName, highlight, false);
-            });
-
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropZone.addEventListener(eventName, unhighlight, false);
-            });
-
-            function highlight(e) {
-                dropZone.classList.add('border-blue-500', 'bg-blue-50');
-            }
-
-            function unhighlight(e) {
-                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
-            }
-
-            dropZone.addEventListener('drop', handleDrop, false);
-
-            function handleDrop(e) {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                handleFiles(files);
-            }
-        }
-
-        function handleFileSelect(event) {
-            handleFiles(event.target.files);
-        }
-
-        function handleFiles(files) {
-            if (files.length > 0) {
-                const file = files[0];
-                if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
-                    document.getElementById('fileName').textContent = file.name;
-                    document.getElementById('fileInfo').classList.remove('hidden');
-                    document.getElementById('importBtn').disabled = false;
-                    window.selectedFile = file;
-                } else {
-                    showToast('Please select a CSV file', 'error', '<i class="fas fa-exclamation-circle"></i>');
-                }
-            }
-        }
-
-        function removeFile() {
-            document.getElementById('fileInfo').classList.add('hidden');
-            document.getElementById('importBtn').disabled = true;
-            document.getElementById('csvFileInput').value = '';
-            window.selectedFile = null;
-        }
-
-        async function importCSV() {
-            if (!window.selectedFile) return;
-
-            const button = document.getElementById('importBtn');
-            const status = document.getElementById('importStatus');
-            
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Importing...';
-
-            try {
-                const text = await window.selectedFile.text();
-                const lines = text.split('\n').filter(line => line.trim());
-                const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
-                
-                let imported = 0;
-                for (let i = 1; i < lines.length; i++) {
-                    const values = lines[i].split(',').map(v => v.replace(/"/g, '').trim());
-                    
-                    if (values.length >= 2) { // At least first and last name
-                        const contact = {};
-                        headers.forEach((header, index) => {
-                            if (values[index]) {
-                                contact[header] = values[index];
-                            }
-                        });
-                        
-                        // Call the actual API to create contact
-                        try {
-                            const response = await fetch('/api/contacts', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    firstName: contact.firstname || contact.first_name || contact.firstName || '',
-                                    lastName: contact.lastname || contact.last_name || contact.lastName || '',
-                                    email: contact.email || '',
-                                    phone: contact.phone || contact.phone_number || '',
-                                    notes: contact.notes || '',
-                                    source: 'csv_import'
-                                })
-                            });
-                            
-                            if (response.ok) {
-                                imported++;
-                            }
-                        } catch (error) {
-                            console.error('Failed to import contact:', error);
-                        }
-                    }
-                }
-
-                status.className = 'p-3 rounded bg-green-100 text-green-800';
-                status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Successfully imported ${imported} contacts!`;
-                status.classList.remove('hidden');
-
-                // Refresh contacts
-                await loadContacts();
-                
-                showToast(`Imported ${imported} contacts`, 'success', '<i class="fas fa-upload"></i>');
-                
-                setTimeout(() => {
-                    closeModal('importModal');
-                }, 2000);
-
-            } catch (error) {
-                status.className = 'p-3 rounded bg-red-100 text-red-800';
-                status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Import failed: ${error.message}`;
-                status.classList.remove('hidden');
-            } finally {
-                button.disabled = false;
-                button.innerHTML = '<i class="fas fa-upload mr-2"></i>Import Contacts';
-            }
-        }
-
-        // Update All Contacts Display (PRESERVED FROM ORIGINAL)
+        // Update All Contacts Display
         function updateAllContactsDisplay() {
             const listElement = document.getElementById('all-contacts-list');
             if (!listElement) return;
@@ -1532,7 +1094,7 @@
             `).join('');
         }
 
-        // Filter contacts by search query (PRESERVED FROM ORIGINAL)
+        // Filter contacts by search query
         function filterContacts(query) {
             if (!query.trim()) {
                 filteredContacts = [];
@@ -1549,7 +1111,7 @@
             updateAllContactsDisplay();
         }
         
-        // Update All Appointments Display (PRESERVED FROM ORIGINAL)
+        // Update All Appointments Display
         function updateAllAppointmentsDisplay() {
             const listElement = document.getElementById('all-appointments-list');
             if (!listElement) return;
@@ -1593,7 +1155,7 @@
             `).join('');
         }
         
-        // Update All Messages Display (PRESERVED FROM ORIGINAL)
+        // Update All Messages Display
         function updateAllMessagesDisplay() {
             const listElement = document.getElementById('all-messages-list');
             if (!listElement) return;
@@ -1636,7 +1198,7 @@
             `).join('');
         }
 
-        // Filter messages (PRESERVED FROM ORIGINAL)
+        // Filter messages
         function filterMessages(filter) {
             messageFilter = filter;
             
@@ -1649,7 +1211,7 @@
             updateAllMessagesDisplay();
         }
         
-        // Update All Calls Display (PRESERVED FROM ORIGINAL)
+        // Update All Calls Display
         function updateAllCallsDisplay() {
             const listElement = document.getElementById('all-calls-list');
             if (!listElement) return;
@@ -1699,7 +1261,7 @@
             `).join('');
         }
 
-        // Filter calls (PRESERVED FROM ORIGINAL)
+        // Filter calls
         function filterCalls(filter) {
             callFilter = filter;
             
@@ -1712,7 +1274,7 @@
             updateAllCallsDisplay();
         }
 
-        // Initiate a call (PRESERVED FROM ORIGINAL)
+        // Initiate a call (placeholder function)
         function initiateCall() {
             const phoneNumber = prompt('Enter phone number to call:');
             if (phoneNumber) {
@@ -1720,16 +1282,15 @@
             }
         }
 
-        // Collapsible section management - ALL COLLAPSED BY DEFAULT (PRESERVED FROM ORIGINAL)
+        // Collapsible section management - ALL COLLAPSED BY DEFAULT
         const sectionStates = {
             'add-contact': false,
             'search-contacts': false,
             'appointments-today': false,
-            'send-sms': false,
-            'analytics-dashboard': false
+            'send-sms': false
         };
 
-        // Load saved section states from localStorage with error handling (PRESERVED FROM ORIGINAL)
+        // Load saved section states from localStorage with error handling
         function loadSectionStates() {
             try {
                 const saved = localStorage.getItem('crm-section-states');
@@ -1786,7 +1347,7 @@
             }
         }
 
-        // Save section states to localStorage (PRESERVED FROM ORIGINAL)
+        // Save section states to localStorage
         function saveSectionStates() {
             try {
                 localStorage.setItem('crm-section-states', JSON.stringify(sectionStates));
@@ -1795,7 +1356,7 @@
             }
         }
 
-        // Toggle individual section (PRESERVED FROM ORIGINAL)
+        // Toggle individual section
         function toggleSection(sectionId) {
             const content = document.getElementById(`${sectionId}-content`);
             const header = content?.parentElement?.querySelector('.section-header');
@@ -1827,7 +1388,7 @@
             }
         }
 
-        // Toggle all sections (PRESERVED FROM ORIGINAL)
+        // Toggle all sections
         function toggleAllSections() {
             const allExpanded = Object.values(sectionStates).every(state => state);
             const newState = !allExpanded;
@@ -1861,7 +1422,7 @@
             saveSectionStates();
         }
 
-        // Load contacts from database (PRESERVED FROM ORIGINAL)
+        // Load contacts from database
         async function loadContacts() {
             try {
                 console.log('Loading contacts from database...');
@@ -1899,7 +1460,7 @@
             }
         }
 
-        // Load appointments (PRESERVED FROM ORIGINAL)
+        // Load appointments (enhanced with better sample data)
         function loadAppointments() {
             const today = new Date();
             
@@ -1957,7 +1518,7 @@
             updateAppointmentsCount();
         }
 
-        // Load today's messages (PRESERVED FROM ORIGINAL)
+        // Load today's messages (enhanced sample data)
         function loadTodaysMessages() {
             todaysMessages = [
                 {
@@ -2011,7 +1572,7 @@
             updateAllMessagesDisplay();
         }
 
-        // Load today's calls (PRESERVED FROM ORIGINAL)
+        // Load today's calls (enhanced sample data)
         function loadTodaysCalls() {
             todaysCalls = [
                 {
@@ -2074,11 +1635,16 @@
             updateAllCallsDisplay();
         }
 
-        // Update count displays (PRESERVED FROM ORIGINAL)
+        // Update count displays
         function updateContactCount() {
             const contactCountEl = document.getElementById('total-contacts');
             if (contactCountEl) {
                 contactCountEl.textContent = totalContacts;
+            }
+            // Update KPI too
+            const kpiEl = document.getElementById('kpi-total-contacts');
+            if (kpiEl) {
+                kpiEl.textContent = totalContacts;
             }
         }
 
@@ -2087,12 +1653,22 @@
             if (appointmentsEl) {
                 appointmentsEl.textContent = appointments.length;
             }
+            // Update KPI too
+            const kpiEl = document.getElementById('kpi-appointments');
+            if (kpiEl) {
+                kpiEl.textContent = appointments.length;
+            }
         }
 
         function updateMessagesCount() {
             const messagesEl = document.getElementById('messages-today');
             if (messagesEl) {
                 messagesEl.textContent = todaysMessages.length;
+            }
+            // Update KPI too
+            const kpiEl = document.getElementById('kpi-messages');
+            if (kpiEl) {
+                kpiEl.textContent = todaysMessages.length;
             }
         }
 
@@ -2103,13 +1679,13 @@
             }
         }
 
-        // Load all today's data (PRESERVED FROM ORIGINAL)
+        // Load all today's data
         function loadTodaysData() {
             loadTodaysMessages();
             loadTodaysCalls();
         }
 
-        // Update dropdowns in any open modals (PRESERVED FROM ORIGINAL)
+        // Update dropdowns in any open modals
         function updateOpenModalDropdowns() {
             // Check if SMS modal is open
             if (!document.getElementById('quickSMSModal').classList.contains('hidden')) {
@@ -2127,7 +1703,7 @@
             }
         }
 
-        // Handle appointment form submission (PRESERVED FROM ORIGINAL)
+        // Handle appointment form submission
         function setupAppointmentForm() {
             const form = document.getElementById('appointment-form');
             if (!form) return;
@@ -2184,7 +1760,7 @@
             });
         }
 
-        // Add Contact Form Handler (PRESERVED FROM ORIGINAL)
+        // Add Contact Form Handler
         function setupContactForm() {
             const form = document.getElementById('contact-form');
             if (!form) return;
@@ -2228,4 +1804,1052 @@
                         // Clear form
                         form.reset();
                         
-                        //
+                        // Reload contacts from database
+                        await loadContacts();
+                        
+                        // Show toast
+                        showToast('Contact added successfully!', 'success', '<i class="fas fa-user-plus"></i>');
+                        
+                    } else {
+                        throw new Error(result.error || 'Failed to create contact');
+                    }
+                } catch (error) {
+                    console.error('Error creating contact:', error);
+                    status.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
+                    status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                    status.classList.remove('hidden');
+                    
+                    showToast('Failed to add contact', 'error', '<i class="fas fa-exclamation-circle"></i>');
+                } finally {
+                    // Reset button
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-plus mr-2"></i>Add Contact to Database';
+                }
+            });
+        }
+
+        // Search contacts
+        async function searchContacts() {
+            const query = document.getElementById('search-input')?.value?.trim();
+            if (!query) return;
+
+            try {
+                const response = await fetch(`/api/contacts/search/${encodeURIComponent(query)}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const searchResults = document.getElementById('search-results');
+                    const searchList = document.getElementById('search-contacts-list');
+                    
+                    if (!searchResults || !searchList) return;
+                    
+                    if (result.data.contacts.length === 0) {
+                        searchList.innerHTML = '<p class="text-gray-500 text-center py-4">No contacts found matching your search</p>';
+                    } else {
+                        searchList.innerHTML = result.data.contacts.map(contact => `
+                            <div class="border border-gray-200 rounded-lg p-3 flex items-center justify-between hover:bg-gray-50 transition duration-200">
+                                <div>
+                                    <h4 class="font-semibold">${contact.fullName}</h4>
+                                    <p class="text-sm text-gray-600">${contact.phone} • ${contact.email}</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button onclick="callContact('${contact.phone}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600" title="Call ${contact.fullName}">
+                                        <i class="fas fa-phone"></i>
+                                    </button>
+                                    <button onclick="textContact('${contact.phone}')" class="bg-green-500 text-white px-2 py-1 rounded text-sm hover:bg-green-600" title="Text ${contact.fullName}">
+                                        <i class="fas fa-sms"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                    
+                    searchResults.classList.remove('hidden');
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                showToast('Search failed: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
+            }
+        }
+
+        // Quick actions
+        function callContact(phone) {
+            showToast(`Calling ${phone}`, 'info', '<i class="fas fa-phone"></i>');
+            // In a real system, RinglyPro would initiate a call via Twilio
+        }
+
+        function textContact(phone) {
+            // Open Quick SMS modal and pre-fill phone number
+            showQuickSMS();
+            const recipientInput = document.getElementById('quickSMSRecipient');
+            if (recipientInput) {
+                recipientInput.value = phone;
+                recipientInput.placeholder = `Texting ${phone}`;
+            }
+            const messageInput = document.getElementById('quickSMSMessage');
+            if (messageInput) {
+                messageInput.focus();
+            }
+        }
+
+        // Refresh all data
+        async function refreshData() {
+            // Show loading indicators
+            document.getElementById('total-contacts').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            document.getElementById('appointments-today').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            document.getElementById('messages-today').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            document.getElementById('calls-today').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
+            await Promise.all([
+                loadContacts(),
+                loadAppointments()
+            ]);
+            
+            // Load today's data
+            loadTodaysData();
+            
+            showToast('All data refreshed successfully', 'success', '<i class="fas fa-sync-alt"></i>');
+            console.log('✅ All data refreshed successfully');
+        }
+
+        // Setup search on Enter key
+        function setupSearchInput() {
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        searchContacts();
+                    }
+                });
+            }
+        }
+
+        // Send test SMS
+        function setupSMSForm() {
+            const sendButton = document.getElementById('send-sms');
+            if (!sendButton) return;
+            
+            sendButton.addEventListener('click', async function() {
+                const button = this;
+                const status = document.getElementById('sms-status');
+                const phone = document.getElementById('test-phone')?.value;
+                const message = document.getElementById('test-message')?.value;
+                
+                if (!phone || !message) {
+                    if (status) {
+                        status.className = 'mt-4 p-4 rounded-lg bg-yellow-100 text-yellow-800';
+                        status.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Please enter both phone number and message';
+                        status.classList.remove('hidden');
+                    }
+                    showToast('Please enter both phone number and message', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+                    return;
+                }
+                
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending via Twilio...';
+                
+                try {
+                    const response = await fetch('/api/messages/sms', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ to: phone, message: message })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        if (status) {
+                            status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
+                            status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>✅ SMS sent successfully! Message SID: ${data.messageSid}`;
+                            status.classList.remove('hidden');
+                        }
+                        
+                        // Clear form
+                        const phoneInput = document.getElementById('test-phone');
+                        const messageInput = document.getElementById('test-message');
+                        if (phoneInput) phoneInput.value = '';
+                        if (messageInput) messageInput.value = '';
+                        
+                        showToast('SMS sent successfully!', 'success', '<i class="fas fa-paper-plane"></i>');
+                        
+                    } else {
+                        throw new Error(data.error || 'Failed to send SMS');
+                    }
+                } catch (error) {
+                    if (status) {
+                        status.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
+                        status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>⚠ Error: ${error.message}`;
+                        status.classList.remove('hidden');
+                    }
+                    showToast('Failed to send SMS: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
+                }
+                
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send SMS via Twilio';
+            });
+        }
+
+        // ==================== QUICK ACTIONS FUNCTIONALITY ====================
+        
+        // Dropdown menu management
+        let activeDropdown = null;
+        
+        function toggleDropdown(dropdownName) {
+            const menu = document.getElementById(`${dropdownName}-menu`);
+            
+            // Close other dropdowns
+            if (activeDropdown && activeDropdown !== dropdownName) {
+                const otherMenu = document.getElementById(`${activeDropdown}-menu`);
+                if (otherMenu) {
+                    otherMenu.classList.add('hidden');
+                }
+            }
+            
+            // Toggle current dropdown
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                activeDropdown = dropdownName;
+            } else {
+                menu.classList.add('hidden');
+                activeDropdown = null;
+            }
+        }
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (activeDropdown && !event.target.closest(`#${activeDropdown}-dropdown`)) {
+                const menu = document.getElementById(`${activeDropdown}-menu`);
+                if (menu) {
+                    menu.classList.add('hidden');
+                    activeDropdown = null;
+                }
+            }
+        });
+        
+        // Modal management
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+            // Close any open dropdowns
+            if (activeDropdown) {
+                const menu = document.getElementById(`${activeDropdown}-menu`);
+                if (menu) {
+                    menu.classList.add('hidden');
+                    activeDropdown = null;
+                }
+            }
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            // Clear any status messages
+            const statusEl = document.querySelector(`#${modalId} [id$="Status"]`);
+            if (statusEl) {
+                statusEl.classList.add('hidden');
+            }
+            // Reset forms
+            const form = document.querySelector(`#${modalId} form`);
+            if (form) {
+                form.reset();
+            }
+        }
+        
+        // Quick action functions
+        function showQuickCreateContact() {
+            openModal('quickCreateContactModal');
+        }
+        
+        function showQuickSearchContact() {
+            openModal('quickSearchContactModal');
+            document.getElementById('quickSearchInput').focus();
+        }
+        
+        function showQuickUpdateEmail() {
+            openModal('quickUpdateEmailModal');
+            document.getElementById('quickUpdateEmailName').focus();
+        }
+        
+        function showQuickUpdatePhone() {
+            openModal('quickUpdatePhoneModal');
+            document.getElementById('quickUpdatePhoneName').focus();
+        }
+        
+        function showQuickCreateAppointment() {
+            openModal('quickCreateAppointmentModal');
+            populateContactDropdown('quickAppointmentContactSelect', false, false); // Show names only
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('quickAppointmentDate').value = today;
+            // Set default time to next hour
+            const now = new Date();
+            now.setHours(now.getHours() + 1, 0, 0, 0);
+            document.getElementById('quickAppointmentTime').value = now.toTimeString().slice(0, 5);
+        }
+        
+        function showQuickUpdateAppointment() {
+            // For now, show today's appointments - can be enhanced later
+            showTodaysAppointments();
+        }
+
+        function showTodaysAppointments() {
+            // Scroll to appointments section
+            const appointmentsSection = document.querySelector('.border-green-500');
+            if (appointmentsSection) {
+                appointmentsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        
+        // Contact dropdown management
+        function populateContactDropdown(selectId, showPhone = false, showEmail = false) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            
+            // Clear existing options
+            select.innerHTML = '<option value="">Select a contact...</option>';
+            
+            // Add contacts to dropdown
+            contacts.forEach(contact => {
+                const option = document.createElement('option');
+                option.value = JSON.stringify({
+                    id: contact.id,
+                    name: contact.fullName,
+                    phone: contact.phone || '',
+                    email: contact.email || ''
+                });
+                
+                let displayText = contact.fullName;
+                if (showPhone && contact.phone) {
+                    displayText += ` (${contact.phone})`;
+                }
+                if (showEmail && contact.email) {
+                    displayText += ` - ${contact.email}`;
+                }
+                
+                option.textContent = displayText;
+                select.appendChild(option);
+            });
+            
+            // Add manual entry option
+            const manualOption = document.createElement('option');
+            manualOption.value = 'manual';
+            manualOption.textContent = '➕ Enter manually...';
+            select.appendChild(manualOption);
+        }
+        
+        // Handle contact selection for SMS
+        function handleSMSContactSelection() {
+            const select = document.getElementById('quickSMSContactSelect');
+            const recipientInput = document.getElementById('quickSMSRecipient');
+            
+            if (!select || !recipientInput) return;
+            
+            select.addEventListener('change', function() {
+                const selectedValue = this.value;
+                
+                if (selectedValue === 'manual') {
+                    recipientInput.value = '';
+                    recipientInput.focus();
+                    recipientInput.placeholder = 'Enter phone number or contact name';
+                } else if (selectedValue) {
+                    try {
+                        const contactData = JSON.parse(selectedValue);
+                        recipientInput.value = contactData.phone || contactData.name;
+                        recipientInput.placeholder = `Selected: ${contactData.name}`;
+                    } catch (e) {
+                        console.error('Error parsing contact data:', e);
+                    }
+                } else {
+                    recipientInput.value = '';
+                    recipientInput.placeholder = 'Contact Name or Phone Number';
+                }
+            });
+        }
+        
+        // Handle contact selection for Email
+        function handleEmailContactSelection() {
+            const select = document.getElementById('quickEmailContactSelect');
+            const recipientInput = document.getElementById('quickEmailRecipient');
+            
+            if (!select || !recipientInput) return;
+            
+            select.addEventListener('change', function() {
+                const selectedValue = this.value;
+                
+                if (selectedValue === 'manual') {
+                    recipientInput.value = '';
+                    recipientInput.focus();
+                    recipientInput.placeholder = 'Enter email address or contact name';
+                } else if (selectedValue) {
+                    try {
+                        const contactData = JSON.parse(selectedValue);
+                        recipientInput.value = contactData.email || contactData.name;
+                        recipientInput.placeholder = `Selected: ${contactData.name}`;
+                    } catch (e) {
+                        console.error('Error parsing contact data:', e);
+                    }
+                } else {
+                    recipientInput.value = '';
+                    recipientInput.placeholder = 'Contact Name or Email';
+                }
+            });
+        }
+        
+        // Handle contact selection for Appointments
+        function handleAppointmentContactSelection() {
+            const select = document.getElementById('quickAppointmentContactSelect');
+            const contactInput = document.getElementById('quickAppointmentContact');
+            
+            if (!select || !contactInput) return;
+            
+            select.addEventListener('change', function() {
+                const selectedValue = this.value;
+                
+                if (selectedValue === 'manual') {
+                    contactInput.value = '';
+                    contactInput.focus();
+                    contactInput.placeholder = 'Enter contact name';
+                } else if (selectedValue) {
+                    try {
+                        const contactData = JSON.parse(selectedValue);
+                        contactInput.value = contactData.name;
+                        contactInput.placeholder = `Selected: ${contactData.name}`;
+                    } catch (e) {
+                        console.error('Error parsing contact data:', e);
+                    }
+                } else {
+                    contactInput.value = '';
+                    contactInput.placeholder = 'Contact Name';
+                }
+            });
+        }
+        
+        // Updated quick action functions to populate dropdowns
+        function showQuickSMS() {
+            openModal('quickSMSModal');
+            populateContactDropdown('quickSMSContactSelect', true, false); // Show phone numbers
+            document.getElementById('quickSMSRecipient').focus();
+        }
+        
+        function showQuickEmail() {
+            openModal('quickEmailModal');
+            populateContactDropdown('quickEmailContactSelect', false, true); // Show email addresses
+            document.getElementById('quickEmailRecipient').focus();
+        }
+        
+        function activateVoiceCommand() {
+            openModal('voiceCommandModal');
+        }
+        
+        // Form handlers
+        function setupQuickCreateForm() {
+            const form = document.getElementById('quickCreateForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    firstName: document.getElementById('quickFirstName').value,
+                    lastName: document.getElementById('quickLastName').value,
+                    email: document.getElementById('quickEmail').value,
+                    phone: document.getElementById('quickPhone').value,
+                    company: document.getElementById('quickCompany').value,
+                    source: 'quick_action'
+                };
+                
+                const status = document.getElementById('quickCreateStatus');
+                
+                try {
+                    const response = await fetch('/api/contacts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
+                        status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${result.message}`;
+                        status.classList.remove('hidden');
+                        
+                        form.reset();
+                        await loadContacts();
+                        
+                        showToast('Contact created successfully!', 'success', '<i class="fas fa-user-plus"></i>');
+                        
+                        setTimeout(() => {
+                            closeModal('quickCreateContactModal');
+                        }, 2000);
+                    } else {
+                        throw new Error(result.error || 'Failed to create contact');
+                    }
+                } catch (error) {
+                    status.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
+                    status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                    status.classList.remove('hidden');
+                    
+                    showToast('Failed to create contact', 'error', '<i class="fas fa-exclamation-circle"></i>');
+                }
+            });
+        }
+        
+        async function performQuickSearch() {
+            const query = document.getElementById('quickSearchInput').value.trim();
+            if (!query) return;
+            
+            const resultsContainer = document.getElementById('quickSearchResults');
+            
+            try {
+                const response = await fetch(`/api/contacts/search/${encodeURIComponent(query)}`);
+                const result = await response.json();
+                
+                if (result.success && result.data.contacts.length > 0) {
+                    resultsContainer.innerHTML = result.data.contacts.map(contact => `
+                        <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                            <h4 class="font-semibold">${contact.fullName}</h4>
+                            <p class="text-sm text-gray-600">${contact.phone} • ${contact.email}</p>
+                            <div class="flex space-x-2 mt-2">
+                                <button onclick="callContact('${contact.phone}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">
+                                    <i class="fas fa-phone"></i> Call
+                                </button>
+                                <button onclick="textContact('${contact.phone}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">
+                                    <i class="fas fa-sms"></i> Text
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    resultsContainer.innerHTML = '<p class="text-gray-500 text-center py-4">No contacts found</p>';
+                }
+            } catch (error) {
+                resultsContainer.innerHTML = '<p class="text-red-500 text-center py-4">Search failed</p>';
+                showToast('Search failed', 'error', '<i class="fas fa-exclamation-circle"></i>');
+            }
+        }
+        
+        function setupQuickUpdateEmailForm() {
+            const form = document.getElementById('quickUpdateEmailForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('quickUpdateEmailName').value;
+                const email = document.getElementById('quickUpdateEmailValue').value;
+                const status = document.getElementById('quickUpdateEmailStatus');
+                
+                try {
+                    // Simulate API call for demo - replace with actual endpoint
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
+                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Email updated for ${name} to ${email}!`;
+                    status.classList.remove('hidden');
+                    
+                    form.reset();
+                    await loadContacts();
+                    
+                    showToast(`Email updated for ${name}`, 'success', '<i class="fas fa-envelope"></i>');
+                    
+                    setTimeout(() => {
+                        closeModal('quickUpdateEmailModal');
+                    }, 2000);
+                } catch (error) {
+                    status.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
+                    status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                    status.classList.remove('hidden');
+                    
+                    showToast('Failed to update email', 'error', '<i class="fas fa-exclamation-circle"></i>');
+                }
+            });
+        }
+        
+        function setupQuickUpdatePhoneForm() {
+            const form = document.getElementById('quickUpdatePhoneForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('quickUpdatePhoneName').value;
+                const phone = document.getElementById('quickUpdatePhoneValue').value;
+                const status = document.getElementById('quickUpdatePhoneStatus');
+                
+                try {
+                    // Simulate API call for demo - replace with actual endpoint
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
+                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Phone updated for ${name} to ${phone}!`;
+                    status.classList.remove('hidden');
+                    
+                    form.reset();
+                    await loadContacts();
+                    
+                    showToast(`Phone updated for ${name}`, 'success', '<i class="fas fa-phone"></i>');
+                    
+                    setTimeout(() => {
+                        closeModal('quickUpdatePhoneModal');
+                    }, 2000);
+                } catch (error) {
+                    status.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
+                    status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                    status.classList.remove('hidden');
+                    
+                    showToast('Failed to update phone', 'error', '<i class="fas fa-exclamation-circle"></i>');
+                }
+            });
+        }
+        
+        function setupQuickCreateAppointmentForm() {
+            const form = document.getElementById('quickCreateAppointmentForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const title = document.getElementById('quickAppointmentTitle').value;
+                
+                // Get contact from either dropdown selection or manual input
+                const contactSelect = document.getElementById('quickAppointmentContactSelect');
+                const contactInput = document.getElementById('quickAppointmentContact');
+                
+                let contact = contactInput.value.trim();
+                let contactPhone = '';
+                
+                // If a contact was selected from dropdown, get the details
+                if (contactSelect.value && contactSelect.value !== 'manual') {
+                    try {
+                        const contactData = JSON.parse(contactSelect.value);
+                        contact = contactData.name;
+                        contactPhone = contactData.phone || '+1234567890'; // Fallback phone
+                    } catch (e) {
+                        // Fallback to manual input
+                        contact = contactInput.value.trim();
+                        contactPhone = '+1234567890'; // Placeholder phone
+                    }
+                }
+                
+                const date = document.getElementById('quickAppointmentDate').value;
+                const time = document.getElementById('quickAppointmentTime').value;
+                const duration = document.getElementById('quickAppointmentDuration').value;
+                const status = document.getElementById('quickCreateAppointmentStatus');
+                
+                if (!title || !contact || !date || !time || !duration) {
+                    status.className = 'mt-4 p-3 rounded bg-yellow-100 text-yellow-800';
+                    status.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Please fill in all fields';
+                    status.classList.remove('hidden');
+                    showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+                    return;
+                }
+                
+                try {
+                    // Simulate API call for demo - replace with actual endpoint
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // Add to appointments array for demo
+                    const newAppointment = {
+                        id: appointments.length + 1,
+                        time: time,
+                        duration: parseInt(duration),
+                        contact: contact,
+                        phone: contactPhone,
+                        purpose: title,
+                        status: 'confirmed'
+                    };
+                    
+                    appointments.push(newAppointment);
+                    appointments.sort((a, b) => a.time.localeCompare(b.time));
+                    updateAllAppointmentsDisplay();
+                    updateAppointmentsCount();
+                    
+                    status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
+                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Appointment "${title}" created for ${contact}!`;
+                    status.classList.remove('hidden');
+                    
+                    form.reset();
+                    
+                    // Reset dropdown
+                    const select = document.getElementById('quickAppointmentContactSelect');
+                    if (select) select.selectedIndex = 0;
+                    
+                    showToast(`Appointment created for ${contact}`, 'success', '<i class="fas fa-calendar-plus"></i>');
+                    
+                    setTimeout(() => {
+                        closeModal('quickCreateAppointmentModal');
+                    }, 2000);
+                } catch (error) {
+                    status.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
+                    status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                    status.classList.remove('hidden');
+                    
+                    showToast('Failed to create appointment', 'error', '<i class="fas fa-exclamation-circle"></i>');
+                }
+            });
+        }
+        
+        function setupQuickSMSForm() {
+            const form = document.getElementById('quickSMSForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Get recipient from either dropdown selection or manual input
+                const contactSelect = document.getElementById('quickSMSContactSelect');
+                const recipientInput = document.getElementById('quickSMSRecipient');
+                
+                let recipient = recipientInput.value.trim();
+                let contactName = '';
+                
+                // If a contact was selected from dropdown, get the phone number
+                if (contactSelect.value && contactSelect.value !== 'manual') {
+                    try {
+                        const contactData = JSON.parse(contactSelect.value);
+                        recipient = contactData.phone || contactData.name;
+                        contactName = contactData.name;
+                    } catch (e) {
+                        // Fallback to manual input
+                        recipient = recipientInput.value.trim();
+                    }
+                }
+                
+                const message = document.getElementById('quickSMSMessage').value;
+                const status = document.getElementById('quickSMSStatus');
+                
+                if (!recipient || !message) {
+                    status.className = 'mt-4 p-3 rounded bg-yellow-100 text-yellow-800';
+                    status.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Please select a contact or enter a phone number and message';
+                    status.classList.remove('hidden');
+                    showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+                    return;
+                }
+                
+                try {
+                    // Use the existing SMS endpoint
+                    const response = await fetch('/api/messages/sms', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ to: recipient, message: message })
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            const displayName = contactName || recipient;
+                            status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
+                            status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>SMS sent to ${displayName}!`;
+                            
+                            showToast(`SMS sent to ${displayName}`, 'success', '<i class="fas fa-paper-plane"></i>');
+                        } else {
+                            throw new Error(result.error || 'Failed to send SMS');
+                        }
+                    } else {
+                        throw new Error('SMS service not available');
+                    }
+                    
+                    status.classList.remove('hidden');
+                    form.reset();
+                    
+                    // Reset dropdown
+                    const select = document.getElementById('quickSMSContactSelect');
+                    if (select) select.selectedIndex = 0;
+                    
+                    setTimeout(() => {
+                        closeModal('quickSMSModal');
+                    }, 2000);
+                } catch (error) {
+                    status.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
+                    status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                    status.classList.remove('hidden');
+                    
+                    showToast('Failed to send SMS: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
+                }
+            });
+        }
+        
+        function setupQuickEmailForm() {
+            const form = document.getElementById('quickEmailForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Get recipient from either dropdown selection or manual input
+                const contactSelect = document.getElementById('quickEmailContactSelect');
+                const recipientInput = document.getElementById('quickEmailRecipient');
+                
+                let recipient = recipientInput.value.trim();
+                let contactName = '';
+                
+                // If a contact was selected from dropdown, get the email
+                if (contactSelect.value && contactSelect.value !== 'manual') {
+                    try {
+                        const contactData = JSON.parse(contactSelect.value);
+                        recipient = contactData.email || contactData.name;
+                        contactName = contactData.name;
+                    } catch (e) {
+                        // Fallback to manual input
+                        recipient = recipientInput.value.trim();
+                    }
+                }
+                
+                const subject = document.getElementById('quickEmailSubject').value;
+                const message = document.getElementById('quickEmailMessage').value;
+                const status = document.getElementById('quickEmailStatus');
+                
+                if (!recipient || !subject || !message) {
+                    status.className = 'mt-4 p-3 rounded bg-yellow-100 text-yellow-800';
+                    status.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Please fill in all fields';
+                    status.classList.remove('hidden');
+                    showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+                    return;
+                }
+                
+                try {
+                    // Simulate email sending for demo - replace with actual endpoint
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    const displayName = contactName || recipient;
+                    status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
+                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Email sent to ${displayName}!`;
+                    status.classList.remove('hidden');
+                    
+                    form.reset();
+                    
+                    // Reset dropdown
+                    const select = document.getElementById('quickEmailContactSelect');
+                    if (select) select.selectedIndex = 0;
+                    
+                    showToast(`Email sent to ${displayName}`, 'success', '<i class="fas fa-envelope"></i>');
+                    
+                    setTimeout(() => {
+                        closeModal('quickEmailModal');
+                    }, 2000);
+                } catch (error) {
+                    status.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
+                    status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                    status.classList.remove('hidden');
+                    
+                    showToast('Failed to send email', 'error', '<i class="fas fa-exclamation-circle"></i>');
+                }
+            });
+        }
+        
+        // Voice Command functionality
+        let voiceRecognition = null;
+        let isVoiceListening = false;
+        
+        function initVoiceRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                voiceRecognition = new SpeechRecognition();
+                
+                voiceRecognition.continuous = false;
+                voiceRecognition.interimResults = true;
+                voiceRecognition.lang = 'en-US';
+                
+                voiceRecognition.onstart = function() {
+                    isVoiceListening = true;
+                    document.getElementById('voiceIndicator').className = 'w-20 h-20 bg-green-500 rounded-full flex items-center justify-center text-white text-2xl mx-auto animate-pulse';
+                    document.getElementById('voiceStatus').textContent = '🎤 Listening... speak your command';
+                    document.getElementById('startVoiceBtn').disabled = true;
+                    document.getElementById('stopVoiceBtn').disabled = false;
+                };
+                
+                voiceRecognition.onresult = function(event) {
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    document.getElementById('voiceTranscript').textContent = transcript;
+                    
+                    if (event.results[event.results.length - 1].isFinal) {
+                        processVoiceCommand(transcript);
+                    }
+                };
+                
+                voiceRecognition.onerror = function(event) {
+                    console.error('Voice recognition error:', event.error);
+                    stopVoiceListening();
+                    document.getElementById('voiceStatus').textContent = '⚠ Error: ' + event.error;
+                    showToast('Voice recognition error: ' + event.error, 'error', '<i class="fas fa-microphone-slash"></i>');
+                };
+                
+                voiceRecognition.onend = function() {
+                    stopVoiceListening();
+                };
+                
+                return true;
+            }
+            return false;
+        }
+        
+        function startVoiceListening() {
+            if (voiceRecognition && !isVoiceListening) {
+                voiceRecognition.start();
+            }
+        }
+        
+        function stopVoiceListening() {
+            if (voiceRecognition && isVoiceListening) {
+                voiceRecognition.stop();
+            }
+            isVoiceListening = false;
+            document.getElementById('voiceIndicator').className = 'w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl mx-auto';
+            document.getElementById('voiceStatus').textContent = 'Click "Start Listening" to begin';
+            document.getElementById('startVoiceBtn').disabled = false;
+            document.getElementById('stopVoiceBtn').disabled = true;
+        }
+        
+        async function processVoiceCommand(transcript) {
+            const status = document.getElementById('voiceCommandStatus');
+            
+            try {
+                document.getElementById('voiceStatus').textContent = '🔄 Processing command...';
+                
+                // For now, simulate the voice command processing
+                // This would integrate with your Flask app's /execute endpoint
+                const response = await fetch('/api/execute-voice-command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: transcript })
+                });
+                
+                let result;
+                if (response.ok) {
+                    result = await response.json();
+                } else {
+                    // Fallback to simulated processing for demo
+                    result = await simulateVoiceCommand(transcript);
+                }
+                
+                if (result.success !== false) {
+                    status.className = 'p-3 rounded bg-green-100 text-green-800';
+                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${result.response || result.message || 'Command processed successfully'}`;
+                    document.getElementById('voiceStatus').textContent = '✅ Command executed successfully!';
+                    
+                    showToast('Voice command executed', 'success', '<i class="fas fa-microphone"></i>');
+                    
+                    // Refresh data if needed
+                    await loadContacts();
+                    loadAppointments();
+                } else {
+                    throw new Error(result.error || result.message || 'Command failed');
+                }
+            } catch (error) {
+                status.className = 'p-3 rounded bg-red-100 text-red-800';
+                status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                document.getElementById('voiceStatus').textContent = '⚠ Command failed';
+                
+                showToast('Voice command failed: ' + error.message, 'error', '<i class="fas fa-microphone-slash"></i>');
+            }
+            
+            status.classList.remove('hidden');
+            
+            setTimeout(() => {
+                status.classList.add('hidden');
+                document.getElementById('voiceTranscript').textContent = '';
+            }, 5000);
+        }
+        
+        // Simulate voice command processing for demo purposes
+        async function simulateVoiceCommand(transcript) {
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate processing delay
+            
+            const lowerText = transcript.toLowerCase();
+            
+            if (lowerText.includes('create contact')) {
+                return { success: true, response: '✅ Contact creation command received. Use the Create Contact form for detailed entry.' };
+            } else if (lowerText.includes('update') && lowerText.includes('email')) {
+                return { success: true, response: '✅ Email update command received. Use the Update Email quick action for changes.' };
+            } else if (lowerText.includes('update') && lowerText.includes('phone')) {
+                return { success: true, response: '✅ Phone update command received. Use the Update Phone quick action for changes.' };
+            } else if (lowerText.includes('schedule') || lowerText.includes('appointment')) {
+                return { success: true, response: '✅ Appointment scheduling command received. Use the Create Appointment quick action.' };
+            } else if (lowerText.includes('text') || lowerText.includes('sms')) {
+                return { success: true, response: '✅ SMS command received. Use the Quick SMS action to send messages.' };
+            } else if (lowerText.includes('email')) {
+                return { success: true, response: '✅ Email command received. Use the Quick Email action to send emails.' };
+            } else if (lowerText.includes('search') || lowerText.includes('find')) {
+                return { success: true, response: '✅ Search command received. Use the Search Contact feature to find contacts.' };
+            } else {
+                return { 
+                    success: true, 
+                    response: `Voice command recognized: "${transcript}". Use the quick action buttons above for CRM operations.` 
+                };
+            }
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 RinglyPro CRM Dashboard loaded');
+            
+            // Initialize theme
+            initDarkMode();
+            
+            // Initialize all components
+            loadSectionStates();
+            setupContactForm();
+            setupAppointmentForm();
+            setupSearchInput();
+            setupSMSForm();
+            
+            // Initialize quick action forms
+            setupQuickCreateForm();
+            setupQuickUpdateEmailForm();
+            setupQuickUpdatePhoneForm();
+            setupQuickCreateAppointmentForm();
+            setupQuickSMSForm();
+            setupQuickEmailForm();
+            
+            // Initialize contact selection handlers
+            handleSMSContactSelection();
+            handleEmailContactSelection();
+            handleAppointmentContactSelection();
+            
+            // Initialize voice recognition
+            if (initVoiceRecognition()) {
+                console.log('🎤 Voice recognition initialized');
+            } else {
+                console.log('⚠ Voice recognition not available');
+            }
+            
+            // Load initial data
+            loadContacts();
+            loadAppointments();
+            loadTodaysData();
+            
+            // Setup search input for quick search modal
+            const quickSearchInput = document.getElementById('quickSearchInput');
+            if (quickSearchInput) {
+                quickSearchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        performQuickSearch();
+                    }
+                });
+            }
+            
+            // Setup contact search input
+            const contactsSearch = document.getElementById('contacts-search');
+            if (contactsSearch) {
+                contactsSearch.addEventListener('input', function(e) {
+                    filterContacts(e.target.value);
+                });
+            }
+            
+            // Show welcome toast
+            setTimeout(() => {
+                showToast('Welcome to RinglyPro CRM!', 'success', '<i class="fas fa-rocket"></i>');
+            }, 1500);
+            
+            console.log('✅ RinglyPro CRM Dashboard initialized successfully');
+        });
+    </script>
+</body>
+</html>
