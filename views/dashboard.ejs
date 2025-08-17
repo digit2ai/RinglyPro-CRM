@@ -35,7 +35,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm text-gray-600">Total Contacts</p>
-                        <p class="text-2xl font-semibold" id="total-contacts">-</p>
+                        <p class="text-2xl font-semibold" id="total-contacts">0</p>
                     </div>
                 </div>
             </div>
@@ -47,7 +47,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm text-gray-600">Appointments Today</p>
-                        <p class="text-2xl font-semibold" id="appointments-today">-</p>
+                        <p class="text-2xl font-semibold" id="appointments-today">0</p>
                     </div>
                 </div>
             </div>
@@ -59,7 +59,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm text-gray-600">Messages Today</p>
-                        <p class="text-2xl font-semibold" id="messages-today">-</p>
+                        <p class="text-2xl font-semibold" id="messages-today">0</p>
                     </div>
                 </div>
             </div>
@@ -71,7 +71,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm text-gray-600">Calls Today</p>
-                        <p class="text-2xl font-semibold" id="calls-today">-</p>
+                        <p class="text-2xl font-semibold" id="calls-today">0</p>
                     </div>
                 </div>
             </div>
@@ -79,6 +79,31 @@
 
         <!-- Main Content -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Add New Contact Form -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">
+                    <i class="fas fa-user-plus mr-2"></i>Add New Contact
+                </h2>
+                <form id="contact-form" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" id="firstName" placeholder="First Name" required
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="text" id="lastName" placeholder="Last Name" required
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <input type="tel" id="phone" placeholder="+1234567890" required
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="email" id="email" placeholder="email@example.com" required
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <textarea id="notes" placeholder="Notes (optional)" rows="3"
+                              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg transition duration-200">
+                        <i class="fas fa-plus mr-2"></i>Add Contact
+                    </button>
+                </form>
+                <div id="contact-status" class="mt-4 p-4 rounded-lg hidden"></div>
+            </div>
+
             <!-- Test Twilio Connection -->
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h2 class="text-xl font-semibold mb-4">
@@ -137,36 +162,17 @@
                     </div>
                 </div>
             </div>
-
-            <!-- System Status -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold mb-4">
-                    <i class="fas fa-server mr-2"></i>System Status
-                </h2>
-                <div id="system-status" class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span>Server Status</span>
-                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">Online</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span>Database</span>
-                        <span id="db-status" class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm">Checking...</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span>Twilio</span>
-                        <span id="twilio-connection-status" class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm">Checking...</span>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <!-- Recent Activity -->
+        <!-- Contact List -->
         <div class="mt-8 bg-white rounded-lg shadow-md p-6">
             <h2 class="text-xl font-semibold mb-4">
-                <i class="fas fa-clock mr-2"></i>Recent Activity
+                <i class="fas fa-address-book mr-2"></i>Recent Contacts
             </h2>
-            <div id="recent-activity" class="text-gray-500 text-center py-8">
-                No recent activity to display
+            <div id="contacts-list" class="space-y-3">
+                <div class="text-gray-500 text-center py-8">
+                    No contacts added yet. Use the form above to add your first contact!
+                </div>
             </div>
         </div>
     </div>
@@ -177,6 +183,103 @@
         // Set webhook URLs
         document.getElementById('voice-webhook').value = `${apiUrl}/webhook/twilio/voice`;
         document.getElementById('sms-webhook').value = `${apiUrl}/webhook/twilio/sms`;
+
+        // Store contacts in memory (since no database yet)
+        let contacts = [];
+
+        // Add Contact Form Handler
+        document.getElementById('contact-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                notes: document.getElementById('notes').value
+            };
+
+            const status = document.getElementById('contact-status');
+            
+            try {
+                const response = await fetch('/api/contacts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                // Add to local storage for demo
+                const contact = { 
+                    id: Date.now(), 
+                    ...formData, 
+                    createdAt: new Date().toLocaleString() 
+                };
+                contacts.push(contact);
+                
+                // Show success message
+                status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
+                status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Contact "${formData.firstName} ${formData.lastName}" added successfully!`;
+                status.classList.remove('hidden');
+                
+                // Clear form
+                document.getElementById('contact-form').reset();
+                
+                // Update contact list and count
+                updateContactsList();
+                updateContactCount();
+                
+            } catch (error) {
+                status.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
+                status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                status.classList.remove('hidden');
+            }
+        });
+
+        // Update contacts list display
+        function updateContactsList() {
+            const listElement = document.getElementById('contacts-list');
+            
+            if (contacts.length === 0) {
+                listElement.innerHTML = '<div class="text-gray-500 text-center py-8">No contacts added yet. Use the form above to add your first contact!</div>';
+                return;
+            }
+            
+            listElement.innerHTML = contacts.slice(-5).reverse().map(contact => `
+                <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold">${contact.firstName} ${contact.lastName}</h3>
+                        <p class="text-sm text-gray-600">${contact.phone} • ${contact.email}</p>
+                        <p class="text-xs text-gray-500">Added: ${contact.createdAt}</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="callContact('${contact.phone}')" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button onclick="textContact('${contact.phone}')" class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
+                            <i class="fas fa-sms"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update contact count
+        function updateContactCount() {
+            document.getElementById('total-contacts').textContent = contacts.length;
+        }
+
+        // Quick actions
+        function callContact(phone) {
+            alert(`Calling ${phone} - In a real system, this would initiate a call via Twilio!`);
+        }
+
+        function textContact(phone) {
+            document.getElementById('test-phone').value = phone;
+            document.getElementById('test-message').focus();
+            document.getElementById('test-message').value = 'Hello! This is a message from our CRM system.';
+        }
 
         // Copy to clipboard function
         function copyToClipboard(elementId) {
@@ -211,16 +314,12 @@
                 if (data.success) {
                     status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
                     status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Connected! Account: ${data.account.friendlyName} (${data.account.status})`;
-                    document.getElementById('twilio-connection-status').className = 'bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm';
-                    document.getElementById('twilio-connection-status').textContent = 'Connected';
                 } else {
                     throw new Error(data.error || 'Connection failed');
                 }
             } catch (error) {
                 status.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
                 status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
-                document.getElementById('twilio-connection-status').className = 'bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm';
-                document.getElementById('twilio-connection-status').textContent = 'Error';
             }
             
             status.classList.remove('hidden');
@@ -281,12 +380,10 @@
                 const data = await response.json();
                 
                 if (data.status === 'OK') {
-                    document.getElementById('db-status').className = 'bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm';
-                    document.getElementById('db-status').textContent = 'Connected';
+                    console.log('✅ Server is healthy');
                 }
             } catch (error) {
-                document.getElementById('db-status').className = 'bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm';
-                document.getElementById('db-status').textContent = 'Error';
+                console.log('❌ Server health check failed');
             }
         }
 
