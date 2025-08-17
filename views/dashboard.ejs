@@ -79,8 +79,8 @@
         <!-- Quick Actions Menu Bar -->
         <div class="bg-blue-700 border-t border-blue-500">
             <div class="container mx-auto px-4 py-2">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-1">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center space-x-1 flex-wrap">
                         <!-- Contacts Dropdown -->
                         <div class="relative" id="contacts-dropdown">
                             <button onclick="toggleDropdown('contacts')" class="flex items-center px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200">
@@ -408,121 +408,139 @@
                 </div>
             </div>
         </div>
-        <!-- Status Cards - Now Interactive Content Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <!-- Card 1: Contacts List -->
-            <div class="bg-white rounded-lg shadow-md border-l-4 border-blue-500">
-                <div class="p-4 border-b border-gray-200 cursor-pointer" onclick="toggleCard('contacts-card')">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-blue-500 text-white">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm text-gray-600">Total Contacts</p>
-                                <p class="text-2xl font-semibold" id="total-contacts">
-                                    <i class="fas fa-spinner fa-spin"></i>
-                                </p>
-                            </div>
-                        </div>
-                        <i class="fas fa-chevron-down transition-transform duration-200" id="contacts-card-icon"></i>
-                    </div>
-                </div>
-                <div id="contacts-card-content" class="hidden p-4 max-h-96 overflow-y-auto">
-                    <div id="contacts-card-list" class="space-y-3">
-                        <div class="text-center py-4">
-                            <i class="fas fa-spinner fa-spin text-gray-400"></i>
-                            <p class="text-gray-500 mt-2">Loading contacts...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Card 2: Today's Appointments -->
-            <div class="bg-white rounded-lg shadow-md border-l-4 border-green-500">
-                <div class="p-4 border-b border-gray-200 cursor-pointer" onclick="toggleCard('appointments-card')">
+        <!-- Main Display Cards - Mobile Responsive -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+            <!-- Card 1: All Contacts Display -->
+            <div class="bg-white rounded-lg shadow-lg border-l-4 border-blue-500 min-h-[500px] flex flex-col">
+                <div class="p-3 sm:p-4 border-b border-gray-200 bg-blue-50">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-green-500 text-white">
-                                <i class="fas fa-calendar-check"></i>
+                            <div class="p-2 sm:p-3 rounded-full bg-blue-500 text-white">
+                                <i class="fas fa-users text-sm sm:text-base"></i>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm text-gray-600">Appointments Today</p>
-                                <p class="text-2xl font-semibold" id="appointments-today">
-                                    <i class="fas fa-spinner fa-spin"></i>
-                                </p>
+                            <div class="ml-3">
+                                <h3 class="text-sm sm:text-base font-semibold text-gray-800">All Contacts</h3>
+                                <p class="text-xs sm:text-sm text-gray-600">Total: <span id="total-contacts" class="font-bold">0</span></p>
                             </div>
                         </div>
-                        <i class="fas fa-chevron-down transition-transform duration-200" id="appointments-card-icon"></i>
-                    </div>
-                </div>
-                <div id="appointments-card-content" class="hidden p-4 max-h-96 overflow-y-auto">
-                    <div class="mb-3">
-                        <button onclick="showQuickCreateAppointment()" class="w-full bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm transition duration-200">
-                            <i class="fas fa-plus mr-2"></i>New Appointment
+                        <button onclick="showQuickCreateContact()" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition duration-200">
+                            <i class="fas fa-plus"></i>
                         </button>
                     </div>
-                    <div id="appointments-card-list" class="space-y-3">
-                        <div class="text-center py-4">
-                            <i class="fas fa-calendar text-2xl text-gray-400 mb-2"></i>
-                            <p class="text-gray-500">No appointments today</p>
+                </div>
+                <div class="flex-1 overflow-hidden">
+                    <div class="p-2 sm:p-3 border-b border-gray-100">
+                        <input type="text" id="contacts-search" placeholder="Search contacts..." 
+                               class="w-full p-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                               onkeyup="filterContacts(this.value)">
+                    </div>
+                    <div id="all-contacts-list" class="p-2 sm:p-3 space-y-2 overflow-y-auto max-h-[400px]">
+                        <div class="text-center py-8">
+                            <i class="fas fa-spinner fa-spin text-gray-400 text-xl"></i>
+                            <p class="text-gray-500 mt-2 text-sm">Loading contacts...</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Card 3: Today's Messages -->
-            <div class="bg-white rounded-lg shadow-md border-l-4 border-purple-500">
-                <div class="p-4 border-b border-gray-200 cursor-pointer" onclick="toggleCard('messages-card')">
+            <!-- Card 2: Today's Appointments Display -->
+            <div class="bg-white rounded-lg shadow-lg border-l-4 border-green-500 min-h-[500px] flex flex-col">
+                <div class="p-3 sm:p-4 border-b border-gray-200 bg-green-50">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-purple-500 text-white">
-                                <i class="fas fa-comments"></i>
+                            <div class="p-2 sm:p-3 rounded-full bg-green-500 text-white">
+                                <i class="fas fa-calendar-check text-sm sm:text-base"></i>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm text-gray-600">Messages Today</p>
-                                <p class="text-2xl font-semibold" id="messages-today">0</p>
+                            <div class="ml-3">
+                                <h3 class="text-sm sm:text-base font-semibold text-gray-800">Today's Appointments</h3>
+                                <p class="text-xs sm:text-sm text-gray-600">Count: <span id="appointments-today" class="font-bold">0</span></p>
                             </div>
                         </div>
-                        <i class="fas fa-chevron-down transition-transform duration-200" id="messages-card-icon"></i>
-                    </div>
-                </div>
-                <div id="messages-card-content" class="hidden p-4 max-h-96 overflow-y-auto">
-                    <div class="mb-3">
-                        <button onclick="showQuickSMS()" class="w-full bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded text-sm transition duration-200">
-                            <i class="fas fa-paper-plane mr-2"></i>Send SMS
+                        <button onclick="showQuickCreateAppointment()" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition duration-200">
+                            <i class="fas fa-plus"></i>
                         </button>
                     </div>
-                    <div id="messages-card-list" class="space-y-3">
-                        <div class="text-center py-4">
-                            <i class="fas fa-comments text-2xl text-gray-400 mb-2"></i>
-                            <p class="text-gray-500">No messages today</p>
+                    <div class="mt-2">
+                        <p class="text-xs text-gray-600" id="today-date-display"></p>
+                    </div>
+                </div>
+                <div class="flex-1 overflow-hidden">
+                    <div id="all-appointments-list" class="p-2 sm:p-3 space-y-2 overflow-y-auto max-h-[430px]">
+                        <div class="text-center py-8">
+                            <i class="fas fa-calendar text-gray-400 text-xl mb-2"></i>
+                            <p class="text-gray-500 text-sm">No appointments today</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Card 4: Today's Calls -->
-            <div class="bg-white rounded-lg shadow-md border-l-4 border-yellow-500">
-                <div class="p-4 border-b border-gray-200 cursor-pointer" onclick="toggleCard('calls-card')">
+            <!-- Card 3: Today's SMS Messages Display -->
+            <div class="bg-white rounded-lg shadow-lg border-l-4 border-purple-500 min-h-[500px] flex flex-col">
+                <div class="p-3 sm:p-4 border-b border-gray-200 bg-purple-50">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-yellow-500 text-white">
-                                <i class="fas fa-phone"></i>
+                            <div class="p-2 sm:p-3 rounded-full bg-purple-500 text-white">
+                                <i class="fas fa-sms text-sm sm:text-base"></i>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm text-gray-600">Calls Today</p>
-                                <p class="text-2xl font-semibold" id="calls-today">0</p>
+                            <div class="ml-3">
+                                <h3 class="text-sm sm:text-base font-semibold text-gray-800">SMS Today</h3>
+                                <p class="text-xs sm:text-sm text-gray-600">Count: <span id="messages-today" class="font-bold">0</span></p>
                             </div>
                         </div>
-                        <i class="fas fa-chevron-down transition-transform duration-200" id="calls-card-icon"></i>
+                        <button onclick="showQuickSMS()" class="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs transition duration-200">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
                     </div>
                 </div>
-                <div id="calls-card-content" class="hidden p-4 max-h-96 overflow-y-auto">
-                    <div id="calls-card-list" class="space-y-3">
-                        <div class="text-center py-4">
-                            <i class="fas fa-phone text-2xl text-gray-400 mb-2"></i>
-                            <p class="text-gray-500">No calls today</p>
+                <div class="flex-1 overflow-hidden">
+                    <div class="p-2 border-b border-gray-100">
+                        <div class="flex space-x-1 text-xs">
+                            <button onclick="filterMessages('all')" class="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition" id="filter-all-messages">All</button>
+                            <button onclick="filterMessages('sent')" class="px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition" id="filter-sent-messages">Sent</button>
+                            <button onclick="filterMessages('received')" class="px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition" id="filter-received-messages">Received</button>
+                        </div>
+                    </div>
+                    <div id="all-messages-list" class="p-2 sm:p-3 space-y-2 overflow-y-auto max-h-[400px]">
+                        <div class="text-center py-8">
+                            <i class="fas fa-sms text-gray-400 text-xl mb-2"></i>
+                            <p class="text-gray-500 text-sm">No SMS messages today</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Today's Calls Display -->
+            <div class="bg-white rounded-lg shadow-lg border-l-4 border-yellow-500 min-h-[500px] flex flex-col">
+                <div class="p-3 sm:p-4 border-b border-gray-200 bg-yellow-50">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="p-2 sm:p-3 rounded-full bg-yellow-500 text-white">
+                                <i class="fas fa-phone text-sm sm:text-base"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm sm:text-base font-semibold text-gray-800">Calls Today</h3>
+                                <p class="text-xs sm:text-sm text-gray-600">Count: <span id="calls-today" class="font-bold">0</span></p>
+                            </div>
+                        </div>
+                        <button onclick="initiateCall()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs transition duration-200">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex-1 overflow-hidden">
+                    <div class="p-2 border-b border-gray-100">
+                        <div class="flex space-x-1 text-xs">
+                            <button onclick="filterCalls('all')" class="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition" id="filter-all-calls">All</button>
+                            <button onclick="filterCalls('incoming')" class="px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition" id="filter-incoming-calls">Incoming</button>
+                            <button onclick="filterCalls('outgoing')" class="px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition" id="filter-outgoing-calls">Outgoing</button>
+                            <button onclick="filterCalls('missed')" class="px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition" id="filter-missed-calls">Missed</button>
+                        </div>
+                    </div>
+                    <div id="all-calls-list" class="p-2 sm:p-3 space-y-2 overflow-y-auto max-h-[400px]">
+                        <div class="text-center py-8">
+                            <i class="fas fa-phone text-gray-400 text-xl mb-2"></i>
+                            <p class="text-gray-500 text-sm">No calls today</p>
                         </div>
                     </div>
                 </div>
@@ -718,47 +736,22 @@
         let appointments = [];
         let todaysMessages = [];
         let todaysCalls = [];
+        let filteredContacts = [];
+        let messageFilter = 'all';
+        let callFilter = 'all';
 
-        // Card management
-        function toggleCard(cardId) {
-            const content = document.getElementById(`${cardId}-content`);
-            const icon = document.getElementById(`${cardId}-icon`);
-            
-            if (content.classList.contains('hidden')) {
-                content.classList.remove('hidden');
-                icon.style.transform = 'rotate(180deg)';
-                
-                // Load appropriate data when card is expanded
-                switch(cardId) {
-                    case 'contacts-card':
-                        updateContactsCard();
-                        break;
-                    case 'appointments-card':
-                        updateAppointmentsCard();
-                        break;
-                    case 'messages-card':
-                        updateMessagesCard();
-                        break;
-                    case 'calls-card':
-                        updateCallsCard();
-                        break;
-                }
-            } else {
-                content.classList.add('hidden');
-                icon.style.transform = 'rotate(0deg)';
-            }
-        }
-        
-        // Update individual card content
-        function updateContactsCard() {
-            const listElement = document.getElementById('contacts-card-list');
+        // Update All Contacts Display
+        function updateAllContactsDisplay() {
+            const listElement = document.getElementById('all-contacts-list');
             if (!listElement) return;
             
-            if (contacts.length === 0) {
+            const displayContacts = filteredContacts.length > 0 ? filteredContacts : contacts;
+            
+            if (displayContacts.length === 0) {
                 listElement.innerHTML = `
-                    <div class="text-center py-4">
-                        <i class="fas fa-users text-2xl text-gray-400 mb-2"></i>
-                        <p class="text-gray-500">No contacts found</p>
+                    <div class="text-center py-8">
+                        <i class="fas fa-users text-gray-400 text-xl mb-2"></i>
+                        <p class="text-gray-500 text-sm">No contacts found</p>
                         <button onclick="showQuickCreateContact()" class="mt-2 bg-blue-500 text-white px-3 py-2 rounded text-sm">
                             <i class="fas fa-plus mr-1"></i> Add Contact
                         </button>
@@ -767,76 +760,85 @@
                 return;
             }
             
-            listElement.innerHTML = contacts.slice(0, 5).map(contact => `
-                <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition duration-200">
+            listElement.innerHTML = displayContacts.map(contact => `
+                <div class="border border-gray-200 rounded-lg p-2 hover:bg-gray-50 transition duration-200">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                                ${contact.firstName.charAt(0)}${contact.lastName.charAt(0)}
+                        <div class="flex items-center space-x-2">
+                            <div class="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                                ${contact.firstName ? contact.firstName.charAt(0) : ''}${contact.lastName ? contact.lastName.charAt(0) : ''}
                             </div>
-                            <div>
-                                <h4 class="font-semibold text-sm">${contact.fullName}</h4>
-                                <p class="text-xs text-gray-600">${contact.phone} • ${contact.email}</p>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-semibold text-xs sm:text-sm truncate">${contact.fullName || contact.firstName + ' ' + contact.lastName}</h4>
+                                <p class="text-xs text-gray-600 truncate">${contact.phone || ''}</p>
+                                <p class="text-xs text-gray-500 truncate">${contact.email || ''}</p>
                             </div>
                         </div>
                         <div class="flex space-x-1">
-                            <button onclick="callContact('${contact.phone}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600" title="Call">
+                            <button onclick="callContact('${contact.phone}')" class="bg-blue-500 text-white px-1.5 py-1 rounded text-xs hover:bg-blue-600" title="Call">
                                 <i class="fas fa-phone"></i>
                             </button>
-                            <button onclick="textContact('${contact.phone}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600" title="Text">
+                            <button onclick="textContact('${contact.phone}')" class="bg-green-500 text-white px-1.5 py-1 rounded text-xs hover:bg-green-600" title="Text">
                                 <i class="fas fa-sms"></i>
                             </button>
                         </div>
                     </div>
                 </div>
             `).join('');
-            
-            if (contacts.length > 5) {
-                listElement.innerHTML += `
-                    <div class="text-center pt-2">
-                        <button onclick="showQuickSearchContact()" class="text-blue-500 hover:text-blue-600 text-sm">
-                            <i class="fas fa-search mr-1"></i> View all ${totalContacts} contacts
-                        </button>
-                    </div>
-                `;
+        }
+
+        // Filter contacts by search query
+        function filterContacts(query) {
+            if (!query.trim()) {
+                filteredContacts = [];
+            } else {
+                const searchTerm = query.toLowerCase();
+                filteredContacts = contacts.filter(contact => 
+                    (contact.fullName || '').toLowerCase().includes(searchTerm) ||
+                    (contact.firstName || '').toLowerCase().includes(searchTerm) ||
+                    (contact.lastName || '').toLowerCase().includes(searchTerm) ||
+                    (contact.phone || '').toLowerCase().includes(searchTerm) ||
+                    (contact.email || '').toLowerCase().includes(searchTerm)
+                );
             }
+            updateAllContactsDisplay();
         }
         
-        function updateAppointmentsCard() {
-            const listElement = document.getElementById('appointments-card-list');
+        // Update All Appointments Display
+        function updateAllAppointmentsDisplay() {
+            const listElement = document.getElementById('all-appointments-list');
             if (!listElement) return;
             
             if (appointments.length === 0) {
                 listElement.innerHTML = `
-                    <div class="text-center py-4">
-                        <i class="fas fa-calendar text-2xl text-gray-400 mb-2"></i>
-                        <p class="text-gray-500">No appointments today</p>
+                    <div class="text-center py-8">
+                        <i class="fas fa-calendar text-gray-400 text-xl mb-2"></i>
+                        <p class="text-gray-500 text-sm">No appointments today</p>
                     </div>
                 `;
                 return;
             }
             
             listElement.innerHTML = appointments.map(apt => `
-                <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition duration-200">
+                <div class="border border-gray-200 rounded-lg p-2 hover:bg-gray-50 transition duration-200">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-2">
                             <div class="text-center">
-                                <div class="text-sm font-bold text-green-600">${apt.time}</div>
+                                <div class="text-xs sm:text-sm font-bold text-green-600">${apt.time}</div>
                                 <div class="text-xs text-gray-500">${apt.duration}min</div>
                             </div>
-                            <div>
-                                <h4 class="font-semibold text-sm">${apt.contact}</h4>
-                                <p class="text-xs text-gray-600">${apt.purpose}</p>
-                                <span class="inline-block px-2 py-1 rounded-full text-xs ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-semibold text-xs sm:text-sm truncate">${apt.contact}</h4>
+                                <p class="text-xs text-gray-600 truncate">${apt.purpose}</p>
+                                <span class="inline-block px-1.5 py-0.5 rounded-full text-xs ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
                                     ${apt.status}
                                 </span>
                             </div>
                         </div>
                         <div class="flex space-x-1">
-                            <button onclick="callContact('${apt.phone}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600" title="Call">
+                            <button onclick="callContact('${apt.phone}')" class="bg-green-500 text-white px-1.5 py-1 rounded text-xs hover:bg-green-600" title="Call">
                                 <i class="fas fa-phone"></i>
                             </button>
-                            <button onclick="textContact('${apt.phone}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600" title="Text">
+                            <button onclick="textContact('${apt.phone}')" class="bg-blue-500 text-white px-1.5 py-1 rounded text-xs hover:bg-blue-600" title="Text">
                                 <i class="fas fa-sms"></i>
                             </button>
                         </div>
@@ -845,76 +847,104 @@
             `).join('');
         }
         
-        function updateMessagesCard() {
-            const listElement = document.getElementById('messages-card-list');
+        // Update All Messages Display
+        function updateAllMessagesDisplay() {
+            const listElement = document.getElementById('all-messages-list');
             if (!listElement) return;
             
-            if (todaysMessages.length === 0) {
+            let displayMessages = todaysMessages;
+            if (messageFilter !== 'all') {
+                displayMessages = todaysMessages.filter(msg => msg.direction === messageFilter || 
+                    (messageFilter === 'sent' && msg.direction === 'outgoing') ||
+                    (messageFilter === 'received' && msg.direction === 'incoming'));
+            }
+            
+            if (displayMessages.length === 0) {
                 listElement.innerHTML = `
-                    <div class="text-center py-4">
-                        <i class="fas fa-comments text-2xl text-gray-400 mb-2"></i>
-                        <p class="text-gray-500">No messages today</p>
+                    <div class="text-center py-8">
+                        <i class="fas fa-sms text-gray-400 text-xl mb-2"></i>
+                        <p class="text-gray-500 text-sm">No SMS messages today</p>
                     </div>
                 `;
                 return;
             }
             
-            listElement.innerHTML = todaysMessages.map(msg => `
-                <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition duration-200">
+            listElement.innerHTML = displayMessages.map(msg => `
+                <div class="border border-gray-200 rounded-lg p-2 hover:bg-gray-50 transition duration-200">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 ${msg.direction === 'incoming' ? 'bg-purple-500' : 'bg-blue-500'} rounded-full flex items-center justify-center text-white text-xs">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-6 h-6 ${msg.direction === 'incoming' ? 'bg-purple-500' : 'bg-blue-500'} rounded-full flex items-center justify-center text-white text-xs">
                                 <i class="fas ${msg.direction === 'incoming' ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
                             </div>
-                            <div class="flex-1">
-                                <h4 class="font-semibold text-sm">${msg.contact}</h4>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-semibold text-xs sm:text-sm truncate">${msg.contact}</h4>
                                 <p class="text-xs text-gray-600">${msg.time} • ${msg.phone}</p>
                                 <p class="text-xs text-gray-700 mt-1 truncate">"${msg.message}"</p>
                             </div>
                         </div>
-                        <button onclick="textContact('${msg.phone}')" class="bg-purple-500 text-white px-2 py-1 rounded text-xs hover:bg-purple-600" title="Reply">
+                        <button onclick="textContact('${msg.phone}')" class="bg-purple-500 text-white px-1.5 py-1 rounded text-xs hover:bg-purple-600" title="Reply">
                             <i class="fas fa-reply"></i>
                         </button>
                     </div>
                 </div>
             `).join('');
         }
+
+        // Filter messages
+        function filterMessages(filter) {
+            messageFilter = filter;
+            
+            // Update filter buttons
+            document.querySelectorAll('[id^="filter-"][id$="-messages"]').forEach(btn => {
+                btn.className = 'px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition';
+            });
+            document.getElementById(`filter-${filter}-messages`).className = 'px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition';
+            
+            updateAllMessagesDisplay();
+        }
         
-        function updateCallsCard() {
-            const listElement = document.getElementById('calls-card-list');
+        // Update All Calls Display
+        function updateAllCallsDisplay() {
+            const listElement = document.getElementById('all-calls-list');
             if (!listElement) return;
             
-            if (todaysCalls.length === 0) {
+            let displayCalls = todaysCalls;
+            if (callFilter !== 'all') {
+                displayCalls = todaysCalls.filter(call => 
+                    call.direction === callFilter || call.status === callFilter);
+            }
+            
+            if (displayCalls.length === 0) {
                 listElement.innerHTML = `
-                    <div class="text-center py-4">
-                        <i class="fas fa-phone text-2xl text-gray-400 mb-2"></i>
-                        <p class="text-gray-500">No calls today</p>
+                    <div class="text-center py-8">
+                        <i class="fas fa-phone text-gray-400 text-xl mb-2"></i>
+                        <p class="text-gray-500 text-sm">No calls today</p>
                     </div>
                 `;
                 return;
             }
             
-            listElement.innerHTML = todaysCalls.map(call => `
-                <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition duration-200">
+            listElement.innerHTML = displayCalls.map(call => `
+                <div class="border border-gray-200 rounded-lg p-2 hover:bg-gray-50 transition duration-200">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 ${call.status === 'missed' ? 'bg-red-500' : call.direction === 'incoming' ? 'bg-green-500' : 'bg-yellow-500'} rounded-full flex items-center justify-center text-white text-xs">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-6 h-6 ${call.status === 'missed' ? 'bg-red-500' : call.direction === 'incoming' ? 'bg-green-500' : 'bg-yellow-500'} rounded-full flex items-center justify-center text-white text-xs">
                                 <i class="fas ${call.status === 'missed' ? 'fa-phone-slash' : call.direction === 'incoming' ? 'fa-phone-volume' : 'fa-phone'}"></i>
                             </div>
-                            <div>
-                                <h4 class="font-semibold text-sm">${call.contact}</h4>
-                                <p class="text-xs text-gray-600">${call.time} • ${call.phone}</p>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-semibold text-xs sm:text-sm truncate">${call.contact}</h4>
+                                <p class="text-xs text-gray-600 truncate">${call.time} • ${call.phone}</p>
                                 <p class="text-xs text-gray-500">Duration: ${call.duration}</p>
-                                <span class="inline-block px-2 py-1 rounded-full text-xs ${call.status === 'missed' ? 'bg-red-100 text-red-800' : call.direction === 'incoming' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                <span class="inline-block px-1.5 py-0.5 rounded-full text-xs ${call.status === 'missed' ? 'bg-red-100 text-red-800' : call.direction === 'incoming' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
                                     ${call.direction} • ${call.status}
                                 </span>
                             </div>
                         </div>
                         <div class="flex space-x-1">
-                            <button onclick="callContact('${call.phone}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600" title="Call back">
+                            <button onclick="callContact('${call.phone}')" class="bg-green-500 text-white px-1.5 py-1 rounded text-xs hover:bg-green-600" title="Call back">
                                 <i class="fas fa-phone"></i>
                             </button>
-                            <button onclick="textContact('${call.phone}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600" title="Text">
+                            <button onclick="textContact('${call.phone}')" class="bg-blue-500 text-white px-1.5 py-1 rounded text-xs hover:bg-blue-600" title="Text">
                                 <i class="fas fa-sms"></i>
                             </button>
                         </div>
@@ -923,267 +953,25 @@
             `).join('');
         }
 
-        // Card click handlers for different views
-        function showTodaysContacts() {
-            currentView = 'contacts';
-            updateActivitiesSection();
-        }
-
-        function showTodaysAppointments() {
-            currentView = 'appointments';
-            updateActivitiesSection();
-        }
-
-        function showTodaysMessages() {
-            currentView = 'messages';
-            updateActivitiesSection();
-        }
-
-        function showTodaysCalls() {
-            currentView = 'calls';
-            updateActivitiesSection();
-        }
-
-        // Update the Recent Activities section based on current view
-        function updateActivitiesSection() {
-            const headerElement = document.querySelector('#contacts-list').parentElement.querySelector('h2');
-            const subtitleElement = document.querySelector('#contacts-list').parentElement.querySelector('p');
-            const listElement = document.getElementById('contacts-list');
+        // Filter calls
+        function filterCalls(filter) {
+            callFilter = filter;
             
-            if (!headerElement || !subtitleElement || !listElement) return;
-
-            const today = new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
+            // Update filter buttons
+            document.querySelectorAll('[id^="filter-"][id$="-calls"]').forEach(btn => {
+                btn.className = 'px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition';
             });
-
-            switch(currentView) {
-                case 'contacts':
-                    headerElement.textContent = 'Recent Activities';
-                    subtitleElement.textContent = 'Your latest contacts from the database';
-                    updateContactsList();
-                    break;
-                    
-                case 'appointments':
-                    headerElement.textContent = `Today's Appointments`;
-                    subtitleElement.textContent = `Appointments scheduled for ${today}`;
-                    displayAppointmentsInActivities();
-                    break;
-                    
-                case 'messages':
-                    headerElement.textContent = `Today's Messages`;
-                    subtitleElement.textContent = `SMS messages sent and received today`;
-                    displayMessagesInActivities();
-                    break;
-                    
-                case 'calls':
-                    headerElement.textContent = `Today's Calls`;
-                    subtitleElement.textContent = `Phone calls made and received today`;
-                    displayCallsInActivities();
-                    break;
-            }
+            document.getElementById(`filter-${filter}-calls`).className = 'px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition';
+            
+            updateAllCallsDisplay();
         }
 
-        // Display appointments in the activities section
-        function displayAppointmentsInActivities() {
-            const listElement = document.getElementById('contacts-list');
-            if (!listElement) return;
-            
-            if (appointments.length === 0) {
-                listElement.innerHTML = `
-                    <div class="text-gray-500 text-center py-8">
-                        <i class="fas fa-calendar text-4xl mb-4 opacity-50"></i>
-                        <p class="text-lg">No appointments scheduled for today</p>
-                        <p class="text-sm">Click on "Today's Appointments" section above to book a new appointment</p>
-                    </div>
-                `;
-                return;
+        // Initiate a call (placeholder function)
+        function initiateCall() {
+            const phoneNumber = prompt('Enter phone number to call:');
+            if (phoneNumber) {
+                callContact(phoneNumber);
             }
-            
-            listElement.innerHTML = appointments.map(apt => `
-                <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:bg-gray-50 transition duration-200">
-                    <div class="flex-1">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold">
-                                <i class="fas fa-calendar-check"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-semibold text-lg">${apt.contact}</h3>
-                                <p class="text-sm text-gray-600">${apt.time} • ${apt.duration} minutes • ${apt.phone}</p>
-                                <p class="text-sm text-gray-500">${apt.purpose}</p>
-                                <span class="inline-block px-2 py-1 rounded-full text-xs ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} mt-1">
-                                    ${apt.status}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex space-x-2">
-                        <button onclick="callContact('${apt.phone}')" 
-                                class="bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200" 
-                                title="Call ${apt.contact}">
-                            <i class="fas fa-phone"></i>
-                        </button>
-                        <button onclick="textContact('${apt.phone}')" 
-                                class="bg-green-500 text-white px-3 py-2 rounded text-sm hover:bg-green-600 transition duration-200"
-                                title="Text ${apt.contact}">
-                            <i class="fas fa-sms"></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Display messages in the activities section
-        function displayMessagesInActivities() {
-            const listElement = document.getElementById('contacts-list');
-            if (!listElement) return;
-            
-            // Simulated message data for demo
-            const todaysMessages = [
-                {
-                    id: 1,
-                    contact: 'John Doe',
-                    phone: '+1234567890',
-                    message: 'Thank you for the information about your services.',
-                    time: '09:15 AM',
-                    direction: 'incoming',
-                    status: 'delivered'
-                },
-                {
-                    id: 2,
-                    contact: 'Jane Smith',
-                    phone: '+1987654321',
-                    message: 'Your appointment is confirmed for tomorrow at 2 PM.',
-                    time: '11:30 AM',
-                    direction: 'outgoing',
-                    status: 'delivered'
-                }
-            ];
-            
-            if (todaysMessages.length === 0) {
-                listElement.innerHTML = `
-                    <div class="text-gray-500 text-center py-8">
-                        <i class="fas fa-comments text-4xl mb-4 opacity-50"></i>
-                        <p class="text-lg">No messages sent or received today</p>
-                        <p class="text-sm">Use the "Send Test SMS" tool above to send messages</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            listElement.innerHTML = todaysMessages.map(msg => `
-                <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:bg-gray-50 transition duration-200">
-                    <div class="flex-1">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 ${msg.direction === 'incoming' ? 'bg-purple-500' : 'bg-blue-500'} rounded-full flex items-center justify-center text-white font-semibold">
-                                <i class="fas ${msg.direction === 'incoming' ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-semibold text-lg">${msg.contact}</h3>
-                                <p class="text-sm text-gray-600">${msg.time} • ${msg.phone}</p>
-                                <p class="text-sm text-gray-700 mt-1">"${msg.message}"</p>
-                                <span class="inline-block px-2 py-1 rounded-full text-xs ${msg.direction === 'incoming' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'} mt-1">
-                                    ${msg.direction} • ${msg.status}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex space-x-2">
-                        <button onclick="textContact('${msg.phone}')" 
-                                class="bg-purple-500 text-white px-3 py-2 rounded text-sm hover:bg-purple-600 transition duration-200"
-                                title="Reply to ${msg.contact}">
-                            <i class="fas fa-reply"></i>
-                        </button>
-                        <button onclick="callContact('${msg.phone}')" 
-                                class="bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200" 
-                                title="Call ${msg.contact}">
-                            <i class="fas fa-phone"></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Display calls in the activities section
-        function displayCallsInActivities() {
-            const listElement = document.getElementById('contacts-list');
-            if (!listElement) return;
-            
-            // Simulated call data for demo
-            const todaysCalls = [
-                {
-                    id: 1,
-                    contact: 'John Doe',
-                    phone: '+1234567890',
-                    time: '08:45 AM',
-                    duration: '05:23',
-                    direction: 'incoming',
-                    status: 'completed'
-                },
-                {
-                    id: 2,
-                    contact: 'Jane Smith',
-                    phone: '+1987654321',
-                    time: '10:15 AM',
-                    duration: '02:45',
-                    direction: 'outgoing',
-                    status: 'completed'
-                },
-                {
-                    id: 3,
-                    contact: 'Unknown',
-                    phone: '+1555999888',
-                    time: '02:30 PM',
-                    duration: '00:00',
-                    direction: 'incoming',
-                    status: 'missed'
-                }
-            ];
-            
-            if (todaysCalls.length === 0) {
-                listElement.innerHTML = `
-                    <div class="text-gray-500 text-center py-8">
-                        <i class="fas fa-phone text-4xl mb-4 opacity-50"></i>
-                        <p class="text-lg">No calls made or received today</p>
-                        <p class="text-sm">Call activity will appear here when calls are made through your system</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            listElement.innerHTML = todaysCalls.map(call => `
-                <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:bg-gray-50 transition duration-200">
-                    <div class="flex-1">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 ${call.status === 'missed' ? 'bg-red-500' : call.direction === 'incoming' ? 'bg-green-500' : 'bg-yellow-500'} rounded-full flex items-center justify-center text-white font-semibold">
-                                <i class="fas ${call.status === 'missed' ? 'fa-phone-slash' : call.direction === 'incoming' ? 'fa-phone-volume' : 'fa-phone'}"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-semibold text-lg">${call.contact}</h3>
-                                <p class="text-sm text-gray-600">${call.time} • ${call.phone}</p>
-                                <p class="text-sm text-gray-500">Duration: ${call.duration}</p>
-                                <span class="inline-block px-2 py-1 rounded-full text-xs ${call.status === 'missed' ? 'bg-red-100 text-red-800' : call.direction === 'incoming' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} mt-1">
-                                    ${call.direction} • ${call.status}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex space-x-2">
-                        <button onclick="callContact('${call.phone}')" 
-                                class="bg-green-500 text-white px-3 py-2 rounded text-sm hover:bg-green-600 transition duration-200" 
-                                title="Call back ${call.contact}">
-                            <i class="fas fa-phone"></i>
-                        </button>
-                        <button onclick="textContact('${call.phone}')" 
-                                class="bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200"
-                                title="Text ${call.contact}">
-                            <i class="fas fa-sms"></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
         }
 
         // Collapsible section management - ALL COLLAPSED BY DEFAULT
@@ -1324,18 +1112,14 @@
         async function loadContacts() {
             try {
                 console.log('Loading contacts from database...');
-                const response = await fetch('/api/contacts?limit=10&sortBy=createdAt&sortOrder=DESC');
+                const response = await fetch('/api/contacts?limit=50&sortBy=createdAt&sortOrder=DESC');
                 const result = await response.json();
                 
                 if (result.success) {
                     contacts = result.data.contacts;
                     totalContacts = result.data.pagination.totalContacts;
                     updateContactCount();
-                    
-                    // Update contacts card if it's expanded
-                    if (!document.getElementById('contacts-card-content').classList.contains('hidden')) {
-                        updateContactsCard();
-                    }
+                    updateAllContactsDisplay();
                     
                     // Update any open modal dropdowns
                     updateOpenModalDropdowns();
@@ -1346,25 +1130,232 @@
                 }
             } catch (error) {
                 console.error('Error loading contacts:', error);
-                // Show error in contacts card if it's expanded
-                const contactsCardContent = document.getElementById('contacts-card-content');
-                if (contactsCardContent && !contactsCardContent.classList.contains('hidden')) {
-                    const contactsList = document.getElementById('contacts-card-list');
-                    if (contactsList) {
-                        contactsList.innerHTML = `
-                            <div class="text-center py-4 text-red-500">
-                                <i class="fas fa-exclamation-triangle text-xl mb-2"></i>
-                                <p class="text-sm">Error loading contacts: ${error.message}</p>
-                                <button onclick="loadContacts()" class="mt-2 bg-blue-500 text-white px-3 py-2 rounded text-sm">
-                                    Try Again
-                                </button>
-                            </div>
-                        `;
-                    }
+                // Show error in contacts display
+                const contactsList = document.getElementById('all-contacts-list');
+                if (contactsList) {
+                    contactsList.innerHTML = `
+                        <div class="text-center py-8 text-red-500">
+                            <i class="fas fa-exclamation-triangle text-xl mb-2"></i>
+                            <p class="text-sm">Error loading contacts: ${error.message}</p>
+                            <button onclick="loadContacts()" class="mt-2 bg-blue-500 text-white px-3 py-2 rounded text-sm">
+                                Try Again
+                            </button>
+                        </div>
+                    `;
                 }
             }
         }
-        
+
+        // Load appointments (enhanced with better sample data)
+        function loadAppointments() {
+            const today = new Date();
+            
+            // Display today's date
+            const todayDateEl = document.getElementById('today-date-display');
+            if (todayDateEl) {
+                todayDateEl.textContent = today.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+
+            // Enhanced simulated appointments for demo
+            appointments = [
+                {
+                    id: 1,
+                    time: '09:00',
+                    duration: 60,
+                    contact: 'John Doe',
+                    phone: '+1234567890',
+                    purpose: 'Sales consultation - New product demo',
+                    status: 'confirmed'
+                },
+                {
+                    id: 2,
+                    time: '11:30',
+                    duration: 30,
+                    contact: 'Jane Smith',
+                    phone: '+1987654321',
+                    purpose: 'Follow-up meeting - Contract signing',
+                    status: 'confirmed'
+                },
+                {
+                    id: 3,
+                    time: '14:30',
+                    duration: 45,
+                    contact: 'Mike Johnson',
+                    phone: '+1555666777',
+                    purpose: 'Technical support session',
+                    status: 'pending'
+                },
+                {
+                    id: 4,
+                    time: '16:00',
+                    duration: 30,
+                    contact: 'Sarah Wilson',
+                    phone: '+1444555666',
+                    purpose: 'Project review meeting',
+                    status: 'confirmed'
+                }
+            ];
+
+            updateAllAppointmentsDisplay();
+            updateAppointmentsCount();
+        }
+
+        // Load today's messages (enhanced sample data)
+        function loadTodaysMessages() {
+            todaysMessages = [
+                {
+                    id: 1,
+                    contact: 'John Doe',
+                    phone: '+1234567890',
+                    message: 'Thank you for the information about your services. Very helpful!',
+                    time: '09:15 AM',
+                    direction: 'incoming',
+                    status: 'delivered'
+                },
+                {
+                    id: 2,
+                    contact: 'Jane Smith',
+                    phone: '+1987654321',
+                    message: 'Your appointment is confirmed for tomorrow at 2 PM. Looking forward to it!',
+                    time: '11:30 AM',
+                    direction: 'outgoing',
+                    status: 'delivered'
+                },
+                {
+                    id: 3,
+                    contact: 'Mike Johnson',
+                    phone: '+1555666777',
+                    message: 'Can we reschedule our meeting to next week?',
+                    time: '01:45 PM',
+                    direction: 'incoming',
+                    status: 'delivered'
+                },
+                {
+                    id: 4,
+                    contact: 'Sarah Wilson',
+                    phone: '+1444555666',
+                    message: 'Perfect! The project proposal looks great. When can we start?',
+                    time: '03:20 PM',
+                    direction: 'incoming',
+                    status: 'delivered'
+                },
+                {
+                    id: 5,
+                    contact: 'David Brown',
+                    phone: '+1333444555',
+                    message: 'Reminder: Your consultation is scheduled for 4 PM today.',
+                    time: '03:45 PM',
+                    direction: 'outgoing',
+                    status: 'delivered'
+                }
+            ];
+
+            updateMessagesCount();
+            updateAllMessagesDisplay();
+        }
+
+        // Load today's calls (enhanced sample data)
+        function loadTodaysCalls() {
+            todaysCalls = [
+                {
+                    id: 1,
+                    contact: 'John Doe',
+                    phone: '+1234567890',
+                    time: '08:45 AM',
+                    duration: '05:23',
+                    direction: 'incoming',
+                    status: 'completed'
+                },
+                {
+                    id: 2,
+                    contact: 'Jane Smith',
+                    phone: '+1987654321',
+                    time: '10:15 AM',
+                    duration: '12:45',
+                    direction: 'outgoing',
+                    status: 'completed'
+                },
+                {
+                    id: 3,
+                    contact: 'Unknown',
+                    phone: '+1555999888',
+                    time: '12:30 PM',
+                    duration: '00:00',
+                    direction: 'incoming',
+                    status: 'missed'
+                },
+                {
+                    id: 4,
+                    contact: 'Mike Johnson',
+                    phone: '+1555666777',
+                    time: '02:15 PM',
+                    duration: '08:30',
+                    direction: 'outgoing',
+                    status: 'completed'
+                },
+                {
+                    id: 5,
+                    contact: 'Sarah Wilson',
+                    phone: '+1444555666',
+                    time: '04:00 PM',
+                    duration: '15:12',
+                    direction: 'incoming',
+                    status: 'completed'
+                },
+                {
+                    id: 6,
+                    contact: 'David Brown',
+                    phone: '+1333444555',
+                    time: '05:30 PM',
+                    duration: '00:00',
+                    direction: 'outgoing',
+                    status: 'missed'
+                }
+            ];
+
+            updateCallsCount();
+            updateAllCallsDisplay();
+        }
+
+        // Update count displays
+        function updateContactCount() {
+            const contactCountEl = document.getElementById('total-contacts');
+            if (contactCountEl) {
+                contactCountEl.textContent = totalContacts;
+            }
+        }
+
+        function updateAppointmentsCount() {
+            const appointmentsEl = document.getElementById('appointments-today');
+            if (appointmentsEl) {
+                appointmentsEl.textContent = appointments.length;
+            }
+        }
+
+        function updateMessagesCount() {
+            const messagesEl = document.getElementById('messages-today');
+            if (messagesEl) {
+                messagesEl.textContent = todaysMessages.length;
+            }
+        }
+
+        function updateCallsCount() {
+            const callsEl = document.getElementById('calls-today');
+            if (callsEl) {
+                callsEl.textContent = todaysCalls.length;
+            }
+        }
+
+        // Load all today's data
+        function loadTodaysData() {
+            loadTodaysMessages();
+            loadTodaysCalls();
+        }
+
         // Update dropdowns in any open modals
         function updateOpenModalDropdowns() {
             // Check if SMS modal is open
@@ -1380,99 +1371,6 @@
             // Check if Appointment modal is open
             if (!document.getElementById('quickCreateAppointmentModal').classList.contains('hidden')) {
                 populateContactDropdown('quickAppointmentContactSelect', false, false);
-            }
-        }
-
-        // Load appointments (simulated for now)
-        function loadAppointments() {
-            const today = new Date();
-            
-            // Display today's date
-            const todayDateEl = document.getElementById('today-date');
-            if (todayDateEl) {
-                todayDateEl.textContent = today.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-            }
-
-            // Simulated appointments for demo
-            appointments = [
-                {
-                    id: 1,
-                    time: '09:00',
-                    duration: 60,
-                    contact: 'John Doe',
-                    phone: '+1234567890',
-                    purpose: 'Sales consultation',
-                    status: 'confirmed'
-                },
-                {
-                    id: 2,
-                    time: '14:30',
-                    duration: 30,
-                    contact: 'Jane Smith',
-                    phone: '+1987654321',
-                    purpose: 'Product demo',
-                    status: 'pending'
-                }
-            ];
-
-            updateAppointmentsList();
-            updateAppointmentsCount();
-        }
-
-        // Update appointments list
-        function updateAppointmentsList() {
-            const listElement = document.getElementById('appointments-list');
-            if (!listElement) return;
-            
-            if (appointments.length === 0) {
-                listElement.innerHTML = `
-                    <div class="text-center py-6 text-gray-500">
-                        <i class="fas fa-calendar text-2xl mb-2 opacity-50"></i>
-                        <p>No appointments scheduled for today</p>
-                        <p class="text-sm">Use the form above to book a new appointment</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            listElement.innerHTML = appointments.map(apt => `
-                <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:bg-gray-50 transition duration-200">
-                    <div class="flex items-center space-x-4">
-                        <div class="text-center">
-                            <div class="text-lg font-bold text-blue-600">${apt.time}</div>
-                            <div class="text-xs text-gray-500">${apt.duration} min</div>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold">${apt.contact}</h4>
-                            <p class="text-sm text-gray-600">${apt.phone}</p>
-                            <p class="text-sm text-gray-500">${apt.purpose}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="px-2 py-1 rounded-full text-xs ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                            ${apt.status}
-                        </span>
-                        <button onclick="callContact('${apt.phone}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600" title="Call ${apt.contact}">
-                            <i class="fas fa-phone"></i>
-                        </button>
-                        <button onclick="textContact('${apt.phone}')" class="bg-green-500 text-white px-2 py-1 rounded text-sm hover:bg-green-600" title="Text ${apt.contact}">
-                            <i class="fas fa-sms"></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Update appointments count
-        function updateAppointmentsCount() {
-            const appointmentsEl = document.getElementById('appointments-today');
-            if (appointmentsEl) {
-                appointmentsEl.textContent = appointments.length;
             }
         }
 
@@ -1510,7 +1408,7 @@
                 appointments.sort((a, b) => a.time.localeCompare(b.time));
                 
                 // Update display
-                updateAppointmentsList();
+                updateAllAppointmentsDisplay();
                 updateAppointmentsCount();
                 
                 // Show success message
@@ -1578,9 +1476,6 @@
                         // Reload contacts from database
                         await loadContacts();
                         
-                        // If we're viewing contacts, the list will already be updated
-                        // If we're viewing something else, keep that view
-                        
                     } else {
                         throw new Error(result.error || 'Failed to create contact');
                     }
@@ -1643,91 +1538,42 @@
             }
         }
 
-        // Update contacts list display (removed since we use cards now)
-        // This function is no longer needed as we use updateContactsCard()
-
-        // Update contact count
-        function updateContactCount() {
-            const contactCountEl = document.getElementById('total-contacts');
-            if (contactCountEl) {
-                contactCountEl.textContent = totalContacts;
-            }
-        }
-
         // Quick actions
         function callContact(phone) {
             alert(`Calling ${phone} - In a real system, RinglyPro would initiate a call via Twilio!`);
         }
 
         function textContact(phone) {
-            // Expand SMS section if collapsed
-            if (!sectionStates['send-sms']) {
-                toggleSection('send-sms');
+            // Open Quick SMS modal and pre-fill phone number
+            showQuickSMS();
+            const recipientInput = document.getElementById('quickSMSRecipient');
+            if (recipientInput) {
+                recipientInput.value = phone;
+                recipientInput.placeholder = `Texting ${phone}`;
             }
-            
-            const phoneInput = document.getElementById('test-phone');
-            const messageInput = document.getElementById('test-message');
-            
-            if (phoneInput) phoneInput.value = phone;
+            const messageInput = document.getElementById('quickSMSMessage');
             if (messageInput) {
-                messageInput.value = 'Hello! This is a message from RinglyPro CRM.';
                 messageInput.focus();
-            }
-            
-            // Scroll to SMS section
-            const smsContent = document.getElementById('send-sms-content');
-            if (smsContent) {
-                smsContent.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
-
-        // Update last contacted timestamp
-        async function updateLastContacted(contactId) {
-            try {
-                const response = await fetch(`/api/contacts/${contactId}/contact`, {
-                    method: 'PATCH'
-                });
-                const result = await response.json();
-                
-                if (result.success) {
-                    await loadContacts(); // This will refresh the view if we're on contacts
-                    alert('Contact timestamp updated!');
-                } else {
-                    throw new Error(result.error);
-                }
-            } catch (error) {
-                console.error('Error updating contact:', error);
-                alert('Failed to update contact: ' + error.message);
             }
         }
 
         // Refresh all data
         async function refreshData() {
+            // Show loading indicators
+            document.getElementById('total-contacts').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            document.getElementById('appointments-today').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            document.getElementById('messages-today').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            document.getElementById('calls-today').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
             await Promise.all([
                 loadContacts(),
                 loadAppointments()
             ]);
+            
             // Load today's data
             loadTodaysData();
             
-            // Update any expanded cards
-            updateExpandedCards();
-        }
-        
-        // Update any currently expanded cards
-        function updateExpandedCards() {
-            if (!document.getElementById('contacts-card-content').classList.contains('hidden')) {
-                updateContactsCard();
-            }
-            if (!document.getElementById('appointments-card-content').classList.contains('hidden')) {
-                updateAppointmentsCard();
-            }
-            if (!document.getElementById('messages-card-content').classList.contains('hidden')) {
-                updateMessagesCard();
-            }
-            if (!document.getElementById('calls-card-content').classList.contains('hidden')) {
-                updateCallsCard();
-            }
+            console.log('✅ All data refreshed successfully');
         }
 
         // Setup search on Enter key
@@ -1795,7 +1641,7 @@
                 } catch (error) {
                     if (status) {
                         status.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
-                        status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>❌ Error: ${error.message}`;
+                        status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>⚠ Error: ${error.message}`;
                         status.classList.remove('hidden');
                     }
                 }
@@ -1872,8 +1718,6 @@
         // Quick action functions
         function showQuickCreateContact() {
             openModal('quickCreateContactModal');
-            // Set today's date as default
-            const today = new Date().toISOString().split('T')[0];
         }
         
         function showQuickSearchContact() {
@@ -1893,6 +1737,7 @@
         
         function showQuickCreateAppointment() {
             openModal('quickCreateAppointmentModal');
+            populateContactDropdown('quickAppointmentContactSelect', false, false); // Show names only
             // Set default date to today
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('quickAppointmentDate').value = today;
@@ -1905,6 +1750,14 @@
         function showQuickUpdateAppointment() {
             // For now, show today's appointments - can be enhanced later
             showTodaysAppointments();
+        }
+
+        function showTodaysAppointments() {
+            // Scroll to appointments section
+            const appointmentsSection = document.querySelector('.border-green-500');
+            if (appointmentsSection) {
+                appointmentsSection.scrollIntoView({ behavior: 'smooth' });
+            }
         }
         
         // Contact dropdown management
@@ -2042,18 +1895,6 @@
             openModal('quickEmailModal');
             populateContactDropdown('quickEmailContactSelect', false, true); // Show email addresses
             document.getElementById('quickEmailRecipient').focus();
-        }
-        
-        function showQuickCreateAppointment() {
-            openModal('quickCreateAppointmentModal');
-            populateContactDropdown('quickAppointmentContactSelect', false, false); // Show names only
-            // Set default date to today
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('quickAppointmentDate').value = today;
-            // Set default time to next hour
-            const now = new Date();
-            now.setHours(now.getHours() + 1, 0, 0, 0);
-            document.getElementById('quickAppointmentTime').value = now.toTimeString().slice(0, 5);
         }
         
         function activateVoiceCommand() {
@@ -2267,7 +2108,7 @@
                     
                     appointments.push(newAppointment);
                     appointments.sort((a, b) => a.time.localeCompare(b.time));
-                    updateAppointmentsList();
+                    updateAllAppointmentsDisplay();
                     updateAppointmentsCount();
                     
                     status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
@@ -2466,7 +2307,7 @@
                 voiceRecognition.onerror = function(event) {
                     console.error('Voice recognition error:', event.error);
                     stopVoiceListening();
-                    document.getElementById('voiceStatus').textContent = '❌ Error: ' + event.error;
+                    document.getElementById('voiceStatus').textContent = '⚠ Error: ' + event.error;
                 };
                 
                 voiceRecognition.onend = function() {
@@ -2531,7 +2372,7 @@
             } catch (error) {
                 status.className = 'p-3 rounded bg-red-100 text-red-800';
                 status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
-                document.getElementById('voiceStatus').textContent = '❌ Command failed';
+                document.getElementById('voiceStatus').textContent = '⚠ Command failed';
             }
             
             status.classList.remove('hidden');
@@ -2569,7 +2410,7 @@
                 };
             }
         }
-        
+
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 RinglyPro CRM Dashboard loaded');
@@ -2598,15 +2439,13 @@
             if (initVoiceRecognition()) {
                 console.log('🎤 Voice recognition initialized');
             } else {
-                console.log('❌ Voice recognition not available');
+                console.log('⚠ Voice recognition not available');
             }
             
             // Load initial data
             loadContacts();
             loadAppointments();
-            
-            // Set initial view to contacts
-            currentView = 'contacts';
+            loadTodaysData();
             
             // Setup search input for quick search modal
             const quickSearchInput = document.getElementById('quickSearchInput');
@@ -2615,6 +2454,14 @@
                     if (e.key === 'Enter') {
                         performQuickSearch();
                     }
+                });
+            }
+            
+            // Setup contact search input
+            const contactsSearch = document.getElementById('contacts-search');
+            if (contactsSearch) {
+                contactsSearch.addEventListener('input', function(e) {
+                    filterContacts(e.target.value);
                 });
             }
             
