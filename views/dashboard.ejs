@@ -201,6 +201,19 @@
             background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
             background-size: 200% 100%;
         }
+
+        /* Fix for voice indicator animation */
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
     </style>
 </head>
 <body>
@@ -290,9 +303,6 @@
                                     </button>
                                     <button onclick="showQuickUpdateAppointment()" class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center transition duration-200" style="color: var(--text-primary);">
                                         <i class="fas fa-edit text-orange-500 mr-3"></i>Update Appointment
-                                    </button>
-                                    <button onclick="showCalendarView()" class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center transition duration-200" style="color: var(--text-primary);">
-                                        <i class="fas fa-calendar-week text-purple-500 mr-3"></i>Calendar View
                                     </button>
                                 </div>
                             </div>
@@ -468,6 +478,204 @@
             </div>
         </div>
 
+        <!-- Quick Search Contact Modal -->
+        <div id="quickSearchContactModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div class="card rounded-lg p-6 w-full max-w-lg mx-4 slide-up">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Search Contact</h3>
+                    <button onclick="closeModal('quickSearchContactModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <input type="text" id="quickSearchInput" placeholder="Search by name, email, or phone..."
+                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                    <button onclick="performQuickSearch()" class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg transition duration-200">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                    <div id="quickSearchResults" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Update Email Modal -->
+        <div id="quickUpdateEmailModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div class="card rounded-lg p-6 w-full max-w-md mx-4 slide-up">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Update Contact Email</h3>
+                    <button onclick="closeModal('quickUpdateEmailModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="quickUpdateEmailForm" class="space-y-4">
+                    <input type="text" id="quickUpdateEmailName" placeholder="Contact Name" required
+                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                    <input type="email" id="quickUpdateEmailValue" placeholder="New Email Address" required
+                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                    <div class="flex space-x-3">
+                        <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg transition duration-200">
+                            <i class="fas fa-save mr-2"></i>Update Email
+                        </button>
+                        <button type="button" onclick="closeModal('quickUpdateEmailModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg transition duration-200">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+                <div id="quickUpdateEmailStatus" class="mt-4 p-3 rounded hidden"></div>
+            </div>
+        </div>
+
+        <!-- Quick Update Phone Modal -->
+        <div id="quickUpdatePhoneModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div class="card rounded-lg p-6 w-full max-w-md mx-4 slide-up">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Update Contact Phone</h3>
+                    <button onclick="closeModal('quickUpdatePhoneModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="quickUpdatePhoneForm" class="space-y-4">
+                    <input type="text" id="quickUpdatePhoneName" placeholder="Contact Name" required
+                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                    <input type="tel" id="quickUpdatePhoneValue" placeholder="New Phone Number" required
+                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                    <div class="flex space-x-3">
+                        <button type="submit" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white px-4 py-3 rounded-lg transition duration-200">
+                            <i class="fas fa-save mr-2"></i>Update Phone
+                        </button>
+                        <button type="button" onclick="closeModal('quickUpdatePhoneModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg transition duration-200">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+                <div id="quickUpdatePhoneStatus" class="mt-4 p-3 rounded hidden"></div>
+            </div>
+        </div>
+
+        <!-- Quick Create Appointment Modal -->
+        <div id="quickCreateAppointmentModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div class="card rounded-lg p-6 w-full max-w-md mx-4 slide-up">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Quick Create Appointment</h3>
+                    <button onclick="closeModal('quickCreateAppointmentModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="quickCreateAppointmentForm" class="space-y-4">
+                    <input type="text" id="quickAppointmentTitle" placeholder="Appointment Title" required
+                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">Select Contact</label>
+                        <select id="quickAppointmentContactSelect" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                            <option value="">Loading contacts...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">Or Enter Contact Name</label>
+                        <input type="text" id="quickAppointmentContact" placeholder="Contact Name"
+                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="date" id="quickAppointmentDate" required
+                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                        <input type="time" id="quickAppointmentTime" required
+                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                    </div>
+                    <select id="quickAppointmentDuration" required
+                            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                        <option value="">Select Duration</option>
+                        <option value="30">30 minutes</option>
+                        <option value="60">1 hour</option>
+                        <option value="90">1.5 hours</option>
+                        <option value="120">2 hours</option>
+                    </select>
+                    <div class="flex space-x-3">
+                        <button type="submit" class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg transition duration-200">
+                            <i class="fas fa-calendar-plus mr-2"></i>Create Appointment
+                        </button>
+                        <button type="button" onclick="closeModal('quickCreateAppointmentModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg transition duration-200">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+                <div id="quickCreateAppointmentStatus" class="mt-4 p-3 rounded hidden"></div>
+            </div>
+        </div>
+
+        <!-- Quick SMS Modal -->
+        <div id="quickSMSModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div class="card rounded-lg p-6 w-full max-w-md mx-4 slide-up">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Quick SMS</h3>
+                    <button onclick="closeModal('quickSMSModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="quickSMSForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">Select Contact</label>
+                        <select id="quickSMSContactSelect" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                            <option value="">Loading contacts...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">Or Enter Phone Number</label>
+                        <input type="text" id="quickSMSRecipient" placeholder="Contact Name or Phone Number"
+                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                    </div>
+                    <textarea id="quickSMSMessage" placeholder="Message..." rows="4" required
+                              class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);"></textarea>
+                    <div class="flex space-x-3">
+                        <button type="submit" class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg transition duration-200">
+                            <i class="fas fa-paper-plane mr-2"></i>Send SMS
+                        </button>
+                        <button type="button" onclick="closeModal('quickSMSModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg transition duration-200">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+                <div id="quickSMSStatus" class="mt-4 p-3 rounded hidden"></div>
+            </div>
+        </div>
+
+        <!-- Quick Email Modal -->
+        <div id="quickEmailModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div class="card rounded-lg p-6 w-full max-w-md mx-4 slide-up">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Quick Email</h3>
+                    <button onclick="closeModal('quickEmailModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="quickEmailForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">Select Contact</label>
+                        <select id="quickEmailContactSelect" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                            <option value="">Loading contacts...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">Or Enter Email</label>
+                        <input type="text" id="quickEmailRecipient" placeholder="Contact Name or Email"
+                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                    </div>
+                    <input type="text" id="quickEmailSubject" placeholder="Subject" required
+                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                    <textarea id="quickEmailMessage" placeholder="Message..." rows="4" required
+                              class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);"></textarea>
+                    <div class="flex space-x-3">
+                        <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg transition duration-200">
+                            <i class="fas fa-envelope mr-2"></i>Send Email
+                        </button>
+                        <button type="button" onclick="closeModal('quickEmailModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg transition duration-200">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+                <div id="quickEmailStatus" class="mt-4 p-3 rounded hidden"></div>
+            </div>
+        </div>
+
         <!-- Import CSV Modal -->
         <div id="importModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
             <div class="card rounded-lg p-6 w-full max-w-md mx-4 slide-up">
@@ -487,7 +695,7 @@
                         </button>
                     </div>
                     <div id="fileInfo" class="hidden">
-                        <div class="flex items-center justify-between p-3 bg-gray-100 rounded" style="background-color: var(--background-color);">
+                        <div class="flex items-center justify-between p-3 rounded" style="background-color: var(--background-color);">
                             <span id="fileName" class="text-sm"></span>
                             <button onclick="removeFile()" class="text-red-500 hover:text-red-700">
                                 <i class="fas fa-times"></i>
@@ -502,10 +710,35 @@
             </div>
         </div>
 
-        <!-- Other existing modals would go here with similar styling updates... -->
-        <!-- For brevity, I'm showing the pattern but you'd apply the same card/styling updates to all modals -->
+        <!-- Voice Command Modal -->
+        <div id="voiceCommandModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div class="card rounded-lg p-6 w-full max-w-lg mx-4 slide-up">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Voice Command</h3>
+                    <button onclick="closeModal('voiceCommandModal')" class="hover:text-gray-600 transition duration-200" style="color: var(--text-secondary);">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="text-center space-y-4">
+                    <div id="voiceIndicator" class="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl mx-auto">
+                        <i class="fas fa-microphone"></i>
+                    </div>
+                    <div id="voiceStatus" style="color: var(--text-secondary);">Click "Start Listening" to begin</div>
+                    <div class="space-x-3">
+                        <button id="startVoiceBtn" onclick="startVoiceListening()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                            <i class="fas fa-microphone mr-2"></i>Start Listening
+                        </button>
+                        <button id="stopVoiceBtn" onclick="stopVoiceListening()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-200" disabled>
+                            <i class="fas fa-stop mr-2"></i>Stop
+                        </button>
+                    </div>
+                    <div id="voiceTranscript" class="p-4 rounded-lg min-h-16 text-left" style="background-color: var(--background-color);"></div>
+                    <div id="voiceCommandStatus" class="p-3 rounded hidden"></div>
+                </div>
+            </div>
+        </div>
 
-        <!-- Main Display Cards - Enhanced -->
+        <!-- Main Display Cards - Mobile Responsive -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
             <!-- Card 1: All Contacts Display -->
             <div class="card rounded-lg shadow-lg border-l-4 border-blue-500 min-h-[500px] flex flex-col card-hover fade-in">
@@ -534,15 +767,13 @@
                     </div>
                     <div id="all-contacts-list" class="p-2 sm:p-3 space-y-2 overflow-y-auto max-h-[400px]">
                         <div class="text-center py-8">
-                            <div class="skeleton w-8 h-8 rounded-full mx-auto mb-2"></div>
-                            <div class="skeleton h-4 w-3/4 mx-auto mb-1"></div>
-                            <div class="skeleton h-3 w-1/2 mx-auto"></div>
+                            <i class="fas fa-spinner fa-spin text-gray-400 text-xl"></i>
+                            <p class="text-gray-500 mt-2 text-sm">Loading contacts...</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Similar enhancements would be applied to the other 3 cards... -->
             <!-- Card 2: Today's Appointments Display -->
             <div class="card rounded-lg shadow-lg border-l-4 border-green-500 min-h-[500px] flex flex-col card-hover fade-in">
                 <div class="p-3 sm:p-4 border-b bg-green-50 dark:bg-green-900 dark:bg-opacity-20" style="border-color: var(--border-color);">
@@ -654,7 +885,7 @@
             <p style="color: var(--text-secondary);">Click on any tool below to expand and use its features</p>
         </div>
 
-        <!-- Main Content - Enhanced with better styling -->
+        <!-- Main Content -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Add New Contact Form -->
             <div class="card rounded-lg shadow-md border-l-4 border-blue-500 card-hover fade-in">
@@ -694,7 +925,7 @@
                 </div>
             </div>
 
-            <!-- Contact Search - Enhanced -->
+            <!-- Contact Search -->
             <div class="card rounded-lg shadow-md border-l-4 border-purple-500 card-hover fade-in">
                 <div class="section-header p-4 border-b flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('search-contacts')" style="border-color: var(--border-color);">
                     <div class="flex items-center space-x-3">
@@ -712,12 +943,8 @@
                 </div>
                 <div id="search-contacts-content" class="collapse-content collapsed p-6">
                     <div class="space-y-4">
-                        <div class="relative">
-                            <input type="text" id="search-input" placeholder="Search by name, phone, or email..." 
-                                   class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200" 
-                                   style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
-                            <div id="search-suggestions" class="absolute top-full left-0 right-0 bg-white border rounded-lg shadow-lg z-10 hidden max-h-48 overflow-y-auto" style="background-color: var(--card-background); border-color: var(--border-color);"></div>
-                        </div>
+                        <input type="text" id="search-input" placeholder="Search by name, phone, or email..." 
+                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
                         <button onclick="searchContacts()" class="w-full bg-purple-500 hover:bg-purple-600 text-white px-4 py-3 rounded-lg transition duration-200">
                             <i class="fas fa-search mr-2"></i>Search Database
                         </button>
@@ -729,7 +956,104 @@
                 </div>
             </div>
 
-            <!-- Similar enhancements for other existing sections... -->
+            <!-- Appointments Today -->
+            <div class="card rounded-lg shadow-md border-l-4 border-green-500 card-hover fade-in">
+                <div class="section-header p-4 border-b flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('appointments-today')" style="border-color: var(--border-color);">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-green-100 rounded-lg">
+                            <i class="fas fa-calendar-alt text-green-600 text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold">Today's Appointments</h3>
+                            <p class="text-sm" style="color: var(--text-secondary);">View and manage appointments scheduled for today</p>
+                        </div>
+                    </div>
+                    <button class="collapse-btn transition duration-200" style="color: var(--text-secondary);">
+                        <i class="fas fa-chevron-down text-lg"></i>
+                    </button>
+                </div>
+                <div id="appointments-today-content" class="collapse-content collapsed p-6">
+                    <!-- Quick Appointment Form -->
+                    <div class="mb-6 p-4 bg-green-50 rounded-lg border border-green-200" style="background-color: var(--background-color); border-color: var(--border-color);">
+                        <h4 class="font-semibold mb-3" style="color: var(--text-primary);">
+                            <i class="fas fa-plus-circle mr-2"></i>Quick Appointment Booking
+                        </h4>
+                        <form id="appointment-form" class="space-y-3">
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="text" id="apt-contact-name" placeholder="Contact Name" required
+                                       class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                                <input type="tel" id="apt-contact-phone" placeholder="+1234567890" required
+                                       class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="time" id="apt-time" required
+                                       class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                                <select id="apt-duration" required
+                                        class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                                    <option value="">Duration</option>
+                                    <option value="30">30 minutes</option>
+                                    <option value="60">1 hour</option>
+                                    <option value="90">1.5 hours</option>
+                                    <option value="120">2 hours</option>
+                                </select>
+                            </div>
+                            <input type="text" id="apt-purpose" placeholder="Appointment purpose" required
+                                   class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                            <button type="submit" id="book-appointment-btn" class="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition duration-200">
+                                <i class="fas fa-calendar-plus mr-2"></i>Book Appointment
+                            </button>
+                        </form>
+                        <div id="appointment-status" class="mt-3 p-3 rounded hidden"></div>
+                    </div>
+
+                    <!-- Today's Appointments List -->
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="font-semibold">
+                                <i class="fas fa-clock mr-2"></i>Scheduled for Today
+                            </h4>
+                            <span class="text-sm" style="color: var(--text-secondary);" id="today-date"></span>
+                        </div>
+                        <div id="appointments-list" class="space-y-3">
+                            <div class="text-center py-6" style="color: var(--text-secondary);">
+                                <i class="fas fa-calendar text-2xl mb-2 opacity-50"></i>
+                                <p>No appointments scheduled for today</p>
+                                <p class="text-sm">Use the form above to book a new appointment</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Send Test SMS -->
+            <div class="card rounded-lg shadow-md border-l-4 border-orange-500 card-hover fade-in">
+                <div class="section-header p-4 border-b flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('send-sms')" style="border-color: var(--border-color);">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-orange-100 rounded-lg">
+                            <i class="fas fa-paper-plane text-orange-600 text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold">Send Test SMS</h3>
+                            <p class="text-sm" style="color: var(--text-secondary);">Send SMS messages via Twilio integration</p>
+                        </div>
+                    </div>
+                    <button class="collapse-btn transition duration-200" style="color: var(--text-secondary);">
+                        <i class="fas fa-chevron-down text-lg"></i>
+                    </button>
+                </div>
+                <div id="send-sms-content" class="collapse-content collapsed p-6">
+                    <div class="space-y-4">
+                        <input type="tel" id="test-phone" placeholder="+1234567890" 
+                               class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);">
+                        <textarea id="test-message" placeholder="Enter your test message..." 
+                                  class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent h-24 transition duration-200" style="border-color: var(--border-color); background-color: var(--card-background); color: var(--text-primary);"></textarea>
+                        <button id="send-sms" class="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg transition duration-200">
+                            <i class="fas fa-paper-plane mr-2"></i>Send SMS via Twilio
+                        </button>
+                    </div>
+                    <div id="sms-status" class="mt-4 p-4 rounded-lg hidden"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Mobile Sticky Action Bar -->
@@ -771,10 +1095,10 @@
         </div>
     </div>
 
-    <!-- Enhanced JavaScript with new features -->
+    <!-- Enhanced JavaScript with all original functionality preserved -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const apiUrl = window.location.origin;
+        const apiUrl = window.location.origin; // For production use
 
         // Global state
         let contacts = [];
@@ -1115,9 +1439,27 @@
                             }
                         });
                         
-                        // Simulate API call to create contact
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                        imported++;
+                        // Call the actual API to create contact
+                        try {
+                            const response = await fetch('/api/contacts', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    firstName: contact.firstname || contact.first_name || contact.firstName || '',
+                                    lastName: contact.lastname || contact.last_name || contact.lastName || '',
+                                    email: contact.email || '',
+                                    phone: contact.phone || contact.phone_number || '',
+                                    notes: contact.notes || '',
+                                    source: 'csv_import'
+                                })
+                            });
+                            
+                            if (response.ok) {
+                                imported++;
+                            }
+                        } catch (error) {
+                            console.error('Failed to import contact:', error);
+                        }
                     }
                 }
 
@@ -1144,60 +1486,241 @@
             }
         }
 
-        // Enhanced Search with Suggestions
-        function setupAdvancedSearch() {
-            const searchInput = document.getElementById('search-input');
-            const suggestions = document.getElementById('search-suggestions');
+        // Update All Contacts Display (PRESERVED FROM ORIGINAL)
+        function updateAllContactsDisplay() {
+            const listElement = document.getElementById('all-contacts-list');
+            if (!listElement) return;
             
-            if (searchInput && suggestions) {
-                searchInput.addEventListener('input', function() {
-                    const query = this.value.trim().toLowerCase();
-                    
-                    if (query.length > 1) {
-                        const matches = contacts.filter(contact => 
-                            contact.fullName?.toLowerCase().includes(query) ||
-                            contact.email?.toLowerCase().includes(query) ||
-                            contact.phone?.toLowerCase().includes(query)
-                        ).slice(0, 5); // Show top 5 matches
-                        
-                        if (matches.length > 0) {
-                            suggestions.innerHTML = matches.map(contact => `
-                                <div class="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0" onclick="selectSuggestion('${contact.fullName}')">
-                                    <div class="font-medium">${contact.fullName}</div>
-                                    <div class="text-sm text-gray-600">${contact.email} • ${contact.phone}</div>
-                                </div>
-                            `).join('');
-                            suggestions.classList.remove('hidden');
-                        } else {
-                            suggestions.classList.add('hidden');
-                        }
-                    } else {
-                        suggestions.classList.add('hidden');
-                    }
-                });
-                
-                // Hide suggestions when clicking outside
-                document.addEventListener('click', function(e) {
-                    if (!searchInput.contains(e.target) && !suggestions.contains(e.target)) {
-                        suggestions.classList.add('hidden');
-                    }
-                });
+            const displayContacts = filteredContacts.length > 0 ? filteredContacts : contacts;
+            
+            if (displayContacts.length === 0) {
+                listElement.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-users text-gray-400 text-xl mb-2"></i>
+                        <p class="text-gray-500 text-sm">No contacts found</p>
+                        <button onclick="showQuickCreateContact()" class="mt-2 bg-blue-500 text-white px-3 py-2 rounded text-sm">
+                            <i class="fas fa-plus mr-1"></i> Add Contact
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            listElement.innerHTML = displayContacts.map(contact => `
+                <div class="border border-gray-200 rounded-lg p-2 hover:bg-gray-50 transition duration-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                                ${contact.firstName ? contact.firstName.charAt(0) : ''}${contact.lastName ? contact.lastName.charAt(0) : ''}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-semibold text-xs sm:text-sm truncate">${contact.fullName || contact.firstName + ' ' + contact.lastName}</h4>
+                                <p class="text-xs text-gray-600 truncate">${contact.phone || ''}</p>
+                                <p class="text-xs text-gray-500 truncate">${contact.email || ''}</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-1">
+                            <button onclick="callContact('${contact.phone}')" class="bg-blue-500 text-white px-1.5 py-1 rounded text-xs hover:bg-blue-600" title="Call">
+                                <i class="fas fa-phone"></i>
+                            </button>
+                            <button onclick="textContact('${contact.phone}')" class="bg-green-500 text-white px-1.5 py-1 rounded text-xs hover:bg-green-600" title="Text">
+                                <i class="fas fa-sms"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter contacts by search query (PRESERVED FROM ORIGINAL)
+        function filterContacts(query) {
+            if (!query.trim()) {
+                filteredContacts = [];
+            } else {
+                const searchTerm = query.toLowerCase();
+                filteredContacts = contacts.filter(contact => 
+                    (contact.fullName || '').toLowerCase().includes(searchTerm) ||
+                    (contact.firstName || '').toLowerCase().includes(searchTerm) ||
+                    (contact.lastName || '').toLowerCase().includes(searchTerm) ||
+                    (contact.phone || '').toLowerCase().includes(searchTerm) ||
+                    (contact.email || '').toLowerCase().includes(searchTerm)
+                );
+            }
+            updateAllContactsDisplay();
+        }
+        
+        // Update All Appointments Display (PRESERVED FROM ORIGINAL)
+        function updateAllAppointmentsDisplay() {
+            const listElement = document.getElementById('all-appointments-list');
+            if (!listElement) return;
+            
+            if (appointments.length === 0) {
+                listElement.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-calendar text-gray-400 text-xl mb-2"></i>
+                        <p class="text-gray-500 text-sm">No appointments today</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            listElement.innerHTML = appointments.map(apt => `
+                <div class="border border-gray-200 rounded-lg p-2 hover:bg-gray-50 transition duration-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <div class="text-center">
+                                <div class="text-xs sm:text-sm font-bold text-green-600">${apt.time}</div>
+                                <div class="text-xs text-gray-500">${apt.duration}min</div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-semibold text-xs sm:text-sm truncate">${apt.contact}</h4>
+                                <p class="text-xs text-gray-600 truncate">${apt.purpose}</p>
+                                <span class="inline-block px-1.5 py-0.5 rounded-full text-xs ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${apt.status}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex space-x-1">
+                            <button onclick="callContact('${apt.phone}')" class="bg-green-500 text-white px-1.5 py-1 rounded text-xs hover:bg-green-600" title="Call">
+                                <i class="fas fa-phone"></i>
+                            </button>
+                            <button onclick="textContact('${apt.phone}')" class="bg-blue-500 text-white px-1.5 py-1 rounded text-xs hover:bg-blue-600" title="Text">
+                                <i class="fas fa-sms"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Update All Messages Display (PRESERVED FROM ORIGINAL)
+        function updateAllMessagesDisplay() {
+            const listElement = document.getElementById('all-messages-list');
+            if (!listElement) return;
+            
+            let displayMessages = todaysMessages;
+            if (messageFilter !== 'all') {
+                displayMessages = todaysMessages.filter(msg => msg.direction === messageFilter || 
+                    (messageFilter === 'sent' && msg.direction === 'outgoing') ||
+                    (messageFilter === 'received' && msg.direction === 'incoming'));
+            }
+            
+            if (displayMessages.length === 0) {
+                listElement.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-sms text-gray-400 text-xl mb-2"></i>
+                        <p class="text-gray-500 text-sm">No SMS messages today</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            listElement.innerHTML = displayMessages.map(msg => `
+                <div class="border border-gray-200 rounded-lg p-2 hover:bg-gray-50 transition duration-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-6 h-6 ${msg.direction === 'incoming' ? 'bg-purple-500' : 'bg-blue-500'} rounded-full flex items-center justify-center text-white text-xs">
+                                <i class="fas ${msg.direction === 'incoming' ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-semibold text-xs sm:text-sm truncate">${msg.contact}</h4>
+                                <p class="text-xs text-gray-600">${msg.time} • ${msg.phone}</p>
+                                <p class="text-xs text-gray-700 mt-1 truncate">"${msg.message}"</p>
+                            </div>
+                        </div>
+                        <button onclick="textContact('${msg.phone}')" class="bg-purple-500 text-white px-1.5 py-1 rounded text-xs hover:bg-purple-600" title="Reply">
+                            <i class="fas fa-reply"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter messages (PRESERVED FROM ORIGINAL)
+        function filterMessages(filter) {
+            messageFilter = filter;
+            
+            // Update filter buttons
+            document.querySelectorAll('[id^="filter-"][id$="-messages"]').forEach(btn => {
+                btn.className = 'px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition';
+            });
+            document.getElementById(`filter-${filter}-messages`).className = 'px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition';
+            
+            updateAllMessagesDisplay();
+        }
+        
+        // Update All Calls Display (PRESERVED FROM ORIGINAL)
+        function updateAllCallsDisplay() {
+            const listElement = document.getElementById('all-calls-list');
+            if (!listElement) return;
+            
+            let displayCalls = todaysCalls;
+            if (callFilter !== 'all') {
+                displayCalls = todaysCalls.filter(call => 
+                    call.direction === callFilter || call.status === callFilter);
+            }
+            
+            if (displayCalls.length === 0) {
+                listElement.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-phone text-gray-400 text-xl mb-2"></i>
+                        <p class="text-gray-500 text-sm">No calls today</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            listElement.innerHTML = displayCalls.map(call => `
+                <div class="border border-gray-200 rounded-lg p-2 hover:bg-gray-50 transition duration-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-6 h-6 ${call.status === 'missed' ? 'bg-red-500' : call.direction === 'incoming' ? 'bg-green-500' : 'bg-yellow-500'} rounded-full flex items-center justify-center text-white text-xs">
+                                <i class="fas ${call.status === 'missed' ? 'fa-phone-slash' : call.direction === 'incoming' ? 'fa-phone-volume' : 'fa-phone'}"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-semibold text-xs sm:text-sm truncate">${call.contact}</h4>
+                                <p class="text-xs text-gray-600 truncate">${call.time} • ${call.phone}</p>
+                                <p class="text-xs text-gray-500">Duration: ${call.duration}</p>
+                                <span class="inline-block px-1.5 py-0.5 rounded-full text-xs ${call.status === 'missed' ? 'bg-red-100 text-red-800' : call.direction === 'incoming' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${call.direction} • ${call.status}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex space-x-1">
+                            <button onclick="callContact('${call.phone}')" class="bg-green-500 text-white px-1.5 py-1 rounded text-xs hover:bg-green-600" title="Call back">
+                                <i class="fas fa-phone"></i>
+                            </button>
+                            <button onclick="textContact('${call.phone}')" class="bg-blue-500 text-white px-1.5 py-1 rounded text-xs hover:bg-blue-600" title="Text">
+                                <i class="fas fa-sms"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter calls (PRESERVED FROM ORIGINAL)
+        function filterCalls(filter) {
+            callFilter = filter;
+            
+            // Update filter buttons
+            document.querySelectorAll('[id^="filter-"][id$="-calls"]').forEach(btn => {
+                btn.className = 'px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition';
+            });
+            document.getElementById(`filter-${filter}-calls`).className = 'px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition';
+            
+            updateAllCallsDisplay();
+        }
+
+        // Initiate a call (PRESERVED FROM ORIGINAL)
+        function initiateCall() {
+            const phoneNumber = prompt('Enter phone number to call:');
+            if (phoneNumber) {
+                callContact(phoneNumber);
             }
         }
 
-        function selectSuggestion(name) {
-            document.getElementById('search-input').value = name;
-            document.getElementById('search-suggestions').classList.add('hidden');
-            searchContacts();
-        }
-
-        // Calendar View Modal
-        function showCalendarView() {
-            // This would open a calendar modal - placeholder for now
-            showToast('Calendar view coming soon!', 'info', '<i class="fas fa-calendar-week"></i>');
-        }
-
-        // Enhanced section state management
+        // Collapsible section management - ALL COLLAPSED BY DEFAULT (PRESERVED FROM ORIGINAL)
         const sectionStates = {
             'add-contact': false,
             'search-contacts': false,
@@ -1206,49 +1729,503 @@
             'analytics-dashboard': false
         };
 
-        // [Previous JavaScript functions continue here with enhancements...]
-        // The existing functions from the original code would be here with similar styling updates
-
-        // Enhanced initialization
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Enhanced RinglyPro CRM Dashboard loaded');
-            
-            // Initialize theme
-            initDarkMode();
-            
-            // Initialize charts
-            setTimeout(initCharts, 500); // Small delay to ensure DOM is ready
-            
-            // Initialize all components
-            loadSectionStates();
-            setupAdvancedSearch();
-            
-            // Load initial data
-            loadContacts();
-            loadAppointments();
-            loadTodaysData();
-            
-            // Update KPIs
-            setTimeout(updateKPIs, 1000);
-            
-            // Show welcome message
-            setTimeout(() => {
-                showToast('Welcome to RinglyPro CRM!', 'success', '<i class="fas fa-rocket"></i>');
-            }, 2000);
-            
-            console.log('✅ Enhanced RinglyPro CRM Dashboard initialized successfully');
-        });
-
-        // Service Worker Registration for PWA
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => console.log('SW registered'))
-                .catch(error => console.log('SW registration failed'));
+        // Load saved section states from localStorage with error handling (PRESERVED FROM ORIGINAL)
+        function loadSectionStates() {
+            try {
+                const saved = localStorage.getItem('crm-section-states');
+                if (saved) {
+                    Object.assign(sectionStates, JSON.parse(saved));
+                }
+                
+                // Apply saved states with error checking - Default is COLLAPSED
+                Object.keys(sectionStates).forEach(sectionId => {
+                    const content = document.getElementById(`${sectionId}-content`);
+                    
+                    // Check if element exists before proceeding
+                    if (!content) {
+                        console.warn(`Section content not found: ${sectionId}-content`);
+                        return;
+                    }
+                    
+                    const header = content.parentElement.querySelector('.section-header');
+                    
+                    if (!header) {
+                        console.warn(`Section header not found for: ${sectionId}`);
+                        return;
+                    }
+                    
+                    // Default behavior: COLLAPSED
+                    if (sectionStates[sectionId]) {
+                        content.classList.add('expanded');
+                        content.classList.remove('collapsed');
+                        header.classList.remove('collapsed');
+                    } else {
+                        content.classList.add('collapsed');
+                        content.classList.remove('expanded');
+                        header.classList.add('collapsed');
+                    }
+                });
+                
+                // Update toggle all button text - Default to "Expand All"
+                const toggleAllText = document.getElementById('toggle-all-text');
+                if (toggleAllText) {
+                    const allExpanded = Object.values(sectionStates).every(state => state);
+                    toggleAllText.textContent = allExpanded ? 'Collapse All' : 'Expand All';
+                }
+            } catch (error) {
+                console.error('Error loading section states:', error);
+                // Reset to default states if there's an error - ALL COLLAPSED
+                Object.keys(sectionStates).forEach(key => {
+                    sectionStates[key] = false;
+                });
+                // Ensure button shows "Expand All"
+                const toggleAllText = document.getElementById('toggle-all-text');
+                if (toggleAllText) {
+                    toggleAllText.textContent = 'Expand All';
+                }
+            }
         }
 
-        // [Include all the existing JavaScript functions here with similar enhancements...]
-        // For brevity, I'm not repeating all the existing functions, but they would be included
-        // with similar styling updates to work with the new theme system
-    </script>
-</body>
-</html>
+        // Save section states to localStorage (PRESERVED FROM ORIGINAL)
+        function saveSectionStates() {
+            try {
+                localStorage.setItem('crm-section-states', JSON.stringify(sectionStates));
+            } catch (error) {
+                console.error('Error saving section states:', error);
+            }
+        }
+
+        // Toggle individual section (PRESERVED FROM ORIGINAL)
+        function toggleSection(sectionId) {
+            const content = document.getElementById(`${sectionId}-content`);
+            const header = content?.parentElement?.querySelector('.section-header');
+            
+            if (!content || !header) {
+                console.error(`Section elements not found for: ${sectionId}`);
+                return;
+            }
+            
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                content.classList.add('collapsed');
+                header.classList.add('collapsed');
+                sectionStates[sectionId] = false;
+            } else {
+                content.classList.remove('collapsed');
+                content.classList.add('expanded');
+                header.classList.remove('collapsed');
+                sectionStates[sectionId] = true;
+            }
+            
+            saveSectionStates();
+            
+            // Update toggle all button text
+            const toggleAllText = document.getElementById('toggle-all-text');
+            if (toggleAllText) {
+                const allExpanded = Object.values(sectionStates).every(state => state);
+                toggleAllText.textContent = allExpanded ? 'Collapse All' : 'Expand All';
+            }
+        }
+
+        // Toggle all sections (PRESERVED FROM ORIGINAL)
+        function toggleAllSections() {
+            const allExpanded = Object.values(sectionStates).every(state => state);
+            const newState = !allExpanded;
+            
+            Object.keys(sectionStates).forEach(sectionId => {
+                const content = document.getElementById(`${sectionId}-content`);
+                const header = content?.parentElement?.querySelector('.section-header');
+                
+                if (!content || !header) {
+                    console.warn(`Section elements not found for: ${sectionId}`);
+                    return;
+                }
+                
+                if (newState) {
+                    content.classList.remove('collapsed');
+                    content.classList.add('expanded');
+                    header.classList.remove('collapsed');
+                } else {
+                    content.classList.remove('expanded');
+                    content.classList.add('collapsed');
+                    header.classList.add('collapsed');
+                }
+                
+                sectionStates[sectionId] = newState;
+            });
+            
+            const toggleAllText = document.getElementById('toggle-all-text');
+            if (toggleAllText) {
+                toggleAllText.textContent = newState ? 'Collapse All' : 'Expand All';
+            }
+            saveSectionStates();
+        }
+
+        // Load contacts from database (PRESERVED FROM ORIGINAL)
+        async function loadContacts() {
+            try {
+                console.log('Loading contacts from database...');
+                const response = await fetch('/api/contacts?limit=50&sortBy=createdAt&sortOrder=DESC');
+                const result = await response.json();
+                
+                if (result.success) {
+                    contacts = result.data.contacts;
+                    totalContacts = result.data.pagination.totalContacts;
+                    updateContactCount();
+                    updateAllContactsDisplay();
+                    
+                    // Update any open modal dropdowns
+                    updateOpenModalDropdowns();
+                    
+                    console.log(`Loaded ${contacts.length} contacts`);
+                } else {
+                    throw new Error(result.error || 'Failed to load contacts');
+                }
+            } catch (error) {
+                console.error('Error loading contacts:', error);
+                // Show error in contacts display
+                const contactsList = document.getElementById('all-contacts-list');
+                if (contactsList) {
+                    contactsList.innerHTML = `
+                        <div class="text-center py-8 text-red-500">
+                            <i class="fas fa-exclamation-triangle text-xl mb-2"></i>
+                            <p class="text-sm">Error loading contacts: ${error.message}</p>
+                            <button onclick="loadContacts()" class="mt-2 bg-blue-500 text-white px-3 py-2 rounded text-sm">
+                                Try Again
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Load appointments (PRESERVED FROM ORIGINAL)
+        function loadAppointments() {
+            const today = new Date();
+            
+            // Display today's date
+            const todayDateEl = document.getElementById('today-date-display');
+            if (todayDateEl) {
+                todayDateEl.textContent = today.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+
+            // Enhanced simulated appointments for demo
+            appointments = [
+                {
+                    id: 1,
+                    time: '09:00',
+                    duration: 60,
+                    contact: 'John Doe',
+                    phone: '+1234567890',
+                    purpose: 'Sales consultation - New product demo',
+                    status: 'confirmed'
+                },
+                {
+                    id: 2,
+                    time: '11:30',
+                    duration: 30,
+                    contact: 'Jane Smith',
+                    phone: '+1987654321',
+                    purpose: 'Follow-up meeting - Contract signing',
+                    status: 'confirmed'
+                },
+                {
+                    id: 3,
+                    time: '14:30',
+                    duration: 45,
+                    contact: 'Mike Johnson',
+                    phone: '+1555666777',
+                    purpose: 'Technical support session',
+                    status: 'pending'
+                },
+                {
+                    id: 4,
+                    time: '16:00',
+                    duration: 30,
+                    contact: 'Sarah Wilson',
+                    phone: '+1444555666',
+                    purpose: 'Project review meeting',
+                    status: 'confirmed'
+                }
+            ];
+
+            updateAllAppointmentsDisplay();
+            updateAppointmentsCount();
+        }
+
+        // Load today's messages (PRESERVED FROM ORIGINAL)
+        function loadTodaysMessages() {
+            todaysMessages = [
+                {
+                    id: 1,
+                    contact: 'John Doe',
+                    phone: '+1234567890',
+                    message: 'Thank you for the information about your services. Very helpful!',
+                    time: '09:15 AM',
+                    direction: 'incoming',
+                    status: 'delivered'
+                },
+                {
+                    id: 2,
+                    contact: 'Jane Smith',
+                    phone: '+1987654321',
+                    message: 'Your appointment is confirmed for tomorrow at 2 PM. Looking forward to it!',
+                    time: '11:30 AM',
+                    direction: 'outgoing',
+                    status: 'delivered'
+                },
+                {
+                    id: 3,
+                    contact: 'Mike Johnson',
+                    phone: '+1555666777',
+                    message: 'Can we reschedule our meeting to next week?',
+                    time: '01:45 PM',
+                    direction: 'incoming',
+                    status: 'delivered'
+                },
+                {
+                    id: 4,
+                    contact: 'Sarah Wilson',
+                    phone: '+1444555666',
+                    message: 'Perfect! The project proposal looks great. When can we start?',
+                    time: '03:20 PM',
+                    direction: 'incoming',
+                    status: 'delivered'
+                },
+                {
+                    id: 5,
+                    contact: 'David Brown',
+                    phone: '+1333444555',
+                    message: 'Reminder: Your consultation is scheduled for 4 PM today.',
+                    time: '03:45 PM',
+                    direction: 'outgoing',
+                    status: 'delivered'
+                }
+            ];
+
+            updateMessagesCount();
+            updateAllMessagesDisplay();
+        }
+
+        // Load today's calls (PRESERVED FROM ORIGINAL)
+        function loadTodaysCalls() {
+            todaysCalls = [
+                {
+                    id: 1,
+                    contact: 'John Doe',
+                    phone: '+1234567890',
+                    time: '08:45 AM',
+                    duration: '05:23',
+                    direction: 'incoming',
+                    status: 'completed'
+                },
+                {
+                    id: 2,
+                    contact: 'Jane Smith',
+                    phone: '+1987654321',
+                    time: '10:15 AM',
+                    duration: '12:45',
+                    direction: 'outgoing',
+                    status: 'completed'
+                },
+                {
+                    id: 3,
+                    contact: 'Unknown',
+                    phone: '+1555999888',
+                    time: '12:30 PM',
+                    duration: '00:00',
+                    direction: 'incoming',
+                    status: 'missed'
+                },
+                {
+                    id: 4,
+                    contact: 'Mike Johnson',
+                    phone: '+1555666777',
+                    time: '02:15 PM',
+                    duration: '08:30',
+                    direction: 'outgoing',
+                    status: 'completed'
+                },
+                {
+                    id: 5,
+                    contact: 'Sarah Wilson',
+                    phone: '+1444555666',
+                    time: '04:00 PM',
+                    duration: '15:12',
+                    direction: 'incoming',
+                    status: 'completed'
+                },
+                {
+                    id: 6,
+                    contact: 'David Brown',
+                    phone: '+1333444555',
+                    time: '05:30 PM',
+                    duration: '00:00',
+                    direction: 'outgoing',
+                    status: 'missed'
+                }
+            ];
+
+            updateCallsCount();
+            updateAllCallsDisplay();
+        }
+
+        // Update count displays (PRESERVED FROM ORIGINAL)
+        function updateContactCount() {
+            const contactCountEl = document.getElementById('total-contacts');
+            if (contactCountEl) {
+                contactCountEl.textContent = totalContacts;
+            }
+        }
+
+        function updateAppointmentsCount() {
+            const appointmentsEl = document.getElementById('appointments-today');
+            if (appointmentsEl) {
+                appointmentsEl.textContent = appointments.length;
+            }
+        }
+
+        function updateMessagesCount() {
+            const messagesEl = document.getElementById('messages-today');
+            if (messagesEl) {
+                messagesEl.textContent = todaysMessages.length;
+            }
+        }
+
+        function updateCallsCount() {
+            const callsEl = document.getElementById('calls-today');
+            if (callsEl) {
+                callsEl.textContent = todaysCalls.length;
+            }
+        }
+
+        // Load all today's data (PRESERVED FROM ORIGINAL)
+        function loadTodaysData() {
+            loadTodaysMessages();
+            loadTodaysCalls();
+        }
+
+        // Update dropdowns in any open modals (PRESERVED FROM ORIGINAL)
+        function updateOpenModalDropdowns() {
+            // Check if SMS modal is open
+            if (!document.getElementById('quickSMSModal').classList.contains('hidden')) {
+                populateContactDropdown('quickSMSContactSelect', true, false);
+            }
+            
+            // Check if Email modal is open
+            if (!document.getElementById('quickEmailModal').classList.contains('hidden')) {
+                populateContactDropdown('quickEmailContactSelect', false, true);
+            }
+            
+            // Check if Appointment modal is open
+            if (!document.getElementById('quickCreateAppointmentModal').classList.contains('hidden')) {
+                populateContactDropdown('quickAppointmentContactSelect', false, false);
+            }
+        }
+
+        // Handle appointment form submission (PRESERVED FROM ORIGINAL)
+        function setupAppointmentForm() {
+            const form = document.getElementById('appointment-form');
+            if (!form) return;
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const contactName = document.getElementById('apt-contact-name')?.value;
+                const contactPhone = document.getElementById('apt-contact-phone')?.value;
+                const time = document.getElementById('apt-time')?.value;
+                const duration = document.getElementById('apt-duration')?.value;
+                const purpose = document.getElementById('apt-purpose')?.value;
+                
+                if (!contactName || !contactPhone || !time || !duration || !purpose) {
+                    showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+                    return;
+                }
+                
+                // Add new appointment (simulation)
+                const newAppointment = {
+                    id: appointments.length + 1,
+                    time: time,
+                    duration: parseInt(duration),
+                    contact: contactName,
+                    phone: contactPhone,
+                    purpose: purpose,
+                    status: 'confirmed'
+                };
+                
+                appointments.push(newAppointment);
+                appointments.sort((a, b) => a.time.localeCompare(b.time));
+                
+                // Update display
+                updateAllAppointmentsDisplay();
+                updateAppointmentsCount();
+                
+                // Show success message
+                const status = document.getElementById('appointment-status');
+                if (status) {
+                    status.className = 'mt-3 p-3 rounded bg-green-100 text-green-800';
+                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Appointment booked for ${contactName} at ${time}`;
+                    status.classList.remove('hidden');
+                    
+                    // Clear form
+                    form.reset();
+                    
+                    // Hide success message after 3 seconds
+                    setTimeout(() => {
+                        status.classList.add('hidden');
+                    }, 3000);
+                }
+                
+                showToast(`Appointment booked for ${contactName}`, 'success', '<i class="fas fa-calendar-plus"></i>');
+            });
+        }
+
+        // Add Contact Form Handler (PRESERVED FROM ORIGINAL)
+        function setupContactForm() {
+            const form = document.getElementById('contact-form');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    firstName: document.getElementById('firstName')?.value,
+                    lastName: document.getElementById('lastName')?.value,
+                    phone: document.getElementById('phone')?.value,
+                    email: document.getElementById('email')?.value,
+                    notes: document.getElementById('notes')?.value,
+                    source: 'dashboard'
+                };
+
+                const button = document.getElementById('add-contact-btn');
+                const status = document.getElementById('contact-status');
+                
+                if (!button || !status) return;
+                
+                // Update button state
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding to Database...';
+                
+                try {
+                    const response = await fetch('/api/contacts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Show success message
+                        status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
+                        status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${result.message}`;
+                        status.classList.remove('hidden');
+                        
+                        // Clear form
+                        form.reset();
+                        
+                        //
