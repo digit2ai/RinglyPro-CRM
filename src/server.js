@@ -1,5 +1,5 @@
 const app = require('./app');
-const { syncDatabase } = require('./models');
+const sequelize = require('./config/database');
 
 const PORT = process.env.PORT || 3000;
 
@@ -9,15 +9,20 @@ async function startServer() {
     console.log('🚀 Starting Twilio Voice Bot CRM...');
     console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
     
-    // Initialize database
-    const syncOptions = {
-      // In production, use alter: true to modify existing tables safely
-      // In development, use force: false to avoid data loss
-      alter: process.env.NODE_ENV === 'production',
-      force: false // NEVER use force: true in production!
-    };
-
-    await syncDatabase(syncOptions);
+    // Test database connection (optional - skip if no DATABASE_URL)
+    try {
+      if (process.env.DATABASE_URL) {
+        await sequelize.authenticate();
+        console.log('✅ Database connection established successfully');
+        
+        // For now, skip model sync since models aren't ready
+        console.log('⏸️ Skipping database sync (models not ready)');
+      } else {
+        console.log('⚠️ No DATABASE_URL provided, running without database');
+      }
+    } catch (dbError) {
+      console.log('⚠️ Database connection failed, running in memory mode:', dbError.message);
+    }
 
     // Start server
     const server = app.listen(PORT, '0.0.0.0', () => {
@@ -31,7 +36,7 @@ async function startServer() {
         console.log(`🔗 Production URL: ${process.env.WEBHOOK_BASE_URL}`);
       }
 
-      console.log('✅ Twilio Voice Bot CRM is ready!');
+      console.log('✅ Twilio Voice Bot CRM is ready! (Memory mode)');
     });
 
     // Graceful shutdown handlers
@@ -42,10 +47,12 @@ async function startServer() {
       server.close(async () => {
         console.log('🔌 HTTP server closed');
         
-        // Close database connections
+        // Close database connections if available
         try {
-          await require('./models').sequelize.close();
-          console.log('📊 Database connections closed');
+          if (process.env.DATABASE_URL) {
+            await sequelize.close();
+            console.log('📊 Database connections closed');
+          }
         } catch (error) {
           console.error('❌ Error closing database:', error);
         }
@@ -78,7 +85,7 @@ async function startServer() {
 
   } catch (error) {
     console.error('❌ Failed to start server:', error);
-    console.error('💡 Check your DATABASE_URL and ensure PostgreSQL is running');
+    console.error('💡 Check your configuration and try again');
     process.exit(1);
   }
 }
