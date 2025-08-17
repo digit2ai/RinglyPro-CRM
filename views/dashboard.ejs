@@ -983,6 +983,21 @@
         let messageFilter = 'all';
         let callFilter = 'all';
 
+let formSubmitLocks = new Set();
+
+function preventRapidSubmit(formId, handler) {
+    if (formSubmitLocks.has(formId)) {
+        console.warn(`Form ${formId} is already being submitted`);
+        return;
+    }
+    
+    formSubmitLocks.add(formId);
+    
+    handler().finally(() => {
+        setTimeout(() => formSubmitLocks.delete(formId), 1000);
+    });
+}
+
         // Dark Mode Management
         function initDarkMode() {
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -1322,10 +1337,10 @@
 // 1. FIX: Update the sectionStates object to only include sections that actually exist
 const sectionStates = {
     'add-contact': false,
-    'search-contacts': false, 
+    'search-contacts': false,
     'appointments-today': false,
     'send-sms': false
-    // Remove any reference to 'twilio-test' or other non-existent sections
+    // Removed 'twilio-test' - section doesn't exist
 };
 
 // 2. FIX: Add all missing function definitions 
@@ -1343,25 +1358,17 @@ function handleUpdateEmailContactSelection() {
             nameInput.value = '';
             currentEmailInput.value = '';
             nameInput.focus();
-            nameInput.placeholder = 'Enter contact name';
-            currentEmailInput.placeholder = 'Current email will appear here';
         } else if (selectedValue) {
             try {
                 const contactData = JSON.parse(selectedValue);
                 nameInput.value = contactData.name;
                 currentEmailInput.value = contactData.email || 'No email on file';
-                nameInput.placeholder = `Selected: ${contactData.name}`;
-                currentEmailInput.placeholder = contactData.email || 'No current email';
             } catch (e) {
                 console.error('Error parsing contact data:', e);
-                nameInput.value = '';
-                currentEmailInput.value = '';
             }
         } else {
             nameInput.value = '';
             currentEmailInput.value = '';
-            nameInput.placeholder = 'Contact Name';
-            currentEmailInput.placeholder = 'Current email will appear here';
         }
     });
 }
@@ -1380,25 +1387,17 @@ function handleUpdatePhoneContactSelection() {
             nameInput.value = '';
             currentPhoneInput.value = '';
             nameInput.focus();
-            nameInput.placeholder = 'Enter contact name';
-            currentPhoneInput.placeholder = 'Current phone will appear here';
         } else if (selectedValue) {
             try {
                 const contactData = JSON.parse(selectedValue);
                 nameInput.value = contactData.name;
                 currentPhoneInput.value = contactData.phone || 'No phone on file';
-                nameInput.placeholder = `Selected: ${contactData.name}`;
-                currentPhoneInput.placeholder = contactData.phone || 'No current phone';
             } catch (e) {
                 console.error('Error parsing contact data:', e);
-                nameInput.value = '';
-                currentPhoneInput.value = '';
             }
         } else {
             nameInput.value = '';
             currentPhoneInput.value = '';
-            nameInput.placeholder = 'Contact Name';
-            currentPhoneInput.placeholder = 'Current phone will appear here';
         }
     });
 }
@@ -2116,9 +2115,17 @@ cleanupSectionStates();
             const form = document.getElementById('quickCreateForm');
             if (!form) return;
             
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
+form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Simple duplicate prevention
+    if (formSubmitLocks.has('appointmentForm')) {
+        return;
+    }
+    
+    return preventRapidSubmit('appointmentForm', async () => {
+ }); // Close the preventRapidSubmit function
+
                 const formData = {
                     firstName: document.getElementById('quickFirstName').value,
                     lastName: document.getElementById('quickLastName').value,
