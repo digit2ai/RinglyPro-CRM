@@ -27,6 +27,9 @@
         .collapsed .collapse-btn {
             transform: rotate(-90deg);
         }
+        .section-header:hover {
+            background-color: #f8fafc;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -46,7 +49,7 @@
                         <i class="fas fa-sync-alt mr-1"></i> Refresh
                     </button>
                     <button onclick="toggleAllSections()" class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded-full text-sm transition duration-200">
-                        <i class="fas fa-expand-arrows-alt mr-1"></i> <span id="toggle-all-text">Collapse All</span>
+                        <i class="fas fa-expand-arrows-alt mr-1"></i> <span id="toggle-all-text">Expand All</span>
                     </button>
                 </div>
             </div>
@@ -107,19 +110,33 @@
             </div>
         </div>
 
+        <!-- Tools Section Header -->
+        <div class="mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-tools mr-2 text-gray-600"></i>CRM Tools & Features
+            </h2>
+            <p class="text-gray-600">Click on any tool below to expand and use its features</p>
+        </div>
+
         <!-- Main Content -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Add New Contact Form -->
-            <div class="bg-white rounded-lg shadow-md">
-                <div class="p-4 border-b border-gray-200 flex items-center justify-between cursor-pointer" onclick="toggleSection('add-contact')">
-                    <h2 class="text-xl font-semibold flex items-center">
-                        <i class="fas fa-user-plus mr-2 text-blue-500"></i>Add New Contact
-                    </h2>
-                    <button class="collapse-btn text-gray-500 hover:text-gray-700 transition duration-200">
+            <div class="bg-white rounded-lg shadow-md border-l-4 border-blue-500">
+                <div class="section-header p-4 border-b border-gray-200 flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('add-contact')">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-blue-100 rounded-lg">
+                            <i class="fas fa-user-plus text-blue-600 text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Add New Contact</h3>
+                            <p class="text-sm text-gray-500">Create and save customer contacts to database</p>
+                        </div>
+                    </div>
+                    <button class="collapse-btn text-gray-400 hover:text-gray-600 transition duration-200">
                         <i class="fas fa-chevron-down text-lg"></i>
                     </button>
                 </div>
-                <div id="add-contact-content" class="collapse-content expanded p-6">
+                <div id="add-contact-content" class="collapse-content collapsed p-6">
                     <form id="contact-form" class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <input type="text" id="firstName" placeholder="First Name" required
@@ -134,7 +151,7 @@
                         <textarea id="notes" placeholder="Notes (optional)" rows="3"
                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
                         <button type="submit" id="add-contact-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg transition duration-200">
-                            <i class="fas fa-plus mr-2"></i>Add Contact
+                            <i class="fas fa-plus mr-2"></i>Add Contact to Database
                         </button>
                     </form>
                     <div id="contact-status" class="mt-4 p-4 rounded-lg hidden"></div>
@@ -142,21 +159,27 @@
             </div>
 
             <!-- Contact Search -->
-            <div class="bg-white rounded-lg shadow-md">
-                <div class="p-4 border-b border-gray-200 flex items-center justify-between cursor-pointer" onclick="toggleSection('search-contacts')">
-                    <h2 class="text-xl font-semibold flex items-center">
-                        <i class="fas fa-search mr-2 text-purple-500"></i>Search Contacts
-                    </h2>
-                    <button class="collapse-btn text-gray-500 hover:text-gray-700 transition duration-200">
+            <div class="bg-white rounded-lg shadow-md border-l-4 border-purple-500">
+                <div class="section-header p-4 border-b border-gray-200 flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('search-contacts')">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-purple-100 rounded-lg">
+                            <i class="fas fa-search text-purple-600 text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Search Contacts</h3>
+                            <p class="text-sm text-gray-500">Find contacts by name, phone, or email address</p>
+                        </div>
+                    </div>
+                    <button class="collapse-btn text-gray-400 hover:text-gray-600 transition duration-200">
                         <i class="fas fa-chevron-down text-lg"></i>
                     </button>
                 </div>
-                <div id="search-contacts-content" class="collapse-content expanded p-6">
+                <div id="search-contacts-content" class="collapse-content collapsed p-6">
                     <div class="space-y-4">
                         <input type="text" id="search-input" placeholder="Search by name, phone, or email..." 
                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
                         <button onclick="searchContacts()" class="w-full bg-purple-500 hover:bg-purple-600 text-white px-4 py-3 rounded-lg transition duration-200">
-                            <i class="fas fa-search mr-2"></i>Search
+                            <i class="fas fa-search mr-2"></i>Search Database
                         </button>
                     </div>
                     <div id="search-results" class="mt-4 space-y-2 hidden">
@@ -167,23 +190,29 @@
             </div>
 
             <!-- Send Test SMS -->
-            <div class="bg-white rounded-lg shadow-md">
-                <div class="p-4 border-b border-gray-200 flex items-center justify-between cursor-pointer" onclick="toggleSection('send-sms')">
-                    <h2 class="text-xl font-semibold flex items-center">
-                        <i class="fas fa-paper-plane mr-2 text-green-500"></i>Send Test SMS
-                    </h2>
-                    <button class="collapse-btn text-gray-500 hover:text-gray-700 transition duration-200">
+            <div class="bg-white rounded-lg shadow-md border-l-4 border-green-500">
+                <div class="section-header p-4 border-b border-gray-200 flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('send-sms')">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-green-100 rounded-lg">
+                            <i class="fas fa-paper-plane text-green-600 text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Send Test SMS</h3>
+                            <p class="text-sm text-gray-500">Send SMS messages via Twilio integration</p>
+                        </div>
+                    </div>
+                    <button class="collapse-btn text-gray-400 hover:text-gray-600 transition duration-200">
                         <i class="fas fa-chevron-down text-lg"></i>
                     </button>
                 </div>
-                <div id="send-sms-content" class="collapse-content expanded p-6">
+                <div id="send-sms-content" class="collapse-content collapsed p-6">
                     <div class="space-y-4">
                         <input type="tel" id="test-phone" placeholder="+1234567890" 
                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
                         <textarea id="test-message" placeholder="Enter your test message..." 
                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent h-24"></textarea>
                         <button id="send-sms" class="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg transition duration-200">
-                            <i class="fas fa-paper-plane mr-2"></i>Send SMS
+                            <i class="fas fa-paper-plane mr-2"></i>Send SMS via Twilio
                         </button>
                     </div>
                     <div id="sms-status" class="mt-4 p-4 rounded-lg hidden"></div>
@@ -191,18 +220,24 @@
             </div>
 
             <!-- Test Twilio Connection -->
-            <div class="bg-white rounded-lg shadow-md">
-                <div class="p-4 border-b border-gray-200 flex items-center justify-between cursor-pointer" onclick="toggleSection('twilio-test')">
-                    <h2 class="text-xl font-semibold flex items-center">
-                        <i class="fas fa-plug mr-2 text-orange-500"></i>Twilio Connection Test
-                    </h2>
-                    <button class="collapse-btn text-gray-500 hover:text-gray-700 transition duration-200">
+            <div class="bg-white rounded-lg shadow-md border-l-4 border-orange-500">
+                <div class="section-header p-4 border-b border-gray-200 flex items-center justify-between cursor-pointer transition duration-200" onclick="toggleSection('twilio-test')">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-orange-100 rounded-lg">
+                            <i class="fas fa-plug text-orange-600 text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Twilio Connection Test</h3>
+                            <p class="text-sm text-gray-500">Verify Twilio API connection and credentials</p>
+                        </div>
+                    </div>
+                    <button class="collapse-btn text-gray-400 hover:text-gray-600 transition duration-200">
                         <i class="fas fa-chevron-down text-lg"></i>
                     </button>
                 </div>
-                <div id="twilio-test-content" class="collapse-content expanded p-6">
+                <div id="twilio-test-content" class="collapse-content collapsed p-6">
                     <button id="test-twilio" class="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg transition duration-200 mb-4">
-                        <i class="fas fa-play mr-2"></i>Test Connection
+                        <i class="fas fa-play mr-2"></i>Test Twilio Connection
                     </button>
                     <div id="twilio-status" class="p-4 rounded-lg hidden"></div>
                 </div>
@@ -210,29 +245,35 @@
         </div>
 
         <!-- Webhook URLs - Always Visible -->
-        <div class="mt-8 bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold mb-4">
-                <i class="fas fa-link mr-2"></i>Webhook URLs
-            </h2>
+        <div class="mt-8 bg-white rounded-lg shadow-md p-6 border-l-4 border-gray-500">
+            <div class="flex items-center mb-4">
+                <div class="p-2 bg-gray-100 rounded-lg mr-3">
+                    <i class="fas fa-link text-gray-600 text-lg"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800">Webhook URLs</h2>
+                    <p class="text-sm text-gray-500">Copy these URLs for your Twilio console configuration</p>
+                </div>
+            </div>
             <div class="space-y-3">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Voice Webhook:</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Voice Webhook URL:</label>
                     <div class="flex items-center">
                         <input type="text" id="voice-webhook" readonly 
                                class="flex-1 p-2 border border-gray-300 rounded-l-lg bg-gray-50 text-sm">
                         <button onclick="copyToClipboard('voice-webhook')" 
-                                class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-r-lg transition duration-200">
+                                class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-r-lg transition duration-200" title="Copy to clipboard">
                             <i class="fas fa-copy"></i>
                         </button>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">SMS Webhook:</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">SMS Webhook URL:</label>
                     <div class="flex items-center">
                         <input type="text" id="sms-webhook" readonly 
                                class="flex-1 p-2 border border-gray-300 rounded-l-lg bg-gray-50 text-sm">
                         <button onclick="copyToClipboard('sms-webhook')" 
-                                class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-r-lg transition duration-200">
+                                class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-r-lg transition duration-200" title="Copy to clipboard">
                             <i class="fas fa-copy"></i>
                         </button>
                     </div>
@@ -241,13 +282,19 @@
         </div>
 
         <!-- Contact List - Always Visible -->
-        <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+        <div class="mt-8 bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold">
-                    <i class="fas fa-address-book mr-2"></i>Recent Contacts
-                </h2>
-                <button onclick="loadContacts()" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition duration-200">
-                    <i class="fas fa-sync-alt mr-1"></i> Refresh
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg mr-3">
+                        <i class="fas fa-address-book text-blue-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800">Recent Contacts</h2>
+                        <p class="text-sm text-gray-500">Your latest contacts from the database</p>
+                    </div>
+                </div>
+                <button onclick="loadContacts()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition duration-200">
+                    <i class="fas fa-sync-alt mr-1"></i> Refresh List
                 </button>
             </div>
             <div id="contacts-list" class="space-y-3">
@@ -270,9 +317,9 @@
         let contacts = [];
         let totalContacts = 0;
 
-        // Collapsible section management
+        // Collapsible section management - ALL COLLAPSED BY DEFAULT
         const sectionStates = {
-            'add-contact': true,
+            'add-contact': false,
             'search-contacts': false,
             'send-sms': false,
             'twilio-test': false
@@ -288,7 +335,7 @@
             // Apply saved states
             Object.keys(sectionStates).forEach(sectionId => {
                 const content = document.getElementById(`${sectionId}-content`);
-                const header = content.parentElement.querySelector('.cursor-pointer');
+                const header = content.parentElement.querySelector('.section-header');
                 
                 if (sectionStates[sectionId]) {
                     content.classList.add('expanded');
@@ -300,6 +347,10 @@
                     header.classList.add('collapsed');
                 }
             });
+            
+            // Update toggle all button text
+            const allExpanded = Object.values(sectionStates).every(state => state);
+            document.getElementById('toggle-all-text').textContent = allExpanded ? 'Collapse All' : 'Expand All';
         }
 
         // Save section states to localStorage
@@ -310,7 +361,7 @@
         // Toggle individual section
         function toggleSection(sectionId) {
             const content = document.getElementById(`${sectionId}-content`);
-            const header = content.parentElement.querySelector('.cursor-pointer');
+            const header = content.parentElement.querySelector('.section-header');
             
             if (content.classList.contains('expanded')) {
                 content.classList.remove('expanded');
@@ -325,6 +376,10 @@
             }
             
             saveSectionStates();
+            
+            // Update toggle all button text
+            const allExpanded = Object.values(sectionStates).every(state => state);
+            document.getElementById('toggle-all-text').textContent = allExpanded ? 'Collapse All' : 'Expand All';
         }
 
         // Toggle all sections
@@ -334,7 +389,7 @@
             
             Object.keys(sectionStates).forEach(sectionId => {
                 const content = document.getElementById(`${sectionId}-content`);
-                const header = content.parentElement.querySelector('.cursor-pointer');
+                const header = content.parentElement.querySelector('.section-header');
                 
                 if (newState) {
                     content.classList.remove('collapsed');
@@ -401,7 +456,7 @@
             
             // Update button state
             button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding...';
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding to Database...';
             
             try {
                 const response = await fetch('/api/contacts', {
@@ -435,7 +490,7 @@
             } finally {
                 // Reset button
                 button.disabled = false;
-                button.innerHTML = '<i class="fas fa-plus mr-2"></i>Add Contact';
+                button.innerHTML = '<i class="fas fa-plus mr-2"></i>Add Contact to Database';
             }
         });
 
@@ -453,7 +508,7 @@
                     const searchList = document.getElementById('search-contacts-list');
                     
                     if (result.data.contacts.length === 0) {
-                        searchList.innerHTML = '<p class="text-gray-500 text-center py-4">No contacts found</p>';
+                        searchList.innerHTML = '<p class="text-gray-500 text-center py-4">No contacts found matching your search</p>';
                     } else {
                         searchList.innerHTML = result.data.contacts.map(contact => `
                             <div class="border border-gray-200 rounded-lg p-3 flex items-center justify-between hover:bg-gray-50 transition duration-200">
@@ -462,10 +517,10 @@
                                     <p class="text-sm text-gray-600">${contact.phone} • ${contact.email}</p>
                                 </div>
                                 <div class="flex space-x-2">
-                                    <button onclick="callContact('${contact.phone}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600">
+                                    <button onclick="callContact('${contact.phone}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600" title="Call ${contact.fullName}">
                                         <i class="fas fa-phone"></i>
                                     </button>
-                                    <button onclick="textContact('${contact.phone}')" class="bg-green-500 text-white px-2 py-1 rounded text-sm hover:bg-green-600">
+                                    <button onclick="textContact('${contact.phone}')" class="bg-green-500 text-white px-2 py-1 rounded text-sm hover:bg-green-600" title="Text ${contact.fullName}">
                                         <i class="fas fa-sms"></i>
                                     </button>
                                 </div>
@@ -492,7 +547,7 @@
                     <div class="text-gray-500 text-center py-8">
                         <i class="fas fa-users text-4xl mb-4 opacity-50"></i>
                         <p class="text-lg">No contacts found</p>
-                        <p class="text-sm">Add your first contact using the form above!</p>
+                        <p class="text-sm">Add your first contact using the "Add New Contact" tool above!</p>
                     </div>
                 `;
                 return;
@@ -616,7 +671,7 @@
             const status = document.getElementById('twilio-status');
             
             button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Testing...';
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Testing Connection...';
             
             try {
                 const response = await fetch('/api/messages/test');
@@ -624,18 +679,18 @@
                 
                 if (data.success) {
                     status.className = 'p-4 rounded-lg bg-green-100 text-green-800';
-                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Connected! Account: ${data.account.friendlyName} (${data.account.status})`;
+                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>✅ Connected! Account: ${data.account.friendlyName} (${data.account.status})`;
                 } else {
                     throw new Error(data.error || 'Connection failed');
                 }
             } catch (error) {
                 status.className = 'p-4 rounded-lg bg-red-100 text-red-800';
-                status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>❌ Error: ${error.message}`;
             }
             
             status.classList.remove('hidden');
             button.disabled = false;
-            button.innerHTML = '<i class="fas fa-play mr-2"></i>Test Connection';
+            button.innerHTML = '<i class="fas fa-play mr-2"></i>Test Twilio Connection';
         });
 
         // Send test SMS
@@ -653,7 +708,7 @@
             }
             
             button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending via Twilio...';
             
             try {
                 const response = await fetch('/api/messages/sms', {
@@ -668,7 +723,7 @@
                 
                 if (data.success) {
                     status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
-                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>SMS sent successfully! Message SID: ${data.messageSid}`;
+                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>✅ SMS sent successfully! Message SID: ${data.messageSid}`;
                     document.getElementById('test-phone').value = '';
                     document.getElementById('test-message').value = '';
                 } else {
@@ -676,12 +731,12 @@
                 }
             } catch (error) {
                 status.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
-                status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>❌ Error: ${error.message}`;
             }
             
             status.classList.remove('hidden');
             button.disabled = false;
-            button.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send SMS';
+            button.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send SMS via Twilio';
         });
 
         // Initialize app
