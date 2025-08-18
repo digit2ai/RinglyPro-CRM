@@ -1,5 +1,6 @@
 const app = require('./app');
 const sequelize = require('./config/database');
+const { syncDatabase } = require('./models'); // IMPORT DATABASE SYNC
 
 const PORT = process.env.PORT || 3000;
 
@@ -9,14 +10,17 @@ async function startServer() {
     console.log('🚀 Starting Twilio Voice Bot CRM...');
     console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
     
-    // Test database connection (optional - skip if no DATABASE_URL)
+    // Test database connection and sync models
     try {
       if (process.env.DATABASE_URL) {
         await sequelize.authenticate();
         console.log('✅ Database connection established successfully');
         
-        // For now, skip model sync since models aren't ready
-        console.log('⏸️ Skipping database sync (models not ready)');
+        // ENABLE DATABASE SYNC - MODELS ARE READY!
+        console.log('🔄 Synchronizing database models...');
+        await syncDatabase();
+        console.log('✅ Database models synchronized successfully');
+        console.log('📊 SMS history will be stored in PostgreSQL');
       } else {
         console.log('⚠️ No DATABASE_URL provided, running without database');
       }
@@ -36,7 +40,12 @@ async function startServer() {
         console.log(`🔗 Production URL: ${process.env.WEBHOOK_BASE_URL}`);
       }
 
-      console.log('✅ Twilio Voice Bot CRM is ready! (Memory mode)');
+      // CHECK IF DATABASE MODE IS ACTIVE
+      if (process.env.DATABASE_URL) {
+        console.log('✅ Twilio Voice Bot CRM is ready! (Database mode)');
+      } else {
+        console.log('✅ Twilio Voice Bot CRM is ready! (Memory mode)');
+      }
     });
 
     // Graceful shutdown handlers
