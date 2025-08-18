@@ -1,14 +1,24 @@
+// src/models/index.js
 const sequelize = require('../config/database');
 const Contact = require('./Contact');
+const Message = require('./Message');  // ADD THIS LINE
 
-// Define model associations here when you add more models
-// Example:
-// Contact.hasMany(Appointment);
-// Appointment.belongsTo(Contact);
+// Define model associations
+Contact.hasMany(Message, {
+  foreignKey: 'contactId',
+  as: 'messages',
+  onDelete: 'SET NULL'
+});
+
+Message.belongsTo(Contact, {
+  foreignKey: 'contactId',
+  as: 'contact'
+});
 
 // Initialize all models
 const models = {
   Contact,
+  Message,  // ADD THIS LINE
   sequelize
 };
 
