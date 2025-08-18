@@ -7,6 +7,9 @@ require('dotenv').config();
 
 const app = express();
 
+// ADD THIS LINE - Trust proxy for Render deployment
+app.set('trust proxy', true);
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: false // Allow inline scripts for dashboard
