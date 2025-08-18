@@ -682,6 +682,87 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
+<!-- EDIT APPOINTMENT MODAL -->
+<div id="editAppointmentModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="card rounded-lg p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Edit Appointment</h3>
+            <button onclick="closeModal('editAppointmentModal')" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="editAppointmentForm" class="space-y-4">
+            <input type="hidden" id="editAppointmentId">
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Appointment Title</label>
+                <input type="text" id="editAppointmentTitle" placeholder="Appointment Title" required
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Contact Name</label>
+                <input type="text" id="editAppointmentContact" placeholder="Contact Name" required
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                    <input type="date" id="editAppointmentDate" required
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                    <input type="time" id="editAppointmentTime" required
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Duration</label>
+                    <select id="editAppointmentDuration" required
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select Duration</option>
+                        <option value="15">15 minutes</option>
+                        <option value="30">30 minutes</option>
+                        <option value="45">45 minutes</option>
+                        <option value="60">1 hour</option>
+                        <option value="90">1.5 hours</option>
+                        <option value="120">2 hours</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select id="editAppointmentStatus" required
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="confirmed">Confirmed</option>
+                        <option value="pending">Pending</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex space-x-3 mt-6">
+                <button type="submit" 
+                        style="background-color: #3b82f6 !important; color: white !important;"
+                        class="flex-1 px-4 py-3 rounded-lg font-medium transition duration-200 focus:outline-none hover:bg-blue-600">
+                    <i class="fas fa-save mr-2"></i>Update Appointment
+                </button>
+                <button type="button" onclick="closeModal('editAppointmentModal')" 
+                        style="background-color: #d1d5db !important; color: #374151 !important;"
+                        class="flex-1 px-4 py-3 rounded-lg font-medium transition duration-200 focus:outline-none hover:bg-gray-400">
+                    <i class="fas fa-times mr-2"></i>Cancel
+                </button>
+            </div>
+        </form>
+        
+        <div id="editAppointmentFormStatus" class="mt-4 p-3 rounded hidden"></div>
+    </div>
+</div>
+
 <!-- Additional CSS to ensure button visibility -->
 <style>
 /* Force button visibility - override any conflicting styles */
@@ -1152,6 +1233,132 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+// NEW: Delete appointment function
+function deleteAppointment(appointmentId) {
+    const appointment = appointments.find(apt => apt.id === appointmentId);
+    if (!appointment) {
+        showToast('Appointment not found', 'error', '<i class="fas fa-exclamation-circle"></i>');
+        return;
+    }
+    
+    // Show confirmation dialog
+    if (confirm(`Are you sure you want to delete the appointment "${appointment.purpose}" with ${appointment.contact}?`)) {
+        // Remove from appointments array
+        appointments = appointments.filter(apt => apt.id !== appointmentId);
+        
+        // Update display
+        updateAllAppointmentsDisplay();
+        updateAppointmentsCount();
+        
+        showToast(`Appointment "${appointment.purpose}" deleted successfully`, 'success', '<i class="fas fa-trash"></i>');
+        
+        console.log(`Deleted appointment: ${appointment.purpose} with ${appointment.contact}`);
+    }
+}
+
+// NEW: Edit appointment function
+function editAppointment(appointmentId) {
+    const appointment = appointments.find(apt => apt.id === appointmentId);
+    if (!appointment) {
+        showToast('Appointment not found', 'error', '<i class="fas fa-exclamation-circle"></i>');
+        return;
+    }
+    
+    // Populate the edit form with current appointment data
+    document.getElementById('editAppointmentId').value = appointment.id;
+    document.getElementById('editAppointmentTitle').value = appointment.purpose;
+    document.getElementById('editAppointmentContact').value = appointment.contact;
+    document.getElementById('editAppointmentDate').value = getTodayDate(); // Assuming today's appointments
+    document.getElementById('editAppointmentTime').value = appointment.time;
+    document.getElementById('editAppointmentDuration').value = appointment.duration;
+    document.getElementById('editAppointmentStatus').value = appointment.status;
+    
+    // Show the edit modal
+    openModal('editAppointmentModal');
+}
+
+// Helper function to get today's date in YYYY-MM-DD format
+function getTodayDate() {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+}
+
+// NEW: Setup edit appointment form handler
+function setupEditAppointmentForm() {
+    const form = document.getElementById('editAppointmentForm');
+    if (!form) return;
+    
+    // Remove existing listeners to prevent duplicates
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    
+    newForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const appointmentId = parseInt(document.getElementById('editAppointmentId').value);
+        const title = document.getElementById('editAppointmentTitle').value;
+        const contact = document.getElementById('editAppointmentContact').value;
+        const date = document.getElementById('editAppointmentDate').value;
+        const time = document.getElementById('editAppointmentTime').value;
+        const duration = document.getElementById('editAppointmentDuration').value;
+        const status = document.getElementById('editAppointmentStatus').value;
+        
+        if (!title || !contact || !date || !time || !duration) {
+            showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+            return;
+        }
+        
+        const submitButton = newForm.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        
+        try {
+            // Disable submit button
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
+            
+            // Find and update the appointment
+            const appointmentIndex = appointments.findIndex(apt => apt.id === appointmentId);
+            if (appointmentIndex === -1) {
+                throw new Error('Appointment not found');
+            }
+            
+            // Update appointment data
+            appointments[appointmentIndex] = {
+                ...appointments[appointmentIndex],
+                purpose: title,
+                contact: contact,
+                time: time,
+                duration: parseInt(duration),
+                status: status,
+                updatedAt: new Date().toISOString()
+            };
+            
+            // Sort appointments by time
+            appointments.sort((a, b) => a.time.localeCompare(b.time));
+            
+            // Update display
+            updateAllAppointmentsDisplay();
+            updateAppointmentsCount();
+            
+            showToast(`Appointment "${title}" updated successfully`, 'success', '<i class="fas fa-edit"></i>');
+            
+            // Close modal
+            closeModal('editAppointmentModal');
+            
+            console.log(`Updated appointment:`, appointments[appointmentIndex]);
+            
+        } catch (error) {
+            console.error('Error updating appointment:', error);
+            showToast('Failed to update appointment: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
+        } finally {
+            // Re-enable submit button
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+        }
+    });
+}
+
         // Toast Notification System
 // Improved Toast Notification System with timing control
 function showToast(message, type = 'info', icon = '', duration = 5000) {
@@ -1331,48 +1538,54 @@ function clearAllToasts() {
         }
         
         // Update All Appointments Display
-        function updateAllAppointmentsDisplay() {
-            const listElement = document.getElementById('all-appointments-list');
-            if (!listElement) return;
-            
-            if (appointments.length === 0) {
-                listElement.innerHTML = `
-                    <div class="text-center py-8">
-                        <i class="fas fa-calendar text-gray-400 text-xl mb-2"></i>
-                        <p class="text-gray-500 text-sm">No appointments today</p>
+function updateAllAppointmentsDisplay() {
+    const listElement = document.getElementById('all-appointments-list');
+    if (!listElement) return;
+    
+    if (appointments.length === 0) {
+        listElement.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-calendar text-gray-400 text-xl mb-2"></i>
+                <p class="text-gray-500 text-sm">No appointments today</p>
+                <button onclick="showQuickCreateAppointment()" class="mt-2 bg-green-500 text-white px-3 py-2 rounded text-sm">
+                    <i class="fas fa-plus mr-1"></i> Add Appointment
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    listElement.innerHTML = appointments.map(apt => `
+        <div class="border border-gray-200 rounded-lg p-2 hover:bg-gray-50 transition duration-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <div class="text-center">
+                        <div class="text-xs sm:text-sm font-bold text-green-600">${apt.time}</div>
+                        <div class="text-xs text-gray-500">${apt.duration}min</div>
                     </div>
-                `;
-                return;
-            }
-            
-            listElement.innerHTML = appointments.map(apt => `
-                <div class="border border-gray-200 rounded-lg p-2 hover:bg-gray-50 transition duration-200">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-2">
-                            <div class="text-center">
-                                <div class="text-xs sm:text-sm font-bold text-green-600">${apt.time}</div>
-                                <div class="text-xs text-gray-500">${apt.duration}min</div>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h4 class="font-semibold text-xs sm:text-sm truncate">${apt.contact}</h4>
-                                <p class="text-xs text-gray-600 truncate">${apt.purpose}</p>
-                                <span class="inline-block px-1.5 py-0.5 rounded-full text-xs ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                                    ${apt.status}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="flex space-x-1">
-                            <button onclick="callContact('${apt.phone}')" class="bg-green-500 text-white px-1.5 py-1 rounded text-xs hover:bg-green-600" title="Call">
-                                <i class="fas fa-phone"></i>
-                            </button>
-                            <button onclick="textContact('${apt.phone}')" class="bg-blue-500 text-white px-1.5 py-1 rounded text-xs hover:bg-blue-600" title="Text">
-                                <i class="fas fa-sms"></i>
-                            </button>
-                        </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-semibold text-xs sm:text-sm truncate">${apt.contact}</h4>
+                        <p class="text-xs text-gray-600 truncate">${apt.purpose}</p>
+                        <span class="inline-block px-1.5 py-0.5 rounded-full text-xs ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : apt.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}">
+                            ${apt.status}
+                        </span>
                     </div>
                 </div>
-            `).join('');
-        }
+                <div class="flex space-x-1">
+                    <button onclick="editAppointment(${apt.id})" class="bg-blue-500 text-white px-1.5 py-1 rounded text-xs hover:bg-blue-600" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="deleteAppointment(${apt.id})" class="bg-red-500 text-white px-1.5 py-1 rounded text-xs hover:bg-red-600" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button onclick="callContact('${apt.phone || ''}')" class="bg-green-500 text-white px-1.5 py-1 rounded text-xs hover:bg-green-600" title="Call">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
         
         // Update All Messages Display
         function updateAllMessagesDisplay() {
@@ -1867,17 +2080,24 @@ function clearAllToasts() {
             }
         }
 
-        function updateAppointmentsCount() {
-            const appointmentsEl = document.getElementById('appointments-today');
-            if (appointmentsEl) {
-                appointmentsEl.textContent = appointments.length;
-            }
-            // Update KPI too
-            const kpiEl = document.getElementById('kpi-appointments');
-            if (kpiEl) {
-                kpiEl.textContent = appointments.length;
-            }
-        }
+// UPDATED: Better appointment count display
+function updateAppointmentsCount() {
+    const appointmentsEl = document.getElementById('appointments-today');
+    if (appointmentsEl) {
+        appointmentsEl.textContent = appointments.length;
+    }
+    // Update KPI too
+    const kpiEl = document.getElementById('kpi-appointments');
+    if (kpiEl) {
+        kpiEl.textContent = appointments.length;
+    }
+    
+    // Update the appointments section header to show count
+    const appointmentsHeader = document.querySelector('.border-green-500 .text-gray-600');
+    if (appointmentsHeader && appointments.length > 0) {
+        appointmentsHeader.innerHTML = `Count: <span class="font-bold">${appointments.length}</span>`;
+    }
+}
 
         function updateMessagesCount() {
             const messagesEl = document.getElementById('messages-today');
@@ -2320,10 +2540,79 @@ function clearAllToasts() {
             document.getElementById('quickAppointmentTime').value = now.toTimeString().slice(0, 5);
         }
         
-        function showQuickUpdateAppointment() {
-            // For now, show today's appointments - can be enhanced later
-            showTodaysAppointments();
-        }
+// NEW/UPDATED: Quick update appointment function (shows today's appointments for editing)
+function showQuickUpdateAppointment() {
+    if (appointments.length === 0) {
+        showToast('No appointments to update', 'info', '<i class="fas fa-info-circle"></i>');
+        return;
+    }
+    
+    // Show a selection modal for appointments to update
+    showAppointmentSelectionModal();
+}
+
+// NEW: Show appointment selection modal
+function showAppointmentSelectionModal() {
+    // Create the modal content dynamically
+    const modalHtml = `
+        <div id="appointmentSelectionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div class="card rounded-lg p-6 w-full max-w-lg mx-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Select Appointment to Edit</h3>
+                    <button onclick="closeAppointmentSelectionModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600">Click on an appointment to edit it:</p>
+                </div>
+                
+                <div id="appointmentSelectionList" class="space-y-2 max-h-64 overflow-y-auto">
+                    ${appointments.map(apt => `
+                        <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition duration-200" onclick="selectAppointmentToEdit(${apt.id})">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-semibold">${apt.purpose}</h4>
+                                    <p class="text-sm text-gray-600">${apt.contact} • ${apt.time} • ${apt.duration}min</p>
+                                    <span class="inline-block px-2 py-1 rounded-full text-xs ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : apt.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}">
+                                        ${apt.status}
+                                    </span>
+                                </div>
+                                <i class="fas fa-edit text-blue-500"></i>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="mt-4 flex justify-end">
+                    <button onclick="closeAppointmentSelectionModal()" 
+                            style="background-color: #d1d5db !important; color: #374151 !important;"
+                            class="px-4 py-2 rounded-lg font-medium transition duration-200 hover:bg-gray-400">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// NEW: Close appointment selection modal
+function closeAppointmentSelectionModal() {
+    const modal = document.getElementById('appointmentSelectionModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// NEW: Select appointment to edit from the selection modal
+function selectAppointmentToEdit(appointmentId) {
+    closeAppointmentSelectionModal();
+    editAppointment(appointmentId);
+}
 
         function showTodaysAppointments() {
             // Scroll to appointments section
@@ -3825,6 +4114,7 @@ function setupQuickCreateAppointmentForm() {
             setupAppointmentForm();
             setupSearchInput();
             setupSMSForm();
+            setupEditAppointmentForm();
             
             // Initialize quick action forms
             setupQuickCreateForm();
