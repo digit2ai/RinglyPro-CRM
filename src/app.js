@@ -8,7 +8,7 @@ require('dotenv').config();
 const app = express();
 
 // ADD THIS LINE - Trust proxy for Render deployment
-app.set('trust proxy', true);
+app.set('trust proxy', 1); // Trust first proxy (Render)
 
 // Security middleware
 app.use(helmet({
