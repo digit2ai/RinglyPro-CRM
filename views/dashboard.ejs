@@ -624,48 +624,50 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
 
         <!-- Quick Update Email Modal -->
-        <div id="quickUpdateEmailModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div class="card rounded-lg p-6 w-full max-w-md mx-4">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">Update Contact Email</h3>
-                    <button onclick="closeModal('quickUpdateEmailModal')" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <form id="quickUpdateEmailForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Contact</label>
-                        <select id="quickUpdateEmailContactSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
-                            <option value="">Choose a contact to update...</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Or Enter Contact Name</label>
-                        <input type="text" id="quickUpdateEmailName" placeholder="Contact Name" 
-                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Current Email</label>
-                        <input type="email" id="quickUpdateEmailCurrent" placeholder="Current email will appear here" readonly
-                               class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">New Email Address</label>
-                        <input type="email" id="quickUpdateEmailValue" placeholder="Enter new email address" required
-                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
-                    </div>
-                    <div class="flex space-x-3">
-                        <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg">
-                            <i class="fas fa-save mr-2"></i>Update Email
-                        </button>
-                        <button type="button" onclick="closeModal('quickUpdateEmailModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-                <div id="quickUpdateEmailStatus" class="mt-4 p-3 rounded hidden"></div>
-            </div>
+<!-- Fixed Quick Update Email Modal with proper submit button -->
+<div id="quickUpdateEmailModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="card rounded-lg p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Update Contact Email</h3>
+            <button onclick="closeModal('quickUpdateEmailModal')" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
+        <form id="quickUpdateEmailForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Select Contact</label>
+                <select id="quickUpdateEmailContactSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                    <option value="">Choose a contact to update...</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Or Enter Contact Name</label>
+                <input type="text" id="quickUpdateEmailName" placeholder="Contact Name" 
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Current Email</label>
+                <input type="email" id="quickUpdateEmailCurrent" placeholder="Current email will appear here" readonly
+                       class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">New Email Address</label>
+                <input type="email" id="quickUpdateEmailValue" placeholder="Enter new email address" required
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+            </div>
+            <!-- FIXED: Added proper submit button container -->
+            <div class="flex space-x-3 pt-2">
+                <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg font-medium transition duration-200">
+                    <i class="fas fa-save mr-2"></i>Update Email
+                </button>
+                <button type="button" onclick="closeModal('quickUpdateEmailModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg font-medium transition duration-200">
+                    Cancel
+                </button>
+            </div>
+        </form>
+        <div id="quickUpdateEmailStatus" class="mt-4 p-3 rounded hidden"></div>
+    </div>
+</div>>
 
         <!-- Quick Update Phone Modal -->
         <div id="quickUpdatePhoneModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
@@ -1091,32 +1093,83 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Toast Notification System
-        function showToast(message, type = 'info', icon = '') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            
-            toast.className = `toast ${type}`;
-            toast.innerHTML = `
-                <div class="flex items-center">
-                    ${icon ? `<span class="mr-2">${icon}</span>` : ''}
-                    <span class="flex-1">${message}</span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            `;
-            
-            container.appendChild(toast);
-            
-            // Trigger animation
-            setTimeout(() => toast.classList.add('show'), 100);
-            
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 5000);
+// Improved Toast Notification System with timing control
+function showToast(message, type = 'info', icon = '', duration = 5000) {
+    const container = document.getElementById('toastContainer');
+    if (!container) {
+        console.warn('Toast container not found');
+        return;
+    }
+    
+    // Prevent duplicate toasts with same message
+    const existingToasts = container.querySelectorAll('.toast');
+    for (let toast of existingToasts) {
+        if (toast.querySelector('span:last-child').textContent === message) {
+            console.log('Duplicate toast prevented:', message);
+            return;
         }
+    }
+    
+    const toast = document.createElement('div');
+    const toastId = 'toast-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    toast.id = toastId;
+    
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <div class="flex items-center">
+            ${icon ? `<span class="mr-2">${icon}</span>` : ''}
+            <span class="flex-1">${message}</span>
+            <button onclick="removeToast('${toastId}')" class="ml-2 text-gray-400 hover:text-gray-600 focus:outline-none">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => {
+        if (document.getElementById(toastId)) {
+            toast.classList.add('show');
+        }
+    }, 100);
+    
+    // Auto remove after specified duration
+    setTimeout(() => {
+        removeToast(toastId);
+    }, duration);
+    
+    console.log(`Toast shown: [${type.toUpperCase()}] ${message}`);
+}
+
+// Helper function to remove specific toast
+function removeToast(toastId) {
+    const toast = document.getElementById(toastId);
+    if (toast) {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 300);
+    }
+}
+
+// Clear all toasts
+function clearAllToasts() {
+    const container = document.getElementById('toastContainer');
+    if (container) {
+        const toasts = container.querySelectorAll('.toast');
+        toasts.forEach(toast => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
+        });
+    }
+}
 
         // Export Functionality
         function exportContacts() {
@@ -2858,6 +2911,418 @@ cleanupSectionStates();
         }
         
 // REPLACE your existing setupQuickCreateAppointmentForm() function with this fixed version:
+
+// ==================== FIXED FUNCTIONS FOR RINGLYPRO CRM ====================
+
+// 1. FIX: Add debouncer to prevent duplicate API calls
+function createDebouncer(delay) {
+    let timeoutId;
+    let isProcessing = false;
+    
+    return function(func) {
+        return new Promise((resolve, reject) => {
+            if (isProcessing) {
+                console.warn('Operation already in progress, skipping duplicate request');
+                return reject(new Error('Duplicate request prevented'));
+            }
+            
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(async () => {
+                if (isProcessing) return;
+                
+                isProcessing = true;
+                try {
+                    const result = await func();
+                    resolve(result);
+                } catch (error) {
+                    reject(error);
+                } finally {
+                    isProcessing = false;
+                }
+            }, delay);
+        });
+    };
+}
+
+// Create debouncer instances
+const debouncedContactCreate = createDebouncer(1000);
+const debouncedEmailUpdate = createDebouncer(1000);
+const debouncedPhoneUpdate = createDebouncer(1000);
+
+// 2. FIX: Updated setupQuickCreateForm with debouncing to prevent duplicates
+function setupQuickCreateForm() {
+    const form = document.getElementById('quickCreateForm');
+    if (!form) return;
+    
+    // Remove existing listeners to prevent duplicates
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    
+    newForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Use debouncer to prevent duplicate submissions
+        return debouncedContactCreate(async () => {
+            const submitButton = newForm.querySelector('button[type="submit"]');
+            
+            // Prevent double submission
+            if (submitButton && submitButton.disabled) {
+                console.warn('Form already submitting, ignoring duplicate');
+                return;
+            }
+            
+            const formData = {
+                firstName: document.getElementById('quickFirstName').value,
+                lastName: document.getElementById('quickLastName').value,
+                email: document.getElementById('quickEmail').value,
+                phone: document.getElementById('quickPhone').value,
+                company: document.getElementById('quickCompany').value,
+                source: 'quick_action'
+            };
+            
+            const status = document.getElementById('quickCreateStatus');
+            
+            // Disable submit button immediately
+            if (submitButton) {
+                submitButton.disabled = true;
+                const originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating...';
+                
+                // Re-enable after delay
+                setTimeout(() => {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalText;
+                }, 3000);
+            }
+            
+            try {
+                console.log('Creating contact:', formData);
+                
+                const response = await fetch('/api/contacts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                console.log('Contact creation response:', result);
+                
+                if (result.success) {
+                    status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
+                    status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${result.message}`;
+                    status.classList.remove('hidden');
+                    
+                    newForm.reset();
+                    await loadContacts();
+                    
+                    showToast('Contact created successfully!', 'success', '<i class="fas fa-user-plus"></i>');
+                    
+                    setTimeout(() => {
+                        closeModal('quickCreateContactModal');
+                    }, 2000);
+                } else {
+                    throw new Error(result.error || 'Failed to create contact');
+                }
+            } catch (error) {
+                console.error('Error creating contact:', error);
+                status.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
+                status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                status.classList.remove('hidden');
+                
+                showToast('Failed to create contact: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
+            }
+        }).catch(error => {
+            if (error.message !== 'Duplicate request prevented') {
+                console.error('Debounced contact creation error:', error);
+            }
+        });
+    });
+}
+
+// 3. FIX: Updated setupQuickUpdateEmailForm with proper API integration and submit button
+function setupQuickUpdateEmailForm() {
+    const form = document.getElementById('quickUpdateEmailForm');
+    if (!form) return;
+    
+    // Remove existing listeners to prevent duplicates
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    
+    newForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Use debouncer to prevent duplicate submissions
+        return debouncedEmailUpdate(async () => {
+            const submitButton = newForm.querySelector('button[type="submit"]');
+            
+            // Prevent double submission
+            if (submitButton && submitButton.disabled) {
+                console.warn('Email update already in progress');
+                return;
+            }
+            
+            // Get contact from either dropdown selection or manual input
+            const contactSelect = document.getElementById('quickUpdateEmailContactSelect');
+            const nameInput = document.getElementById('quickUpdateEmailName');
+            
+            let contactName = nameInput.value.trim();
+            let contactId = null;
+            
+            // If a contact was selected from dropdown, get the details
+            if (contactSelect.value && contactSelect.value !== 'manual') {
+                try {
+                    const contactData = JSON.parse(contactSelect.value);
+                    contactName = contactData.name;
+                    contactId = contactData.id;
+                } catch (e) {
+                    contactName = nameInput.value.trim();
+                }
+            }
+            
+            const newEmail = document.getElementById('quickUpdateEmailValue').value;
+            const status = document.getElementById('quickUpdateEmailStatus');
+            
+            if (!contactName || !newEmail) {
+                status.className = 'mt-4 p-3 rounded bg-yellow-100 text-yellow-800';
+                status.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Please select a contact and enter a new email address';
+                status.classList.remove('hidden');
+                showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+                return;
+            }
+            
+            // Disable submit button
+            if (submitButton) {
+                submitButton.disabled = true;
+                const originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
+                
+                setTimeout(() => {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalText;
+                }, 3000);
+            }
+            
+            try {
+                let updateResponse;
+                
+                if (contactId) {
+                    // Update by ID if we have it
+                    console.log(`Updating contact ID ${contactId} email to:`, newEmail);
+                    updateResponse = await fetch(`/api/contacts/${contactId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: newEmail })
+                    });
+                } else {
+                    // Search for contact by name first, then update
+                    console.log(`Searching for contact: ${contactName}`);
+                    const searchResponse = await fetch(`/api/contacts/search/${encodeURIComponent(contactName)}`);
+                    const searchResult = await searchResponse.json();
+                    
+                    if (searchResult.success && searchResult.data.contacts.length > 0) {
+                        const foundContact = searchResult.data.contacts[0];
+                        console.log(`Found contact, updating email:`, foundContact);
+                        
+                        updateResponse = await fetch(`/api/contacts/${foundContact.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: newEmail })
+                        });
+                    } else {
+                        throw new Error(`Contact "${contactName}" not found`);
+                    }
+                }
+                
+                if (updateResponse && updateResponse.ok) {
+                    const result = await updateResponse.json();
+                    
+                    if (result.success) {
+                        status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
+                        status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Email updated for ${contactName} to ${newEmail}!`;
+                        status.classList.remove('hidden');
+                        
+                        newForm.reset();
+                        
+                        // Reset dropdown
+                        const select = document.getElementById('quickUpdateEmailContactSelect');
+                        if (select) select.selectedIndex = 0;
+                        
+                        // Clear current email display
+                        const currentEmailInput = document.getElementById('quickUpdateEmailCurrent');
+                        if (currentEmailInput) currentEmailInput.value = '';
+                        
+                        await loadContacts();
+                        
+                        showToast(`Email updated for ${contactName}`, 'success', '<i class="fas fa-envelope"></i>');
+                        
+                        setTimeout(() => {
+                            closeModal('quickUpdateEmailModal');
+                        }, 2000);
+                    } else {
+                        throw new Error(result.error || 'Failed to update email');
+                    }
+                } else {
+                    throw new Error('Failed to update contact email');
+                }
+            } catch (error) {
+                console.error('Error updating email:', error);
+                status.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
+                status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                status.classList.remove('hidden');
+                
+                showToast('Failed to update email: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
+            }
+        }).catch(error => {
+            if (error.message !== 'Duplicate request prevented') {
+                console.error('Debounced email update error:', error);
+            }
+        });
+    });
+}
+
+// 4. FIX: Updated setupQuickUpdatePhoneForm with real API integration
+function setupQuickUpdatePhoneForm() {
+    const form = document.getElementById('quickUpdatePhoneForm');
+    if (!form) return;
+    
+    // Remove existing listeners to prevent duplicates
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    
+    newForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Use debouncer to prevent duplicate submissions
+        return debouncedPhoneUpdate(async () => {
+            const submitButton = newForm.querySelector('button[type="submit"]');
+            
+            // Prevent double submission
+            if (submitButton && submitButton.disabled) {
+                console.warn('Phone update already in progress');
+                return;
+            }
+            
+            // Get contact from either dropdown selection or manual input
+            const contactSelect = document.getElementById('quickUpdatePhoneContactSelect');
+            const nameInput = document.getElementById('quickUpdatePhoneName');
+            
+            let contactName = nameInput.value.trim();
+            let contactId = null;
+            
+            // If a contact was selected from dropdown, get the details
+            if (contactSelect.value && contactSelect.value !== 'manual') {
+                try {
+                    const contactData = JSON.parse(contactSelect.value);
+                    contactName = contactData.name;
+                    contactId = contactData.id;
+                } catch (e) {
+                    contactName = nameInput.value.trim();
+                }
+            }
+            
+            const newPhone = document.getElementById('quickUpdatePhoneValue').value;
+            const status = document.getElementById('quickUpdatePhoneStatus');
+            
+            if (!contactName || !newPhone) {
+                status.className = 'mt-4 p-3 rounded bg-yellow-100 text-yellow-800';
+                status.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Please select a contact and enter a new phone number';
+                status.classList.remove('hidden');
+                showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+                return;
+            }
+            
+            // Disable submit button
+            if (submitButton) {
+                submitButton.disabled = true;
+                const originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
+                
+                setTimeout(() => {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalText;
+                }, 3000);
+            }
+            
+            try {
+                let updateResponse;
+                
+                if (contactId) {
+                    // Update by ID if we have it
+                    console.log(`Updating contact ID ${contactId} phone to:`, newPhone);
+                    updateResponse = await fetch(`/api/contacts/${contactId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone: newPhone })
+                    });
+                } else {
+                    // Search for contact by name first, then update
+                    console.log(`Searching for contact: ${contactName}`);
+                    const searchResponse = await fetch(`/api/contacts/search/${encodeURIComponent(contactName)}`);
+                    const searchResult = await searchResponse.json();
+                    
+                    if (searchResult.success && searchResult.data.contacts.length > 0) {
+                        const foundContact = searchResult.data.contacts[0];
+                        console.log(`Found contact, updating phone:`, foundContact);
+                        
+                        updateResponse = await fetch(`/api/contacts/${foundContact.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ phone: newPhone })
+                        });
+                    } else {
+                        throw new Error(`Contact "${contactName}" not found`);
+                    }
+                }
+                
+                if (updateResponse && updateResponse.ok) {
+                    const result = await updateResponse.json();
+                    
+                    if (result.success) {
+                        status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
+                        status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Phone updated for ${contactName} to ${newPhone}!`;
+                        status.classList.remove('hidden');
+                        
+                        newForm.reset();
+                        
+                        // Reset dropdown
+                        const select = document.getElementById('quickUpdatePhoneContactSelect');
+                        if (select) select.selectedIndex = 0;
+                        
+                        // Clear current phone display
+                        const currentPhoneInput = document.getElementById('quickUpdatePhoneCurrent');
+                        if (currentPhoneInput) currentPhoneInput.value = '';
+                        
+                        await loadContacts();
+                        
+                        showToast(`Phone updated for ${contactName}`, 'success', '<i class="fas fa-phone"></i>');
+                        
+                        setTimeout(() => {
+                            closeModal('quickUpdatePhoneModal');
+                        }, 2000);
+                    } else {
+                        throw new Error(result.error || 'Failed to update phone');
+                    }
+                } else {
+                    throw new Error('Failed to update contact phone');
+                }
+            } catch (error) {
+                console.error('Error updating phone:', error);
+                status.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
+                status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+                status.classList.remove('hidden');
+                
+                showToast('Failed to update phone: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
+            }
+        }).catch(error => {
+            if (error.message !== 'Duplicate request prevented') {
+                console.error('Debounced phone update error:', error);
+            }
+        });
+    });
+}
 
 function setupQuickCreateAppointmentForm() {
     // First add the debouncer for appointments if not already added
