@@ -181,108 +181,357 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- Header -->
-    <header class="bg-blue-600 text-white shadow-lg">
-        <div class="container mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <!-- RinglyPro Logo -->
-                    <div class="flex items-center space-x-2">
-                        <div class="relative">
-                            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68a15064d7c434d8cab7644b.png" 
-                                 alt="RinglyPro Logo" 
-                                 class="w-16 h-16 object-contain bg-white rounded-lg shadow-lg p-2">
-                        </div>
-                        <div class="text-2xl font-bold">
-                            <span class="text-white">Ringly</span><span class="text-blue-200">Pro</span>
-                        </div>
+<!-- Header with Mobile Hamburger Menu -->
+<header class="bg-blue-600 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <!-- RinglyPro Logo -->
+                <div class="flex items-center space-x-2">
+                    <div class="relative">
+                        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68a15064d7c434d8cab7644b.png" 
+                             alt="RinglyPro Logo" 
+                             class="w-12 h-12 md:w-16 md:h-16 object-contain bg-white rounded-lg shadow-lg p-2">
+                    </div>
+                    <div class="text-xl md:text-2xl font-bold">
+                        <span class="text-white">Ringly</span><span class="text-blue-200">Pro</span>
                     </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <button onclick="exportContacts()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-sm transition duration-200">
-                        <i class="fas fa-download mr-1"></i> Export
+            </div>
+            
+            <!-- Desktop Menu - Hidden on Mobile -->
+            <div class="hidden md:flex items-center space-x-4">
+                <button onclick="exportContacts()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-sm transition duration-200">
+                    <i class="fas fa-download mr-1"></i> Export
+                </button>
+                <button onclick="refreshData()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full text-sm transition duration-200">
+                    <i class="fas fa-sync-alt mr-1"></i> Refresh
+                </button>
+                <button onclick="toggleAllSections()" class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded-full text-sm transition duration-200">
+                    <i class="fas fa-expand-arrows-alt mr-1"></i> <span id="toggle-all-text">Expand All</span>
+                </button>
+                <button onclick="toggleDarkMode()" class="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-full text-sm transition duration-200">
+                    <i id="theme-icon" class="fas fa-moon mr-1"></i> <span id="theme-text">Dark</span>
+                </button>
+            </div>
+            
+            <!-- Mobile Hamburger Button - Only Visible on Mobile -->
+            <div class="md:hidden">
+                <button onclick="toggleMobileMenu()" id="mobile-menu-button" class="p-2 rounded-md hover:bg-blue-700 focus:outline-none focus:bg-blue-700 transition duration-200">
+                    <i id="hamburger-icon" class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Desktop Quick Actions Menu Bar - Hidden on Mobile -->
+    <div class="hidden md:block bg-blue-700 border-t border-blue-500">
+        <div class="container mx-auto px-4 py-2">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center space-x-1 flex-wrap">
+                    <!-- Contacts Dropdown -->
+                    <div class="relative" id="contacts-dropdown">
+                        <button onclick="toggleDropdown('contacts')" class="flex items-center px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200">
+                            <i class="fas fa-users mr-2"></i>Contacts
+                            <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                        </button>
+                        <div id="contacts-menu" class="hidden absolute left-0 mt-1 w-64 bg-white rounded-lg shadow-lg z-50 border card">
+                            <div class="py-2">
+                                <button onclick="showQuickCreateContact()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
+                                    <i class="fas fa-user-plus text-green-500 mr-3"></i>Create New Contact
+                                </button>
+                                <button onclick="showQuickSearchContact()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
+                                    <i class="fas fa-search text-blue-500 mr-3"></i>Search Contact
+                                </button>
+                                <button onclick="showQuickUpdateEmail()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
+                                    <i class="fas fa-envelope text-orange-500 mr-3"></i>Update Email
+                                </button>
+                                <button onclick="showQuickUpdatePhone()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
+                                    <i class="fas fa-phone text-purple-500 mr-3"></i>Update Phone
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appointments Dropdown -->
+                    <div class="relative" id="appointments-dropdown">
+                        <button onclick="toggleDropdown('appointments')" class="flex items-center px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200">
+                            <i class="fas fa-calendar mr-2"></i>Appointments
+                            <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                        </button>
+                        <div id="appointments-menu" class="hidden absolute left-0 mt-1 w-64 bg-white rounded-lg shadow-lg z-50 border card">
+                            <div class="py-2">
+                                <button onclick="showQuickCreateAppointment()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
+                                    <i class="fas fa-calendar-plus text-green-500 mr-3"></i>Create Appointment
+                                </button>
+                                <button onclick="showTodaysAppointments()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
+                                    <i class="fas fa-clock text-blue-500 mr-3"></i>Today's Appointments
+                                </button>
+                                <button onclick="showQuickUpdateAppointment()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
+                                    <i class="fas fa-edit text-orange-500 mr-3"></i>Update Appointment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <button onclick="showQuickSMS()" class="flex items-center px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200">
+                        <i class="fas fa-sms mr-2"></i>Quick SMS
                     </button>
-                    <button onclick="refreshData()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full text-sm transition duration-200">
-                        <i class="fas fa-sync-alt mr-1"></i> Refresh
-                    </button>
-                    <button onclick="toggleAllSections()" class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded-full text-sm transition duration-200">
-                        <i class="fas fa-expand-arrows-alt mr-1"></i> <span id="toggle-all-text">Expand All</span>
-                    </button>
-                    <button onclick="toggleDarkMode()" class="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-full text-sm transition duration-200">
-                        <i id="theme-icon" class="fas fa-moon mr-1"></i> <span id="theme-text">Dark</span>
+                    
+                    <button onclick="showQuickEmail()" class="flex items-center px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200">
+                        <i class="fas fa-envelope mr-2"></i>Quick Email
                     </button>
                 </div>
+                
+                <!-- Voice Command Button -->
+                <button onclick="activateVoiceCommand()" class="flex items-center px-3 py-2 bg-green-600 hover:bg-green-700 rounded text-sm transition duration-200">
+                    <i class="fas fa-microphone mr-2"></i>Voice Command
+                </button>
             </div>
+        </div>
+    </div>
+</header>
+
+<!-- Mobile Menu Overlay - Only visible when hamburger is clicked -->
+<div id="mobile-menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden" onclick="closeMobileMenu()"></div>
+
+<!-- Mobile Menu Sidebar - Slides in from right -->
+<div id="mobile-menu" class="fixed top-0 right-0 h-full w-80 bg-blue-600 text-white transform translate-x-full transition-transform duration-300 ease-in-out z-50 md:hidden shadow-2xl">
+    <div class="flex flex-col h-full">
+        <!-- Mobile Menu Header -->
+        <div class="flex items-center justify-between p-4 border-b border-blue-500">
+            <div class="flex items-center space-x-2">
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68a15064d7c434d8cab7644b.png" 
+                     alt="RinglyPro Logo" 
+                     class="w-8 h-8 object-contain bg-white rounded-lg p-1">
+                <span class="text-lg font-bold">RinglyPro</span>
+            </div>
+            <button onclick="closeMobileMenu()" class="p-2 rounded-md hover:bg-blue-700 focus:outline-none transition duration-200">
+                <i class="fas fa-times text-lg"></i>
+            </button>
         </div>
         
-        <!-- Quick Actions Menu Bar -->
-        <div class="bg-blue-700 border-t border-blue-500">
-            <div class="container mx-auto px-4 py-2">
-                <div class="flex items-center justify-between flex-wrap gap-2">
-                    <div class="flex items-center space-x-1 flex-wrap">
-                        <!-- Contacts Dropdown -->
-                        <div class="relative" id="contacts-dropdown">
-                            <button onclick="toggleDropdown('contacts')" class="flex items-center px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200">
-                                <i class="fas fa-users mr-2"></i>Contacts
-                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
-                            </button>
-                            <div id="contacts-menu" class="hidden absolute left-0 mt-1 w-64 bg-white rounded-lg shadow-lg z-50 border card">
-                                <div class="py-2">
-                                    <button onclick="showQuickCreateContact()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
-                                        <i class="fas fa-user-plus text-green-500 mr-3"></i>Create New Contact
-                                    </button>
-                                    <button onclick="showQuickSearchContact()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
-                                        <i class="fas fa-search text-blue-500 mr-3"></i>Search Contact
-                                    </button>
-                                    <button onclick="showQuickUpdateEmail()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
-                                        <i class="fas fa-envelope text-orange-500 mr-3"></i>Update Email
-                                    </button>
-                                    <button onclick="showQuickUpdatePhone()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
-                                        <i class="fas fa-phone text-purple-500 mr-3"></i>Update Phone
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Appointments Dropdown -->
-                        <div class="relative" id="appointments-dropdown">
-                            <button onclick="toggleDropdown('appointments')" class="flex items-center px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200">
-                                <i class="fas fa-calendar mr-2"></i>Appointments
-                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
-                            </button>
-                            <div id="appointments-menu" class="hidden absolute left-0 mt-1 w-64 bg-white rounded-lg shadow-lg z-50 border card">
-                                <div class="py-2">
-                                    <button onclick="showQuickCreateAppointment()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
-                                        <i class="fas fa-calendar-plus text-green-500 mr-3"></i>Create Appointment
-                                    </button>
-                                    <button onclick="showTodaysAppointments()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
-                                        <i class="fas fa-clock text-blue-500 mr-3"></i>Today's Appointments
-                                    </button>
-                                    <button onclick="showQuickUpdateAppointment()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center">
-                                        <i class="fas fa-edit text-orange-500 mr-3"></i>Update Appointment
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Quick Actions -->
-                        <button onclick="showQuickSMS()" class="flex items-center px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200">
-                            <i class="fas fa-sms mr-2"></i>Quick SMS
-                        </button>
-                        
-                        <button onclick="showQuickEmail()" class="flex items-center px-3 py-2 rounded text-sm hover:bg-blue-600 transition duration-200">
-                            <i class="fas fa-envelope mr-2"></i>Quick Email
-                        </button>
-                    </div>
-                    
-                    <!-- Voice Command Button -->
-                    <button onclick="activateVoiceCommand()" class="flex items-center px-3 py-2 bg-green-600 hover:bg-green-700 rounded text-sm transition duration-200">
-                        <i class="fas fa-microphone mr-2"></i>Voice Command
+        <!-- Mobile Menu Content -->
+        <div class="flex-1 overflow-y-auto">
+            <!-- Quick Actions Section -->
+            <div class="p-4 border-b border-blue-500">
+                <h3 class="text-sm font-semibold text-blue-200 uppercase tracking-wider mb-3">Quick Actions</h3>
+                <div class="space-y-2">
+                    <button onclick="showQuickCreateContact(); closeMobileMenu();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-user-plus text-green-400 mr-3 w-5"></i>
+                        <span>Create Contact</span>
+                    </button>
+                    <button onclick="showQuickSearchContact(); closeMobileMenu();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-search text-blue-400 mr-3 w-5"></i>
+                        <span>Search Contact</span>
+                    </button>
+                    <button onclick="showQuickCreateAppointment(); closeMobileMenu();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-calendar-plus text-green-400 mr-3 w-5"></i>
+                        <span>Create Appointment</span>
+                    </button>
+                    <button onclick="showQuickSMS(); closeMobileMenu();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-sms text-purple-400 mr-3 w-5"></i>
+                        <span>Quick SMS</span>
+                    </button>
+                    <button onclick="showQuickEmail(); closeMobileMenu();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-envelope text-orange-400 mr-3 w-5"></i>
+                        <span>Quick Email</span>
+                    </button>
+                    <button onclick="activateVoiceCommand(); closeMobileMenu();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-microphone text-green-400 mr-3 w-5"></i>
+                        <span>Voice Command</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Contact Actions Section -->
+            <div class="p-4 border-b border-blue-500">
+                <h3 class="text-sm font-semibold text-blue-200 uppercase tracking-wider mb-3">Contact Management</h3>
+                <div class="space-y-2">
+                    <button onclick="showQuickUpdateEmail(); closeMobileMenu();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-envelope text-orange-400 mr-3 w-5"></i>
+                        <span>Update Email</span>
+                    </button>
+                    <button onclick="showQuickUpdatePhone(); closeMobileMenu();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-phone text-purple-400 mr-3 w-5"></i>
+                        <span>Update Phone</span>
+                    </button>
+                    <button onclick="showTodaysAppointments(); closeMobileMenu();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-clock text-blue-400 mr-3 w-5"></i>
+                        <span>Today's Appointments</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- System Actions Section -->
+            <div class="p-4">
+                <h3 class="text-sm font-semibold text-blue-200 uppercase tracking-wider mb-3">System</h3>
+                <div class="space-y-2">
+                    <button onclick="exportContacts(); closeMobileMenu();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-download text-green-400 mr-3 w-5"></i>
+                        <span>Export Data</span>
+                    </button>
+                    <button onclick="refreshData(); closeMobileMenu();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-sync-alt text-blue-400 mr-3 w-5"></i>
+                        <span>Refresh Data</span>
+                    </button>
+                    <button onclick="toggleAllSections(); closeMobileMenu();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-expand-arrows-alt text-purple-400 mr-3 w-5"></i>
+                        <span id="mobile-toggle-all-text">Expand All</span>
+                    </button>
+                    <button onclick="toggleDarkMode(); updateMobileThemeText();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i id="mobile-theme-icon" class="fas fa-moon text-yellow-400 mr-3 w-5"></i>
+                        <span id="mobile-theme-text">Dark Mode</span>
                     </button>
                 </div>
             </div>
         </div>
-    </header>
+    </div>
+</div>
+
+<style>
+/* Additional mobile menu styles */
+.mobile-menu-open {
+    transform: translateX(0) !important;
+}
+
+/* Prevent body scroll when mobile menu is open */
+.mobile-menu-open-body {
+    overflow: hidden;
+}
+
+/* Mobile menu animation improvements */
+#mobile-menu {
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Ensure hamburger icon changes */
+.hamburger-open {
+    transform: rotate(90deg);
+    transition: transform 0.3s ease;
+}
+</style>
+
+<script>
+// Mobile Menu Functions
+let isMobileMenuOpen = false;
+
+function toggleMobileMenu() {
+    const mobileMenu = document.getElementById('mobile-menu');
+    const overlay = document.getElementById('mobile-menu-overlay');
+    const hamburgerIcon = document.getElementById('hamburger-icon');
+    const body = document.body;
+    
+    if (isMobileMenuOpen) {
+        closeMobileMenu();
+    } else {
+        openMobileMenu();
+    }
+}
+
+function openMobileMenu() {
+    const mobileMenu = document.getElementById('mobile-menu');
+    const overlay = document.getElementById('mobile-menu-overlay');
+    const hamburgerIcon = document.getElementById('hamburger-icon');
+    const body = document.body;
+    
+    // Show overlay
+    overlay.classList.remove('hidden');
+    
+    // Slide in menu
+    setTimeout(() => {
+        mobileMenu.classList.add('mobile-menu-open');
+    }, 10);
+    
+    // Change hamburger to X
+    hamburgerIcon.className = 'fas fa-times text-xl hamburger-open';
+    
+    // Prevent body scroll
+    body.classList.add('mobile-menu-open-body');
+    
+    isMobileMenuOpen = true;
+    
+    // Update mobile theme text
+    updateMobileThemeText();
+    updateMobileToggleText();
+}
+
+function closeMobileMenu() {
+    const mobileMenu = document.getElementById('mobile-menu');
+    const overlay = document.getElementById('mobile-menu-overlay');
+    const hamburgerIcon = document.getElementById('hamburger-icon');
+    const body = document.body;
+    
+    // Slide out menu
+    mobileMenu.classList.remove('mobile-menu-open');
+    
+    // Hide overlay after animation
+    setTimeout(() => {
+        overlay.classList.add('hidden');
+    }, 300);
+    
+    // Change X back to hamburger
+    hamburgerIcon.className = 'fas fa-bars text-xl';
+    
+    // Restore body scroll
+    body.classList.remove('mobile-menu-open-body');
+    
+    isMobileMenuOpen = false;
+}
+
+// Update mobile theme text to match desktop
+function updateMobileThemeText() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const mobileThemeIcon = document.getElementById('mobile-theme-icon');
+    const mobileThemeText = document.getElementById('mobile-theme-text');
+    
+    if (currentTheme === 'dark') {
+        mobileThemeIcon.className = 'fas fa-sun text-yellow-400 mr-3 w-5';
+        mobileThemeText.textContent = 'Light Mode';
+    } else {
+        mobileThemeIcon.className = 'fas fa-moon text-yellow-400 mr-3 w-5';
+        mobileThemeText.textContent = 'Dark Mode';
+    }
+}
+
+// Update mobile toggle text to match desktop
+function updateMobileToggleText() {
+    const desktopToggleText = document.getElementById('toggle-all-text');
+    const mobileToggleText = document.getElementById('mobile-toggle-all-text');
+    
+    if (desktopToggleText && mobileToggleText) {
+        mobileToggleText.textContent = desktopToggleText.textContent;
+    }
+}
+
+// Close mobile menu when clicking outside or when window is resized to desktop
+window.addEventListener('resize', function() {
+    if (window.innerWidth >= 768 && isMobileMenuOpen) {
+        closeMobileMenu();
+    }
+});
+
+// Update mobile menu text when desktop text changes
+const originalToggleAllSections = toggleAllSections;
+toggleAllSections = function() {
+    originalToggleAllSections();
+    updateMobileToggleText();
+};
+
+// Close mobile menu when pressing Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape' && isMobileMenuOpen) {
+        closeMobileMenu();
+    }
+});
+
+// Initialize mobile theme text on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateMobileThemeText();
+    updateMobileToggleText();
+});
+</script>
 
     <div class="container mx-auto px-4 py-8">
         <!-- KPI Metrics Bar -->
