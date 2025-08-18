@@ -625,6 +625,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         <!-- Quick Update Email Modal -->
 <!-- Fixed Quick Update Email Modal with proper submit button -->
+<!-- COMPLETE FIX: Update Contact Email Modal with proper buttons -->
 <div id="quickUpdateEmailModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
     <div class="card rounded-lg p-6 w-full max-w-md mx-4">
         <div class="flex justify-between items-center mb-4">
@@ -655,19 +656,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="email" id="quickUpdateEmailValue" placeholder="Enter new email address" required
                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
             </div>
-            <!-- FIXED: Added proper submit button container -->
-            <div class="flex space-x-3 pt-2">
-                <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg font-medium transition duration-200">
+            
+            <!-- FIXED: Proper button container with both buttons -->
+            <div class="flex space-x-3 mt-6">
+                <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500">
                     <i class="fas fa-save mr-2"></i>Update Email
                 </button>
-                <button type="button" onclick="closeModal('quickUpdateEmailModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg font-medium transition duration-200">
-                    Cancel
+                <button type="button" onclick="closeModal('quickUpdateEmailModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                    <i class="fas fa-times mr-2"></i>Cancel
                 </button>
             </div>
         </form>
+        
+        <!-- Status message container -->
         <div id="quickUpdateEmailStatus" class="mt-4 p-3 rounded hidden"></div>
     </div>
-</div>>
+</div>
 
         <!-- Quick Update Phone Modal -->
         <div id="quickUpdatePhoneModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
