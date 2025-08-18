@@ -1304,10 +1304,36 @@ function setupEditAppointmentForm() {
         const duration = document.getElementById('editAppointmentDuration').value;
         const status = document.getElementById('editAppointmentStatus').value;
         
-        if (!title || !contact || !date || !time || !duration) {
-            showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
-            return;
-        }
+if (!title || !contact || !date || !time || !duration) {
+    showToast('Please fill in all fields', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
+    return;
+}
+
+// NEW: Check for scheduling conflicts
+const conflictingAppointment = appointments.find(apt => 
+    apt.time === time && 
+    apt.status !== 'cancelled' && 
+    apt.status !== 'completed'
+);
+
+if (conflictingAppointment) {
+    showToast(`Time slot ${time} is already booked for ${conflictingAppointment.contact}`, 'error', '<i class="fas fa-calendar-times"></i>');
+    
+    // Highlight the conflicting time input
+    const timeInput = document.getElementById('quickAppointmentTime');
+    if (timeInput) {
+        timeInput.style.borderColor = '#ef4444';
+        timeInput.style.backgroundColor = '#fef2f2';
+        
+        // Reset styling after 3 seconds
+        setTimeout(() => {
+            timeInput.style.borderColor = '';
+            timeInput.style.backgroundColor = '';
+        }, 3000);
+    }
+    
+    return;
+}
         
         const submitButton = newForm.querySelector('button[type="submit"]');
         const originalText = submitButton.innerHTML;
