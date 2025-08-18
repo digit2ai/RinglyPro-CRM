@@ -1310,11 +1310,19 @@ if (!title || !contact || !date || !time || !duration) {
 }
 
 // NEW: Check for scheduling conflicts
-const conflictingAppointment = appointments.find(apt => 
-    apt.time === time && 
-    apt.status !== 'cancelled' && 
-    apt.status !== 'completed'
-);
+// DEBUGGING: Enhanced conflict checking with console logs
+const conflictingAppointment = appointments.find(apt => {
+    console.log('Checking appointment:', apt.contact, 'at time:', apt.time, 'status:', apt.status);
+    console.log('New appointment time:', time);
+    console.log('Times match?', apt.time === time);
+    console.log('Status check:', apt.status !== 'cancelled' && apt.status !== 'completed');
+    
+    return apt.time === time && 
+           apt.status !== 'cancelled' && 
+           apt.status !== 'completed';
+});
+
+console.log('Conflicting appointment found:', conflictingAppointment);
 
 if (conflictingAppointment) {
     showToast(`Time slot ${time} is already booked for ${conflictingAppointment.contact}`, 'error', '<i class="fas fa-calendar-times"></i>');
