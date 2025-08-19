@@ -1988,53 +1988,343 @@ function updateAllAppointmentsDisplay() {
 
         // Load today's messages (enhanced sample data)
    // Add this function to your dashboard.ejs <script> section
-// Replace the existing loadTodaysMessages() function with this:
+// Complete Message Handling Code for RinglyPro CRM Dashboard
 
-// Add this function to your dashboard.ejs <script> section
-// Replace the existing loadTodaysMessages() function with this:
+// Global variables
+let allMessages = [];
+let currentFilter = 'all'; // 'all', 'sent', 'received'
 
+// Load today's messages from database
 async function loadTodaysMessages() {
     try {
         console.log('📱 Loading today\'s SMS messages from database...');
+        
         const response = await fetch('/api/messages/today');
-        const result = await response.json();
         
-        if (result.success && result.data) {
-            todaysMessages = result.data.messages || [];
-            
-            console.log(`✅ Loaded ${todaysMessages.length} SMS messages from PostgreSQL database`);
-            
-            updateMessagesCount();
-            updateAllMessagesDisplay();
-            
-            // Show success toast if messages were found
-            if (todaysMessages.length > 0) {
-                showToast(
-                    `📱 ${todaysMessages.length} SMS messages loaded from database`, 
-                    'success', 
-                    '<i class="fas fa-database"></i>'
-                );
-            }
-        } else {
-            console.log('⚠️ No messages data received, using empty array');
-            todaysMessages = [];
-            updateMessagesCount();
-            updateAllMessagesDisplay();
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-    } catch (error) {
-        console.error('❌ Error loading today\'s messages:', error);
-        // Fallback to empty array
-        todaysMessages = [];
-        updateMessagesCount();
-        updateAllMessagesDisplay();
         
-        showToast(
-            'Failed to load SMS history from database', 
-            'warning', 
-            '<i class="fas fa-exclamation-triangle"></i>'
-        );
+        const messages = await response.json();
+        
+        console.log(`✅ Successfully loaded ${messages.length} messages from database`);
+        console.log('Messages data:', messages);
+        
+        // Store messages globally
+        allMessages = messages || [];
+        
+        // Update UI
+        updateMessageStats();
+        displayMessages();
+        
+        return messages;
+        
+    } catch (error) {
+        console.error('❌ Error loading messages:', error);
+        showToast('Failed to load SMS messages', 'error');
+        
+        // Fallback to empty array
+        allMessages = [];
+        updateMessageStats();
+        displayMessages();
+        
+        return [];
     }
 }
+
+// Update message statistics in dashboard
+function updateMessageStats() {
+    const totalCount = allMessages.length;
+    const sentCount = allMessages.filter(msg => msg.direction === 'outgoing').length;
+    const receivedCount = allMessages.filter(msg => msg.direction === 'incoming').length;
+    
+    // Update SMS count displays
+    const smsCountElements = [
+        document.querySelector('.sms-count'),
+        document.querySelector('#sms-count'),
+        document.querySelector('[data-sms-count]'),
+        document.querySelector('.messages-sent .count')
+    ];
+    
+    smsCountElements.forEach(element => {
+        if (element) {
+            element.textContent = totalCount;
+        }
+    });
+    
+    // Update sent messages count
+    const sentElements = [
+        document.querySelector('.messages-sent-count'),
+        document.querySelector('#sent-count'),
+        document.querySelector('[data-sent-count]')
+    ];
+    
+    sentElements.forEach(element => {
+        if (element) {
+            element.textContent = sentCount;
+        }
+    });
+    
+    // Update received messages count  
+    const receivedElements = [
+        document.querySelector('.messages-received-count'),
+        document.querySelector('#received-count'),
+        document.querySelector('[data-received-count]')
+    ];
+    
+    receivedElements.forEach(element => {
+        if (element) {
+            element.textContent = receivedCount;
+        }
+    });
+    
+    // Update the main SMS Today count
+    const todayCountElements = [
+        document.querySelector('.sms-today-count'),
+        document.querySelector('#sms-today-count'),
+        document.querySelector('[data-today-count]')
+    ];
+    
+    todayCountElements.forEach(element => {
+        if (element) {
+            element.textContent = totalCount;
+        }
+    });
+    
+    console.log(`📊 Updated stats: Total=${totalCount}, Sent=${sentCount}, Received=${receivedCount}`);
+}
+
+// Display messages in the UI
+function displayMessages() {
+    const containers = [
+        document.querySelector('#sms-messages-container'),
+        document.querySelector('.sms-messages'),
+        document.querySelector('#messages-list'),
+        document.querySelector('.messages-container'),
+        document.querySelector('[data-messages-container]')
+    ];
+    
+    // Find the first valid container
+    let container = null;
+    for (let c of containers) {
+        if (c) {
+            container = c;
+            break;
+        }
+    }
+    
+    if (!container) {
+        console.error('❌ No messages container found in DOM');
+        return;
+    }
+    
+    console.log(`📱 Displaying messages in container:`, container);
+    
+    // Filter messages based on current filter
+    let messagesToShow = allMessages;
+    
+    if (currentFilter === 'sent') {
+        messagesToShow = allMessages.filter(msg => msg.direction === 'outgoing');
+    } else if (currentFilter === 'received') {
+        messagesToShow = allMessages.filter(msg => msg.direction === 'incoming');
+    }
+    
+    // Clear container
+    container.innerHTML = '';
+    
+    if (messagesToShow.length === 0) {
+        container.innerHTML = `
+            <div class="no-messages">
+                <div class="text-gray-400 text-center py-8">
+                    <i class="fas fa-sms text-3xl mb-2"></i>
+                    <p>No SMS messages ${currentFilter === 'all' ? 'today' : currentFilter}</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Render messages
+    messagesToShow.forEach(message => {
+        const messageElement = createMessageElement(message);
+        container.appendChild(messageElement);
+    });
+    
+    console.log(`✅ Displayed ${messagesToShow.length} messages`);
+}
+
+// Create individual message element
+function createMessageElement(message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message-item ${message.direction} mb-3 p-3 rounded-lg`;
+    
+    // Set background color based on direction
+    if (message.direction === 'outgoing') {
+        messageDiv.classList.add('bg-blue-50', 'border-l-4', 'border-blue-400');
+    } else {
+        messageDiv.classList.add('bg-green-50', 'border-l-4', 'border-green-400');
+    }
+    
+    // Format phone numbers
+    const fromNumber = formatPhoneNumber(message.fromNumber);
+    const toNumber = formatPhoneNumber(message.toNumber);
+    
+    // Format timestamp
+    const timestamp = formatMessageTime(message.createdAt);
+    
+    // Direction icon and label
+    const directionIcon = message.direction === 'outgoing' ? '📤' : '📥';
+    const directionLabel = message.direction === 'outgoing' ? 'Sent to' : 'From';
+    
+    messageDiv.innerHTML = `
+        <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center">
+                <span class="text-lg mr-2">${directionIcon}</span>
+                <div>
+                    <div class="font-semibold text-gray-800">
+                        ${directionLabel} ${message.direction === 'outgoing' ? toNumber : fromNumber}
+                    </div>
+                    <div class="text-sm text-gray-500">${timestamp}</div>
+                </div>
+            </div>
+            <div class="text-xs text-gray-400">
+                ${message.status}
+            </div>
+        </div>
+        <div class="message-body bg-white p-3 rounded border">
+            <p class="text-gray-800">${escapeHtml(message.body)}</p>
+        </div>
+        ${message.twilioSid ? `<div class="text-xs text-gray-400 mt-2">SID: ${message.twilioSid}</div>` : ''}
+    `;
+    
+    return messageDiv;
+}
+
+// Format phone number for display
+function formatPhoneNumber(phone) {
+    if (!phone) return 'Unknown';
+    
+    // Remove +1 country code for US numbers
+    let formatted = phone.replace(/^\+1/, '');
+    
+    // Format as (XXX) XXX-XXXX
+    if (formatted.length === 10) {
+        return `(${formatted.slice(0, 3)}) ${formatted.slice(3, 6)}-${formatted.slice(6)}`;
+    }
+    
+    return phone; // Return original if can't format
+}
+
+// Format message timestamp
+function formatMessageTime(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    
+    // Check if it's today
+    if (date.toDateString() === now.toDateString()) {
+        return date.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true 
+        });
+    } else {
+        return date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true 
+        });
+    }
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Filter messages by type
+function filterMessages(filter) {
+    currentFilter = filter;
+    
+    // Update filter buttons
+    const filterButtons = document.querySelectorAll('[data-filter]');
+    filterButtons.forEach(button => {
+        button.classList.remove('active', 'bg-blue-500', 'text-white');
+        button.classList.add('bg-gray-200', 'text-gray-700');
+    });
+    
+    const activeButton = document.querySelector(`[data-filter="${filter}"]`);
+    if (activeButton) {
+        activeButton.classList.remove('bg-gray-200', 'text-gray-700');
+        activeButton.classList.add('active', 'bg-blue-500', 'text-white');
+    }
+    
+    // Redisplay messages with filter
+    displayMessages();
+    
+    console.log(`📱 Filtered messages: ${filter}`);
+}
+
+// Refresh messages from server
+async function refreshMessages() {
+    console.log('🔄 Refreshing messages...');
+    showToast('Refreshing messages...', 'info');
+    
+    await loadTodaysMessages();
+    
+    showToast('Messages refreshed!', 'success');
+}
+
+// Initialize message system
+function initializeMessaging() {
+    console.log('📱 Initializing messaging system...');
+    
+    // Set up filter buttons
+    const filterButtons = document.querySelectorAll('[data-filter]');
+    filterButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const filter = e.target.getAttribute('data-filter') || 'all';
+            filterMessages(filter);
+        });
+    });
+    
+    // Set up refresh button
+    const refreshButton = document.querySelector('#refresh-messages, .refresh-messages');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', refreshMessages);
+    }
+    
+    // Load initial messages
+    loadTodaysMessages();
+    
+    console.log('✅ Messaging system initialized');
+}
+
+// Auto-refresh messages every 30 seconds
+function startAutoRefresh() {
+    setInterval(() => {
+        console.log('🔄 Auto-refreshing messages...');
+        loadTodaysMessages();
+    }, 30000); // 30 seconds
+}
+
+// Call this when your dashboard loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize messaging after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        initializeMessaging();
+        startAutoRefresh();
+    }, 1000);
+});
+
+// Export functions for global access
+window.loadTodaysMessages = loadTodaysMessages;
+window.refreshMessages = refreshMessages;
+window.filterMessages = filterMessages;
+window.allMessages = allMessages;
 
 // Test database message storage after sending SMS
 // Add this to your existing SMS form submission
