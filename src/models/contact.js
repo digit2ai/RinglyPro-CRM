@@ -1,3 +1,4 @@
+// src/models/Contact.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -28,8 +29,7 @@ const Contact = sequelize.define('Contact', {
     allowNull: false,
     unique: true,
     validate: {
-      notEmpty: true,
-      is: /^\+[1-9]\d{1,14}$/ // E.164 format
+      notEmpty: true
     }
   },
   email: {
