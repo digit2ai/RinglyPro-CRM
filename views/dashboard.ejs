@@ -1985,58 +1985,75 @@ function updateAllAppointmentsDisplay() {
         }
 
         // Load today's messages (enhanced sample data)
-        function loadTodaysMessages() {
-            todaysMessages = [
-                {
-                    id: 1,
-                    contact: 'John Doe',
-                    phone: '+1234567890',
-                    message: 'Thank you for the information about your services. Very helpful!',
-                    time: '09:15 AM',
-                    direction: 'incoming',
-                    status: 'delivered'
-                },
-                {
-                    id: 2,
-                    contact: 'Jane Smith',
-                    phone: '+1987654321',
-                    message: 'Your appointment is confirmed for tomorrow at 2 PM. Looking forward to it!',
-                    time: '11:30 AM',
-                    direction: 'outgoing',
-                    status: 'delivered'
-                },
-                {
-                    id: 3,
-                    contact: 'Mike Johnson',
-                    phone: '+1555666777',
-                    message: 'Can we reschedule our meeting to next week?',
-                    time: '01:45 PM',
-                    direction: 'incoming',
-                    status: 'delivered'
-                },
-                {
-                    id: 4,
-                    contact: 'Sarah Wilson',
-                    phone: '+1444555666',
-                    message: 'Perfect! The project proposal looks great. When can we start?',
-                    time: '03:20 PM',
-                    direction: 'incoming',
-                    status: 'delivered'
-                },
-                {
-                    id: 5,
-                    contact: 'David Brown',
-                    phone: '+1333444555',
-                    message: 'Reminder: Your consultation is scheduled for 4 PM today.',
-                    time: '03:45 PM',
-                    direction: 'outgoing',
-                    status: 'delivered'
-                }
-            ];
+   // Add this function to your dashboard.ejs <script> section
+// Replace the existing loadTodaysMessages() function with this:
 
+async function loadTodaysMessages() {
+    try {
+        console.log('📱 Loading today\'s SMS messages from database...');
+        const response = await fetch('/api/messages/today');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            todaysMessages = result.data.messages || [];
+            
+            console.log(`✅ Loaded ${todaysMessages.length} SMS messages from PostgreSQL database`);
+            
+            updateMessagesCount();
+            updateAllMessagesDisplay();
+            
+            // Show success toast if messages were found
+            if (todaysMessages.length > 0) {
+                showToast(
+                    `📱 ${todaysMessages.length} SMS messages loaded from database`, 
+                    'success', 
+                    '<i class="fas fa-database"></i>'
+                );
+            }
+        } else {
+            console.log('⚠️ No messages data received, using empty array');
+            todaysMessages = [];
             updateMessagesCount();
             updateAllMessagesDisplay();
         }
+    } catch (error) {
+        console.error('❌ Error loading today\'s messages:', error);
+        // Fallback to empty array
+        todaysMessages = [];
+        updateMessagesCount();
+        updateAllMessagesDisplay();
+        
+        showToast(
+            'Failed to load SMS history from database', 
+            'warning', 
+            '<i class="fas fa-exclamation-triangle"></i>'
+        );
+    }
+}
+
+// Test database message storage after sending SMS
+// Add this to your existing SMS form submission
+async function testSMSStorage(messageId, twilioSid) {
+    // Wait a moment for database to save
+    setTimeout(async () => {
+        try {
+            // Reload messages to see if new one appears
+            await loadTodaysMessages();
+            
+            // Check if our message appears in the list
+            const ourMessage = todaysMessages.find(msg => msg.twilioSid === twilioSid);
+            if (ourMessage) {
+                showToast(
+                    `✅ SMS saved to database (ID: ${ourMessage.id})`, 
+                    'success', 
+                    '<i class="fas fa-database"></i>'
+                );
+            }
+        } catch (error) {
+            console.log('Could not verify message storage:', error);
+        }
+    }, 2000); // Wait 2 seconds for database save
+}
 
         // Load today's calls (enhanced sample data)
         function loadTodaysCalls() {
