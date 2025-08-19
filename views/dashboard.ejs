@@ -1402,10 +1402,12 @@ function showToast(message, type = 'info', icon = '', duration = 5000) {
         return;
     }
     
-    // Prevent duplicate toasts with same message
+    // Prevent duplicate toasts with same message - FIXED VERSION
     const existingToasts = container.querySelectorAll('.toast');
     for (let toast of existingToasts) {
-        if (toast.querySelector('span:last-child').textContent === message) {
+        const messageSpan = toast.querySelector('span:last-child');
+        // ADD NULL CHECK HERE to prevent the error
+        if (messageSpan && messageSpan.textContent === message) {
             console.log('Duplicate toast prevented:', message);
             return;
         }
