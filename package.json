@@ -1,7 +1,7 @@
 {
-  "name": "twilio-voice-bot-crm",
-  "version": "1.0.0",
-  "description": "Twilio Voice Bot CRM Integration with PostgreSQL",
+  "name": "ringlypro-crm-rachel-integration",
+  "version": "2.0.0",
+  "description": "RinglyPro CRM with Rachel Voice AI Integration - Real-time appointment booking system",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -9,11 +9,31 @@
     "build": "npm install",
     "setup-db": "node scripts/setup-database.js",
     "seed-db": "node scripts/seed-database.js",
+    "migrate": "npx sequelize-cli db:migrate",
+    "migrate:undo": "npx sequelize-cli db:migrate:undo",
+    "migrate:status": "npx sequelize-cli db:migrate:status",
+    "create-migration": "npx sequelize-cli migration:generate --name",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:appointments": "jest tests/appointments.test.js",
+    "test:integration": "jest tests/rachel-integration.test.js",
+    "health-check": "node scripts/health-check.js",
+    "appointment-stats": "node scripts/appointment-stats.js",
+    "sync-models": "node scripts/sync-models.js",
+    "validate-env": "node scripts/validate-environment.js"
   },
-  "keywords": ["twilio", "crm", "voice-bot", "postgresql", "nodejs"],
-  "author": "Your Name",
+  "keywords": [
+    "ringlypro",
+    "crm", 
+    "voice-ai",
+    "rachel",
+    "appointment-booking",
+    "twilio",
+    "postgresql",
+    "nodejs",
+    "real-time-scheduling"
+  ],
+  "author": "RinglyPro Team",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
@@ -29,15 +49,58 @@
     "jsonwebtoken": "^9.0.2",
     "node-cron": "^3.0.3",
     "winston": "^3.11.0",
-    "ejs": "^3.1.9"
+    "ejs": "^3.1.9",
+    "moment-timezone": "^0.5.43",
+    "uuid": "^9.0.1",
+    "validator": "^13.11.0",
+    "express-validator": "^7.0.1",
+    "sequelize-cli": "^6.6.2",
+    "axios": "^1.6.2",
+    "lodash": "^4.17.21",
+    "date-fns": "^2.30.0",
+    "date-fns-tz": "^2.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",
     "jest": "^29.7.0",
-    "supertest": "^6.3.3"
+    "supertest": "^6.3.3",
+    "sequelize-test-helpers": "^1.4.3",
+    "@types/jest": "^29.5.8",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0"
   },
   "engines": {
     "node": ">=16.0.0",
     "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ringlypro/crm-rachel-integration.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ringlypro/crm-rachel-integration/issues"
+  },
+  "homepage": "https://ringlypro.com",
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/config/**",
+      "!src/migrations/**"
+    ],
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
+  },
+  "nodemonConfig": {
+    "watch": [
+      "src/"
+    ],
+    "ext": "js,json,ejs",
+    "ignore": [
+      "node_modules/",
+      "tests/",
+      "scripts/"
+    ]
   }
 }
