@@ -1,4 +1,4 @@
-// src/models/Appointment.js
+// src/models/Appointment.js - FIXED FOR EXISTING DATABASE
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -11,11 +11,13 @@ const Appointment = sequelize.define('Appointment', {
   contactId: {
     type: DataTypes.INTEGER,
     allowNull: true,
+    field: 'contact_id', // Map to snake_case column
     comment: 'References contacts table - nullable for walk-ins'
   },
   customerName: {
     type: DataTypes.STRING,
     allowNull: false,
+    field: 'customer_name', // Map to snake_case column
     validate: {
       notEmpty: true,
       len: [1, 100]
@@ -24,13 +26,15 @@ const Appointment = sequelize.define('Appointment', {
   customerPhone: {
     type: DataTypes.STRING,
     allowNull: false,
+    field: 'customer_phone', // Map to snake_case column
     validate: {
       notEmpty: true
     }
   },
   customerEmail: {
     type: DataTypes.STRING,
-    allowNull: true,
+    allowNull: false, // Changed to match database
+    field: 'customer_email', // Map to snake_case column
     validate: {
       isEmail: true
     }
@@ -38,65 +42,130 @@ const Appointment = sequelize.define('Appointment', {
   appointmentDate: {
     type: DataTypes.DATEONLY,
     allowNull: false,
+    field: 'appointment_date', // Map to snake_case column
     comment: 'Date of appointment (YYYY-MM-DD)'
   },
   appointmentTime: {
     type: DataTypes.TIME,
     allowNull: false,
+    field: 'appointment_time', // Map to snake_case column
     comment: 'Time of appointment (HH:MM:SS)'
   },
   duration: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 60,
+    allowNull: true,
+    defaultValue: 30, // Changed from 60 to match database
     comment: 'Duration in minutes'
   },
   purpose: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT, // Changed from STRING to TEXT
     allowNull: true,
-    defaultValue: 'General Consultation',
+    defaultValue: 'General consultation', // Match database default
     comment: 'Purpose of appointment'
   },
   status: {
-    type: DataTypes.ENUM('confirmed', 'pending', 'cancelled', 'completed', 'no-show'),
-    defaultValue: 'confirmed'
+    type: DataTypes.STRING, // Use STRING instead of ENUM to match existing
+    defaultValue: 'scheduled', // Match database default
+    validate: {
+      isIn: [['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show']]
+    }
+  },
+  confirmationCode: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    field: 'confirmation_code', // Map to snake_case column
+    unique: true,
+    comment: 'Unique confirmation code for appointment'
   },
   source: {
-    type: DataTypes.ENUM('voice_booking', 'online', 'manual', 'walk-in'),
-    defaultValue: 'voice_booking'
+    type: DataTypes.STRING, // Use STRING instead of ENUM to match existing
+    defaultValue: 'voice_booking', // Match database default
+    validate: {
+      isIn: [['voice_booking', 'online', 'manual', 'walk-in']]
+    }
+  },
+  timezone: {
+    type: DataTypes.STRING(50),
+    defaultValue: 'America/New_York'
+  },
+  zoomMeetingUrl: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    field: 'zoom_meeting_url'
+  },
+  zoomMeetingId: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    field: 'zoom_meeting_id'
+  },
+  zoomPassword: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    field: 'zoom_password'
+  },
+  hubspotContactId: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    field: 'hubspot_contact_id'
+  },
+  hubspotMeetingId: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    field: 'hubspot_meeting_id'
+  },
+  emailSent: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'email_sent'
+  },
+  smsSent: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'sms_sent'
+  },
+  reminderSent: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'reminder_sent'
   },
   notes: {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  cancelReason: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'cancel_reason'
+  },
+  rescheduleCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    field: 'reschedule_count'
+  },
   callSid: {
     type: DataTypes.STRING,
     allowNull: true,
+    field: 'call_sid',
     comment: 'Twilio Call SID if booked via phone'
-  },
-  reminderSent: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
-  },
-  confirmationSent: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
   }
 }, {
   tableName: 'appointments',
   timestamps: true,
+  underscored: true, // Use snake_case for timestamps
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
   indexes: [
     {
-      fields: ['contactId']
+      fields: ['contact_id']
     },
     {
-      fields: ['customerPhone']
+      fields: ['customer_phone']
     },
     {
-      fields: ['appointmentDate']
+      fields: ['appointment_date']
     },
     {
-      fields: ['appointmentTime']
+      fields: ['appointment_time']
     },
     {
       fields: ['status']
@@ -105,11 +174,11 @@ const Appointment = sequelize.define('Appointment', {
       fields: ['source']
     },
     {
-      fields: ['callSid']
+      fields: ['confirmation_code']
     },
     {
       unique: true,
-      fields: ['appointmentDate', 'appointmentTime'],
+      fields: ['appointment_date', 'appointment_time'],
       name: 'unique_time_slot'
     }
   ]
@@ -172,24 +241,33 @@ Appointment.findByPhone = function(phone) {
   });
 };
 
+Appointment.findByConfirmationCode = function(confirmationCode) {
+  return this.findOne({
+    where: { confirmationCode }
+  });
+};
+
 Appointment.checkAvailability = function(date, time) {
   return this.findOne({
     where: { 
       appointmentDate: date,
       appointmentTime: time,
-      status: ['confirmed', 'pending']
+      status: ['confirmed', 'scheduled']
     }
   });
 };
 
 Appointment.getAvailableSlots = function(date) {
   const businessHours = [
-    '09:00:00', '10:00:00', '11:00:00',
-    '14:00:00', '15:00:00', '16:00:00', '17:00:00'
+    '09:00:00', '09:30:00', '10:00:00', '10:30:00', '11:00:00', '11:30:00',
+    '14:00:00', '14:30:00', '15:00:00', '15:30:00', '16:00:00', '16:30:00', '17:00:00'
   ];
   
   return this.findAll({
-    where: { appointmentDate: date },
+    where: { 
+      appointmentDate: date,
+      status: ['scheduled', 'confirmed']
+    },
     attributes: ['appointmentTime']
   }).then(bookedSlots => {
     const bookedTimes = bookedSlots.map(slot => slot.appointmentTime);
