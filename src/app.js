@@ -8,6 +8,7 @@ const app = express();
 
 // Trust proxy for Render deployment
 app.set('trust proxy', true);
+app.use('/api/calls', require('./routes/voiceBot'));
 
 // Middleware
 app.use(cors());
