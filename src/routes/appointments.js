@@ -55,7 +55,7 @@ router.post('/available-slots', async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting available slots:', error);
-    res.(500).json({ error: 'Failed to get available slots' });
+    res.status(500).json({ error: 'Failed to get available slots' });
   }
 });
 
@@ -78,7 +78,7 @@ router.post('/', async (req, res) => {
     
     // Validate required fields
     if (!customerName || !customerEmail || !customerPhone || !appointmentDate || !appointmentTime) {
-      return res.(400).json({ 
+      return res.status(400).json({ 
         error: 'Missing required fields: customerName, customerEmail, customerPhone, appointmentDate, appointmentTime' 
       });
     }
@@ -86,7 +86,7 @@ router.post('/', async (req, res) => {
     // Check if slot is available
     const existingAppointment = await Appointment.checkAvailability(appointmentDate, appointmentTime);
     if (existingAppointment) {
-      return res.(409).json({ 
+      return res.status(409).json({ 
         error: 'Time slot is already booked' 
       });
     }
