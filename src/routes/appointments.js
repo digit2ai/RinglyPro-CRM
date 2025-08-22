@@ -73,7 +73,8 @@ router.post('/', async (req, res) => {
       source = 'online',
       contactId,
       duration = 30,
-      notes
+      notes,
+      sendSMS = true // Option to disable SMS sending
     } = req.body;
     
     // Validate required fields
@@ -110,10 +111,36 @@ router.post('/', async (req, res) => {
       status: 'confirmed'
     });
     
+    // Send SMS confirmation after successful appointment creation
+    let smsResult = null;
+    if (sendSMS) {
+      try {
+        smsResult = await sendAppointmentConfirmationSMS({
+          appointmentId: appointment.id,
+          customerPhone: appointment.customerPhone,
+          customerName: appointment.customerName,
+          appointmentDate: appointment.appointmentDate,
+          appointmentTime: appointment.appointmentTime,
+          duration: appointment.duration,
+          confirmationCode: appointment.confirmationCode
+        });
+        
+        console.log(`✅ SMS confirmation sent for appointment ${appointment.id}`);
+      } catch (smsError) {
+        console.error(`⚠️ Failed to send SMS confirmation for appointment ${appointment.id}:`, smsError.message);
+        // Don't fail the appointment creation if SMS fails
+      }
+    }
+    
     res.status(201).json({
       success: true,
       message: 'Appointment created successfully',
-      appointment: appointment
+      appointment: appointment,
+      smsConfirmation: smsResult ? {
+        sent: true,
+        messageId: smsResult.messageId,
+        twilioSid: smsResult.twilioSid
+      } : { sent: false, reason: sendSMS ? 'SMS sending failed' : 'SMS disabled' }
     });
   } catch (error) {
     console.error('Error creating appointment:', error);
@@ -132,6 +159,52 @@ router.post('/', async (req, res) => {
     }
     
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Send SMS confirmation for existing appointment
+router.post('/:id/send-confirmation', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const appointment = await Appointment.findByPk(id);
+    
+    if (!appointment) {
+      return res.status(404).json({ 
+        error: 'Appointment not found' 
+      });
+    }
+    
+    const smsResult = await sendAppointmentConfirmationSMS({
+      appointmentId: appointment.id,
+      customerPhone: appointment.customerPhone,
+      customerName: appointment.customerName,
+      appointmentDate: appointment.appointmentDate,
+      appointmentTime: appointment.appointmentTime,
+      duration: appointment.duration,
+      confirmationCode: appointment.confirmationCode
+    });
+    
+    res.json({
+      success: true,
+      message: 'SMS confirmation sent successfully',
+      appointment: {
+        id: appointment.id,
+        customerName: appointment.customerName,
+        customerPhone: appointment.customerPhone
+      },
+      smsConfirmation: {
+        sent: true,
+        messageId: smsResult.messageId,
+        twilioSid: smsResult.twilioSid
+      }
+    });
+  } catch (error) {
+    console.error('Error sending SMS confirmation:', error);
+    res.status(500).json({ 
+      error: 'Failed to send SMS confirmation',
+      details: error.message 
+    });
   }
 });
 
@@ -269,5 +342,49 @@ router.get('/phone/:phone', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Helper function to send SMS confirmation
+async function sendAppointmentConfirmationSMS({
+  appointmentId,
+  customerPhone,
+  customerName,
+  appointmentDate,
+  appointmentTime,
+  duration,
+  confirmationCode
+}) {
+  const fetch = require('node-fetch'); // Make sure to install: npm install node-fetch@2
+  
+  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+  
+  try {
+    const response = await fetch(`${baseUrl}/api/messages/appointment-confirmation`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        appointmentId,
+        customerPhone,
+        customerName,
+        appointmentDate,
+        appointmentTime,
+        duration,
+        confirmationCode
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'SMS API call failed');
+    }
+    
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error calling SMS confirmation API:', error);
+    throw error;
+  }
+}
 
 module.exports = router;
