@@ -1985,6 +1985,8 @@ async function sendAppointmentConfirmation(appointmentId) {
 
 // Replace your existing deleteAppointment function in dashboard.ejs with this:
 
+// Replace your existing deleteAppointment function in dashboard.ejs with this:
+
 async function deleteAppointment(appointmentId) {
     const appointment = appointments.find(apt => apt.id === appointmentId);
     if (!appointment) {
@@ -1993,9 +1995,9 @@ async function deleteAppointment(appointmentId) {
     }
     
     // Show confirmation dialog
-    if (confirm(`Cancel the appointment "${appointment.purpose}" with ${appointment.contact}?\n\nThis will mark it as cancelled but keep the record.`)) {
+    if (confirm(`Cancel the appointment "${appointment.purpose}" with ${appointment.contact}?\n\nThis will:\n• Mark appointment as cancelled\n• Send SMS notification to customer\n• Keep record for audit trail`)) {
         try {
-            showToast('Cancelling appointment...', 'info', '<i class="fas fa-spinner fa-spin"></i>');
+            showToast('Cancelling appointment and sending SMS...', 'info', '<i class="fas fa-spinner fa-spin"></i>');
             
             console.log(`🔄 Cancelling appointment ${appointmentId}`);
             
@@ -2023,9 +2025,26 @@ async function deleteAppointment(appointmentId) {
                 updateAllAppointmentsDisplay();
                 updateAppointmentsCount();
                 
-                showToast(`Appointment with ${appointment.contact} cancelled successfully`, 'success', '<i class="fas fa-calendar-times"></i>');
+                // Show success message with SMS status
+                let successMessage = `Appointment with ${appointment.contact} cancelled successfully`;
+                let successIcon = '<i class="fas fa-calendar-times"></i>';
+                
+                if (result.smsNotification && result.smsNotification.sent) {
+                    successMessage += ' • SMS notification sent';
+                    successIcon = '<i class="fas fa-check-double"></i>';
+                } else {
+                    successMessage += ' • SMS notification failed';
+                }
+                
+                showToast(successMessage, 'success', successIcon);
                 
                 console.log(`✅ Successfully cancelled appointment: ${appointment.purpose} with ${appointment.contact}`);
+                console.log(`📱 SMS Status:`, result.smsNotification);
+                
+                // Refresh messages to show the cancellation SMS
+                setTimeout(async () => {
+                    await loadTodaysMessages();
+                }, 2000);
             } else {
                 throw new Error(result.error || `API returned ${response.status}`);
             }
