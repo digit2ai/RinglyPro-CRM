@@ -65,9 +65,9 @@ const Appointment = sequelize.define('Appointment', {
   },
   status: {
     type: DataTypes.STRING,
-    defaultValue: 'confirmed', // Changed from 'scheduled' to 'confirmed'
+    defaultValue: 'confirmed',
     validate: {
-      isIn: [['confirmed', 'pending', 'cancelled', 'completed', 'no_show']] // Removed 'scheduled'
+      isIn: [['confirmed', 'pending', 'cancelled', 'completed', 'no_show']]
     }
   },
   confirmationCode: {
@@ -84,19 +84,6 @@ const Appointment = sequelize.define('Appointment', {
       isIn: [['voice_booking', 'online', 'manual', 'walk-in']]
     }
   }
-  // REMOVED ALL ZOOM, HUBSPOT, AND OTHER FIELDS THAT DON'T EXIST IN DATABASE:
-  // - zoomMeetingUrl
-  // - zoomMeetingId  
-  // - zoomPassword
-  // - hubspotContactId
-  // - hubspotMeetingId
-  // - emailSent
-  // - smsSent
-  // - reminderSent
-  // - notes
-  // - cancelReason
-  // - rescheduleCount
-  // - callSid
 }, {
   tableName: 'appointments',
   timestamps: true,
@@ -132,6 +119,7 @@ const Appointment = sequelize.define('Appointment', {
     }
   ]
 });
+
 // Instance methods
 Appointment.prototype.getFormattedDateTime = function() {
   const date = new Date(`${this.appointmentDate}T${this.appointmentTime}`);
@@ -200,7 +188,7 @@ Appointment.checkAvailability = function(date, time) {
     where: { 
       appointmentDate: date,
       appointmentTime: time,
-      status: ['confirmed', 'scheduled']
+      status: ['confirmed', 'pending']
     }
   });
 };
@@ -214,7 +202,7 @@ Appointment.getAvailableSlots = function(date) {
   return this.findAll({
     where: { 
       appointmentDate: date,
-      status: ['scheduled', 'confirmed']
+      status: ['confirmed', 'pending']
     },
     attributes: ['appointmentTime']
   }).then(bookedSlots => {
