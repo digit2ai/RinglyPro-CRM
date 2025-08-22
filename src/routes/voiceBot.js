@@ -42,7 +42,7 @@ const availableSlots = [
 
 // Main voice webhook handler
 router.post('/webhook/voice', async (req, res) => {
-    const { CallSid, From, Digits, SpeechResult } = req.body;
+    const CallSid = req.body?.CallSid || req.query?.CallSid || 'unknown';
     
     console.log(`📞 Voice call received from ${From}, CallSid: ${CallSid}`);
     console.log(`Digits: ${Digits}, Speech: ${SpeechResult}`);
