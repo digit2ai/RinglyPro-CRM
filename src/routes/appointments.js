@@ -290,7 +290,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// FIXED: Cancel appointment (soft delete - changes status to 'cancelled')
+// FIXED: Cancel appointment (soft delete - changes status to 'cancelled') + Send SMS
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -318,6 +318,25 @@ router.delete('/:id', async (req, res) => {
     
     console.log(`✅ Successfully cancelled appointment ${id} - New status: ${appointment.status}`);
     
+    // Send cancellation SMS notification
+    let smsResult = null;
+    try {
+      smsResult = await sendAppointmentCancellationSMS({
+        appointmentId: appointment.id,
+        customerPhone: appointment.customerPhone,
+        customerName: appointment.customerName,
+        appointmentDate: appointment.appointmentDate,
+        appointmentTime: appointment.appointmentTime,
+        confirmationCode: appointment.confirmationCode,
+        reason: reason || 'scheduling conflict'
+      });
+      
+      console.log(`✅ Cancellation SMS sent for appointment ${appointment.id}`);
+    } catch (smsError) {
+      console.error(`⚠️ Failed to send cancellation SMS for appointment ${appointment.id}:`, smsError.message);
+      // Don't fail the cancellation if SMS fails
+    }
+    
     res.json({
       success: true,
       message: 'Appointment cancelled successfully',
@@ -325,7 +344,12 @@ router.delete('/:id', async (req, res) => {
         id: appointment.id,
         customerName: appointment.customerName,
         status: appointment.status
-      }
+      },
+      smsNotification: smsResult ? {
+        sent: true,
+        messageId: smsResult.messageId,
+        twilioSid: smsResult.twilioSid
+      } : { sent: false, reason: 'SMS sending failed' }
     });
     
   } catch (error) {
@@ -395,6 +419,50 @@ async function sendAppointmentConfirmationSMS({
     return result;
   } catch (error) {
     console.error('Error calling SMS confirmation API:', error);
+    throw error;
+  }
+}
+
+// Helper function to send SMS cancellation
+async function sendAppointmentCancellationSMS({
+  appointmentId,
+  customerPhone,
+  customerName,
+  appointmentDate,
+  appointmentTime,
+  confirmationCode,
+  reason
+}) {
+  const fetch = require('node-fetch'); // Make sure to install: npm install node-fetch@2
+  
+  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+  
+  try {
+    const response = await fetch(`${baseUrl}/api/messages/appointment-cancellation`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        appointmentId,
+        customerPhone,
+        customerName,
+        appointmentDate,
+        appointmentTime,
+        confirmationCode,
+        reason
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'SMS API call failed');
+    }
+    
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error calling SMS cancellation API:', error);
     throw error;
   }
 }
