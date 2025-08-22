@@ -20,42 +20,38 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get today's appointments (for dashboard)
+// Get today's appointments (for dashboard) - FIXED: Filters out cancelled/completed
 router.get('/today', async (req, res) => {
   try {
-    const appointments = await Appointment.findTodaysAppointments();
+    const { Op } = require('sequelize');
+    const today = new Date().toISOString().split('T')[0];
+    
+    console.log(`📅 Fetching today's appointments for: ${today}`);
+    
+    const appointments = await Appointment.findAll({
+      where: {
+        appointmentDate: today,
+        status: {
+          [Op.notIn]: ['cancelled', 'completed'] // Hide cancelled and completed
+        }
+      },
+      order: [['appointmentTime', 'ASC']]
+    });
+    
+    console.log(`📊 Found ${appointments.length} active appointments (excluding cancelled/completed)`);
     
     res.json({
       success: true,
       count: appointments.length,
       appointments: appointments
     });
+    
   } catch (error) {
-    console.error('Error fetching today\'s appointments:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get available slots for a date (for Rachel)
-router.post('/available-slots', async (req, res) => {
-  try {
-    const { date, timezone = 'America/New_York' } = req.body;
-    
-    if (!date) {
-      return res.status(400).json({ error: 'Date is required' });
-    }
-    
-    const slots = await Appointment.getAvailableSlots(date);
-    
-    res.json({
-      success: true,
-      date: date,
-      timezone: timezone,
-      slots: slots
+    console.error('❌ Error fetching today\'s appointments:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
     });
-  } catch (error) {
-    console.error('Error getting available slots:', error);
-    res.status(500).json({ error: 'Failed to get available slots' });
   }
 });
 
@@ -294,34 +290,50 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Cancel appointment
+// FIXED: Cancel appointment (soft delete - changes status to 'cancelled')
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
     
+    console.log(`🔄 Attempting to cancel appointment ${id}`);
+    
+    // Find the appointment
     const appointment = await Appointment.findByPk(id);
     
     if (!appointment) {
+      console.log(`❌ Appointment ${id} not found`);
       return res.status(404).json({ 
+        success: false,
         error: 'Appointment not found' 
       });
     }
     
-    // Update status to cancelled instead of deleting
+    console.log(`📋 Found appointment: ${appointment.customerName} - Status: ${appointment.status}`);
+    
+    // Update status to cancelled
     await appointment.update({ 
-      status: 'cancelled',
-      cancelReason: reason || 'Cancelled by request'
+      status: 'cancelled'
     });
+    
+    console.log(`✅ Successfully cancelled appointment ${id} - New status: ${appointment.status}`);
     
     res.json({
       success: true,
       message: 'Appointment cancelled successfully',
-      appointment: appointment
+      appointment: {
+        id: appointment.id,
+        customerName: appointment.customerName,
+        status: appointment.status
+      }
     });
+    
   } catch (error) {
-    console.error('Error cancelling appointment:', error);
-    res.status(500).json({ error: error.message });
+    console.error('❌ Error cancelling appointment:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 });
 
