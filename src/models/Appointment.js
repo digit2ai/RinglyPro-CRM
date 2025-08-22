@@ -84,10 +84,6 @@ const Appointment = sequelize.define('Appointment', {
       isIn: [['voice_booking', 'online', 'manual', 'walk-in']]
     }
   },
-  timezone: {
-    type: DataTypes.STRING(50),
-    defaultValue: 'America/New_York'
-  },
   zoomMeetingUrl: {
     type: DataTypes.STRING(500),
     allowNull: true,
