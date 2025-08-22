@@ -32,7 +32,7 @@ router.get('/today', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching today\'s appointments:', error);
-    res.(500).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
