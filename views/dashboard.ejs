@@ -1983,6 +1983,59 @@ async function sendAppointmentConfirmation(appointmentId) {
   }
 }
 
+// Replace your existing deleteAppointment function in dashboard.ejs with this:
+
+async function deleteAppointment(appointmentId) {
+    const appointment = appointments.find(apt => apt.id === appointmentId);
+    if (!appointment) {
+        showToast('Appointment not found', 'error', '<i class="fas fa-exclamation-circle"></i>');
+        return;
+    }
+    
+    // Show confirmation dialog
+    if (confirm(`Cancel the appointment "${appointment.purpose}" with ${appointment.contact}?\n\nThis will mark it as cancelled but keep the record.`)) {
+        try {
+            showToast('Cancelling appointment...', 'info', '<i class="fas fa-spinner fa-spin"></i>');
+            
+            console.log(`🔄 Cancelling appointment ${appointmentId}`);
+            
+            // Call the API to cancel the appointment
+            const response = await fetch(`/api/appointments/${appointmentId}`, {
+                method: 'DELETE',
+                headers: { 
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    reason: 'Cancelled from dashboard'
+                })
+            });
+            
+            console.log(`📡 API Response Status: ${response.status}`);
+            
+            const result = await response.json();
+            console.log('📋 API Response:', result);
+            
+            if (response.ok && result.success) {
+                // Remove from local appointments array
+                appointments = appointments.filter(apt => apt.id !== appointmentId);
+                
+                // Update display
+                updateAllAppointmentsDisplay();
+                updateAppointmentsCount();
+                
+                showToast(`Appointment with ${appointment.contact} cancelled successfully`, 'success', '<i class="fas fa-calendar-times"></i>');
+                
+                console.log(`✅ Successfully cancelled appointment: ${appointment.purpose} with ${appointment.contact}`);
+            } else {
+                throw new Error(result.error || `API returned ${response.status}`);
+            }
+        } catch (error) {
+            console.error('❌ Error cancelling appointment:', error);
+            showToast('Failed to cancel appointment: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
+        }
+    }
+}
+
         // Load today's messages from database
         async function loadTodaysMessages() {
             try {
