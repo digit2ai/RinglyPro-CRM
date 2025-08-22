@@ -42,7 +42,7 @@ router.post('/available-slots', async (req, res) => {
     const { date, timezone = 'America/New_York' } = req.body;
     
     if (!date) {
-      return res.(400).json({ error: 'Date is required' });
+      return res.status(400).json({ error: 'Date is required' });
     }
     
     const slots = await Appointment.getAvailableSlots(date);
