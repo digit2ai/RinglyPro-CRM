@@ -2751,104 +2751,91 @@ function updateAppointmentsCount() {
             }
         }
 
-        // Refresh all data
-        async function refreshData() {
-            // Show loading indicators
-            document.getElementById('total-contacts').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            document.getElementById('appointments-today').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            document.getElementById('messages-today').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            document.getElementById('calls-today').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            
-            await Promise.all([
-                loadContacts(),
-                loadAppointments()
-            ]);
-            
-            // Load today's data
-            loadTodaysData();
-            
-            showToast('All data refreshed successfully', 'success', '<i class="fas fa-sync-alt"></i>');
-            console.log('✅ All data refreshed successfully');
+// FIXED: Better refresh function with proper error handling
+async function refreshData() {
+    console.log('🔄 Starting comprehensive data refresh...');
+    
+    // Show loading indicators
+    const loadingElements = [
+        'total-contacts', 'appointments-today', 'messages-today', 'calls-today',
+        'kpi-total-contacts', 'kpi-appointments', 'kpi-messages'
+    ];
+    
+    loadingElements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         }
-
-        // Setup search on Enter key
-        function setupSearchInput() {
-            const searchInput = document.getElementById('search-input');
-            if (searchInput) {
-                searchInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        searchContacts();
-                    }
-                });
-            }
-        }
-
-        // Send test SMS
-        function setupSMSForm() {
-            const sendButton = document.getElementById('send-sms');
-            if (!sendButton) return;
-            
-            sendButton.addEventListener('click', async function() {
-                const button = this;
-                const status = document.getElementById('sms-status');
-                const phone = document.getElementById('test-phone')?.value;
-                const message = document.getElementById('test-message')?.value;
-                
-                if (!phone || !message) {
-                    if (status) {
-                        status.className = 'mt-4 p-4 rounded-lg bg-yellow-100 text-yellow-800';
-                        status.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Please enter both phone number and message';
-                        status.classList.remove('hidden');
-                    }
-                    showToast('Please enter both phone number and message', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
-                    return;
+    });
+    
+    try {
+        // Force fresh API calls with cache busting
+        const timestamp = Date.now();
+        
+        // Refresh contacts
+        console.log('📞 Refreshing contacts...');
+        await fetch(`/api/contacts?_t=${timestamp}`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    contacts = result.data.contacts;
+                    totalContacts = result.data.pagination.totalContacts;
+                    updateContactCount();
+                    updateAllContactsDisplay();
+                    updateOpenModalDropdowns();
+                    console.log(`✅ Loaded ${contacts.length} contacts`);
                 }
-                
-                button.disabled = true;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending via Twilio...';
-                
-                try {
-                    const response = await fetch('/api/messages/sms', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ to: phone, message: message })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        if (status) {
-                            status.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
-                            status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>✅ SMS sent successfully! Message SID: ${data.messageSid}`;
-                            status.classList.remove('hidden');
-                        }
-                        
-                        // Clear form
-                        const phoneInput = document.getElementById('test-phone');
-                        const messageInput = document.getElementById('test-message');
-                        if (phoneInput) phoneInput.value = '';
-                        if (messageInput) messageInput.value = '';
-                        
-                        showToast('SMS sent successfully!', 'success', '<i class="fas fa-paper-plane"></i>');
-                        
-                    } else {
-                        throw new Error(data.error || 'Failed to send SMS');
-                    }
-                } catch (error) {
-                    if (status) {
-                        status.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
-                        status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>⚠ Error: ${error.message}`;
-                        status.classList.remove('hidden');
-                    }
-                    showToast('Failed to send SMS: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
-                }
-                
-                button.disabled = false;
-                button.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send SMS via Twilio';
             });
-        }
+        
+        // Refresh appointments
+        console.log('📅 Refreshing appointments...');
+        await fetch(`/api/appointments/today?_t=${timestamp}`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && result.appointments) {
+                    appointments = result.appointments.map(apt => ({
+                        id: apt.id,
+                        time: apt.appointmentTime ? apt.appointmentTime.substring(0, 5) : '00:00',
+                        duration: apt.duration || 30,
+                        contact: apt.customerName,
+                        phone: apt.customerPhone || '',
+                        purpose: apt.purpose || 'General consultation',
+                        status: apt.status || 'confirmed',
+                        confirmationCode: apt.confirmationCode
+                    }));
+                    updateAllAppointmentsDisplay();
+                    updateAppointmentsCount();
+                    console.log(`✅ Loaded ${appointments.length} appointments`);
+                } else {
+                    console.warn('⚠️ No appointments returned from API');
+                    appointments = [];
+                    updateAllAppointmentsDisplay();
+                    updateAppointmentsCount();
+                }
+            });
+        
+        // Refresh messages
+        console.log('📱 Refreshing messages...');
+        await loadTodaysMessages();
+        
+        // Refresh calls
+        console.log('📞 Refreshing calls...');
+        await loadTodaysCalls();
+        
+        showToast('All data refreshed successfully', 'success', '<i class="fas fa-sync-alt"></i>');
+        console.log('✅ Complete data refresh finished');
+        
+    } catch (error) {
+        console.error('❌ Error during refresh:', error);
+        showToast('Refresh failed: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
+        
+        // Restore original counts on error
+        updateContactCount();
+        updateAppointmentsCount();
+        updateMessagesCount();
+        updateCallsCount();
+    }
+}
 
         // ==================== QUICK ACTIONS FUNCTIONALITY ====================
         
