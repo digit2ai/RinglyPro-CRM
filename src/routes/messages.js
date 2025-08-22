@@ -102,6 +102,84 @@ router.post('/sms', async (req, res) => {
   }
 });
 
+// POST /api/messages/appointment-confirmation - Send appointment confirmation SMS
+router.post('/appointment-confirmation', async (req, res) => {
+  try {
+    const { appointmentId, customerPhone, customerName, appointmentDate, appointmentTime, duration, confirmationCode } = req.body;
+    
+    // Validate required fields
+    if (!customerPhone || !customerName || !appointmentDate || !appointmentTime) {
+      return res.status(400).json({ 
+        error: 'Missing required appointment details',
+        required: ['customerPhone', 'customerName', 'appointmentDate', 'appointmentTime']
+      });
+    }
+
+    // Format appointment details into SMS message
+    const appointmentMessage = formatAppointmentConfirmationSMS({
+      customerName,
+      appointmentDate,
+      appointmentTime,
+      duration: duration || 30,
+      confirmationCode
+    });
+
+    console.log(`📅 Sending appointment confirmation to ${customerPhone} for ${customerName}`);
+
+    // Send SMS via Twilio
+    const twilioMessage = await client.messages.create({
+      body: appointmentMessage,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: customerPhone
+    });
+
+    console.log(`✅ Appointment confirmation sent! SID: ${twilioMessage.sid}`);
+
+    // Store in database
+    let savedMessage = null;
+    if (Message) {
+      try {
+        savedMessage = await Message.create({
+          contactId: null, // Could link to contact if you have contactId
+          twilioSid: twilioMessage.sid,
+          direction: 'outgoing',
+          fromNumber: process.env.TWILIO_PHONE_NUMBER,
+          toNumber: customerPhone,
+          body: appointmentMessage,
+          status: twilioMessage.status || 'sent',
+          cost: twilioMessage.price || null,
+          sentAt: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        
+        console.log(`💾 Appointment confirmation stored in database with ID: ${savedMessage.id}`);
+      } catch (dbError) {
+        console.error('⚠️ Failed to store message in database:', dbError.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Appointment confirmation sent successfully',
+      twilioSid: twilioMessage.sid,
+      status: twilioMessage.status,
+      messageId: savedMessage ? savedMessage.id : null,
+      appointmentId,
+      confirmationCode,
+      sentTo: customerPhone,
+      customerName
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending appointment confirmation:', error);
+    res.status(500).json({ 
+      error: 'Failed to send appointment confirmation',
+      details: error.message 
+    });
+  }
+});
+
 // POST /api/messages/webhook - Twilio webhook for incoming messages
 router.post('/webhook', async (req, res) => {
   try {
@@ -158,5 +236,38 @@ router.get('/webhook', (req, res) => {
     method: 'POST'
   });
 });
+
+// Helper function to format appointment confirmation message
+function formatAppointmentConfirmationSMS({ customerName, appointmentDate, appointmentTime, duration, confirmationCode }) {
+  // Format date
+  const date = new Date(appointmentDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  // Format time (assuming it's already in HH:MM format)
+  const time = appointmentTime;
+  
+  // Confirmation code
+  const code = confirmationCode || 'N/A';
+
+  return `🗓️ APPOINTMENT CONFIRMED
+
+Hi ${customerName}!
+
+Your appointment has been scheduled:
+
+📅 Date: ${date}
+🕐 Time: ${time}
+⏱️ Duration: ${duration} minutes
+🔑 Confirmation: ${code}
+
+📞 RinglyPro CRM
+Need to reschedule? Reply to this message.
+
+Thank you for choosing our services!`;
+}
 
 module.exports = router;
