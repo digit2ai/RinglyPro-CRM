@@ -1941,6 +1941,45 @@
             }
         }
 
+// Add to your dashboard.ejs <script> section:
+
+async function sendAppointmentConfirmation(appointmentId) {
+  try {
+    const appointment = appointments.find(apt => apt.id === appointmentId);
+    if (!appointment) {
+      showToast('Appointment not found', 'error', '<i class="fas fa-exclamation-circle"></i>');
+      return;
+    }
+
+    showToast('Sending confirmation SMS...', 'info', '<i class="fas fa-paper-plane"></i>');
+
+    const response = await fetch('/api/messages/appointment-confirmation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        appointmentId: appointment.id,
+        customerPhone: appointment.phone,
+        customerName: appointment.contact,
+        appointmentDate: getTodayDate(), // Today's date
+        appointmentTime: appointment.time,
+        duration: appointment.duration,
+        confirmationCode: appointment.confirmationCode
+      })
+    });
+
+    const result = await response.json();
+    
+    if (result.success) {
+      showToast(`Confirmation SMS sent to ${appointment.contact}`, 'success', '<i class="fas fa-check-circle"></i>');
+    } else {
+      throw new Error(result.error);
+    }
+  } catch (error) {
+    console.error('Error sending confirmation:', error);
+    showToast('Failed to send confirmation: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
+  }
+}
+
         // Load today's messages from database
         async function loadTodaysMessages() {
             try {
