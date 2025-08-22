@@ -1929,62 +1929,77 @@ function updateAllAppointmentsDisplay() {
         }
 
         // Load appointments (enhanced with better sample data)
-        function loadAppointments() {
-            const today = new Date();
-            
-            // Display today's date
-            const todayDateEl = document.getElementById('today-date-display');
-            if (todayDateEl) {
-                todayDateEl.textContent = today.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric'
-                });
-            }
-
-            // Enhanced simulated appointments for demo
-            appointments = [
-                {
-                    id: 1,
-                    time: '09:00',
-                    duration: 60,
-                    contact: 'John Doe',
-                    phone: '+1234567890',
-                    purpose: 'Sales consultation - New product demo',
-                    status: 'confirmed'
-                },
-                {
-                    id: 2,
-                    time: '11:30',
-                    duration: 30,
-                    contact: 'Jane Smith',
-                    phone: '+1987654321',
-                    purpose: 'Follow-up meeting - Contract signing',
-                    status: 'confirmed'
-                },
-                {
-                    id: 3,
-                    time: '14:30',
-                    duration: 45,
-                    contact: 'Mike Johnson',
-                    phone: '+1555666777',
-                    purpose: 'Technical support session',
-                    status: 'pending'
-                },
-                {
-                    id: 4,
-                    time: '16:00',
-                    duration: 30,
-                    contact: 'Sarah Wilson',
-                    phone: '+1444555666',
-                    purpose: 'Project review meeting',
-                    status: 'confirmed'
-                }
-            ];
-
-            updateAllAppointmentsDisplay();
-            updateAppointmentsCount();
+// FIXED: Load appointments from PostgreSQL API instead of hardcoded data
+async function loadAppointments() {
+    try {
+        console.log('📅 Loading today\'s appointments from PostgreSQL API...');
+        
+        const response = await fetch('/api/appointments/today');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
+        
+        const result = await response.json();
+        
+        console.log('✅ Received appointments from API:', result);
+        
+        if (result.success && result.appointments) {
+            // Transform API data to match dashboard format
+            appointments = result.appointments.map(apt => ({
+                id: apt.id,
+                time: apt.appointmentTime ? apt.appointmentTime.substring(0, 5) : '00:00', // Format HH:MM
+                duration: apt.duration || 30,
+                contact: apt.customerName,
+                phone: apt.customerPhone || '',
+                purpose: apt.purpose || 'General consultation',
+                status: apt.status || 'confirmed',
+                confirmationCode: apt.confirmationCode,
+                source: apt.source
+            }));
+            
+            console.log(`✅ Loaded ${appointments.length} real appointments from PostgreSQL`);
+        } else {
+            console.warn('⚠️ API returned no appointments or invalid format');
+            appointments = [];
+        }
+        
+        // Display today's date
+        const today = new Date();
+        const todayDateEl = document.getElementById('today-date-display');
+        if (todayDateEl) {
+            todayDateEl.textContent = today.toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        updateAllAppointmentsDisplay();
+        updateAppointmentsCount();
+        
+    } catch (error) {
+        console.error('❌ Error loading appointments from API:', error);
+        
+        // Show error in appointments display
+        const appointmentsList = document.getElementById('all-appointments-list');
+        if (appointmentsList) {
+            appointmentsList.innerHTML = `
+                <div class="text-center py-8 text-red-500">
+                    <i class="fas fa-exclamation-triangle text-xl mb-2"></i>
+                    <p class="text-sm">Error loading appointments: ${error.message}</p>
+                    <button onclick="loadAppointments()" class="mt-2 bg-green-500 text-white px-3 py-2 rounded text-sm">
+                        Try Again
+                    </button>
+                </div>
+            `;
+        }
+        
+        // Fallback to empty array
+        appointments = [];
+        updateAppointmentsCount();
+    }
+}
 
         // Load today's messages (enhanced sample data)
    // Add this function to your dashboard.ejs <script> section
