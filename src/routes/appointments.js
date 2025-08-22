@@ -32,7 +32,7 @@ router.get('/today', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching today\'s appointments:', error);
-    res.status(500).json({ error: error.message });
+    res.(500).json({ error: error.message });
   }
 });
 
@@ -42,7 +42,7 @@ router.post('/available-slots', async (req, res) => {
     const { date, timezone = 'America/New_York' } = req.body;
     
     if (!date) {
-      return res.status(400).json({ error: 'Date is required' });
+      return res.(400).json({ error: 'Date is required' });
     }
     
     const slots = await Appointment.getAvailableSlots(date);
@@ -55,7 +55,7 @@ router.post('/available-slots', async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting available slots:', error);
-    res.status(500).json({ error: 'Failed to get available slots' });
+    res.(500).json({ error: 'Failed to get available slots' });
   }
 });
 
@@ -78,7 +78,7 @@ router.post('/', async (req, res) => {
     
     // Validate required fields
     if (!customerName || !customerEmail || !customerPhone || !appointmentDate || !appointmentTime) {
-      return res.status(400).json({ 
+      return res.(400).json({ 
         error: 'Missing required fields: customerName, customerEmail, customerPhone, appointmentDate, appointmentTime' 
       });
     }
@@ -86,7 +86,7 @@ router.post('/', async (req, res) => {
     // Check if slot is available
     const existingAppointment = await Appointment.checkAvailability(appointmentDate, appointmentTime);
     if (existingAppointment) {
-      return res.status(409).json({ 
+      return res.(409).json({ 
         error: 'Time slot is already booked' 
       });
     }
@@ -107,7 +107,7 @@ router.post('/', async (req, res) => {
       contactId,
       duration,
       notes,
-      status: 'scheduled'
+      status: 'confirmed'
     });
     
     res.status(201).json({
