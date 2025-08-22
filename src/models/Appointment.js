@@ -67,7 +67,7 @@ const Appointment = sequelize.define('Appointment', {
     type: DataTypes.STRING,
     defaultValue: 'confirmed',
     validate: {
-      isIn: [['confirmed', 'pending', 'cancelled', 'completed', 'no_show']]
+      isIn: [['confirmed', 'pending', 'cancelled', 'completed', 'no-show', 'scheduled']]
     }
   },
   confirmationCode: {
@@ -119,6 +119,24 @@ const Appointment = sequelize.define('Appointment', {
     }
   ]
 });
+
+// Static method to find today's active appointments (excluding cancelled)
+Appointment.findTodaysAppointments = function() {
+  const { Op } = require('sequelize');
+  const today = new Date().toISOString().split('T')[0];
+  
+  return this.findAll({
+    where: {
+      appointmentDate: today,
+      status: {
+        [Op.notIn]: ['cancelled', 'completed'] // Hide cancelled and completed
+      }
+    },
+    order: [['appointmentTime', 'ASC']]
+  });
+};
+
+module.exports = Appointment;
 
 // Instance methods
 Appointment.prototype.getFormattedDateTime = function() {
