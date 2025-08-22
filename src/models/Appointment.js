@@ -11,13 +11,13 @@ const Appointment = sequelize.define('Appointment', {
   contactId: {
     type: DataTypes.INTEGER,
     allowNull: true,
-    field: 'contact_id', // Map to snake_case column
+    field: 'contact_id',
     comment: 'References contacts table - nullable for walk-ins'
   },
   customerName: {
     type: DataTypes.STRING,
     allowNull: false,
-    field: 'customer_name', // Map to snake_case column
+    field: 'customer_name',
     validate: {
       notEmpty: true,
       len: [1, 100]
@@ -26,15 +26,15 @@ const Appointment = sequelize.define('Appointment', {
   customerPhone: {
     type: DataTypes.STRING,
     allowNull: false,
-    field: 'customer_phone', // Map to snake_case column
+    field: 'customer_phone',
     validate: {
       notEmpty: true
     }
   },
   customerEmail: {
     type: DataTypes.STRING,
-    allowNull: false, // Changed to match database
-    field: 'customer_email', // Map to snake_case column
+    allowNull: false,
+    field: 'customer_email',
     validate: {
       isEmail: true
     }
@@ -42,112 +42,65 @@ const Appointment = sequelize.define('Appointment', {
   appointmentDate: {
     type: DataTypes.DATEONLY,
     allowNull: false,
-    field: 'appointment_date', // Map to snake_case column
+    field: 'appointment_date',
     comment: 'Date of appointment (YYYY-MM-DD)'
   },
   appointmentTime: {
     type: DataTypes.TIME,
     allowNull: false,
-    field: 'appointment_time', // Map to snake_case column
+    field: 'appointment_time',
     comment: 'Time of appointment (HH:MM:SS)'
   },
   duration: {
     type: DataTypes.INTEGER,
     allowNull: true,
-    defaultValue: 30, // Changed from 60 to match database
+    defaultValue: 30,
     comment: 'Duration in minutes'
   },
   purpose: {
-    type: DataTypes.TEXT, // Changed from STRING to TEXT
+    type: DataTypes.TEXT,
     allowNull: true,
-    defaultValue: 'General consultation', // Match database default
+    defaultValue: 'General consultation',
     comment: 'Purpose of appointment'
   },
   status: {
-    type: DataTypes.STRING, // Use STRING instead of ENUM to match existing
-    defaultValue: 'scheduled', // Match database default
+    type: DataTypes.STRING,
+    defaultValue: 'confirmed', // Changed from 'scheduled' to 'confirmed'
     validate: {
-      isIn: [['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show']]
+      isIn: [['confirmed', 'pending', 'cancelled', 'completed', 'no_show']] // Removed 'scheduled'
     }
   },
   confirmationCode: {
     type: DataTypes.STRING(20),
     allowNull: false,
-    field: 'confirmation_code', // Map to snake_case column
+    field: 'confirmation_code',
     unique: true,
     comment: 'Unique confirmation code for appointment'
   },
   source: {
-    type: DataTypes.STRING, // Use STRING instead of ENUM to match existing
-    defaultValue: 'voice_booking', // Match database default
+    type: DataTypes.STRING,
+    defaultValue: 'voice_booking',
     validate: {
       isIn: [['voice_booking', 'online', 'manual', 'walk-in']]
     }
-  },
-  zoomMeetingUrl: {
-    type: DataTypes.STRING(500),
-    allowNull: true,
-    field: 'zoom_meeting_url'
-  },
-  zoomMeetingId: {
-    type: DataTypes.STRING(50),
-    allowNull: true,
-    field: 'zoom_meeting_id'
-  },
-  zoomPassword: {
-    type: DataTypes.STRING(50),
-    allowNull: true,
-    field: 'zoom_password'
-  },
-  hubspotContactId: {
-    type: DataTypes.STRING(50),
-    allowNull: true,
-    field: 'hubspot_contact_id'
-  },
-  hubspotMeetingId: {
-    type: DataTypes.STRING(50),
-    allowNull: true,
-    field: 'hubspot_meeting_id'
-  },
-  emailSent: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-    field: 'email_sent'
-  },
-  smsSent: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-    field: 'sms_sent'
-  },
-  reminderSent: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-    field: 'reminder_sent'
-  },
-  notes: {
-    type: DataTypes.TEXT,
-    allowNull: true
-  },
-  cancelReason: {
-    type: DataTypes.STRING(255),
-    allowNull: true,
-    field: 'cancel_reason'
-  },
-  rescheduleCount: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-    field: 'reschedule_count'
-  },
-  callSid: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    field: 'call_sid',
-    comment: 'Twilio Call SID if booked via phone'
   }
+  // REMOVED ALL ZOOM, HUBSPOT, AND OTHER FIELDS THAT DON'T EXIST IN DATABASE:
+  // - zoomMeetingUrl
+  // - zoomMeetingId  
+  // - zoomPassword
+  // - hubspotContactId
+  // - hubspotMeetingId
+  // - emailSent
+  // - smsSent
+  // - reminderSent
+  // - notes
+  // - cancelReason
+  // - rescheduleCount
+  // - callSid
 }, {
   tableName: 'appointments',
   timestamps: true,
-  underscored: true, // Use snake_case for timestamps
+  underscored: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
   indexes: [
@@ -179,7 +132,6 @@ const Appointment = sequelize.define('Appointment', {
     }
   ]
 });
-
 // Instance methods
 Appointment.prototype.getFormattedDateTime = function() {
   const date = new Date(`${this.appointmentDate}T${this.appointmentTime}`);
