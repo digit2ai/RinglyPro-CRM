@@ -42,12 +42,20 @@ const availableSlots = [
 
 // Main voice webhook handler
 router.post('/webhook/voice', async (req, res) => {
-    const CallSid = req.body?.CallSid || req.query?.CallSid || 'unknown';
-    
-    console.log(`📞 Voice call received from ${From}, CallSid: ${CallSid}`);
-    console.log(`Digits: ${Digits}, Speech: ${SpeechResult}`);
-    
     try {
+        // Extract Twilio webhook parameters safely
+        const CallSid = req.body?.CallSid || req.query?.CallSid || 'unknown';
+        const From = req.body?.From || req.query?.From || 'unknown';
+        const To = req.body?.To || req.query?.To || 'unknown';
+        const Digits = req.body?.Digits || req.query?.Digits || '';
+        const SpeechResult = req.body?.SpeechResult || req.query?.SpeechResult || '';
+        const CallStatus = req.body?.CallStatus || req.query?.CallStatus || 'unknown';
+        const Direction = req.body?.Direction || req.query?.Direction || 'inbound';
+        
+        console.log(`📞 Voice call received from ${From}, CallSid: ${CallSid}`);
+        console.log(`Digits: ${Digits}, Speech: ${SpeechResult}`);
+        console.log(`Call Status: ${CallStatus}, Direction: ${Direction}`);
+        
         // Get or create session
         let session = voiceSessions.get(CallSid) || {
             step: 'greeting',
@@ -56,31 +64,70 @@ router.post('/webhook/voice', async (req, res) => {
             callSid: CallSid,
             createdAt: Date.now()
         };
+
+        // Store call data in PostgreSQL
+        try {
+            await Call.create({
+                callSid: CallSid,
+                fromNumber: From,
+                toNumber: To,
+                callStatus: CallStatus,
+                direction: Direction,
+                speechResult: SpeechResult,
+                digits: Digits,
+                source: 'voice_webhook',
+                timestamp: new Date()
+            });
+            console.log(`📊 Call data saved to PostgreSQL: ${CallSid}`);
+        } catch (dbError) {
+            console.error('❌ Failed to save call to PostgreSQL:', dbError.message);
+            // Continue processing even if database save fails
+        }
+
+        // Update session
+        voiceSessions.set(CallSid, session);
+
+        // Generate TwiML response
+        const twiml = new VoiceResponse();
         
-        // Log call to database
-        await logCallToDatabase(CallSid, From, session.step);
-        
-        // Process the conversation flow
-        const twiml = await processConversationFlow(session, Digits, SpeechResult);
-        
+        // Handle the voice call flow here
+        switch (session.step) {
+            case 'greeting':
+                twiml.say('Thank you for calling RinglyPro. How can I help you today?');
+                session.step = 'listening';
+                break;
+                
+            case 'listening':
+                if (SpeechResult) {
+                    console.log(`🗣️ Customer said: ${SpeechResult}`);
+                    // Process speech and generate response
+                    twiml.say('Thank you for your message. We will get back to you soon.');
+                } else {
+                    twiml.say('I did not hear anything. Please try again.');
+                }
+                break;
+                
+            default:
+                twiml.say('Thank you for calling RinglyPro.');
+                break;
+        }
+
         // Update session
         voiceSessions.set(CallSid, session);
         
-        // Clean up old sessions (basic cleanup)
-        cleanupOldSessions();
-        
+        // Return TwiML response
         res.type('text/xml');
         res.send(twiml.toString());
         
     } catch (error) {
         console.error('❌ Voice webhook error:', error);
         
-        const twiml = new twilio.twiml.VoiceResponse();
-        twiml.say('I apologize, but I\'m experiencing technical difficulties. Please try calling back later. Goodbye.');
-        twiml.hangup();
+        // Return error TwiML
+        const errorTwiml = new VoiceResponse();
+        errorTwiml.say('Sorry, there was a technical issue. Please try again later.');
         
         res.type('text/xml');
-        res.send(twiml.toString());
+        res.send(errorTwiml.toString());
     }
 });
 
