@@ -126,6 +126,96 @@ router.post('/appointment-confirmation', async (req, res) => {
 
     console.log(`📅 Sending appointment confirmation to ${customerPhone} for ${customerName}`);
 
+    // Add this route to your routes/messages.js file
+
+// Send appointment cancellation SMS
+router.post('/appointment-cancellation', async (req, res) => {
+  try {
+    const {
+      appointmentId,
+      customerPhone,
+      customerName,
+      appointmentDate,
+      appointmentTime,
+      confirmationCode,
+      reason = 'scheduling conflict'
+    } = req.body;
+
+    // Validate required fields
+    if (!customerPhone || !customerName || !appointmentDate || !appointmentTime) {
+      return res.status(400).json({
+        error: 'Missing required fields: customerPhone, customerName, appointmentDate, appointmentTime'
+      });
+    }
+
+    // Format date and time for display
+    const formattedDate = new Date(appointmentDate).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const formattedTime = new Date(`2000-01-01T${appointmentTime}`).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+
+    // Create cancellation message
+    const message = `🚫 APPOINTMENT CANCELLED 🚫
+
+Hi ${customerName},
+
+Your appointment scheduled for:
+📅 ${formattedDate}
+🕐 ${formattedTime}
+
+Has been cancelled due to ${reason}.
+
+${confirmationCode ? `Reference: ${confirmationCode}` : ''}
+
+We apologize for any inconvenience. Please call us to reschedule.
+
+- RinglyPro Team`;
+
+    // Send SMS using Twilio
+    const twilioMessage = await twilioClient.messages.create({
+      body: message,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: customerPhone
+    });
+
+    console.log(`✅ Cancellation SMS sent to ${customerPhone} (SID: ${twilioMessage.sid})`);
+
+    // Save message to database
+    const savedMessage = await Message.create({
+      customerPhone,
+      messageBody: message,
+      direction: 'outbound',
+      status: 'sent',
+      twilioSid: twilioMessage.sid,
+      messageType: 'appointment_cancellation',
+      appointmentId: appointmentId || null
+    });
+
+    res.json({
+      success: true,
+      message: 'Cancellation SMS sent successfully',
+      messageId: savedMessage.id,
+      twilioSid: twilioMessage.sid,
+      customerPhone: customerPhone
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending cancellation SMS:', error);
+    res.status(500).json({
+      error: 'Failed to send cancellation SMS',
+      details: error.message
+    });
+  }
+});
+
     // Send SMS via Twilio
     const twilioMessage = await client.messages.create({
       body: appointmentMessage,
