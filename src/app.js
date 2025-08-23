@@ -8,7 +8,6 @@ const app = express();
 
 // Trust proxy for Render deployment
 app.set('trust proxy', true);
-app.use('/api/calls', require('./routes/voiceBot'));
 
 // Middleware
 app.use(cors());
@@ -42,11 +41,13 @@ app.get('/', (req, res) => {
   });
 });
 
-// API Routes
+
+// API Routes - Clean version with proper call routing
 app.use('/api/contacts', require('./routes/contacts'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/appointments', require('./routes/appointments'));
-app.use('/api/calls', require('./routes/calls')); // 🎯 THIS IS THE MISSING LINE!
+app.use('/api/calls', require('./routes/calls')); // Main call routes
+app.use('/api', require('./routes/callLog')); // Legacy call logging
 
 // Legacy webhook routes (for backward compatibility)
 app.use('/webhook', require('./routes/messages')); // Legacy SMS webhook
