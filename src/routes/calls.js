@@ -292,6 +292,114 @@ router.post('/:callId/notes', async (req, res) => {
   }
 });
 
+// POST /api/calls - Log call data from Rachel or Twilio webhooks
+router.post('/', async (req, res) => {
+  try {
+    const { 
+      CallSid,
+      callSid,
+      fromNumber, 
+      toNumber, 
+      direction = 'incoming',
+      status = 'completed',
+      duration = 0,
+      startTime,
+      endTime,
+      transcript,
+      customerName,
+      appointmentBooked,
+      From,
+      To,
+      CallStatus,
+      Direction
+    } = req.body;
+    
+    // Handle both Rachel format and Twilio webhook format
+    const finalCallSid = CallSid || callSid || `CALL_${Date.now()}`;
+    const finalFromNumber = fromNumber || From;
+    const finalToNumber = toNumber || To;
+    const finalDirection = direction || (Direction === 'inbound' ? 'incoming' : 'outgoing');
+    const finalStatus = status || CallStatus || 'completed';
+    
+    console.log(`📞 Call logged: ${finalFromNumber} -> ${finalToNumber} (${duration}s)`);
+    
+    if (!finalFromNumber || !finalToNumber) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: fromNumber/From and toNumber/To' 
+      });
+    }
+    
+    // Try to link to existing contact
+    let contactId = null;
+    if (Contact && finalFromNumber) {
+      const contact = await Contact.findOne({
+        where: { phone: finalFromNumber }
+      });
+      if (contact) {
+        contactId = contact.id;
+        console.log(`🔗 Linked to contact: ${contact.firstName} ${contact.lastName}`);
+      }
+    }
+    
+    // Create or update call record
+    if (Call) {
+      // Check if call already exists (for webhook updates)
+      let callRecord = await Call.findOne({
+        where: { twilioCallSid: finalCallSid }
+      });
+      
+      const callData = {
+        contactId: contactId,
+        twilioCallSid: finalCallSid,
+        direction: finalDirection,
+        fromNumber: finalFromNumber,
+        toNumber: finalToNumber,
+        status: finalStatus,
+        callStatus: mapTwilioStatusToCallStatus(finalStatus),
+        duration: parseInt(duration) || 0,
+        startTime: startTime ? new Date(startTime) : new Date(),
+        endTime: endTime ? new Date(endTime) : (duration > 0 ? new Date() : null),
+        notes: transcript ? `Rachel transcript: ${transcript}` : null,
+        callerName: customerName || null,
+        updatedAt: new Date()
+      };
+      
+      if (callRecord) {
+        // Update existing call
+        await callRecord.update(callData);
+        console.log(`📝 Updated call record: ${callRecord.id}`);
+      } else {
+        // Create new call record
+        callRecord = await Call.create({
+          ...callData,
+          createdAt: new Date()
+        });
+        console.log(`📝 Created call record: ${callRecord.id}`);
+      }
+      
+      res.json({
+        success: true,
+        message: 'Call logged successfully',
+        callId: callRecord.id,
+        linkedToContact: !!contactId
+      });
+    } else {
+      res.status(503).json({ 
+        success: false,
+        error: 'Call model not available' 
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Error logging call:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to log call',
+      details: error.message 
+    });
+  }
+});
+
 // Helper Functions
 function mapTwilioStatusToCallStatus(twilioStatus) {
   const statusMap = {
