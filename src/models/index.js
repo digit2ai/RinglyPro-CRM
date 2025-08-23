@@ -1,318 +1,454 @@
-// src/models/index.js - COMPLETE UPDATED VERSION FOR RINGLYPRO CRM + RACHEL INTEGRATION
-const sequelize = require('../config/database');
+// src/routes/calls.js - ENHANCED VERSION WITH ANALYTICS
+const express = require('express');
+const router = express.Router();
+const twilio = require('twilio');
+const { Op } = require('sequelize');
 
-// Import models with error handling
-let Message;
-let Call;
-let Contact;
-let Appointment;
+// Import models
+const { Call, Contact, Appointment } = require('../models');
 
-try {
-  Message = require('./Message');
-  console.log('Message model imported successfully');
-} catch (error) {
-  console.log('Message model not found:', error.message);
-}
+// Twilio client setup
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const client = twilio(accountSid, authToken);
 
-try {
-  Call = require('./Call');
-  console.log('Call model imported successfully');
-} catch (error) {
-  console.log('Call model not found:', error.message);
-}
-
-try {
-  Contact = require('./contact'); // lowercase as per existing structure
-  console.log('Contact model imported successfully');
-} catch (error) {
-  console.log('Contact model not found:', error.message);
-}
-
-try {
-  Appointment = require('./Appointment');
-  console.log('Appointment model imported successfully');
-} catch (error) {
-  console.log('Appointment model not found:', error.message);
-  console.log('Note: Appointment model needed for Rachel voice booking integration');
-}
-
-// Initialize models object
-const models = {
-  sequelize
-};
-
-// Add models if they exist
-if (Message) models.Message = Message;
-if (Call) models.Call = Call;
-if (Contact) models.Contact = Contact;
-if (Appointment) models.Appointment = Appointment;
-
-// Set up associations if models exist
-if (Contact && Message) {
+// GET /api/calls/today - Enhanced with contact linking
+router.get('/today', async (req, res) => {
   try {
-    Contact.hasMany(Message, {
-      foreignKey: 'contactId',
-      as: 'messages',
-      constraints: false // Allow messages without contacts (from Rachel)
-    });
-    
-    Message.belongsTo(Contact, {
-      foreignKey: 'contactId',
-      as: 'contact',
-      constraints: false
-    });
-    
-    console.log('Contact-Message associations configured');
-  } catch (error) {
-    console.log('Could not set up Contact-Message associations:', error.message);
-  }
-}
-
-if (Contact && Call) {
-  try {
-    Contact.hasMany(Call, {
-      foreignKey: 'contactId',
-      as: 'calls',
-      constraints: false // Allow calls without contacts (from Rachel)
-    });
-    
-    Call.belongsTo(Contact, {
-      foreignKey: 'contactId',
-      as: 'contact',
-      constraints: false
-    });
-    
-    console.log('Contact-Call associations configured');
-  } catch (error) {
-    console.log('Could not set up Contact-Call associations:', error.message);
-  }
-}
-
-if (Contact && Appointment) {
-  try {
-    Contact.hasMany(Appointment, {
-      foreignKey: 'contactId',
-      as: 'appointments',
-      constraints: false // Rachel creates appointments without existing contacts
-    });
-    
-    Appointment.belongsTo(Contact, {
-      foreignKey: 'contactId',
-      as: 'contact',
-      constraints: false
-    });
-    
-    console.log('Contact-Appointment associations configured');
-  } catch (error) {
-    console.log('Could not set up Contact-Appointment associations:', error.message);
-  }
-}
-
-// Database synchronization function - safe for production
-const syncDatabase = async (options = {}) => {
-  try {
-    console.log('Synchronizing database models...');
-    
-    // Test connection first
-    await sequelize.authenticate();
-    console.log('Database connection verified');
-
-    // Sync Contact table (skip if conflicts)
-    if (Contact) {
-      try {
-        await Contact.sync({ ...options, alter: false });
-        console.log('Contact table synchronized');
-      } catch (error) {
-        console.log('Contact table sync skipped (existing table):', error.message);
-      }
+    if (!Call) {
+      return res.json([]);
     }
 
-    // Sync Message table for SMS history
-    if (Message) {
-      try {
-        await Message.sync({ ...options, alter: false });
-        console.log('Message table synchronized - SMS history ready');
-      } catch (error) {
-        console.log('Message table sync issues:', error.message);
-        // Try without foreign key constraints
-        try {
-          await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS "Messages" (
-              id SERIAL PRIMARY KEY,
-              "phoneNumber" VARCHAR(20) NOT NULL,
-              message TEXT NOT NULL,
-              direction VARCHAR(10) NOT NULL,
-              status VARCHAR(20) DEFAULT 'sent',
-              "messageSid" VARCHAR(100),
-              "contactId" INTEGER,
-              "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-          `);
-          console.log('Message table created with manual SQL');
-        } catch (sqlError) {
-          console.log('Manual Message table creation failed:', sqlError.message);
+    console.log('📞 Fetching today\'s calls with contact information...');
+    
+    const calls = await Call.findAll({
+      where: {
+        createdAt: {
+          [Op.between]: [
+            new Date(new Date().setHours(0, 0, 0, 0)),
+            new Date(new Date().setHours(23, 59, 59, 999))
+          ]
         }
-      }
+      },
+      include: [{
+        model: Contact,
+        as: 'contact',
+        required: false,
+        attributes: ['id', 'firstName', 'lastName', 'phone', 'email']
+      }],
+      order: [['createdAt', 'DESC']]
+    });
+    
+    // Enhance calls with contact names and call analytics
+    const enhancedCalls = calls.map(call => {
+      const contactName = call.contact 
+        ? `${call.contact.firstName} ${call.contact.lastName}`
+        : formatPhoneForDisplay(call.fromNumber);
+        
+      return {
+        id: call.id,
+        contactId: call.contactId,
+        contact: contactName,
+        phone: call.direction === 'incoming' ? call.fromNumber : call.toNumber,
+        time: call.createdAt.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: true 
+        }),
+        duration: call.getFormattedDuration(),
+        direction: call.direction,
+        status: call.callStatus || call.status,
+        twilioSid: call.twilioCallSid,
+        notes: call.notes,
+        recordingUrl: call.recordingUrl,
+        cost: call.cost,
+        originalData: call
+      };
+    });
+    
+    console.log(`✅ Found ${enhancedCalls.length} calls for today`);
+    res.json(enhancedCalls);
+    
+  } catch (error) {
+    console.error('❌ Error fetching today\'s calls:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch calls',
+      details: error.message 
+    });
+  }
+});
+
+// GET /api/calls/analytics - Call analytics and metrics
+router.get('/analytics', async (req, res) => {
+  try {
+    if (!Call) {
+      return res.status(503).json({ error: 'Call model not available' });
     }
 
-    // Sync Call table for call history
+    const { timeframe = 'today' } = req.query;
+    let whereClause = {};
+    
+    // Set date range based on timeframe
+    const now = new Date();
+    switch (timeframe) {
+      case 'today':
+        whereClause.createdAt = {
+          [Op.between]: [
+            new Date(now.setHours(0, 0, 0, 0)),
+            new Date(now.setHours(23, 59, 59, 999))
+          ]
+        };
+        break;
+      case 'week':
+        const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+        whereClause.createdAt = {
+          [Op.gte]: weekStart
+        };
+        break;
+      case 'month':
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        whereClause.createdAt = {
+          [Op.gte]: monthStart
+        };
+        break;
+    }
+
+    // Get call statistics
+    const totalCalls = await Call.count({ where: whereClause });
+    
+    const callsByDirection = await Call.findAll({
+      where: whereClause,
+      attributes: [
+        'direction',
+        [Call.sequelize.fn('COUNT', Call.sequelize.col('id')), 'count'],
+        [Call.sequelize.fn('AVG', Call.sequelize.col('duration')), 'avgDuration'],
+        [Call.sequelize.fn('SUM', Call.sequelize.col('duration')), 'totalDuration']
+      ],
+      group: ['direction']
+    });
+
+    const callsByStatus = await Call.findAll({
+      where: whereClause,
+      attributes: [
+        'callStatus',
+        [Call.sequelize.fn('COUNT', Call.sequelize.col('id')), 'count']
+      ],
+      group: ['callStatus']
+    });
+
+    // Answer rate calculation
+    const answeredCalls = await Call.count({
+      where: {
+        ...whereClause,
+        callStatus: 'completed'
+      }
+    });
+    
+    const answerRate = totalCalls > 0 ? ((answeredCalls / totalCalls) * 100).toFixed(1) : 0;
+
+    // Peak hours analysis
+    const callsByHour = await Call.findAll({
+      where: whereClause,
+      attributes: [
+        [Call.sequelize.fn('EXTRACT', Call.sequelize.literal('HOUR FROM "createdAt"')), 'hour'],
+        [Call.sequelize.fn('COUNT', Call.sequelize.col('id')), 'count']
+      ],
+      group: [Call.sequelize.fn('EXTRACT', Call.sequelize.literal('HOUR FROM "createdAt"'))],
+      order: [[Call.sequelize.fn('COUNT', Call.sequelize.col('id')), 'DESC']]
+    });
+
+    // Response time metrics (time to answer)
+    const avgResponseTime = await Call.findOne({
+      where: {
+        ...whereClause,
+        callStatus: 'completed'
+      },
+      attributes: [
+        [Call.sequelize.fn('AVG', 
+          Call.sequelize.literal('EXTRACT(EPOCH FROM ("endTime" - "startTime"))')
+        ), 'avgResponseSeconds']
+      ]
+    });
+
+    res.json({
+      success: true,
+      timeframe,
+      analytics: {
+        totalCalls,
+        answerRate: parseFloat(answerRate),
+        callsByDirection: callsByDirection.map(call => ({
+          direction: call.direction,
+          count: parseInt(call.dataValues.count),
+          avgDuration: parseFloat(call.dataValues.avgDuration || 0).toFixed(1),
+          totalDuration: parseInt(call.dataValues.totalDuration || 0)
+        })),
+        callsByStatus: callsByStatus.map(call => ({
+          status: call.callStatus,
+          count: parseInt(call.dataValues.count)
+        })),
+        peakHours: callsByHour.slice(0, 3).map(call => ({
+          hour: parseInt(call.dataValues.hour),
+          count: parseInt(call.dataValues.count),
+          displayHour: formatHour(parseInt(call.dataValues.hour))
+        })),
+        avgResponseTime: avgResponseTime ? 
+          parseFloat(avgResponseTime.dataValues.avgResponseSeconds || 0).toFixed(1) : 0
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching call analytics:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch call analytics',
+      details: error.message 
+    });
+  }
+});
+
+// POST /api/calls/webhook/voice - ENHANCED webhook with appointment linking
+router.post('/webhook/voice', async (req, res) => {
+  try {
+    const { 
+      CallSid, 
+      From, 
+      To, 
+      CallStatus, 
+      Direction,
+      Duration,
+      StartTime,
+      EndTime,
+      Price,
+      AnsweredBy,
+      CallerName
+    } = req.body;
+    
+    console.log(`📞 Voice webhook: ${CallSid} from ${From} - Status: ${CallStatus}`);
+
     if (Call) {
       try {
-        await Call.sync({ ...options, alter: false });
-        console.log('Call table synchronized - Call history ready');
-      } catch (error) {
-        console.log('Call table sync issues:', error.message);
-        // Try without foreign key constraints
-        try {
-          await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS "Calls" (
-              id SERIAL PRIMARY KEY,
-              "callSid" VARCHAR(100) UNIQUE,
-              "fromNumber" VARCHAR(20) NOT NULL,
-              "toNumber" VARCHAR(20) NOT NULL,
-              direction VARCHAR(10) NOT NULL,
-              status VARCHAR(20) DEFAULT 'completed',
-              duration INTEGER DEFAULT 0,
-              "recordingUrl" TEXT,
-              "contactId" INTEGER,
-              "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-          `);
-          console.log('Call table created with manual SQL');
-        } catch (sqlError) {
-          console.log('Manual Call table creation failed:', sqlError.message);
+        // Find or create call record
+        let callRecord = await Call.findOne({ 
+          where: { twilioCallSid: CallSid } 
+        });
+        
+        // Try to link to existing contact
+        let contactId = null;
+        if (Contact) {
+          const contact = await Contact.findOne({
+            where: { phone: From }
+          });
+          if (contact) {
+            contactId = contact.id;
+            console.log(`🔗 Linked call to contact: ${contact.firstName} ${contact.lastName}`);
+          }
         }
+        
+        const callData = {
+          contactId,
+          twilioCallSid: CallSid,
+          direction: Direction === 'inbound' ? 'incoming' : 'outgoing',
+          fromNumber: From,
+          toNumber: To,
+          status: CallStatus,
+          callStatus: mapTwilioStatusToCallStatus(CallStatus),
+          duration: Duration ? parseInt(Duration) : null,
+          startTime: StartTime ? new Date(StartTime) : new Date(),
+          endTime: EndTime ? new Date(EndTime) : null,
+          cost: Price ? parseFloat(Price) : null,
+          answeredBy: AnsweredBy || null,
+          callerName: CallerName || null,
+          updatedAt: new Date()
+        };
+        
+        if (callRecord) {
+          // Update existing call
+          await callRecord.update(callData);
+          console.log(`📝 Updated call record: ${callRecord.id}`);
+        } else {
+          // Create new call record
+          callRecord = await Call.create({
+            ...callData,
+            createdAt: new Date()
+          });
+          console.log(`📝 Created call record: ${callRecord.id}`);
+        }
+        
+        // Link to appointments if applicable
+        if (contactId && Appointment && CallStatus === 'completed') {
+          await linkCallToAppointments(callRecord.id, contactId);
+        }
+        
+      } catch (dbError) {
+        console.error('⚠️ Database error:', dbError.message);
       }
     }
 
-    // Sync Appointment table for Rachel voice booking - CRITICAL FOR INTEGRATION
-    if (Appointment) {
-      try {
-        await Appointment.sync({ ...options, alter: false });
-        console.log('Appointment table synchronized - Rachel voice booking ready');
-      } catch (error) {
-        console.log('Appointment table sync issues:', error.message);
-        // Try creating manually for Rachel integration
-        try {
-          await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS "appointments" (
-              id SERIAL PRIMARY KEY,
-              "customerName" VARCHAR(100) NOT NULL,
-              "customerEmail" VARCHAR(255) NOT NULL,
-              "customerPhone" VARCHAR(20) NOT NULL,
-              "appointmentDate" DATE NOT NULL,
-              "appointmentTime" TIME NOT NULL,
-              duration INTEGER DEFAULT 30,
-              purpose TEXT DEFAULT 'General consultation',
-              status VARCHAR(20) DEFAULT 'scheduled',
-              "confirmationCode" VARCHAR(20) UNIQUE NOT NULL,
-              source VARCHAR(20) DEFAULT 'web',
-              timezone VARCHAR(50) DEFAULT 'America/New_York',
-              "zoomMeetingUrl" VARCHAR(500),
-              "zoomMeetingId" VARCHAR(50),
-              "zoomPassword" VARCHAR(50),
-              "hubspotContactId" VARCHAR(50),
-              "hubspotMeetingId" VARCHAR(50),
-              "emailSent" BOOLEAN DEFAULT false,
-              "smsSent" BOOLEAN DEFAULT false,
-              "reminderSent" BOOLEAN DEFAULT false,
-              notes TEXT,
-              "cancelReason" VARCHAR(255),
-              "rescheduleCount" INTEGER DEFAULT 0,
-              "contactId" INTEGER,
-              "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              CONSTRAINT unique_scheduled_slot UNIQUE ("appointmentDate", "appointmentTime")
-            );
-          `);
-          
-          // Create indexes for performance
-          await sequelize.query(`
-            CREATE INDEX IF NOT EXISTS idx_appointments_date_time ON appointments ("appointmentDate", "appointmentTime");
-            CREATE INDEX IF NOT EXISTS idx_appointments_confirmation ON appointments ("confirmationCode");
-            CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments (status);
-            CREATE INDEX IF NOT EXISTS idx_appointments_email ON appointments ("customerEmail");
-          `);
-          
-          console.log('Appointment table created with manual SQL - Rachel integration ready');
-        } catch (sqlError) {
-          console.log('Manual Appointment table creation failed:', sqlError.message);
-          console.log('WARNING: Rachel voice booking may not work without Appointment table');
-        }
-      }
-    } else {
-      console.log('WARNING: Appointment model not found - Rachel voice booking will not work');
+    // Return appropriate TwiML
+    res.type('text/xml');
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say voice="alice">Thank you for calling RinglyPro. Your call is important to us.</Say>
+</Response>`);
+
+  } catch (error) {
+    console.error('❌ Voice webhook error:', error);
+    res.status(500).send('Webhook processing error');
+  }
+});
+
+// GET /api/calls/contact/:contactId - Get call history for a contact
+router.get('/contact/:contactId', async (req, res) => {
+  try {
+    const { contactId } = req.params;
+    const { limit = 50, offset = 0 } = req.query;
+    
+    if (!Call) {
+      return res.status(503).json({ error: 'Call model not available' });
     }
 
-    // Log available models
-    const availableModels = Object.keys(models).filter(key => key !== 'sequelize');
-    console.log('Available models:', availableModels.join(', ') || 'None');
+    const calls = await Call.findAll({
+      where: { contactId },
+      include: [{
+        model: Contact,
+        as: 'contact',
+        attributes: ['firstName', 'lastName', 'phone']
+      }],
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
 
-    console.log('Database synchronization completed');
-    
-    if (Message) console.log('SMS messaging system active');
-    if (Call) console.log('Call logging system active');
-    if (Appointment) console.log('Rachel voice appointment booking system active');
-    
-    return true;
-  } catch (error) {
-    console.error('Database sync error:', error.message);
-    console.log('Continuing without full database sync - some features may be limited');
-    return false;
-  }
-};
-
-// Test database connectivity
-const testConnection = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('PostgreSQL connection established successfully');
-    return true;
-  } catch (error) {
-    console.error('Unable to connect to PostgreSQL:', error.message);
-    return false;
-  }
-};
-
-// Get appointment statistics for dashboard
-const getAppointmentStats = async () => {
-  if (!Appointment) return null;
-  
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    
-    const stats = await Appointment.findAll({
-      attributes: [
-        [sequelize.fn('COUNT', sequelize.col('id')), 'total'],
-        [sequelize.fn('COUNT', sequelize.literal("CASE WHEN status = 'scheduled' THEN 1 END")), 'scheduled'],
-        [sequelize.fn('COUNT', sequelize.literal("CASE WHEN status = 'completed' THEN 1 END")), 'completed'],
-        [sequelize.fn('COUNT', sequelize.literal(`CASE WHEN "appointmentDate" = '${today}' THEN 1 END`)), 'today']
-      ],
-      raw: true
+    res.json({
+      success: true,
+      contactId,
+      calls: calls.map(call => ({
+        id: call.id,
+        direction: call.direction,
+        status: call.callStatus,
+        duration: call.getFormattedDuration(),
+        startTime: call.startTime,
+        endTime: call.endTime,
+        cost: call.cost,
+        notes: call.notes,
+        recordingUrl: call.recordingUrl,
+        createdAt: call.createdAt
+      }))
     });
     
-    return stats[0];
   } catch (error) {
-    console.log('Error getting appointment stats:', error.message);
-    return null;
+    console.error('❌ Error fetching contact calls:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch contact calls',
+      details: error.message 
+    });
   }
-};
+});
 
-// Export everything
-module.exports = {
-  sequelize,
-  syncDatabase,
-  testConnection,
-  getAppointmentStats,
-  ...models
-};
+// POST /api/calls/:callId/notes - Add notes to a call
+router.post('/:callId/notes', async (req, res) => {
+  try {
+    const { callId } = req.params;
+    const { notes } = req.body;
+    
+    if (!Call) {
+      return res.status(503).json({ error: 'Call model not available' });
+    }
 
-// Export individual models for easier imports
-module.exports.Message = Message;
-module.exports.Call = Call;
-module.exports.Contact = Contact;
-module.exports.Appointment = Appointment;
+    const call = await Call.findByPk(callId);
+    if (!call) {
+      return res.status(404).json({ error: 'Call not found' });
+    }
 
-console.log('Models index loaded - RinglyPro CRM + Rachel Voice AI integration ready');
+    await call.update({ 
+      notes: notes,
+      updatedAt: new Date()
+    });
+
+    res.json({
+      success: true,
+      message: 'Call notes updated successfully',
+      callId: call.id,
+      notes: call.notes
+    });
+    
+  } catch (error) {
+    console.error('❌ Error updating call notes:', error);
+    res.status(500).json({ 
+      error: 'Failed to update call notes',
+      details: error.message 
+    });
+  }
+});
+
+// Helper Functions
+function mapTwilioStatusToCallStatus(twilioStatus) {
+  const statusMap = {
+    'queued': 'initiated',
+    'ringing': 'ringing', 
+    'in-progress': 'answered',
+    'completed': 'completed',
+    'busy': 'busy',
+    'failed': 'failed',
+    'no-answer': 'missed',
+    'canceled': 'missed'
+  };
+  return statusMap[twilioStatus] || 'initiated';
+}
+
+function formatPhoneForDisplay(phone) {
+  if (!phone) return 'Unknown';
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.length === 11 && cleaned.startsWith('1')) {
+    const number = cleaned.slice(1);
+    return `(${number.slice(0,3)}) ${number.slice(3,6)}-${number.slice(6)}`;
+  }
+  return phone;
+}
+
+function formatHour(hour) {
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:00 ${ampm}`;
+}
+
+// Link calls to related appointments
+async function linkCallToAppointments(callId, contactId) {
+  try {
+    if (!Appointment) return;
+    
+    // Find appointments for this contact in the next 7 days
+    const upcomingAppointments = await Appointment.findAll({
+      where: {
+        contactId,
+        appointmentDate: {
+          [Op.between]: [
+            new Date(),
+            new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+          ]
+        },
+        status: {
+          [Op.in]: ['confirmed', 'pending']
+        }
+      }
+    });
+    
+    if (upcomingAppointments.length > 0) {
+      console.log(`🔗 Found ${upcomingAppointments.length} upcoming appointments for contact ${contactId}`);
+      // You could add a field to track call-appointment relationships
+      // or add notes to the call record
+      const call = await Call.findByPk(callId);
+      const appointmentInfo = upcomingAppointments.map(apt => 
+        `${apt.appointmentDate} at ${apt.appointmentTime}`
+      ).join(', ');
+      
+      await call.update({
+        notes: `${call.notes || ''}\nRelated appointments: ${appointmentInfo}`.trim()
+      });
+    }
+    
+  } catch (error) {
+    console.error('⚠️ Error linking call to appointments:', error);
+  }
+}
+
+module.exports = router;
