@@ -2102,169 +2102,199 @@ async function deleteAppointment(appointmentId) {
         }
 
         // Load today's calls
-        async function loadTodaysCalls() {
-            try {
-                console.log('Loading today\'s calls from database...');
-                
-                const response = await fetch('/api/calls/today');
-                
-                if (!response.ok) {
-                    // If API fails, fall back to mock data for now
-                    console.log('Call API not available, using mock data');
-                    
-                    // Keep existing mock data as fallback
-                    todaysCalls = [
-                        {
-                            id: 1,
-                            contact: 'John Doe',
-                            phone: '+1234567890',
-                            time: '08:45 AM',
-                            duration: '05:23',
-                            direction: 'incoming',
-                            status: 'completed'
-                        },
-                        {
-                            id: 2,
-                            contact: 'Jane Smith',
-                            phone: '+1987654321',
-                            time: '10:15 AM',
-                            duration: '12:45',
-                            direction: 'outgoing',
-                            status: 'completed'
-                        }
-                    ];
-                    
-                    updateCallsCount();
-                    updateAllCallsDisplay();
-                    return;
-                }
-                
-                const calls = await response.json();
-                
-                console.log(`Successfully loaded ${calls.length} calls from database`);
-                
-                // Update global todaysCalls array with real data
-                todaysCalls = calls.map(call => ({
-                    id: call.id,
-                    contact: call.contact || formatPhoneNumber(call.direction === 'outgoing' ? call.toNumber : call.fromNumber),
-                    phone: call.direction === 'outgoing' ? call.toNumber : call.fromNumber,
-                    time: formatCallTime(call.createdAt),
-                    duration: formatCallDuration(call.duration),
-                    direction: call.direction,
-                    status: call.callStatus || call.status,
-                    originalData: call
-                }));
-                
-                // Update displays
-                updateCallsCount();
-                updateAllCallsDisplay();
-                
-                return calls;
-                
-            } catch (error) {
-                console.error('Error loading calls:', error);
-                
-                // Keep mock data on error
-                console.log('Keeping existing mock data due to error');
-                updateCallsCount();
-                updateAllCallsDisplay();
-                
-                return [];
-            }
+// Enhanced call loading with analytics
+async function loadTodaysCalls() {
+    try {
+        console.log('Loading today\'s calls with analytics...');
+        
+        // Load basic call data
+        const response = await fetch('/api/calls/today');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
+        
+        const calls = await response.json();
+        console.log(`Successfully loaded ${calls.length} calls from database`);
+        
+        // Load call analytics
+        const analyticsResponse = await fetch('/api/calls/analytics?timeframe=today');
+        let analytics = null;
+        if (analyticsResponse.ok) {
+            const analyticsData = await analyticsResponse.json();
+            analytics = analyticsData.analytics;
+            console.log('Call analytics loaded:', analytics);
+        }
+        
+        // Update global variable
+        todaysCalls = calls.map(call => ({
+            id: call.id,
+            contactId: call.contactId,
+            contact: call.contact,
+            phone: call.phone,
+            time: call.time,
+            duration: call.duration,
+            direction: call.direction,
+            status: call.status,
+            twilioSid: call.twilioSid,
+            notes: call.notes,
+            recordingUrl: call.recordingUrl,
+            originalData: call.originalData
+        }));
+        
+        // Update displays
+        updateCallsCount();
+        updateAllCallsDisplay();
+        
+        return calls;
+        
+    } catch (error) {
+        console.error('Error loading calls:', error);
+        todaysCalls = [];
+        updateCallsCount();
+        updateAllCallsDisplay();
+        return [];
+    }
+}
 
-        // Helper functions for formatting
-        function formatPhoneNumber(phone) {
-            if (!phone) return 'Unknown';
-            
-            // Remove +1 country code for US numbers
-            let formatted = phone.replace(/^\+1/, '');
-            
-            // Format as (XXX) XXX-XXXX
-            if (formatted.length === 10) {
-                return `(${formatted.slice(0, 3)}) ${formatted.slice(3, 6)}-${formatted.slice(6)}`;
-            }
-            
-            return phone; // Return original if can't format
-        }
+// Enhanced call display with contact integration
+function updateAllCallsDisplay() {
+    const listElement = document.getElementById('all-calls-list');
+    if (!listElement) return;
+    
+    let displayCalls = todaysCalls;
+    if (callFilter !== 'all') {
+        displayCalls = todaysCalls.filter(call => 
+            call.direction === callFilter || 
+            call.status === callFilter ||
+            (callFilter === 'missed' && (call.status === 'missed' || call.status === 'no-answer'))
+        );
+    }
+    
+    if (displayCalls.length === 0) {
+        listElement.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-phone text-gray-400 text-xl mb-2"></i>
+                <p class="text-gray-500 text-sm">No calls today</p>
+                <button onclick="refreshCallData()" class="mt-2 bg-yellow-500 text-white px-3 py-2 rounded text-sm">
+                    <i class="fas fa-sync-alt mr-1"></i> Refresh
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    listElement.innerHTML = displayCalls.map(call => `
+        <div class="border border-gray-200 rounded-lg p-2 hover:bg-gray-50 transition duration-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <div class="w-6 h-6 ${getCallStatusColor(call)} rounded-full flex items-center justify-center text-white text-xs">
+                        <i class="fas ${getCallIcon(call)}"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-semibold text-xs sm:text-sm truncate">
+                            ${call.contact}
+                            ${call.contactId ? '<i class="fas fa-user-check text-green-500 ml-1" title="Known Contact"></i>' : ''}
+                        </h4>
+                        <p class="text-xs text-gray-600 truncate">${call.time} • ${call.phone}</p>
+                        <p class="text-xs text-gray-500">Duration: ${call.duration}</p>
+                        <div class="flex items-center space-x-1 mt-1">
+                            <span class="inline-block px-1.5 py-0.5 rounded-full text-xs ${getStatusBadgeClass(call)}">
+                                ${call.direction} • ${call.status}
+                            </span>
+                            ${call.notes ? '<i class="fas fa-sticky-note text-yellow-500" title="Has Notes"></i>' : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="flex space-x-1">
+                    <button onclick="addCallNotes(${call.id})" class="bg-purple-500 text-white px-1.5 py-1 rounded text-xs hover:bg-purple-600" title="Add Notes">
+                        <i class="fas fa-sticky-note"></i>
+                    </button>
+                    <button onclick="callContact('${call.phone}')" class="bg-green-500 text-white px-1.5 py-1 rounded text-xs hover:bg-green-600" title="Call Back">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                    <button onclick="textContact('${call.phone}')" class="bg-blue-500 text-white px-1.5 py-1 rounded text-xs hover:bg-blue-600" title="Send SMS">
+                        <i class="fas fa-sms"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
 
-        function formatMessageTime(timestamp) {
-            const date = new Date(timestamp);
-            const now = new Date();
-            
-            // Check if it's today
-            if (date.toDateString() === now.toDateString()) {
-                return date.toLocaleTimeString('en-US', { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: true 
-                });
-            } else {
-                return date.toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric',
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: true 
-                });
-            }
-        }
+// Add these new helper functions at the end of your script section:
+function getCallStatusColor(call) {
+    switch (call.status) {
+        case 'completed':
+            return call.direction === 'incoming' ? 'bg-green-500' : 'bg-blue-500';
+        case 'missed':
+        case 'no-answer':
+            return 'bg-red-500';
+        case 'busy':
+            return 'bg-yellow-500';
+        case 'failed':
+            return 'bg-gray-500';
+        default:
+            return 'bg-gray-400';
+    }
+}
 
-        function formatCallTime(timestamp) {
-            const date = new Date(timestamp);
-            const now = new Date();
-            
-            // Check if it's today
-            if (date.toDateString() === now.toDateString()) {
-                return date.toLocaleTimeString('en-US', { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: true 
-                });
-            } else {
-                return date.toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric',
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: true 
-                });
-            }
-        }
+function getCallIcon(call) {
+    switch (call.status) {
+        case 'missed':
+        case 'no-answer':
+            return 'fa-phone-slash';
+        case 'completed':
+            return call.direction === 'incoming' ? 'fa-phone-volume' : 'fa-phone';
+        case 'busy':
+            return 'fa-phone-busy';
+        default:
+            return 'fa-phone';
+    }
+}
 
-        function formatCallDuration(durationSeconds) {
-            if (!durationSeconds || durationSeconds <= 0) return '00:00';
-            
-            const minutes = Math.floor(durationSeconds / 60);
-            const seconds = durationSeconds % 60;
-            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
+function getStatusBadgeClass(call) {
+    switch (call.status) {
+        case 'completed':
+            return 'bg-green-100 text-green-800';
+        case 'missed':
+        case 'no-answer':
+            return 'bg-red-100 text-red-800';
+        case 'busy':
+            return 'bg-yellow-100 text-yellow-800';
+        default:
+            return 'bg-gray-100 text-gray-800';
+    }
+}
 
-        // Update count displays
-        function updateContactCount() {
-            const contactCountEl = document.getElementById('total-contacts');
-            if (contactCountEl) {
-                contactCountEl.textContent = totalContacts;
-            }
-            // Update KPI too
-            const kpiEl = document.getElementById('kpi-total-contacts');
-            if (kpiEl) {
-                kpiEl.textContent = totalContacts;
-            }
+async function addCallNotes(callId) {
+    const notes = prompt('Add notes for this call:');
+    if (!notes) return;
+    
+    try {
+        const response = await fetch(`/api/calls/${callId}/notes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes })
+        });
+        
+        if (response.ok) {
+            showToast('Call notes added successfully', 'success', '<i class="fas fa-sticky-note"></i>');
+            await loadTodaysCalls();
+        } else {
+            throw new Error('Failed to add notes');
         }
+    } catch (error) {
+        console.error('Error adding call notes:', error);
+        showToast('Failed to add call notes', 'error', '<i class="fas fa-exclamation-circle"></i>');
+    }
+}
 
-        // Better appointment count display
-        function updateAppointmentsCount() {
-            const appointmentsEl = document.getElementById('appointments-today');
-            if (appointmentsEl) {
-                appointmentsEl.textContent = appointments.length;
-            }
-            // Update KPI too
-            const kpiEl = document.getElementById('kpi-appointments');
-            if (kpiEl) {
-                kpiEl.textContent = appointments.length;
-            }
-        }
+async function refreshCallData() {
+    showToast('Refreshing call data...', 'info', '<i class="fas fa-sync-alt fa-spin"></i>');
+    await loadTodaysCalls();
+    showToast('Call data refreshed', 'success', '<i class="fas fa-check-circle"></i>');
+}
 
         function updateMessagesCount() {
             const messagesEl = document.getElementById('messages-today');
