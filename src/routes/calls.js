@@ -1,39 +1,74 @@
-// src/routes/calls.js
+// src/routes/calls.js - ENHANCED VERSION WITH ANALYTICS
 const express = require('express');
 const router = express.Router();
 const twilio = require('twilio');
+const { Op } = require('sequelize');
 
-// Import Call model from models
-const { Call } = require('../models');
+// Import models
+const { Call, Contact, Appointment } = require('../models');
 
 // Twilio client setup
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
 
-// GET /api/calls/today - Get today's calls from database
+// GET /api/calls/today - Enhanced with contact linking
 router.get('/today', async (req, res) => {
   try {
     if (!Call) {
-      console.log('⚠️ Call model not available, returning mock data');
-      return res.json([
-        {
-          id: 1,
-          direction: "incoming",
-          fromNumber: "+1234567890",
-          toNumber: "+1987654321",
-          status: "completed",
-          duration: 323,
-          createdAt: new Date().toISOString()
-        }
-      ]);
+      return res.json([]);
     }
 
-    console.log('📞 Fetching today\'s calls from database...');
-    const calls = await Call.getTodaysCalls();
+    console.log('📞 Fetching today\'s calls with contact information...');
     
-    console.log(`✅ Found ${calls.length} calls for today`);
-    res.json(calls);
+    const calls = await Call.findAll({
+      where: {
+        createdAt: {
+          [Op.between]: [
+            new Date(new Date().setHours(0, 0, 0, 0)),
+            new Date(new Date().setHours(23, 59, 59, 999))
+          ]
+        }
+      },
+      include: [{
+        model: Contact,
+        as: 'contact',
+        required: false,
+        attributes: ['id', 'firstName', 'lastName', 'phone', 'email']
+      }],
+      order: [['createdAt', 'DESC']]
+    });
+    
+    // Enhance calls with contact names and call analytics
+    const enhancedCalls = calls.map(call => {
+      const contactName = call.contact 
+        ? `${call.contact.firstName} ${call.contact.lastName}`
+        : formatPhoneForDisplay(call.fromNumber);
+        
+      return {
+        id: call.id,
+        contactId: call.contactId,
+        contact: contactName,
+        phone: call.direction === 'incoming' ? call.fromNumber : call.toNumber,
+        time: call.createdAt.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: true 
+        }),
+        duration: call.getFormattedDuration(),
+        direction: call.direction,
+        status: call.callStatus || call.status,
+        twilioSid: call.twilioCallSid,
+        notes: call.notes,
+        recordingUrl: call.recordingUrl,
+        cost: call.cost,
+        originalData: call
+      };
+    });
+    
+    console.log(`✅ Found ${enhancedCalls.length} calls for today`);
+    res.json(enhancedCalls);
+    
   } catch (error) {
     console.error('❌ Error fetching today\'s calls:', error);
     res.status(500).json({ 
@@ -43,69 +78,103 @@ router.get('/today', async (req, res) => {
   }
 });
 
-// POST /api/calls - Create a new call record manually
-router.post('/', async (req, res) => {
+// GET /api/calls/analytics - Call analytics and metrics
+router.get('/analytics', async (req, res) => {
   try {
-    const { 
-      contactId, 
-      direction, 
-      fromNumber, 
-      toNumber, 
-      status = 'completed',
-      duration = 0,
-      notes 
-    } = req.body;
+    if (!Call) {
+      return res.status(503).json({ error: 'Call model not available' });
+    }
+
+    const { timeframe = 'today' } = req.query;
+    let whereClause = {};
     
-    // Validate input
-    if (!direction || !fromNumber || !toNumber) {
-      return res.status(400).json({ 
-        error: 'Missing required fields: direction, fromNumber, toNumber' 
-      });
+    // Set date range based on timeframe
+    const now = new Date();
+    switch (timeframe) {
+      case 'today':
+        whereClause.createdAt = {
+          [Op.between]: [
+            new Date(now.setHours(0, 0, 0, 0)),
+            new Date(now.setHours(23, 59, 59, 999))
+          ]
+        };
+        break;
+      case 'week':
+        const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+        whereClause.createdAt = {
+          [Op.gte]: weekStart
+        };
+        break;
+      case 'month':
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        whereClause.createdAt = {
+          [Op.gte]: monthStart
+        };
+        break;
     }
 
-    console.log(`📞 Creating call record: ${direction} call from ${fromNumber} to ${toNumber}`);
+    // Get call statistics
+    const totalCalls = await Call.count({ where: whereClause });
+    
+    const callsByDirection = await Call.findAll({
+      where: whereClause,
+      attributes: [
+        'direction',
+        [Call.sequelize.fn('COUNT', Call.sequelize.col('id')), 'count'],
+        [Call.sequelize.fn('AVG', Call.sequelize.col('duration')), 'avgDuration'],
+        [Call.sequelize.fn('SUM', Call.sequelize.col('duration')), 'totalDuration']
+      ],
+      group: ['direction']
+    });
 
-    // Store in database if Call model is available
-    if (Call) {
-      const callRecord = await Call.create({
-        contactId: contactId || null,
-        direction: direction,
-        fromNumber: fromNumber,
-        toNumber: toNumber,
-        status: status,
-        callStatus: duration > 0 ? 'completed' : 'missed',
-        duration: parseInt(duration) || 0,
-        startTime: new Date(),
-        endTime: duration > 0 ? new Date(Date.now() + (duration * 1000)) : null,
-        notes: notes || null,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-      
-      console.log(`💾 Call record stored in database with ID: ${callRecord.id}`);
-      
-      res.json({
-        success: true,
-        message: 'Call record created successfully',
-        callId: callRecord.id,
-        call: callRecord
-      });
-    } else {
-      res.status(503).json({ 
-        error: 'Call model not available' 
-      });
-    }
+    const callsByStatus = await Call.findAll({
+      where: whereClause,
+      attributes: [
+        'callStatus',
+        [Call.sequelize.fn('COUNT', Call.sequelize.col('id')), 'count']
+      ],
+      group: ['callStatus']
+    });
 
+    // Answer rate calculation
+    const answeredCalls = await Call.count({
+      where: {
+        ...whereClause,
+        callStatus: 'completed'
+      }
+    });
+    
+    const answerRate = totalCalls > 0 ? ((answeredCalls / totalCalls) * 100).toFixed(1) : 0;
+
+    res.json({
+      success: true,
+      timeframe,
+      analytics: {
+        totalCalls,
+        answerRate: parseFloat(answerRate),
+        callsByDirection: callsByDirection.map(call => ({
+          direction: call.direction,
+          count: parseInt(call.dataValues.count),
+          avgDuration: parseFloat(call.dataValues.avgDuration || 0).toFixed(1),
+          totalDuration: parseInt(call.dataValues.totalDuration || 0)
+        })),
+        callsByStatus: callsByStatus.map(call => ({
+          status: call.callStatus,
+          count: parseInt(call.dataValues.count)
+        }))
+      }
+    });
+    
   } catch (error) {
-    console.error('❌ Error creating call record:', error);
+    console.error('❌ Error fetching call analytics:', error);
     res.status(500).json({ 
-      error: 'Failed to create call record',
+      error: 'Failed to fetch call analytics',
       details: error.message 
     });
   }
 });
 
-// POST /api/calls/webhook/voice - Twilio voice webhook handler
+// POST /api/calls/webhook/voice - ENHANCED webhook
 router.post('/webhook/voice', async (req, res) => {
   try {
     const { 
@@ -118,150 +187,134 @@ router.post('/webhook/voice', async (req, res) => {
       StartTime,
       EndTime,
       Price,
-      AnsweredBy
+      AnsweredBy,
+      CallerName
     } = req.body;
     
-    console.log(`📞 Voice webhook received:`);
-    console.log(`   Call SID: ${CallSid}`);
-    console.log(`   From: ${From}`);
-    console.log(`   To: ${To}`);
-    console.log(`   Status: ${CallStatus}`);
-    console.log(`   Direction: ${Direction}`);
-    console.log(`   Duration: ${Duration}`);
+    console.log(`📞 Voice webhook: ${CallSid} from ${From} - Status: ${CallStatus}`);
 
-    // Store call record if Call model is available
     if (Call) {
       try {
-        // Check if call record already exists
-        let callRecord = await Call.findByTwilioSid(CallSid);
+        let callRecord = await Call.findOne({ 
+          where: { twilioCallSid: CallSid } 
+        });
+        
+        // Try to link to existing contact
+        let contactId = null;
+        if (Contact) {
+          const contact = await Contact.findOne({
+            where: { phone: From }
+          });
+          if (contact) {
+            contactId = contact.id;
+            console.log(`🔗 Linked call to contact: ${contact.firstName} ${contact.lastName}`);
+          }
+        }
+        
+        const callData = {
+          contactId,
+          twilioCallSid: CallSid,
+          direction: Direction === 'inbound' ? 'incoming' : 'outgoing',
+          fromNumber: From,
+          toNumber: To,
+          status: CallStatus,
+          callStatus: mapTwilioStatusToCallStatus(CallStatus),
+          duration: Duration ? parseInt(Duration) : null,
+          startTime: StartTime ? new Date(StartTime) : new Date(),
+          endTime: EndTime ? new Date(EndTime) : null,
+          cost: Price ? parseFloat(Price) : null,
+          answeredBy: AnsweredBy || null,
+          callerName: CallerName || null,
+          updatedAt: new Date()
+        };
         
         if (callRecord) {
-          // Update existing call record
-          await callRecord.update({
-            status: CallStatus,
-            callStatus: mapTwilioStatusToCallStatus(CallStatus),
-            duration: Duration ? parseInt(Duration) : null,
-            startTime: StartTime ? new Date(StartTime) : null,
-            endTime: EndTime ? new Date(EndTime) : null,
-            cost: Price ? parseFloat(Price) : null,
-            answeredBy: AnsweredBy || null,
-            updatedAt: new Date()
-          });
-          
-          console.log(`🔄 Updated existing call record ID: ${callRecord.id}`);
+          await callRecord.update(callData);
+          console.log(`📝 Updated call record: ${callRecord.id}`);
         } else {
-          // Create new call record
           callRecord = await Call.create({
-            contactId: null, // You can add logic to find contactId by phone number
-            twilioCallSid: CallSid,
-            direction: Direction === 'inbound' ? 'incoming' : 'outgoing',
-            fromNumber: From,
-            toNumber: To,
-            status: CallStatus,
-            callStatus: mapTwilioStatusToCallStatus(CallStatus),
-            duration: Duration ? parseInt(Duration) : null,
-            startTime: StartTime ? new Date(StartTime) : new Date(),
-            endTime: EndTime ? new Date(EndTime) : null,
-            cost: Price ? parseFloat(Price) : null,
-            answeredBy: AnsweredBy || null,
-            createdAt: new Date(),
-            updatedAt: new Date()
+            ...callData,
+            createdAt: new Date()
           });
-          
-          console.log(`💾 New call record stored with ID: ${callRecord.id}`);
+          console.log(`📝 Created call record: ${callRecord.id}`);
         }
+        
       } catch (dbError) {
-        console.error('⚠️ Failed to store/update call record:', dbError.message);
+        console.error('⚠️ Database error:', dbError.message);
       }
-    } else {
-      console.log('⚠️ Call model not available - call not stored');
     }
 
-    // Respond to Twilio with TwiML (optional - for call control)
     res.type('text/xml');
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say>Thank you for calling. Your call has been recorded.</Say>
+  <Say voice="alice">Thank you for calling RinglyPro. Your call is important to us.</Say>
 </Response>`);
 
   } catch (error) {
-    console.error('❌ Error processing voice webhook:', error);
-    res.status(500).send('Error processing voice webhook');
+    console.error('❌ Voice webhook error:', error);
+    res.status(500).send('Webhook processing error');
   }
 });
 
-// GET /api/calls/contact/:contactId - Get calls for a specific contact
-router.get('/contact/:contactId', async (req, res) => {
+// POST /api/calls/:callId/notes - Add notes to a call
+router.post('/:callId/notes', async (req, res) => {
   try {
-    const { contactId } = req.params;
+    const { callId } = req.params;
+    const { notes } = req.body;
     
     if (!Call) {
       return res.status(503).json({ error: 'Call model not available' });
     }
 
-    const calls = await Call.findByContact(contactId, {
-      limit: parseInt(req.query.limit) || 50,
-      offset: parseInt(req.query.offset) || 0
-    });
-
-    res.json(calls);
-  } catch (error) {
-    console.error('❌ Error fetching contact calls:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch contact calls',
-      details: error.message 
-    });
-  }
-});
-
-// GET /api/calls/stats - Get call statistics
-router.get('/stats', async (req, res) => {
-  try {
-    if (!Call) {
-      return res.status(503).json({ error: 'Call model not available' });
+    const call = await Call.findByPk(callId);
+    if (!call) {
+      return res.status(404).json({ error: 'Call not found' });
     }
 
-    const dateRange = req.query.range || 'today';
-    const stats = await Call.getCallStats(dateRange);
+    await call.update({ 
+      notes: notes,
+      updatedAt: new Date()
+    });
 
     res.json({
       success: true,
-      dateRange: dateRange,
-      stats: stats
+      message: 'Call notes updated successfully',
+      callId: call.id,
+      notes: call.notes
     });
+    
   } catch (error) {
-    console.error('❌ Error fetching call stats:', error);
+    console.error('❌ Error updating call notes:', error);
     res.status(500).json({ 
-      error: 'Failed to fetch call stats',
+      error: 'Failed to update call notes',
       details: error.message 
     });
   }
 });
 
-// GET /api/calls/webhook/voice - Handle GET requests to webhook (for testing)
-router.get('/webhook/voice', (req, res) => {
-  res.json({ 
-    message: 'Voice webhook endpoint is working! Use POST for actual webhooks.',
-    endpoint: '/api/calls/webhook/voice',
-    method: 'POST',
-    note: 'Configure this URL in your Twilio phone number settings'
-  });
-});
-
-// Helper function to map Twilio call status to our call status
+// Helper Functions
 function mapTwilioStatusToCallStatus(twilioStatus) {
   const statusMap = {
     'queued': 'initiated',
-    'ringing': 'ringing',
+    'ringing': 'ringing', 
     'in-progress': 'answered',
     'completed': 'completed',
     'busy': 'busy',
     'failed': 'failed',
-    'no-answer': 'no-answer',
+    'no-answer': 'missed',
     'canceled': 'missed'
   };
-  
   return statusMap[twilioStatus] || 'initiated';
+}
+
+function formatPhoneForDisplay(phone) {
+  if (!phone) return 'Unknown';
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.length === 11 && cleaned.startsWith('1')) {
+    const number = cleaned.slice(1);
+    return `(${number.slice(0,3)}) ${number.slice(3,6)}-${number.slice(6)}`;
+  }
+  return phone;
 }
 
 module.exports = router;
