@@ -1565,6 +1565,29 @@
                 </div>
             `).join('');
         }
+
+// Restore these missing functions - add them anywhere in your <script> section
+function updateContactCount() {
+    const contactCountEl = document.getElementById('total-contacts');
+    if (contactCountEl) {
+        contactCountEl.textContent = totalContacts;
+    }
+    const kpiEl = document.getElementById('kpi-total-contacts');
+    if (kpiEl) {
+        kpiEl.textContent = totalContacts;
+    }
+}
+
+function updateAppointmentsCount() {
+    const appointmentsEl = document.getElementById('appointments-today');
+    if (appointmentsEl) {
+        appointmentsEl.textContent = appointments.length;
+    }
+    const kpiEl = document.getElementById('kpi-appointments');
+    if (kpiEl) {
+        kpiEl.textContent = appointments.length;
+    }
+}
         
         // Update All Messages Display
         function updateAllMessagesDisplay() {
@@ -1693,13 +1716,13 @@
             }
         }
 
-        // Collapsible section management - ALL COLLAPSED BY DEFAULT
-        const sectionStates = {
-            'add-contact': false,
-            'search-contacts': false,
-            'appointments-today': false,
-            'send-sms': false
-        };
+  // To this (matching your actual HTML IDs):
+const sectionStates = {
+    'contacts': false,
+    'appointments': false,
+    'messages': false,
+    'calls': false
+};
 
         // Load saved section states from localStorage with error handling
         function loadSectionStates() {
