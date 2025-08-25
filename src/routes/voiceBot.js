@@ -1,4 +1,4 @@
-// src/routes/voiceBot.js - FIXED VERSION
+// src/routes/voiceBot.js - COMPLETE FIXED VERSION FOR CONTACT AUTO-CREATION
 const express = require('express');
 const router = express.Router();
 const twilio = require('twilio');
@@ -40,10 +40,9 @@ const availableSlots = [
     { time: '16:00', day: 'Tuesday', available: true }
 ];
 
-// Main voice webhook handler
+// Main voice webhook handler - FIXED TO USE CONVERSATION FLOW
 router.post('/webhook/voice', async (req, res) => {
     try {
-        // Extract Twilio webhook parameters safely
         const CallSid = req.body?.CallSid || req.query?.CallSid || 'unknown';
         const From = req.body?.From || req.query?.From || 'unknown';
         const To = req.body?.To || req.query?.To || 'unknown';
@@ -52,9 +51,8 @@ router.post('/webhook/voice', async (req, res) => {
         const CallStatus = req.body?.CallStatus || req.query?.CallStatus || 'unknown';
         const Direction = req.body?.Direction || req.query?.Direction || 'inbound';
         
-        console.log(`📞 Voice call received from ${From}, CallSid: ${CallSid}`);
-        console.log(`Digits: ${Digits}, Speech: ${SpeechResult}`);
-        console.log(`Call Status: ${CallStatus}, Direction: ${Direction}`);
+        console.log(`📞 Voice call from ${From}, CallSid: ${CallSid}`);
+        console.log(`Input - Digits: "${Digits}", Speech: "${SpeechResult}"`);
         
         // Get or create session
         let session = voiceSessions.get(CallSid) || {
@@ -67,51 +65,25 @@ router.post('/webhook/voice', async (req, res) => {
 
         // Store call data in PostgreSQL
         try {
-            await Call.create({
-                callSid: CallSid,
-                fromNumber: From,
-                toNumber: To,
-                callStatus: CallStatus,
-                direction: Direction,
-                speechResult: SpeechResult,
-                digits: Digits,
-                source: 'voice_webhook',
-                timestamp: new Date()
-            });
-            console.log(`📊 Call data saved to PostgreSQL: ${CallSid}`);
+            if (Call && Call.create) {
+                await Call.create({
+                    twilioCallSid: CallSid,
+                    direction: Direction === 'inbound' ? 'incoming' : 'outgoing',
+                    fromNumber: From,
+                    toNumber: To,
+                    status: CallStatus,
+                    startTime: new Date(),
+                    notes: `Voice bot step: ${session.step}`
+                });
+                console.log(`📊 Call data saved: ${CallSid}`);
+            }
         } catch (dbError) {
-            console.error('❌ Failed to save call to PostgreSQL:', dbError.message);
-            // Continue processing even if database save fails
+            console.error('Failed to save call:', dbError.message);
         }
 
-        // Update session
-        voiceSessions.set(CallSid, session);
-
-        // Generate TwiML response
-        const twiml = new VoiceResponse();
+        // FIXED: Process conversation flow properly
+        const twiml = await processConversationFlow(session, Digits, SpeechResult);
         
-        // Handle the voice call flow here
-        switch (session.step) {
-            case 'greeting':
-                twiml.say('Thank you for calling RinglyPro. How can I help you today?');
-                session.step = 'listening';
-                break;
-                
-            case 'listening':
-                if (SpeechResult) {
-                    console.log(`🗣️ Customer said: ${SpeechResult}`);
-                    // Process speech and generate response
-                    twiml.say('Thank you for your message. We will get back to you soon.');
-                } else {
-                    twiml.say('I did not hear anything. Please try again.');
-                }
-                break;
-                
-            default:
-                twiml.say('Thank you for calling RinglyPro.');
-                break;
-        }
-
         // Update session
         voiceSessions.set(CallSid, session);
         
@@ -122,8 +94,7 @@ router.post('/webhook/voice', async (req, res) => {
     } catch (error) {
         console.error('❌ Voice webhook error:', error);
         
-        // Return error TwiML
-        const errorTwiml = new VoiceResponse();
+        const errorTwiml = new twilio.twiml.VoiceResponse();
         errorTwiml.say('Sorry, there was a technical issue. Please try again later.');
         
         res.type('text/xml');
@@ -134,6 +105,8 @@ router.post('/webhook/voice', async (req, res) => {
 // Process conversation flow based on current step
 async function processConversationFlow(session, digits, speech) {
     const twiml = new twilio.twiml.VoiceResponse();
+    
+    console.log(`🔄 Processing step: ${session.step}, digits: ${digits}, speech: ${speech}`);
     
     switch (session.step) {
         case 'greeting':
@@ -181,7 +154,7 @@ function handleGreeting(session, twiml) {
         timeout: 5,
         numDigits: 1,
         speechTimeout: 3,
-        action: '/api/calls/webhook/voice'
+        action: '/voice/webhook/voice'
     });
     
     gather.say({
@@ -200,7 +173,7 @@ function handleGreeting(session, twiml) {
 function handleMainMenu(session, twiml, digits, speech) {
     const input = digits || parseSpokenNumber(speech);
     
-    console.log(`📋 Main menu input: digits=${digits}, speech="${speech}", parsed=${input}`);
+    console.log(`📋 Main menu - digits: ${digits}, speech: "${speech}", parsed: ${input}`);
     
     switch (input) {
         case '1':
@@ -238,7 +211,7 @@ function handleMainMenu(session, twiml, digits, speech) {
                 timeout: 5,
                 numDigits: 1,
                 speechTimeout: 3,
-                action: '/api/calls/webhook/voice'
+                action: '/voice/webhook/voice'
             });
             
             gather.say('I didn\'t understand that. Please press 1 for Sales, 2 for Support, 3 for Appointments, or 0 for a representative.');
@@ -253,6 +226,8 @@ function handleCollectName(session, twiml, speech) {
     if (speech) {
         // Process the name
         const name = cleanSpokenName(speech);
+        console.log(`📝 Name collected: "${speech}" cleaned to "${name}"`);
+        
         if (name && name.length > 2) {
             session.data.customerName = name;
             session.step = 'collect_phone';
@@ -263,13 +238,13 @@ function handleCollectName(session, twiml, speech) {
                 input: 'dtmf',
                 timeout: 10,
                 numDigits: 10,
-                action: '/api/calls/webhook/voice'
+                action: '/voice/webhook/voice'
             });
             
             gather.say('Please enter your 10-digit phone number using the keypad.');
             
             twiml.say('I didn\'t receive your phone number. Let me try a different way.');
-            twiml.redirect('/api/calls/webhook/voice');
+            twiml.redirect('/voice/webhook/voice');
             
         } else {
             // Name not clear, ask again
@@ -277,7 +252,7 @@ function handleCollectName(session, twiml, speech) {
                 input: 'speech',
                 timeout: 5,
                 speechTimeout: 4,
-                action: '/api/calls/webhook/voice'
+                action: '/voice/webhook/voice'
             });
             
             gather.say('I didn\'t catch your name clearly. Could you please say your full name again?');
@@ -291,7 +266,7 @@ function handleCollectName(session, twiml, speech) {
             input: 'speech',
             timeout: 5,
             speechTimeout: 4,
-            action: '/api/calls/webhook/voice'
+            action: '/voice/webhook/voice'
         });
         
         gather.say({
@@ -308,11 +283,15 @@ function handleCollectName(session, twiml, speech) {
 
 // Collect phone number
 function handleCollectPhone(session, twiml, digits) {
+    console.log(`📱 Phone collection - digits: "${digits}", length: ${digits ? digits.length : 0}`);
+    
     if (digits && digits.length === 10) {
         // Format phone number
         const formattedPhone = `+1${digits}`;
         session.data.customerPhone = formattedPhone;
         session.step = 'show_availability';
+        
+        console.log(`📱 Phone collected: ${formattedPhone} for ${session.data.customerName}`);
         
         return handleShowAvailability(session, twiml);
         
@@ -322,7 +301,7 @@ function handleCollectPhone(session, twiml, digits) {
             input: 'dtmf',
             timeout: 10,
             numDigits: 10,
-            action: '/api/calls/webhook/voice'
+            action: '/voice/webhook/voice'
         });
         
         gather.say('That doesn\'t appear to be a valid 10-digit phone number. Please try again.');
@@ -353,7 +332,7 @@ function handleShowAvailability(session, twiml) {
         input: 'dtmf',
         timeout: 15,
         numDigits: 1,
-        action: '/api/calls/webhook/voice'
+        action: '/voice/webhook/voice'
     });
     
     let optionsText = 'Please press the number for your preferred time: ';
@@ -377,6 +356,7 @@ function handleShowAvailability(session, twiml) {
 // Handle slot selection
 function handleSelectSlot(session, twiml, digits) {
     const selection = parseInt(digits);
+    console.log(`📅 Slot selection: ${selection}`);
     
     if (selection >= 1 && selection <= 5 && session.data[`slot_${selection}`]) {
         session.data.selectedSlot = session.data[`slot_${selection}`];
@@ -391,7 +371,7 @@ function handleSelectSlot(session, twiml, digits) {
             input: 'dtmf',
             timeout: 10,
             numDigits: 1,
-            action: '/api/calls/webhook/voice'
+            action: '/voice/webhook/voice'
         });
         
         gather.say(`To confirm: ${session.data.customerName}, phone number ${formatPhoneForSpeech(session.data.customerPhone)}, appointment on ${slot.day} at ${formatTime(slot.time)}. Press 1 to confirm or 2 to choose a different time.`);
@@ -415,6 +395,8 @@ function handleSelectSlot(session, twiml, digits) {
 
 // Handle appointment confirmation
 function handleConfirmAppointment(session, twiml, digits) {
+    console.log(`✅ Confirmation step - digits: ${digits}`);
+    
     if (digits === '1') {
         // Confirm appointment
         session.step = 'book_appointment';
@@ -431,7 +413,7 @@ function handleConfirmAppointment(session, twiml, digits) {
             input: 'dtmf',
             timeout: 10,
             numDigits: 1,
-            action: '/api/calls/webhook/voice'
+            action: '/voice/webhook/voice'
         });
         
         gather.say('Please press 1 to confirm your appointment or 2 to choose a different time.');
@@ -443,10 +425,12 @@ function handleConfirmAppointment(session, twiml, digits) {
     return twiml;
 }
 
-// Book the appointment
+// Book the appointment - THIS IS WHERE CONTACT CREATION HAPPENS
 async function handleBookAppointment(session, twiml) {
     try {
-        // Create or find contact
+        console.log(`🎯 Booking appointment for ${session.data.customerName} (${session.data.customerPhone})`);
+        
+        // Create or find contact - THIS WILL CREATE THE CONTACT IN DATABASE
         let contact = await findOrCreateContact(session.data.customerName, session.data.customerPhone);
         
         // Book appointment in database/system
@@ -473,6 +457,8 @@ async function handleBookAppointment(session, twiml) {
             
             // Clean up session
             voiceSessions.delete(session.callSid);
+            
+            console.log(`✅ Appointment booked successfully: ${appointment.id}`);
             
         } else {
             throw new Error('Failed to book appointment');
@@ -540,9 +526,10 @@ function getAvailableSlots() {
     return availableSlots.filter(slot => slot.available).slice(0, 5);
 }
 
+// FIXED: Contact creation function with proper database integration
 async function findOrCreateContact(name, phone) {
     try {
-        console.log(`📞 Looking for contact: ${name} (${phone})`);
+        console.log(`🔍 Looking for contact: ${name} (${phone})`);
         
         // Try to find existing contact by phone using database
         if (Contact) {
@@ -566,7 +553,7 @@ async function findOrCreateContact(name, phone) {
                     notes: `Auto-created from voice booking on ${new Date().toLocaleDateString()}`
                 });
                 
-                console.log(`✅ Created new contact: ${firstName} ${lastName} (${phone})`);
+                console.log(`✅ Created new contact in database: ${firstName} ${lastName} (${phone})`);
             } else {
                 // Update last contacted
                 await contact.update({
@@ -584,10 +571,11 @@ async function findOrCreateContact(name, phone) {
                 email: contact.email,
                 fullName: `${contact.firstName} ${contact.lastName}`
             };
+        } else {
+            console.warn('⚠️ Contact model not available, creating mock contact');
         }
         
         // Fallback for demo if Contact model not available
-        console.warn('Contact model not available, creating mock contact');
         return {
             id: Math.floor(Math.random() * 10000),
             firstName: name.split(' ')[0] || 'Unknown',
@@ -619,19 +607,24 @@ async function bookAppointmentInSystem(appointmentData) {
         
         let appointment = null;
         
+        // Generate confirmation code
+        const confirmationCode = `VOICE${Date.now().toString().slice(-6)}`;
+        
         // Try to save to database if Appointment model is available
         if (Appointment && Appointment.create) {
             appointment = await Appointment.create({
                 contactId: appointmentData.contactId,
                 customerName: appointmentData.customerName,
                 customerPhone: appointmentData.customerPhone,
+                customerEmail: `${appointmentData.customerName.replace(/\s+/g, '').toLowerCase()}@voicebooking.temp`,
                 appointmentDate: appointmentDate,
                 appointmentTime: appointmentTime,
                 duration: 60,
-                purpose: 'Phone Consultation',
+                purpose: 'Voice Consultation',
                 status: 'confirmed',
                 source: 'voice_booking',
-                callSid: appointmentData.callSid
+                confirmationCode: confirmationCode,
+                notes: `Booked via voice call ${appointmentData.callSid}`
             });
             
             console.log(`📅 Appointment saved to database: ${appointment.id}`);
@@ -645,9 +638,10 @@ async function bookAppointmentInSystem(appointmentData) {
                 appointmentDate: appointmentDate,
                 appointmentTime: appointmentTime,
                 duration: 60,
-                purpose: 'Phone Consultation',
+                purpose: 'Voice Consultation',
                 status: 'confirmed',
                 source: 'voice_booking',
+                confirmationCode: confirmationCode,
                 callSid: appointmentData.callSid,
                 createdAt: new Date()
             };
@@ -725,46 +719,6 @@ async function sendAppointmentConfirmationSMS(phone, appointment) {
     }
 }
 
-async function logCallToDatabase(callSid, fromNumber, step) {
-    try {
-        if (Call && Call.findByTwilioSid) {
-            let callRecord = await Call.findByTwilioSid(callSid);
-            
-            if (!callRecord && Call.create) {
-                callRecord = await Call.create({
-                    twilioCallSid: callSid,
-                    direction: 'incoming',
-                    fromNumber: fromNumber,
-                    toNumber: process.env.TWILIO_PHONE_NUMBER,
-                    status: 'in-progress',
-                    callStatus: 'answered',
-                    startTime: new Date(),
-                    notes: `Voice bot interaction - Step: ${step}`
-                });
-            } else if (callRecord && callRecord.update) {
-                await callRecord.update({
-                    notes: `${callRecord.notes || ''} | Step: ${step}`,
-                    updatedAt: new Date()
-                });
-            }
-        }
-    } catch (error) {
-        console.error('❌ Error logging call:', error);
-    }
-}
-
-function cleanupOldSessions() {
-    // Clean up sessions older than 1 hour
-    const oneHourAgo = Date.now() - (60 * 60 * 1000);
-    
-    for (const [callSid, session] of voiceSessions.entries()) {
-        if (session.createdAt && session.createdAt < oneHourAgo) {
-            voiceSessions.delete(callSid);
-            console.log(`🧹 Cleaned up old session: ${callSid}`);
-        }
-    }
-}
-
 // Today's calls route (compatibility with existing dashboard)
 router.get('/today', async (req, res) => {
     try {
@@ -801,7 +755,7 @@ router.get('/today', async (req, res) => {
 router.get('/webhook/voice', (req, res) => {
     res.json({ 
         message: 'Voice webhook endpoint is working!',
-        endpoint: '/api/calls/webhook/voice',
+        endpoint: '/voice/webhook/voice',
         method: 'POST',
         note: 'Configure this URL in your Twilio phone number settings'
     });
