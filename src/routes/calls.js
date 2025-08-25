@@ -264,4 +264,42 @@ function mapTwilioStatusToCallStatus(twilioStatus) {
   return statusMap[twilioStatus] || 'initiated';
 }
 
+// POST /api/calls/test - Test outbound call
+router.post('/test', async (req, res) => {
+  try {
+    const testNumber = process.env.FORWARD_TO_NUMBER || '+16566001400';
+    
+    console.log(`📞 Testing outbound call to: ${testNumber}`);
+
+    const twimlResponse = `
+      <Response>
+        <Say voice="alice">Hello! This is a test call from RinglyPro CRM. The outgoing call system is working correctly.</Say>
+        <Pause length="2"/>
+        <Say voice="alice">Goodbye!</Say>
+      </Response>
+    `;
+
+    const call = await client.calls.create({
+      to: testNumber,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      twiml: twimlResponse
+    });
+
+    console.log(`✅ Test call initiated: ${call.sid}`);
+
+    res.json({
+      success: true,
+      message: `Test call initiated to ${testNumber}`,
+      call: { twilioSid: call.sid, status: call.status }
+    });
+
+  } catch (error) {
+    console.error('❌ Test call error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Test call failed: ' + error.message
+    });
+  }
+});
+
 module.exports = router;
