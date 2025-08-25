@@ -542,52 +542,71 @@ function getAvailableSlots() {
 
 async function findOrCreateContact(name, phone) {
     try {
-        // Try to find existing contact by phone
-        let contact = null;
+        console.log(`📞 Looking for contact: ${name} (${phone})`);
         
-        if (Contact && Contact.findByPhone) {
-            contact = await Contact.findByPhone(phone);
-        }
-        
-        if (!contact && Contact && Contact.create) {
-            // Create new contact
-            const nameParts = name.split(' ');
-            const firstName = nameParts[0] || 'Unknown';
-            const lastName = nameParts.slice(1).join(' ') || 'Customer';
-            
-            contact = await Contact.create({
-                firstName: firstName,
-                lastName: lastName,
-                phone: phone,
-                email: `${firstName.toLowerCase()}@example.com`, // Placeholder
-                source: 'voice_call',
-                status: 'active'
+        // Try to find existing contact by phone using database
+        if (Contact) {
+            let contact = await Contact.findOne({
+                where: { phone: phone }
             });
             
-            console.log(`📞 Created new contact: ${name} (${phone})`);
-        }
-        
-        if (!contact) {
-            // Fallback contact
-            contact = {
-                id: Math.floor(Math.random() * 1000),
-                firstName: name.split(' ')[0],
-                lastName: name.split(' ').slice(1).join(' '),
-                phone: phone,
-                fullName: name
+            if (!contact) {
+                // Create new contact in database
+                const nameParts = name.split(' ');
+                const firstName = nameParts[0] || 'Unknown';
+                const lastName = nameParts.slice(1).join(' ') || 'Customer';
+                
+                contact = await Contact.create({
+                    firstName: firstName,
+                    lastName: lastName,
+                    phone: phone,
+                    email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@voicebooking.temp`.replace(/\s+/g, ''),
+                    source: 'voice_booking',
+                    status: 'active',
+                    notes: `Auto-created from voice booking on ${new Date().toLocaleDateString()}`
+                });
+                
+                console.log(`✅ Created new contact: ${firstName} ${lastName} (${phone})`);
+            } else {
+                // Update last contacted
+                await contact.update({
+                    lastContactedAt: new Date()
+                });
+                
+                console.log(`👤 Found existing contact: ${contact.firstName} ${contact.lastName} (${phone})`);
+            }
+            
+            return {
+                id: contact.id,
+                firstName: contact.firstName,
+                lastName: contact.lastName,
+                phone: contact.phone,
+                email: contact.email,
+                fullName: `${contact.firstName} ${contact.lastName}`
             };
         }
         
-        return contact;
+        // Fallback for demo if Contact model not available
+        console.warn('Contact model not available, creating mock contact');
+        return {
+            id: Math.floor(Math.random() * 10000),
+            firstName: name.split(' ')[0] || 'Unknown',
+            lastName: name.split(' ').slice(1).join(' ') || 'Customer',
+            phone: phone,
+            email: `${name.replace(/\s+/g, '').toLowerCase()}@temp.example.com`,
+            fullName: name
+        };
         
     } catch (error) {
-        console.error('❌ Error finding/creating contact:', error);
-        // Return mock contact for demo
+        console.error('❌ Error in findOrCreateContact:', error);
+        
+        // Return mock contact on error
         return {
-            id: Math.floor(Math.random() * 1000),
-            firstName: name.split(' ')[0],
-            lastName: name.split(' ').slice(1).join(' '),
+            id: Math.floor(Math.random() * 10000),
+            firstName: name.split(' ')[0] || 'Unknown',
+            lastName: name.split(' ').slice(1).join(' ') || 'Customer',
             phone: phone,
+            email: `${name.replace(/\s+/g, '').toLowerCase()}@temp.example.com`,
             fullName: name
         };
     }
