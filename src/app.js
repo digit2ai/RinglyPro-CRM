@@ -1,4 +1,4 @@
-// src/app.js - Complete application setup with all routes
+// src/app.js - Enhanced with Call History Integration
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -6,76 +6,267 @@ require('dotenv').config();
 
 const app = express();
 
-// Trust proxy for Render deployment
-app.set('trust proxy', true);
-app.use('/api/calls', require('./routes/voiceBot'));
-
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Static files
 app.use(express.static(path.join(__dirname, '../public')));
 
-// View engine setup
+// Set view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
 
-app.use('/api', require('./routes/callLog'));
+// Import routes
+const contactsRoutes = require('./routes/contacts');
+const appointmentsRoutes = require('./routes/appointments');
+const appointmentRoutes = require('./routes/appointment'); // Individual appointment routes
+const messagesRoutes = require('./routes/messages');
+const callsRoutes = require('./routes/calls'); // New call routes
+const callLogRoutes = require('./routes/callLog'); // Call log routes
+const voiceBotRoutes = require('./routes/voiceBot');
+
+// Database connection test
+const { sequelize } = require('./models');
+
+// Test database connection
+sequelize.authenticate()
+  .then(() => {
+    console.log('✅ Database connection established successfully.');
+  })
+  .catch(err => {
+    console.error('❌ Unable to connect to database:', err);
+  });
+
+// API Routes
+app.use('/api/contacts', contactsRoutes);
+app.use('/api/appointments', appointmentsRoutes);
+app.use('/api/appointment', appointmentRoutes);
+app.use('/api/messages', messagesRoutes);
+app.use('/api/calls', callsRoutes); // Mount call routes
+app.use('/api/call-log', callLogRoutes); // Mount call log routes
+app.use('/api/voice', voiceBotRoutes);
+
+// Voice webhook routes (for Twilio integration)
+app.use('/voice', voiceBotRoutes);
+
+// Dashboard route
+app.get('/', (req, res) => {
+  res.render('dashboard', { 
+    title: 'RinglyPro CRM Dashboard',
+    currentDate: new Date().toLocaleDateString(),
+    voiceEnabled: process.env.VOICE_ENABLED === 'true' || false
+  });
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    database: process.env.DATABASE_URL ? 'connected' : 'not configured'
+    services: {
+      database: 'connected',
+      twilio: process.env.TWILIO_ACCOUNT_SID ? 'configured' : 'not configured',
+      voice: process.env.ELEVENLABS_API_KEY ? 'configured' : 'not configured'
+    }
   });
 });
 
-// Main dashboard route
-app.get('/', (req, res) => {
-  res.render('dashboard', { 
-    title: 'RinglyPro CRM',
-    environment: process.env.NODE_ENV || 'development'
-  });
+// API status endpoint
+app.get('/api/status', async (req, res) => {
+  try {
+    // Test database connection
+    await sequelize.authenticate();
+    
+    // Get quick stats
+    const { Contact, Appointment, Message, Call } = require('./models');
+    
+    const stats = await Promise.all([
+      Contact.count(),
+      Appointment.count(),
+      Message.count(),
+      Call.count()
+    ]);
+
+    res.json({
+      status: 'operational',
+      timestamp: new Date().toISOString(),
+      database: 'connected',
+      stats: {
+        contacts: stats[0],
+        appointments: stats[1],
+        messages: stats[2],
+        calls: stats[3]
+      },
+      features: {
+        voice_ai: process.env.ELEVENLABS_API_KEY ? 'enabled' : 'disabled',
+        sms: process.env.TWILIO_ACCOUNT_SID ? 'enabled' : 'disabled',
+        calls: process.env.TWILIO_ACCOUNT_SID ? 'enabled' : 'disabled'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      error: error.message
+    });
+  }
 });
 
-// API Routes
-app.use('/api/contacts', require('./routes/contacts'));
-app.use('/api/messages', require('./routes/messages'));
-app.use('/api/appointments', require('./routes/appointments'));
-app.use('/api/calls', require('./routes/calls')); // 🎯 THIS IS THE MISSING LINE!
+// Get dashboard data endpoint
+app.get('/api/dashboard', async (req, res) => {
+  try {
+    const { Contact, Appointment, Message, Call } = require('./models');
+    const { Op } = require('sequelize');
 
-// Legacy webhook routes (for backward compatibility)
-app.use('/webhook', require('./routes/messages')); // Legacy SMS webhook
-app.use('/webhook/twilio', require('./routes/messages')); // Legacy Twilio webhook
+    // Get today's date range
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
 
-// Catch-all for SPA routing
-app.get('*', (req, res) => {
-  res.render('dashboard', { 
-    title: 'RinglyPro CRM',
-    environment: process.env.NODE_ENV || 'development'
-  });
+    // Get counts and today's data
+    const [
+      totalContacts,
+      todaysAppointments,
+      todaysMessages,
+      todaysCalls,
+      recentContacts,
+      recentAppointments,
+      recentMessages,
+      recentCalls
+    ] = await Promise.all([
+      // Counts
+      Contact.count(),
+      Appointment.count({
+        where: {
+          date: {
+            [Op.between]: [todayStart, todayEnd]
+          }
+        }
+      }),
+      Message.count({
+        where: {
+          createdAt: {
+            [Op.between]: [todayStart, todayEnd]
+          }
+        }
+      }),
+      Call.count({
+        where: {
+          createdAt: {
+            [Op.between]: [todayStart, todayEnd]
+          }
+        }
+      }),
+      
+      // Recent data
+      Contact.findAll({
+        limit: 5,
+        order: [['createdAt', 'DESC']],
+        attributes: ['id', 'firstName', 'lastName', 'phone', 'email']
+      }),
+      Appointment.findAll({
+        where: {
+          date: {
+            [Op.between]: [todayStart, todayEnd]
+          }
+        },
+        limit: 10,
+        order: [['time', 'ASC']],
+        include: [{
+          model: Contact,
+          as: 'contact',
+          required: false,
+          attributes: ['firstName', 'lastName', 'phone']
+        }]
+      }),
+      Message.findAll({
+        where: {
+          createdAt: {
+            [Op.between]: [todayStart, todayEnd]
+          }
+        },
+        limit: 10,
+        order: [['createdAt', 'DESC']],
+        include: [{
+          model: Contact,
+          as: 'contact',
+          required: false,
+          attributes: ['firstName', 'lastName', 'phone']
+        }]
+      }),
+      Call.findAll({
+        where: {
+          createdAt: {
+            [Op.between]: [todayStart, todayEnd]
+          }
+        },
+        limit: 10,
+        order: [['createdAt', 'DESC']],
+        include: [{
+          model: Contact,
+          as: 'contact',
+          required: false,
+          attributes: ['firstName', 'lastName', 'phone']
+        }]
+      })
+    ]);
+
+    // Calculate call statistics
+    const callStats = {
+      total: todaysCalls,
+      incoming: recentCalls.filter(call => call.direction === 'incoming').length,
+      outgoing: recentCalls.filter(call => call.direction === 'outgoing').length,
+      missed: recentCalls.filter(call => call.status === 'no-answer' || call.status === 'busy').length,
+      answered: recentCalls.filter(call => call.status === 'completed').length,
+      totalDuration: recentCalls.reduce((sum, call) => sum + (call.duration || 0), 0),
+      averageDuration: recentCalls.length > 0 ? 
+        Math.round(recentCalls.reduce((sum, call) => sum + (call.duration || 0), 0) / recentCalls.length) : 0
+    };
+
+    res.json({
+      success: true,
+      stats: {
+        contacts: totalContacts,
+        appointments: todaysAppointments,
+        messages: todaysMessages,
+        calls: todaysCalls
+      },
+      data: {
+        contacts: recentContacts,
+        appointments: recentAppointments,
+        messages: recentMessages,
+        calls: recentCalls
+      },
+      callStats: callStats,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch dashboard data'
+    });
+  }
 });
 
-// Global error handler
+// Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('❌ Global error handler:', err);
-  
-  // Don't leak error details in production
-  const isDevelopment = process.env.NODE_ENV !== 'production';
-  
-  res.status(err.status || 500).json({
-    error: isDevelopment ? err.message : 'Internal server error',
-    ...(isDevelopment && { stack: err.stack })
+  console.error('Server Error:', err.stack);
+  res.status(500).json({
+    success: false,
+    error: 'Something went wrong!',
+    ...(process.env.NODE_ENV === 'development' && { details: err.message })
   });
 });
 
-// 404 handler for API routes
-app.use('/api/*', (req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Endpoint not found'
+  });
 });
 
 module.exports = app;
