@@ -1,46 +1,58 @@
 const express = require('express');
 const router = express.Router();
 
-// Temporary in-memory storage (will be replaced with database later)
-let contacts = [];
-let contactIdCounter = 1;
+// Import Contact model from models
+const { Contact } = require('../models');
 
 // Get all contacts
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 50, search = '' } = req.query;
+    const { page = 1, limit = 50, search = '', sortBy = 'createdAt', sortOrder = 'DESC' } = req.query;
     
-    let filteredContacts = contacts;
+    let whereClause = {};
     
-    // Simple search filter
+    // Search functionality
     if (search.trim()) {
-      const searchLower = search.toLowerCase();
-      filteredContacts = contacts.filter(contact => 
-        contact.firstName.toLowerCase().includes(searchLower) ||
-        contact.lastName.toLowerCase().includes(searchLower) ||
-        contact.phone.includes(search) ||
-        contact.email.toLowerCase().includes(searchLower)
-      );
+      const { Op } = require('sequelize');
+      const searchTerm = search.toLowerCase();
+      whereClause = {
+        [Op.or]: [
+          { firstName: { [Op.iLike]: `%${searchTerm}%` } },
+          { lastName: { [Op.iLike]: `%${searchTerm}%` } },
+          { email: { [Op.iLike]: `%${searchTerm}%` } },
+          { phone: { [Op.like]: `%${search}%` } }
+        ]
+      };
     }
     
-    // Pagination
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + parseInt(limit);
-    const paginatedContacts = filteredContacts.slice(startIndex, endIndex);
+    // Get total count for pagination
+    const totalContacts = await Contact.count({ where: whereClause });
+    
+    // Get paginated results
+    const contacts = await Contact.findAll({
+      where: whereClause,
+      limit: parseInt(limit),
+      offset: (parseInt(page) - 1) * parseInt(limit),
+      order: [[sortBy, sortOrder.toUpperCase()]],
+      attributes: ['id', 'firstName', 'lastName', 'phone', 'email', 'notes', 'status', 'source', 'lastContactedAt', 'createdAt', 'updatedAt']
+    });
+    
+    // Add fullName to each contact
+    const contactsWithFullName = contacts.map(contact => ({
+      ...contact.toJSON(),
+      fullName: `${contact.firstName} ${contact.lastName}`
+    }));
     
     res.json({
       success: true,
       data: {
-        contacts: paginatedContacts.map(contact => ({
-          ...contact,
-          fullName: `${contact.firstName} ${contact.lastName}`
-        })),
+        contacts: contactsWithFullName,
         pagination: {
           currentPage: parseInt(page),
-          totalPages: Math.ceil(filteredContacts.length / limit),
-          totalContacts: filteredContacts.length,
-          hasNext: endIndex < filteredContacts.length,
-          hasPrev: page > 1,
+          totalPages: Math.ceil(totalContacts / limit),
+          totalContacts: totalContacts,
+          hasNext: (parseInt(page) * parseInt(limit)) < totalContacts,
+          hasPrev: parseInt(page) > 1,
           limit: parseInt(limit)
         }
       }
@@ -49,7 +61,8 @@ router.get('/', async (req, res) => {
     console.error('Error fetching contacts:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Failed to fetch contacts'
+      error: 'Failed to fetch contacts',
+      details: error.message
     });
   }
 });
@@ -67,8 +80,17 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Check for existing contact
-    const existingContact = contacts.find(c => c.phone === phone || c.email === email);
+    // Check for existing contact by phone or email
+    const { Op } = require('sequelize');
+    const existingContact = await Contact.findOne({
+      where: {
+        [Op.or]: [
+          { phone: phone },
+          { email: email }
+        ]
+      }
+    });
+
     if (existingContact) {
       return res.status(409).json({
         success: false,
@@ -82,9 +104,8 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Create new contact
-    const contact = {
-      id: contactIdCounter++,
+    // Create new contact in database
+    const contact = await Contact.create({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       phone: phone.trim(),
@@ -92,18 +113,14 @@ router.post('/', async (req, res) => {
       notes: notes ? notes.trim() : '',
       source,
       status: 'active',
-      lastContactedAt: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    contacts.unshift(contact); // Add to beginning of array
+      lastContactedAt: null
+    });
 
     res.status(201).json({
       success: true,
       message: `Contact "${contact.firstName} ${contact.lastName}" created successfully`,
       data: {
-        ...contact,
+        ...contact.toJSON(),
         fullName: `${contact.firstName} ${contact.lastName}`
       }
     });
@@ -111,7 +128,8 @@ router.post('/', async (req, res) => {
     console.error('Error creating contact:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Failed to create contact'
+      error: 'Failed to create contact',
+      details: error.message
     });
   }
 });
@@ -120,7 +138,7 @@ router.post('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const contact = contacts.find(c => c.id === parseInt(id));
+    const contact = await Contact.findByPk(id);
 
     if (!contact) {
       return res.status(404).json({
@@ -132,7 +150,7 @@ router.get('/:id', async (req, res) => {
     res.json({
       success: true,
       data: {
-        ...contact,
+        ...contact.toJSON(),
         fullName: `${contact.firstName} ${contact.lastName}`
       }
     });
@@ -140,7 +158,8 @@ router.get('/:id', async (req, res) => {
     console.error('Error fetching contact:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Failed to fetch contact'
+      error: 'Failed to fetch contact',
+      details: error.message
     });
   }
 });
@@ -151,36 +170,39 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { firstName, lastName, phone, email, notes, status } = req.body;
 
-    const contactIndex = contacts.findIndex(c => c.id === parseInt(id));
-    if (contactIndex === -1) {
+    const contact = await Contact.findByPk(id);
+    if (!contact) {
       return res.status(404).json({
         success: false,
         error: 'Contact not found'
       });
     }
 
-    // Update contact
-    if (firstName !== undefined) contacts[contactIndex].firstName = firstName.trim();
-    if (lastName !== undefined) contacts[contactIndex].lastName = lastName.trim();
-    if (phone !== undefined) contacts[contactIndex].phone = phone.trim();
-    if (email !== undefined) contacts[contactIndex].email = email.trim().toLowerCase();
-    if (notes !== undefined) contacts[contactIndex].notes = notes ? notes.trim() : '';
-    if (status !== undefined) contacts[contactIndex].status = status;
-    contacts[contactIndex].updatedAt = new Date().toISOString();
+    // Update contact fields
+    const updateData = {};
+    if (firstName !== undefined) updateData.firstName = firstName.trim();
+    if (lastName !== undefined) updateData.lastName = lastName.trim();
+    if (phone !== undefined) updateData.phone = phone.trim();
+    if (email !== undefined) updateData.email = email.trim().toLowerCase();
+    if (notes !== undefined) updateData.notes = notes ? notes.trim() : '';
+    if (status !== undefined) updateData.status = status;
+
+    await contact.update(updateData);
 
     res.json({
       success: true,
-      message: `Contact "${contacts[contactIndex].firstName} ${contacts[contactIndex].lastName}" updated successfully`,
+      message: `Contact "${contact.firstName} ${contact.lastName}" updated successfully`,
       data: {
-        ...contacts[contactIndex],
-        fullName: `${contacts[contactIndex].firstName} ${contacts[contactIndex].lastName}`
+        ...contact.toJSON(),
+        fullName: `${contact.firstName} ${contact.lastName}`
       }
     });
   } catch (error) {
     console.error('Error updating contact:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Failed to update contact'
+      error: 'Failed to update contact',
+      details: error.message
     });
   }
 });
@@ -189,27 +211,28 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const contactIndex = contacts.findIndex(c => c.id === parseInt(id));
+    const contact = await Contact.findByPk(id);
 
-    if (contactIndex === -1) {
+    if (!contact) {
       return res.status(404).json({
         success: false,
         error: 'Contact not found'
       });
     }
 
-    const contact = contacts[contactIndex];
-    contacts.splice(contactIndex, 1);
+    const contactName = `${contact.firstName} ${contact.lastName}`;
+    await contact.destroy();
 
     res.json({
       success: true,
-      message: `Contact "${contact.firstName} ${contact.lastName}" deleted successfully`
+      message: `Contact "${contactName}" deleted successfully`
     });
   } catch (error) {
     console.error('Error deleting contact:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Failed to delete contact'
+      error: 'Failed to delete contact',
+      details: error.message
     });
   }
 });
@@ -220,30 +243,52 @@ router.get('/search/:query', async (req, res) => {
     const { query } = req.params;
     const { limit = 20 } = req.query;
 
-    const searchLower = query.toLowerCase();
-    const searchResults = contacts.filter(contact => 
-      contact.firstName.toLowerCase().includes(searchLower) ||
-      contact.lastName.toLowerCase().includes(searchLower) ||
-      contact.phone.includes(query) ||
-      contact.email.toLowerCase().includes(searchLower)
-    );
+    if (!query || query.trim().length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          query,
+          contacts: [],
+          total: 0
+        }
+      });
+    }
+
+    const { Op } = require('sequelize');
+    const searchTerm = query.toLowerCase();
+    
+    const contacts = await Contact.findAll({
+      where: {
+        [Op.or]: [
+          { firstName: { [Op.iLike]: `%${searchTerm}%` } },
+          { lastName: { [Op.iLike]: `%${searchTerm}%` } },
+          { email: { [Op.iLike]: `%${searchTerm}%` } },
+          { phone: { [Op.like]: `%${query}%` } }
+        ]
+      },
+      limit: parseInt(limit),
+      order: [['firstName', 'ASC'], ['lastName', 'ASC']]
+    });
+
+    const contactsWithFullName = contacts.map(contact => ({
+      ...contact.toJSON(),
+      fullName: `${contact.firstName} ${contact.lastName}`
+    }));
 
     res.json({
       success: true,
       data: {
         query,
-        contacts: searchResults.slice(0, limit).map(contact => ({
-          ...contact,
-          fullName: `${contact.firstName} ${contact.lastName}`
-        })),
-        total: searchResults.length
+        contacts: contactsWithFullName,
+        total: contacts.length
       }
     });
   } catch (error) {
     console.error('Error searching contacts:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Failed to search contacts'
+      error: 'Failed to search contacts',
+      details: error.message
     });
   }
 });
@@ -252,31 +297,33 @@ router.get('/search/:query', async (req, res) => {
 router.patch('/:id/contact', async (req, res) => {
   try {
     const { id } = req.params;
-    const contactIndex = contacts.findIndex(c => c.id === parseInt(id));
+    const contact = await Contact.findByPk(id);
 
-    if (contactIndex === -1) {
+    if (!contact) {
       return res.status(404).json({
         success: false,
         error: 'Contact not found'
       });
     }
 
-    contacts[contactIndex].lastContactedAt = new Date().toISOString();
-    contacts[contactIndex].updatedAt = new Date().toISOString();
+    await contact.update({
+      lastContactedAt: new Date()
+    });
 
     res.json({
       success: true,
-      message: `Updated last contacted time for "${contacts[contactIndex].firstName} ${contacts[contactIndex].lastName}"`,
+      message: `Updated last contacted time for "${contact.firstName} ${contact.lastName}"`,
       data: {
-        ...contacts[contactIndex],
-        fullName: `${contacts[contactIndex].firstName} ${contacts[contactIndex].lastName}`
+        ...contact.toJSON(),
+        fullName: `${contact.firstName} ${contact.lastName}`
       }
     });
   } catch (error) {
     console.error('Error updating last contacted:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Failed to update last contacted time'
+      error: 'Failed to update last contacted time',
+      details: error.message
     });
   }
 });
