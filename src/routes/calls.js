@@ -43,6 +43,77 @@ router.get('/today', async (req, res) => {
   }
 });
 
+// POST /api/calls/initiate - Initiate outbound call (like SMS /sms endpoint)
+router.post('/initiate', async (req, res) => {
+  try {
+    const { to, from, contactId, message } = req.body;
+    
+    if (!to) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Phone number is required' 
+      });
+    }
+
+    console.log(`📞 API: Initiating outbound call to: ${to}`);
+
+    // Create TwiML for the call
+    const twimlContent = message || 'Hello! This is a call from RinglyPro CRM.';
+    const forwardNumber = process.env.FORWARD_TO_NUMBER || '+16566001400';
+    
+    const twimlResponse = `
+      <Response>
+        <Say voice="alice">${twimlContent}</Say>
+        <Dial timeout="30" callerId="${process.env.TWILIO_PHONE_NUMBER}">${forwardNumber}</Dial>
+      </Response>
+    `;
+
+    // Make call via Twilio (same pattern as SMS)
+    const call = await client.calls.create({
+      to: to,
+      from: from || process.env.TWILIO_PHONE_NUMBER,
+      twiml: twimlResponse
+    });
+
+    console.log(`✅ Twilio call created: ${call.sid}`);
+
+    // Store call record in database (same pattern as SMS)
+    if (Call) {
+      const callRecord = await Call.create({
+        contactId: contactId || null,
+        twilioCallSid: call.sid,
+        direction: 'outgoing',
+        fromNumber: from || process.env.TWILIO_PHONE_NUMBER,
+        toNumber: to,
+        status: 'queued',
+        callStatus: 'initiated',
+        startTime: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      console.log(`💾 Call record created with ID: ${callRecord.id}`);
+    }
+
+    res.json({
+      success: true,
+      call: {
+        twilioSid: call.sid,
+        status: call.status,
+        to: to,
+        from: from || process.env.TWILIO_PHONE_NUMBER
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error initiating call:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to initiate call: ' + error.message
+    });
+  }
+});
+
 // POST /api/calls - Create a new call record manually
 router.post('/', async (req, res) => {
   try {
@@ -190,6 +261,44 @@ router.post('/webhook/voice', async (req, res) => {
   }
 });
 
+// POST /api/calls/test - Test outbound call
+router.post('/test', async (req, res) => {
+  try {
+    const testNumber = process.env.FORWARD_TO_NUMBER || '+16566001400';
+    
+    console.log(`📞 Testing outbound call to: ${testNumber}`);
+
+    const twimlResponse = `
+      <Response>
+        <Say voice="alice">Hello! This is a test call from RinglyPro CRM. The outgoing call system is working correctly.</Say>
+        <Pause length="2"/>
+        <Say voice="alice">Goodbye!</Say>
+      </Response>
+    `;
+
+    const call = await client.calls.create({
+      to: testNumber,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      twiml: twimlResponse
+    });
+
+    console.log(`✅ Test call initiated: ${call.sid}`);
+
+    res.json({
+      success: true,
+      message: `Test call initiated to ${testNumber}`,
+      call: { twilioSid: call.sid, status: call.status }
+    });
+
+  } catch (error) {
+    console.error('❌ Test call error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Test call failed: ' + error.message
+    });
+  }
+});
+
 // GET /api/calls/contact/:contactId - Get calls for a specific contact
 router.get('/contact/:contactId', async (req, res) => {
   try {
@@ -263,43 +372,5 @@ function mapTwilioStatusToCallStatus(twilioStatus) {
   
   return statusMap[twilioStatus] || 'initiated';
 }
-
-// POST /api/calls/test - Test outbound call
-router.post('/test', async (req, res) => {
-  try {
-    const testNumber = process.env.FORWARD_TO_NUMBER || '+16566001400';
-    
-    console.log(`📞 Testing outbound call to: ${testNumber}`);
-
-    const twimlResponse = `
-      <Response>
-        <Say voice="alice">Hello! This is a test call from RinglyPro CRM. The outgoing call system is working correctly.</Say>
-        <Pause length="2"/>
-        <Say voice="alice">Goodbye!</Say>
-      </Response>
-    `;
-
-    const call = await client.calls.create({
-      to: testNumber,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      twiml: twimlResponse
-    });
-
-    console.log(`✅ Test call initiated: ${call.sid}`);
-
-    res.json({
-      success: true,
-      message: `Test call initiated to ${testNumber}`,
-      call: { twilioSid: call.sid, status: call.status }
-    });
-
-  } catch (error) {
-    console.error('❌ Test call error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Test call failed: ' + error.message
-    });
-  }
-});
 
 module.exports = router;
