@@ -117,13 +117,46 @@ const syncDatabase = async (options = {}) => {
     await sequelize.authenticate();
     console.log('Database connection verified');
 
-    // Sync Contact table (skip if conflicts)
+    // Sync Contact table for CRM functionality - ENHANCED WITH MANUAL SQL FALLBACK
     if (Contact) {
       try {
         await Contact.sync({ ...options, alter: false });
-        console.log('Contact table synchronized');
+        console.log('Contact table synchronized - CRM contact management ready');
       } catch (error) {
-        console.log('Contact table sync skipped (existing table):', error.message);
+        console.log('Contact table sync issues:', error.message);
+        // Try creating manually for Contact management
+        try {
+          await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "contacts" (
+              id SERIAL PRIMARY KEY,
+              "firstName" VARCHAR(50) NOT NULL,
+              "lastName" VARCHAR(50) NOT NULL,
+              phone VARCHAR(20) UNIQUE NOT NULL,
+              email VARCHAR(255) UNIQUE NOT NULL,
+              notes TEXT,
+              status VARCHAR(20) DEFAULT 'active',
+              source VARCHAR(50) DEFAULT 'manual',
+              "lastContactedAt" TIMESTAMP,
+              "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+          `);
+          
+          // Create indexes for performance
+          await sequelize.query(`
+            CREATE INDEX IF NOT EXISTS idx_contacts_phone ON contacts (phone);
+            CREATE INDEX IF NOT EXISTS idx_contacts_email ON contacts (email);
+            CREATE INDEX IF NOT EXISTS idx_contacts_name ON contacts ("firstName", "lastName");
+            CREATE INDEX IF NOT EXISTS idx_contacts_created ON contacts ("createdAt");
+            CREATE INDEX IF NOT EXISTS idx_contacts_status ON contacts (status);
+            CREATE INDEX IF NOT EXISTS idx_contacts_source ON contacts (source);
+          `);
+          
+          console.log('Contact table created with manual SQL - CRM contact management ready');
+        } catch (sqlError) {
+          console.log('Manual Contact table creation failed:', sqlError.message);
+          console.log('WARNING: Contact management may not work without Contact table');
+        }
       }
     }
 
@@ -254,6 +287,7 @@ const syncDatabase = async (options = {}) => {
     
     if (Message) console.log('SMS messaging system active');
     if (Call) console.log('Call logging system active');
+    if (Contact) console.log('Contact management system active');
     if (Appointment) console.log('Rachel voice appointment booking system active');
     
     return true;
