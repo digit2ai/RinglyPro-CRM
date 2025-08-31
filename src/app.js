@@ -1,10 +1,15 @@
-// src/app.js - Enhanced with Call History Integration
+// src/app.js - Enhanced with Call History Integration and Multi-Client Support
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
 const app = express();
+
+// Multi-Client Configuration - ADD THIS SECTION
+const CLIENT_ID = process.env.CLIENT_ID || 'default';
+const CLIENT_NAME = process.env.CLIENT_NAME || 'RinglyPro';
+const CLIENT_DOMAIN = process.env.CLIENT_DOMAIN || 'ringlypro.com';
 
 // Middleware
 app.use(cors());
@@ -49,19 +54,23 @@ app.use('/api/voice', voiceBotRoutes);
 // Voice webhook routes (for Twilio integration)
 app.use('/voice', voiceBotRoutes);
 
-// Dashboard route
+// Dashboard route - UPDATED FOR MULTI-CLIENT
 app.get('/', (req, res) => {
   res.render('dashboard', { 
-    title: 'RinglyPro CRM Dashboard',
+    title: `${CLIENT_NAME} CRM Dashboard`,
     currentDate: new Date().toLocaleDateString(),
-    voiceEnabled: process.env.VOICE_ENABLED === 'true' || false
+    voiceEnabled: process.env.VOICE_ENABLED === 'true' || false,
+    clientName: CLIENT_NAME,
+    clientId: CLIENT_ID
   });
 });
 
-// Health check endpoint
+// Health check endpoint - UPDATED FOR MULTI-CLIENT
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
+    client: CLIENT_NAME,
+    clientId: CLIENT_ID,
     timestamp: new Date().toISOString(),
     services: {
       database: 'connected',
@@ -89,6 +98,8 @@ app.get('/api/status', async (req, res) => {
 
     res.json({
       status: 'operational',
+      client: CLIENT_NAME,
+      clientId: CLIENT_ID,
       timestamp: new Date().toISOString(),
       database: 'connected',
       stats: {
@@ -106,6 +117,8 @@ app.get('/api/status', async (req, res) => {
   } catch (error) {
     res.status(500).json({
       status: 'error',
+      client: CLIENT_NAME,
+      clientId: CLIENT_ID,
       timestamp: new Date().toISOString(),
       error: error.message
     });
@@ -226,6 +239,8 @@ app.get('/api/dashboard', async (req, res) => {
 
     res.json({
       success: true,
+      client: CLIENT_NAME,
+      clientId: CLIENT_ID,
       stats: {
         contacts: totalContacts,
         appointments: todaysAppointments,
@@ -246,6 +261,8 @@ app.get('/api/dashboard', async (req, res) => {
     console.error('Error fetching dashboard data:', error);
     res.status(500).json({
       success: false,
+      client: CLIENT_NAME,
+      clientId: CLIENT_ID,
       error: 'Failed to fetch dashboard data'
     });
   }
