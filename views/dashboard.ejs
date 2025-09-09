@@ -436,30 +436,15 @@
 
     <div class="container mx-auto px-4 py-8">
         <!-- KPI Metrics Bar -->
-        <!-- KPI Metrics Bar -->
-<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8 fade-in">
-            <div class="kpi-card rounded-lg p-4 text-center">
+<!-- KPI Metrics Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8 fade-in">
+            <div class="bg-blue-600 rounded-lg p-4 text-center text-white">
                 <div class="text-2xl font-bold" id="kpi-total-contacts">0</div>
                 <div class="text-sm opacity-90">Total Contacts</div>
                 <div class="text-xs opacity-75 mt-1">
                     <i class="fas fa-arrow-up mr-1"></i><span>+5.2%</span>
                 </div>
             </div>
-            <div class="bg-orange-500 rounded-lg p-4 text-center text-white relative">
-    <div class="text-2xl font-bold" id="kpi-credit-balance">$0.00</div>
-    <div class="text-sm opacity-90">Credit Balance</div>
-    <div class="text-xs opacity-75 mt-1" id="kpi-credit-info">
-        <i class="fas fa-clock mr-1"></i><span id="kpi-free-minutes">100/100 free</span>
-    </div>
-    <!-- Add Reload Button -->
-    <button onclick="showReloadCreditsModal()" class="absolute top-2 right-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-2 py-1 rounded text-xs transition duration-200">
-        <i class="fas fa-plus"></i> Add
-    </button>
-</div>
-    <div class="text-xs opacity-75 mt-1" id="kpi-credit-info">
-        <i class="fas fa-clock mr-1"></i><span id="kpi-free-minutes">100/100 free</span>
-    </div>
-</div>
             <div class="bg-green-500 rounded-lg p-4 text-center text-white">
                 <div class="text-2xl font-bold" id="kpi-appointments">0</div>
                 <div class="text-sm opacity-90">Appointments</div>
@@ -480,6 +465,16 @@
                 <div class="text-xs opacity-75 mt-1">
                     <i class="fas fa-arrow-up mr-1"></i><span>+3.1%</span>
                 </div>
+            </div>
+            <div class="bg-orange-500 rounded-lg p-4 text-center text-white relative">
+                <div class="text-2xl font-bold" id="kpi-credit-balance">$0.00</div>
+                <div class="text-sm opacity-90">Credit Balance</div>
+                <div class="text-xs opacity-75 mt-1" id="kpi-credit-info">
+                    <i class="fas fa-clock mr-1"></i><span id="kpi-free-minutes">100/100 free</span>
+                </div>
+                <button onclick="showReloadCreditsModal()" class="absolute top-2 right-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-2 py-1 rounded text-xs transition duration-200">
+                    <i class="fas fa-plus"></i> Add
+                </button>
             </div>
         </div>
 

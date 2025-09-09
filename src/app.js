@@ -17,6 +17,12 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, '../public')));
 
+// Add this line with other route imports
+const twilioRoutes = require('./routes/twilio');
+
+// Add this line with other route mounts
+app.use('/webhook/twilio', twilioRoutes);
+
 // Set view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
