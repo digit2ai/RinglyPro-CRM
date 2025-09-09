@@ -1,4 +1,4 @@
-// src/app.js - Enhanced with Call History Integration and Multi-Client Support
+// src/app.js - Enhanced with Call History Integration, Multi-Client Support, and Credit System
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -29,6 +29,7 @@ const messagesRoutes = require('./routes/messages');
 const callsRoutes = require('./routes/calls'); // New call routes
 const callLogRoutes = require('./routes/callLog'); // Call log routes
 const voiceBotRoutes = require('./routes/voiceBot');
+const creditRoutes = require('./routes/credits'); // Credit system routes
 
 // Database connection test
 const { sequelize } = require('./models');
@@ -50,6 +51,7 @@ app.use('/api/messages', messagesRoutes);
 app.use('/api/calls', callsRoutes); // Mount call routes
 app.use('/api/call-log', callLogRoutes); // Mount call log routes
 app.use('/api/voice', voiceBotRoutes);
+app.use('/api/credits', creditRoutes); // Mount credit system routes
 
 // Voice webhook routes (for Twilio integration)
 app.use('/voice', voiceBotRoutes);
@@ -75,7 +77,8 @@ app.get('/health', (req, res) => {
     services: {
       database: 'connected',
       twilio: process.env.TWILIO_ACCOUNT_SID ? 'configured' : 'not configured',
-      voice: process.env.ELEVENLABS_API_KEY ? 'configured' : 'not configured'
+      voice: process.env.ELEVENLABS_API_KEY ? 'configured' : 'not configured',
+      stripe: process.env.STRIPE_SECRET_KEY ? 'configured' : 'not configured'
     }
   });
 });
@@ -111,7 +114,8 @@ app.get('/api/status', async (req, res) => {
       features: {
         voice_ai: process.env.ELEVENLABS_API_KEY ? 'enabled' : 'disabled',
         sms: process.env.TWILIO_ACCOUNT_SID ? 'enabled' : 'disabled',
-        calls: process.env.TWILIO_ACCOUNT_SID ? 'enabled' : 'disabled'
+        calls: process.env.TWILIO_ACCOUNT_SID ? 'enabled' : 'disabled',
+        credits: process.env.STRIPE_SECRET_KEY ? 'enabled' : 'disabled'
       }
     });
   } catch (error) {

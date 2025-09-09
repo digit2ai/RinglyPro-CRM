@@ -436,7 +436,8 @@
 
     <div class="container mx-auto px-4 py-8">
         <!-- KPI Metrics Bar -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 fade-in">
+        <!-- KPI Metrics Bar -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8 fade-in">
             <div class="kpi-card rounded-lg p-4 text-center">
                 <div class="text-2xl font-bold" id="kpi-total-contacts">0</div>
                 <div class="text-sm opacity-90">Total Contacts</div>
@@ -444,6 +445,21 @@
                     <i class="fas fa-arrow-up mr-1"></i><span>+5.2%</span>
                 </div>
             </div>
+            <div class="bg-orange-500 rounded-lg p-4 text-center text-white relative">
+    <div class="text-2xl font-bold" id="kpi-credit-balance">$0.00</div>
+    <div class="text-sm opacity-90">Credit Balance</div>
+    <div class="text-xs opacity-75 mt-1" id="kpi-credit-info">
+        <i class="fas fa-clock mr-1"></i><span id="kpi-free-minutes">100/100 free</span>
+    </div>
+    <!-- Add Reload Button -->
+    <button onclick="showReloadCreditsModal()" class="absolute top-2 right-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-2 py-1 rounded text-xs transition duration-200">
+        <i class="fas fa-plus"></i> Add
+    </button>
+</div>
+    <div class="text-xs opacity-75 mt-1" id="kpi-credit-info">
+        <i class="fas fa-clock mr-1"></i><span id="kpi-free-minutes">100/100 free</span>
+    </div>
+</div>
             <div class="bg-green-500 rounded-lg p-4 text-center text-white">
                 <div class="text-2xl font-bold" id="kpi-appointments">0</div>
                 <div class="text-sm opacity-90">Appointments</div>
@@ -828,32 +844,43 @@
         </div>
 
         <!-- Voice Command Modal -->
-        <div id="voiceCommandModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div class="card rounded-lg p-6 w-full max-w-lg mx-4">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">Voice Command</h3>
-                    <button onclick="closeModal('voiceCommandModal')" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="text-center space-y-4">
-                    <div id="voiceIndicator" class="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl mx-auto">
-                        <i class="fas fa-microphone"></i>
-                    </div>
-                    <div id="voiceStatus" class="text-gray-600">Click "Start Listening" to begin</div>
-                    <div class="space-x-3">
-                        <button id="startVoiceBtn" onclick="startVoiceListening()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">
-                            <i class="fas fa-microphone mr-2"></i>Start Listening
-                        </button>
-                        <button id="stopVoiceBtn" onclick="stopVoiceListening()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg" disabled>
-                            <i class="fas fa-stop mr-2"></i>Stop
-                        </button>
-                    </div>
-                    <div id="voiceTranscript" class="bg-gray-100 p-4 rounded-lg min-h-16 text-left"></div>
-                    <div id="voiceCommandStatus" class="p-3 rounded hidden"></div>
-                </div>
-            </div>
+<!-- Reload Credits Modal -->
+<div id="reloadCreditsModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="card rounded-lg p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Add Credits</h3>
+            <button onclick="closeModal('reloadCreditsModal')" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
+        <form id="reloadCreditsForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Amount to Add</label>
+                <select id="reloadAmount" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                    <option value="5.00">$5.00 - ~50 minutes</option>
+                    <option value="10.00">$10.00 - ~100 minutes</option>
+                    <option value="25.00">$25.00 - ~250 minutes</option>
+                    <option value="50.00">$50.00 - ~500 minutes</option>
+                </select>
+            </div>
+            <div class="bg-blue-50 p-3 rounded-lg">
+                <p class="text-sm text-blue-800">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Rate: $0.10/minute after your 100 free monthly minutes
+                </p>
+            </div>
+            <div class="flex space-x-3">
+                <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg">
+                    <i class="fas fa-credit-card mr-2"></i>Add Credits
+                </button>
+                <button type="button" onclick="closeModal('reloadCreditsModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg">
+                    Cancel
+                </button>
+            </div>
+        </form>
+        <div id="reloadCreditsStatus" class="mt-4 p-3 rounded hidden"></div>
+    </div>
+</div>
 
         <!-- Main Display Cards - Mobile Responsive -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
@@ -1833,6 +1860,41 @@
             saveSectionStates();
         }
 
+        // Update credit balance display
+async function updateCreditBalance() {
+    try {
+        const response = await fetch('/api/credits/1/balance');
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            // Update credit balance
+            const balanceEl = document.getElementById('kpi-credit-balance');
+            if (balanceEl) {
+                balanceEl.textContent = `$${parseFloat(data.balance).toFixed(2)}`;
+            }
+            
+            // Update free minutes info
+            const freeMinutesEl = document.getElementById('kpi-free-minutes');
+            if (freeMinutesEl) {
+                freeMinutesEl.textContent = `${data.freeMinutesUsed}/${data.freeMinutesRemaining + data.freeMinutesUsed} free`;
+            }
+            
+            // Show low balance warning if needed
+            const creditCard = balanceEl?.closest('.bg-orange-500');
+            if (creditCard && data.isLowBalance) {
+                creditCard.classList.remove('bg-orange-500');
+                creditCard.classList.add('bg-red-500');
+            }
+            
+            console.log('Credit balance updated:', data);
+        }
+    } catch (error) {
+        console.error('Error loading credit balance:', error);
+    }
+}
+
         // Load contacts from database
         async function loadContacts() {
             try {
@@ -2289,6 +2351,7 @@ async function deleteAppointment(appointmentId) {
         function loadTodaysData() {
             loadTodaysMessages();
             loadTodaysCalls();
+            updateCreditBalance();  // Add this line
         }
 
         // Update dropdowns in any open modals
@@ -2983,6 +3046,61 @@ async function deleteAppointment(appointmentId) {
         }
         
         function showQuickEmail() {
+            // Reload Credits functionality
+function showReloadCreditsModal() {
+    openModal('reloadCreditsModal');
+}
+
+function setupReloadCreditsForm() {
+    const form = document.getElementById('reloadCreditsForm');
+    if (!form) return;
+    
+    // Remove existing listeners to prevent duplicates
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    
+    newForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const amount = document.getElementById('reloadAmount').value;
+        const status = document.getElementById('reloadCreditsStatus');
+        const submitButton = newForm.querySelector('button[type="submit"]');
+        
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+        }
+        
+        try {
+            // Simulate credit reload (since Stripe is not configured)
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            status.className = 'mt-4 p-3 rounded bg-green-100 text-green-800';
+            status.innerHTML = `<i class="fas fa-check-circle mr-2"></i>$${amount} credits added successfully! (Demo mode)`;
+            status.classList.remove('hidden');
+            
+            // Refresh credit balance display
+            await updateCreditBalance();
+            
+            showToast(`$${amount} credits added`, 'success', '<i class="fas fa-credit-card"></i>');
+            
+            setTimeout(() => {
+                closeModal('reloadCreditsModal');
+            }, 2000);
+            
+        } catch (error) {
+            status.className = 'mt-4 p-3 rounded bg-red-100 text-red-800';
+            status.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}`;
+            status.classList.remove('hidden');
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Add Credits';
+            }
+        }
+    });
+}
             openModal('quickEmailModal');
             populateContactDropdown('quickEmailContactSelect', false, true); // Show email addresses
             document.getElementById('quickEmailRecipient').focus();
@@ -4049,6 +4167,9 @@ async function deleteAppointment(appointmentId) {
                 setupQuickCreateAppointmentForm();
                 setupQuickSMSForm();
                 setupQuickEmailForm();
+                setupReloadCreditsForm();  // Add this line
+                // Quick action forms
+
                 
                 // Contact selection handlers
                 handleSMSContactSelection();
