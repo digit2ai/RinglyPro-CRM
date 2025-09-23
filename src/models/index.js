@@ -6,6 +6,7 @@ let Message;
 let Call;
 let Contact;
 let Appointment;
+let User;
 
 try {
   Message = require('./Message');
@@ -36,6 +37,14 @@ try {
   console.log('Note: Appointment model needed for Rachel voice booking integration');
 }
 
+try {
+  User = require('./User')(sequelize);
+  console.log('User model imported successfully');
+} catch (error) {
+  console.log('User model not found:', error.message);
+  console.log('Note: User model needed for authentication system');
+}
+
 // Initialize models object
 const models = {
   sequelize
@@ -46,6 +55,7 @@ if (Message) models.Message = Message;
 if (Call) models.Call = Call;
 if (Contact) models.Contact = Contact;
 if (Appointment) models.Appointment = Appointment;
+if (User) models.User = User;
 
 // Set up associations if models exist
 if (Contact && Message) {
@@ -116,6 +126,48 @@ const syncDatabase = async (options = {}) => {
     // Test connection first
     await sequelize.authenticate();
     console.log('Database connection verified');
+
+    // Sync User table for authentication - CRITICAL FOR MVP
+    if (User) {
+      try {
+        await User.sync({ ...options, alter: false });
+        console.log('User table synchronized - Authentication system ready');
+      } catch (error) {
+        console.log('User table sync issues:', error.message);
+        // Try creating manually for User authentication
+        try {
+          await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "users" (
+              id SERIAL PRIMARY KEY,
+              email VARCHAR(255) UNIQUE NOT NULL,
+              password_hash VARCHAR(255) NOT NULL,
+              first_name VARCHAR(100),
+              last_name VARCHAR(100),
+              business_name VARCHAR(255),
+              business_phone VARCHAR(20),
+              email_verified BOOLEAN DEFAULT false,
+              email_verification_token VARCHAR(255),
+              password_reset_token VARCHAR(255),
+              password_reset_expires TIMESTAMP,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+          `);
+          
+          // Create indexes for performance
+          await sequelize.query(`
+            CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
+            CREATE INDEX IF NOT EXISTS idx_users_verification ON users (email_verification_token);
+            CREATE INDEX IF NOT EXISTS idx_users_reset ON users (password_reset_token);
+          `);
+          
+          console.log('User table created with manual SQL - Authentication system ready');
+        } catch (sqlError) {
+          console.log('Manual User table creation failed:', sqlError.message);
+          console.log('WARNING: User authentication may not work without User table');
+        }
+      }
+    }
 
     // Sync Contact table for CRM functionality - ENHANCED WITH MANUAL SQL FALLBACK
     if (Contact) {
@@ -285,6 +337,7 @@ const syncDatabase = async (options = {}) => {
 
     console.log('Database synchronization completed');
     
+    if (User) console.log('User authentication system active');
     if (Message) console.log('SMS messaging system active');
     if (Call) console.log('Call logging system active');
     if (Contact) console.log('Contact management system active');
@@ -348,5 +401,6 @@ module.exports.Message = Message;
 module.exports.Call = Call;
 module.exports.Contact = Contact;
 module.exports.Appointment = Appointment;
+module.exports.User = User;
 
 console.log('Models index loaded - RinglyPro CRM + Rachel Voice AI integration ready');

@@ -29,6 +29,30 @@ class CreditSystem {
         return result.rows[0];
     }
 
+    // Get client information including user_id
+    async getClientInfo(clientId) {
+        const query = `
+            SELECT id, business_name, business_phone, owner_name, owner_phone, 
+                   monthly_free_minutes, per_minute_rate, active, user_id
+            FROM clients 
+            WHERE id = $1
+        `;
+        const result = await this.pool.query(query, [clientId]);
+        return result.rows[0];
+    }
+
+    // Get client by user ID (for user-based lookups)
+    async getClientByUserId(userId) {
+        const query = `
+            SELECT id, business_name, business_phone, owner_name, owner_phone, 
+                   monthly_free_minutes, per_minute_rate, active, user_id
+            FROM clients 
+            WHERE user_id = $1
+        `;
+        const result = await this.pool.query(query, [userId]);
+        return result.rows[0];
+    }
+
     // Get monthly spend for current month
     async getMonthlySpend(clientId) {
         const query = `

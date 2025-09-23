@@ -44,4 +44,39 @@ router.post('/voice', async (req, res) => {
     }
 });
 
+// POST /webhook/twilio/sms - Handle SMS usage
+router.post('/sms', async (req, res) => {
+    try {
+        const { 
+            MessageSid,
+            SmsStatus,
+            To,
+            From 
+        } = req.body;
+        
+        if (SmsStatus === 'delivered' || SmsStatus === 'sent') {
+            // For MVP: Use client ID 1, later lookup by phone number
+            const clientId = 1;
+            
+            // Track SMS usage (each SMS costs $0.05 after free tier)
+            await creditSystem.trackUsage(clientId, {
+                messageSid: MessageSid,
+                durationSeconds: 0, // SMS doesn't use duration
+                usageType: 'sms'
+            });
+            
+            console.log(`Tracked SMS ${MessageSid} for client ${clientId}`);
+        }
+        
+        // Return TwiML response
+        res.type('text/xml');
+        res.send('<Response></Response>');
+        
+    } catch (error) {
+        console.error('Twilio SMS webhook error:', error);
+        res.type('text/xml');
+        res.send('<Response></Response>');
+    }
+});
+
 module.exports = router;

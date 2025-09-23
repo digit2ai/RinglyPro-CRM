@@ -14,7 +14,7 @@ async function startServer() {
     try {
       if (process.env.DATABASE_URL) {
         await sequelize.authenticate();
-        console.log('✅ Database connection established successfully');
+        console.log('✅ Database connection established successfully.');
         
         // ENABLE DATABASE SYNC - MODELS ARE READY!
         console.log('🔄 Synchronizing database models...');
@@ -35,6 +35,8 @@ async function startServer() {
       console.log(`🌐 Dashboard: http://localhost:${PORT}/`);
       console.log(`📞 Voice Webhook: ${process.env.WEBHOOK_BASE_URL || `http://localhost:${PORT}`}/webhook/twilio/voice`);
       console.log(`💬 SMS Webhook: ${process.env.WEBHOOK_BASE_URL || `http://localhost:${PORT}`}/webhook/twilio/sms`);
+      console.log(`🔐 Auth API: http://localhost:${PORT}/api/auth/register`);
+      console.log(`💳 Credits API: http://localhost:${PORT}/api/credits/test/client/1`);
       
       if (process.env.NODE_ENV === 'production') {
         console.log(`🔗 Production URL: ${process.env.WEBHOOK_BASE_URL}`);
@@ -43,6 +45,8 @@ async function startServer() {
       // CHECK IF DATABASE MODE IS ACTIVE
       if (process.env.DATABASE_URL) {
         console.log('✅ Twilio Voice Bot CRM is ready! (Database mode)');
+        console.log('✅ User authentication system active');
+        console.log('✅ Credit system active');
       } else {
         console.log('✅ Twilio Voice Bot CRM is ready! (Memory mode)');
       }

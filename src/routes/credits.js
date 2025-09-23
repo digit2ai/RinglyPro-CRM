@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const CreditSystem = require('../services/creditSystem');
+const { authenticateToken } = require('../middleware/auth');
 
 // Conditional Stripe initialization
 let stripe = null;
@@ -18,14 +19,27 @@ if (process.env.STRIPE_SECRET_KEY) {
 // Initialize credit system service
 const creditSystem = new CreditSystem();
 
+// Helper function to get user's client ID
+async function getUserClient(userId) {
+    try {
+        const client = await creditSystem.getClientByUserId(userId);
+        if (!client) {
+            throw new Error('No client associated with user');
+        }
+        return client.id;
+    } catch (error) {
+        throw new Error(`Failed to get user client: ${error.message}`);
+    }
+}
+
 // =====================================================
-// API ENDPOINTS
+// USER-AUTHENTICATED API ENDPOINTS
 // =====================================================
 
-// GET /api/credits/:clientId/balance - Get current balance and usage
-router.get('/:clientId/balance', async (req, res) => {
+// GET /api/credits/balance - Get current balance and usage for authenticated user
+router.get('/balance', authenticateToken, async (req, res) => {
     try {
-        const { clientId } = req.params;
+        const clientId = await getUserClient(req.user.userId);
         const creditData = await creditSystem.getClientCreditSummary(clientId);
         
         if (!creditData) {
@@ -53,14 +67,14 @@ router.get('/:clientId/balance', async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching credit balance:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: error.message || 'Internal server error' });
     }
 });
 
-// GET /api/credits/:clientId/usage - Get usage history with pagination
-router.get('/:clientId/usage', async (req, res) => {
+// GET /api/credits/usage - Get usage history with pagination for authenticated user
+router.get('/usage', authenticateToken, async (req, res) => {
     try {
-        const { clientId } = req.params;
+        const clientId = await getUserClient(req.user.userId);
         const { page = 1, limit = 50, type, startDate, endDate } = req.query;
         
         const usageData = await creditSystem.getUsageHistory(clientId, {
@@ -83,14 +97,14 @@ router.get('/:clientId/usage', async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching usage history:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: error.message || 'Internal server error' });
     }
 });
 
-// POST /api/credits/:clientId/reload - Initiate credit reload
-router.post('/:clientId/reload', async (req, res) => {
+// POST /api/credits/reload - Initiate credit reload for authenticated user
+router.post('/reload', authenticateToken, async (req, res) => {
     try {
-        const { clientId } = req.params;
+        const clientId = await getUserClient(req.user.userId);
         const { amount, paymentMethodId, savePaymentMethod = false } = req.body;
         
         // Check if Stripe is configured
@@ -129,10 +143,10 @@ router.post('/:clientId/reload', async (req, res) => {
     }
 });
 
-// GET /api/credits/:clientId/transactions - Payment history
-router.get('/:clientId/transactions', async (req, res) => {
+// GET /api/credits/transactions - Payment history for authenticated user
+router.get('/transactions', authenticateToken, async (req, res) => {
     try {
-        const { clientId } = req.params;
+        const clientId = await getUserClient(req.user.userId);
         const { page = 1, limit = 20, status } = req.query;
         
         const transactions = await creditSystem.getPaymentHistory(clientId, {
@@ -153,14 +167,14 @@ router.get('/:clientId/transactions', async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching payment history:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: error.message || 'Internal server error' });
     }
 });
 
-// POST /api/credits/:clientId/auto-reload - Configure auto-reload
-router.post('/:clientId/auto-reload', async (req, res) => {
+// POST /api/credits/auto-reload - Configure auto-reload for authenticated user
+router.post('/auto-reload', authenticateToken, async (req, res) => {
     try {
-        const { clientId } = req.params;
+        const clientId = await getUserClient(req.user.userId);
         const { enabled, amount, threshold, paymentMethodId } = req.body;
         
         // Check if Stripe is configured for auto-reload
@@ -189,10 +203,10 @@ router.post('/:clientId/auto-reload', async (req, res) => {
     }
 });
 
-// GET /api/credits/:clientId/notifications - Get active notifications
-router.get('/:clientId/notifications', async (req, res) => {
+// GET /api/credits/notifications - Get active notifications for authenticated user
+router.get('/notifications', authenticateToken, async (req, res) => {
     try {
-        const { clientId } = req.params;
+        const clientId = await getUserClient(req.user.userId);
         const { active = true } = req.query;
         
         const notifications = await creditSystem.getNotifications(clientId, { active });
@@ -203,9 +217,31 @@ router.get('/:clientId/notifications', async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching notifications:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: error.message || 'Internal server error' });
     }
 });
+
+// GET /api/credits/analytics - Usage analytics and reporting for authenticated user
+router.get('/analytics', authenticateToken, async (req, res) => {
+    try {
+        const clientId = await getUserClient(req.user.userId);
+        const { period = '30d' } = req.query;
+        
+        const analytics = await creditSystem.getUsageAnalytics(clientId, period);
+        
+        res.json({
+            success: true,
+            data: analytics
+        });
+    } catch (error) {
+        console.error('Error fetching analytics:', error);
+        res.status(500).json({ error: error.message || 'Internal server error' });
+    }
+});
+
+// =====================================================
+// PUBLIC/INTERNAL ENDPOINTS (No authentication)
+// =====================================================
 
 // POST /api/credits/webhooks/stripe - Stripe payment webhooks
 router.post('/webhooks/stripe', express.raw({type: 'application/json'}), async (req, res) => {
@@ -271,24 +307,6 @@ router.post('/track-usage', async (req, res) => {
     }
 });
 
-// GET /api/credits/:clientId/analytics - Usage analytics and reporting
-router.get('/:clientId/analytics', async (req, res) => {
-    try {
-        const { clientId } = req.params;
-        const { period = '30d' } = req.query;
-        
-        const analytics = await creditSystem.getUsageAnalytics(clientId, period);
-        
-        res.json({
-            success: true,
-            data: analytics
-        });
-    } catch (error) {
-        console.error('Error fetching analytics:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
 // =====================================================
 // TESTING ENDPOINTS (Development Only)
 // =====================================================
@@ -298,20 +316,27 @@ router.get('/test/client/:clientId', async (req, res) => {
     try {
         const { clientId } = req.params;
         
-        // Get basic client info
+        // Get client info including user_id
+        const clientInfo = await creditSystem.getClientInfo(clientId);
         const creditData = await creditSystem.getClientCreditSummary(clientId);
         
-        if (!creditData) {
+        if (!clientInfo || !creditData) {
             return res.status(404).json({ 
                 error: 'Client not found',
                 clientId: clientId
             });
         }
         
+        // Combine client info with credit data
+        const responseData = {
+            ...creditData,
+            user_id: clientInfo.user_id
+        };
+        
         res.json({
             success: true,
             message: 'Credit system is working!',
-            data: creditData,
+            data: responseData,
             stripeConfigured: !!stripe,
             timestamp: new Date().toISOString()
         });
@@ -374,6 +399,31 @@ router.post('/test/add-credits', async (req, res) => {
         console.error('Error adding test credits:', error);
         res.status(500).json({ 
             error: error.message 
+        });
+    }
+});
+
+// =====================================================
+// TEMPORARY ADMIN ROUTES (Remove after fixing pricing)
+// =====================================================
+
+// POST /api/credits/admin/fix-pricing - Temporary admin route to fix pricing
+router.post('/admin/fix-pricing', async (req, res) => {
+    try {
+        const result = await creditSystem.pool.query("UPDATE clients SET per_minute_rate = 0.200 WHERE per_minute_rate = 0.100;");
+        const check = await creditSystem.pool.query("SELECT id, business_name, per_minute_rate FROM clients;");
+        
+        res.json({
+            success: true,
+            message: `Updated ${result.rowCount} row(s) - Pricing fixed from $0.10 to $0.20/minute`,
+            current_rates: check.rows,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error fixing pricing:', error);
+        res.status(500).json({ 
+            error: error.message,
+            message: 'Failed to update pricing in database'
         });
     }
 });
