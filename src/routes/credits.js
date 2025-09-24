@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const CreditSystem = require('../services/creditSystem');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateAndGetClient } = require('../middleware/auth');
 
 // Conditional Stripe initialization
 let stripe = null;
@@ -19,28 +19,14 @@ if (process.env.STRIPE_SECRET_KEY) {
 // Initialize credit system service
 const creditSystem = new CreditSystem();
 
-// Helper function to get user's client ID
-async function getUserClient(userId) {
-    try {
-        const client = await creditSystem.getClientByUserId(userId);
-        if (!client) {
-            throw new Error('No client associated with user');
-        }
-        return client.id;
-    } catch (error) {
-        throw new Error(`Failed to get user client: ${error.message}`);
-    }
-}
-
 // =====================================================
 // USER-AUTHENTICATED API ENDPOINTS
 // =====================================================
 
 // GET /api/credits/balance - Get current balance and usage for authenticated user
-router.get('/balance', authenticateToken, async (req, res) => {
+router.get('/balance', authenticateAndGetClient, async (req, res) => {
     try {
-        const clientId = await getUserClient(req.user.userId);
-        const creditData = await creditSystem.getClientCreditSummary(clientId);
+        const creditData = await creditSystem.getClientCreditSummary(req.clientId);
         
         if (!creditData) {
             return res.status(404).json({ error: 'Client not found' });
@@ -62,7 +48,7 @@ router.get('/balance', authenticateToken, async (req, res) => {
                 needsMonthlyReset: creditData.needs_monthly_reset,
                 lastUsageDate: creditData.last_usage_date,
                 freeMinutesResetDate: creditData.free_minutes_reset_date,
-                monthlySpend: await creditSystem.getMonthlySpend(clientId)
+                monthlySpend: await creditSystem.getMonthlySpend(req.clientId)
             }
         });
     } catch (error) {
@@ -72,12 +58,11 @@ router.get('/balance', authenticateToken, async (req, res) => {
 });
 
 // GET /api/credits/usage - Get usage history with pagination for authenticated user
-router.get('/usage', authenticateToken, async (req, res) => {
+router.get('/usage', authenticateAndGetClient, async (req, res) => {
     try {
-        const clientId = await getUserClient(req.user.userId);
         const { page = 1, limit = 50, type, startDate, endDate } = req.query;
         
-        const usageData = await creditSystem.getUsageHistory(clientId, {
+        const usageData = await creditSystem.getUsageHistory(req.clientId, {
             page: parseInt(page),
             limit: parseInt(limit),
             type,
@@ -102,9 +87,8 @@ router.get('/usage', authenticateToken, async (req, res) => {
 });
 
 // POST /api/credits/reload - Initiate credit reload for authenticated user
-router.post('/reload', authenticateToken, async (req, res) => {
+router.post('/reload', authenticateAndGetClient, async (req, res) => {
     try {
-        const clientId = await getUserClient(req.user.userId);
         const { amount, paymentMethodId, savePaymentMethod = false } = req.body;
         
         // Check if Stripe is configured
@@ -121,7 +105,7 @@ router.post('/reload', authenticateToken, async (req, res) => {
             });
         }
         
-        const result = await creditSystem.initiateReload(clientId, amount, paymentMethodId, {
+        const result = await creditSystem.initiateReload(req.clientId, amount, paymentMethodId, {
             savePaymentMethod
         });
         
@@ -144,12 +128,11 @@ router.post('/reload', authenticateToken, async (req, res) => {
 });
 
 // GET /api/credits/transactions - Payment history for authenticated user
-router.get('/transactions', authenticateToken, async (req, res) => {
+router.get('/transactions', authenticateAndGetClient, async (req, res) => {
     try {
-        const clientId = await getUserClient(req.user.userId);
         const { page = 1, limit = 20, status } = req.query;
         
-        const transactions = await creditSystem.getPaymentHistory(clientId, {
+        const transactions = await creditSystem.getPaymentHistory(req.clientId, {
             page: parseInt(page),
             limit: parseInt(limit),
             status
@@ -172,9 +155,8 @@ router.get('/transactions', authenticateToken, async (req, res) => {
 });
 
 // POST /api/credits/auto-reload - Configure auto-reload for authenticated user
-router.post('/auto-reload', authenticateToken, async (req, res) => {
+router.post('/auto-reload', authenticateAndGetClient, async (req, res) => {
     try {
-        const clientId = await getUserClient(req.user.userId);
         const { enabled, amount, threshold, paymentMethodId } = req.body;
         
         // Check if Stripe is configured for auto-reload
@@ -184,7 +166,7 @@ router.post('/auto-reload', authenticateToken, async (req, res) => {
             });
         }
         
-        const result = await creditSystem.configureAutoReload(clientId, {
+        const result = await creditSystem.configureAutoReload(req.clientId, {
             enabled,
             amount,
             threshold,
@@ -204,12 +186,11 @@ router.post('/auto-reload', authenticateToken, async (req, res) => {
 });
 
 // GET /api/credits/notifications - Get active notifications for authenticated user
-router.get('/notifications', authenticateToken, async (req, res) => {
+router.get('/notifications', authenticateAndGetClient, async (req, res) => {
     try {
-        const clientId = await getUserClient(req.user.userId);
         const { active = true } = req.query;
         
-        const notifications = await creditSystem.getNotifications(clientId, { active });
+        const notifications = await creditSystem.getNotifications(req.clientId, { active });
         
         res.json({
             success: true,
@@ -222,12 +203,11 @@ router.get('/notifications', authenticateToken, async (req, res) => {
 });
 
 // GET /api/credits/analytics - Usage analytics and reporting for authenticated user
-router.get('/analytics', authenticateToken, async (req, res) => {
+router.get('/analytics', authenticateAndGetClient, async (req, res) => {
     try {
-        const clientId = await getUserClient(req.user.userId);
         const { period = '30d' } = req.query;
         
-        const analytics = await creditSystem.getUsageAnalytics(clientId, period);
+        const analytics = await creditSystem.getUsageAnalytics(req.clientId, period);
         
         res.json({
             success: true,
