@@ -302,6 +302,14 @@
                     <i id="theme-icon" class="fas fa-moon mr-1"></i> <span id="theme-text">Dark</span>
                 </button>
             </div>
+
+            <button onclick="toggleDarkMode()" class="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-full text-sm transition duration-200">
+                    <i id="theme-icon" class="fas fa-moon mr-1"></i> <span id="theme-text">Dark</span>
+                </button>
+                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full text-sm transition duration-200">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                </button>
+            </div>
             
             <!-- Mobile Hamburger Button - Only Visible on Mobile -->
             <div class="md:hidden">
@@ -471,6 +479,20 @@
                     <button onclick="toggleDarkMode(); updateMobileThemeText();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
                         <i id="mobile-theme-icon" class="fas fa-moon text-yellow-400 mr-3 w-5"></i>
                         <span id="mobile-theme-text">Dark Mode</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button onclick="toggleDarkMode(); updateMobileThemeText();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i id="mobile-theme-icon" class="fas fa-moon text-yellow-400 mr-3 w-5"></i>
+                        <span id="mobile-theme-text">Dark Mode</span>
+                    </button>
+                    <button onclick="logout(); closeMobileMenu();" class="w-full flex items-center px-3 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-sign-out-alt text-red-400 mr-3 w-5"></i>
+                        <span>Logout</span>
                     </button>
                 </div>
             </div>
@@ -2000,9 +2022,10 @@
         }
 
         // Update credit balance display
+// Update credit balance display
 async function updateCreditBalance() {
     try {
-        const response = await fetch('/api/credits/1/balance');
+        const response = await authenticatedFetch('/api/credits/balance');
         const result = await response.json();
         
         if (result.success) {
@@ -2034,6 +2057,7 @@ async function updateCreditBalance() {
     }
 }
 
+        // Load contacts from database
         // Load contacts from database
         // Load contacts from database
         async function loadContacts() {
@@ -2099,6 +2123,7 @@ async function updateCreditBalance() {
         }
 
         // FIXED: Load appointments from PostgreSQL API - NO MORE HARDCODED DATA
+        // Load appointments from PostgreSQL API with JWT
         // Load appointments from PostgreSQL API with JWT
         async function loadAppointments() {
             try {
@@ -2267,6 +2292,43 @@ async function sendAppointmentConfirmation(appointmentId) {
   }
 }
 
+// Send appointment confirmation SMS with JWT
+        async function sendAppointmentConfirmation(appointmentId) {
+            try {
+                const appointment = appointments.find(apt => apt.id === appointmentId);
+                if (!appointment) {
+                    showToast('Appointment not found', 'error', '<i class="fas fa-exclamation-circle"></i>');
+                    return;
+                }
+
+                showToast('Sending confirmation SMS...', 'info', '<i class="fas fa-paper-plane"></i>');
+
+                const response = await authenticatedFetch('/api/messages/appointment-confirmation', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        appointmentId: appointment.id,
+                        customerPhone: appointment.phone,
+                        customerName: appointment.contact,
+                        appointmentDate: getTodayDate(),
+                        appointmentTime: appointment.time,
+                        duration: appointment.duration,
+                        confirmationCode: appointment.confirmationCode
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast(`Confirmation SMS sent to ${appointment.contact}`, 'success', '<i class="fas fa-check-circle"></i>');
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('Error sending confirmation:', error);
+                showToast('Failed to send confirmation: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
+            }
+        }
+
 // Replace your existing deleteAppointment function in dashboard.ejs with this:
 
 // Replace your existing deleteAppointment function in dashboard.ejs with this:
@@ -2286,11 +2348,8 @@ async function deleteAppointment(appointmentId) {
             console.log(`🔄 Cancelling appointment ${appointmentId}`);
             
             // Call the API to cancel the appointment
-            const response = await fetch(`/api/appointments/${appointmentId}`, {
+            const response = await authenticatedFetch(`/api/appointments/${appointmentId}`, {
                 method: 'DELETE',
-                headers: { 
-                    'Content-Type': 'application/json'
-                },
                 body: JSON.stringify({
                     reason: 'Cancelled from dashboard'
                 })
@@ -2341,6 +2400,7 @@ async function deleteAppointment(appointmentId) {
 
         // Load today's messages from database
        // Load today's messages from database
+    // Load today's messages from database
         async function loadTodaysMessages() {
             try {
                 console.log('Loading today\'s SMS messages from database...');
@@ -2367,6 +2427,24 @@ async function deleteAppointment(appointmentId) {
                     twilioSid: msg.twilioSid,
                     originalData: msg
                 }));
+                
+                // Update displays
+                updateMessagesCount();
+                updateAllMessagesDisplay();
+                
+                return messages;
+                
+            } catch (error) {
+                console.error('Error loading messages:', error);
+                
+                // Show error but don't completely fail
+                todaysMessages = [];
+                updateMessagesCount();
+                updateAllMessagesDisplay();
+                
+                return [];
+            }
+        }
                 
                 // Update displays
                 updateMessagesCount();
@@ -2719,9 +2797,8 @@ async function deleteAppointment(appointmentId) {
                 button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding to Database...';
                 
                 try {
-                    const response = await fetch('/api/contacts', {
+                    const response = await authenticatedFetch('/api/contacts', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(formData)
                     });
                     
@@ -2766,7 +2843,7 @@ async function deleteAppointment(appointmentId) {
             if (!query) return;
 
             try {
-                const response = await fetch(`/api/contacts/search/${encodeURIComponent(query)}`);
+                const response = await authenticatedFetch(`/api/contacts/search/${encodeURIComponent(query)}`);
                 const result = await response.json();
                 
                 if (result.success) {
@@ -2849,7 +2926,7 @@ async function deleteAppointment(appointmentId) {
                 
                 // Refresh contacts
                 console.log('Refreshing contacts...');
-                await fetch(`/api/contacts?_t=${timestamp}`)
+                await authenticatedFetch(`/api/contacts?_t=${timestamp}`)
                     .then(response => response.json())
                     .then(result => {
                         if (result.success) {
@@ -2864,7 +2941,7 @@ async function deleteAppointment(appointmentId) {
                 
                 // Refresh appointments
                 console.log('Refreshing appointments...');
-                await fetch(`/api/appointments/today?_t=${timestamp}`)
+                await authenticatedFetch(`/api/appointments/today?_t=${timestamp}`)
                     .then(response => response.json())
                     .then(result => {
                         if (result.success && result.appointments) {
@@ -3449,9 +3526,8 @@ function setupReloadCreditsForm() {
                     try {
                         console.log('Creating contact:', formData);
                         
-                        const response = await fetch('/api/contacts', {
+                        const response = await authenticatedFetch('/api/contacts', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(formData)
                         });
                         
@@ -3497,7 +3573,7 @@ function setupReloadCreditsForm() {
             const resultsContainer = document.getElementById('quickSearchResults');
             
             try {
-                const response = await fetch(`/api/contacts/search/${encodeURIComponent(query)}`);
+                const response = await authenticatedFetch(`/api/contacts/search/${encodeURIComponent(query)}`);
                 const result = await response.json();
                 
                 if (result.success && result.data.contacts.length > 0) {
@@ -4030,11 +4106,12 @@ function setupReloadCreditsForm() {
                     console.log(`Sending single SMS to ${recipient}: ${message}`);
                     
                     // Use the existing SMS endpoint
-                    const response = await fetch('/api/messages/sms', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ to: recipient, message: message })
-                    });
+                    // Update by ID if we have it
+                            console.log(`Updating contact ID ${contactId} email to:`, newEmail);
+                            updateResponse = await authenticatedFetch(`/api/contacts/${contactId}`, {
+                                method: 'PUT',
+                                body: JSON.stringify({ email: newEmail })
+                            });
                     
                     if (response.ok) {
                         const result = await response.json();
@@ -4134,11 +4211,8 @@ function setupReloadCreditsForm() {
                 try {
                     console.log(`Sending main SMS to ${phone}: ${message}`);
                     
-                    const response = await fetch('/api/messages/sms', {
+                    const response = await authenticatedFetch('/api/messages/sms', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
                         body: JSON.stringify({ to: phone, message: message })
                     });
                     
@@ -4398,8 +4472,32 @@ function setupReloadCreditsForm() {
         }
 
         // SINGLE DOMContentLoaded - Replace all existing ones with this
+        // SINGLE DOMContentLoaded - Main initialization with JWT
         document.addEventListener('DOMContentLoaded', function() {
             console.log('RinglyPro CRM Dashboard loaded');
+            
+            // Check authentication first - this is the key change
+            if (authToken) {
+                console.log('User already authenticated, hiding login overlay');
+                hideLoginOverlay();
+                // Initialize authenticated dashboard after a brief delay
+                setTimeout(() => {
+                    loadContacts();
+                    loadAppointments();
+                    loadTodaysData();
+                    showToast('Welcome back to RinglyPro CRM!', 'success', '<i class="fas fa-rocket"></i>');
+                }, 500);
+            } else {
+                console.log('No auth token found, showing login overlay');
+                showLoginOverlay();
+            }
+            
+            // Setup login form handler
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleLogin);
+                console.log('Login form handler attached');
+            }
             
             // Initialize theme first
             initDarkMode();
@@ -4409,7 +4507,7 @@ function setupReloadCreditsForm() {
                 loadSectionStates();
                 setupContactForm();
                 setupAppointmentForm();
-                setupSearchInput(); // Now this function exists
+                setupSearchInput();
                 setupSMSForm();
                 setupEditAppointmentForm();
                 
@@ -4486,6 +4584,40 @@ function setupReloadCreditsForm() {
             
             console.log('RinglyPro CRM Dashboard initialized successfully');
         });
+
+     console.log('RinglyPro CRM Dashboard initialized successfully');
+        });
+
+        // Add error boundary for unhandled JWT errors
+        window.addEventListener('unhandledrejection', function(event) {
+            if (event.reason && event.reason.message && event.reason.message.includes('Session expired')) {
+                console.log('Unhandled session expiry caught, redirecting to login');
+                localStorage.removeItem('jwt_token');
+                authToken = null;
+                showLoginOverlay();
+                event.preventDefault(); // Prevent the error from showing in console
+            }
+        });
+
+        // Debug function for testing JWT state
+        function debugAuthState() {
+            console.log('=== JWT Auth Debug Info ===');
+            console.log('authToken exists:', !!authToken);
+            console.log('localStorage token exists:', !!localStorage.getItem('jwt_token'));
+            console.log('Login overlay hidden:', document.getElementById('loginOverlay').classList.contains('hidden'));
+            console.log('Current user authenticated:', !!authToken);
+            console.log('============================');
+        }
+        
+        // Make debug function available globally for testing
+        window.debugAuthState = debugAuthState;
+
+        // Ensure login overlay starts visible if no token
+        if (!authToken) {
+            setTimeout(() => {
+                showLoginOverlay();
+            }, 100);
+        }   
     </script>
 </body>
 </html>
