@@ -82,6 +82,30 @@ app.get('/', (req, res) => {
   });
 });
 
+// Login page route
+app.get('/login', (req, res) => {
+  res.render('login', { 
+    title: `${CLIENT_NAME} - Sign In`,
+    clientName: CLIENT_NAME,
+    clientId: CLIENT_ID
+  });
+});
+
+// Signup page route  
+app.get('/signup', (req, res) => {
+  res.render('signup', { 
+    title: `${CLIENT_NAME} - Sign Up`,
+    clientName: CLIENT_NAME,
+    clientId: CLIENT_ID
+  });
+});
+
+// Redirect root to dashboard if authenticated, otherwise to login
+app.get('/auth-check', (req, res) => {
+  // This would check JWT token when we add middleware later
+  res.redirect('/login');
+});
+
 // Health check endpoint - UPDATED FOR MULTI-CLIENT
 app.get('/health', (req, res) => {
   res.json({ 
