@@ -1605,7 +1605,7 @@
             }
         }
 
-        // Export Functionality
+        // Export Functionality//
         function exportContacts() {
             if (contacts.length === 0) {
                 showToast('No contacts to export', 'warning', '<i class="fas fa-exclamation-triangle"></i>');
@@ -2025,7 +2025,7 @@
             saveSectionStates();
         }
 
-        // Update credit balance display
+
 // Update credit balance display
 async function updateCreditBalance() {
     try {
@@ -2061,7 +2061,7 @@ async function updateCreditBalance() {
     }
 }
 
-        // Load contacts from database
+// Load contacts from database
         async function loadContacts() {
             try {
                 console.log('Loading contacts from database...');
@@ -2087,17 +2087,14 @@ async function updateCreditBalance() {
                 const contactsList = document.getElementById('all-contacts-list');
                 if (contactsList) {
                     contactsList.innerHTML = '<div class="text-center py-8 text-red-500">' +
-    '<i class="fas fa-exclamation-triangle text-xl mb-2"></i>' +
-    '<p class="text-sm">Error loading contacts: ' + error.message + '</p>' +
-    '<button onclick="loadContacts()" class="mt-2 bg-blue-500 text-white px-3 py-2 rounded text-sm">Try Again</button>' +
-    '</div>';
+                        '<i class="fas fa-exclamation-triangle text-xl mb-2"></i>' +
+                        '<p class="text-sm">Error loading contacts: ' + error.message + '</p>' +
+                        '<button onclick="loadContacts()" class="mt-2 bg-blue-500 text-white px-3 py-2 rounded text-sm">Try Again</button>' +
+                        '</div>';
                 }
             }
         }
-                    
 
-        // FIXED: Load appointments from PostgreSQL API - NO MORE HARDCODED DATA
-        // Load appointments from PostgreSQL API with JWT
         // Load appointments from PostgreSQL API with JWT
         async function loadAppointments() {
             try {
@@ -2117,7 +2114,7 @@ async function updateCreditBalance() {
                     // Transform API data to match dashboard format
                     appointments = result.appointments.map(apt => ({
                         id: apt.id,
-                        time: apt.appointmentTime ? apt.appointmentTime.substring(0, 5) : '00:00', // Format HH:MM
+                        time: apt.appointmentTime ? apt.appointmentTime.substring(0, 5) : '00:00',
                         duration: apt.duration || 30,
                         contact: apt.customerName,
                         phone: apt.customerPhone || '',
@@ -2155,10 +2152,10 @@ async function updateCreditBalance() {
                 const appointmentsList = document.getElementById('all-appointments-list');
                 if (appointmentsList) {
                     appointmentsList.innerHTML = '<div class="text-center py-8 text-red-500">' +
-    '<i class="fas fa-exclamation-triangle text-xl mb-2"></i>' +
-    '<p class="text-sm">Error loading appointments: ' + error.message + '</p>' +
-    '<button onclick="loadAppointments()" class="mt-2 bg-green-500 text-white px-3 py-2 rounded text-sm">Try Again</button>' +
-    '</div>';
+                        '<i class="fas fa-exclamation-triangle text-xl mb-2"></i>' +
+                        '<p class="text-sm">Error loading appointments: ' + error.message + '</p>' +
+                        '<button onclick="loadAppointments()" class="mt-2 bg-green-500 text-white px-3 py-2 rounded text-sm">Try Again</button>' +
+                        '</div>';
                 }
                 
                 // Fallback to empty array
@@ -2166,103 +2163,8 @@ async function updateCreditBalance() {
                 updateAppointmentsCount();
             }
         }
-                    // Transform API data to match dashboard format
-                    appointments = result.appointments.map(apt => ({
-                        id: apt.id,
-                        time: apt.appointmentTime ? apt.appointmentTime.substring(0, 5) : '00:00', // Format HH:MM
-                        duration: apt.duration || 30,
-                        contact: apt.customerName,
-                        phone: apt.customerPhone || '',
-                        purpose: apt.purpose || 'General consultation',
-                        status: apt.status || 'confirmed',
-                        confirmationCode: apt.confirmationCode,
-                        source: apt.source
-                    }));
-                    
-                    console.log(`Loaded ${appointments.length} real appointments from PostgreSQL`);
-                    console.log('Appointment details:', appointments);
-                } else {
-                    console.warn('API returned no appointments or invalid format');
-                    appointments = [];
-                }
-                
-                // Display today's date
-                const today = new Date();
-                const todayDateEl = document.getElementById('today-date-display');
-                if (todayDateEl) {
-                    todayDateEl.textContent = today.toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        month: 'long',
-                        day: 'numeric'
-                    });
-                }
 
-                updateAllAppointmentsDisplay();
-                updateAppointmentsCount();
-                
-            } catch (error) {
-                console.error('Error loading appointments from API:', error);
-                
-                // Show error in appointments display
-                const appointmentsList = document.getElementById('all-appointments-list');
-                if (appointmentsList) {
-                    appointmentsList.innerHTML = `
-                    <div class="text-center py-8 text-red-500">
-                            <i class="fas fa-exclamation-triangle text-xl mb-2"></i>
-                            <p class="text-sm">Error loading appointments: ${error.message}</p>
-                            <button onclick="loadAppointments()" class="mt-2 bg-green-500 text-white px-3 py-2 rounded text-sm">
-                                Try Again
-                            </button>
-                        </div>
-                    `;
-                }
-                
-                // Fallback to empty array.
-                appointments = [];
-                updateAppointmentsCount();
-            }
-        }
-
-// Add to your dashboard.ejs <script> section:
-
-async function sendAppointmentConfirmation(appointmentId) {
-  try {
-    const appointment = appointments.find(apt => apt.id === appointmentId);
-    if (!appointment) {
-      showToast('Appointment not found', 'error', '<i class="fas fa-exclamation-circle"></i>');
-      return;
-    }
-
-    showToast('Sending confirmation SMS...', 'info', '<i class="fas fa-paper-plane"></i>');
-
-    const response = await fetch('/api/messages/appointment-confirmation', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        appointmentId: appointment.id,
-        customerPhone: appointment.phone,
-        customerName: appointment.contact,
-        appointmentDate: getTodayDate(), // Today's date
-        appointmentTime: appointment.time,
-        duration: appointment.duration,
-        confirmationCode: appointment.confirmationCode
-      })
-    });
-
-    const result = await response.json();
-    
-    if (result.success) {
-      showToast(`Confirmation SMS sent to ${appointment.contact}`, 'success', '<i class="fas fa-check-circle"></i>');
-    } else {
-      throw new Error(result.error);
-    }
-  } catch (error) {
-    console.error('Error sending confirmation:', error);
-    showToast('Failed to send confirmation: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
-  }
-}
-
-// Send appointment confirmation SMS with JWT
+        // Send appointment confirmation SMS with JWT
         async function sendAppointmentConfirmation(appointmentId) {
             try {
                 const appointment = appointments.find(apt => apt.id === appointmentId);
@@ -2299,7 +2201,110 @@ async function sendAppointmentConfirmation(appointmentId) {
             }
         }
 
-// Replace your existing deleteAppointment function in dashboard.ejs with this:
+        // Helper function to get today's date in YYYY-MM-DD format
+        function getTodayDate() {
+            const today = new Date();
+            return today.toISOString().split('T')[0];
+        }
+
+        // Delete appointment with API integration
+        async function deleteAppointment(appointmentId) {
+            const appointment = appointments.find(apt => apt.id === appointmentId);
+            if (!appointment) {
+                showToast('Appointment not found', 'error', '<i class="fas fa-exclamation-circle"></i>');
+                return;
+            }
+            
+            if (confirm(`Cancel the appointment "${appointment.purpose}" with ${appointment.contact}?\n\nThis will:\n• Mark appointment as cancelled\n• Send SMS notification to customer\n• Keep record for audit trail`)) {
+                try {
+                    showToast('Cancelling appointment and sending SMS...', 'info', '<i class="fas fa-spinner fa-spin"></i>');
+                    
+                    console.log(`🔄 Cancelling appointment ${appointmentId}`);
+                    
+                    const response = await authenticatedFetch(`/api/appointments/${appointmentId}`, {
+                        method: 'DELETE',
+                        body: JSON.stringify({
+                            reason: 'Cancelled from dashboard'
+                        })
+                    });
+                    
+                    console.log(`📡 API Response Status: ${response.status}`);
+                    
+                    const result = await response.json();
+                    console.log('📋 API Response:', result);
+                    
+                    if (response.ok && result.success) {
+                        // Remove from local appointments array
+                        appointments = appointments.filter(apt => apt.id !== appointmentId);
+                        
+                        // Update display
+                        updateAllAppointmentsDisplay();
+                        updateAppointmentsCount();
+                        
+                        // Show success message with SMS status
+                        let successMessage = `Appointment with ${appointment.contact} cancelled successfully`;
+                        let successIcon = '<i class="fas fa-calendar-times"></i>';
+                        
+                        if (result.smsNotification && result.smsNotification.sent) {
+                            successMessage += ' • SMS notification sent';
+                            successIcon = '<i class="fas fa-check-double"></i>';
+                        } else {
+                            successMessage += ' • SMS notification failed';
+                        }
+                        
+                        showToast(successMessage, 'success', successIcon);
+                        
+                        console.log(`✅ Successfully cancelled appointment: ${appointment.purpose} with ${appointment.contact}`);
+                        console.log(`📱 SMS Status:`, result.smsNotification);
+                        
+                        // Refresh messages to show the cancellation SMS
+                        setTimeout(async () => {
+                            await loadTodaysMessages();
+                        }, 2000);
+                    } else {
+                        throw new Error(result.error || `API returned ${response.status}`);
+                    }
+                } catch (error) {
+                    console.error('❌ Error cancelling appointment:', error);
+                    showToast('Failed to cancel appointment: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
+                }
+            }
+        }
+        async function sendAppointmentConfirmation(appointmentId) {
+            try {
+                const appointment = appointments.find(apt => apt.id === appointmentId);
+                if (!appointment) {
+                    showToast('Appointment not found', 'error', '<i class="fas fa-exclamation-circle"></i>');
+                    return;
+                }
+
+                showToast('Sending confirmation SMS...', 'info', '<i class="fas fa-paper-plane"></i>');
+
+                const response = await authenticatedFetch('/api/messages/appointment-confirmation', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        appointmentId: appointment.id,
+                        customerPhone: appointment.phone,
+                        customerName: appointment.contact,
+                        appointmentDate: getTodayDate(),
+                        appointmentTime: appointment.time,
+                        duration: appointment.duration,
+                        confirmationCode: appointment.confirmationCode
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast(`Confirmation SMS sent to ${appointment.contact}`, 'success', '<i class="fas fa-check-circle"></i>');
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('Error sending confirmation:', error);
+                showToast('Failed to send confirmaton: ' + error.message, 'error', '<i class="fas fa-exclamation-circle"></i>');
+            }
+        }
 
 // Replace your existing deleteAppointment function in dashboard.ejs with this:
 
@@ -2368,9 +2373,7 @@ async function deleteAppointment(appointmentId) {
     }
 }
 
-        // Load today's messages from database
-       // Load today's messages from database
-    // Load today's messages from database
+ // Load today's messages from database
         async function loadTodaysMessages() {
             try {
                 console.log('Loading today\'s SMS messages from database...');
@@ -2415,56 +2418,8 @@ async function deleteAppointment(appointmentId) {
                 return [];
             }
         }
-                
-                // Update displays
-                updateMessagesCount();
-                updateAllMessagesDisplay();
-                
-                return messages;
-                
-            } catch (error) {
-                console.error('Error loading messages:', error);
-                
-                // Show error but don't completely fail
-                todaysMessages = [];
-                updateMessagesCount();
-                updateAllMessagesDisplay();
-                
-                return [];
-            }
-        }
-                // Update global todaysMessages array with real data
-                todaysMessages = messages.map(msg => ({
-                    id: msg.id,
-                    contact: msg.direction === 'outgoing' ? formatPhoneNumber(msg.toNumber) : formatPhoneNumber(msg.fromNumber),
-                    phone: msg.direction === 'outgoing' ? msg.toNumber : msg.fromNumber,
-                    time: formatMessageTime(msg.createdAt),
-                    message: msg.body,
-                    direction: msg.direction,
-                    status: msg.status,
-                    twilioSid: msg.twilioSid,
-                    originalData: msg
-                }));
-                
-                // Update displays
-                updateMessagesCount();
-                updateAllMessagesDisplay();
-                
-                return messages;
-                
-            } catch (error) {
-                console.error('Error loading messages:', error);
-                
-                // Show error but don't completely fail
-                todaysMessages = [];
-                updateMessagesCount();
-                updateAllMessagesDisplay();
-                
-                return [];
-            }
-        }
 
-        // Load today's calls
+        // Load today's calls from database
         async function loadTodaysCalls() {
             try {
                 console.log('Loading today\'s calls from database...');
@@ -4441,7 +4396,7 @@ function setupReloadCreditsForm() {
             }
         }
 
-        // SINGLE DOMContentLoaded - Replace all existing ones with this
+    
         // SINGLE DOMContentLoaded - Main initialization with JWT
         document.addEventListener('DOMContentLoaded', function() {
             console.log('RinglyPro CRM Dashboard loaded');
@@ -4555,8 +4510,6 @@ function setupReloadCreditsForm() {
             console.log('RinglyPro CRM Dashboard initialized successfully');
         });
 
-     console.log('RinglyPro CRM Dashboard initialized successfully');
-        });
 
         // Add error boundary for unhandled JWT errors
         window.addEventListener('unhandledrejection', function(event) {
