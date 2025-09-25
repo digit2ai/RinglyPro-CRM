@@ -1,4 +1,4 @@
-// src/models/index.js - COMPLETE UPDATED VERSION FOR RINGLYPRO CRM + RACHEL INTEGRATION
+// src/models/index.js - COMPLETE UPDATED VERSION FOR RINGLYPRO CRM + RACHEL INTEGRATION + AI SERVICES
 const sequelize = require('../config/database');
 
 // Import models with error handling
@@ -387,6 +387,48 @@ const getAppointmentStats = async () => {
   }
 };
 
+// Import AI Services with error handling
+let BusinessAICustomizer;
+let AIResponseGenerator;
+
+try {
+  BusinessAICustomizer = require('../services/aiCustomization');
+  console.log('BusinessAICustomizer service imported successfully');
+} catch (error) {
+  console.log('BusinessAICustomizer service not found:', error.message);
+  console.log('Note: AI customization service needed for personalized responses');
+}
+
+try {
+  AIResponseGenerator = require('../services/aiResponseGenerator');
+  console.log('AIResponseGenerator service imported successfully');
+} catch (error) {
+  console.log('AIResponseGenerator service not found:', error.message);
+  console.log('Note: AI response generator needed for voice call responses');
+}
+
+// Initialize AI services
+let aiCustomizer;
+let aiResponseGenerator;
+
+if (BusinessAICustomizer) {
+  try {
+    aiCustomizer = new BusinessAICustomizer();
+    console.log('AI Customization service initialized');
+  } catch (error) {
+    console.log('Failed to initialize AI Customization service:', error.message);
+  }
+}
+
+if (AIResponseGenerator) {
+  try {
+    aiResponseGenerator = new AIResponseGenerator();
+    console.log('AI Response Generator service initialized');
+  } catch (error) {
+    console.log('Failed to initialize AI Response Generator service:', error.message);
+  }
+}
+
 // Export everything
 module.exports = {
   sequelize,
@@ -403,4 +445,21 @@ module.exports.Contact = Contact;
 module.exports.Appointment = Appointment;
 module.exports.User = User;
 
+// Export AI services
+module.exports.BusinessAICustomizer = BusinessAICustomizer;
+module.exports.AIResponseGenerator = AIResponseGenerator;
+module.exports.aiCustomizer = aiCustomizer;
+module.exports.aiResponseGenerator = aiResponseGenerator;
+
 console.log('Models index loaded - RinglyPro CRM + Rachel Voice AI integration ready');
+
+// Log AI services status
+if (aiCustomizer && aiResponseGenerator) {
+  console.log('AI Voice Customization System: ACTIVE');
+  console.log('- Business context generation: Ready');
+  console.log('- AI response generation: Ready');
+  console.log('- OpenAI integration: ' + (process.env.OPENAI_API_KEY ? 'Configured' : 'Mock mode'));
+} else {
+  console.log('AI Voice Customization System: PARTIAL');
+  console.log('- Missing AI services - some features may be limited');
+}
