@@ -17,6 +17,15 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, '../public')));
 
+// Add session middleware for Rachel routes
+const session = require('express-session');
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'ringlypro-session-secret',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // Set to true in production with HTTPS
+}));
+
 // Add this line with other route imports
 const twilioRoutes = require('./routes/twilio');
 
@@ -37,8 +46,9 @@ const callLogRoutes = require('./routes/callLog'); // Call log routes
 const voiceBotRoutes = require('./routes/voiceBot');
 const creditRoutes = require('./routes/credits'); // Credit system routes
 const voiceWebhookRouter = require('./routes/voiceWebhook'); // Rachel voice routes
+const rachelRoutes = require('./routes/rachelRoutes'); // NEW: Multi-tenant Rachel routes
 
-console.log('🔄 About to require auth routes...');
+console.log('📄 About to require auth routes...');
 const authRoutes = require('./routes/auth'); // User authentication routes
 console.log('✅ Auth routes required successfully, type:', typeof authRoutes);
 console.log('🔍 Auth routes object:', authRoutes);
@@ -65,7 +75,7 @@ app.use('/api/call-log', callLogRoutes); // Mount call log routes
 app.use('/api/voice', voiceBotRoutes);
 app.use('/api/credits', creditRoutes); // Mount credit system routes
 
-console.log('🔄 About to mount auth routes...');
+console.log('📄 About to mount auth routes...');
 app.use('/api/auth', authRoutes); // Mount user authentication routes
 console.log('✅ Auth routes mounted successfully');
 
@@ -75,6 +85,10 @@ app.use('/voice', voiceBotRoutes);
 // Rachel Voice webhook routes (NEW - ElevenLabs integration)
 app.use('/voice/rachel', voiceWebhookRouter);
 console.log('🎤 Rachel Voice webhook routes mounted at /voice/rachel/*');
+
+// NEW: Multi-tenant Rachel routes with client identification
+app.use('/', rachelRoutes);
+console.log('🎯 Multi-tenant Rachel routes mounted - Client identification active');
 
 // Dashboard route - UPDATED FOR MULTI-CLIENT
 app.get('/', (req, res) => {
@@ -124,11 +138,13 @@ app.get('/health', (req, res) => {
       voice: process.env.ELEVENLABS_API_KEY ? 'configured' : 'not configured',
       rachel_voice: process.env.ELEVENLABS_API_KEY ? 'active' : 'disabled',
       stripe: process.env.STRIPE_SECRET_KEY ? 'configured' : 'not configured',
-      authentication: 'enabled'
+      authentication: 'enabled',
+      client_identification: 'enabled'
     },
     webhooks: {
       twilio_voice: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/webhook/twilio/voice`,
-      rachel_voice: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/voice/rachel/incoming`
+      rachel_voice: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/voice/rachel/`,
+      rachel_client_test: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/voice/rachel/test-client/+18886103810`
     }
   });
 });
@@ -169,7 +185,8 @@ app.get('/api/status', async (req, res) => {
         sms: process.env.TWILIO_ACCOUNT_SID ? 'enabled' : 'disabled',
         calls: process.env.TWILIO_ACCOUNT_SID ? 'enabled' : 'disabled',
         credits: process.env.STRIPE_SECRET_KEY ? 'enabled' : 'disabled',
-        authentication: 'enabled'
+        authentication: 'enabled',
+        client_identification: 'enabled'
       }
     });
   } catch (error) {
