@@ -1,4 +1,4 @@
-// src/app.js - Enhanced with Call History Integration, Multi-Client Support, Credit System, and User Authentication
+// src/app.js - Enhanced with Call History Integration, Multi-Client Support, Credit System, User Authentication, and Rachel Voice AI
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -36,6 +36,7 @@ const callsRoutes = require('./routes/calls'); // New call routes
 const callLogRoutes = require('./routes/callLog'); // Call log routes
 const voiceBotRoutes = require('./routes/voiceBot');
 const creditRoutes = require('./routes/credits'); // Credit system routes
+const voiceWebhookRouter = require('./routes/voiceWebhook'); // Rachel voice routes
 
 console.log('🔄 About to require auth routes...');
 const authRoutes = require('./routes/auth'); // User authentication routes
@@ -68,8 +69,12 @@ console.log('🔄 About to mount auth routes...');
 app.use('/api/auth', authRoutes); // Mount user authentication routes
 console.log('✅ Auth routes mounted successfully');
 
-// Voice webhook routes (for Twilio integration)
+// Voice webhook routes (existing Twilio integration)
 app.use('/voice', voiceBotRoutes);
+
+// Rachel Voice webhook routes (NEW - ElevenLabs integration)
+app.use('/voice/rachel', voiceWebhookRouter);
+console.log('🎤 Rachel Voice webhook routes mounted at /voice/rachel/*');
 
 // Dashboard route - UPDATED FOR MULTI-CLIENT
 app.get('/', (req, res) => {
@@ -106,7 +111,7 @@ app.get('/auth-check', (req, res) => {
   res.redirect('/login');
 });
 
-// Health check endpoint - UPDATED FOR MULTI-CLIENT
+// Health check endpoint - UPDATED FOR MULTI-CLIENT AND RACHEL
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
@@ -117,8 +122,13 @@ app.get('/health', (req, res) => {
       database: 'connected',
       twilio: process.env.TWILIO_ACCOUNT_SID ? 'configured' : 'not configured',
       voice: process.env.ELEVENLABS_API_KEY ? 'configured' : 'not configured',
+      rachel_voice: process.env.ELEVENLABS_API_KEY ? 'active' : 'disabled',
       stripe: process.env.STRIPE_SECRET_KEY ? 'configured' : 'not configured',
       authentication: 'enabled'
+    },
+    webhooks: {
+      twilio_voice: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/webhook/twilio/voice`,
+      rachel_voice: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/voice/rachel/incoming`
     }
   });
 });
@@ -155,6 +165,7 @@ app.get('/api/status', async (req, res) => {
       },
       features: {
         voice_ai: process.env.ELEVENLABS_API_KEY ? 'enabled' : 'disabled',
+        rachel_voice: process.env.ELEVENLABS_API_KEY ? 'enabled' : 'disabled',
         sms: process.env.TWILIO_ACCOUNT_SID ? 'enabled' : 'disabled',
         calls: process.env.TWILIO_ACCOUNT_SID ? 'enabled' : 'disabled',
         credits: process.env.STRIPE_SECRET_KEY ? 'enabled' : 'disabled',

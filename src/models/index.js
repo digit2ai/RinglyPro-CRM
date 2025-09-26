@@ -407,9 +407,21 @@ try {
   console.log('Note: AI response generator needed for voice call responses');
 }
 
+// Import Rachel Voice Service with error handling
+let RachelVoiceService;
+
+try {
+  RachelVoiceService = require('../services/voiceService');
+  console.log('RachelVoiceService imported successfully');
+} catch (error) {
+  console.log('RachelVoiceService not found:', error.message);
+  console.log('Note: Rachel voice service needed for Twilio call handling with ElevenLabs TTS');
+}
+
 // Initialize AI services
 let aiCustomizer;
 let aiResponseGenerator;
+let rachelVoice;
 
 if (BusinessAICustomizer) {
   try {
@@ -429,12 +441,141 @@ if (AIResponseGenerator) {
   }
 }
 
+if (RachelVoiceService) {
+  try {
+    rachelVoice = new RachelVoiceService();
+    console.log('Rachel Voice Service initialized');
+    console.log('- ElevenLabs integration:', process.env.ELEVENLABS_API_KEY ? 'Configured' : 'Missing (will use Twilio TTS fallback)');
+    console.log('- Rachel Voice ID: 21m00Tcm4TlvDq8ikWAM');
+    console.log('- Twilio phone number:', process.env.TWILIO_PHONE_NUMBER || 'Not configured');
+  } catch (error) {
+    console.log('Failed to initialize Rachel Voice Service:', error.message);
+    console.log('Note: Voice call handling will not work without Rachel service');
+  }
+}
+
+// Appointment booking helper functions for Rachel integration
+const createAppointmentForRachel = async (appointmentData) => {
+  if (!Appointment) {
+    console.log('Appointment model not available for Rachel booking');
+    return { success: false, message: 'Appointment system not available' };
+  }
+
+  try {
+    // Generate unique confirmation code
+    const confirmationCode = require('crypto').randomBytes(4).toString('hex').toUpperCase();
+    
+    const appointment = await Appointment.create({
+      ...appointmentData,
+      confirmationCode,
+      source: 'rachel_voice',
+      status: 'scheduled'
+    });
+
+    console.log(`Rachel created appointment: ${confirmationCode}`);
+    
+    return {
+      success: true,
+      appointment: appointment.toJSON(),
+      confirmationCode
+    };
+  } catch (error) {
+    console.error('Rachel appointment creation failed:', error.message);
+    return {
+      success: false,
+      message: error.message
+    };
+  }
+};
+
+const getAvailableSlots = async (date) => {
+  if (!Appointment) {
+    // Return default slots if no Appointment model
+    return ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00'];
+  }
+
+  try {
+    const bookedSlots = await Appointment.findAll({
+      where: {
+        appointmentDate: date,
+        status: ['scheduled', 'confirmed']
+      },
+      attributes: ['appointmentTime']
+    });
+
+    const bookedTimes = bookedSlots.map(slot => slot.appointmentTime);
+    const allSlots = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00'];
+    
+    return allSlots.filter(slot => !bookedTimes.includes(slot));
+  } catch (error) {
+    console.error('Error getting available slots:', error.message);
+    return [];
+  }
+};
+
+// Call logging function for Rachel
+const logCallForRachel = async (callData) => {
+  if (!Call) {
+    console.log('Call model not available for Rachel logging');
+    return false;
+  }
+
+  try {
+    await Call.create({
+      ...callData,
+      source: 'rachel_voice'
+    });
+    
+    console.log(`Call logged by Rachel: ${callData.callSid}`);
+    return true;
+  } catch (error) {
+    console.error('Rachel call logging failed:', error.message);
+    return false;
+  }
+};
+
+// Contact lookup/creation for Rachel
+const findOrCreateContactForRachel = async (phoneNumber, additionalData = {}) => {
+  if (!Contact) {
+    console.log('Contact model not available for Rachel');
+    return null;
+  }
+
+  try {
+    let contact = await Contact.findOne({
+      where: { phone: phoneNumber }
+    });
+
+    if (!contact && additionalData.firstName) {
+      contact = await Contact.create({
+        phone: phoneNumber,
+        firstName: additionalData.firstName || 'Unknown',
+        lastName: additionalData.lastName || '',
+        email: additionalData.email || `phone.${phoneNumber.replace(/\D/g, '')}@rachel.voice`,
+        source: 'rachel_voice',
+        notes: 'Contact created by Rachel voice assistant'
+      });
+      
+      console.log(`Rachel created new contact: ${phoneNumber}`);
+    }
+
+    return contact;
+  } catch (error) {
+    console.error('Rachel contact lookup/creation failed:', error.message);
+    return null;
+  }
+};
+
 // Export everything
 module.exports = {
   sequelize,
   syncDatabase,
   testConnection,
   getAppointmentStats,
+  createAppointmentForRachel,
+  getAvailableSlots,
+  logCallForRachel,
+  findOrCreateContactForRachel,
   ...models
 };
 
@@ -451,9 +592,26 @@ module.exports.AIResponseGenerator = AIResponseGenerator;
 module.exports.aiCustomizer = aiCustomizer;
 module.exports.aiResponseGenerator = aiResponseGenerator;
 
+// Export Rachel Voice Service
+module.exports.RachelVoiceService = RachelVoiceService;
+module.exports.rachelVoice = rachelVoice;
+
 console.log('Models index loaded - RinglyPro CRM + Rachel Voice AI integration ready');
 
-// Log AI services status
+// Log comprehensive system status
+console.log('\n========== RINGLYPRO SYSTEM STATUS ==========');
+
+// Database models status
+const modelStatus = [];
+if (User) modelStatus.push('User Authentication');
+if (Contact) modelStatus.push('Contact Management');
+if (Message) modelStatus.push('SMS History'); 
+if (Call) modelStatus.push('Call Logging');
+if (Appointment) modelStatus.push('Appointment Booking');
+
+console.log('Database Models:', modelStatus.length > 0 ? modelStatus.join(', ') : 'None available');
+
+// AI services status
 if (aiCustomizer && aiResponseGenerator) {
   console.log('AI Voice Customization System: ACTIVE');
   console.log('- Business context generation: Ready');
@@ -462,4 +620,36 @@ if (aiCustomizer && aiResponseGenerator) {
 } else {
   console.log('AI Voice Customization System: PARTIAL');
   console.log('- Missing AI services - some features may be limited');
+}
+
+// Rachel Voice Service status
+if (rachelVoice) {
+  console.log('Rachel Voice Assistant: ACTIVE');
+  console.log('- ElevenLabs TTS: ' + (process.env.ELEVENLABS_API_KEY ? 'Configured (Rachel Voice)' : 'Missing (Twilio fallback)'));
+  console.log('- Twilio Integration: ' + (process.env.TWILIO_ACCOUNT_SID ? 'Configured' : 'Missing'));
+  console.log('- Appointment Booking: ' + (Appointment ? 'Ready' : 'Model Missing'));
+  console.log('- Call Logging: ' + (Call ? 'Ready' : 'Model Missing'));
+} else {
+  console.log('Rachel Voice Assistant: INACTIVE');
+  console.log('- Voice service not available - create /src/services/voiceService.js');
+}
+
+// Integration readiness
+const integrationChecks = [];
+if (process.env.ELEVENLABS_API_KEY) integrationChecks.push('ElevenLabs');
+if (process.env.TWILIO_ACCOUNT_SID) integrationChecks.push('Twilio');
+if (process.env.OPENAI_API_KEY) integrationChecks.push('OpenAI');
+
+console.log('External Integrations:', integrationChecks.length > 0 ? integrationChecks.join(', ') : 'None configured');
+console.log('==========================================\n');
+
+// Ready for Rachel integration
+if (rachelVoice && Appointment && Call) {
+  console.log('✅ SYSTEM READY: Rachel Voice Assistant with full CRM integration');
+  console.log('   Next: Configure Twilio webhook to /voice/incoming');
+} else {
+  console.log('⚠️  PARTIAL SETUP: Some components missing for full Rachel integration');
+  if (!rachelVoice) console.log('   - Create RachelVoiceService in /src/services/voiceService.js');
+  if (!Appointment) console.log('   - Create Appointment model for booking functionality');
+  if (!Call) console.log('   - Create Call model for call logging');
 }
