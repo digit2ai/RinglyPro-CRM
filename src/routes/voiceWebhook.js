@@ -53,7 +53,7 @@ router.post('/incoming', async (req, res) => {
             throw new Error('Rachel Voice Service not available');
         }
 
-        const response = rachelVoice.createGreetingResponse();
+        const response = await rachelVoice.createGreetingResponse();
         
         res.type('text/xml');
         res.send(response.toString());
@@ -83,7 +83,7 @@ router.post('/process-speech', async (req, res) => {
             const gather = response.gather({
                 input: 'speech',
                 timeout: 5,
-                action: '/voice/process-speech',
+                action: '/voice/rachel/process-speech',
                 method: 'POST',
                 speechTimeout: 'auto'
             });
@@ -167,7 +167,7 @@ router.post('/collect-name', async (req, res) => {
             const gather = response.gather({
                 input: 'speech',
                 timeout: 5,
-                action: '/voice/collect-name',
+                action: '/voice/rachel/collect-name',
                 method: 'POST'
             });
             gather.say("I didn't catch that clearly. Please say your full name.", { voice: 'Polly.Joanna' });
@@ -247,7 +247,7 @@ router.post('/collect-phone', async (req, res) => {
         const gather = response.gather({
             input: ['speech', 'dtmf'],
             timeout: 10,
-            action: '/voice/collect-phone',
+            action: '/voice/rachel/collect-phone',
             method: 'POST',
             numDigits: 10,
             finishOnKey: '#'
@@ -395,7 +395,7 @@ router.get('/test-rachel', async (req, res) => {
             rachelVoiceService: !!rachelVoice,
             elevenlabsConfigured: !!process.env.ELEVENLABS_API_KEY,
             twilioConfigured: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN),
-            webhookUrl: process.env.WEBHOOK_BASE_URL + '/voice/incoming'
+            webhookUrl: process.env.WEBHOOK_BASE_URL + '/voice/rachel/incoming'
         };
         
         if (rachelVoice) {

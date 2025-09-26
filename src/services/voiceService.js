@@ -88,7 +88,7 @@ class RachelVoiceService {
         }
     }
 
-    createGreetingResponse() {
+    async createGreetingResponse() {
         const response = new VoiceResponse();
         
         const greeting_text = `
@@ -104,16 +104,22 @@ class RachelVoiceService {
         const gather = response.gather({
             input: 'speech',
             timeout: 5,
-            action: '/voice/process-speech',
+            action: '/voice/rachel/process-speech',
             method: 'POST',
             speechTimeout: 'auto',
             language: 'en-US'
         });
 
-        // Use Twilio's built-in TTS - Rachel's voice will be added in process-speech
-        gather.say(greeting_text, { voice: 'Polly.Joanna', language: 'en-US' });
+        // Try Rachel's ElevenLabs voice first
+        const audioUrl = await this.generateRachelAudio(greeting_text);
+        if (audioUrl) {
+            gather.play(audioUrl);
+        } else {
+            // Fallback to Twilio's built-in TTS
+            gather.say(greeting_text, { voice: 'Polly.Joanna', language: 'en-US' });
+        }
         
-        response.redirect('/voice/incoming');
+        response.redirect('/voice/rachel/incoming');
         return response;
     }
 
@@ -150,7 +156,7 @@ class RachelVoiceService {
                 const followup = response.gather({
                     input: 'speech',
                     timeout: 5,
-                    action: '/voice/process-speech',
+                    action: '/voice/rachel/process-speech',
                     method: 'POST',
                     speechTimeout: 'auto'
                 });
@@ -174,7 +180,7 @@ class RachelVoiceService {
                     response.say(transferText, { voice: 'Polly.Joanna' });
                 }
                 
-                const dial = response.dial({ action: '/voice/call-complete', timeout: 30 });
+                const dial = response.dial({ action: '/voice/rachel/call-complete', timeout: 30 });
                 dial.number('+16566001400'); // Your support number
             }
         }
@@ -199,7 +205,7 @@ class RachelVoiceService {
         const gather = response.gather({
             input: 'speech',
             timeout: 5,
-            action: '/voice/collect-name',
+            action: '/voice/rachel/collect-name',
             method: 'POST',
             speechTimeout: 'auto'
         });
@@ -239,7 +245,7 @@ class RachelVoiceService {
         const gather = response.gather({
             input: 'speech',
             timeout: 5,
-            action: '/voice/pricing-followup',
+            action: '/voice/rachel/pricing-followup',
             method: 'POST',
             speechTimeout: 'auto'
         });
@@ -278,7 +284,7 @@ class RachelVoiceService {
         response.pause({ length: 1 });
         
         const dial = response.dial({
-            action: '/voice/call-complete',
+            action: '/voice/rachel/call-complete',
             timeout: 30,
             record: 'record-from-answer-dual'
         });
@@ -301,7 +307,7 @@ class RachelVoiceService {
         }
         
         const dial = response.dial({
-            action: '/voice/call-complete',
+            action: '/voice/rachel/call-complete',
             timeout: 30,
             record: 'record-from-answer-dual'
         });
@@ -371,7 +377,7 @@ class RachelVoiceService {
             const gather = response.gather({
                 input: ['speech', 'dtmf'],
                 timeout: 10,
-                action: '/voice/collect-phone',
+                action: '/voice/rachel/collect-phone',
                 method: 'POST',
                 speechTimeout: 'auto',
                 numDigits: 10,
@@ -405,7 +411,7 @@ class RachelVoiceService {
             const gather = response.gather({
                 input: 'speech',
                 timeout: 5,
-                action: '/voice/process-speech',
+                action: '/voice/rachel/process-speech',
                 method: 'POST'
             });
             
