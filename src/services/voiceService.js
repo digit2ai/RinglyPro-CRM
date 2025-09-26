@@ -75,7 +75,7 @@ class RachelVoiceService {
                 
                 fs.writeFileSync(audioPath, response.data);
                 
-                const audio_url = `${this.webhook_base_url}/voice/audio/${filename}`;
+                const audio_url = `${this.webhook_base_url}/voice/rachel/audio/${filename}`;
                 console.log(`Rachel audio generated: ${filename} (${response.data.byteLength} bytes)`);
                 return audio_url;
             } else {
