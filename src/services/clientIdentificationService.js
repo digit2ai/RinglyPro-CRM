@@ -39,7 +39,13 @@ class ClientIdentificationService {
                     booking_url,
                     ringlypro_number,
                     rachel_enabled,
-                    business_hours
+                    business_hours_start,
+                    business_hours_end,
+                    business_days,
+                    appointment_duration,
+                    timezone,
+                    booking_enabled,
+                    active
                 FROM clients 
                 WHERE ringlypro_number = $1 OR ringlypro_number = $2
             `;
@@ -55,7 +61,13 @@ class ClientIdentificationService {
                     booking_url: result.rows[0].booking_url,
                     ringlypro_number: result.rows[0].ringlypro_number,
                     rachel_enabled: result.rows[0].rachel_enabled,
-                    business_hours: result.rows[0].business_hours
+                    business_hours_start: result.rows[0].business_hours_start,
+                    business_hours_end: result.rows[0].business_hours_end,
+                    business_days: result.rows[0].business_days,
+                    appointment_duration: result.rows[0].appointment_duration,
+                    timezone: result.rows[0].timezone,
+                    booking_enabled: result.rows[0].booking_enabled,
+                    active: result.rows[0].active
                 };
                 
                 console.log(`✅ Client identified: ${clientInfo.business_name} (ID: ${clientInfo.client_id})`);
