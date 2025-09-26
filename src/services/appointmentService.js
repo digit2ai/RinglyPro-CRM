@@ -31,27 +31,41 @@ class AppointmentService {
                 throw new Error('Time slot already booked');
             }
 
-            // Create the appointment
+            // Generate confirmation code
+            const confirmationCode = this.generateConfirmationCode();
+
+            // Create the appointment with ACTUAL database columns
             const insertQuery = `
                 INSERT INTO appointments (
                     client_id, 
-                    prospect_name, 
-                    prospect_phone, 
+                    customer_name, 
+                    customer_phone, 
+                    customer_email,
                     appointment_date, 
-                    appointment_time, 
+                    appointment_time,
+                    duration,
+                    purpose,
                     status, 
-                    created_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
+                    source,
+                    confirmation_code,
+                    created_at,
+                    updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
                 RETURNING *
             `;
 
             const values = [
                 clientId,
-                appointmentData.prospect_name,
-                appointmentData.prospect_phone,
+                appointmentData.customer_name,
+                appointmentData.customer_phone,
+                appointmentData.customer_email || null,
                 appointmentData.appointment_date,
                 appointmentData.appointment_time,
-                'scheduled'
+                appointmentData.duration || 30,
+                appointmentData.purpose || 'General consultation',
+                'confirmed', // Your database uses 'confirmed' as default
+                'voice_booking', // Source is voice_booking for Rachel
+                confirmationCode
             ];
 
             const result = await client.query(insertQuery, values);
@@ -87,13 +101,13 @@ class AppointmentService {
     validateBookingData(data) {
         const errors = [];
         
-        // Required fields check
-        if (!data.prospect_name || data.prospect_name.trim().length === 0) {
-            errors.push('Prospect name is required');
+        // Required fields check - matching actual database columns
+        if (!data.customer_name || data.customer_name.trim().length === 0) {
+            errors.push('Customer name is required');
         }
         
-        if (!data.prospect_phone || data.prospect_phone.trim().length === 0) {
-            errors.push('Prospect phone is required');
+        if (!data.customer_phone || data.customer_phone.trim().length === 0) {
+            errors.push('Customer phone is required');
         }
         
         if (!data.appointment_date) {
@@ -105,8 +119,18 @@ class AppointmentService {
         }
 
         // Phone number format validation (basic)
-        if (data.prospect_phone && !this.isValidPhoneFormat(data.prospect_phone)) {
+        if (data.customer_phone && !this.isValidPhoneFormat(data.customer_phone)) {
             errors.push('Invalid phone number format');
+        }
+
+        // Email validation (optional but if provided must be valid)
+        if (data.customer_email && !this.isValidEmail(data.customer_email)) {
+            errors.push('Invalid email format');
+        }
+
+        // Duration validation (must be positive)
+        if (data.duration && (data.duration < 15 || data.duration > 180)) {
+            errors.push('Duration must be between 15 and 180 minutes');
         }
 
         // Date validation (not in the past)
@@ -141,7 +165,7 @@ class AppointmentService {
                 WHERE client_id = $1 
                 AND appointment_date = $2 
                 AND appointment_time = $3 
-                AND status != 'cancelled'
+                AND status NOT IN ('cancelled')
             `;
             
             const result = await client.query(query, [clientId, date, time]);
@@ -168,6 +192,29 @@ class AppointmentService {
         
         // Check if it's 10 or 11 digits (US format)
         return digitsOnly.length >= 10 && digitsOnly.length <= 11;
+    }
+
+    /**
+     * Email format validation
+     * @param {string} email - Email to validate
+     * @returns {boolean} Valid format
+     */
+    isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    /**
+     * Generate confirmation code
+     * @returns {string} Random confirmation code
+     */
+    generateConfirmationCode() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        for (let i = 0; i < 8; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
     }
 
     /**
@@ -250,6 +297,67 @@ class AppointmentService {
             client.release();
         }
     }
+
+    /**
+     * Get appointments for a specific client
+     * @param {string} clientId - Client ID
+     * @param {object} options - Query options (status, date range, etc.)
+     * @returns {object} Appointments list
+     */
+    async getClientAppointments(clientId, options = {}) {
+        const client = await db.getClient();
+        
+        try {
+            let query = `
+                SELECT * FROM appointments 
+                WHERE client_id = $1
+            `;
+            const params = [clientId];
+            
+            // Add status filter if provided
+            if (options.status) {
+                query += ` AND status = ${params.length + 1}`;
+                params.push(options.status);
+            }
+            
+            // Add date range filter if provided
+            if (options.fromDate) {
+                query += ` AND appointment_date >= ${params.length + 1}`;
+                params.push(options.fromDate);
+            }
+            
+            if (options.toDate) {
+                query += ` AND appointment_date <= ${params.length + 1}`;
+                params.push(options.toDate);
+            }
+            
+            query += ` ORDER BY appointment_date, appointment_time`;
+            
+            // Add limit if provided
+            if (options.limit) {
+                query += ` LIMIT ${params.length + 1}`;
+                params.push(options.limit);
+            }
+            
+            const result = await client.query(query, params);
+            
+            return {
+                success: true,
+                appointments: result.rows,
+                count: result.rows.length
+            };
+        } catch (error) {
+            console.error('Error fetching client appointments:', error.message);
+            return {
+                success: false,
+                error: error.message,
+                appointments: []
+            };
+        } finally {
+            client.release();
+        }
+    }
+}
 }
 
 module.exports = new AppointmentService();
