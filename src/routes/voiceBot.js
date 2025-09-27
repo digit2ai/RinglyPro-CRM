@@ -536,7 +536,7 @@ async function identifyClient(phoneNumber) {
         console.log(`🔍 Looking up client for number: ${phoneNumber}`);
         
         // Use your existing database connection pattern
-        const query = `
+   const query = `
     SELECT id, business_name, ringlypro_number, custom_greeting
     FROM clients 
     WHERE ringlypro_number = $1
