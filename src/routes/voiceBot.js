@@ -535,11 +535,11 @@ async function identifyClient(phoneNumber) {
         
         // Use your existing database connection pattern
         const query = `
-            SELECT id, business_name, ringlypro_number, custom_greeting, business_hours
-            FROM clients 
-            WHERE ringlypro_number = $1
-            AND rachel_enabled = true
-        `;
+    SELECT id, business_name, ringlypro_number, custom_greeting
+    FROM clients 
+    WHERE ringlypro_number = $1
+    AND rachel_enabled = true
+`;
         
         // Use your existing database query method (likely through models)
         if (Contact && Contact.sequelize) {
