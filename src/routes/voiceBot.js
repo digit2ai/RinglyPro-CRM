@@ -47,7 +47,7 @@ router.post('/webhook/voice', async (req, res) => {
         
         if (!session) {
             // Identify client by called number (To field)
-            const clientResult = await identifyClient(To);
+            const clientResult = await identifyClient(From);
             
             session = {
                 step: 'greeting',

@@ -1,255 +1,186 @@
-const db = require('../config/database');
+const moment = require('moment-timezone');
 
-class AppointmentService {
-    /**
-     * Book a new appointment for a client
-     * @param {string} clientId - The client ID
-     * @param {object} appointmentData - Appointment details
-     * @returns {object} Created appointment or error
-     */
-    async bookAppointment(clientId, appointmentData) {
-        const client = await db.getClient();
-        
-        try {
-            await client.query('BEGIN');
-            
-            // Validate booking data
-            const validationResult = this.validateBookingData(appointmentData);
-            if (!validationResult.isValid) {
-                throw new Error(`Validation failed: ${validationResult.errors.join(', ')}`);
-            }
-
-            // Check for duplicate bookings
-            const duplicateCheck = await this.checkDuplicateBooking(
-                clientId, 
-                appointmentData.appointment_date, 
-                appointmentData.appointment_time,
-                client
-            );
-            
-            if (duplicateCheck.exists) {
-                throw new Error('Time slot already booked');
-            }
-
-            // Create the appointment
-            const insertQuery = `
-                INSERT INTO appointments (
-                    client_id, 
-                    prospect_name, 
-                    prospect_phone, 
-                    appointment_date, 
-                    appointment_time, 
-                    status, 
-                    created_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
-                RETURNING *
-            `;
-
-            const values = [
-                clientId,
-                appointmentData.prospect_name,
-                appointmentData.prospect_phone,
-                appointmentData.appointment_date,
-                appointmentData.appointment_time,
-                'scheduled'
-            ];
-
-            const result = await client.query(insertQuery, values);
-            await client.query('COMMIT');
-            
-            console.log('✅ Appointment booked successfully:', result.rows[0]);
-            
-            return {
-                success: true,
-                appointment: result.rows[0],
-                message: 'Appointment booked successfully'
-            };
-
-        } catch (error) {
-            await client.query('ROLLBACK');
-            console.error('❌ Appointment booking failed:', error.message);
-            
-            return {
-                success: false,
-                error: error.message,
-                appointment: null
-            };
-        } finally {
-            client.release();
-        }
-    }
-
-    /**
-     * Validate appointment booking data
-     * @param {object} data - Appointment data to validate
-     * @returns {object} Validation result
-     */
-    validateBookingData(data) {
-        const errors = [];
-        
-        // Required fields check
-        if (!data.prospect_name || data.prospect_name.trim().length === 0) {
-            errors.push('Prospect name is required');
-        }
-        
-        if (!data.prospect_phone || data.prospect_phone.trim().length === 0) {
-            errors.push('Prospect phone is required');
-        }
-        
-        if (!data.appointment_date) {
-            errors.push('Appointment date is required');
-        }
-        
-        if (!data.appointment_time) {
-            errors.push('Appointment time is required');
-        }
-
-        // Phone number format validation (basic)
-        if (data.prospect_phone && !this.isValidPhoneFormat(data.prospect_phone)) {
-            errors.push('Invalid phone number format');
-        }
-
-        // Date validation (not in the past)
-        if (data.appointment_date && data.appointment_time) {
-            const appointmentDateTime = new Date(`${data.appointment_date}T${data.appointment_time}`);
-            const now = new Date();
-            
-            if (appointmentDateTime < now) {
-                errors.push('Appointment cannot be scheduled in the past');
-            }
-        }
-
-        return {
-            isValid: errors.length === 0,
-            errors: errors
+class AvailabilityService {
+    constructor() {
+        // Default business hours
+        this.defaultBusinessHours = {
+            start: '09:00',
+            end: '17:00',
+            days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
         };
     }
 
     /**
-     * Check if appointment time slot is already booked
-     * @param {string} clientId - Client ID
-     * @param {string} date - Appointment date
-     * @param {string} time - Appointment time
-     * @param {object} client - Database client
-     * @returns {object} Duplicate check result
+     * Get available appointment slots for a client
+     * @param {number} clientId - Client ID
+     * @param {string} date - Date in YYYY-MM-DD format (optional, defaults to next 7 days)
+     * @param {number} duration - Appointment duration in minutes (default 30)
+     * @returns {Promise<Array>} Array of available time slots
      */
-    async checkDuplicateBooking(clientId, date, time, client) {
+    async getAvailableSlots(clientId, date = null, duration = 30) {
         try {
-            const query = `
-                SELECT COUNT(*) as count
-                FROM appointments 
-                WHERE client_id = $1 
-                AND appointment_date = $2 
-                AND appointment_time = $3 
-                AND status != 'cancelled'
-            `;
+            const db = require('../config/database');
+            const client = await db.getClient();
             
-            const result = await client.query(query, [clientId, date, time]);
-            const count = parseInt(result.rows[0].count);
+            // Get client's business hours and timezone
+            const clientQuery = await client.query(
+                'SELECT business_hours_start, business_hours_end, timezone, appointment_duration FROM clients WHERE id = $1',
+                [clientId]
+            );
+
+            if (clientQuery.rows.length === 0) {
+                client.release();
+                throw new Error('Client not found');
+            }
+
+            const clientData = clientQuery.rows[0];
+            const timezone = clientData.timezone || 'America/New_York';
+            const startTime = clientData.business_hours_start || '09:00:00';
+            const endTime = clientData.business_hours_end || '17:00:00';
+            const appointmentDuration = clientData.appointment_duration || 30;
+
+            // If no specific date provided, generate slots for next 7 days
+            const datesToCheck = date ? [date] : this.getNextSevenBusinessDays(timezone);
             
-            return {
-                exists: count > 0,
-                count: count
-            };
+            const availableSlots = [];
+
+            for (const checkDate of datesToCheck) {
+                // Get existing appointments for this date
+                const existingAppointments = await client.query(
+                    `SELECT appointment_time, duration 
+                     FROM appointments 
+                     WHERE client_id = $1 
+                     AND appointment_date = $2 
+                     AND status IN ('confirmed', 'scheduled')
+                     ORDER BY appointment_time`,
+                    [clientId, checkDate]
+                );
+
+                // Generate time slots for this date
+                const daySlots = this.generateTimeSlotsForDate(
+                    checkDate,
+                    startTime,
+                    endTime,
+                    appointmentDuration,
+                    existingAppointments.rows,
+                    timezone
+                );
+
+                availableSlots.push(...daySlots);
+            }
+
+            client.release();
+            return availableSlots;
+
         } catch (error) {
-            console.error('Error checking duplicate booking:', error.message);
-            throw new Error('Unable to verify appointment availability');
+            console.error('Error getting available slots:', error);
+            throw error;
         }
     }
 
     /**
-     * Basic phone number format validation
-     * @param {string} phone - Phone number to validate
-     * @returns {boolean} Valid format
+     * Generate time slots for a specific date
      */
-    isValidPhoneFormat(phone) {
-        // Remove all non-digit characters
-        const digitsOnly = phone.replace(/\D/g, '');
+    generateTimeSlotsForDate(date, startTime, endTime, duration, existingAppointments, timezone) {
+        const slots = [];
+        const dateStr = moment(date).format('YYYY-MM-DD');
         
-        // Check if it's 10 or 11 digits (US format)
-        return digitsOnly.length >= 10 && digitsOnly.length <= 11;
-    }
+        // Convert business hours to minutes
+        const [startHour, startMin] = startTime.split(':').map(Number);
+        const [endHour, endMin] = endTime.split(':').map(Number);
+        
+        const startMinutes = startHour * 60 + startMin;
+        const endMinutes = endHour * 60 + endMin;
 
-    /**
-     * Get appointment by ID
-     * @param {string} appointmentId - Appointment ID
-     * @returns {object} Appointment details
-     */
-    async getAppointment(appointmentId) {
-        const client = await db.getClient();
-        
-        try {
-            const query = `
-                SELECT a.*, c.business_name, c.ringlypro_number
-                FROM appointments a
-                JOIN clients c ON a.client_id = c.id
-                WHERE a.id = $1
-            `;
+        // Generate slots every 30 minutes
+        for (let minutes = startMinutes; minutes < endMinutes; minutes += 30) {
+            const slotHour = Math.floor(minutes / 60);
+            const slotMin = minutes % 60;
+            const timeStr = `${slotHour.toString().padStart(2, '0')}:${slotMin.toString().padStart(2, '0')}:00`;
             
-            const result = await client.query(query, [appointmentId]);
-            
-            if (result.rows.length === 0) {
-                return {
-                    success: false,
-                    error: 'Appointment not found'
-                };
+            // Check if this slot conflicts with existing appointments
+            const hasConflict = existingAppointments.some(apt => {
+                const aptTime = apt.appointment_time;
+                const aptDuration = apt.duration || 30;
+                
+                // Convert appointment time to minutes
+                const [aptHour, aptMin] = aptTime.split(':').map(Number);
+                const aptStartMinutes = aptHour * 60 + aptMin;
+                const aptEndMinutes = aptStartMinutes + aptDuration;
+                
+                // Check for overlap
+                const slotEndMinutes = minutes + duration;
+                return (minutes < aptEndMinutes && slotEndMinutes > aptStartMinutes);
+            });
+
+            if (!hasConflict) {
+                // Format time for display
+                const displayTime = moment(`${dateStr} ${timeStr}`, 'YYYY-MM-DD HH:mm:ss')
+                    .tz(timezone)
+                    .format('h:mm A');
+                
+                const displayDate = moment(dateStr).format('dddd, MMMM Do');
+
+                slots.push({
+                    date: dateStr,
+                    time: timeStr,
+                    displayDate: displayDate,
+                    displayTime: displayTime,
+                    datetime: `${dateStr} ${timeStr}`,
+                    available: true
+                });
             }
-            
-            return {
-                success: true,
-                appointment: result.rows[0]
-            };
-        } catch (error) {
-            console.error('Error fetching appointment:', error.message);
-            return {
-                success: false,
-                error: error.message
-            };
-        } finally {
-            client.release();
         }
+
+        return slots;
     }
 
     /**
-     * Cancel an appointment
-     * @param {string} appointmentId - Appointment ID
-     * @returns {object} Cancellation result
+     * Get next 7 business days (Mon-Fri)
      */
-    async cancelAppointment(appointmentId) {
-        const client = await db.getClient();
+    getNextSevenBusinessDays(timezone = 'America/New_York') {
+        const dates = [];
+        let currentDate = moment().tz(timezone).startOf('day');
         
-        try {
-            const query = `
-                UPDATE appointments 
-                SET status = 'cancelled', updated_at = NOW()
-                WHERE id = $1 
-                RETURNING *
-            `;
-            
-            const result = await client.query(query, [appointmentId]);
-            
-            if (result.rows.length === 0) {
-                return {
-                    success: false,
-                    error: 'Appointment not found'
-                };
+        while (dates.length < 7) {
+            // Skip weekends
+            if (currentDate.day() !== 0 && currentDate.day() !== 6) {
+                dates.push(currentDate.format('YYYY-MM-DD'));
             }
+            currentDate.add(1, 'day');
+        }
+
+        return dates;
+    }
+
+    /**
+     * Check if a specific time slot is available
+     */
+    async isSlotAvailable(clientId, date, time, duration = 30) {
+        try {
+            const db = require('../config/database');
+            const client = await db.getClient();
             
-            return {
-                success: true,
-                appointment: result.rows[0],
-                message: 'Appointment cancelled successfully'
-            };
-        } catch (error) {
-            console.error('Error cancelling appointment:', error.message);
-            return {
-                success: false,
-                error: error.message
-            };
-        } finally {
+            const conflicts = await client.query(
+                `SELECT id FROM appointments 
+                 WHERE client_id = $1 
+                 AND appointment_date = $2 
+                 AND status IN ('confirmed', 'scheduled')
+                 AND (
+                     (appointment_time <= $3 AND appointment_time + INTERVAL '1 minute' * duration > $3) OR
+                     (appointment_time < $3 + INTERVAL '1 minute' * $4 AND appointment_time >= $3)
+                 )`,
+                [clientId, date, time, duration]
+            );
+
             client.release();
+            return conflicts.rows.length === 0;
+
+        } catch (error) {
+            console.error('Error checking slot availability:', error);
+            return false;
         }
     }
 }
 
-module.exports = new AppointmentService();
+module.exports = new AvailabilityService();
