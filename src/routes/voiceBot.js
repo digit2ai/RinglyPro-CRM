@@ -6,7 +6,6 @@ const twilio = require('twilio');
 // Import new services
 const availabilityService = require('../services/availabilityService');
 const appointmentService = require('../services/appointmentService');
-const db = require('../config/database');
 
 // Import models safely
 let Call, Message, Contact, Appointment;
@@ -63,27 +62,6 @@ router.post('/webhook/voice', async (req, res) => {
             
             console.log(`🏢 Client identified: ${clientResult.success ? clientResult.data.business_name : 'Unknown'} (ID: ${session.clientId})`);
         }
-
-        // Store call data in PostgreSQL
-        /*
-        try {
-            if (Call && Call.create) {
-                await Call.create({
-    client_id: session.clientId || null,
-    twilioCallSid: CallSid,
-    direction: Direction === 'inbound' ? 'incoming' : 'outgoing',
-    fromNumber: From,
-    toNumber: To,
-    status: CallStatus,
-    startTime: new Date(),
-    notes: `Voice bot step: ${session.step}, Client: ${session.clientId || 'Unknown'}`
-});
-                console.log(`📊 Call data saved: ${CallSid}`);
-            }
-        } catch (dbError) {
-            console.error('Failed to save call:', dbError.message);
-        }
-            */
 
         // Process conversation flow
         const twiml = await processConversationFlow(session, Digits, SpeechResult);
@@ -530,25 +508,22 @@ async function handleBookAppointment(session, twiml) {
     return twiml;
 }
 
-// Client identification function - NEW
+// Client identification function - FIXED
 async function identifyClient(phoneNumber) {
     try {
         console.log(`🔍 Looking up client for number: ${phoneNumber}`);
         
-        // Use your existing database connection pattern
-   const query = `
-    SELECT id, business_name, ringlypro_number, custom_greeting
-    FROM clients 
-    WHERE ringlypro_number = $1
-    AND rachel_enabled = true
-`;
-        
-        // Use your existing database query method (likely through models)
         if (Contact && Contact.sequelize) {
-            const result = await Contact.sequelize.query(query, {
-                replacements: [phoneNumber],
-                type: Contact.sequelize.QueryTypes.SELECT
-            });
+            const result = await Contact.sequelize.query(
+                `SELECT id, business_name, ringlypro_number, custom_greeting
+                 FROM clients 
+                 WHERE ringlypro_number = :phoneNumber
+                 AND rachel_enabled = true`,
+                {
+                    replacements: { phoneNumber: phoneNumber },
+                    type: Contact.sequelize.QueryTypes.SELECT
+                }
+            );
             
             if (result.length === 0) {
                 console.log('❌ Client not found or Rachel disabled');
@@ -558,12 +533,13 @@ async function identifyClient(phoneNumber) {
                 };
             }
             
+            console.log('✅ Client found:', result[0]);
             return {
                 success: true,
                 data: result[0]
             };
         } else {
-            // Fallback if models not available
+            console.log('⚠️ Database models not available');
             return {
                 success: false,
                 error: 'Database models not available'
