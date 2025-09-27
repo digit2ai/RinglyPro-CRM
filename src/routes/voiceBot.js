@@ -530,11 +530,10 @@ async function handleBookAppointment(session, twiml) {
 
 // Client identification function - NEW
 async function identifyClient(phoneNumber) {
-    const client = await db.getClient();
-    
     try {
         console.log(`🔍 Looking up client for number: ${phoneNumber}`);
         
+        // Use your existing database connection pattern
         const query = `
             SELECT id, business_name, ringlypro_number, custom_greeting, business_hours
             FROM clients 
@@ -542,20 +541,32 @@ async function identifyClient(phoneNumber) {
             AND rachel_enabled = true
         `;
         
-        const result = await client.query(query, [phoneNumber]);
-        
-        if (result.rows.length === 0) {
-            console.log('❌ Client not found or Rachel disabled');
+        // Use your existing database query method (likely through models)
+        if (Contact && Contact.sequelize) {
+            const result = await Contact.sequelize.query(query, {
+                replacements: [phoneNumber],
+                type: Contact.sequelize.QueryTypes.SELECT
+            });
+            
+            if (result.length === 0) {
+                console.log('❌ Client not found or Rachel disabled');
+                return {
+                    success: false,
+                    error: 'Client not found or Rachel disabled'
+                };
+            }
+            
+            return {
+                success: true,
+                data: result[0]
+            };
+        } else {
+            // Fallback if models not available
             return {
                 success: false,
-                error: 'Client not found or Rachel disabled'
+                error: 'Database models not available'
             };
         }
-        
-        return {
-            success: true,
-            data: result.rows[0]
-        };
         
     } catch (error) {
         console.error('Database error during client identification:', error.message);
@@ -563,8 +574,6 @@ async function identifyClient(phoneNumber) {
             success: false,
             error: 'Database error'
         };
-    } finally {
-        client.release();
     }
 }
 
