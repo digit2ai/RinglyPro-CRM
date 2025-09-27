@@ -65,6 +65,7 @@ router.post('/webhook/voice', async (req, res) => {
         }
 
         // Store call data in PostgreSQL
+        /*
         try {
             if (Call && Call.create) {
                 await Call.create({
@@ -82,6 +83,7 @@ router.post('/webhook/voice', async (req, res) => {
         } catch (dbError) {
             console.error('Failed to save call:', dbError.message);
         }
+            */
 
         // Process conversation flow
         const twiml = await processConversationFlow(session, Digits, SpeechResult);
