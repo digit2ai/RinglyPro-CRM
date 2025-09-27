@@ -60,6 +60,9 @@ router.post('/register', async (req, res) => {
         const saltRounds = 12;
         const passwordHash = await bcrypt.hash(password, saltRounds);
         
+        // FIXED: Clean up website_url - convert empty strings to null
+        const cleanWebsiteUrl = websiteUrl && websiteUrl.trim() !== '' ? websiteUrl.trim() : null;
+        
         // Create user with all business fields
         const user = await User.create({
             // Basic user info
@@ -74,7 +77,7 @@ router.post('/register', async (req, res) => {
             
             // NEW business fields
             business_type: businessType,
-            website_url: websiteUrl,
+            website_url: cleanWebsiteUrl, // Use cleaned URL (null if empty)
             phone_number: phoneNumber,
             business_description: businessDescription,
             business_hours: businessHours, // JSONB field
