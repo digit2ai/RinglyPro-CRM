@@ -346,7 +346,7 @@ class AppointmentService {
                 appointments: result.rows,
                 count: result.rows.length
             };
-        } catch (error) {
+ } catch (error) {
             console.error('Error fetching client appointments:', error.message);
             return {
                 success: false,
@@ -357,7 +357,6 @@ class AppointmentService {
             client.release();
         }
     }
-}
 }
 
 module.exports = new AppointmentService();
