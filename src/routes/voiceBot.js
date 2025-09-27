@@ -68,14 +68,15 @@ router.post('/webhook/voice', async (req, res) => {
         try {
             if (Call && Call.create) {
                 await Call.create({
-                    twilioCallSid: CallSid,
-                    direction: Direction === 'inbound' ? 'incoming' : 'outgoing',
-                    fromNumber: From,
-                    toNumber: To,
-                    status: CallStatus,
-                    startTime: new Date(),
-                    notes: `Voice bot step: ${session.step}, Client: ${session.clientId || 'Unknown'}`
-                });
+    client_id: session.clientId || null,
+    twilioCallSid: CallSid,
+    direction: Direction === 'inbound' ? 'incoming' : 'outgoing',
+    fromNumber: From,
+    toNumber: To,
+    status: CallStatus,
+    startTime: new Date(),
+    notes: `Voice bot step: ${session.step}, Client: ${session.clientId || 'Unknown'}`
+});
                 console.log(`📊 Call data saved: ${CallSid}`);
             }
         } catch (dbError) {
