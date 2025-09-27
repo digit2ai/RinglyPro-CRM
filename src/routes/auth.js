@@ -1,8 +1,18 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const { User, sequelize } = require('../models');
 const router = express.Router();
+
+// Import Client model for appointment booking
+let Client;
+try {
+    const models = require('../models');
+    Client = models.Client;
+    console.log('✅ Client model imported for auth routes');
+} catch (error) {
+    console.log('⚠️ Client model not available:', error.message);
+}
 
 console.log('🔍 AUTH ROUTES FILE LOADED - Routes should be available');
 
@@ -12,7 +22,7 @@ router.get('/simple-test', (req, res) => {
     res.json({ success: true, message: 'Auth routes are loading successfully!' });
 });
 
-// POST /api/auth/register - Enhanced User registration with business fields
+// POST /api/auth/register - Enhanced User registration with business fields AND client creation
 router.post('/register', async (req, res) => {
     try {
         const { 
@@ -32,12 +42,19 @@ router.post('/register', async (req, res) => {
             termsAccepted
         } = req.body;
         
-        console.log('📝 Registration attempt:', { email, firstName, lastName, businessName, businessType });
+        console.log('📝 Registration attempt:', { email, firstName, lastName, businessName, businessType, businessPhone });
         
         // Validate required fields
         if (!email || !password || !firstName || !lastName) {
             return res.status(400).json({ 
                 error: 'Email, password, first name, and last name are required' 
+            });
+        }
+        
+        // Validate business phone for Rachel AI
+        if (!businessPhone) {
+            return res.status(400).json({ 
+                error: 'Business phone number is required for your Rachel AI system' 
             });
         }
         
@@ -56,6 +73,16 @@ router.post('/register', async (req, res) => {
             });
         }
         
+        // Check if business phone already exists (for Rachel AI system)
+        if (Client) {
+            const existingClient = await Client.findOne({ where: { business_phone: businessPhone } });
+            if (existingClient) {
+                return res.status(409).json({ 
+                    error: 'A Rachel AI system already exists with this phone number' 
+                });
+            }
+        }
+        
         // Hash password
         const saltRounds = 12;
         const passwordHash = await bcrypt.hash(password, saltRounds);
@@ -63,39 +90,81 @@ router.post('/register', async (req, res) => {
         // FIXED: Clean up website_url - convert empty strings to null
         const cleanWebsiteUrl = websiteUrl && websiteUrl.trim() !== '' ? websiteUrl.trim() : null;
         
-        // Create user with all business fields
-        const user = await User.create({
-            // Basic user info
-            email,
-            password_hash: passwordHash,
-            first_name: firstName,
-            last_name: lastName,
+        // Use transaction to create both user and client records
+        const result = await sequelize.transaction(async (t) => {
+            // Create user with all business fields
+            const user = await User.create({
+                // Basic user info
+                email,
+                password_hash: passwordHash,
+                first_name: firstName,
+                last_name: lastName,
+                
+                // Existing business fields
+                business_name: businessName,
+                business_phone: businessPhone,
+                
+                // NEW business fields
+                business_type: businessType,
+                website_url: cleanWebsiteUrl, // Use cleaned URL (null if empty)
+                phone_number: phoneNumber,
+                business_description: businessDescription,
+                business_hours: businessHours, // JSONB field
+                services: services,
+                terms_accepted: termsAccepted,
+                free_trial_minutes: 100, // Default free trial
+                onboarding_completed: false // User needs to complete onboarding
+            }, { transaction: t });
             
-            // Existing business fields
-            business_name: businessName,
-            business_phone: businessPhone,
+            console.log('✅ User created successfully:', user.id);
             
-            // NEW business fields
-            business_type: businessType,
-            website_url: cleanWebsiteUrl, // Use cleaned URL (null if empty)
-            phone_number: phoneNumber,
-            business_description: businessDescription,
-            business_hours: businessHours, // JSONB field
-            services: services,
-            terms_accepted: termsAccepted,
-            free_trial_minutes: 100, // Default free trial
-            onboarding_completed: false // User needs to complete onboarding
+            // CREATE CLIENT RECORD for Rachel AI appointment booking
+            let client = null;
+            if (Client) {
+                client = await Client.create({
+                    business_name: businessName,
+                    business_phone: businessPhone,
+                    ringlypro_number: businessPhone, // Business phone becomes Rachel AI number
+                    owner_name: `${firstName} ${lastName}`,
+                    owner_phone: businessPhone,
+                    owner_email: email,
+                    custom_greeting: `Hello! Thank you for calling ${businessName}. I'm Rachel, your AI assistant.`,
+                    business_hours_start: businessHours?.open ? businessHours.open + ':00' : '09:00:00',
+                    business_hours_end: businessHours?.close ? businessHours.close + ':00' : '17:00:00',
+                    business_days: 'Mon-Fri',
+                    timezone: 'America/New_York',
+                    appointment_duration: 30,
+                    booking_enabled: true,
+                    sms_notifications: true,
+                    call_recording: false,
+                    credit_plan: 'basic',
+                    monthly_free_minutes: 100,
+                    per_minute_rate: 0.10,
+                    auto_reload_enabled: false,
+                    auto_reload_amount: 10.00,
+                    auto_reload_threshold: 1.00,
+                    rachel_enabled: true,
+                    active: true,
+                    user_id: user.id
+                }, { transaction: t });
+                
+                console.log('✅ Client record created for Rachel AI appointment booking:', client.id);
+                console.log(`📞 Rachel AI number configured: ${businessPhone}`);
+            } else {
+                console.log('⚠️ Client model not available - skipping client creation');
+            }
+            
+            return { user, client };
         });
-        
-        console.log('✅ User created successfully:', user.id);
         
         // Generate JWT token with additional business context
         const token = jwt.sign(
             { 
-                userId: user.id, 
-                email: user.email,
-                businessName: user.business_name,
-                businessType: user.business_type
+                userId: result.user.id, 
+                email: result.user.email,
+                businessName: result.user.business_name,
+                businessType: result.user.business_type,
+                clientId: result.client ? result.client.id : null
             },
             process.env.JWT_SECRET || 'your-super-secret-jwt-key',
             { expiresIn: '7d' }
@@ -107,29 +176,36 @@ router.post('/register', async (req, res) => {
             message: 'Registration successful! Welcome to RinglyPro!',
             data: {
                 user: {
-                    id: user.id,
-                    email: user.email,
-                    firstName: user.first_name,
-                    lastName: user.last_name,
-                    businessName: user.business_name,
-                    businessType: user.business_type,
-                    businessPhone: user.business_phone,
-                    phoneNumber: user.phone_number,
-                    websiteUrl: user.website_url,
-                    freeTrialMinutes: user.free_trial_minutes,
-                    onboardingCompleted: user.onboarding_completed
+                    id: result.user.id,
+                    email: result.user.email,
+                    firstName: result.user.first_name,
+                    lastName: result.user.last_name,
+                    businessName: result.user.business_name,
+                    businessType: result.user.business_type,
+                    businessPhone: result.user.business_phone,
+                    phoneNumber: result.user.phone_number,
+                    websiteUrl: result.user.website_url,
+                    freeTrialMinutes: result.user.free_trial_minutes,
+                    onboardingCompleted: result.user.onboarding_completed
                 },
+                client: result.client ? {
+                    id: result.client.id,
+                    rachelNumber: result.client.ringlypro_number,
+                    rachelEnabled: result.client.rachel_enabled
+                } : null,
                 token,
                 nextSteps: {
                     dashboard: '/dashboard',
                     setupPhone: '/setup/phone',
-                    testAI: '/test-assistant'
+                    testAI: '/test-assistant',
+                    testRachel: `Call ${businessPhone} to test your Rachel AI appointment booking`
                 }
             }
         });
         
         // Log successful registration for monitoring
         console.log(`🎉 New user registered: ${firstName} ${lastName} (${businessName || 'No business'}) - ${email}`);
+        console.log(`📞 Rachel AI configured for: ${businessPhone}`);
         
     } catch (error) {
         console.error('💥 Registration error:', error);
@@ -138,7 +214,7 @@ router.post('/register', async (req, res) => {
         // Check for specific database errors
         if (error.name === 'SequelizeUniqueConstraintError') {
             return res.status(409).json({
-                error: 'An account with this email already exists'
+                error: 'An account with this email or phone number already exists'
             });
         }
         
@@ -198,6 +274,15 @@ router.post('/login', async (req, res) => {
         
         console.log('✅ Password validated successfully');
         
+        // Find associated client record for Rachel AI
+        let client = null;
+        if (Client) {
+            client = await Client.findOne({ where: { user_id: user.id } });
+            if (client) {
+                console.log(`📞 Rachel AI found: ${client.ringlypro_number} (Client ID: ${client.id})`);
+            }
+        }
+        
         // Generate JWT token with business context
         console.log('🎫 Generating JWT token...');
         const jwtSecret = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
@@ -208,7 +293,8 @@ router.post('/login', async (req, res) => {
                 userId: user.id, 
                 email: user.email,
                 businessName: user.business_name,
-                businessType: user.business_type
+                businessType: user.business_type,
+                clientId: client ? client.id : null
             },
             jwtSecret,
             { expiresIn: '7d' }
@@ -234,6 +320,11 @@ router.post('/login', async (req, res) => {
                     freeTrialMinutes: user.free_trial_minutes,
                     onboardingCompleted: user.onboarding_completed
                 },
+                client: client ? {
+                    id: client.id,
+                    rachelNumber: client.ringlypro_number,
+                    rachelEnabled: client.rachel_enabled
+                } : null,
                 redirectTo: user.onboarding_completed ? '/dashboard' : '/onboarding'
             }
         };

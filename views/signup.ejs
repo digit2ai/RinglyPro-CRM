@@ -164,11 +164,12 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Business Phone Number</label>
                         <div class="relative">
                             <i class="fas fa-phone absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                             <input type="tel" id="phoneNumber" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="+1 (555) 123-4567" required>
                         </div>
+                        <p class="text-xs text-blue-600 mt-1">This will be your Rachel AI number for receiving calls</p>
                     </div>
 
                     <div class="flex space-x-3">
@@ -359,7 +360,7 @@
                     businessName: document.getElementById('businessName').value,
                     businessType: document.getElementById('businessType').value,
                     websiteUrl: document.getElementById('websiteUrl').value,
-                    phoneNumber: document.getElementById('phoneNumber').value
+                    businessPhone: document.getElementById('phoneNumber').value // FIXED: Map to businessPhone
                 };
             }
         }
@@ -410,7 +411,7 @@
                         localStorage.setItem('token', result.token);
                     }
                 } else {
-                    throw new Error(result.message || 'Registration failed');
+                    throw new Error(result.error || 'Registration failed');
                 }
             } catch (error) {
                 console.error('Registration error:', error);
@@ -438,8 +439,8 @@
         }
 
         function goToDashboard() {
-    window.location.href = '/';
-}
+            window.location.href = '/';
+        }
 
         // Phone number formatting
         document.getElementById('phoneNumber').addEventListener('input', function(e) {
