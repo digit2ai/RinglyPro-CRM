@@ -26,7 +26,7 @@ class AppointmentService {
                 throw new Error(`Validation failed: ${validationResult.errors.join(', ')}`);
             }
 
-            // Check for duplicate bookings
+            // Check for duplicate bookings using raw SQL
             const duplicateCheck = await this.checkDuplicateBooking(
                 clientId, 
                 appointmentData.appointment_date, 
@@ -40,44 +40,61 @@ class AppointmentService {
             // Generate confirmation code
             const confirmationCode = this.generateConfirmationCode();
 
-            // Create appointment using Sequelize - FIXED: Use camelCase field names
+            // Create appointment using raw SQL to avoid field mapping issues
             let appointment;
             
-            if (Appointment && Appointment.create) {
-                appointment = await Appointment.create({
-                    clientId: clientId,
-                    customerName: appointmentData.customer_name,
-                    customerPhone: appointmentData.customer_phone,
-                    customerEmail: appointmentData.customer_email || `phone.${appointmentData.customer_phone.replace(/\D/g, '')}@rachel.voice`,
-                    appointmentDate: appointmentData.appointment_date,
-                    appointmentTime: appointmentData.appointment_time,
-                    duration: appointmentData.duration || 30,
-                    purpose: appointmentData.purpose || 'General consultation',
-                    status: 'confirmed',
-                    source: 'voice_booking',
-                    confirmationCode: confirmationCode,
-                    reminderSent: false,
-                    confirmationSent: false
-                });
+            if (Appointment && Appointment.sequelize) {
+                const result = await Appointment.sequelize.query(
+                    `INSERT INTO appointments (
+                        client_id, customer_name, customer_phone, customer_email,
+                        appointment_date, appointment_time, duration, purpose,
+                        status, source, confirmation_code, reminder_sent, confirmation_sent,
+                        created_at, updated_at
+                    ) VALUES (
+                        :clientId, :customerName, :customerPhone, :customerEmail,
+                        :appointmentDate, :appointmentTime, :duration, :purpose,
+                        :status, :source, :confirmationCode, :reminderSent, :confirmationSent,
+                        NOW(), NOW()
+                    ) RETURNING *`,
+                    {
+                        replacements: {
+                            clientId: clientId,
+                            customerName: appointmentData.customer_name,
+                            customerPhone: appointmentData.customer_phone,
+                            customerEmail: appointmentData.customer_email || `phone.${appointmentData.customer_phone.replace(/\D/g, '')}@rachel.voice`,
+                            appointmentDate: appointmentData.appointment_date,
+                            appointmentTime: appointmentData.appointment_time,
+                            duration: appointmentData.duration || 30,
+                            purpose: appointmentData.purpose || 'Voice booking consultation',
+                            status: 'confirmed',
+                            source: 'voice_booking',
+                            confirmationCode: confirmationCode,
+                            reminderSent: false,
+                            confirmationSent: false
+                        },
+                        type: Appointment.sequelize.QueryTypes.INSERT
+                    }
+                );
                 
+                appointment = result[0][0]; // PostgreSQL RETURNING result
                 console.log('✅ Appointment booked in database:', appointment.id);
             } else {
                 // Fallback mock appointment
                 appointment = {
                     id: Math.floor(Math.random() * 10000),
-                    clientId: clientId,
-                    customerName: appointmentData.customer_name,
-                    customerPhone: appointmentData.customer_phone,
-                    customerEmail: appointmentData.customer_email || `phone.${appointmentData.customer_phone.replace(/\D/g, '')}@rachel.voice`,
-                    appointmentDate: appointmentData.appointment_date,
-                    appointmentTime: appointmentData.appointment_time,
+                    client_id: clientId,
+                    customer_name: appointmentData.customer_name,
+                    customer_phone: appointmentData.customer_phone,
+                    customer_email: appointmentData.customer_email || `phone.${appointmentData.customer_phone.replace(/\D/g, '')}@rachel.voice`,
+                    appointment_date: appointmentData.appointment_date,
+                    appointment_time: appointmentData.appointment_time,
                     duration: appointmentData.duration || 30,
                     purpose: appointmentData.purpose || 'General consultation',
                     status: 'confirmed',
                     source: 'voice_booking',
-                    confirmationCode: confirmationCode,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
+                    confirmation_code: confirmationCode,
+                    created_at: new Date(),
+                    updated_at: new Date()
                 };
                 
                 console.log('✅ Mock appointment created:', appointment.id);
@@ -96,6 +113,55 @@ class AppointmentService {
                 success: false,
                 error: error.message,
                 appointment: null
+            };
+        }
+    }
+
+    /**
+     * Check if appointment time slot is already booked using raw SQL
+     * @param {string} clientId - Client ID
+     * @param {string} date - Appointment date
+     * @param {string} time - Appointment time
+     * @returns {object} Duplicate check result
+     */
+    async checkDuplicateBooking(clientId, date, time) {
+        try {
+            if (Appointment && Appointment.sequelize) {
+                const result = await Appointment.sequelize.query(
+                    `SELECT COUNT(*) as count FROM appointments 
+                     WHERE client_id = :clientId 
+                     AND appointment_date = :date 
+                     AND appointment_time = :time 
+                     AND status != 'cancelled'`,
+                    {
+                        replacements: {
+                            clientId: clientId,
+                            date: date,
+                            time: time
+                        },
+                        type: Appointment.sequelize.QueryTypes.SELECT
+                    }
+                );
+                
+                const count = parseInt(result[0].count);
+                
+                return {
+                    exists: count > 0,
+                    count: count
+                };
+            } else {
+                // Fallback - assume no duplicates
+                return {
+                    exists: false,
+                    count: 0
+                };
+            }
+        } catch (error) {
+            console.error('Error checking duplicate booking:', error.message);
+            // Don't throw error, just return false to allow booking
+            return {
+                exists: false,
+                count: 0
             };
         }
     }
@@ -157,48 +223,6 @@ class AppointmentService {
     }
 
     /**
-     * Check if appointment time slot is already booked using Sequelize
-     * @param {string} clientId - Client ID
-     * @param {string} date - Appointment date
-     * @param {string} time - Appointment time
-     * @returns {object} Duplicate check result
-     */
-    async checkDuplicateBooking(clientId, date, time) {
-        try {
-            if (Appointment && Appointment.count) {
-                const count = await Appointment.count({
-                    where: {
-                        clientId: clientId,
-                        appointmentDate: date,
-                        appointmentTime: time,
-                        status: {
-                            [Appointment.sequelize.Sequelize.Op.ne]: 'cancelled'
-                        }
-                    }
-                });
-                
-                return {
-                    exists: count > 0,
-                    count: count
-                };
-            } else {
-                // Fallback - assume no duplicates
-                return {
-                    exists: false,
-                    count: 0
-                };
-            }
-        } catch (error) {
-            console.error('Error checking duplicate booking:', error.message);
-            // Don't throw error, just return false to allow booking
-            return {
-                exists: false,
-                count: 0
-            };
-        }
-    }
-
-    /**
      * Basic phone number format validation
      * @param {string} phone - Phone number to validate
      * @returns {boolean} Valid format
@@ -235,16 +259,22 @@ class AppointmentService {
     }
 
     /**
-     * Get appointment by ID using Sequelize
+     * Get appointment by ID using raw SQL
      * @param {string} appointmentId - Appointment ID
      * @returns {object} Appointment details
      */
     async getAppointment(appointmentId) {
         try {
-            if (Appointment && Appointment.findByPk) {
-                const appointment = await Appointment.findByPk(appointmentId);
+            if (Appointment && Appointment.sequelize) {
+                const result = await Appointment.sequelize.query(
+                    `SELECT * FROM appointments WHERE id = :appointmentId`,
+                    {
+                        replacements: { appointmentId: appointmentId },
+                        type: Appointment.sequelize.QueryTypes.SELECT
+                    }
+                );
                 
-                if (!appointment) {
+                if (result.length === 0) {
                     return {
                         success: false,
                         error: 'Appointment not found'
@@ -253,12 +283,12 @@ class AppointmentService {
                 
                 return {
                     success: true,
-                    appointment: appointment
+                    appointment: result[0]
                 };
             } else {
                 return {
                     success: false,
-                    error: 'Appointment model not available'
+                    error: 'Database not available'
                 };
             }
         } catch (error) {
@@ -271,36 +301,40 @@ class AppointmentService {
     }
 
     /**
-     * Cancel an appointment using Sequelize
+     * Cancel an appointment using raw SQL
      * @param {string} appointmentId - Appointment ID
      * @returns {object} Cancellation result
      */
     async cancelAppointment(appointmentId) {
         try {
-            if (Appointment && Appointment.findByPk) {
-                const appointment = await Appointment.findByPk(appointmentId);
+            if (Appointment && Appointment.sequelize) {
+                const result = await Appointment.sequelize.query(
+                    `UPDATE appointments 
+                     SET status = 'cancelled', updated_at = NOW() 
+                     WHERE id = :appointmentId 
+                     RETURNING *`,
+                    {
+                        replacements: { appointmentId: appointmentId },
+                        type: Appointment.sequelize.QueryTypes.UPDATE
+                    }
+                );
                 
-                if (!appointment) {
+                if (result[0].length === 0) {
                     return {
                         success: false,
                         error: 'Appointment not found'
                     };
                 }
                 
-                await appointment.update({
-                    status: 'cancelled',
-                    updatedAt: new Date()
-                });
-                
                 return {
                     success: true,
-                    appointment: appointment,
+                    appointment: result[0][0],
                     message: 'Appointment cancelled successfully'
                 };
             } else {
                 return {
                     success: false,
-                    error: 'Appointment model not available'
+                    error: 'Database not available'
                 };
             }
         } catch (error) {
@@ -313,51 +347,47 @@ class AppointmentService {
     }
 
     /**
-     * Get appointments for a specific client using Sequelize
+     * Get appointments for a specific client using raw SQL
      * @param {string} clientId - Client ID
      * @param {object} options - Query options (status, date range, etc.)
      * @returns {object} Appointments list
      */
     async getClientAppointments(clientId, options = {}) {
         try {
-            if (Appointment && Appointment.findAll) {
-                const whereClause = {
-                    clientId: clientId
-                };
+            if (Appointment && Appointment.sequelize) {
+                let whereClause = `WHERE client_id = :clientId`;
+                const replacements = { clientId: clientId };
                 
                 // Add status filter if provided
                 if (options.status) {
-                    whereClause.status = options.status;
+                    whereClause += ` AND status = :status`;
+                    replacements.status = options.status;
                 }
                 
                 // Add date range filter if provided
                 if (options.fromDate) {
-                    whereClause.appointmentDate = {
-                        [Appointment.sequelize.Sequelize.Op.gte]: options.fromDate
-                    };
+                    whereClause += ` AND appointment_date >= :fromDate`;
+                    replacements.fromDate = options.fromDate;
                 }
                 
                 if (options.toDate) {
-                    if (whereClause.appointmentDate) {
-                        whereClause.appointmentDate[Appointment.sequelize.Sequelize.Op.lte] = options.toDate;
-                    } else {
-                        whereClause.appointmentDate = {
-                            [Appointment.sequelize.Sequelize.Op.lte]: options.toDate
-                        };
-                    }
+                    whereClause += ` AND appointment_date <= :toDate`;
+                    replacements.toDate = options.toDate;
                 }
                 
-                const queryOptions = {
-                    where: whereClause,
-                    order: [['appointmentDate', 'ASC'], ['appointmentTime', 'ASC']]
-                };
-                
-                // Add limit if provided
+                let limitClause = '';
                 if (options.limit) {
-                    queryOptions.limit = options.limit;
+                    limitClause = ` LIMIT :limit`;
+                    replacements.limit = options.limit;
                 }
                 
-                const appointments = await Appointment.findAll(queryOptions);
+                const query = `SELECT * FROM appointments ${whereClause} 
+                              ORDER BY appointment_date ASC, appointment_time ASC${limitClause}`;
+                
+                const appointments = await Appointment.sequelize.query(query, {
+                    replacements: replacements,
+                    type: Appointment.sequelize.QueryTypes.SELECT
+                });
                 
                 return {
                     success: true,
@@ -367,7 +397,7 @@ class AppointmentService {
             } else {
                 return {
                     success: false,
-                    error: 'Appointment model not available',
+                    error: 'Database not available',
                     appointments: []
                 };
             }
