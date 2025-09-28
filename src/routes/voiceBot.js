@@ -1,4 +1,4 @@
-// src/routes/voiceBot.js - UPDATED WITH ELEVENLABS PREMIUM VOICE
+// src/routes/voiceBot.js - UPDATED WITH CLIENT ID CALL LOGGING FIX
 const express = require('express');
 const router = express.Router();
 const twilio = require('twilio');
@@ -28,6 +28,83 @@ const client = twilio(accountSid, authToken);
 
 // In-memory session storage (in production, use Redis or database)
 const voiceSessions = new Map();
+
+// FIXED: Call status webhook handler that preserves client_id
+router.post('/webhook/call-status', async (req, res) => {
+    try {
+        const callSid = req.body.CallSid;
+        const callStatus = req.body.CallStatus;
+        const callDuration = req.body.CallDuration || 0;
+        const from = req.body.From;
+        const to = req.body.To;
+        const direction = req.body.Direction || 'inbound';
+        
+        console.log(`📞 Voice webhook received:\n Call SID: ${callSid}\n From: ${from}\n To: ${to}\n Status: ${callStatus}\n Direction: ${direction}\n Duration: ${callDuration}`);
+        
+        // Get session to find client_id
+        const session = voiceSessions.get(callSid);
+        const clientId = session ? session.clientId : null;
+        
+        if (!clientId) {
+            console.log('⚠️ No client ID found in session, attempting lookup by phone number');
+            const clientResult = await identifyClient(to);
+            const fallbackClientId = clientResult.success ? clientResult.data.id : null;
+            
+            if (fallbackClientId) {
+                console.log(`✅ Found client ID via fallback lookup: ${fallbackClientId}`);
+                await storeCallRecord(callSid, from, to, callStatus, direction, callDuration, fallbackClientId);
+            } else {
+                console.log('❌ Could not determine client_id for call logging');
+            }
+        } else {
+            console.log(`✅ Using client ID from session: ${clientId}`);
+            await storeCallRecord(callSid, from, to, callStatus, direction, callDuration, clientId);
+        }
+        
+        // Clean up session for completed calls
+        if (['completed', 'failed', 'busy', 'no-answer'].includes(callStatus)) {
+            voiceSessions.delete(callSid);
+            console.log(`🧹 Session cleaned up for call: ${callSid}`);
+        }
+        
+        res.status(200).send('OK');
+        
+    } catch (error) {
+        console.error('⚠️ Failed to store/update call record:', error.message);
+        res.status(200).send('OK'); // Still return OK to Twilio
+    }
+});
+
+// FIXED: Store call record with client_id
+async function storeCallRecord(callSid, fromNumber, toNumber, status, direction, duration, clientId) {
+    try {
+        if (!Call || !clientId) {
+            console.log('⚠️ Cannot store call - missing Call model or client_id');
+            return;
+        }
+        
+        const callData = {
+            twilio_call_sid: callSid,
+            from_number: fromNumber,
+            to_number: toNumber,
+            direction: direction,
+            status: 'completed',
+            call_status: status,
+            duration: parseInt(duration) || 0,
+            client_id: clientId, // FIXED: Include client_id
+            start_time: new Date(),
+            end_time: new Date(),
+            created_at: new Date(),
+            updated_at: new Date()
+        };
+        
+        const call = await Call.create(callData);
+        console.log(`✅ Call record stored: ${call.id} for client ${clientId}`);
+        
+    } catch (error) {
+        console.error('❌ Error storing call record:', error.message);
+    }
+}
 
 // Main voice webhook handler - UPDATED WITH CLIENT IDENTIFICATION
 router.post('/webhook/voice', async (req, res) => {
@@ -135,7 +212,7 @@ async function handleGreeting(session, twiml) {
         }
     }
     
-    const fullMessage = `${greeting} I'm Rachel, your virtual assistant. I can help you with several things today. Please say or press 1 for Sales, 2 for Support, 3 to Schedule an Appointment, or 0 to speak with a representative.`;
+    const fullMessage = `${greeting} I'm your virtual assistant. I can help you with several things today. Please say or press 1 for Sales, 2 for Support, 3 to Schedule an Appointment, or 0 to speak with a representative.`;
     
     // Use ElevenLabs premium voice
     await elevenLabsService.addSpeech(twiml, fullMessage);
