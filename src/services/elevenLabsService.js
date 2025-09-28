@@ -6,26 +6,21 @@ class ElevenLabsService {
     constructor() {
         this.apiKey = process.env.ELEVENLABS_API_KEY;
         this.baseUrl = 'https://api.elevenlabs.io/v1';
-        this.defaultVoiceId = 'pNInz6obpgDQGcFmaJgB'; // Rachel voice
+        this.defaultVoiceId = '21m00Tcm4TlvDq8ikWAM'; // Rachel's correct voice ID
         this.audioDir = path.join(process.cwd(), 'public', 'audio');
 
         // Ensure public and audio directories exist
-const publicDir = path.join(process.cwd(), 'public');
-if (!fs.existsSync(publicDir)) {
-    fs.mkdirSync(publicDir, { recursive: true });
-}
-if (!fs.existsSync(this.audioDir)) {
-    fs.mkdirSync(this.audioDir, { recursive: true });
-}
-        
-        // Ensure audio directory exists
+        const publicDir = path.join(process.cwd(), 'public');
+        if (!fs.existsSync(publicDir)) {
+            fs.mkdirSync(publicDir, { recursive: true });
+        }
         if (!fs.existsSync(this.audioDir)) {
             fs.mkdirSync(this.audioDir, { recursive: true });
         }
     }
 
     /**
-     * Generate speech using ElevenLabs API
+     * Generate speech using ElevenLabs API with Rachel's voice
      * @param {string} text - Text to convert to speech
      * @param {string} voiceId - ElevenLabs voice ID (optional)
      * @returns {Promise<string>} URL to generated audio file
@@ -37,7 +32,13 @@ if (!fs.existsSync(this.audioDir)) {
             const filepath = path.join(this.audioDir, filename);
             const publicUrl = `/audio/${filename}`;
 
-            console.log(`🎤 Generating ElevenLabs speech: "${text.substring(0, 50)}..."`);
+            // Prepare text for speech (same as Python version)
+            const speechText = text
+                .replace(/RinglyPro/g, 'Ringly Pro')
+                .replace(/AI/g, 'A.I.')
+                .replace(/\$/g, ' dollars');
+
+            console.log(`🎤 Generating Rachel's voice: "${speechText.substring(0, 50)}..."`);
 
             const response = await axios({
                 method: 'POST',
@@ -48,13 +49,11 @@ if (!fs.existsSync(this.audioDir)) {
                     'xi-api-key': this.apiKey
                 },
                 data: {
-                    text: text,
+                    text: speechText,
                     model_id: 'eleven_monolingual_v1',
                     voice_settings: {
                         stability: 0.5,
-                        similarity_boost: 0.8,
-                        style: 0.2,
-                        use_speaker_boost: true
+                        similarity_boost: 0.75
                     }
                 },
                 responseType: 'stream'
@@ -66,14 +65,14 @@ if (!fs.existsSync(this.audioDir)) {
 
             return new Promise((resolve, reject) => {
                 writer.on('finish', () => {
-                    console.log(`✅ ElevenLabs audio generated: ${filename}`);
+                    console.log(`✅ Rachel's voice audio generated: ${filename}`);
                     resolve(publicUrl);
                 });
                 writer.on('error', reject);
             });
 
         } catch (error) {
-            console.error('❌ ElevenLabs API error:', error.response?.data || error.message);
+            console.error('❌ ElevenLabs Rachel voice error:', error.response?.data || error.message);
             
             // Fallback to null (will use Twilio TTS)
             return null;
@@ -91,9 +90,10 @@ if (!fs.existsSync(this.audioDir)) {
             const audioUrl = await this.generateSpeech(text);
             
             if (audioUrl) {
-                // Use ElevenLabs premium voice
-                const baseUrl = process.env.BASE_URL || 'https://your-domain.com';
+                // Use Rachel's premium voice
+                const baseUrl = process.env.BASE_URL || 'https://ringlypro-crm.onrender.com';
                 twiml.play(`${baseUrl}${audioUrl}`);
+                console.log(`🎙️ Using Rachel's premium voice: ${baseUrl}${audioUrl}`);
             } else {
                 // Fallback to Twilio TTS
                 console.log('⚠️ Falling back to Twilio TTS');
