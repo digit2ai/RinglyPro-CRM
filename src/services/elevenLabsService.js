@@ -7,7 +7,16 @@ class ElevenLabsService {
         this.apiKey = process.env.ELEVENLABS_API_KEY;
         this.baseUrl = 'https://api.elevenlabs.io/v1';
         this.defaultVoiceId = 'pNInz6obpgDQGcFmaJgB'; // Rachel voice
-        this.audioDir = path.join(__dirname, '../public/audio');
+        this.audioDir = path.join(process.cwd(), 'public', 'audio');
+
+        // Ensure public and audio directories exist
+const publicDir = path.join(process.cwd(), 'public');
+if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir, { recursive: true });
+}
+if (!fs.existsSync(this.audioDir)) {
+    fs.mkdirSync(this.audioDir, { recursive: true });
+}
         
         // Ensure audio directory exists
         if (!fs.existsSync(this.audioDir)) {
