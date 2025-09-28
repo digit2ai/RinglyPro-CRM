@@ -40,22 +40,24 @@ class AppointmentService {
             // Generate confirmation code
             const confirmationCode = this.generateConfirmationCode();
 
-            // Create appointment using Sequelize
+            // Create appointment using Sequelize - FIXED: Use camelCase field names
             let appointment;
             
             if (Appointment && Appointment.create) {
                 appointment = await Appointment.create({
-                    client_id: clientId,
-                    customer_name: appointmentData.customer_name,
-                    customer_phone: appointmentData.customer_phone,
-                    customer_email: appointmentData.customer_email || null,
-                    appointment_date: appointmentData.appointment_date,
-                    appointment_time: appointmentData.appointment_time,
+                    clientId: clientId,
+                    customerName: appointmentData.customer_name,
+                    customerPhone: appointmentData.customer_phone,
+                    customerEmail: appointmentData.customer_email || `phone.${appointmentData.customer_phone.replace(/\D/g, '')}@rachel.voice`,
+                    appointmentDate: appointmentData.appointment_date,
+                    appointmentTime: appointmentData.appointment_time,
                     duration: appointmentData.duration || 30,
                     purpose: appointmentData.purpose || 'General consultation',
                     status: 'confirmed',
                     source: 'voice_booking',
-                    confirmation_code: confirmationCode
+                    confirmationCode: confirmationCode,
+                    reminderSent: false,
+                    confirmationSent: false
                 });
                 
                 console.log('✅ Appointment booked in database:', appointment.id);
@@ -63,19 +65,19 @@ class AppointmentService {
                 // Fallback mock appointment
                 appointment = {
                     id: Math.floor(Math.random() * 10000),
-                    client_id: clientId,
-                    customer_name: appointmentData.customer_name,
-                    customer_phone: appointmentData.customer_phone,
-                    customer_email: appointmentData.customer_email || null,
-                    appointment_date: appointmentData.appointment_date,
-                    appointment_time: appointmentData.appointment_time,
+                    clientId: clientId,
+                    customerName: appointmentData.customer_name,
+                    customerPhone: appointmentData.customer_phone,
+                    customerEmail: appointmentData.customer_email || `phone.${appointmentData.customer_phone.replace(/\D/g, '')}@rachel.voice`,
+                    appointmentDate: appointmentData.appointment_date,
+                    appointmentTime: appointmentData.appointment_time,
                     duration: appointmentData.duration || 30,
                     purpose: appointmentData.purpose || 'General consultation',
                     status: 'confirmed',
                     source: 'voice_booking',
-                    confirmation_code: confirmationCode,
-                    created_at: new Date(),
-                    updated_at: new Date()
+                    confirmationCode: confirmationCode,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
                 };
                 
                 console.log('✅ Mock appointment created:', appointment.id);
@@ -166,9 +168,9 @@ class AppointmentService {
             if (Appointment && Appointment.count) {
                 const count = await Appointment.count({
                     where: {
-                        client_id: clientId,
-                        appointment_date: date,
-                        appointment_time: time,
+                        clientId: clientId,
+                        appointmentDate: date,
+                        appointmentTime: time,
                         status: {
                             [Appointment.sequelize.Sequelize.Op.ne]: 'cancelled'
                         }
@@ -287,7 +289,7 @@ class AppointmentService {
                 
                 await appointment.update({
                     status: 'cancelled',
-                    updated_at: new Date()
+                    updatedAt: new Date()
                 });
                 
                 return {
@@ -320,7 +322,7 @@ class AppointmentService {
         try {
             if (Appointment && Appointment.findAll) {
                 const whereClause = {
-                    client_id: clientId
+                    clientId: clientId
                 };
                 
                 // Add status filter if provided
@@ -330,16 +332,16 @@ class AppointmentService {
                 
                 // Add date range filter if provided
                 if (options.fromDate) {
-                    whereClause.appointment_date = {
+                    whereClause.appointmentDate = {
                         [Appointment.sequelize.Sequelize.Op.gte]: options.fromDate
                     };
                 }
                 
                 if (options.toDate) {
-                    if (whereClause.appointment_date) {
-                        whereClause.appointment_date[Appointment.sequelize.Sequelize.Op.lte] = options.toDate;
+                    if (whereClause.appointmentDate) {
+                        whereClause.appointmentDate[Appointment.sequelize.Sequelize.Op.lte] = options.toDate;
                     } else {
-                        whereClause.appointment_date = {
+                        whereClause.appointmentDate = {
                             [Appointment.sequelize.Sequelize.Op.lte]: options.toDate
                         };
                     }
@@ -347,7 +349,7 @@ class AppointmentService {
                 
                 const queryOptions = {
                     where: whereClause,
-                    order: [['appointment_date', 'ASC'], ['appointment_time', 'ASC']]
+                    order: [['appointmentDate', 'ASC'], ['appointmentTime', 'ASC']]
                 };
                 
                 // Add limit if provided

@@ -229,7 +229,7 @@ async function handleGreeting(session, twiml) {
     
     // Fallback if no input
     await elevenLabsService.addSpeech(twiml, 'I didn\'t receive your selection. Let me transfer you to a representative.');
-    twiml.dial('+1234567890'); // Replace with actual number
+    twiml.dial('+6566001400'); // Replace with actual number
     
     return twiml;
 }
