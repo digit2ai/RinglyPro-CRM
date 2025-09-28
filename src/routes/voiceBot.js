@@ -227,9 +227,9 @@ async function handleGreeting(session, twiml) {
         action: '/voice/webhook/voice'
     });
     
-    // Fallback if no input
+    // Fallback if no input - FIXED: Use correct representative number
     await elevenLabsService.addSpeech(twiml, 'I didn\'t receive your selection. Let me transfer you to a representative.');
-    twiml.dial('+6566001400'); // Replace with actual number
+    twiml.dial('+16566001400');
     
     return twiml;
 }
@@ -242,17 +242,17 @@ async function handleMainMenu(session, twiml, digits, speech) {
     
     switch (input) {
         case '1':
-            // Sales
+            // Sales - FIXED: Use correct representative number
             session.step = 'sales';
             await elevenLabsService.addSpeech(twiml, 'Connecting you to our sales team. Please hold.');
-            twiml.dial('+1234567890'); // Replace with sales number
+            twiml.dial('+16566001400');
             break;
             
         case '2':
-            // Support
+            // Support - FIXED: Use correct representative number
             session.step = 'support';
             await elevenLabsService.addSpeech(twiml, 'Connecting you to technical support. Please hold.');
-            twiml.dial('+1234567891'); // Replace with support number
+            twiml.dial('+16566001400');
             break;
             
         case '3':
@@ -263,9 +263,9 @@ async function handleMainMenu(session, twiml, digits, speech) {
             return await handleCollectName(session, twiml);
             
         case '0':
-            // Representative
+            // Representative - FIXED: Use correct representative number
             await elevenLabsService.addSpeech(twiml, 'Connecting you to a representative. Please hold.');
-            twiml.dial('+1234567892'); // Replace with main number
+            twiml.dial('+16566001400');
             break;
             
         default:
@@ -323,7 +323,7 @@ async function handleCollectName(session, twiml, speech) {
             await elevenLabsService.addSpeech(gather, 'I didn\'t catch your name clearly. Could you please say your full name again?');
             
             await elevenLabsService.addSpeech(twiml, 'I\'m having trouble hearing you. Let me connect you to a representative.');
-            twiml.dial('+1234567892');
+            twiml.dial('+16566001400');
         }
     } else {
         // First time asking for name
@@ -337,7 +337,7 @@ async function handleCollectName(session, twiml, speech) {
         await elevenLabsService.addSpeech(gather, 'Great! I\'d be happy to help you schedule an appointment. May I have your full name please?');
         
         await elevenLabsService.addSpeech(twiml, 'I didn\'t hear your name. Let me connect you to someone who can help.');
-        twiml.dial('+1234567892');
+        twiml.dial('+16566001400');
     }
     
     return twiml;
@@ -369,7 +369,7 @@ async function handleCollectPhone(session, twiml, digits) {
         await elevenLabsService.addSpeech(gather, 'That doesn\'t appear to be a valid 10-digit phone number. Please try again.');
         
         await elevenLabsService.addSpeech(twiml, 'I\'m having trouble with your phone number. Let me connect you to a representative.');
-        twiml.dial('+1234567892');
+        twiml.dial('+16566001400');
     }
     
     return twiml;
@@ -381,7 +381,7 @@ async function handleShowAvailability(session, twiml) {
         if (!session.clientId) {
             console.log('❌ No client ID available for availability check');
             await elevenLabsService.addSpeech(twiml, 'I apologize, but I\'m having trouble accessing our calendar. Let me connect you to a representative.');
-            twiml.dial('+1234567892');
+            twiml.dial('+16566001400');
             return twiml;
         }
 
@@ -398,7 +398,7 @@ async function handleShowAvailability(session, twiml) {
         if (!availabilityResult.success || availabilityResult.slots.length === 0) {
             console.log('❌ No availability found');
             await elevenLabsService.addSpeech(twiml, 'I apologize, but we don\'t have any available appointments tomorrow. Let me connect you to someone who can help you find alternative times.');
-            twiml.dial('+1234567892');
+            twiml.dial('+16566001400');
             return twiml;
         }
 
@@ -431,14 +431,14 @@ async function handleShowAvailability(session, twiml) {
         await elevenLabsService.addSpeech(gather, optionsText);
         
         await elevenLabsService.addSpeech(twiml, 'I didn\'t receive your selection. Let me connect you to a representative.');
-        twiml.dial('+1234567892');
+        twiml.dial('+16566001400');
         
         return twiml;
 
     } catch (error) {
         console.error('❌ Error checking availability:', error);
         await elevenLabsService.addSpeech(twiml, 'I\'m having trouble checking our calendar. Let me connect you to a representative.');
-        twiml.dial('+1234567892');
+        twiml.dial('+16566001400');
         return twiml;
     }
 }
@@ -467,12 +467,12 @@ async function handleSelectSlot(session, twiml, digits) {
         await elevenLabsService.addSpeech(gather, `To confirm: ${session.data.customerName}, phone number ${formatPhoneForSpeech(session.data.customerPhone)}, appointment on ${formatDateForSpeech(slot.date)} at ${formatTimeForSpeech(slot.time)}. Press 1 to confirm or 2 to choose a different time.`);
         
         await elevenLabsService.addSpeech(twiml, 'I didn\'t receive your confirmation. Let me connect you to a representative.');
-        twiml.dial('+1234567892');
+        twiml.dial('+16566001400');
         
     } else if (selection === 9) {
         // Show more options (implement if needed)
         await elevenLabsService.addSpeech(twiml, 'More appointment options are available. Let me connect you to a representative who can help you find the perfect time.');
-        twiml.dial('+1234567892');
+        twiml.dial('+16566001400');
         
     } else {
         // Invalid selection
@@ -509,7 +509,7 @@ async function handleConfirmAppointment(session, twiml, digits) {
         await elevenLabsService.addSpeech(gather, 'Please press 1 to confirm your appointment or 2 to choose a different time.');
         
         await elevenLabsService.addSpeech(twiml, 'Let me connect you to a representative.');
-        twiml.dial('+1234567892');
+        twiml.dial('+16566001400');
     }
     
     return twiml;
@@ -556,8 +556,8 @@ async function handleBookAppointment(session, twiml) {
             const businessName = session.clientInfo ? session.clientInfo.business_name : 'our office';
             await elevenLabsService.addSpeech(twiml, `Thank you for calling ${businessName}. We look forward to seeing you. Goodbye!`);
             
-            // Send confirmation SMS
-            await sendAppointmentConfirmationSMS(session.data.customerPhone, appointment, session.clientInfo);
+            // FIXED: Send confirmation SMS with client_id
+            await sendAppointmentConfirmationSMS(session.data.customerPhone, appointment, session.clientInfo, session.clientId);
             
             // Clean up session
             voiceSessions.delete(session.callSid);
@@ -572,7 +572,7 @@ async function handleBookAppointment(session, twiml) {
         console.error('❌ Appointment booking error:', error);
         
         await elevenLabsService.addSpeech(twiml, 'I apologize, but I\'m having trouble booking your appointment right now. Let me connect you to a representative who can help you immediately.');
-        twiml.dial('+1234567892');
+        twiml.dial('+16566001400');
     }
     
     return twiml;
@@ -751,7 +751,8 @@ async function findOrCreateContact(name, phone) {
     }
 }
 
-async function sendAppointmentConfirmationSMS(phone, appointment, clientInfo) {
+// FIXED: Send appointment confirmation SMS with client_id logging
+async function sendAppointmentConfirmationSMS(phone, appointment, clientInfo, clientId) {
     try {
         const businessName = clientInfo ? clientInfo.business_name : 'RinglyPro';
         const message = `📅 Appointment Confirmed!\n\nHi ${appointment.customer_name},\n\nYour appointment is confirmed for ${formatDateForSpeech(appointment.appointment_date)} at ${formatTimeForSpeech(appointment.appointment_time)}.\n\nLocation: ${businessName}\nDuration: ${appointment.duration} minutes\nConfirmation: ${appointment.confirmation_code}\n\nCall us if you need to reschedule.\n\nThank you!`;
@@ -765,18 +766,23 @@ async function sendAppointmentConfirmationSMS(phone, appointment, clientInfo) {
             
             console.log(`📱 Confirmation SMS sent: ${response.sid}`);
             
-            // Log SMS to database
-            if (Message && Message.create) {
+            // FIXED: Log SMS to database with client_id
+            if (Message && Message.create && clientId) {
                 await Message.create({
-                    contactId: appointment.contact_id,
-                    twilioSid: response.sid,
+                    client_id: clientId, // FIXED: Add missing client_id
+                    contact_id: appointment.contact_id || null,
+                    twilio_sid: response.sid,
                     direction: 'outgoing',
-                    fromNumber: process.env.TWILIO_PHONE_NUMBER,
-                    toNumber: phone,
+                    from_number: process.env.TWILIO_PHONE_NUMBER,
+                    to_number: phone,
                     body: message,
                     status: 'sent',
-                    sentAt: new Date()
+                    sent_at: new Date(),
+                    created_at: new Date(),
+                    updated_at: new Date()
                 });
+                
+                console.log(`📱 SMS logged to database for client ${clientId}`);
             }
             
             return response;
