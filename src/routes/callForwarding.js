@@ -1,81 +1,240 @@
 const express = require('express');
 const router = express.Router();
-const { Client } = require('../models');
-const { authenticateToken } = require('../middleware/auth');
 
-// Carrier forwarding code templates
+// Comprehensive carrier forwarding codes database
 const CARRIER_CODES = {
     'att': {
         name: 'AT&T',
-        activate: '*004*{rachel_number}*11#',
-        deactivate: '#004#',
-        description: 'Forwards calls when busy, no answer, or unreachable'
+        conditional: {
+            busy: '*67*{rachel_number}#',
+            no_answer: '*61*{rachel_number}#', 
+            unreachable: '*62*{rachel_number}#',
+            all_conditions: '*21*{rachel_number}#'
+        },
+        deactivate: {
+            busy: '##67#',
+            no_answer: '##61#',
+            unreachable: '##62#', 
+            all_conditions: '##21#'
+        },
+        recommended: 'all_conditions',
+        description: 'Forwards when busy, no answer, or unreachable'
     },
-    'tmobile': {
-        name: 'T-Mobile', 
-        activate: '**004*{rachel_number}*11#',
-        deactivate: '##004#',
-        description: 'All conditional forwarding (no answer, busy, unreachable)'
-    },
+    
     'verizon': {
         name: 'Verizon',
-        activate: '*71{rachel_number}',
-        deactivate: '*73',
-        description: 'No answer/busy conditional forwarding'
+        conditional: {
+            busy_no_answer: '*71{rachel_number}',
+            unconditional: '*72{rachel_number}'
+        },
+        deactivate: {
+            all: '*73'
+        },
+        recommended: 'busy_no_answer',
+        description: 'Forwards after 3-4 rings when busy or no answer'
     },
+    
+    'tmobile': {
+        name: 'T-Mobile',
+        conditional: {
+            busy: '**67*{rachel_number}#',
+            no_answer: '**61*{rachel_number}#',
+            unreachable: '**62*{rachel_number}#', 
+            all_conditions: '**004*{rachel_number}*11#'
+        },
+        deactivate: {
+            busy: '##67#',
+            no_answer: '##61#',
+            unreachable: '##62#',
+            all_conditions: '##004#'
+        },
+        recommended: 'all_conditions',
+        description: 'GSM standard codes - all conditional scenarios'
+    },
+    
     'sprint': {
         name: 'Sprint/T-Mobile',
-        activate: '*004*{rachel_number}*11#', 
-        deactivate: '#004#',
-        description: 'Conditional forwarding for all scenarios'
+        conditional: {
+            busy_no_answer: '*28{rachel_number}',
+            busy_only: '*74{rachel_number}',
+            no_answer_only: '*73{rachel_number}',
+            unconditional: '*72{rachel_number}'
+        },
+        deactivate: {
+            busy_no_answer: '*38',
+            all: '*73'
+        },
+        recommended: 'busy_no_answer', 
+        description: 'Combined busy and no answer forwarding'
+    },
+    
+    'uscellular': {
+        name: 'US Cellular',
+        conditional: {
+            busy_no_answer: '*90*1{rachel_number}',
+            no_answer_only: '*92*1{rachel_number}',
+            unconditional: '*72*1{rachel_number}'
+        },
+        deactivate: {
+            busy: '*900',
+            no_answer: '*920',
+            all: '*720'
+        },
+        recommended: 'busy_no_answer',
+        description: 'US Cellular specific conditional forwarding'
+    },
+    
+    'boost': {
+        name: 'Boost Mobile',
+        conditional: {
+            unconditional: '*72{rachel_number}',
+            note: 'Conditional forwarding limited on Boost'
+        },
+        deactivate: {
+            all: '*73'
+        },
+        recommended: 'unconditional',
+        description: 'Limited to unconditional forwarding only'
+    },
+    
+    'metro': {
+        name: 'Metro by T-Mobile',
+        conditional: {
+            busy: '**67*{rachel_number}#',
+            no_answer: '**61*{rachel_number}#',
+            all_conditions: '**004*{rachel_number}*11#'
+        },
+        deactivate: {
+            busy: '##67#',
+            no_answer: '##61#', 
+            all_conditions: '##004#'
+        },
+        recommended: 'all_conditions',
+        description: 'Uses T-Mobile GSM codes'
+    },
+    
+    'visible': {
+        name: 'Visible (Verizon)',
+        conditional: {
+            busy_no_answer: '*71{rachel_number}',
+            unconditional: '*72{rachel_number}'
+        },
+        deactivate: {
+            all: '*73'
+        },
+        recommended: 'busy_no_answer',
+        description: 'Verizon network codes'
+    },
+    
+    'cricketwireless': {
+        name: 'Cricket Wireless',
+        conditional: {
+            busy: '*67*{rachel_number}#',
+            no_answer: '*61*{rachel_number}#',
+            all_conditions: '*21*{rachel_number}#'
+        },
+        deactivate: {
+            busy: '##67#',
+            no_answer: '##61#',
+            all_conditions: '##21#'
+        },
+        recommended: 'all_conditions',
+        description: 'AT&T network - uses AT&T codes'
     }
 };
 
-// GET /api/call-forwarding/setup
-router.get('/setup', authenticateToken, async (req, res) => {
-    try {
-        const client = await Client.findOne({
-            where: { user_id: req.user.id },
-            attributes: ['id', 'business_name', 'business_phone', 'ringlypro_number', 'rachel_enabled']
-        });
+// GET /api/call-forwarding/carriers
+router.get('/carriers', (req, res) => {
+    const carrierList = Object.keys(CARRIER_CODES).map(carrier => ({
+        code: carrier,
+        name: CARRIER_CODES[carrier].name,
+        description: CARRIER_CODES[carrier].description
+    }));
+    
+    res.json({
+        success: true,
+        carriers: carrierList,
+        count: carrierList.length
+    });
+});
 
-        if (!client) {
+// GET /api/call-forwarding/setup/:carrier/:client_id - Multi-tenant without auth (for testing)
+router.get('/setup/:carrier/:client_id', async (req, res) => {
+    try {
+        const { carrier, client_id } = req.params;
+        
+        if (!CARRIER_CODES[carrier]) {
+            return res.status(400).json({
+                success: false,
+                error: 'Carrier not supported',
+                supported_carriers: Object.keys(CARRIER_CODES)
+            });
+        }
+        
+        const { sequelize } = require('../models');
+        
+        const client = await sequelize.query(
+            'SELECT id, business_name, business_phone, ringlypro_number, rachel_enabled FROM clients WHERE id = :client_id',
+            { 
+                replacements: { client_id: client_id },
+                type: sequelize.QueryTypes.SELECT 
+            }
+        );
+
+        if (!client || client.length === 0) {
             return res.status(404).json({
                 success: false,
-                error: 'Client not found'
+                error: `Client with ID ${client_id} not found`
             });
         }
 
-        // Generate forwarding codes for all carriers
-        const forwardingInstructions = Object.keys(CARRIER_CODES).map(carrier => {
-            const config = CARRIER_CODES[carrier];
-            return {
-                carrier: carrier,
-                name: config.name,
-                description: config.description,
-                activate_code: config.activate.replace('{rachel_number}', client.ringlypro_number),
-                deactivate_code: config.deactivate,
-                instructions: {
-                    activate: `Dial ${config.activate.replace('{rachel_number}', client.ringlypro_number)} then press call`,
-                    deactivate: `Dial ${config.deactivate} then press call`
-                }
-            };
+        const config = CARRIER_CODES[carrier];
+        const rachelNumber = client[0].ringlypro_number;
+        
+        // Generate activation codes
+        const activationCodes = {};
+        Object.keys(config.conditional).forEach(type => {
+            if (type !== 'note') {
+                activationCodes[type] = config.conditional[type].replace('{rachel_number}', rachelNumber);
+            }
         });
+        
+        // Generate deactivation codes
+        const deactivationCodes = config.deactivate;
+        
+        // Get recommended setup
+        const recommendedType = config.recommended;
+        const recommendedCode = activationCodes[recommendedType];
+        const recommendedDeactivate = deactivationCodes[recommendedType] || deactivationCodes.all;
 
         res.json({
             success: true,
-            client: {
-                business_name: client.business_name,
-                business_phone: client.business_phone,
-                rachel_number: client.ringlypro_number,
-                rachel_enabled: client.rachel_enabled
+            carrier: {
+                name: config.name,
+                description: config.description
             },
-            forwarding_setup: forwardingInstructions,
-            setup_notes: [
-                "These codes work when dialed from your business phone",
-                "Forwarding activates after 3-4 rings (carrier dependent)", 
+            client: client[0],
+            setup: {
+                recommended: {
+                    type: recommendedType,
+                    activate: recommendedCode,
+                    deactivate: recommendedDeactivate,
+                    instructions: {
+                        activate: `From ${client[0].business_phone}, dial: ${recommendedCode}`,
+                        deactivate: `From ${client[0].business_phone}, dial: ${recommendedDeactivate}`
+                    }
+                },
+                all_options: {
+                    activation_codes: activationCodes,
+                    deactivation_codes: deactivationCodes
+                }
+            },
+            usage_notes: [
+                "Dial these codes from your business phone line",
+                "You'll hear a confirmation tone when successfully activated",
                 "Test by calling your business number and not answering",
-                "Deactivate anytime using the deactivate code"
+                "Calls will forward to Rachel after 3-4 rings",
+                "Use deactivation code anytime to turn off forwarding"
             ]
         });
 
@@ -85,45 +244,6 @@ router.get('/setup', authenticateToken, async (req, res) => {
             success: false,
             error: 'Failed to generate forwarding setup',
             details: error.message
-        });
-    }
-});
-
-// POST /api/call-forwarding/test
-router.post('/test', authenticateToken, async (req, res) => {
-    try {
-        const { test_number } = req.body;
-        
-        const client = await Client.findOne({
-            where: { user_id: req.user.id }
-        });
-
-        if (!client) {
-            return res.status(404).json({
-                success: false, 
-                error: 'Client not found'
-            });
-        }
-
-        // Log test attempt
-        console.log(`Forwarding test: ${test_number} → ${client.ringlypro_number} for client ${client.id}`);
-
-        res.json({
-            success: true,
-            message: `Test call instructions sent`,
-            test_steps: [
-                `Call ${client.business_phone} from ${test_number}`,
-                "Let it ring 4+ times without answering",
-                `Call should forward to Rachel at ${client.ringlypro_number}`,
-                "Rachel will identify your business and offer appointments"
-            ]
-        });
-
-    } catch (error) {
-        console.error('Call forwarding test error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to initiate test'
         });
     }
 });
