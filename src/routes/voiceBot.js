@@ -212,7 +212,7 @@ async function handleGreeting(session, twiml) {
         }
     }
     
-    const fullMessage = `${greeting} I'm your virtual assistant. I can help you with several things today. Please say or press 1 for Sales, 2 for Support, 3 to Schedule an Appointment, or 0 to speak with a representative.`;
+    const fullMessage = `${greeting} I can help you with several things today. Please say or press 1 for Sales, 2 for Support, 3 to Schedule an Appointment, or 0 to speak with a representative.`;
     
     // Use ElevenLabs premium voice
     await elevenLabsService.addSpeech(twiml, fullMessage);
