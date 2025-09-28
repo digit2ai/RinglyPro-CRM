@@ -61,6 +61,9 @@ const callForwardingRoutes = require('./routes/callForwarding');
 const forwardingStatusRoutes = require('./routes/forwardingStatus');
 const clientRoutes = require('./routes/client'); // Rachel toggle route from Task 1
 
+// Import mobile CRM routes
+const mobileRoutes = require('./routes/mobile'); // Mobile CRM API routes
+
 console.log('📄 About to require auth routes...');
 const authRoutes = require('./routes/auth'); // User authentication routes
 console.log('✅ Auth routes required successfully, type:', typeof authRoutes);
@@ -81,6 +84,9 @@ app.use('/api/credits', creditRoutes);
 
 // Client management routes
 app.use('/api/client', clientRoutes); // Rachel toggle and client settings
+
+// Add Mobile CRM API routes
+app.use('/api/mobile', mobileRoutes);
 
 // Call forwarding API routes
 app.use('/api/call-forwarding', callForwardingRoutes);
