@@ -6,12 +6,12 @@ require('dotenv').config();
 
 const app = express();
 
-// Multi-Client Configuration - ADD THIS SECTION
+// Multi-Client Configuration
 const CLIENT_ID = process.env.CLIENT_ID || 'default';
 const CLIENT_NAME = process.env.CLIENT_NAME || 'RinglyPro';
 const CLIENT_DOMAIN = process.env.CLIENT_DOMAIN || 'ringlypro.com';
 
-// Middleware
+// Middleware - MUST COME BEFORE ROUTES
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -26,32 +26,9 @@ app.use(session({
     cookie: { secure: false } // Set to true in production with HTTPS
 }));
 
-// Add this line with other route imports
-const twilioRoutes = require('./routes/twilio');
-
-// Add this line with other route mounts
-app.use('/webhook/twilio', twilioRoutes);
-
 // Set view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
-
-// Import routes
-const contactsRoutes = require('./routes/contacts');
-const appointmentsRoutes = require('./routes/appointments');
-const appointmentRoutes = require('./routes/appointment'); // Individual appointment routes
-const messagesRoutes = require('./routes/messages');
-const callsRoutes = require('./routes/calls'); // New call routes
-const callLogRoutes = require('./routes/callLog'); // Call log routes
-const voiceBotRoutes = require('./routes/voiceBot');
-const creditRoutes = require('./routes/credits'); // Credit system routes
-const voiceWebhookRouter = require('./routes/voiceWebhook'); // Rachel voice routes
-const rachelRoutes = require('./routes/rachelRoutes'); // NEW: Multi-tenant Rachel routes
-
-console.log('📄 About to require auth routes...');
-const authRoutes = require('./routes/auth'); // User authentication routes
-console.log('✅ Auth routes required successfully, type:', typeof authRoutes);
-console.log('🔍 Auth routes object:', authRoutes);
 
 // Database connection test
 const { sequelize } = require('./models');
@@ -65,32 +42,67 @@ sequelize.authenticate()
     console.error('❌ Unable to connect to database:', err);
   });
 
-// API Routes
-app.use('/api/contacts', contactsRoutes);
-app.use('/api/appointments', appointmentsRoutes);
-app.use('/api/appointment', appointmentRoutes);
-app.use('/api/messages', messagesRoutes);
-app.use('/api/calls', callsRoutes); // Mount call routes
-app.use('/api/call-log', callLogRoutes); // Mount call log routes
-app.use('/api/voice', voiceBotRoutes);
-app.use('/api/credits', creditRoutes); // Mount credit system routes
+// Import routes
+const contactsRoutes = require('./routes/contacts');
+const appointmentsRoutes = require('./routes/appointments');
+const appointmentRoutes = require('./routes/appointment'); // Individual appointment routes
+const messagesRoutes = require('./routes/messages');
+const callsRoutes = require('./routes/calls'); // New call routes
+const callLogRoutes = require('./routes/callLog'); // Call log routes
+const voiceBotRoutes = require('./routes/voiceBot');
+const creditRoutes = require('./routes/credits'); // Credit system routes
+const voiceWebhookRouter = require('./routes/voiceWebhook'); // Rachel voice routes
+const rachelRoutes = require('./routes/rachelRoutes'); // Multi-tenant Rachel routes
+const twilioRoutes = require('./routes/twilio');
 
+// Import new forwarding routes
+const conditionalForwardRoutes = require('./routes/conditionalForward');
+const callForwardingRoutes = require('./routes/callForwarding');
+const forwardingStatusRoutes = require('./routes/forwardingStatus');
+const clientRoutes = require('./routes/client'); // Rachel toggle route from Task 1
+
+console.log('📄 About to require auth routes...');
+const authRoutes = require('./routes/auth'); // User authentication routes
+console.log('✅ Auth routes required successfully, type:', typeof authRoutes);
+
+// API Routes - Organized by functionality
 console.log('📄 About to mount auth routes...');
 app.use('/api/auth', authRoutes); // Mount user authentication routes
 console.log('✅ Auth routes mounted successfully');
 
-// Voice webhook routes (existing Twilio integration)
-app.use('/voice', voiceBotRoutes);
+// Core CRM API routes
+app.use('/api/contacts', contactsRoutes);
+app.use('/api/appointments', appointmentsRoutes);
+app.use('/api/appointment', appointmentRoutes);
+app.use('/api/messages', messagesRoutes);
+app.use('/api/calls', callsRoutes);
+app.use('/api/call-log', callLogRoutes);
+app.use('/api/credits', creditRoutes);
 
-// Rachel Voice webhook routes (NEW - ElevenLabs integration)
+// Client management routes
+app.use('/api/client', clientRoutes); // Rachel toggle and client settings
+
+// Call forwarding API routes
+app.use('/api/call-forwarding', callForwardingRoutes);
+app.use('/api/forwarding-status', forwardingStatusRoutes);
+
+// Voice and webhook routes
+app.use('/api/voice', voiceBotRoutes);
+app.use('/voice', voiceBotRoutes);
+app.use('/webhook/twilio', twilioRoutes);
+
+// Conditional forwarding webhook (for business phone forwarding)
+app.use('/webhook', conditionalForwardRoutes);
+
+// Rachel Voice webhook routes (ElevenLabs integration)
 app.use('/voice/rachel', voiceWebhookRouter);
 console.log('🎤 Rachel Voice webhook routes mounted at /voice/rachel/*');
 
-// NEW: Multi-tenant Rachel routes with client identification
+// Multi-tenant Rachel routes with client identification
 app.use('/', rachelRoutes);
 console.log('🎯 Multi-tenant Rachel routes mounted - Client identification active');
 
-// Dashboard route - UPDATED FOR MULTI-CLIENT
+// Dashboard route
 app.get('/', (req, res) => {
   res.render('dashboard', { 
     title: `${CLIENT_NAME} CRM Dashboard`,
@@ -125,7 +137,7 @@ app.get('/auth-check', (req, res) => {
   res.redirect('/login');
 });
 
-// Health check endpoint - UPDATED FOR MULTI-CLIENT AND RACHEL
+// Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
@@ -139,12 +151,19 @@ app.get('/health', (req, res) => {
       rachel_voice: process.env.ELEVENLABS_API_KEY ? 'active' : 'disabled',
       stripe: process.env.STRIPE_SECRET_KEY ? 'configured' : 'not configured',
       authentication: 'enabled',
-      client_identification: 'enabled'
+      client_identification: 'enabled',
+      call_forwarding: 'enabled'
     },
     webhooks: {
       twilio_voice: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/webhook/twilio/voice`,
       rachel_voice: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/voice/rachel/`,
+      conditional_forward: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/webhook/conditional-forward`,
       rachel_client_test: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/voice/rachel/test-client/+18886103810`
+    },
+    api_endpoints: {
+      rachel_toggle: '/api/client/rachel-toggle',
+      call_forwarding_setup: '/api/call-forwarding/setup/:carrier',
+      forwarding_status: '/api/forwarding-status'
     }
   });
 });
@@ -186,7 +205,8 @@ app.get('/api/status', async (req, res) => {
         calls: process.env.TWILIO_ACCOUNT_SID ? 'enabled' : 'disabled',
         credits: process.env.STRIPE_SECRET_KEY ? 'enabled' : 'disabled',
         authentication: 'enabled',
-        client_identification: 'enabled'
+        client_identification: 'enabled',
+        call_forwarding: 'enabled'
       }
     });
   } catch (error) {
@@ -353,7 +373,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler - This is what's returning "Endpoint not found"
+// 404 handler
 app.use((req, res) => {
   console.log('🚨 404 handler hit for:', req.method, req.path);
   res.status(404).json({
