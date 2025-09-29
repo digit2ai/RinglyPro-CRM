@@ -646,9 +646,11 @@
             <div class="header-top">
                 <div>
                     <h1>RinglyPro CRM</h1>
+                    <% if (typeof client !== 'undefined' && client.businessName) { %>
                     <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">
                         <%= client.businessName %>
                     </p>
+                    <% } %>
                 </div>
                 <button class="logout-btn" onclick="logout()">
                     <svg style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -865,6 +867,8 @@
                     
                     if (data.success) {
                         updateRachelUI(enabled);
+                        // Show forwarding instructions
+                        await showForwardingInstructions(enabled);
                     } else {
                         e.target.checked = !enabled;
                         alert('Failed to update Rachel status');
@@ -875,6 +879,79 @@
                     alert('Error updating Rachel status');
                 }
             });
+        }
+
+        // Show forwarding instructions when toggle changes
+        async function showForwardingInstructions(enabled) {
+            try {
+                // Detect carrier or ask user
+                let carrier = localStorage.getItem('carrier_preference');
+                
+                if (!carrier) {
+                    // Ask user to select carrier on first use
+                    carrier = await promptForCarrier();
+                    if (!carrier) return; // User cancelled
+                    localStorage.setItem('carrier_preference', carrier);
+                }
+                
+                // Get forwarding codes for selected carrier
+                const response = await fetch(`/api/call-forwarding/setup/${carrier}/${CLIENT_ID}`);
+                const data = await response.json();
+                
+                if (data.success && data.setup && data.setup.recommended) {
+                    const code = enabled ? data.setup.recommended.activate : data.setup.recommended.deactivate;
+                    const action = enabled ? 'ACTIVATE' : 'DEACTIVATE';
+                    const businessPhone = data.client.business_phone;
+                    const carrierName = data.carrier.name;
+                    
+                    const message = `
+${action} CALL FORWARDING
+Carrier: ${carrierName}
+
+From your business phone (${businessPhone}), dial:
+
+${code}
+
+Press the CALL button and wait for confirmation tone.
+
+${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call forwarding to Rachel AI is now disabled.'}
+
+(To change carrier, clear browser data)
+                    `.trim();
+                    
+                    alert(message);
+                }
+            } catch (error) {
+                console.error('Error getting forwarding instructions:', error);
+            }
+        }
+
+        // Prompt user to select their carrier
+        async function promptForCarrier() {
+            const carriers = [
+                { code: 'att', name: 'AT&T' },
+                { code: 'verizon', name: 'Verizon' },
+                { code: 'tmobile', name: 'T-Mobile' },
+                { code: 'sprint', name: 'Sprint/T-Mobile' },
+                { code: 'uscellular', name: 'US Cellular' },
+                { code: 'boost', name: 'Boost Mobile' },
+                { code: 'metro', name: 'Metro by T-Mobile' },
+                { code: 'visible', name: 'Visible' },
+                { code: 'cricketwireless', name: 'Cricket Wireless' }
+            ];
+            
+            const carrierList = carriers.map((c, i) => `${i + 1}. ${c.name}`).join('\n');
+            const selection = prompt(`Select your phone carrier:\n\n${carrierList}\n\nEnter number (1-${carriers.length}):`);
+            
+            if (!selection) return null;
+            
+            const index = parseInt(selection) - 1;
+            if (index >= 0 && index < carriers.length) {
+                return carriers[index].code;
+            }
+            
+            alert('Invalid selection. Please try again.');
+            return null;
         }
 
         // Load Dashboard Data
