@@ -1,7 +1,59 @@
-// src/routes/mobile.js - Mobile CRM API with correct database schema
+// src/routes/mobile.js - Mobile CRM API with JWT authentication
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const router = express.Router();
 const { sequelize } = require('../models');
+
+// Authentication middleware - CRITICAL for multi-tenant security
+const authenticateClient = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        success: false,
+        error: 'Authentication required' 
+      });
+    }
+    
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key');
+    
+    if (!decoded.clientId) {
+      return res.status(401).json({ 
+        success: false,
+        error: 'No client associated with this account' 
+      });
+    }
+    
+    // CRITICAL: Verify the requested client_id matches the authenticated user's client_id
+    const requestedClientId = parseInt(req.params.client_id);
+    if (decoded.clientId !== requestedClientId) {
+      console.log(`🚨 Security violation: User ${decoded.email} (client ${decoded.clientId}) attempted to access client ${requestedClientId}`);
+      return res.status(403).json({ 
+        success: false,
+        error: 'Unauthorized: You can only access your own data' 
+      });
+    }
+    
+    req.clientId = decoded.clientId;
+    req.userId = decoded.userId;
+    req.userEmail = decoded.email;
+    
+    console.log(`✅ Authenticated: ${req.userEmail} accessing client ${req.clientId}`);
+    
+    next();
+  } catch (error) {
+    console.error('Authentication error:', error.message);
+    return res.status(401).json({ 
+      success: false,
+      error: 'Invalid or expired token' 
+    });
+  }
+};
+
+// Apply authentication to all routes
+router.use(authenticateClient);
 
 // ============= TODAY'S DASHBOARD API =============
 
@@ -9,12 +61,14 @@ router.get('/dashboard/today/:client_id', async (req, res) => {
   const { client_id } = req.params;
   
   try {
+    console.log(`📊 Loading dashboard for client ${client_id}`);
+    
     const appointmentsQuery = `
       SELECT id, customer_name as name, customer_phone as phone,
-             appointment_date as time, notes, status, created_at
+             appointment_time as time, appointment_date, notes, status, created_at
       FROM appointments 
       WHERE client_id = $1 AND DATE(appointment_date) = CURRENT_DATE
-      ORDER BY appointment_date ASC
+      ORDER BY appointment_time ASC
     `;
 
     const communicationsQuery = `
@@ -42,9 +96,13 @@ router.get('/dashboard/today/:client_id', async (req, res) => {
       sequelize.query(communicationsQuery, { bind: [client_id], type: sequelize.QueryTypes.SELECT })
     ]);
 
-    const formatTime = (dateString) => {
-      const date = new Date(dateString);
-      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const formatTime = (timeString) => {
+      if (!timeString) return 'N/A';
+      const [hours, minutes] = timeString.split(':');
+      const hour = parseInt(hours);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour % 12 || 12;
+      return `${displayHour}:${minutes} ${ampm}`;
     };
 
     const appointments = appointmentsResult.map(apt => ({
@@ -60,11 +118,14 @@ router.get('/dashboard/today/:client_id', async (req, res) => {
       id: `${comm.type}_${Date.now()}_${Math.random()}`,
       type: comm.type,
       contact: comm.contact_name || 'Unknown',
-      content: comm.content,
+      message: comm.content,
+      duration: comm.content,
       time: getRelativeTime(comm.created_at),
-      direction: comm.direction || 'incoming',
+      direction: comm.direction || 'inbound',
       phone: comm.contact_phone
     }));
+
+    console.log(`✅ Client ${client_id}: Loaded ${appointments.length} appointments, ${communications.length} communications`);
 
     res.json({
       success: true,
