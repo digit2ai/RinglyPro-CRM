@@ -42,6 +42,9 @@ sequelize.authenticate()
     console.error('❌ Unable to connect to database:', err);
   });
 
+// Import authentication middleware
+const { authenticateToken, getUserClient } = require('./middleware/auth');
+
 // Import routes
 const contactsRoutes = require('./routes/contacts');
 const appointmentsRoutes = require('./routes/appointments');
@@ -108,16 +111,33 @@ console.log('🎤 Rachel Voice webhook routes mounted at /voice/rachel/*');
 app.use('/', rachelRoutes);
 console.log('🎯 Multi-tenant Rachel routes mounted - Client identification active');
 
-// Dashboard route
-app.get('/', (req, res) => {
-  res.render('dashboard', { 
-    title: `${CLIENT_NAME} CRM Dashboard`,
-    currentDate: new Date().toLocaleDateString(),
-    voiceEnabled: process.env.VOICE_ENABLED === 'true' || false,
-    clientName: CLIENT_NAME,
-    clientId: CLIENT_ID
-  });
+// =====================================================
+// PROTECTED ROUTES - Require Authentication
+// =====================================================
+
+// Protected Dashboard route - requires JWT authentication
+app.get('/', authenticateToken, getUserClient, async (req, res) => {
+  try {
+    // User is authenticated - req.user and req.client are available
+    res.render('dashboard', { 
+      title: `${CLIENT_NAME} CRM Dashboard`,
+      currentDate: new Date().toLocaleDateString(),
+      voiceEnabled: process.env.VOICE_ENABLED === 'true' || false,
+      clientName: CLIENT_NAME,
+      clientId: CLIENT_ID,
+      // Pass authenticated user and client data to template
+      user: req.user,
+      client: req.client
+    });
+  } catch (error) {
+    console.error('Dashboard error:', error);
+    res.status(500).send('Error loading dashboard');
+  }
 });
+
+// =====================================================
+// PUBLIC ROUTES - No authentication required
+// =====================================================
 
 // Login page route
 app.get('/login', (req, res) => {
@@ -142,6 +162,10 @@ app.get('/auth-check', (req, res) => {
   // This would check JWT token when we add middleware later
   res.redirect('/login');
 });
+
+// =====================================================
+// HEALTH CHECK & STATUS ENDPOINTS
+// =====================================================
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -381,7 +405,7 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use((req, res) => {
-  console.log('🚨 404 handler hit for:', req.method, req.path);
+  console.log('404 handler hit for:', req.method, req.path);
   res.status(404).json({
     success: false,
     error: 'Endpoint not found'

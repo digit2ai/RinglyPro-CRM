@@ -44,6 +44,22 @@
             font-weight: 700;
         }
 
+        .logout-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+
         /* Rachel Toggle Card */
         .rachel-card {
             background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
@@ -628,7 +644,18 @@
     <div class="header">
         <div class="header-content">
             <div class="header-top">
-                <h1>RinglyPro CRM</h1>
+                <div>
+                    <h1>RinglyPro CRM</h1>
+                    <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">
+                        <%= client.businessName %>
+                    </p>
+                </div>
+                <button class="logout-btn" onclick="logout()">
+                    <svg style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    Logout
+                </button>
             </div>
             
             <!-- Rachel AI Toggle Card -->
@@ -741,23 +768,58 @@
     </div>
 
     <script>
-        const CLIENT_ID = 5; // Digit2ai client ID
+        // Get client ID from server-side rendering
+        const CLIENT_ID = <%= clientId %>;
         let currentAction = '';
         let dashboardData = null;
         let isListening = false;
+        let authToken = localStorage.getItem('token');
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
+            // Check if token exists (additional client-side check)
+            if (!authToken) {
+                window.location.href = '/login';
+                return;
+            }
+            
             loadRachelStatus();
             loadDashboard();
             setupTabSwitching();
             setupRachelToggle();
         });
 
+        // Logout function
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+
+        // Helper function to make authenticated API calls
+        async function authenticatedFetch(url, options = {}) {
+            const headers = {
+                ...options.headers,
+                'Authorization': `Bearer ${authToken}`
+            };
+            
+            const response = await fetch(url, { ...options, headers });
+            
+            // If unauthorized, redirect to login
+            if (response.status === 401) {
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return null;
+            }
+            
+            return response;
+        }
+
         // Load Rachel Status
         async function loadRachelStatus() {
             try {
-                const response = await fetch(`/api/client/rachel-status/${CLIENT_ID}`);
+                const response = await authenticatedFetch(`/api/client/rachel-status/${CLIENT_ID}`);
+                if (!response) return;
+                
                 const data = await response.json();
                 
                 if (data.success) {
@@ -792,12 +854,13 @@
                 const enabled = e.target.checked;
                 
                 try {
-                    const response = await fetch(`/api/client/rachel-status/${CLIENT_ID}`, {
+                    const response = await authenticatedFetch(`/api/client/rachel-status/${CLIENT_ID}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ rachel_enabled: enabled })
                     });
                     
+                    if (!response) return;
                     const data = await response.json();
                     
                     if (data.success) {
@@ -817,7 +880,9 @@
         // Load Dashboard Data
         async function loadDashboard() {
             try {
-                const response = await fetch(`/api/mobile/dashboard/today/${CLIENT_ID}`);
+                const response = await authenticatedFetch(`/api/mobile/dashboard/today/${CLIENT_ID}`);
+                if (!response) return;
+                
                 const data = await response.json();
                 
                 if (data.success) {
@@ -986,7 +1051,9 @@
             }
 
             try {
-                const response = await fetch(`/api/mobile/contacts/smart-search/${CLIENT_ID}?q=${encodeURIComponent(query)}`);
+                const response = await authenticatedFetch(`/api/mobile/contacts/smart-search/${CLIENT_ID}?q=${encodeURIComponent(query)}`);
+                if (!response) return;
+                
                 const data = await response.json();
                 
                 if (data.success && data.contacts.length > 0) {
@@ -1023,7 +1090,6 @@
         // Actions
         function sendSMS(phone, name) {
             alert(`Opening SMS to ${name} (${phone})\n\nIn production, this would open your SMS app or messaging interface.`);
-            // TODO: Implement actual SMS interface
         }
 
         function makeCall(phone, name) {
@@ -1041,13 +1107,11 @@
             btn.classList.add('listening');
             text.textContent = 'Listening...';
             
-            // Simulate voice recognition (replace with actual implementation)
             setTimeout(async () => {
                 isListening = false;
                 btn.classList.remove('listening');
                 text.textContent = 'Voice';
                 
-                // Example: Process voice command
                 const transcript = prompt('Voice command (e.g., "text manuel about todays meeting"):');
                 if (transcript) {
                     await processVoiceCommand(transcript);
@@ -1057,12 +1121,13 @@
 
         async function processVoiceCommand(transcript) {
             try {
-                const response = await fetch(`/api/mobile/voice/command/${CLIENT_ID}`, {
+                const response = await authenticatedFetch(`/api/mobile/voice/command/${CLIENT_ID}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ transcript })
                 });
                 
+                if (!response) return;
                 const data = await response.json();
                 
                 if (data.success && data.next_action) {
