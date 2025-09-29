@@ -45,6 +45,20 @@ sequelize.authenticate()
 // Import authentication middleware
 const { authenticateToken, getUserClient } = require('./middleware/auth');
 
+// Create a modified version that redirects instead of returning JSON
+const authenticateOrRedirect = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  // If no token, redirect to login
+  if (!token) {
+    return res.redirect('/login');
+  }
+  
+  // If has token, use regular authentication
+  authenticateToken(req, res, next);
+};
+
 // Import routes
 const contactsRoutes = require('./routes/contacts');
 const appointmentsRoutes = require('./routes/appointments');
@@ -116,7 +130,7 @@ console.log('🎯 Multi-tenant Rachel routes mounted - Client identification act
 // =====================================================
 
 // Protected Dashboard route - requires JWT authentication
-app.get('/', authenticateToken, async (req, res) => {
+app.get('/', authenticateOrRedirect, async (req, res) => {
   try {
     // User is authenticated - req.user is available
     // Use simple client data from environment or defaults
@@ -136,7 +150,7 @@ app.get('/', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Dashboard error:', error);
-    res.status(500).send('Error loading dashboard');
+    res.redirect('/login');
   }
 });
 
