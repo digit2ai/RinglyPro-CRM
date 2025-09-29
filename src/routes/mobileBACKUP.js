@@ -1,4 +1,3 @@
-// src/routes/mobile.js - Mobile CRM API endpoints
 const express = require('express');
 const router = express.Router();
 const { sequelize } = require('../models');
@@ -14,16 +13,16 @@ router.get('/dashboard/today/:client_id', async (req, res) => {
     const appointmentsQuery = `
       SELECT 
         id,
-        "customerName" as name,
-        "customerPhone" as phone,
-        "appointmentDate" as time,
+        customer_name as name,
+        customer_phone as phone,
+        appointment_date as time,
         notes,
         status,
-        "createdAt"
-      FROM "Appointments" 
-      WHERE "clientId" = $1 
-        AND DATE("appointmentDate") = CURRENT_DATE
-      ORDER BY "appointmentDate" ASC
+        created_at
+      FROM appointments 
+      WHERE client_id = $1 
+        AND DATE(appointment_date) = CURRENT_DATE
+      ORDER BY appointment_date ASC
     `;
 
     // Get recent communications (last 24 hours) using raw SQL
@@ -31,27 +30,27 @@ router.get('/dashboard/today/:client_id', async (req, res) => {
       SELECT * FROM (
         SELECT 
           'sms' as type,
-          "customerPhone" as contact_phone,
-          "customerName" as contact_name,
-          "content" as content,
-          "createdAt",
+          customer_phone as contact_phone,
+          customer_name as contact_name,
+          content as content,
+          created_at,
           'received' as direction
-        FROM "Messages" 
-        WHERE "clientId" = $1 AND "createdAt" > NOW() - INTERVAL '24 hours'
+        FROM messages 
+        WHERE client_id = $1 AND created_at > NOW() - INTERVAL '24 hours'
         
         UNION ALL
         
         SELECT 
           'call' as type,
-          "fromNumber" as contact_phone,
-          COALESCE("fromNumber", 'Unknown Caller') as contact_name,
-          CONCAT('Duration: ', "duration", ' seconds') as content,
-          "createdAt",
-          "direction"
-        FROM "Calls" 
-        WHERE "clientId" = $1 AND "createdAt" > NOW() - INTERVAL '24 hours'
+          from_number as contact_phone,
+          COALESCE(from_number, 'Unknown Caller') as contact_name,
+          CONCAT('Duration: ', duration, ' seconds') as content,
+          created_at,
+          direction
+        FROM calls 
+        WHERE client_id = $1 AND created_at > NOW() - INTERVAL '24 hours'
       ) combined_communications
-      ORDER BY "createdAt" DESC
+      ORDER BY created_at DESC
       LIMIT 10
     `;
 
@@ -90,7 +89,7 @@ router.get('/dashboard/today/:client_id', async (req, res) => {
       type: comm.type,
       contact: comm.contact_name || 'Unknown',
       content: comm.content,
-      time: getRelativeTime(comm.createdAt),
+      time: getRelativeTime(comm.created_at),
       direction: comm.direction || 'incoming',
       phone: comm.contact_phone
     }));
@@ -136,40 +135,40 @@ router.get('/contacts/smart-search/:client_id', async (req, res) => {
       WITH contact_data AS (
         -- Get contacts from appointments
         SELECT DISTINCT
-          "customerPhone" as phone,
-          "customerName" as name,
-          MAX("appointmentDate") as last_interaction,
+          customer_phone as phone,
+          customer_name as name,
+          MAX(appointment_date) as last_interaction,
           COUNT(*) as interaction_count,
           'appointment' as source
-        FROM "Appointments" 
-        WHERE "clientId" = $1 AND "customerName" IS NOT NULL
-        GROUP BY "customerPhone", "customerName"
+        FROM appointments 
+        WHERE client_id = $1 AND customer_name IS NOT NULL
+        GROUP BY customer_phone, customer_name
         
         UNION ALL
         
         -- Get contacts from calls
         SELECT DISTINCT
-          "fromNumber" as phone,
-          COALESCE("fromNumber", 'Unknown Contact') as name,
-          MAX("createdAt") as last_interaction,
+          from_number as phone,
+          COALESCE(from_number, 'Unknown Contact') as name,
+          MAX(created_at) as last_interaction,
           COUNT(*) as interaction_count,
           'call' as source
-        FROM "Calls" 
-        WHERE "clientId" = $1 AND "fromNumber" IS NOT NULL
-        GROUP BY "fromNumber"
+        FROM calls 
+        WHERE client_id = $1 AND from_number IS NOT NULL
+        GROUP BY from_number
         
         UNION ALL
         
         -- Get contacts from messages
         SELECT DISTINCT
-          "customerPhone" as phone,
-          "customerName" as name,
-          MAX("createdAt") as last_interaction,
+          customer_phone as phone,
+          customer_name as name,
+          MAX(created_at) as last_interaction,
           COUNT(*) as interaction_count,
           'sms' as source
-        FROM "Messages" 
-        WHERE "clientId" = $1 AND "customerName" IS NOT NULL
-        GROUP BY "customerPhone", "customerName"
+        FROM messages 
+        WHERE client_id = $1 AND customer_name IS NOT NULL
+        GROUP BY customer_phone, customer_name
       ),
       
       ranked_contacts AS (
@@ -281,10 +280,10 @@ router.post('/voice/command/:client_id', async (req, res) => {
 
     // Find the contact using raw SQL
     const contactQuery = `
-      SELECT DISTINCT "customerPhone" as phone, "customerName" as name
-      FROM "Appointments" 
-      WHERE "clientId" = $1 AND LOWER("customerName") LIKE LOWER($2)
-      ORDER BY "appointmentDate" DESC
+      SELECT DISTINCT customer_phone as phone, customer_name as name
+      FROM appointments 
+      WHERE client_id = $1 AND LOWER(customer_name) LIKE LOWER($2)
+      ORDER BY appointment_date DESC
       LIMIT 1
     `;
 
@@ -332,7 +331,7 @@ function getRelativeTime(dateString) {
 
   if (diffInSeconds < 60) return 'Just now';
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hour${Math.floor(diffInSeconds / 3600) > 1 ? 's' : ''} ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600) hour${Math.floor(diffInSeconds / 3600) > 1 ? 's' : ''} ago`;
   return `${Math.floor(diffInSeconds / 86400)} day${Math.floor(diffInSeconds / 86400) > 1 ? 's' : ''} ago`;
 }
 
