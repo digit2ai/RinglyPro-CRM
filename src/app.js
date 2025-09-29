@@ -42,22 +42,8 @@ sequelize.authenticate()
     console.error('❌ Unable to connect to database:', err);
   });
 
-// Import authentication middleware
+// Import authentication middleware (for API routes only)
 const { authenticateToken, getUserClient } = require('./middleware/auth');
-
-// Create a modified version that redirects instead of returning JSON
-const authenticateOrRedirect = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  
-  // If no token, redirect to login
-  if (!token) {
-    return res.redirect('/login');
-  }
-  
-  // If has token, use regular authentication
-  authenticateToken(req, res, next);
-};
 
 // Import routes
 const contactsRoutes = require('./routes/contacts');
@@ -129,14 +115,13 @@ console.log('🎯 Multi-tenant Rachel routes mounted - Client identification act
 // PROTECTED ROUTES - Require Authentication
 // =====================================================
 
-// Protected Dashboard route - requires JWT authentication
-app.get('/', authenticateOrRedirect, async (req, res) => {
+// Dashboard route - protected client-side
+app.get('/', async (req, res) => {
   try {
-    // User is authenticated - req.user is available
-    // Use simple client data from environment or defaults
+    // Render dashboard - authentication happens client-side
     const clientData = {
       id: parseInt(CLIENT_ID) || 5,
-      businessName: req.user?.businessName || CLIENT_NAME
+      businessName: CLIENT_NAME
     };
 
     res.render('dashboard', { 
@@ -145,12 +130,11 @@ app.get('/', authenticateOrRedirect, async (req, res) => {
       voiceEnabled: process.env.VOICE_ENABLED === 'true' || false,
       clientName: CLIENT_NAME,
       clientId: clientData.id,
-      user: req.user,
       client: clientData
     });
   } catch (error) {
     console.error('Dashboard error:', error);
-    res.redirect('/login');
+    res.status(500).send('Error loading dashboard');
   }
 });
 
