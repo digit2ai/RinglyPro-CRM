@@ -21,7 +21,7 @@ router.get('/dashboard/today/:client_id', async (req, res) => {
       SELECT * FROM (
         SELECT 'sms' as type, from_number as contact_phone, 
                from_number as contact_name, body as content,
-               created_at, direction
+               created_at, direction::text as direction
         FROM messages 
         WHERE client_id = $1 AND created_at > NOW() - INTERVAL '24 hours'
         
@@ -30,7 +30,7 @@ router.get('/dashboard/today/:client_id', async (req, res) => {
         SELECT 'call' as type, from_number as contact_phone,
                from_number as contact_name,
                CONCAT('Duration: ', COALESCE(duration, 0), ' seconds') as content,
-               created_at, direction
+               created_at, direction::text as direction
         FROM calls 
         WHERE client_id = $1 AND created_at > NOW() - INTERVAL '24 hours'
       ) combined_communications
