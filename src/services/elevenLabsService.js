@@ -107,7 +107,7 @@ class ElevenLabsService {
             
             // Fallback to Twilio TTS
             twiml.say({
-                voice: options.voice || 'alice',
+                voice: options.voice || 'Alice',
                 rate: options.rate || 'medium'
             }, text);
         }

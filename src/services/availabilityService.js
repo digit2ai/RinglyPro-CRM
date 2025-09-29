@@ -53,12 +53,15 @@ class AvailabilityService {
             
             console.log(`📅 Checking availability for client ${clientId} on ${targetDate}`);
             
-            // Get existing appointments for this date
+            // Get existing appointments for this date - FIXED SEQUELIZE SYNTAX
+            const { Op } = require('sequelize');
             const existingAppointments = await Appointment.findAll({
                 where: {
                     client_id: clientId,
                     appointment_date: targetDate,
-                    status: ['confirmed', 'scheduled']
+                    status: {
+                        [Op.in]: ['confirmed', 'scheduled']
+                    }
                 },
                 order: [['appointment_time', 'ASC']]
             });
@@ -118,7 +121,7 @@ class AvailabilityService {
                 const aptTime = apt.appointment_time;
                 const aptDuration = apt.duration || 30;
                 
-                // Convert appointment time to minutes
+                // Convert appointment time to minutes for comparison
                 const [aptHour, aptMin] = aptTime.split(':').map(Number);
                 const aptStartMinutes = aptHour * 60 + aptMin;
                 const aptEndMinutes = aptStartMinutes + aptDuration;
@@ -221,12 +224,15 @@ class AvailabilityService {
                 return true;
             }
             
+            // Fixed Sequelize syntax for status checking
+            const { Op } = require('sequelize');
             const conflicts = await Appointment.count({
                 where: {
                     client_id: clientId,
                     appointment_date: date,
-                    status: ['confirmed', 'scheduled'],
-                    // Note: This is a simplified overlap check
+                    status: {
+                        [Op.in]: ['confirmed', 'scheduled']
+                    },
                     appointment_time: time
                 }
             });
