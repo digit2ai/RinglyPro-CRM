@@ -332,12 +332,8 @@ function getRelativeTime(dateString) {
 
   if (diffInSeconds < 60) return 'Just now';
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`;
-  if (diffInSeconds < 86400) {
-    const hours = Math.floor(diffInSeconds / 3600);
-    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-  }
-  const days = Math.floor(diffInSeconds / 86400);
-  return `${days} day${days > 1 ? 's' : ''} ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600) hour${Math.floor(diffInSeconds / 3600) > 1 ? 's' : ''} ago`;
+  return `${Math.floor(diffInSeconds / 86400)} day${Math.floor(diffInSeconds / 86400) > 1 ? 's' : ''} ago`;
 }
 
 module.exports = router;
