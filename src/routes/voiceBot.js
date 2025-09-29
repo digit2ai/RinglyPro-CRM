@@ -840,4 +840,74 @@ router.get('/webhook/voice', (req, res) => {
     });
 });
 
+// POST /voice/forward-to-owner/:client_id - Forward calls to owner when Rachel disabled
+router.post('/voice/forward-to-owner/:client_id', async (req, res) => {
+    const { client_id } = req.params;
+    const { From: fromNumber, CallSid: callSid } = req.body;
+
+    console.log(`Forwarding call to owner for client ${client_id}`);
+    console.log(`From: ${fromNumber}, CallSid: ${callSid}`);
+    
+    try {
+        const { sequelize } = require('../models');
+
+        const clientData = await sequelize.query(
+            'SELECT id, business_name, owner_phone, owner_name FROM clients WHERE id = :client_id',
+            { 
+                replacements: { client_id },
+                type: sequelize.QueryTypes.SELECT 
+            }
+        );
+
+        if (!clientData || clientData.length === 0) {
+            console.error(`Client ${client_id} not found`);
+            const twiml = new twilio.twiml.VoiceResponse();
+            twiml.say('We apologize, but we cannot connect your call at this time.');
+            return res.type('text/xml').send(twiml.toString());
+        }
+
+        const client = clientData[0];
+        const ownerPhone = client.owner_phone;
+
+        console.log(`Forwarding to ${client.owner_name}: ${ownerPhone}`);
+
+        // Log the call
+        try {
+            await sequelize.query(
+                'INSERT INTO calls (client_id, twilio_call_sid, direction, from_number, to_number, status, created_at) VALUES (:client_id, :call_sid, :direction, :from, :to, :status, NOW())',
+                {
+                    replacements: {
+                        client_id: client_id,
+                        call_sid: callSid,
+                        direction: 'inbound',
+                        from: fromNumber,
+                        to: ownerPhone,
+                        status: 'forwarded'
+                    },
+                    type: sequelize.QueryTypes.INSERT
+                }
+            );
+        } catch (logError) {
+            console.error('Failed to log call:', logError.message);
+        }
+
+        // Generate TwiML to forward the call
+        const twiml = new twilio.twiml.VoiceResponse();
+        twiml.dial({
+            callerId: fromNumber,
+            timeout: 30,
+            record: 'do-not-record'
+        }, ownerPhone);
+
+        res.type('text/xml').send(twiml.toString());
+
+    } catch (error) {
+        console.error('Error forwarding call:', error);
+        
+        const twiml = new twilio.twiml.VoiceResponse();
+        twiml.say('We apologize, but we cannot connect your call at this time.');
+        res.type('text/xml').send(twiml.toString());
+    }
+});
+
 module.exports = router;
