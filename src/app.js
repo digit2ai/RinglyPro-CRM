@@ -116,17 +116,13 @@ console.log('🎯 Multi-tenant Rachel routes mounted - Client identification act
 // =====================================================
 
 // Protected Dashboard route - requires JWT authentication
-app.get('/', authenticateToken, getUserClient, async (req, res) => {
+app.get('/', authenticateToken, async (req, res) => {
   try {
-    // User is authenticated - req.user and req.client are available
-    // Provide fallback values if client data is missing
-    const clientData = req.client || {
-      id: 5, // Default to CLIENT_ID from env or 5
-      businessName: req.user?.businessName || CLIENT_NAME,
-      businessPhone: '',
-      monthlyFreeMinutes: 100,
-      perMinuteRate: 0.05,
-      active: true
+    // User is authenticated - req.user is available
+    // Use simple client data from environment or defaults
+    const clientData = {
+      id: parseInt(CLIENT_ID) || 5,
+      businessName: req.user?.businessName || CLIENT_NAME
     };
 
     res.render('dashboard', { 
@@ -135,7 +131,6 @@ app.get('/', authenticateToken, getUserClient, async (req, res) => {
       voiceEnabled: process.env.VOICE_ENABLED === 'true' || false,
       clientName: CLIENT_NAME,
       clientId: clientData.id,
-      // Pass authenticated user and client data to template
       user: req.user,
       client: clientData
     });
