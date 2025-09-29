@@ -1,13 +1,64 @@
 const express = require('express');
-const { Appointment } = require('../models');
+const jwt = require('jsonwebtoken');
+const { Appointment, sequelize } = require('../models');
 const router = express.Router();
 
-// Get all appointments
+// Middleware to extract and verify client_id from JWT token
+const authenticateClient = (req, res, next) => {
+  try {
+    // Get token from Authorization header
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        success: false,
+        error: 'Authentication required: No token provided' 
+      });
+    }
+    
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    
+    // Verify and decode JWT
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key');
+    
+    if (!decoded.clientId) {
+      return res.status(401).json({ 
+        success: false,
+        error: 'Authentication required: No client associated with this account' 
+      });
+    }
+    
+    // Attach client info to request
+    req.clientId = decoded.clientId;
+    req.userId = decoded.userId;
+    req.userEmail = decoded.email;
+    
+    console.log(`🔐 Authenticated request for client ${req.clientId} (user: ${req.userEmail})`);
+    
+    next();
+  } catch (error) {
+    console.error('Authentication error:', error.message);
+    return res.status(401).json({ 
+      success: false,
+      error: 'Invalid or expired token' 
+    });
+  }
+};
+
+// Apply authentication middleware to all routes
+router.use(authenticateClient);
+
+// Get all appointments FOR THIS CLIENT ONLY
 router.get('/', async (req, res) => {
   try {
     const appointments = await Appointment.findAll({
+      where: {
+        client_id: req.clientId
+      },
       order: [['appointmentDate', 'DESC'], ['appointmentTime', 'ASC']]
     });
+    
+    console.log(`📋 Client ${req.clientId}: Found ${appointments.length} total appointments`);
     
     res.json({
       success: true,
@@ -20,25 +71,26 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get today's appointments (for dashboard) - FIXED: Filters out cancelled/completed
+// Get today's appointments FOR THIS CLIENT ONLY
 router.get('/today', async (req, res) => {
   try {
     const { Op } = require('sequelize');
     const today = new Date().toISOString().split('T')[0];
     
-    console.log(`📅 Fetching today's appointments for: ${today}`);
+    console.log(`📅 Fetching today's appointments for client ${req.clientId}: ${today}`);
     
     const appointments = await Appointment.findAll({
       where: {
+        client_id: req.clientId,
         appointmentDate: today,
         status: {
-          [Op.notIn]: ['cancelled', 'completed'] // Hide cancelled and completed
+          [Op.notIn]: ['cancelled', 'completed']
         }
       },
       order: [['appointmentTime', 'ASC']]
     });
     
-    console.log(`📊 Found ${appointments.length} active appointments (excluding cancelled/completed)`);
+    console.log(`📊 Client ${req.clientId}: Found ${appointments.length} active appointments for today`);
     
     res.json({
       success: true,
@@ -55,7 +107,7 @@ router.get('/today', async (req, res) => {
   }
 });
 
-// Create appointment (for Rachel and web bookings)
+// Create appointment FOR THIS CLIENT
 router.post('/', async (req, res) => {
   try {
     const {
@@ -70,29 +122,41 @@ router.post('/', async (req, res) => {
       contactId,
       duration = 30,
       notes,
-      sendSMS = true // Option to disable SMS sending
+      sendSMS = true
     } = req.body;
     
-    // Validate required fields
     if (!customerName || !customerEmail || !customerPhone || !appointmentDate || !appointmentTime) {
       return res.status(400).json({ 
         error: 'Missing required fields: customerName, customerEmail, customerPhone, appointmentDate, appointmentTime' 
       });
     }
     
-    // Check if slot is available
-    const existingAppointment = await Appointment.checkAvailability(appointmentDate, appointmentTime);
-    if (existingAppointment) {
+    // Check if slot is available FOR THIS CLIENT
+    const existing = await sequelize.query(
+      'SELECT id FROM appointments WHERE client_id = :client_id AND appointment_date = :date AND appointment_time = :time AND status NOT IN (:cancelled, :completed)',
+      {
+        replacements: {
+          client_id: req.clientId,
+          date: appointmentDate,
+          time: appointmentTime,
+          cancelled: 'cancelled',
+          completed: 'completed'
+        },
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+    
+    if (existing.length > 0) {
       return res.status(409).json({ 
         error: 'Time slot is already booked' 
       });
     }
     
-    // Generate confirmation code if not provided
     const finalConfirmationCode = confirmationCode || 
       `APPT${Date.now().toString().slice(-6).toUpperCase()}`;
     
     const appointment = await Appointment.create({
+      client_id: req.clientId,
       customerName,
       customerEmail,
       customerPhone,
@@ -107,7 +171,8 @@ router.post('/', async (req, res) => {
       status: 'confirmed'
     });
     
-    // Send SMS confirmation after successful appointment creation
+    console.log(`✅ Client ${req.clientId}: Created appointment ${appointment.id} for ${customerName}`);
+    
     let smsResult = null;
     if (sendSMS) {
       try {
@@ -120,11 +185,8 @@ router.post('/', async (req, res) => {
           duration: appointment.duration,
           confirmationCode: appointment.confirmationCode
         });
-        
-        console.log(`✅ SMS confirmation sent for appointment ${appointment.id}`);
       } catch (smsError) {
-        console.error(`⚠️ Failed to send SMS confirmation for appointment ${appointment.id}:`, smsError.message);
-        // Don't fail the appointment creation if SMS fails
+        console.error(`⚠️ Failed to send SMS confirmation:`, smsError.message);
       }
     }
     
@@ -136,7 +198,7 @@ router.post('/', async (req, res) => {
         sent: true,
         messageId: smsResult.messageId,
         twilioSid: smsResult.twilioSid
-      } : { sent: false, reason: sendSMS ? 'SMS sending failed' : 'SMS disabled' }
+      } : { sent: false }
     });
   } catch (error) {
     console.error('Error creating appointment:', error);
@@ -148,12 +210,6 @@ router.post('/', async (req, res) => {
       });
     }
     
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      return res.status(409).json({ 
-        error: 'Appointment conflict or duplicate confirmation code' 
-      });
-    }
-    
     res.status(500).json({ error: error.message });
   }
 });
@@ -161,14 +217,15 @@ router.post('/', async (req, res) => {
 // Send SMS confirmation for existing appointment
 router.post('/:id/send-confirmation', async (req, res) => {
   try {
-    const { id } = req.params;
-    
-    const appointment = await Appointment.findByPk(id);
+    const appointment = await Appointment.findOne({
+      where: {
+        id: req.params.id,
+        client_id: req.clientId
+      }
+    });
     
     if (!appointment) {
-      return res.status(404).json({ 
-        error: 'Appointment not found' 
-      });
+      return res.status(404).json({ error: 'Appointment not found' });
     }
     
     const smsResult = await sendAppointmentConfirmationSMS({
@@ -204,17 +261,18 @@ router.post('/:id/send-confirmation', async (req, res) => {
   }
 });
 
-// Get appointment by ID
+// Get appointment by ID FOR THIS CLIENT
 router.get('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    
-    const appointment = await Appointment.findByPk(id);
+    const appointment = await Appointment.findOne({
+      where: {
+        id: req.params.id,
+        client_id: req.clientId
+      }
+    });
     
     if (!appointment) {
-      return res.status(404).json({ 
-        error: 'Appointment not found' 
-      });
+      return res.status(404).json({ error: 'Appointment not found' });
     }
     
     res.json({
@@ -227,14 +285,21 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Get appointment by confirmation code
+// Get appointment by confirmation code FOR THIS CLIENT
 router.get('/confirmation/:code', async (req, res) => {
   try {
-    const { code } = req.params;
+    const appointment = await sequelize.query(
+      'SELECT * FROM appointments WHERE confirmation_code = :code AND client_id = :client_id',
+      {
+        replacements: {
+          code: req.params.code,
+          client_id: req.clientId
+        },
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
     
-    const appointment = await Appointment.findByConfirmationCode(code);
-    
-    if (!appointment) {
+    if (!appointment || appointment.length === 0) {
       return res.status(404).json({ 
         error: 'Appointment not found with that confirmation code' 
       });
@@ -242,7 +307,7 @@ router.get('/confirmation/:code', async (req, res) => {
     
     res.json({
       success: true,
-      appointment: appointment
+      appointment: appointment[0]
     });
   } catch (error) {
     console.error('Error fetching appointment by confirmation code:', error);
@@ -250,30 +315,44 @@ router.get('/confirmation/:code', async (req, res) => {
   }
 });
 
-// Update appointment
+// Update appointment FOR THIS CLIENT
 router.put('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const updates = req.body;
-    
-    const appointment = await Appointment.findByPk(id);
+    const appointment = await Appointment.findOne({
+      where: {
+        id: req.params.id,
+        client_id: req.clientId
+      }
+    });
     
     if (!appointment) {
-      return res.status(404).json({ 
-        error: 'Appointment not found' 
-      });
+      return res.status(404).json({ error: 'Appointment not found' });
     }
+    
+    const updates = req.body;
     
     // If updating date/time, check availability
     if (updates.appointmentDate || updates.appointmentTime) {
       const newDate = updates.appointmentDate || appointment.appointmentDate;
       const newTime = updates.appointmentTime || appointment.appointmentTime;
       
-      const existingAppointment = await Appointment.checkAvailability(newDate, newTime);
-      if (existingAppointment && existingAppointment.id !== parseInt(id)) {
-        return res.status(409).json({ 
-          error: 'Time slot is already booked' 
-        });
+      const existing = await sequelize.query(
+        'SELECT id FROM appointments WHERE client_id = :client_id AND appointment_date = :date AND appointment_time = :time AND id != :current_id AND status NOT IN (:cancelled, :completed)',
+        {
+          replacements: {
+            client_id: req.clientId,
+            date: newDate,
+            time: newTime,
+            current_id: req.params.id,
+            cancelled: 'cancelled',
+            completed: 'completed'
+          },
+          type: sequelize.QueryTypes.SELECT
+        }
+      );
+      
+      if (existing.length > 0) {
+        return res.status(409).json({ error: 'Time slot is already booked' });
       }
     }
     
@@ -290,35 +369,29 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// FIXED: Cancel appointment (soft delete - changes status to 'cancelled') + Send SMS
+// Cancel appointment FOR THIS CLIENT
 router.delete('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
     const { reason } = req.body;
     
-    console.log(`🔄 Attempting to cancel appointment ${id}`);
-    
-    // Find the appointment
-    const appointment = await Appointment.findByPk(id);
+    const appointment = await Appointment.findOne({
+      where: {
+        id: req.params.id,
+        client_id: req.clientId
+      }
+    });
     
     if (!appointment) {
-      console.log(`❌ Appointment ${id} not found`);
       return res.status(404).json({ 
         success: false,
         error: 'Appointment not found' 
       });
     }
     
-    console.log(`📋 Found appointment: ${appointment.customerName} - Status: ${appointment.status}`);
+    await appointment.update({ status: 'cancelled' });
     
-    // Update status to cancelled
-    await appointment.update({ 
-      status: 'cancelled'
-    });
+    console.log(`✅ Client ${req.clientId}: Cancelled appointment ${appointment.id}`);
     
-    console.log(`✅ Successfully cancelled appointment ${id} - New status: ${appointment.status}`);
-    
-    // Send cancellation SMS notification
     let smsResult = null;
     try {
       smsResult = await sendAppointmentCancellationSMS({
@@ -330,11 +403,8 @@ router.delete('/:id', async (req, res) => {
         confirmationCode: appointment.confirmationCode,
         reason: reason || 'scheduling conflict'
       });
-      
-      console.log(`✅ Cancellation SMS sent for appointment ${appointment.id}`);
     } catch (smsError) {
-      console.error(`⚠️ Failed to send cancellation SMS for appointment ${appointment.id}:`, smsError.message);
-      // Don't fail the cancellation if SMS fails
+      console.error(`⚠️ Failed to send cancellation SMS:`, smsError.message);
     }
     
     res.json({
@@ -349,7 +419,7 @@ router.delete('/:id', async (req, res) => {
         sent: true,
         messageId: smsResult.messageId,
         twilioSid: smsResult.twilioSid
-      } : { sent: false, reason: 'SMS sending failed' }
+      } : { sent: false }
     });
     
   } catch (error) {
@@ -361,12 +431,19 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// Get appointments by phone number (for Rachel lookups)
+// Get appointments by phone number FOR THIS CLIENT
 router.get('/phone/:phone', async (req, res) => {
   try {
-    const { phone } = req.params;
-    
-    const appointments = await Appointment.findByPhone(phone);
+    const appointments = await sequelize.query(
+      'SELECT * FROM appointments WHERE customer_phone = :phone AND client_id = :client_id ORDER BY appointment_date DESC, appointment_time DESC',
+      {
+        replacements: {
+          phone: req.params.phone,
+          client_id: req.clientId
+        },
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
     
     res.json({
       success: true,
@@ -389,8 +466,7 @@ async function sendAppointmentConfirmationSMS({
   duration,
   confirmationCode
 }) {
-  const fetch = require('node-fetch'); // Make sure to install: npm install node-fetch@2
-  
+  const fetch = require('node-fetch');
   const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
   
   try {
@@ -415,8 +491,7 @@ async function sendAppointmentConfirmationSMS({
       throw new Error(errorData.error || 'SMS API call failed');
     }
     
-    const result = await response.json();
-    return result;
+    return await response.json();
   } catch (error) {
     console.error('Error calling SMS confirmation API:', error);
     throw error;
@@ -433,8 +508,7 @@ async function sendAppointmentCancellationSMS({
   confirmationCode,
   reason
 }) {
-  const fetch = require('node-fetch'); // Make sure to install: npm install node-fetch@2
-  
+  const fetch = require('node-fetch');
   const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
   
   try {
@@ -459,8 +533,7 @@ async function sendAppointmentCancellationSMS({
       throw new Error(errorData.error || 'SMS API call failed');
     }
     
-    const result = await response.json();
-    return result;
+    return await response.json();
   } catch (error) {
     console.error('Error calling SMS cancellation API:', error);
     throw error;
