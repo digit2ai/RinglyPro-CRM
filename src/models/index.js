@@ -7,6 +7,8 @@ let Call;
 let Contact;
 let Appointment;
 let User;
+let Client;
+let CreditAccount;
 
 try {
   Message = require('./Message');
@@ -45,6 +47,22 @@ try {
   console.log('Note: User model needed for authentication system');
 }
 
+try {
+  Client = require('./Client')(sequelize);
+  console.log('Client model imported successfully');
+} catch (error) {
+  console.log('Client model not found:', error.message);
+  console.log('Note: Client model needed for multi-tenant Rachel AI system');
+}
+
+try {
+  CreditAccount = require('./CreditAccount')(sequelize);
+  console.log('CreditAccount model imported successfully');
+} catch (error) {
+  console.log('CreditAccount model not found:', error.message);
+  console.log('Note: CreditAccount model needed for billing system');
+}
+
 // Initialize models object
 const models = {
   sequelize
@@ -56,6 +74,8 @@ if (Call) models.Call = Call;
 if (Contact) models.Contact = Contact;
 if (Appointment) models.Appointment = Appointment;
 if (User) models.User = User;
+if (Client) models.Client = Client;
+if (CreditAccount) models.CreditAccount = CreditAccount;
 
 // Set up associations if models exist
 if (Contact && Message) {
@@ -118,6 +138,42 @@ if (Contact && Appointment) {
   }
 }
 
+if (User && Client) {
+  try {
+    User.hasOne(Client, {
+      foreignKey: 'user_id',
+      as: 'client'
+    });
+    
+    Client.belongsTo(User, {
+      foreignKey: 'user_id',
+      as: 'user'
+    });
+    
+    console.log('User-Client associations configured');
+  } catch (error) {
+    console.log('Could not set up User-Client associations:', error.message);
+  }
+}
+
+if (Client && CreditAccount) {
+  try {
+    Client.hasOne(CreditAccount, {
+      foreignKey: 'client_id',
+      as: 'creditAccount'
+    });
+    
+    CreditAccount.belongsTo(Client, {
+      foreignKey: 'client_id',
+      as: 'client'
+    });
+    
+    console.log('Client-CreditAccount associations configured');
+  } catch (error) {
+    console.log('Could not set up Client-CreditAccount associations:', error.message);
+  }
+}
+
 // Database synchronization function - safe for production
 const syncDatabase = async (options = {}) => {
   try {
@@ -134,81 +190,36 @@ const syncDatabase = async (options = {}) => {
         console.log('User table synchronized - Authentication system ready');
       } catch (error) {
         console.log('User table sync issues:', error.message);
-        // Try creating manually for User authentication
-        try {
-          await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS "users" (
-              id SERIAL PRIMARY KEY,
-              email VARCHAR(255) UNIQUE NOT NULL,
-              password_hash VARCHAR(255) NOT NULL,
-              first_name VARCHAR(100),
-              last_name VARCHAR(100),
-              business_name VARCHAR(255),
-              business_phone VARCHAR(20),
-              email_verified BOOLEAN DEFAULT false,
-              email_verification_token VARCHAR(255),
-              password_reset_token VARCHAR(255),
-              password_reset_expires TIMESTAMP,
-              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-          `);
-          
-          // Create indexes for performance
-          await sequelize.query(`
-            CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
-            CREATE INDEX IF NOT EXISTS idx_users_verification ON users (email_verification_token);
-            CREATE INDEX IF NOT EXISTS idx_users_reset ON users (password_reset_token);
-          `);
-          
-          console.log('User table created with manual SQL - Authentication system ready');
-        } catch (sqlError) {
-          console.log('Manual User table creation failed:', sqlError.message);
-          console.log('WARNING: User authentication may not work without User table');
-        }
       }
     }
 
-    // Sync Contact table for CRM functionality - ENHANCED WITH MANUAL SQL FALLBACK
+    // Sync Client table for multi-tenant system - CRITICAL FOR MVP
+    if (Client) {
+      try {
+        await Client.sync({ ...options, alter: false });
+        console.log('Client table synchronized - Multi-tenant system ready');
+      } catch (error) {
+        console.log('Client table sync issues:', error.message);
+      }
+    }
+
+    // Sync CreditAccount table for billing - CRITICAL FOR MVP
+    if (CreditAccount) {
+      try {
+        await CreditAccount.sync({ ...options, alter: false });
+        console.log('CreditAccount table synchronized - Billing system ready');
+      } catch (error) {
+        console.log('CreditAccount table sync issues:', error.message);
+      }
+    }
+
+    // Sync Contact table for CRM functionality
     if (Contact) {
       try {
         await Contact.sync({ ...options, alter: false });
         console.log('Contact table synchronized - CRM contact management ready');
       } catch (error) {
         console.log('Contact table sync issues:', error.message);
-        // Try creating manually for Contact management
-        try {
-          await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS "contacts" (
-              id SERIAL PRIMARY KEY,
-              "firstName" VARCHAR(50) NOT NULL,
-              "lastName" VARCHAR(50) NOT NULL,
-              phone VARCHAR(20) UNIQUE NOT NULL,
-              email VARCHAR(255) UNIQUE NOT NULL,
-              notes TEXT,
-              status VARCHAR(20) DEFAULT 'active',
-              source VARCHAR(50) DEFAULT 'manual',
-              "lastContactedAt" TIMESTAMP,
-              "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-          `);
-          
-          // Create indexes for performance
-          await sequelize.query(`
-            CREATE INDEX IF NOT EXISTS idx_contacts_phone ON contacts (phone);
-            CREATE INDEX IF NOT EXISTS idx_contacts_email ON contacts (email);
-            CREATE INDEX IF NOT EXISTS idx_contacts_name ON contacts ("firstName", "lastName");
-            CREATE INDEX IF NOT EXISTS idx_contacts_created ON contacts ("createdAt");
-            CREATE INDEX IF NOT EXISTS idx_contacts_status ON contacts (status);
-            CREATE INDEX IF NOT EXISTS idx_contacts_source ON contacts (source);
-          `);
-          
-          console.log('Contact table created with manual SQL - CRM contact management ready');
-        } catch (sqlError) {
-          console.log('Manual Contact table creation failed:', sqlError.message);
-          console.log('WARNING: Contact management may not work without Contact table');
-        }
       }
     }
 
@@ -219,25 +230,6 @@ const syncDatabase = async (options = {}) => {
         console.log('Message table synchronized - SMS history ready');
       } catch (error) {
         console.log('Message table sync issues:', error.message);
-        // Try without foreign key constraints
-        try {
-          await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS "Messages" (
-              id SERIAL PRIMARY KEY,
-              "phoneNumber" VARCHAR(20) NOT NULL,
-              message TEXT NOT NULL,
-              direction VARCHAR(10) NOT NULL,
-              status VARCHAR(20) DEFAULT 'sent',
-              "messageSid" VARCHAR(100),
-              "contactId" INTEGER,
-              "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-          `);
-          console.log('Message table created with manual SQL');
-        } catch (sqlError) {
-          console.log('Manual Message table creation failed:', sqlError.message);
-        }
       }
     }
 
@@ -248,27 +240,6 @@ const syncDatabase = async (options = {}) => {
         console.log('Call table synchronized - Call history ready');
       } catch (error) {
         console.log('Call table sync issues:', error.message);
-        // Try without foreign key constraints
-        try {
-          await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS "Calls" (
-              id SERIAL PRIMARY KEY,
-              "callSid" VARCHAR(100) UNIQUE,
-              "fromNumber" VARCHAR(20) NOT NULL,
-              "toNumber" VARCHAR(20) NOT NULL,
-              direction VARCHAR(10) NOT NULL,
-              status VARCHAR(20) DEFAULT 'completed',
-              duration INTEGER DEFAULT 0,
-              "recordingUrl" TEXT,
-              "contactId" INTEGER,
-              "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-          `);
-          console.log('Call table created with manual SQL');
-        } catch (sqlError) {
-          console.log('Manual Call table creation failed:', sqlError.message);
-        }
       }
     }
 
@@ -279,56 +250,7 @@ const syncDatabase = async (options = {}) => {
         console.log('Appointment table synchronized - Rachel voice booking ready');
       } catch (error) {
         console.log('Appointment table sync issues:', error.message);
-        // Try creating manually for Rachel integration
-        try {
-          await sequelize.query(`
-            CREATE TABLE IF NOT EXISTS "appointments" (
-              id SERIAL PRIMARY KEY,
-              "customerName" VARCHAR(100) NOT NULL,
-              "customerEmail" VARCHAR(255) NOT NULL,
-              "customerPhone" VARCHAR(20) NOT NULL,
-              "appointmentDate" DATE NOT NULL,
-              "appointmentTime" TIME NOT NULL,
-              duration INTEGER DEFAULT 30,
-              purpose TEXT DEFAULT 'General consultation',
-              status VARCHAR(20) DEFAULT 'scheduled',
-              "confirmationCode" VARCHAR(20) UNIQUE NOT NULL,
-              source VARCHAR(20) DEFAULT 'web',
-              timezone VARCHAR(50) DEFAULT 'America/New_York',
-              "zoomMeetingUrl" VARCHAR(500),
-              "zoomMeetingId" VARCHAR(50),
-              "zoomPassword" VARCHAR(50),
-              "hubspotContactId" VARCHAR(50),
-              "hubspotMeetingId" VARCHAR(50),
-              "emailSent" BOOLEAN DEFAULT false,
-              "smsSent" BOOLEAN DEFAULT false,
-              "reminderSent" BOOLEAN DEFAULT false,
-              notes TEXT,
-              "cancelReason" VARCHAR(255),
-              "rescheduleCount" INTEGER DEFAULT 0,
-              "contactId" INTEGER,
-              "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              CONSTRAINT unique_scheduled_slot UNIQUE ("appointmentDate", "appointmentTime")
-            );
-          `);
-          
-          // Create indexes for performance
-          await sequelize.query(`
-            CREATE INDEX IF NOT EXISTS idx_appointments_date_time ON appointments ("appointmentDate", "appointmentTime");
-            CREATE INDEX IF NOT EXISTS idx_appointments_confirmation ON appointments ("confirmationCode");
-            CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments (status);
-            CREATE INDEX IF NOT EXISTS idx_appointments_email ON appointments ("customerEmail");
-          `);
-          
-          console.log('Appointment table created with manual SQL - Rachel integration ready');
-        } catch (sqlError) {
-          console.log('Manual Appointment table creation failed:', sqlError.message);
-          console.log('WARNING: Rachel voice booking may not work without Appointment table');
-        }
       }
-    } else {
-      console.log('WARNING: Appointment model not found - Rachel voice booking will not work');
     }
 
     // Log available models
@@ -338,6 +260,8 @@ const syncDatabase = async (options = {}) => {
     console.log('Database synchronization completed');
     
     if (User) console.log('User authentication system active');
+    if (Client) console.log('Multi-tenant client system active');
+    if (CreditAccount) console.log('Credit/billing system active');
     if (Message) console.log('SMS messaging system active');
     if (Call) console.log('Call logging system active');
     if (Contact) console.log('Contact management system active');
@@ -585,6 +509,8 @@ module.exports.Call = Call;
 module.exports.Contact = Contact;
 module.exports.Appointment = Appointment;
 module.exports.User = User;
+module.exports.Client = Client;
+module.exports.CreditAccount = CreditAccount;
 
 // Export AI services
 module.exports.BusinessAICustomizer = BusinessAICustomizer;
@@ -604,6 +530,8 @@ console.log('\n========== RINGLYPRO SYSTEM STATUS ==========');
 // Database models status
 const modelStatus = [];
 if (User) modelStatus.push('User Authentication');
+if (Client) modelStatus.push('Multi-Tenant Clients');
+if (CreditAccount) modelStatus.push('Billing System');
 if (Contact) modelStatus.push('Contact Management');
 if (Message) modelStatus.push('SMS History'); 
 if (Call) modelStatus.push('Call Logging');
@@ -644,12 +572,13 @@ console.log('External Integrations:', integrationChecks.length > 0 ? integration
 console.log('==========================================\n');
 
 // Ready for Rachel integration
-if (rachelVoice && Appointment && Call) {
-  console.log('✅ SYSTEM READY: Rachel Voice Assistant with full CRM integration');
+if (rachelVoice && Appointment && Call && Client) {
+  console.log('✅ SYSTEM READY: Rachel Voice Assistant with full multi-tenant CRM integration');
   console.log('   Next: Configure Twilio webhook to /voice/incoming');
 } else {
   console.log('⚠️  PARTIAL SETUP: Some components missing for full Rachel integration');
   if (!rachelVoice) console.log('   - Create RachelVoiceService in /src/services/voiceService.js');
   if (!Appointment) console.log('   - Create Appointment model for booking functionality');
   if (!Call) console.log('   - Create Call model for call logging');
+  if (!Client) console.log('   - Create Client model for multi-tenant system');
 }
