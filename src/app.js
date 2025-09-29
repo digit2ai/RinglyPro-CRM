@@ -119,15 +119,25 @@ console.log('🎯 Multi-tenant Rachel routes mounted - Client identification act
 app.get('/', authenticateToken, getUserClient, async (req, res) => {
   try {
     // User is authenticated - req.user and req.client are available
+    // Provide fallback values if client data is missing
+    const clientData = req.client || {
+      id: 5, // Default to CLIENT_ID from env or 5
+      businessName: req.user?.businessName || CLIENT_NAME,
+      businessPhone: '',
+      monthlyFreeMinutes: 100,
+      perMinuteRate: 0.05,
+      active: true
+    };
+
     res.render('dashboard', { 
       title: `${CLIENT_NAME} CRM Dashboard`,
       currentDate: new Date().toLocaleDateString(),
       voiceEnabled: process.env.VOICE_ENABLED === 'true' || false,
       clientName: CLIENT_NAME,
-      clientId: CLIENT_ID,
+      clientId: clientData.id,
       // Pass authenticated user and client data to template
       user: req.user,
-      client: req.client
+      client: clientData
     });
   } catch (error) {
     console.error('Dashboard error:', error);
