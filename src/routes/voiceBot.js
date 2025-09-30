@@ -569,8 +569,8 @@ async function handleBookAppointment(session, twiml) {
 
         console.log(`🎯 Booking appointment for ${session.data.customerName} (${session.data.customerPhone}) with client ${session.clientId}`);
         
-        // Create or find contact
-        let contact = await findOrCreateContact(session.data.customerName, session.data.customerPhone);
+        // FIXED BUG #1: Pass session.clientId to findOrCreateContact
+        let contact = await findOrCreateContact(session.data.customerName, session.data.customerPhone, session.clientId);
         
         // Prepare appointment data
         const appointmentData = {
@@ -721,10 +721,10 @@ function formatPhoneForSpeech(phone) {
     return phone;
 }
 
-// Contact creation function
-async function findOrCreateContact(name, phone) {
+// FIXED BUG #1: Contact creation function now accepts and uses clientId
+async function findOrCreateContact(name, phone, clientId) {
     try {
-        console.log(`👤 Looking for contact: ${name} (${phone})`);
+        console.log(`👤 Looking for contact: ${name} (${phone}) for client ${clientId}`);
         
         // Try to find existing contact by phone using database
         if (Contact) {
@@ -738,6 +738,7 @@ async function findOrCreateContact(name, phone) {
                 const firstName = nameParts[0] || 'Unknown';
                 const lastName = nameParts.slice(1).join(' ') || 'Customer';
                 
+                // FIXED BUG #1: Added client_id to Contact.create()
                 contact = await Contact.create({
                     firstName: firstName,
                     lastName: lastName,
@@ -745,10 +746,11 @@ async function findOrCreateContact(name, phone) {
                     email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@voicebooking.temp`.replace(/\s+/g, ''),
                     source: 'voice_booking',
                     status: 'active',
-                    notes: `Auto-created from voice booking on ${new Date().toLocaleDateString()}`
+                    notes: `Auto-created from voice booking on ${new Date().toLocaleDateString()}`,
+                    client_id: clientId
                 });
                 
-                console.log(`✅ Created new contact in database: ${firstName} ${lastName} (${phone})`);
+                console.log(`✅ Created new contact in database: ${firstName} ${lastName} (${phone}) for client ${clientId}`);
             } else {
                 // Update last contacted
                 await contact.update({
@@ -796,6 +798,7 @@ async function findOrCreateContact(name, phone) {
 }
 
 // Send appointment confirmation SMS with client_id logging
+// Send appointment confirmation SMS with client_id logging
 async function sendAppointmentConfirmationSMS(phone, appointment, clientInfo, clientId) {
     try {
         const businessName = clientInfo ? clientInfo.business_name : 'RinglyPro';
@@ -810,20 +813,19 @@ async function sendAppointmentConfirmationSMS(phone, appointment, clientInfo, cl
             
             console.log(`📱 Confirmation SMS sent: ${response.sid}`);
             
-            // Log SMS to database with client_id
+            // FIXED BUG #2: Use camelCase field names (Sequelize converts to snake_case)
             if (Message && Message.create && clientId) {
                 await Message.create({
-                    client_id: clientId,
-                    contact_id: appointment.contact_id || null,
-                    twilio_sid: response.sid,
+                    clientId: clientId,
+                    contactId: appointment.contact_id || null,
+                    twilioSid: response.sid,
                     direction: 'outgoing',
-                    from_number: process.env.TWILIO_PHONE_NUMBER,
-                    to_number: phone,
+                    fromNumber: process.env.TWILIO_PHONE_NUMBER,
+                    toNumber: phone,
                     body: message,
                     status: 'sent',
-                    sent_at: new Date(),
-                    created_at: new Date(),
-                    updated_at: new Date()
+                    sentAt: new Date()
+                    // createdAt and updatedAt are handled automatically by Sequelize
                 });
                 
                 console.log(`📱 SMS logged to database for client ${clientId}`);
