@@ -8,6 +8,11 @@ const Contact = sequelize.define('Contact', {
     primaryKey: true,
     autoIncrement: true
   },
+  clientId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    comment: 'References clients table - required for multi-tenant'
+  },
   firstName: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -71,7 +76,11 @@ const Contact = sequelize.define('Contact', {
 }, {
   tableName: 'contacts',
   timestamps: true,
+  underscored: true, // ADDED: Maps camelCase to snake_case in database
   indexes: [
+    {
+      fields: ['client_id'] // ADDED: Index for client_id
+    },
     {
       fields: ['phone']
     },
@@ -104,6 +113,15 @@ Contact.findByPhone = function(phone) {
 
 Contact.findByEmail = function(email) {
   return this.findOne({ where: { email } });
+};
+
+Contact.findByClient = function(clientId, options = {}) {
+  return this.findAll({
+    where: { clientId },
+    order: [['createdAt', options.order || 'DESC']],
+    limit: options.limit || 50,
+    offset: options.offset || 0
+  });
 };
 
 Contact.getRecentContacts = function(limit = 10) {
