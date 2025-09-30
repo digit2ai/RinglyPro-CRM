@@ -26,8 +26,20 @@ const authenticateClient = (req, res, next) => {
       });
     }
     
-    // CRITICAL: Verify the requested client_id matches the authenticated user's client_id
-    const requestedClientId = parseInt(req.params.client_id);
+    // CRITICAL: Extract client_id from URL path (since req.params isn't available yet)
+    // URL format: /api/mobile/dashboard/today/12 or /api/mobile/contacts/smart-search/12
+    const urlMatch = req.path.match(/\/(\d+)(?:\/|$)/);
+    const requestedClientId = urlMatch ? parseInt(urlMatch[1]) : NaN;
+    
+    // Verify the requested client_id matches the authenticated user's client_id
+    if (isNaN(requestedClientId)) {
+      console.log(`⚠️ No client_id found in URL path: ${req.path}`);
+      return res.status(400).json({ 
+        success: false,
+        error: 'Client ID is required in URL' 
+      });
+    }
+    
     if (decoded.clientId !== requestedClientId) {
       console.log(`🚨 Security violation: User ${decoded.email} (client ${decoded.clientId}) attempted to access client ${requestedClientId}`);
       return res.status(403).json({ 

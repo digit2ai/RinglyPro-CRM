@@ -115,22 +115,15 @@ console.log('🎯 Multi-tenant Rachel routes mounted - Client identification act
 // PROTECTED ROUTES - Require Authentication
 // =====================================================
 
-// Dashboard route - protected client-side
+// Dashboard route - client-side authentication
 app.get('/', async (req, res) => {
   try {
-    // Render dashboard - authentication happens client-side
-    const clientData = {
-      id: parseInt(CLIENT_ID) || 5,
-      businessName: CLIENT_NAME
-    };
-
+    // Render dashboard - authentication and clientId extraction happens client-side via JavaScript
     res.render('dashboard', { 
       title: `${CLIENT_NAME} CRM Dashboard`,
       currentDate: new Date().toLocaleDateString(),
       voiceEnabled: process.env.VOICE_ENABLED === 'true' || false,
-      clientName: CLIENT_NAME,
-      clientId: clientData.id,
-      client: clientData
+      clientName: CLIENT_NAME
     });
   } catch (error) {
     console.error('Dashboard error:', error);

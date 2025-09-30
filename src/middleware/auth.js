@@ -35,13 +35,14 @@ const authenticateToken = async (req, res, next) => {
             });
         }
         
-        // Add user info to request object
+        // Add user info to request object - INCLUDING clientId from JWT
         req.user = {
             userId: user.id,
             email: user.email,
             firstName: user.first_name,
             lastName: user.last_name,
-            businessName: user.business_name
+            businessName: user.business_name,
+            clientId: decoded.clientId  // ← FIX: Add clientId from JWT token
         };
         
         next();
