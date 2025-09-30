@@ -44,6 +44,19 @@
             font-weight: 700;
         }
 
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .username {
+            font-size: 0.875rem;
+            color: #4b5563;
+            font-weight: 500;
+        }
+
         .logout-btn {
             background: #ef4444;
             color: white;
@@ -646,11 +659,9 @@
             <div class="header-top">
                 <div>
                     <h1>RinglyPro CRM</h1>
-                    <% if (typeof client !== 'undefined' && client.businessName) { %>
                     <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">
-                        <%= client.businessName %>
+                        <%= clientName %>
                     </p>
-                    <% } %>
                 </div>
                 <button class="logout-btn" onclick="logout()">
                     <svg style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -659,10 +670,11 @@
                     Logout
                 </button>
             </div>
+            
+            <!-- User Info -->
             <div class="user-info">
-  <span class="username"><%= user.fullName %></span>
-  <button onclick="logout()">Logout</button>
-</div>
+                <span class="username" id="username-display">Loading...</span>
+            </div>
             
             <!-- Rachel AI Toggle Card -->
             <div class="rachel-card">
@@ -774,8 +786,33 @@
     </div>
 
     <script>
-        // Get client ID from server-side rendering
-        const CLIENT_ID = <%= clientId %>;
+        // Extract CLIENT_ID from JWT token in localStorage
+        function getClientIdFromToken() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return null;
+            }
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                
+                // Display username in header
+                const usernameDisplay = document.getElementById('username-display');
+                if (usernameDisplay && payload.firstName && payload.lastName) {
+                    usernameDisplay.textContent = `Welcome, ${payload.firstName} ${payload.lastName}`;
+                } else if (usernameDisplay && payload.email) {
+                    usernameDisplay.textContent = `Welcome, ${payload.email}`;
+                }
+                
+                return payload.clientId;
+            } catch (error) {
+                console.error('Invalid token:', error);
+                window.location.href = '/login';
+                return null;
+            }
+        }
+
+        const CLIENT_ID = getClientIdFromToken();
         let currentAction = '';
         let dashboardData = null;
         let isListening = false;
