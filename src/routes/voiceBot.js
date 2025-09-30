@@ -747,7 +747,7 @@ async function findOrCreateContact(name, phone, clientId) {
                     source: 'voice_booking',
                     status: 'active',
                     notes: `Auto-created from voice booking on ${new Date().toLocaleDateString()}`,
-                    client_id: clientId
+                    clientid: clientId
                 });
                 
                 console.log(`✅ Created new contact in database: ${firstName} ${lastName} (${phone}) for client ${clientId}`);
