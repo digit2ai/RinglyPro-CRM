@@ -787,30 +787,42 @@
 
     <script>
         // Extract CLIENT_ID from JWT token in localStorage
-        function getClientIdFromToken() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = '/login';
-                return null;
-            }
-            try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                
-                // Display username in header
-                const usernameDisplay = document.getElementById('username-display');
-                if (usernameDisplay && payload.firstName && payload.lastName) {
-                    usernameDisplay.textContent = `Welcome, ${payload.firstName} ${payload.lastName}`;
-                } else if (usernameDisplay && payload.email) {
-                    usernameDisplay.textContent = `Welcome, ${payload.email}`;
-                }
-                
-                return payload.clientId;
-            } catch (error) {
-                console.error('Invalid token:', error);
-                window.location.href = '/login';
-                return null;
+   function getClientIdFromToken() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login';
+        return null;
+    }
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        
+        // DEBUG: Log the entire payload
+        console.log('🔍 JWT Payload:', payload);
+        console.log('📊 clientId from payload:', payload.clientId);
+        console.log('📊 Type of clientId:', typeof payload.clientId);
+        
+        // Display username in header
+        const usernameDisplay = document.getElementById('username-display');
+        if (usernameDisplay) {
+            if (payload.firstName && payload.lastName) {
+                usernameDisplay.textContent = `Welcome, ${payload.firstName} ${payload.lastName}`;
+            } else if (payload.businessName) {
+                usernameDisplay.textContent = `Welcome, ${payload.businessName}`;
+            } else if (payload.email) {
+                usernameDisplay.textContent = `Welcome, ${payload.email}`;
             }
         }
+        
+        // Return clientId
+        const clientId = payload.clientId;
+        console.log('✅ Returning CLIENT_ID:', clientId);
+        return clientId;
+    } catch (error) {
+        console.error('Invalid token:', error);
+        window.location.href = '/login';
+        return null;
+    }
+}
 
         const CLIENT_ID = getClientIdFromToken();
         let currentAction = '';
