@@ -115,40 +115,15 @@ console.log('🎯 Multi-tenant Rachel routes mounted - Client identification act
 // PROTECTED ROUTES - Require Authentication
 // =====================================================
 
-// Dashboard route - protected (requires authentication)
-app.get('/', authenticateToken, async (req, res) => {
+// Dashboard route - client-side authentication
+app.get('/', async (req, res) => {
   try {
-    // req.user is set by authenticateToken middleware from JWT
-    const { User, Client } = require('./models');
-    
-    // Get user details
-    const user = await User.findByPk(req.user.userId);
-    if (!user) {
-      return res.redirect('/login');
-    }
-
-    // Get client details
-    const client = await Client.findOne({
-      where: { user_id: req.user.userId }
-    });
-
-    if (!client) {
-      return res.status(500).send('Client configuration not found');
-    }
-
+    // Render dashboard - authentication and clientId extraction happens client-side via JavaScript
     res.render('dashboard', { 
-      title: `${client.business_name} CRM Dashboard`,
+      title: `${CLIENT_NAME} CRM Dashboard`,
       currentDate: new Date().toLocaleDateString(),
-      voiceEnabled: client.rachel_enabled || false,
-      clientName: client.business_name,
-      clientId: client.id,  // ✅ Real client ID from database
-      client: client,
-      user: {
-        firstName: user.first_name,
-        lastName: user.last_name,
-        email: user.email,
-        fullName: `${user.first_name} ${user.last_name}`  // ✅ For header display
-      }
+      voiceEnabled: process.env.VOICE_ENABLED === 'true' || false,
+      clientName: CLIENT_NAME
     });
   } catch (error) {
     console.error('Dashboard error:', error);
