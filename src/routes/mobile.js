@@ -80,14 +80,14 @@ router.get('/dashboard/today/:client_id', async (req, res) => {
     console.log(`📅 Querying appointments for date: ${today}`);
     
     const appointmentsQuery = `
-      SELECT id, customer_name as name, customer_phone as phone,
-             appointment_time as time, appointment_date, notes, status, created_at
-      FROM appointments 
-      WHERE client_id = $1 
-        AND appointment_date = $2
-        AND status NOT IN ('cancelled', 'no_show')
-      ORDER BY appointment_time ASC
-    `;
+  SELECT id, customer_name as name, customer_phone as phone,
+         appointment_time as time, appointment_date, notes, status, created_at
+  FROM appointments 
+  WHERE client_id = $1 
+    AND appointment_date = $2
+    AND status != 'cancelled'
+  ORDER BY appointment_time ASC
+`;
 
     const communicationsQuery = `
       SELECT * FROM (
