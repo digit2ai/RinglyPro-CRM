@@ -740,15 +740,15 @@ async function findOrCreateContact(name, phone, clientId) {
                 
                 // FIXED BUG #1: Added client_id to Contact.create()
                 contact = await Contact.create({
-                    firstName: firstName,
-                    lastName: lastName,
-                    phone: phone,
-                    email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@voicebooking.temp`.replace(/\s+/g, ''),
-                    source: 'voice_booking',
-                    status: 'active',
-                    notes: `Auto-created from voice booking on ${new Date().toLocaleDateString()}`,
-                    clientid: clientId
-                });
+    firstName: firstName,
+    lastName: lastName,
+    phone: phone,
+    email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@voicebooking.temp`.replace(/\s+/g, ''),
+    source: 'voice_booking',
+    status: 'active',
+    notes: `Auto-created from voice booking on ${new Date().toLocaleDateString()}`,
+    clientId: clientId  // FIXED: Changed from clientid to clientId
+});
                 
                 console.log(`✅ Created new contact in database: ${firstName} ${lastName} (${phone}) for client ${clientId}`);
             } else {
