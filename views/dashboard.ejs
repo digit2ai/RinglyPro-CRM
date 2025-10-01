@@ -1252,39 +1252,18 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
         }
 
         // UPDATED: Real SMS sending via API
-        async function sendSMS(phone, name) {
-            const message = prompt(`Send message to ${name}:`, '');
-            
-            if (!message || message.trim() === '') {
-                return;
-            }
-
-            try {
-                const response = await authenticatedFetch(`/api/mobile/send-sms/${CLIENT_ID}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        to: phone,
-                        message: message.trim(),
-                        contactName: name
-                    })
-                });
-
-                if (!response) return;
-                const data = await response.json();
-
-                if (data.success) {
-                    alert(`Message sent to ${name}!`);
-                    // Refresh dashboard to show new message
-                    loadDashboard();
-                } else {
-                    alert(`Failed to send message: ${data.error}`);
-                }
-            } catch (error) {
-                console.error('SMS error:', error);
-                alert('Failed to send message. Please try again.');
-            }
-        }
+ // SMS via native app (like phone calls)
+function sendSMS(phone, name) {
+    const message = prompt(`Message to ${name}:`, '');
+    
+    if (!message || message.trim() === '') {
+        return;
+    }
+    
+    // Open device's SMS app with pre-filled message
+    const smsURL = `sms:${phone}?body=${encodeURIComponent(message)}`;
+    window.location.href = smsURL;
+}
 
         function makeCall(phone, name) {
             window.location.href = `tel:${phone}`;
