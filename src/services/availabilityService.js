@@ -53,20 +53,27 @@ class AvailabilityService {
             
             console.log(`📅 Checking availability for client ${clientId} on ${targetDate}`);
             
-            // Get existing appointments for this date - FIXED SEQUELIZE SYNTAX
+            // FIXED: Use camelCase field names for Sequelize with underscored: true
             const { Op } = require('sequelize');
             const existingAppointments = await Appointment.findAll({
                 where: {
-                    client_id: clientId,
-                    appointment_date: targetDate,
+                    clientId: clientId,
+                    appointmentDate: targetDate,
                     status: {
-                        [Op.in]: ['confirmed', 'scheduled']
+                        [Op.notIn]: ['cancelled', 'no_show', 'rejected']
                     }
                 },
-                order: [['appointment_time', 'ASC']]
+                order: [['appointmentTime', 'ASC']]
             });
 
             console.log(`📅 Found ${existingAppointments.length} existing appointments for ${targetDate}`);
+            
+            // Log existing appointment times for debugging
+            if (existingAppointments.length > 0) {
+                existingAppointments.forEach(apt => {
+                    console.log(`   - Existing appointment at ${apt.appointmentTime || apt.appointment_time} (Status: ${apt.status})`);
+                });
+            }
 
             // Generate time slots for this date
             const daySlots = this.generateTimeSlotsForDate(
@@ -89,6 +96,7 @@ class AvailabilityService {
 
         } catch (error) {
             console.error('Error getting available slots:', error);
+            console.error('Error stack:', error.stack);
             
             // Return mock slots on error for demo
             console.log('📅 Falling back to mock slots due to error');
@@ -118,7 +126,8 @@ class AvailabilityService {
             
             // Check if this slot conflicts with existing appointments
             const hasConflict = existingAppointments.some(apt => {
-                const aptTime = apt.appointment_time;
+                // FIXED: Handle both camelCase and snake_case field names
+                const aptTime = apt.appointmentTime || apt.appointment_time;
                 const aptDuration = apt.duration || 30;
                 
                 // Convert appointment time to minutes for comparison
@@ -128,7 +137,13 @@ class AvailabilityService {
                 
                 // Check for overlap
                 const slotEndMinutes = minutes + duration;
-                return (minutes < aptEndMinutes && slotEndMinutes > aptStartMinutes);
+                const overlaps = (minutes < aptEndMinutes && slotEndMinutes > aptStartMinutes);
+                
+                if (overlaps) {
+                    console.log(`   ⚠️ Slot ${timeStr} conflicts with existing appointment at ${aptTime}`);
+                }
+                
+                return overlaps;
             });
 
             if (!hasConflict) {
@@ -224,18 +239,20 @@ class AvailabilityService {
                 return true;
             }
             
-            // Fixed Sequelize syntax for status checking
+            // FIXED: Use camelCase field names and check all non-cancelled statuses
             const { Op } = require('sequelize');
             const conflicts = await Appointment.count({
                 where: {
-                    client_id: clientId,
-                    appointment_date: date,
+                    clientId: clientId,
+                    appointmentDate: date,
+                    appointmentTime: time,
                     status: {
-                        [Op.in]: ['confirmed', 'scheduled']
-                    },
-                    appointment_time: time
+                        [Op.notIn]: ['cancelled', 'no_show', 'rejected']
+                    }
                 }
             });
+
+            console.log(`🔍 Checking slot ${date} ${time}: ${conflicts > 0 ? 'CONFLICT' : 'AVAILABLE'}`);
 
             return conflicts === 0;
 
