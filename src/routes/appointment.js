@@ -8,6 +8,11 @@ const Appointment = sequelize.define('Appointment', {
     primaryKey: true,
     autoIncrement: true
   },
+  clientId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    comment: 'References clients table - required for multi-tenant'
+  },
   contactId: {
     type: DataTypes.INTEGER,
     allowNull: true,
@@ -61,6 +66,11 @@ const Appointment = sequelize.define('Appointment', {
     type: DataTypes.ENUM('confirmed', 'pending', 'cancelled', 'completed', 'no-show'),
     defaultValue: 'confirmed'
   },
+  confirmationCode: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Unique confirmation code for appointment'
+  },
   source: {
     type: DataTypes.ENUM('voice_booking', 'online', 'manual', 'walk-in'),
     defaultValue: 'voice_booking'
@@ -95,7 +105,11 @@ const Appointment = sequelize.define('Appointment', {
 }, {
   tableName: 'appointments',
   timestamps: true,
+  underscored: true, // ADDED: Maps camelCase to snake_case in database
   indexes: [
+    {
+      fields: ['client_id'] // ADDED: Index for client_id
+    },
     {
       fields: ['contactId']
     },
@@ -119,7 +133,7 @@ const Appointment = sequelize.define('Appointment', {
     },
     {
       unique: true,
-      fields: ['appointmentDate', 'appointmentTime'],
+      fields: ['appointmentDate', 'appointmentTime', 'client_id'], // FIXED: Added client_id to unique constraint
       name: 'unique_time_slot'
     }
   ]
@@ -180,6 +194,15 @@ Appointment.findByContact = function(contactId) {
   });
 };
 
+Appointment.findByClient = function(clientId, options = {}) {
+  return this.findAll({
+    where: { clientId },
+    order: [['appointmentDate', options.order || 'DESC'], ['appointmentTime', 'DESC']],
+    limit: options.limit || 50,
+    offset: options.offset || 0
+  });
+};
+
 Appointment.findByPhone = function(phone) {
   return this.findAll({
     where: { customerPhone: phone },
@@ -188,9 +211,10 @@ Appointment.findByPhone = function(phone) {
   });
 };
 
-Appointment.checkAvailability = function(date, time) {
+Appointment.checkAvailability = function(date, time, clientId) {
   return this.findOne({
     where: { 
+      clientId: clientId,
       appointmentDate: date,
       appointmentTime: time,
       status: ['confirmed', 'pending']
@@ -198,14 +222,17 @@ Appointment.checkAvailability = function(date, time) {
   });
 };
 
-Appointment.getAvailableSlots = function(date) {
+Appointment.getAvailableSlots = function(date, clientId) {
   const businessHours = [
     '09:00:00', '10:00:00', '11:00:00',
     '14:00:00', '15:00:00', '16:00:00', '17:00:00'
   ];
   
   return this.findAll({
-    where: { appointmentDate: date },
+    where: { 
+      appointmentDate: date,
+      clientId: clientId
+    },
     attributes: ['appointmentTime']
   }).then(bookedSlots => {
     const bookedTimes = bookedSlots.map(slot => slot.appointmentTime);
