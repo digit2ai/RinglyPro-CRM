@@ -15,7 +15,10 @@ if (process.env.STRIPE_SECRET_KEY) {
 class CreditSystem {
     constructor() {
         this.pool = new Pool({
-            connectionString: process.env.DATABASE_URL
+            connectionString: process.env.DATABASE_URL,
+            ssl: {
+                rejectUnauthorized: false
+            }
         });
     }
 
