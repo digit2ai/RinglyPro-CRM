@@ -53,7 +53,7 @@ router.get('/', async (req, res) => {
   try {
     const appointments = await Appointment.findAll({
       where: {
-        client_id: req.clientId
+        clientId: req.clientId
       },
       order: [['appointmentDate', 'DESC'], ['appointmentTime', 'ASC']]
     });
@@ -81,7 +81,7 @@ router.get('/today', async (req, res) => {
     
     const appointments = await Appointment.findAll({
       where: {
-        client_id: req.clientId,
+        clientId: req.clientId,
         appointmentDate: today,
         status: {
           [Op.notIn]: ['cancelled', 'completed']
@@ -156,7 +156,7 @@ router.post('/', async (req, res) => {
       `APPT${Date.now().toString().slice(-6).toUpperCase()}`;
     
     const appointment = await Appointment.create({
-      client_id: req.clientId,
+      clientId: req.clientId,
       customerName,
       customerEmail,
       customerPhone,
@@ -220,7 +220,7 @@ router.post('/:id/send-confirmation', async (req, res) => {
     const appointment = await Appointment.findOne({
       where: {
         id: req.params.id,
-        client_id: req.clientId
+        clientId: req.clientId
       }
     });
     
@@ -267,7 +267,7 @@ router.get('/:id', async (req, res) => {
     const appointment = await Appointment.findOne({
       where: {
         id: req.params.id,
-        client_id: req.clientId
+        clientId: req.clientId
       }
     });
     
@@ -321,7 +321,7 @@ router.put('/:id', async (req, res) => {
     const appointment = await Appointment.findOne({
       where: {
         id: req.params.id,
-        client_id: req.clientId
+        clientId: req.clientId
       }
     });
     
@@ -377,7 +377,7 @@ router.delete('/:id', async (req, res) => {
     const appointment = await Appointment.findOne({
       where: {
         id: req.params.id,
-        client_id: req.clientId
+        clientId: req.clientId
       }
     });
     
