@@ -4,7 +4,7 @@ const router = express.Router();
 const twilio = require('twilio');
 
 // Import Message model from models
-const { Message } = require('../models');
+const { Message, sequelize } = require('../models');
 
 // Twilio client setup
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -33,54 +33,70 @@ router.get('/today', async (req, res) => {
   }
 });
 
-// POST /api/messages/sms - Send SMS and store in database
+// POST /api/messages/sms - Send SMS and store in database (MULTI-TENANT)
 router.post('/sms', async (req, res) => {
   try {
-    const { to, message, contactId } = req.body;
+    const { to, message, clientId } = req.body;
     
     // Validate input
-    if (!to || !message) {
+    if (!to || !message || !clientId) {
       return res.status(400).json({ 
-        error: 'Missing required fields: to, message' 
+        success: false,
+        error: 'Missing required fields: to, message, clientId' 
       });
     }
 
-    console.log(`📤 Sending SMS to ${to}: ${message}`);
+    console.log(`📤 Client ${clientId} sending SMS to ${to}: ${message}`);
 
-    // Send via Twilio
+    // Get client's dedicated Twilio number
+    const clientQuery = `
+      SELECT ringlypro_number, business_name 
+      FROM clients 
+      WHERE id = $1 AND active = TRUE
+    `;
+    
+    const [clientData] = await sequelize.query(clientQuery, {
+      bind: [clientId],
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    if (!clientData) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Client not found or inactive' 
+      });
+    }
+
+    // Send via Twilio using client's dedicated number
     const twilioMessage = await client.messages.create({
       body: message,
-      from: process.env.TWILIO_PHONE_NUMBER,
+      from: clientData.ringlypro_number, // Use client's Rachel number
       to: to
     });
 
     console.log(`✅ SMS sent successfully! SID: ${twilioMessage.sid}`);
 
-    // Store in database if Message model is available
+    // Store in database WITH client_id
     let savedMessage = null;
     if (Message) {
       try {
         savedMessage = await Message.create({
-          contactId: contactId || null,
+          clientId: clientId,  // CRITICAL: Multi-tenant isolation
           twilioSid: twilioMessage.sid,
-          direction: 'outgoing',
-          fromNumber: process.env.TWILIO_PHONE_NUMBER,
+          direction: 'outbound',
+          fromNumber: clientData.ringlypro_number,
           toNumber: to,
           body: message,
           status: twilioMessage.status || 'sent',
-          cost: twilioMessage.price || null,
-          sentAt: new Date(),
           createdAt: new Date(),
           updatedAt: new Date()
         });
         
-        console.log(`💾 Message stored in database with ID: ${savedMessage.id}`);
+        console.log(`💾 Message stored in database with ID: ${savedMessage.id} for client ${clientId}`);
       } catch (dbError) {
         console.error('⚠️ Failed to store message in database:', dbError.message);
         // Continue without failing the SMS send
       }
-    } else {
-      console.log('⚠️ Message model not available - SMS sent but not stored');
     }
 
     // Return success response
@@ -96,6 +112,7 @@ router.post('/sms', async (req, res) => {
   } catch (error) {
     console.error('❌ Error sending SMS:', error);
     res.status(500).json({ 
+      success: false,
       error: 'Failed to send SMS',
       details: error.message 
     });
@@ -105,13 +122,31 @@ router.post('/sms', async (req, res) => {
 // POST /api/messages/appointment-confirmation - Send appointment confirmation SMS
 router.post('/appointment-confirmation', async (req, res) => {
   try {
-    const { appointmentId, customerPhone, customerName, appointmentDate, appointmentTime, duration, confirmationCode } = req.body;
+    const { appointmentId, customerPhone, customerName, appointmentDate, appointmentTime, duration, confirmationCode, clientId } = req.body;
     
     // Validate required fields
-    if (!customerPhone || !customerName || !appointmentDate || !appointmentTime) {
+    if (!customerPhone || !customerName || !appointmentDate || !appointmentTime || !clientId) {
       return res.status(400).json({ 
         error: 'Missing required appointment details',
-        required: ['customerPhone', 'customerName', 'appointmentDate', 'appointmentTime']
+        required: ['customerPhone', 'customerName', 'appointmentDate', 'appointmentTime', 'clientId']
+      });
+    }
+
+    // Get client's dedicated Twilio number
+    const clientQuery = `
+      SELECT ringlypro_number, business_name 
+      FROM clients 
+      WHERE id = $1 AND active = TRUE
+    `;
+    
+    const [clientData] = await sequelize.query(clientQuery, {
+      bind: [clientId],
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    if (!clientData) {
+      return res.status(404).json({ 
+        error: 'Client not found or inactive' 
       });
     }
 
@@ -126,100 +161,10 @@ router.post('/appointment-confirmation', async (req, res) => {
 
     console.log(`📅 Sending appointment confirmation to ${customerPhone} for ${customerName}`);
 
-    // Add this route to your routes/messages.js file
-
-// Send appointment cancellation SMS
-router.post('/appointment-cancellation', async (req, res) => {
-  try {
-    const {
-      appointmentId,
-      customerPhone,
-      customerName,
-      appointmentDate,
-      appointmentTime,
-      confirmationCode,
-      reason = 'scheduling conflict'
-    } = req.body;
-
-    // Validate required fields
-    if (!customerPhone || !customerName || !appointmentDate || !appointmentTime) {
-      return res.status(400).json({
-        error: 'Missing required fields: customerPhone, customerName, appointmentDate, appointmentTime'
-      });
-    }
-
-    // Format date and time for display
-    const formattedDate = new Date(appointmentDate).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-
-    const formattedTime = new Date(`2000-01-01T${appointmentTime}`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-
-    // Create cancellation message
-    const message = `🚫 APPOINTMENT CANCELLED 🚫
-
-Hi ${customerName},
-
-Your appointment scheduled for:
-📅 ${formattedDate}
-🕐 ${formattedTime}
-
-Has been cancelled due to ${reason}.
-
-${confirmationCode ? `Reference: ${confirmationCode}` : ''}
-
-We apologize for any inconvenience. Please call us to reschedule.
-
-- RinglyPro Team`;
-
-    // Send SMS using Twilio
-    const twilioMessage = await twilioClient.messages.create({
-      body: message,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: customerPhone
-    });
-
-    console.log(`✅ Cancellation SMS sent to ${customerPhone} (SID: ${twilioMessage.sid})`);
-
-    // Save message to database
-    const savedMessage = await Message.create({
-      customerPhone,
-      messageBody: message,
-      direction: 'outbound',
-      status: 'sent',
-      twilioSid: twilioMessage.sid,
-      messageType: 'appointment_cancellation',
-      appointmentId: appointmentId || null
-    });
-
-    res.json({
-      success: true,
-      message: 'Cancellation SMS sent successfully',
-      messageId: savedMessage.id,
-      twilioSid: twilioMessage.sid,
-      customerPhone: customerPhone
-    });
-
-  } catch (error) {
-    console.error('❌ Error sending cancellation SMS:', error);
-    res.status(500).json({
-      error: 'Failed to send cancellation SMS',
-      details: error.message
-    });
-  }
-});
-
     // Send SMS via Twilio
     const twilioMessage = await client.messages.create({
       body: appointmentMessage,
-      from: process.env.TWILIO_PHONE_NUMBER,
+      from: clientData.ringlypro_number,
       to: customerPhone
     });
 
@@ -230,15 +175,13 @@ We apologize for any inconvenience. Please call us to reschedule.
     if (Message) {
       try {
         savedMessage = await Message.create({
-          contactId: null, // Could link to contact if you have contactId
+          clientId: clientId,
           twilioSid: twilioMessage.sid,
-          direction: 'outgoing',
-          fromNumber: process.env.TWILIO_PHONE_NUMBER,
+          direction: 'outbound',
+          fromNumber: clientData.ringlypro_number,
           toNumber: customerPhone,
           body: appointmentMessage,
           status: twilioMessage.status || 'sent',
-          cost: twilioMessage.price || null,
-          sentAt: new Date(),
           createdAt: new Date(),
           updatedAt: new Date()
         });
@@ -270,6 +213,115 @@ We apologize for any inconvenience. Please call us to reschedule.
   }
 });
 
+// POST /api/messages/appointment-cancellation - Send appointment cancellation SMS
+router.post('/appointment-cancellation', async (req, res) => {
+  try {
+    const {
+      appointmentId,
+      customerPhone,
+      customerName,
+      appointmentDate,
+      appointmentTime,
+      confirmationCode,
+      clientId,
+      reason = 'scheduling conflict'
+    } = req.body;
+
+    // Validate required fields
+    if (!customerPhone || !customerName || !appointmentDate || !appointmentTime || !clientId) {
+      return res.status(400).json({
+        error: 'Missing required fields: customerPhone, customerName, appointmentDate, appointmentTime, clientId'
+      });
+    }
+
+    // Get client's dedicated Twilio number
+    const clientQuery = `
+      SELECT ringlypro_number, business_name 
+      FROM clients 
+      WHERE id = $1 AND active = TRUE
+    `;
+    
+    const [clientData] = await sequelize.query(clientQuery, {
+      bind: [clientId],
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    if (!clientData) {
+      return res.status(404).json({ 
+        error: 'Client not found or inactive' 
+      });
+    }
+
+    // Format date and time for display
+    const formattedDate = new Date(appointmentDate).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const formattedTime = new Date(`2000-01-01T${appointmentTime}`).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+
+    // Create cancellation message
+    const message = `APPOINTMENT CANCELLED
+
+Hi ${customerName},
+
+Your appointment scheduled for:
+Date: ${formattedDate}
+Time: ${formattedTime}
+
+Has been cancelled due to ${reason}.
+
+${confirmationCode ? `Reference: ${confirmationCode}` : ''}
+
+We apologize for any inconvenience. Please call us to reschedule.
+
+- ${clientData.business_name}`;
+
+    // Send SMS using Twilio
+    const twilioMessage = await client.messages.create({
+      body: message,
+      from: clientData.ringlypro_number,
+      to: customerPhone
+    });
+
+    console.log(`✅ Cancellation SMS sent to ${customerPhone} (SID: ${twilioMessage.sid})`);
+
+    // Save message to database
+    const savedMessage = await Message.create({
+      clientId: clientId,
+      twilioSid: twilioMessage.sid,
+      direction: 'outbound',
+      fromNumber: clientData.ringlypro_number,
+      toNumber: customerPhone,
+      body: message,
+      status: 'sent',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    res.json({
+      success: true,
+      message: 'Cancellation SMS sent successfully',
+      messageId: savedMessage.id,
+      twilioSid: twilioMessage.sid,
+      customerPhone: customerPhone
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending cancellation SMS:', error);
+    res.status(500).json({
+      error: 'Failed to send cancellation SMS',
+      details: error.message
+    });
+  }
+});
+
 // POST /api/messages/webhook - Twilio webhook for incoming messages
 router.post('/webhook', async (req, res) => {
   try {
@@ -282,13 +334,25 @@ router.post('/webhook', async (req, res) => {
     console.log(`   Body: ${Body}`);
     console.log(`   Status: ${SmsStatus}`);
 
+    // Find client by ringlypro_number
+    const clientQuery = `
+      SELECT id, business_name 
+      FROM clients 
+      WHERE ringlypro_number = $1 AND active = TRUE
+    `;
+    
+    const [clientData] = await sequelize.query(clientQuery, {
+      bind: [To],
+      type: sequelize.QueryTypes.SELECT
+    });
+
     // Store incoming message if Message model is available
-    if (Message) {
+    if (Message && clientData) {
       try {
         const savedMessage = await Message.create({
-          contactId: null, // You can add logic to find contactId by phone number
+          clientId: clientData.id,
           twilioSid: MessageSid,
-          direction: 'incoming',
+          direction: 'inbound',
           fromNumber: From,
           toNumber: To,
           body: Body,
@@ -297,12 +361,12 @@ router.post('/webhook', async (req, res) => {
           updatedAt: new Date()
         });
         
-        console.log(`💾 Incoming message stored in database with ID: ${savedMessage.id}`);
+        console.log(`💾 Incoming message stored in database with ID: ${savedMessage.id} for client ${clientData.id}`);
       } catch (dbError) {
         console.error('⚠️ Failed to store incoming message:', dbError.message);
       }
     } else {
-      console.log('⚠️ Message model not available - incoming message not stored');
+      console.log('⚠️ Message model not available or client not found - incoming message not stored');
     }
 
     // Send auto-reply (optional)
@@ -343,18 +407,18 @@ function formatAppointmentConfirmationSMS({ customerName, appointmentDate, appoi
   // Confirmation code
   const code = confirmationCode || 'N/A';
 
-  return `🗓️ APPOINTMENT CONFIRMED
+  return `APPOINTMENT CONFIRMED
 
 Hi ${customerName}!
 
 Your appointment has been scheduled:
 
-📅 Date: ${date}
-🕐 Time: ${time}
-⏱️ Duration: ${duration} minutes
-🔑 Confirmation: ${code}
+Date: ${date}
+Time: ${time}
+Duration: ${duration} minutes
+Confirmation: ${code}
 
-📞 RinglyPro CRM
+RinglyPro CRM
 Need to reschedule? Reply to this message.
 
 Thank you for choosing our services!`;

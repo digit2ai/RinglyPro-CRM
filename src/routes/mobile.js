@@ -267,6 +267,95 @@ router.post('/voice/command/:client_id', async (req, res) => {
   }
 });
 
+// ============= SEND SMS =============
+
+router.post('/send-sms/:client_id', async (req, res) => {
+  const { client_id } = req.params;
+  const { to, message, contactName } = req.body;
+
+  if (!to || !message) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Phone number and message are required' 
+    });
+  }
+
+  try {
+    console.log(`📤 Client ${client_id} sending SMS to ${to}`);
+
+    // Get client's Twilio number
+    const clientQuery = `
+      SELECT ringlypro_number, business_name 
+      FROM clients 
+      WHERE id = $1 AND active = TRUE
+    `;
+    
+    const [client] = await sequelize.query(clientQuery, {
+      bind: [client_id],
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    if (!client) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Client not found' 
+      });
+    }
+
+    // Initialize Twilio client
+    const twilio = require('twilio');
+    const twilioClient = twilio(
+      process.env.TWILIO_ACCOUNT_SID,
+      process.env.TWILIO_AUTH_TOKEN
+    );
+
+    // Send SMS
+    const twilioMessage = await twilioClient.messages.create({
+      body: message,
+      from: client.ringlypro_number,
+      to: to
+    });
+
+    // Log to database
+    const insertQuery = `
+      INSERT INTO messages (client_id, twilio_sid, direction, from_number, to_number, body, status, created_at)
+      VALUES ($1, $2, 'outbound', $3, $4, $5, $6, NOW())
+      RETURNING id
+    `;
+
+    const [result] = await sequelize.query(insertQuery, {
+      bind: [
+        client_id,
+        twilioMessage.sid,
+        client.ringlypro_number,
+        to,
+        message,
+        twilioMessage.status
+      ],
+      type: sequelize.QueryTypes.INSERT
+    });
+
+    console.log(`✅ SMS sent and logged (Message ID: ${result.id})`);
+
+    res.json({
+      success: true,
+      message: 'SMS sent successfully',
+      messageId: result.id,
+      twilioSid: twilioMessage.sid,
+      sentTo: to,
+      contactName: contactName || 'Unknown'
+    });
+
+  } catch (error) {
+    console.error('❌ SMS sending error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to send SMS',
+      details: error.message 
+    });
+  }
+});
+
 // ============= HELPER FUNCTIONS =============
 
 function getRelativeTime(dateString) {

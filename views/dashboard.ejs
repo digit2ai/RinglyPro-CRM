@@ -225,22 +225,18 @@
             background: #059669;
         }
 
-        .btn-voice {
+        .btn-credits {
             background: #8b5cf6;
         }
 
-        .btn-voice:hover {
+        .btn-credits:hover {
             background: #7c3aed;
         }
 
-        .btn-voice.listening {
-            background: #ef4444;
-            animation: pulse-button 1s ease-in-out infinite;
-        }
-
-        @keyframes pulse-button {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        .credit-amount {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-top: 0.125rem;
         }
 
         /* Navigation Tabs */
@@ -710,11 +706,12 @@
                 </svg>
                 Make Call
             </button>
-            <button class="action-btn btn-voice" id="voiceBtn" onclick="startVoiceCommand()">
+            <button class="action-btn btn-credits" onclick="showCreditsInfo()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <span id="voiceText">Voice</span>
+                Credits
+                <div class="credit-amount" id="creditAmount">Loading...</div>
             </button>
         </div>
     </div>
@@ -787,52 +784,46 @@
 
     <script>
         // Extract CLIENT_ID from JWT token in localStorage
-   function getClientIdFromToken() {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        window.location.href = '/login';
-        return null;
-    }
-    try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        
-        // DEBUG: Log the entire payload
-        console.log('🔍 JWT Payload:', payload);
-        console.log('📊 clientId from payload:', payload.clientId);
-        console.log('📊 Type of clientId:', typeof payload.clientId);
-        
-        // Display username in header
-        const usernameDisplay = document.getElementById('username-display');
-        if (usernameDisplay) {
-            if (payload.firstName && payload.lastName) {
-                usernameDisplay.textContent = `Welcome, ${payload.firstName} ${payload.lastName}`;
-            } else if (payload.businessName) {
-                usernameDisplay.textContent = `Welcome, ${payload.businessName}`;
-            } else if (payload.email) {
-                usernameDisplay.textContent = `Welcome, ${payload.email}`;
+        function getClientIdFromToken() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return null;
+            }
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                
+                console.log('JWT Payload:', payload);
+                console.log('clientId from payload:', payload.clientId);
+                
+                // Display username in header
+                const usernameDisplay = document.getElementById('username-display');
+                if (usernameDisplay) {
+                    if (payload.firstName && payload.lastName) {
+                        usernameDisplay.textContent = `Welcome, ${payload.firstName} ${payload.lastName}`;
+                    } else if (payload.businessName) {
+                        usernameDisplay.textContent = `Welcome, ${payload.businessName}`;
+                    } else if (payload.email) {
+                        usernameDisplay.textContent = `Welcome, ${payload.email}`;
+                    }
+                }
+                
+                return payload.clientId;
+            } catch (error) {
+                console.error('Invalid token:', error);
+                window.location.href = '/login';
+                return null;
             }
         }
-        
-        // Return clientId
-        const clientId = payload.clientId;
-        console.log('✅ Returning CLIENT_ID:', clientId);
-        return clientId;
-    } catch (error) {
-        console.error('Invalid token:', error);
-        window.location.href = '/login';
-        return null;
-    }
-}
 
         const CLIENT_ID = getClientIdFromToken();
         let currentAction = '';
         let dashboardData = null;
-        let isListening = false;
         let authToken = localStorage.getItem('token');
+        let creditsData = null;
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
-            // Check if token exists (additional client-side check)
             if (!authToken) {
                 window.location.href = '/login';
                 return;
@@ -840,6 +831,7 @@
             
             loadRachelStatus();
             loadDashboard();
+            loadCredits();
             setupTabSwitching();
             setupRachelToggle();
         });
@@ -859,7 +851,6 @@
             
             const response = await fetch(url, { ...options, headers });
             
-            // If unauthorized, redirect to login
             if (response.status === 401) {
                 localStorage.removeItem('token');
                 window.location.href = '/login';
@@ -867,6 +858,54 @@
             }
             
             return response;
+        }
+
+        // Load Credits
+        async function loadCredits() {
+            try {
+                const response = await authenticatedFetch(`/api/credits/balance?clientId=${CLIENT_ID}`);
+                if (!response) return;
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    creditsData = data;
+                    const freeMinutes = data.free_minutes_remaining || 0;
+                    const paidBalance = data.balance || 0;
+                    
+                    document.getElementById('creditAmount').textContent = 
+                        `${freeMinutes} free min`;
+                }
+            } catch (error) {
+                console.error('Error loading credits:', error);
+                document.getElementById('creditAmount').textContent = 'N/A';
+            }
+        }
+
+        // Show Credits Info
+        function showCreditsInfo() {
+            if (!creditsData) {
+                alert('Loading credit information...');
+                return;
+            }
+            
+            const freeMinutes = creditsData.free_minutes_remaining || 0;
+            const usedMinutes = creditsData.free_minutes_used || 0;
+            const totalMinutes = creditsData.total_minutes || 100;
+            const paidBalance = creditsData.balance || 0;
+            const resetDate = creditsData.reset_date || 'Unknown';
+            
+            const message = `CREDIT BALANCE
+
+Free Minutes: ${freeMinutes} / ${totalMinutes}
+Used This Month: ${usedMinutes} min
+Paid Balance: $${paidBalance.toFixed(2)}
+
+Reset Date: ${new Date(resetDate).toLocaleDateString()}
+
+Rate: $0.10 per minute after free tier`;
+            
+            alert(message);
         }
 
         // Load Rachel Status
@@ -920,7 +959,6 @@
                     
                     if (data.success) {
                         updateRachelUI(enabled);
-                        // Show forwarding instructions
                         await showForwardingInstructions(enabled);
                     } else {
                         e.target.checked = !enabled;
@@ -937,17 +975,14 @@
         // Show forwarding instructions when toggle changes
         async function showForwardingInstructions(enabled) {
             try {
-                // Detect carrier or ask user
                 let carrier = localStorage.getItem('carrier_preference');
                 
                 if (!carrier) {
-                    // Ask user to select carrier on first use
                     carrier = await promptForCarrier();
-                    if (!carrier) return; // User cancelled
+                    if (!carrier) return;
                     localStorage.setItem('carrier_preference', carrier);
                 }
                 
-                // Get forwarding codes for selected carrier
                 const response = await fetch(`/api/call-forwarding/setup/${carrier}/${CLIENT_ID}`);
                 const data = await response.json();
                 
@@ -1137,7 +1172,6 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
             title.textContent = action === 'sms' ? 'Send Message To' : 'Call Contact';
             modal.classList.add('active');
             
-            // Load recent contacts from appointments
             if (dashboardData && dashboardData.appointments) {
                 renderContactList(dashboardData.appointments);
             }
@@ -1217,62 +1251,43 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
             }
         }
 
-        // Actions
-        function sendSMS(phone, name) {
-            alert(`Opening SMS to ${name} (${phone})\n\nIn production, this would open your SMS app or messaging interface.`);
+        // UPDATED: Real SMS sending via API
+        async function sendSMS(phone, name) {
+            const message = prompt(`Send message to ${name}:`, '');
+            
+            if (!message || message.trim() === '') {
+                return;
+            }
+
+            try {
+                const response = await authenticatedFetch(`/api/mobile/send-sms/${CLIENT_ID}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: phone,
+                        message: message.trim(),
+                        contactName: name
+                    })
+                });
+
+                if (!response) return;
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`Message sent to ${name}!`);
+                    // Refresh dashboard to show new message
+                    loadDashboard();
+                } else {
+                    alert(`Failed to send message: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('SMS error:', error);
+                alert('Failed to send message. Please try again.');
+            }
         }
 
         function makeCall(phone, name) {
             window.location.href = `tel:${phone}`;
-        }
-
-        // Voice Command
-        function startVoiceCommand() {
-            if (isListening) return;
-            
-            isListening = true;
-            const btn = document.getElementById('voiceBtn');
-            const text = document.getElementById('voiceText');
-            
-            btn.classList.add('listening');
-            text.textContent = 'Listening...';
-            
-            setTimeout(async () => {
-                isListening = false;
-                btn.classList.remove('listening');
-                text.textContent = 'Voice';
-                
-                const transcript = prompt('Voice command (e.g., "text manuel about todays meeting"):');
-                if (transcript) {
-                    await processVoiceCommand(transcript);
-                }
-            }, 2000);
-        }
-
-        async function processVoiceCommand(transcript) {
-            try {
-                const response = await authenticatedFetch(`/api/mobile/voice/command/${CLIENT_ID}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ transcript })
-                });
-                
-                if (!response) return;
-                const data = await response.json();
-                
-                if (data.success && data.next_action) {
-                    const action = data.next_action;
-                    if (action.action === 'sms') {
-                        const confirmed = confirm(`Send message to ${action.contact_name}?\n\nMessage: ${action.message}`);
-                        if (confirmed) {
-                            sendSMS(action.contact_phone, action.contact_name);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Error processing voice command:', error);
-                alert('Error processing voice command');
-            }
         }
     </script>
 </body>
