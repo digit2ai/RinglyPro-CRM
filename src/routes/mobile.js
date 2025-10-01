@@ -75,11 +75,17 @@ router.get('/dashboard/today/:client_id', async (req, res) => {
   try {
     console.log(`📊 Loading dashboard for client ${client_id}`);
     
+    // FIXED: Use explicit date string instead of CURRENT_DATE to avoid timezone issues
+    const today = new Date().toISOString().split('T')[0]; // Get YYYY-MM-DD
+    console.log(`📅 Querying appointments for date: ${today}`);
+    
     const appointmentsQuery = `
       SELECT id, customer_name as name, customer_phone as phone,
              appointment_time as time, appointment_date, notes, status, created_at
       FROM appointments 
-      WHERE client_id = $1 AND DATE(appointment_date) = CURRENT_DATE
+      WHERE client_id = $1 
+        AND appointment_date = $2
+        AND status NOT IN ('cancelled', 'no_show')
       ORDER BY appointment_time ASC
     `;
 
@@ -104,9 +110,16 @@ router.get('/dashboard/today/:client_id', async (req, res) => {
     `;
 
     const [appointmentsResult, communicationsResult] = await Promise.all([
-      sequelize.query(appointmentsQuery, { bind: [client_id], type: sequelize.QueryTypes.SELECT }),
+      sequelize.query(appointmentsQuery, { bind: [client_id, today], type: sequelize.QueryTypes.SELECT }),
       sequelize.query(communicationsQuery, { bind: [client_id], type: sequelize.QueryTypes.SELECT })
     ]);
+
+    console.log(`📊 Query returned ${appointmentsResult.length} appointments`);
+    if (appointmentsResult.length > 0) {
+      appointmentsResult.forEach(apt => {
+        console.log(`   - Appointment ${apt.id}: ${apt.name} at ${apt.time}`);
+      });
+    }
 
     const formatTime = (timeString) => {
       if (!timeString) return 'N/A';
