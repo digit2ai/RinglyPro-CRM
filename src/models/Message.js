@@ -8,6 +8,11 @@ const Message = sequelize.define('Message', {
     primaryKey: true,
     autoIncrement: true
   },
+  clientId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    comment: 'References clients table - required for multi-tenant'
+  },
   contactId: {
     type: DataTypes.INTEGER,
     allowNull: true,
@@ -83,7 +88,11 @@ const Message = sequelize.define('Message', {
 }, {
   tableName: 'messages',
   timestamps: true,
+  underscored: true, // ADDED: Maps camelCase to snake_case in database
   indexes: [
+    {
+      fields: ['client_id'] // ADDED: Index for client_id
+    },
     {
       fields: ['contactId']
     },
@@ -137,6 +146,15 @@ Message.findByTwilioSid = function(twilioSid) {
 Message.findByContact = function(contactId, options = {}) {
   return this.findAll({
     where: { contactId },
+    order: [['createdAt', options.order || 'DESC']],
+    limit: options.limit || 50,
+    offset: options.offset || 0
+  });
+};
+
+Message.findByClient = function(clientId, options = {}) {
+  return this.findAll({
+    where: { clientId },
     order: [['createdAt', options.order || 'DESC']],
     limit: options.limit || 50,
     offset: options.offset || 0

@@ -51,6 +51,15 @@ router.post('/register', async (req, res) => {
         
         console.log('📝 Registration attempt:', { email, firstName, lastName, businessName, businessType, businessPhone });
         
+        // FIXED BUG #3: Validate Client model is available before proceeding
+        if (!Client) {
+            await transaction.rollback();
+            return res.status(500).json({ 
+                error: 'System configuration error. Please contact support.',
+                details: process.env.NODE_ENV === 'development' ? 'Client model not loaded' : undefined
+            });
+        }
+        
         // Validate required fields
         if (!email || !password || !firstName || !lastName) {
             await transaction.rollback();
@@ -85,14 +94,12 @@ router.post('/register', async (req, res) => {
         }
         
         // Check if business phone already exists (for Rachel AI system)
-        if (Client) {
-            const existingClient = await Client.findOne({ where: { business_phone: businessPhone } });
-            if (existingClient) {
-                await transaction.rollback();
-                return res.status(409).json({ 
-                    error: 'A Rachel AI system already exists with this phone number' 
-                });
-            }
+        const existingClient = await Client.findOne({ where: { business_phone: businessPhone } });
+        if (existingClient) {
+            await transaction.rollback();
+            return res.status(409).json({ 
+                error: 'A Rachel AI system already exists with this phone number' 
+            });
         }
         
         // Hash password
@@ -171,14 +178,17 @@ router.post('/register', async (req, res) => {
         }
         
         // ==================== CREATE CLIENT RECORD ====================
+        // FIXED BUG #3: Better error handling and validation
+        console.log('🏢 Creating client record...');
+        
         let client = null;
-        if (Client) {
+        try {
             client = await Client.create({
                 business_name: businessName,
                 business_phone: businessPhone,
-                ringlypro_number: twilioNumber,              // NEW: Twilio number
-                twilio_number_sid: twilioSid,                // NEW: Twilio SID
-                forwarding_status: 'active',                  // NEW: Active status
+                ringlypro_number: twilioNumber,              // Twilio number
+                twilio_number_sid: twilioSid,                // Twilio SID
+                forwarding_status: 'active',                  // Active status
                 owner_name: `${firstName} ${lastName}`,
                 owner_phone: phoneNumber || businessPhone,
                 owner_email: email,
@@ -194,13 +204,34 @@ router.post('/register', async (req, res) => {
                 per_minute_rate: 0.10,
                 rachel_enabled: true,
                 active: true,
-                user_id: user.id
+                user_id: user.id  // CRITICAL: Links client to user
             }, { transaction });
             
             console.log('✅ Client record created for Rachel AI:', client.id);
             console.log(`📞 Rachel AI number configured: ${twilioNumber}`);
             
-            // Create credit account
+        } catch (clientError) {
+            console.error('❌ Client creation error:', clientError);
+            await transaction.rollback();
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to create client account. Please try again or contact support.',
+                details: process.env.NODE_ENV === 'development' ? clientError.message : undefined
+            });
+        }
+        
+        // FIXED BUG #3: Validate client was actually created
+        if (!client || !client.id) {
+            console.error('❌ Client creation returned null or no ID');
+            await transaction.rollback();
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to create client account. Please try again or contact support.'
+            });
+        }
+        
+        // Create credit account
+        try {
             if (CreditAccount) {
                 await CreditAccount.create({
                     client_id: client.id,
@@ -209,11 +240,14 @@ router.post('/register', async (req, res) => {
                 }, { transaction });
                 console.log('✅ Credit account created');
             }
-        } else {
-            console.log('⚠️ Client model not available - skipping client creation');
+        } catch (creditError) {
+            console.error('⚠️ Credit account creation error (non-fatal):', creditError);
+            // Don't rollback for credit account errors - it's not critical
         }
         
+        // FIXED BUG #3: Commit transaction only after everything succeeds
         await transaction.commit();
+        console.log('✅ Transaction committed successfully');
         
         // Generate JWT token
         const token = jwt.sign(
@@ -222,7 +256,7 @@ router.post('/register', async (req, res) => {
                 email: user.email,
                 businessName: user.business_name,
                 businessType: user.business_type,
-                clientId: client ? client.id : null
+                clientId: client.id  // Always has valid client.id now
             },
             process.env.JWT_SECRET || 'your-super-secret-jwt-key',
             { expiresIn: '7d' }
@@ -246,12 +280,12 @@ router.post('/register', async (req, res) => {
                     freeTrialMinutes: user.free_trial_minutes,
                     onboardingCompleted: user.onboarding_completed
                 },
-                client: client ? {
+                client: {
                     id: client.id,
-                    rachelNumber: twilioNumber,              // NEW: Return Twilio number
+                    rachelNumber: twilioNumber,
                     rachelEnabled: client.rachel_enabled,
-                    twilioSid: twilioSid                      // NEW: Return SID
-                } : null,
+                    twilioSid: twilioSid
+                },
                 token,
                 nextSteps: {
                     dashboard: '/dashboard',
@@ -264,11 +298,13 @@ router.post('/register', async (req, res) => {
         
         console.log(`🎉 New user registered: ${firstName} ${lastName} (${businessName}) - ${email}`);
         console.log(`📞 Rachel AI Twilio number: ${twilioNumber}`);
+        console.log(`👤 User ID: ${user.id}, Client ID: ${client.id}`);
         
     } catch (error) {
         await transaction.rollback();
         console.error('💥 Registration error:', error);
         console.error('Error details:', error.message);
+        console.error('Stack trace:', error.stack);
         
         // Check for specific database errors
         if (error.name === 'SequelizeUniqueConstraintError') {
@@ -339,6 +375,8 @@ router.post('/login', async (req, res) => {
             client = await Client.findOne({ where: { user_id: user.id } });
             if (client) {
                 console.log(`📞 Rachel AI found: ${client.ringlypro_number} (Client ID: ${client.id})`);
+            } else {
+                console.log('⚠️ No client record found for user - this should not happen after registration');
             }
         }
         
