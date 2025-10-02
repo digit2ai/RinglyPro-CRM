@@ -15,14 +15,14 @@ if (process.env.STRIPE_SECRET_KEY) {
 
 class CreditSystem {
     constructor() {
-        // Create a query wrapper that mimics pg Pool's query method
+        // Create a query wrapper that matches mobile.js syntax
         this.pool = {
             query: async (sql, params = []) => {
                 const result = await sequelize.query(sql, {
-                    replacements: params,
+                    bind: params,  // MUST use 'bind' not 'replacements'
                     type: sequelize.QueryTypes.SELECT
                 });
-                // Return in pg Pool format with .rows property
+                // Return in pg Pool format
                 return { rows: result };
             }
         };
