@@ -15,18 +15,17 @@ if (process.env.STRIPE_SECRET_KEY) {
 
 class CreditSystem {
     constructor() {
-        // Use Sequelize's existing connection pool (already configured with SSL and correct schema)
-        this.pool = sequelize.connectionManager.pool;
-    }
-
-    // Get comprehensive credit summary for a client
-    async getClientCreditSummary(clientId) {
-        const query = `
-            SELECT * FROM client_credit_summary 
-            WHERE client_id = $1
-        `;
-        const result = await this.pool.query(query, [clientId]);
-        return result.rows[0];
+        // Create a query wrapper that mimics pg Pool's query method
+        this.pool = {
+            query: async (sql, params = []) => {
+                const result = await sequelize.query(sql, {
+                    replacements: params,
+                    type: sequelize.QueryTypes.SELECT
+                });
+                // Return in pg Pool format with .rows property
+                return { rows: result };
+            }
+        };
     }
 
     // Get client information including user_id
