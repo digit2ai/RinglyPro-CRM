@@ -28,6 +28,16 @@ class CreditSystem {
         };
     }
 
+    // Get comprehensive credit summary for a client
+    async getClientCreditSummary(clientId) {
+        const query = `
+            SELECT * FROM client_credit_summary 
+            WHERE client_id = $1
+        `;
+        const result = await this.pool.query(query, [clientId]);
+        return result.rows[0];
+    }
+
     // Get client information including user_id
     async getClientInfo(clientId) {
         const query = `
@@ -291,7 +301,7 @@ class CreditSystem {
             'low_balance',
             balance,
             `Your RinglyPro credit balance is low ($${balance.toFixed(2)}). Reload now to ensure uninterrupted service.`,
-            `🔔 RinglyPro Low Balance Alert\n\nYour credit balance: $${balance.toFixed(2)}\nFree minutes used: ${freeMinutesUsed}/100\n\nReload now: ${process.env.APP_URL}/credits/reload/${clientId}\n\nReply STOP to opt out.`
+            `RinglyPro Low Balance Alert\n\nYour credit balance: $${balance.toFixed(2)}\nFree minutes used: ${freeMinutesUsed}/100\n\nReload now: ${process.env.APP_URL}/credits/reload/${clientId}\n\nReply STOP to opt out.`
         ]);
         
         console.log(`Low balance notification created for client ${clientId}: $${balance.toFixed(2)}`);
