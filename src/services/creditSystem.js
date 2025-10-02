@@ -3,7 +3,8 @@
 // File: src/services/creditSystem.js
 // =====================================================
 
-const { Pool } = require('pg');
+const { sequelize } = require('../models');
+
 // Conditional Stripe initialization
 let stripe = null;
 if (process.env.STRIPE_SECRET_KEY) {
@@ -14,12 +15,8 @@ if (process.env.STRIPE_SECRET_KEY) {
 
 class CreditSystem {
     constructor() {
-        this.pool = new Pool({
-            connectionString: process.env.DATABASE_URL,
-            ssl: {
-                rejectUnauthorized: false
-            }
-        });
+        // Use Sequelize's existing connection pool (already configured with SSL and correct schema)
+        this.pool = sequelize.connectionManager.pool;
     }
 
     // Get comprehensive credit summary for a client
