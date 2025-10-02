@@ -3,7 +3,29 @@
 // File: src/services/creditSystem.js
 // =====================================================
 
+const { Pool } = require('pg');
 const { sequelize } = require('../models');
+
+// Get connection config from Sequelize
+const config = sequelize.config;
+
+// Create native PostgreSQL pool that supports $1, $2, $3 syntax
+const pool = new Pool({
+    host: config.host,
+    port: config.port,
+    database: config.database,
+    user: config.username,
+    password: config.password,
+    ssl: config.dialectOptions?.ssl || { rejectUnauthorized: false },
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+});
+
+// Handle pool errors
+pool.on('error', (err) => {
+    console.error('Unexpected error on idle PostgreSQL client', err);
+});
 
 // Conditional Stripe initialization
 let stripe = null;
@@ -15,16 +37,8 @@ if (process.env.STRIPE_SECRET_KEY) {
 
 class CreditSystem {
     constructor() {
-        // Create a query wrapper that matches mobile.js syntax
-        
-        this.pool = {
-    query: async (sql, params = []) => {
-        const [result, metadata] = await sequelize.query(sql, {
-            replacements: params  // Works with $1, $2, $3 positional params
-        });
-        return { rows: result };
-    }
-};
+        // Use native pg Pool - supports $1, $2, $3 syntax natively
+        this.pool = pool;
     }
 
     // Get comprehensive credit summary for a client
