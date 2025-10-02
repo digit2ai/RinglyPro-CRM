@@ -89,17 +89,18 @@ const getUserClient = async (req, res, next) => {
             });
         }
         
-        // Add client info to request object
-        req.client = {
-            id: client.id,
-            businessName: client.business_name,
-            businessPhone: client.business_phone,
-            ownerName: client.owner_name,
-            ownerPhone: client.owner_phone,
-            monthlyFreeMinutes: client.monthly_free_minutes,
-            perMinuteRate: parseFloat(client.per_minute_rate),
-            active: client.active
-        };
+       // Add client info to request object
+req.clientId = client.id;  // ✅ ADD THIS LINE for credits routes
+req.client = {
+    id: client.id,
+    businessName: client.business_name,
+    businessPhone: client.business_phone,
+    ownerName: client.owner_name,
+    ownerPhone: client.owner_phone,
+    monthlyFreeMinutes: client.monthly_free_minutes,
+    perMinuteRate: parseFloat(client.per_minute_rate),
+    active: client.active
+};
         
         next();
     } catch (error) {
