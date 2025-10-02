@@ -869,13 +869,13 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    creditsData = data;
-                    const freeMinutes = data.free_minutes_remaining || 0;
-                    const paidBalance = data.balance || 0;
-                    
-                    document.getElementById('creditAmount').textContent = 
-                        `${freeMinutes} free min`;
-                }
+    creditsData = data.data;  // ✅ Note: response has data.data structure
+    const freeMinutes = data.data.freeMinutesRemaining || 0;
+    const paidBalance = data.data.balance || 0;
+    
+    document.getElementById('creditAmount').textContent = 
+        `$${paidBalance.toFixed(2)}`;  // ✅ Show actual paid balance
+}
             } catch (error) {
                 console.error('Error loading credits:', error);
                 document.getElementById('creditAmount').textContent = 'N/A';
@@ -884,18 +884,18 @@
 
         // Show Credits Info
         function showCreditsInfo() {
-            if (!creditsData) {
-                alert('Loading credit information...');
-                return;
-            }
-            
-            const freeMinutes = creditsData.free_minutes_remaining || 0;
-            const usedMinutes = creditsData.free_minutes_used || 0;
-            const totalMinutes = creditsData.total_minutes || 100;
-            const paidBalance = creditsData.balance || 0;
-            const resetDate = creditsData.reset_date || 'Unknown';
-            
-            const message = `CREDIT BALANCE
+    if (!creditsData) {
+        alert('Loading credit information...');
+        return;
+    }
+    
+    const freeMinutes = creditsData.freeMinutesRemaining || 0;
+    const usedMinutes = creditsData.freeMinutesUsed || 0;
+    const totalMinutes = creditsData.monthlyFreeMinutes || 100;
+    const paidBalance = creditsData.balance || 0;
+    const resetDate = creditsData.freeMinutesResetDate || 'Unknown';
+    
+    const message = `CREDIT BALANCE
 
 Free Minutes: ${freeMinutes} / ${totalMinutes}
 Used This Month: ${usedMinutes} min
@@ -904,9 +904,9 @@ Paid Balance: $${paidBalance.toFixed(2)}
 Reset Date: ${new Date(resetDate).toLocaleDateString()}
 
 Rate: $0.10 per minute after free tier`;
-            
-            alert(message);
-        }
+    
+    alert(message);
+}
 
         // Load Rachel Status
         async function loadRachelStatus() {
