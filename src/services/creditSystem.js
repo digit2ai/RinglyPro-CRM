@@ -1,4 +1,4 @@
-// =====================================================
+/ =====================================================
 // RinglyPro Credit System Service
 // File: src/services/creditSystem.js
 // =====================================================
@@ -321,8 +321,8 @@ class CreditSystem {
         return notification.rows[0];
     }
 
-    // Credit reload with Stripe (conditional)
-    async initiateReload(clientId, amount, paymentMethodId, options = {}) {
+    // Credit reload with Stripe - creates payment intent for frontend confirmation
+    async initiateReload(clientId, amount) {
         // Check if Stripe is configured
         if (!stripe) {
             throw new Error('Payment processing not configured. Stripe credentials required.');
@@ -340,47 +340,45 @@ class CreditSystem {
         const clientData = client.rows[0];
         const creditAccount = await this.getCreditAccount(clientId);
         
-        // Create Stripe payment intent
+        // Create Stripe payment intent (WITHOUT confirming - frontend will handle this)
         const paymentIntent = await stripe.paymentIntents.create({
             amount: Math.round(amount * 100), // Convert to cents
             currency: 'usd',
-            payment_method: paymentMethodId,
-            customer: clientData.stripe_customer_id,
-            confirm: true,
+            automatic_payment_methods: {
+                enabled: true,
+            },
             metadata: {
                 clientId: clientId.toString(),
+                businessName: clientData.business_name,
                 type: 'credit_reload'
             }
         });
         
-        // Create transaction record
+        // Create pending transaction record
         const transaction = await this.pool.query(`
             INSERT INTO payment_transactions (
                 client_id, stripe_payment_intent_id, amount, status, 
-                payment_method, balance_before, balance_after
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                payment_method, balance_before
+            ) VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
         `, [
             clientId,
             paymentIntent.id,
             amount,
-            paymentIntent.status,
+            'pending',
             'card',
-            creditAccount.balance,
-            parseFloat(creditAccount.balance) + amount
+            creditAccount.balance
         ]);
         
-        if (paymentIntent.status === 'succeeded') {
-            await this.completeReload(transaction.rows[0].id, amount);
-        }
-        
         return { 
-            transaction: transaction.rows[0], 
-            paymentIntent 
+            success: true,
+            clientSecret: paymentIntent.client_secret,
+            transactionId: transaction.rows[0].id,
+            amount: amount
         };
     }
 
-    // Complete credit reload
+    // Complete credit reload (called by webhook after payment succeeds)
     async completeReload(transactionId, amount) {
         const transaction = await this.pool.query(
             'SELECT * FROM payment_transactions WHERE id = $1',
@@ -650,3 +648,4 @@ class CreditSystem {
 }
 
 module.exports = CreditSystem;
+
