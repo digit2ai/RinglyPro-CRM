@@ -16,16 +16,15 @@ if (process.env.STRIPE_SECRET_KEY) {
 class CreditSystem {
     constructor() {
         // Create a query wrapper that matches mobile.js syntax
+        
         this.pool = {
-            query: async (sql, params = []) => {
-                const result = await sequelize.query(sql, {
-                    bind: params,  // MUST use 'bind' not 'replacements'
-                    type: sequelize.QueryTypes.SELECT
-                });
-                // Return in pg Pool format
-                return { rows: result };
-            }
-        };
+    query: async (sql, params = []) => {
+        const [result, metadata] = await sequelize.query(sql, {
+            replacements: params  // Works with $1, $2, $3 positional params
+        });
+        return { rows: result };
+    }
+};
     }
 
     // Get comprehensive credit summary for a client
