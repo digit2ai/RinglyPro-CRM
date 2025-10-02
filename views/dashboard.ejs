@@ -863,7 +863,7 @@
         // Load Credits
         async function loadCredits() {
             try {
-                const response = await authenticatedFetch(`/api/credits/balance?clientId=${CLIENT_ID}`);
+                const response = await authenticatedFetch(`/api/credits/balance`);
                 if (!response) return;
                 
                 const data = await response.json();
