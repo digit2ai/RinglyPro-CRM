@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const twilio = require('twilio');
+const axios = require('axios');
 
 // Import new services
 const availabilityService = require('../services/availabilityService');
@@ -53,12 +54,22 @@ router.post('/webhook/call-status', async (req, res) => {
             if (fallbackClientId) {
                 console.log(`✅ Found client ID via fallback lookup: ${fallbackClientId}`);
                 await storeCallRecord(callSid, from, to, callStatus, direction, callDuration, fallbackClientId);
+                
+                // Track credit usage for completed calls
+                if (['completed', 'no-answer', 'busy'].includes(callStatus) && callDuration > 0) {
+                    await trackCallCredits(fallbackClientId, callSid, callDuration);
+                }
             } else {
                 console.log('❌ Could not determine client_id for call logging');
             }
         } else {
             console.log(`✅ Using client ID from session: ${clientId}`);
             await storeCallRecord(callSid, from, to, callStatus, direction, callDuration, clientId);
+            
+            // Track credit usage for completed calls
+            if (['completed', 'no-answer', 'busy'].includes(callStatus) && callDuration > 0) {
+                await trackCallCredits(clientId, callSid, callDuration);
+            }
         }
         
         // Clean up session for completed calls
@@ -956,5 +967,38 @@ router.post('/voice/forward-to-owner/:client_id', async (req, res) => {
         res.type('text/xml').send(twiml.toString());
     }
 });
+
+// Credit tracking function - calls the credit system API
+async function trackCallCredits(clientId, callSid, durationSeconds) {
+    try {
+        console.log(`💰 Tracking credits for call ${callSid}: ${durationSeconds}s for client ${clientId}`);
+        
+        const response = await axios.post('http://localhost:3000/api/credits/track-usage', {
+            clientId: clientId,
+            callSid: callSid,
+            durationSeconds: parseInt(durationSeconds),
+            usageType: 'voice_call'
+        }, {
+            timeout: 5000 // 5 second timeout
+        });
+        
+        if (response.data.success) {
+            const data = response.data.data;
+            console.log(`✅ Credits tracked: Cost $${data.cost}, Balance: $${data.balanceAfter}, Charged from: ${data.chargedFrom}`);
+        } else {
+            console.log(`⚠️ Credit tracking returned success=false: ${response.data.error || 'Unknown error'}`);
+        }
+        
+    } catch (error) {
+        // Don't fail the call if credit tracking fails - just log the error
+        console.error(`❌ Failed to track call credits for ${callSid}:`, error.message);
+        
+        // Log more details for debugging
+        if (error.response) {
+            console.error(`   Response status: ${error.response.status}`);
+            console.error(`   Response data:`, error.response.data);
+        }
+    }
+}
 
 module.exports = router;
