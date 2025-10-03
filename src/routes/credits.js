@@ -89,7 +89,7 @@ router.get('/usage', authenticateAndGetClient, async (req, res) => {
 // POST /api/credits/reload - Initiate credit reload for authenticated user
 router.post('/reload', authenticateAndGetClient, async (req, res) => {
     try {
-        const { amount, paymentMethodId, savePaymentMethod = false } = req.body;
+        const { amount } = req.body;
         
         // Check if Stripe is configured
         if (!stripe) {
@@ -105,19 +105,13 @@ router.post('/reload', authenticateAndGetClient, async (req, res) => {
             });
         }
         
-        const result = await creditSystem.initiateReload(req.clientId, amount, paymentMethodId, {
-            savePaymentMethod
-        });
+        const result = await creditSystem.initiateReload(req.clientId, amount);
         
         res.json({
             success: true,
-            data: {
-                transactionId: result.transaction.id,
-                paymentIntentId: result.paymentIntent.id,
-                clientSecret: result.paymentIntent.client_secret,
-                status: result.paymentIntent.status,
-                amount: result.transaction.amount
-            }
+            clientSecret: result.clientSecret,
+            transactionId: result.transactionId,
+            amount: result.amount
         });
     } catch (error) {
         console.error('Error initiating reload:', error);
