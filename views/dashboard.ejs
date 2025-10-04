@@ -354,6 +354,22 @@
             font-weight: 600;
         }
 
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
         /* Appointment Card */
         .appointment-card {
             background: white;
@@ -950,15 +966,151 @@
             display: block;
         }
 
+        /* Appointment Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1100;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+
+        .modal .modal-content {
+            position: relative;
+            background: white;
+            border-radius: 12px;
+            z-index: 2;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #1f2937;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .modal .modal-body {
+            padding: 1.5rem;
+        }
+
+        .form-section {
+            margin-bottom: 0;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.9375rem;
+            color: #1f2937;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-input:disabled {
+            background: #f9fafb;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .loading-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .error-message {
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
         /* Mobile Responsive */
         @media (max-width: 640px) {
             .package-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .balance-stats {
                 flex-direction: column;
                 gap: 8px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr !important;
+            }
+
+            .modal .modal-content {
+                max-width: 100%;
+                margin: 0;
+                border-radius: 0;
             }
         }
 
@@ -1077,6 +1229,12 @@
         <div class="content-section active" id="todaySection">
             <div class="section-header">
                 <h2>Today's Schedule</h2>
+                <button onclick="openAppointmentModal()" class="btn-primary" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                    </svg>
+                    New Appointment
+                </button>
             </div>
             <div id="appointmentsList">
                 <div class="loading">
@@ -1190,6 +1348,98 @@
                     </button>
                     <button class="btn-cancel" onclick="closeCreditsModal()">Cancel</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment Creation Modal -->
+    <div id="appointmentModal" class="modal">
+        <div class="modal-overlay" onclick="closeAppointmentModal()"></div>
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Create New Appointment</h2>
+                <button class="modal-close" onclick="closeAppointmentModal()">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <form id="appointmentForm">
+                    <!-- Customer Information -->
+                    <div class="form-section">
+                        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #374151;">Customer Information</h3>
+
+                        <div class="form-group">
+                            <label for="customerName">Name <span style="color: #ef4444;">*</span></label>
+                            <input type="text" id="customerName" class="form-input" placeholder="John Doe" required>
+                        </div>
+
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="customerPhone">Phone <span style="color: #ef4444;">*</span></label>
+                                <input type="tel" id="customerPhone" class="form-input" placeholder="+1 (555) 000-0000" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="customerEmail">Email</label>
+                                <input type="email" id="customerEmail" class="form-input" placeholder="john@example.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appointment Date & Time -->
+                    <div class="form-section" style="margin-top: 1.5rem;">
+                        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #374151;">Date & Time</h3>
+
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="appointmentDate">Date <span style="color: #ef4444;">*</span></label>
+                                <input type="date" id="appointmentDate" class="form-input" required onchange="loadAvailableTimeSlots()">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="appointmentTime">Time Slot <span style="color: #ef4444;">*</span></label>
+                                <select id="appointmentTime" class="form-input" required disabled>
+                                    <option value="">Select a date first</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Notes -->
+                    <div class="form-section" style="margin-top: 1.5rem;">
+                        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #374151;">Additional Information</h3>
+
+                        <div class="form-group">
+                            <label for="appointmentNotes">Purpose / Notes</label>
+                            <textarea id="appointmentNotes" class="form-input" rows="3" placeholder="Appointment reason, special requests, etc."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Loading Indicator -->
+                    <div id="appointmentLoadingSlots" class="loading-indicator" style="display: none; text-align: center; padding: 1rem; color: #6b7280;">
+                        <i class="fas fa-spinner fa-spin"></i> Loading available time slots...
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="appointmentError" class="error-message" style="display: none; background: #fee2e2; color: #991b1b; padding: 0.75rem; border-radius: 0.5rem; margin-top: 1rem;">
+                    </div>
+
+                    <!-- Success Message -->
+                    <div id="appointmentSuccess" class="success-message" style="display: none;">
+                        Appointment created successfully!
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="modal-actions" style="margin-top: 1.5rem;">
+                        <button type="submit" id="createAppointmentBtn" class="btn-primary" style="padding: 0.75rem 1.5rem;">
+                            Create Appointment
+                        </button>
+                        <button type="button" class="btn-cancel" onclick="closeAppointmentModal()">Cancel</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -1671,6 +1921,170 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
         function makeCall(phone, name) {
             window.location.href = `tel:${phone}`;
         }
+
+        // =====================================================
+        // APPOINTMENT MODAL FUNCTIONS
+        // =====================================================
+
+        // Open appointment modal
+        function openAppointmentModal() {
+            const modal = document.getElementById('appointmentModal');
+            modal.classList.add('active');
+
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('appointmentDate').setAttribute('min', today);
+
+            // Reset form
+            document.getElementById('appointmentForm').reset();
+            document.getElementById('appointmentTime').disabled = true;
+            document.getElementById('appointmentTime').innerHTML = '<option value="">Select a date first</option>';
+            document.getElementById('appointmentError').style.display = 'none';
+            document.getElementById('appointmentSuccess').style.display = 'none';
+        }
+
+        // Close appointment modal
+        function closeAppointmentModal() {
+            const modal = document.getElementById('appointmentModal');
+            modal.classList.remove('active');
+            document.getElementById('appointmentForm').reset();
+        }
+
+        // Load available time slots when date is selected
+        async function loadAvailableTimeSlots() {
+            const dateInput = document.getElementById('appointmentDate');
+            const timeSelect = document.getElementById('appointmentTime');
+            const loading = document.getElementById('appointmentLoadingSlots');
+            const errorDiv = document.getElementById('appointmentError');
+
+            const selectedDate = dateInput.value;
+            if (!selectedDate) {
+                timeSelect.disabled = true;
+                timeSelect.innerHTML = '<option value="">Select a date first</option>';
+                return;
+            }
+
+            // Show loading
+            loading.style.display = 'block';
+            timeSelect.disabled = true;
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await authenticatedFetch(`/api/appointments/availability/${CLIENT_ID}/${selectedDate}`);
+
+                if (!response) {
+                    throw new Error('Failed to fetch availability');
+                }
+
+                const data = await response.json();
+
+                if (data.success && data.available_slots && data.available_slots.length > 0) {
+                    // Populate time slots
+                    timeSelect.innerHTML = '<option value="">Select a time slot</option>' +
+                        data.available_slots.map(slot => {
+                            return `<option value="${slot}">${formatTimeSlot(slot)}</option>`;
+                        }).join('');
+
+                    timeSelect.disabled = false;
+                } else {
+                    timeSelect.innerHTML = '<option value="">No available slots for this date</option>';
+                    timeSelect.disabled = true;
+                }
+            } catch (error) {
+                console.error('Error loading time slots:', error);
+                errorDiv.textContent = 'Error loading available time slots. Please try again.';
+                errorDiv.style.display = 'block';
+                timeSelect.innerHTML = '<option value="">Error loading slots</option>';
+                timeSelect.disabled = true;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Format time slot for display (e.g., "09:00" -> "9:00 AM")
+        function formatTimeSlot(time) {
+            const [hours, minutes] = time.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour === 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+            return `${displayHour}:${minutes} ${ampm}`;
+        }
+
+        // Handle appointment form submission
+        document.addEventListener('DOMContentLoaded', () => {
+            const appointmentForm = document.getElementById('appointmentForm');
+            if (appointmentForm) {
+                appointmentForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const submitBtn = document.getElementById('createAppointmentBtn');
+                    const errorDiv = document.getElementById('appointmentError');
+                    const successDiv = document.getElementById('appointmentSuccess');
+
+                    // Hide messages
+                    errorDiv.style.display = 'none';
+                    successDiv.style.display = 'none';
+
+                    // Get form data
+                    const formData = {
+                        customerName: document.getElementById('customerName').value.trim(),
+                        customerPhone: document.getElementById('customerPhone').value.trim(),
+                        customerEmail: document.getElementById('customerEmail').value.trim() || null,
+                        appointmentDate: document.getElementById('appointmentDate').value,
+                        appointmentTime: document.getElementById('appointmentTime').value,
+                        notes: document.getElementById('appointmentNotes').value.trim() || null
+                    };
+
+                    // Validate
+                    if (!formData.customerName || !formData.customerPhone || !formData.appointmentDate || !formData.appointmentTime) {
+                        errorDiv.textContent = 'Please fill in all required fields.';
+                        errorDiv.style.display = 'block';
+                        return;
+                    }
+
+                    // Disable submit button
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="loading-spinner"></span> Creating...';
+
+                    try {
+                        const response = await authenticatedFetch('/api/appointments/create', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(formData)
+                        });
+
+                        if (!response) {
+                            throw new Error('Failed to create appointment');
+                        }
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            // Show success message
+                            successDiv.style.display = 'block';
+
+                            // Reload dashboard to show new appointment
+                            await loadDashboard();
+
+                            // Close modal after 2 seconds
+                            setTimeout(() => {
+                                closeAppointmentModal();
+                                submitBtn.disabled = false;
+                                submitBtn.textContent = 'Create Appointment';
+                            }, 2000);
+                        } else {
+                            throw new Error(data.error || 'Failed to create appointment');
+                        }
+                    } catch (error) {
+                        console.error('Error creating appointment:', error);
+                        errorDiv.textContent = error.message || 'Error creating appointment. Please try again.';
+                        errorDiv.style.display = 'block';
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Create Appointment';
+                    }
+                });
+            }
+        });
     </script>
 
     <!-- Stripe Library -->

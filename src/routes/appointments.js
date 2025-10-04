@@ -431,6 +431,153 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Get availability for a specific date FOR THIS CLIENT
+router.get('/availability/:clientId/:date', async (req, res) => {
+  try {
+    const { clientId, date } = req.params;
+
+    // Verify this client has access to this data
+    if (parseInt(clientId) !== parseInt(req.clientId)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied'
+      });
+    }
+
+    // Define business hours (9 AM to 5 PM, 30-minute slots)
+    const businessHours = {
+      start: 9,  // 9 AM
+      end: 17,   // 5 PM
+      slotDuration: 30 // minutes
+    };
+
+    // Generate all possible time slots
+    const allSlots = [];
+    for (let hour = businessHours.start; hour < businessHours.end; hour++) {
+      for (let minute = 0; minute < 60; minute += businessHours.slotDuration) {
+        const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
+        allSlots.push(timeStr);
+      }
+    }
+
+    // Get existing appointments for this date
+    const existingAppointments = await sequelize.query(
+      'SELECT appointment_time FROM appointments WHERE client_id = :client_id AND appointment_date = :date AND status NOT IN (:cancelled, :completed)',
+      {
+        replacements: {
+          client_id: clientId,
+          date: date,
+          cancelled: 'cancelled',
+          completed: 'completed'
+        },
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    const bookedTimes = existingAppointments.map(apt => apt.appointment_time);
+    const availableSlots = allSlots.filter(slot => !bookedTimes.includes(slot));
+
+    console.log(`📅 Client ${clientId}: ${availableSlots.length}/${allSlots.length} slots available on ${date}`);
+
+    res.json({
+      success: true,
+      date: date,
+      available_slots: availableSlots,
+      booked_slots: bookedTimes,
+      business_hours: businessHours
+    });
+  } catch (error) {
+    console.error('Error fetching availability:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Create appointment from dashboard (different from POST / to allow custom field names)
+router.post('/create', async (req, res) => {
+  try {
+    const {
+      customerName,
+      customerEmail,
+      customerPhone,
+      appointmentDate,
+      appointmentTime,
+      notes
+    } = req.body;
+
+    if (!customerName || !customerPhone || !appointmentDate || !appointmentTime) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: customerName, customerPhone, appointmentDate, appointmentTime'
+      });
+    }
+
+    // Check if slot is available FOR THIS CLIENT
+    const existing = await sequelize.query(
+      'SELECT id FROM appointments WHERE client_id = :client_id AND appointment_date = :date AND appointment_time = :time AND status NOT IN (:cancelled, :completed)',
+      {
+        replacements: {
+          client_id: req.clientId,
+          date: appointmentDate,
+          time: appointmentTime,
+          cancelled: 'cancelled',
+          completed: 'completed'
+        },
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    if (existing.length > 0) {
+      return res.status(409).json({
+        success: false,
+        error: 'Time slot is already booked'
+      });
+    }
+
+    const confirmationCode = `APPT${Date.now().toString().slice(-6).toUpperCase()}`;
+
+    const appointment = await Appointment.create({
+      clientId: req.clientId,
+      customerName,
+      customerEmail: customerEmail || null,
+      customerPhone,
+      appointmentDate,
+      appointmentTime,
+      purpose: notes || 'General consultation',
+      confirmationCode: confirmationCode,
+      source: 'crm_dashboard',
+      duration: 30,
+      notes: notes || null,
+      status: 'confirmed'
+    });
+
+    console.log(`✅ Client ${req.clientId}: Created appointment ${appointment.id} for ${customerName} via CRM dashboard`);
+
+    res.status(201).json({
+      success: true,
+      message: 'Appointment created successfully',
+      appointment: appointment
+    });
+  } catch (error) {
+    console.error('Error creating appointment from dashboard:', error);
+
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation error',
+        details: error.errors.map(e => e.message)
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Get appointments by phone number FOR THIS CLIENT
 router.get('/phone/:phone', async (req, res) => {
   try {
@@ -444,7 +591,7 @@ router.get('/phone/:phone', async (req, res) => {
         type: sequelize.QueryTypes.SELECT
       }
     );
-    
+
     res.json({
       success: true,
       count: appointments.length,
