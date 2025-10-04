@@ -122,8 +122,8 @@ const Appointment = sequelize.define('Appointment', {
     },
     {
       unique: true,
-      fields: ['appointment_date', 'appointment_time'],
-      name: 'unique_time_slot'
+      fields: ['client_id', 'appointment_date', 'appointment_time'],
+      name: 'unique_time_slot_per_client'
     }
   ]
 });
