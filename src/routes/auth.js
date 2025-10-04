@@ -531,6 +531,64 @@ router.post('/forgot-password', async (req, res) => {
     }
 });
 
+// GET /api/auth/verify-reset-token/:token - Verify if reset token is valid
+router.get('/verify-reset-token/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        if (!token) {
+            return res.status(400).json({
+                valid: false,
+                error: 'No token provided'
+            });
+        }
+
+        // Verify JWT token
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+            if (decoded.type !== 'password_reset') {
+                throw new Error('Invalid token type');
+            }
+        } catch (err) {
+            return res.json({
+                valid: false,
+                error: 'Token is invalid or has expired'
+            });
+        }
+
+        // Check if user exists and token matches
+        const user = await User.findOne({
+            where: {
+                id: decoded.userId,
+                email: decoded.email,
+                email_verification_token: token
+            }
+        });
+
+        if (!user) {
+            return res.json({
+                valid: false,
+                error: 'Reset token not found or already used'
+            });
+        }
+
+        // Token is valid
+        res.json({
+            valid: true,
+            email: user.email
+        });
+
+    } catch (error) {
+        console.error('Token verification error:', error);
+        res.status(500).json({
+            valid: false,
+            error: 'Failed to verify token'
+        });
+    }
+});
+
 // POST /api/auth/reset-password - Reset password with token
 router.post('/reset-password', async (req, res) => {
     try {
