@@ -18,6 +18,61 @@
             line-height: 1.5;
         }
 
+        /* Low Balance Alert Banner */
+        .low-balance-alert {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-left: 4px solid #dc2626;
+            padding: 1rem;
+            margin: 0;
+            display: none;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .low-balance-alert.show {
+            display: flex;
+        }
+
+        .low-balance-alert svg {
+            width: 1.5rem;
+            height: 1.5rem;
+            color: #dc2626;
+            flex-shrink: 0;
+        }
+
+        .low-balance-alert-content {
+            flex: 1;
+        }
+
+        .low-balance-alert-content h3 {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: #991b1b;
+            margin-bottom: 0.25rem;
+        }
+
+        .low-balance-alert-content p {
+            font-size: 0.8125rem;
+            color: #7f1d1d;
+        }
+
+        .low-balance-alert button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .low-balance-alert button:hover {
+            background: #b91c1c;
+        }
+
         /* Header */
         .header {
             background: white;
@@ -921,6 +976,18 @@
     </style>
 </head>
 <body>
+    <!-- Low Balance Alert Banner -->
+    <div class="low-balance-alert" id="lowBalanceAlert">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <div class="low-balance-alert-content">
+            <h3>Low Balance Warning</h3>
+            <p id="lowBalanceMessage">Only X minutes remaining. Recharge now to avoid service interruption.</p>
+        </div>
+        <button onclick="showCreditsInfo()">Recharge</button>
+    </div>
+
     <!-- Header with Rachel Toggle -->
     <div class="header">
         <div class="header-content">
@@ -980,9 +1047,9 @@
             </button>
             <button class="action-btn btn-credits" onclick="showCreditsInfo()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                Credits
+                Minutes
                 <div class="credit-amount" id="creditAmount">Loading...</div>
             </button>
         </div>
@@ -1058,21 +1125,21 @@
     <div id="creditsModal" class="credits-modal">
         <div class="credits-modal-content">
             <div class="credits-modal-header">
-                <h2>Add Credits</h2>
+                <h2>Add Minutes</h2>
                 <button class="credits-modal-close" onclick="closeCreditsModal()">&times;</button>
             </div>
             
             <div class="credits-modal-body">
                 <!-- Current Balance -->
                 <div class="current-balance-display">
-                    <h3>Current Balance</h3>
-                    <p class="balance-amount" id="modalBalance">$0.00</p>
+                    <h3>Available Minutes</h3>
+                    <p class="balance-amount" id="modalBalance">0 min</p>
                     <div class="balance-stats">
                         <div class="balance-stat">
                             <strong id="modalFreeMinutes">0</strong> free minutes used
                         </div>
                         <div class="balance-stat">
-                            <strong id="modalTotalMinutes">0</strong> total minutes
+                            <strong id="modalPaidMinutes">0</strong> paid minutes
                         </div>
                     </div>
                 </div>
@@ -1083,23 +1150,23 @@
                     <div class="package-grid">
                         <div class="package-option" onclick="selectPackage(10)" data-amount="10">
                             <div class="package-amount">$10</div>
-                            <div class="package-minutes">100 minutes</div>
-                            <div class="package-rate">$0.10/min</div>
+                            <div class="package-minutes">50 minutes</div>
+                            <div class="package-rate">$0.20/min</div>
                         </div>
                         <div class="package-option" onclick="selectPackage(20)" data-amount="20">
                             <div class="package-amount">$20</div>
-                            <div class="package-minutes">200 minutes</div>
-                            <div class="package-rate">$0.10/min</div>
+                            <div class="package-minutes">100 minutes</div>
+                            <div class="package-rate">$0.20/min</div>
                         </div>
                         <div class="package-option" onclick="selectPackage(50)" data-amount="50">
                             <div class="package-amount">$50</div>
-                            <div class="package-minutes">500 minutes</div>
-                            <div class="package-rate">$0.10/min</div>
+                            <div class="package-minutes">250 minutes</div>
+                            <div class="package-rate">$0.20/min</div>
                         </div>
                         <div class="package-option" onclick="selectPackage(100)" data-amount="100">
                             <div class="package-amount">$100</div>
-                            <div class="package-minutes">1000 minutes</div>
-                            <div class="package-rate">$0.10/min</div>
+                            <div class="package-minutes">500 minutes</div>
+                            <div class="package-rate">$0.20/min</div>
                         </div>
                     </div>
                 </div>
@@ -1113,7 +1180,7 @@
 
                 <!-- Success Message -->
                 <div id="successMessage" class="success-message">
-                    Payment successful! Your balance has been updated.
+                    Payment successful! Your minutes have been added.
                 </div>
 
                 <!-- Actions -->
@@ -1205,6 +1272,13 @@
             return response;
         }
 
+        // Calculate total minutes from balance and free minutes
+        function calculateTotalMinutes(balance, freeMinutesUsed, monthlyFreeMinutes = 100) {
+            const freeMinutesRemaining = Math.max(0, monthlyFreeMinutes - freeMinutesUsed);
+            const paidMinutes = Math.floor(balance / 0.20); // $0.20 per minute
+            return freeMinutesRemaining + paidMinutes;
+        }
+
         // Load Credits Balance
         async function loadCreditsBalance() {
             try {
@@ -1215,10 +1289,24 @@
                 
                 if (data.success) {
                     creditsData = data.data;
-                    const freeMinutes = data.data.freeMinutesRemaining || 0;
-                    const paidBalance = data.data.balance || 0;
+                    const freeMinutesRemaining = data.data.freeMinutesRemaining || 0;
+                    const freeMinutesUsed = data.data.freeMinutesUsed || 0;
+                    const paidBalance = parseFloat(data.data.balance) || 0;
+                    const paidMinutes = Math.floor(paidBalance / 0.20);
+                    const totalMinutes = freeMinutesRemaining + paidMinutes;
                     
-                    document.getElementById('creditAmount').textContent = `$${paidBalance.toFixed(2)}`;
+                    // Display total minutes
+                    document.getElementById('creditAmount').textContent = `${totalMinutes} min`;
+                    
+                    // Check for low balance (< 10 minutes)
+                    if (totalMinutes < 10) {
+                        const alert = document.getElementById('lowBalanceAlert');
+                        const message = document.getElementById('lowBalanceMessage');
+                        message.textContent = `Only ${totalMinutes} minutes remaining. Recharge now to avoid service interruption.`;
+                        alert.classList.add('show');
+                    } else {
+                        document.getElementById('lowBalanceAlert').classList.remove('show');
+                    }
                 }
             } catch (error) {
                 console.error('Error loading credits:', error);
@@ -1675,9 +1763,15 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
                     const result = await response.json();
                     const data = result.data;
                     
-                    document.getElementById('modalBalance').textContent = `$${data.balance.toFixed(2)}`;
-                    document.getElementById('modalFreeMinutes').textContent = data.freeMinutesUsed;
-                    document.getElementById('modalTotalMinutes').textContent = data.totalMinutesUsed;
+                    const freeMinutesRemaining = data.freeMinutesRemaining || 0;
+                    const freeMinutesUsed = data.freeMinutesUsed || 0;
+                    const paidBalance = parseFloat(data.balance) || 0;
+                    const paidMinutes = Math.floor(paidBalance / 0.20);
+                    const totalMinutes = freeMinutesRemaining + paidMinutes;
+                    
+                    document.getElementById('modalBalance').textContent = `${totalMinutes} min`;
+                    document.getElementById('modalFreeMinutes').textContent = freeMinutesUsed;
+                    document.getElementById('modalPaidMinutes').textContent = paidMinutes;
                 }
             } catch (error) {
                 console.error('Error loading balance:', error);
