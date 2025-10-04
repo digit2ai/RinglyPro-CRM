@@ -75,13 +75,15 @@ router.get('/dashboard/today/:client_id', async (req, res) => {
   try {
     console.log(`📊 Loading dashboard for client ${client_id}`);
     
-    // FIXED: Show all appointments, no date filter
+    // Show appointments from today through next 14 days
     const appointmentsQuery = `
       SELECT id, customer_name as name, customer_phone as phone,
              appointment_time as time, appointment_date, notes, status, created_at
-      FROM appointments 
-      WHERE client_id = $1 
+      FROM appointments
+      WHERE client_id = $1
         AND status != 'cancelled'
+        AND appointment_date >= CURRENT_DATE
+        AND appointment_date <= CURRENT_DATE + INTERVAL '14 days'
       ORDER BY appointment_date ASC, appointment_time ASC
     `;
 
@@ -126,11 +128,20 @@ router.get('/dashboard/today/:client_id', async (req, res) => {
       return `${displayHour}:${minutes} ${ampm}`;
     };
 
+    const formatDate = (dateString) => {
+      if (!dateString) return 'N/A';
+      const date = new Date(dateString);
+      const options = { weekday: 'short', month: 'short', day: 'numeric' };
+      return date.toLocaleDateString('en-US', options);
+    };
+
     const appointments = appointmentsResult.map(apt => ({
       id: apt.id,
       name: apt.name || 'Unknown',
       phone: apt.phone || '',
       time: formatTime(apt.time),
+      date: formatDate(apt.appointment_date),
+      appointmentDate: apt.appointment_date,
       notes: apt.notes || 'No notes',
       status: apt.status || 'confirmed'
     }));
