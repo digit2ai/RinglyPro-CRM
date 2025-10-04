@@ -99,6 +99,16 @@ module.exports = (sequelize) => {
         email_verification_token: {
             type: DataTypes.STRING(255),
             allowNull: true
+        },
+
+        // PASSWORD RESET FIELDS
+        password_reset_token: {
+            type: DataTypes.STRING(255),
+            allowNull: true
+        },
+        password_reset_expires: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
     }, {
         tableName: 'users',

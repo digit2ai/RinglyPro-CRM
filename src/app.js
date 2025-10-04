@@ -115,15 +115,50 @@ console.log('🎯 Multi-tenant Rachel routes mounted - Client identification act
 // PROTECTED ROUTES - Require Authentication
 // =====================================================
 
-// Dashboard route - client-side authentication
+// Dashboard route - hybrid authentication (server-side optional, client-side required)
 app.get('/', async (req, res) => {
   try {
-    // Render dashboard - authentication and clientId extraction happens client-side via JavaScript
-    res.render('dashboard', { 
+    // Optional: Extract token from query parameter for server-side verification
+    const tokenFromQuery = req.query.token;
+    const tokenFromHeader = req.headers.authorization?.replace('Bearer ', '');
+    const token = tokenFromQuery || tokenFromHeader;
+
+    let serverSideAuth = false;
+    let userData = null;
+
+    // If token provided, verify server-side
+    if (token) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key');
+
+        const { User } = require('./models');
+        const user = await User.findByPk(decoded.userId);
+
+        if (user) {
+          serverSideAuth = true;
+          userData = {
+            id: user.id,
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            businessName: user.business_name
+          };
+          console.log(`✅ Server-side auth successful for: ${user.email}`);
+        }
+      } catch (jwtError) {
+        console.log('⚠️ Server-side auth failed (client-side will handle):', jwtError.message);
+      }
+    }
+
+    // Render dashboard - client-side auth is always enforced via JavaScript
+    res.render('dashboard', {
       title: `${CLIENT_NAME} CRM Dashboard`,
       currentDate: new Date().toLocaleDateString(),
       voiceEnabled: process.env.VOICE_ENABLED === 'true' || false,
-      clientName: CLIENT_NAME
+      clientName: CLIENT_NAME,
+      serverAuth: serverSideAuth,
+      user: userData
     });
   } catch (error) {
     console.error('Dashboard error:', error);
@@ -144,10 +179,28 @@ app.get('/login', (req, res) => {
   });
 });
 
-// Signup page route  
+// Signup page route
 app.get('/signup', (req, res) => {
-  res.render('signup', { 
+  res.render('signup', {
     title: `${CLIENT_NAME} - Sign Up`,
+    clientName: CLIENT_NAME,
+    clientId: CLIENT_ID
+  });
+});
+
+// Forgot password page route
+app.get('/forgot-password', (req, res) => {
+  res.render('forgot-password', {
+    title: `${CLIENT_NAME} - Forgot Password`,
+    clientName: CLIENT_NAME,
+    clientId: CLIENT_ID
+  });
+});
+
+// Reset password page route
+app.get('/reset-password', (req, res) => {
+  res.render('reset-password', {
+    title: `${CLIENT_NAME} - Reset Password`,
     clientName: CLIENT_NAME,
     clientId: CLIENT_ID
   });
