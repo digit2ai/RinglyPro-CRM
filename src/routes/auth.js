@@ -1,70 +1,13 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-const rateLimit = require('express-rate-limit');
 const twilio = require('twilio');
 const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
 const { User, sequelize } = require('../models');
-const emailService = require('../services/emailService');
-const { authenticateToken, getUserClient } = require('../middleware/auth');
 const router = express.Router();
-
-// =====================================================
-// RATE LIMITING CONFIGURATION
-// =====================================================
-
-// Strict rate limit for login attempts (prevent brute force)
-const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // 5 attempts per 15 minutes
-    message: {
-        success: false,
-        error: 'Too many login attempts. Please try again in 15 minutes.'
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    skipSuccessfulRequests: true // Don't count successful logins
-});
-
-// Rate limit for registration (prevent spam)
-const registerLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3, // 3 registrations per hour per IP
-    message: {
-        success: false,
-        error: 'Too many registration attempts. Please try again later.'
-    },
-    standardHeaders: true,
-    legacyHeaders: false
-});
-
-// Rate limit for password reset requests (prevent email spam)
-const passwordResetLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3, // 3 reset requests per hour
-    message: {
-        success: false,
-        error: 'Too many password reset requests. Please try again later.'
-    },
-    standardHeaders: true,
-    legacyHeaders: false
-});
-
-// General rate limit for auth endpoints
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // 100 requests per 15 minutes
-    message: {
-        success: false,
-        error: 'Too many requests. Please try again later.'
-    },
-    standardHeaders: true,
-    legacyHeaders: false
-});
 
 // Import Client and CreditAccount models for appointment booking
 let Client, CreditAccount;
@@ -86,7 +29,7 @@ router.get('/simple-test', (req, res) => {
 });
 
 // POST /api/auth/register - Enhanced User registration with Twilio auto-provisioning
-router.post('/register', registerLimiter, async (req, res) => {
+router.post('/register', async (req, res) => {
     const transaction = await sequelize.transaction();
     
     try {
@@ -384,7 +327,7 @@ router.post('/register', registerLimiter, async (req, res) => {
 });
 
 // POST /api/auth/login - User login with enhanced debugging and business data
-router.post('/login', loginLimiter, async (req, res) => {
+router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         
@@ -496,409 +439,36 @@ router.post('/login', loginLimiter, async (req, res) => {
     }
 });
 
-// GET /api/auth/profile - Get current user profile (Protected)
-router.get('/profile', authenticateToken, getUserClient, async (req, res) => {
+// GET /api/auth/profile - Get current user profile
+router.get('/profile', async (req, res) => {
     try {
-        console.log(`📋 Profile request for user: ${req.user.email}`);
-
-        // Get fresh user data from database
-        const user = await User.findByPk(req.user.userId, {
-            attributes: {
-                exclude: ['password_hash', 'password_reset_token', 'email_verification_token']
-            }
-        });
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                error: 'User not found'
-            });
-        }
-
+        // This would need JWT middleware to extract userId from token
+        // For now, just return a placeholder
         res.json({
             success: true,
-            data: {
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    firstName: user.first_name,
-                    lastName: user.last_name,
-                    businessName: user.business_name,
-                    businessType: user.business_type,
-                    businessPhone: user.business_phone,
-                    phoneNumber: user.phone_number,
-                    websiteUrl: user.website_url,
-                    businessDescription: user.business_description,
-                    businessHours: user.business_hours,
-                    services: user.services,
-                    freeTrialMinutes: user.free_trial_minutes,
-                    emailVerified: user.email_verified,
-                    onboardingCompleted: user.onboarding_completed,
-                    createdAt: user.created_at,
-                    updatedAt: user.updated_at
-                },
-                client: req.client || null
-            }
+            message: 'Profile endpoint ready - JWT middleware needed'
         });
     } catch (error) {
         console.error('Profile error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to get profile'
+        res.status(500).json({ 
+            error: 'Failed to get profile' 
         });
     }
 });
 
-// POST /api/auth/update-profile - Update user business information (Protected)
-router.post('/update-profile', authenticateToken, async (req, res) => {
+// POST /api/auth/update-profile - Update user business information
+router.post('/update-profile', async (req, res) => {
     try {
-        console.log(`📝 Profile update request for user: ${req.user.email}`);
-
-        const {
-            firstName,
-            lastName,
-            businessName,
-            businessType,
-            businessPhone,
-            phoneNumber,
-            websiteUrl,
-            businessDescription,
-            businessHours,
-            services
-        } = req.body;
-
-        // Get user from database
-        const user = await User.findByPk(req.user.userId);
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                error: 'User not found'
-            });
-        }
-
-        // Build update object with only provided fields
-        const updates = {};
-        if (firstName !== undefined) updates.first_name = firstName;
-        if (lastName !== undefined) updates.last_name = lastName;
-        if (businessName !== undefined) updates.business_name = businessName;
-        if (businessType !== undefined) updates.business_type = businessType;
-        if (businessPhone !== undefined) updates.business_phone = businessPhone;
-        if (phoneNumber !== undefined) updates.phone_number = phoneNumber;
-        if (websiteUrl !== undefined) {
-            updates.website_url = websiteUrl && websiteUrl.trim() !== '' ? websiteUrl.trim() : null;
-        }
-        if (businessDescription !== undefined) updates.business_description = businessDescription;
-        if (businessHours !== undefined) updates.business_hours = businessHours;
-        if (services !== undefined) updates.services = services;
-
-        // Update user
-        await user.update(updates);
-
-        console.log(`✅ Profile updated for user: ${user.email}`);
-
+        // This would need JWT middleware to get current user
+        // Placeholder for profile update functionality
         res.json({
             success: true,
-            message: 'Profile updated successfully',
-            data: {
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    firstName: user.first_name,
-                    lastName: user.last_name,
-                    businessName: user.business_name,
-                    businessType: user.business_type,
-                    businessPhone: user.business_phone,
-                    phoneNumber: user.phone_number,
-                    websiteUrl: user.website_url,
-                    businessDescription: user.business_description,
-                    businessHours: user.business_hours,
-                    services: user.services,
-                    freeTrialMinutes: user.free_trial_minutes,
-                    emailVerified: user.email_verified,
-                    onboardingCompleted: user.onboarding_completed
-                }
-            }
+            message: 'Profile update endpoint ready - JWT middleware needed'
         });
     } catch (error) {
         console.error('Profile update error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to update profile'
-        });
-    }
-});
-
-// POST /api/auth/refresh-token - Refresh JWT token (Protected)
-router.post('/refresh-token', authenticateToken, async (req, res) => {
-    try {
-        console.log(`🔄 Token refresh for user: ${req.user.email}`);
-
-        // Get fresh user data
-        const user = await User.findByPk(req.user.userId);
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                error: 'User not found'
-            });
-        }
-
-        // Get client if exists
-        let client = null;
-        if (Client) {
-            client = await Client.findOne({ where: { user_id: user.id } });
-        }
-
-        // Generate new JWT token
-        const newToken = jwt.sign(
-            {
-                userId: user.id,
-                email: user.email,
-                businessName: user.business_name,
-                businessType: user.business_type,
-                clientId: client ? client.id : null
-            },
-            process.env.JWT_SECRET || 'your-super-secret-jwt-key',
-            { expiresIn: '7d' }
-        );
-
-        console.log(`✅ Token refreshed for: ${user.email}`);
-
-        res.json({
-            success: true,
-            message: 'Token refreshed successfully',
-            token: newToken,
-            expiresIn: '7d'
-        });
-    } catch (error) {
-        console.error('Token refresh error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to refresh token'
-        });
-    }
-});
-
-// POST /api/auth/logout - Logout user (Protected)
-router.post('/logout', authenticateToken, async (req, res) => {
-    try {
-        console.log(`👋 Logout request for user: ${req.user.email}`);
-
-        // In a stateless JWT system, logout is handled client-side by removing the token
-        // For future enhancement: implement token blacklist in Redis
-
-        res.json({
-            success: true,
-            message: 'Logged out successfully'
-        });
-    } catch (error) {
-        console.error('Logout error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to logout'
-        });
-    }
-});
-
-// GET /api/auth/verify - Verify if token is valid (Protected)
-router.get('/verify', authenticateToken, async (req, res) => {
-    try {
-        res.json({
-            success: true,
-            valid: true,
-            user: {
-                userId: req.user.userId,
-                email: req.user.email,
-                businessName: req.user.businessName
-            }
-        });
-    } catch (error) {
-        console.error('Verify token error:', error);
-        res.status(500).json({
-            success: false,
-            valid: false,
-            error: 'Failed to verify token'
-        });
-    }
-});
-
-// POST /api/auth/forgot-password - Request password reset
-router.post('/forgot-password', passwordResetLimiter, async (req, res) => {
-    try {
-        const { email } = req.body;
-
-        console.log(`🔐 Password reset requested for: ${email}`);
-
-        if (!email) {
-            return res.status(400).json({
-                success: false,
-                error: 'Email address is required'
-            });
-        }
-
-        // Find user by email
-        const user = await User.findOne({ where: { email } });
-
-        // Always return success to prevent email enumeration
-        // Don't reveal if email exists or not
-        if (!user) {
-            console.log(`⚠️ Password reset requested for non-existent email: ${email}`);
-            return res.json({
-                success: true,
-                message: 'If that email exists, a password reset link has been sent.'
-            });
-        }
-
-        // Generate password reset token
-        const resetToken = crypto.randomBytes(32).toString('hex');
-        const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
-
-        // Save reset token to user
-        await user.update({
-            password_reset_token: resetToken,
-            password_reset_expires: resetTokenExpiry
-        });
-
-        console.log(`✅ Reset token generated for ${email}: ${resetToken.substring(0, 10)}...`);
-        console.log(`⏰ Token expires at: ${resetTokenExpiry.toISOString()}`);
-
-        // Send password reset email
-        try {
-            await emailService.sendPasswordResetEmail(
-                user.email,
-                resetToken,
-                `${user.first_name} ${user.last_name}`
-            );
-            console.log(`📧 Password reset email sent to ${email}`);
-        } catch (emailError) {
-            console.error('❌ Failed to send password reset email:', emailError);
-            // Don't fail the request if email fails - token is still valid
-        }
-
-        res.json({
-            success: true,
-            message: 'If that email exists, a password reset link has been sent.'
-        });
-
-    } catch (error) {
-        console.error('💥 Forgot password error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to process password reset request'
-        });
-    }
-});
-
-// POST /api/auth/reset-password - Reset password with token
-router.post('/reset-password', authLimiter, async (req, res) => {
-    try {
-        const { token, password } = req.body;
-
-        console.log(`🔐 Password reset attempt with token: ${token?.substring(0, 10)}...`);
-
-        // Validate inputs
-        if (!token || !password) {
-            return res.status(400).json({
-                success: false,
-                error: 'Reset token and new password are required'
-            });
-        }
-
-        // Validate password strength
-        if (password.length < 8) {
-            return res.status(400).json({
-                success: false,
-                error: 'Password must be at least 8 characters long'
-            });
-        }
-
-        // Find user with valid reset token
-        const user = await User.findOne({
-            where: {
-                password_reset_token: token,
-                password_reset_expires: {
-                    [sequelize.Sequelize.Op.gt]: new Date() // Token not expired
-                }
-            }
-        });
-
-        if (!user) {
-            console.log('❌ Invalid or expired reset token');
-            return res.status(400).json({
-                success: false,
-                error: 'Invalid or expired password reset token'
-            });
-        }
-
-        console.log(`✅ Valid reset token found for user: ${user.email}`);
-
-        // Hash new password
-        const saltRounds = 12;
-        const passwordHash = await bcrypt.hash(password, saltRounds);
-
-        // Update password and clear reset token
-        await user.update({
-            password_hash: passwordHash,
-            password_reset_token: null,
-            password_reset_expires: null
-        });
-
-        console.log(`✅ Password successfully reset for: ${user.email}`);
-
-        res.json({
-            success: true,
-            message: 'Password has been reset successfully. You can now log in with your new password.'
-        });
-
-    } catch (error) {
-        console.error('💥 Reset password error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to reset password'
-        });
-    }
-});
-
-// GET /api/auth/verify-reset-token - Verify if reset token is valid
-router.get('/verify-reset-token/:token', async (req, res) => {
-    try {
-        const { token } = req.params;
-
-        console.log(`🔍 Verifying reset token: ${token?.substring(0, 10)}...`);
-
-        // Find user with valid reset token
-        const user = await User.findOne({
-            where: {
-                password_reset_token: token,
-                password_reset_expires: {
-                    [sequelize.Sequelize.Op.gt]: new Date()
-                }
-            }
-        });
-
-        if (!user) {
-            console.log('❌ Invalid or expired token');
-            return res.status(400).json({
-                success: false,
-                valid: false,
-                error: 'Invalid or expired password reset token'
-            });
-        }
-
-        console.log(`✅ Valid token for user: ${user.email}`);
-
-        res.json({
-            success: true,
-            valid: true,
-            message: 'Token is valid',
-            email: user.email // Return masked email for confirmation
-        });
-
-    } catch (error) {
-        console.error('💥 Verify token error:', error);
-        res.status(500).json({
-            success: false,
-            valid: false,
-            error: 'Failed to verify token'
+        res.status(500).json({ 
+            error: 'Failed to update profile' 
         });
     }
 });
