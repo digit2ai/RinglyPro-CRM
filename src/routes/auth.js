@@ -7,6 +7,7 @@ const twilioClient = twilio(
   process.env.TWILIO_AUTH_TOKEN
 );
 const { User, sequelize } = require('../models');
+const { sendPasswordResetEmail } = require('../services/emailService');
 const router = express.Router();
 
 // Import Client and CreditAccount models for appointment booking
@@ -510,14 +511,20 @@ router.post('/forgot-password', async (req, res) => {
         });
 
         console.log(`✅ Password reset token generated for: ${email}`);
-        console.log(`🔗 Reset link: ${process.env.APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`);
 
-        // TODO: Send email with reset link
-        // For now, just log the link
+        // Send password reset email via SendGrid
+        const emailResult = await sendPasswordResetEmail(email, resetToken, user.first_name);
+
+        if (emailResult.success) {
+            console.log(`📧 Password reset email sent successfully to: ${email}`);
+        } else {
+            console.log(`⚠️  Email not sent (${emailResult.reason || emailResult.error}) - token logged to console`);
+            console.log(`🔗 Reset link: ${process.env.APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`);
+        }
 
         res.json({
             success: true,
-            message: 'Password reset link has been sent to your email',
+            message: 'If an account exists with this email, you will receive a password reset link',
             // REMOVE THIS IN PRODUCTION - only for testing
             resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined
         });
