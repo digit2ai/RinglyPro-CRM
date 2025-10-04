@@ -1393,16 +1393,23 @@
                     <div class="form-section" style="margin-top: 1.5rem;">
                         <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #374151;">Date & Time</h3>
 
+                        <div class="form-group">
+                            <label for="appointmentDate">Date <span style="color: #ef4444;">*</span></label>
+                            <input type="date" id="appointmentDate" class="form-input" required onchange="loadAvailableTimeSlots()">
+                        </div>
+
                         <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                             <div class="form-group">
-                                <label for="appointmentDate">Date <span style="color: #ef4444;">*</span></label>
-                                <input type="date" id="appointmentDate" class="form-input" required onchange="loadAvailableTimeSlots()">
+                                <label for="appointmentStartTime">Start Time <span style="color: #ef4444;">*</span></label>
+                                <select id="appointmentStartTime" class="form-input" required disabled onchange="updateEndTimeOptions()">
+                                    <option value="">Select a date first</option>
+                                </select>
                             </div>
 
                             <div class="form-group">
-                                <label for="appointmentTime">Time Slot <span style="color: #ef4444;">*</span></label>
-                                <select id="appointmentTime" class="form-input" required disabled>
-                                    <option value="">Select a date first</option>
+                                <label for="appointmentEndTime">End Time <span style="color: #ef4444;">*</span></label>
+                                <select id="appointmentEndTime" class="form-input" required disabled>
+                                    <option value="">Select start time first</option>
                                 </select>
                             </div>
                         </div>
@@ -1926,6 +1933,9 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
         // APPOINTMENT MODAL FUNCTIONS
         // =====================================================
 
+        // Store available slots globally
+        let availableSlots = [];
+
         // Open appointment modal
         function openAppointmentModal() {
             const modal = document.getElementById('appointmentModal');
@@ -1937,8 +1947,10 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
 
             // Reset form
             document.getElementById('appointmentForm').reset();
-            document.getElementById('appointmentTime').disabled = true;
-            document.getElementById('appointmentTime').innerHTML = '<option value="">Select a date first</option>';
+            document.getElementById('appointmentStartTime').disabled = true;
+            document.getElementById('appointmentStartTime').innerHTML = '<option value="">Select a date first</option>';
+            document.getElementById('appointmentEndTime').disabled = true;
+            document.getElementById('appointmentEndTime').innerHTML = '<option value="">Select start time first</option>';
             document.getElementById('appointmentError').style.display = 'none';
             document.getElementById('appointmentSuccess').style.display = 'none';
         }
@@ -1953,20 +1965,24 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
         // Load available time slots when date is selected
         async function loadAvailableTimeSlots() {
             const dateInput = document.getElementById('appointmentDate');
-            const timeSelect = document.getElementById('appointmentTime');
+            const startTimeSelect = document.getElementById('appointmentStartTime');
+            const endTimeSelect = document.getElementById('appointmentEndTime');
             const loading = document.getElementById('appointmentLoadingSlots');
             const errorDiv = document.getElementById('appointmentError');
 
             const selectedDate = dateInput.value;
             if (!selectedDate) {
-                timeSelect.disabled = true;
-                timeSelect.innerHTML = '<option value="">Select a date first</option>';
+                startTimeSelect.disabled = true;
+                startTimeSelect.innerHTML = '<option value="">Select a date first</option>';
+                endTimeSelect.disabled = true;
+                endTimeSelect.innerHTML = '<option value="">Select start time first</option>';
                 return;
             }
 
             // Show loading
             loading.style.display = 'block';
-            timeSelect.disabled = true;
+            startTimeSelect.disabled = true;
+            endTimeSelect.disabled = true;
             errorDiv.style.display = 'none';
 
             try {
@@ -1979,26 +1995,75 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
                 const data = await response.json();
 
                 if (data.success && data.available_slots && data.available_slots.length > 0) {
-                    // Populate time slots
-                    timeSelect.innerHTML = '<option value="">Select a time slot</option>' +
+                    // Store available slots globally
+                    availableSlots = data.available_slots;
+
+                    // Populate start time slots
+                    startTimeSelect.innerHTML = '<option value="">Select start time</option>' +
                         data.available_slots.map(slot => {
                             return `<option value="${slot}">${formatTimeSlot(slot)}</option>`;
                         }).join('');
 
-                    timeSelect.disabled = false;
+                    startTimeSelect.disabled = false;
                 } else {
-                    timeSelect.innerHTML = '<option value="">No available slots for this date</option>';
-                    timeSelect.disabled = true;
+                    startTimeSelect.innerHTML = '<option value="">No available slots for this date</option>';
+                    startTimeSelect.disabled = true;
                 }
             } catch (error) {
                 console.error('Error loading time slots:', error);
                 errorDiv.textContent = 'Error loading available time slots. Please try again.';
                 errorDiv.style.display = 'block';
-                timeSelect.innerHTML = '<option value="">Error loading slots</option>';
-                timeSelect.disabled = true;
+                startTimeSelect.innerHTML = '<option value="">Error loading slots</option>';
+                startTimeSelect.disabled = true;
             } finally {
                 loading.style.display = 'none';
             }
+        }
+
+        // Update end time options based on start time selection
+        function updateEndTimeOptions() {
+            const startTimeSelect = document.getElementById('appointmentStartTime');
+            const endTimeSelect = document.getElementById('appointmentEndTime');
+
+            const startTime = startTimeSelect.value;
+
+            if (!startTime || availableSlots.length === 0) {
+                endTimeSelect.disabled = true;
+                endTimeSelect.innerHTML = '<option value="">Select start time first</option>';
+                return;
+            }
+
+            // Find the index of the selected start time
+            const startIndex = availableSlots.indexOf(startTime);
+
+            // Get all slots after the start time
+            const endSlots = availableSlots.slice(startIndex + 1);
+
+            // Add one more option after the last available slot for appointments that go beyond business hours
+            endSlots.push(addTimeToSlot(availableSlots[availableSlots.length - 1], 30));
+
+            if (endSlots.length === 0) {
+                endTimeSelect.innerHTML = '<option value="">No end time available</option>';
+                endTimeSelect.disabled = true;
+                return;
+            }
+
+            // Populate end time options
+            endTimeSelect.innerHTML = '<option value="">Select end time</option>' +
+                endSlots.map(slot => {
+                    return `<option value="${slot}">${formatTimeSlot(slot)}</option>`;
+                }).join('');
+
+            endTimeSelect.disabled = false;
+        }
+
+        // Helper function to add minutes to a time string
+        function addTimeToSlot(timeSlot, minutes) {
+            const [hours, mins] = timeSlot.split(':').map(Number);
+            const totalMinutes = hours * 60 + mins + minutes;
+            const newHours = Math.floor(totalMinutes / 60);
+            const newMins = totalMinutes % 60;
+            return `${newHours.toString().padStart(2, '0')}:${newMins.toString().padStart(2, '0')}:00`;
         }
 
         // Format time slot for display (e.g., "09:00" -> "9:00 AM")
@@ -2026,18 +2091,31 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
                     successDiv.style.display = 'none';
 
                     // Get form data
-                    const formData = {
-                        customerName: document.getElementById('customerName').value.trim(),
-                        customerPhone: document.getElementById('customerPhone').value.trim(),
-                        customerEmail: document.getElementById('customerEmail').value.trim() || null,
-                        appointmentDate: document.getElementById('appointmentDate').value,
-                        appointmentTime: document.getElementById('appointmentTime').value,
-                        notes: document.getElementById('appointmentNotes').value.trim() || null
-                    };
+                    const customerName = document.getElementById('customerName').value.trim();
+                    const customerPhone = document.getElementById('customerPhone').value.trim();
+                    const customerEmail = document.getElementById('customerEmail').value.trim() || null;
+                    const appointmentDate = document.getElementById('appointmentDate').value;
+                    const startTime = document.getElementById('appointmentStartTime').value;
+                    const endTime = document.getElementById('appointmentEndTime').value;
+                    const notes = document.getElementById('appointmentNotes').value.trim() || null;
 
                     // Validate
-                    if (!formData.customerName || !formData.customerPhone || !formData.appointmentDate || !formData.appointmentTime) {
+                    if (!customerName || !customerPhone || !appointmentDate || !startTime || !endTime) {
                         errorDiv.textContent = 'Please fill in all required fields.';
+                        errorDiv.style.display = 'block';
+                        return;
+                    }
+
+                    // Calculate all time slots between start and end
+                    const timeSlots = [];
+                    let currentTime = startTime;
+                    while (currentTime < endTime) {
+                        timeSlots.push(currentTime);
+                        currentTime = addTimeToSlot(currentTime, 30);
+                    }
+
+                    if (timeSlots.length === 0) {
+                        errorDiv.textContent = 'Invalid time range selected.';
                         errorDiv.style.display = 'block';
                         return;
                     }
@@ -2047,23 +2125,33 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
                     submitBtn.innerHTML = '<span class="loading-spinner"></span> Creating...';
 
                     try {
-                        const response = await authenticatedFetch('/api/appointments/create', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(formData)
+                        // Create an appointment for each 30-minute slot
+                        const promises = timeSlots.map(timeSlot => {
+                            return authenticatedFetch('/api/appointments/create', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    customerName,
+                                    customerPhone,
+                                    customerEmail,
+                                    appointmentDate,
+                                    appointmentTime: timeSlot,
+                                    notes
+                                })
+                            });
                         });
 
-                        if (!response) {
-                            throw new Error('Failed to create appointment');
-                        }
+                        const responses = await Promise.all(promises);
 
-                        const data = await response.json();
+                        // Check if all succeeded
+                        const allSucceeded = responses.every(r => r && r.ok);
 
-                        if (data.success) {
+                        if (allSucceeded) {
                             // Show success message
+                            successDiv.textContent = `Successfully blocked ${timeSlots.length} time slot(s) from ${formatTimeSlot(startTime)} to ${formatTimeSlot(endTime)}`;
                             successDiv.style.display = 'block';
 
-                            // Reload dashboard to show new appointment
+                            // Reload dashboard to show new appointments
                             await loadDashboard();
 
                             // Close modal after 2 seconds
@@ -2073,11 +2161,11 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
                                 submitBtn.textContent = 'Create Appointment';
                             }, 2000);
                         } else {
-                            throw new Error(data.error || 'Failed to create appointment');
+                            throw new Error('Some time slots could not be booked');
                         }
                     } catch (error) {
-                        console.error('Error creating appointment:', error);
-                        errorDiv.textContent = error.message || 'Error creating appointment. Please try again.';
+                        console.error('Error creating appointments:', error);
+                        errorDiv.textContent = error.message || 'Error creating appointments. Please try again.';
                         errorDiv.style.display = 'block';
                         submitBtn.disabled = false;
                         submitBtn.textContent = 'Create Appointment';
