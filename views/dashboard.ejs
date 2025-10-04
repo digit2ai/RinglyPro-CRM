@@ -872,6 +872,27 @@
             margin: 0 0 16px 0;
             font-size: 18px;
             color: #1f2937;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stripe-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #635bff 0%, #5469d4 100%);
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .stripe-badge svg {
+            width: 14px;
+            height: 14px;
         }
 
         #card-element {
@@ -1331,7 +1352,15 @@
 
                 <!-- Payment Form -->
                 <div class="payment-form">
-                    <h3>Payment Details</h3>
+                    <h3>
+                        Payment Details
+                        <span class="stripe-badge">
+                            <svg fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                            SECURED BY STRIPE
+                        </span>
+                    </h3>
                     <div id="card-element"></div>
                     <div id="card-errors" role="alert"></div>
                 </div>
