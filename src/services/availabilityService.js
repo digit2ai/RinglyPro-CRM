@@ -60,7 +60,7 @@ class AvailabilityService {
                     clientId: clientId,
                     appointmentDate: targetDate,
                     status: {
-                        [Op.notIn]: ['cancelled', 'no_show', 'rejected']
+                        [Op.notIn]: ['cancelled', 'completed']
                     }
                 },
                 order: [['appointmentTime', 'ASC']]
@@ -247,7 +247,7 @@ class AvailabilityService {
                     appointmentDate: date,
                     appointmentTime: time,
                     status: {
-                        [Op.notIn]: ['cancelled', 'no_show', 'rejected']
+                        [Op.notIn]: ['cancelled', 'completed']
                     }
                 }
             });
