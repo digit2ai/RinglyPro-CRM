@@ -8,6 +8,12 @@ const Appointment = sequelize.define('Appointment', {
     primaryKey: true,
     autoIncrement: true
   },
+  clientId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    field: 'client_id',
+    comment: 'References clients table - multi-tenant isolation'
+  },
   contactId: {
     type: DataTypes.INTEGER,
     allowNull: true,
