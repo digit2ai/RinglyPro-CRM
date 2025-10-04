@@ -474,27 +474,41 @@ router.post('/update-profile', async (req, res) => {
     }
 });
 
-// POST /api/auth/forgot-password - Request password reset
+// POST /api/auth/forgot-password - Request password reset via SMS
 router.post('/forgot-password', async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, phone } = req.body;
 
-        if (!email) {
+        if (!email && !phone) {
             return res.status(400).json({
                 success: false,
-                error: 'Email is required'
+                error: 'Email or phone number is required'
             });
         }
 
-        // Find user by email
-        const user = await User.findOne({ where: { email } });
+        // Find user by email or phone
+        let user;
+        if (email) {
+            user = await User.findOne({ where: { email } });
+        } else if (phone) {
+            user = await User.findOne({ where: { phone_number: phone } });
+        }
 
-        // Always return success for security (don't reveal if email exists)
+        // Always return success for security (don't reveal if user exists)
         if (!user) {
-            console.log(`Password reset requested for non-existent email: ${email}`);
+            console.log(`Password reset requested for non-existent user: ${email || phone}`);
             return res.json({
                 success: true,
-                message: 'If an account exists with this email, you will receive a password reset link'
+                message: 'If an account exists, you will receive a password reset link via SMS'
+            });
+        }
+
+        // Check if user has a phone number
+        if (!user.phone_number) {
+            console.log(`⚠️  User ${user.email} has no phone number - cannot send SMS`);
+            return res.json({
+                success: true,
+                message: 'If an account exists, you will receive a password reset link via SMS'
             });
         }
 
@@ -510,21 +524,27 @@ router.post('/forgot-password', async (req, res) => {
             email_verification_token: resetToken // Reusing this field for password reset
         });
 
-        console.log(`✅ Password reset token generated for: ${email}`);
+        console.log(`✅ Password reset token generated for: ${user.email}`);
 
-        // Send password reset email via SendGrid
-        const emailResult = await sendPasswordResetEmail(email, resetToken, user.first_name);
+        // Send password reset SMS via Twilio
+        const resetLink = `${process.env.APP_URL || 'https://aiagent.ringlypro.com'}/reset-password?token=${resetToken}`;
 
-        if (emailResult.success) {
-            console.log(`📧 Password reset email sent successfully to: ${email}`);
-        } else {
-            console.log(`⚠️  Email not sent (${emailResult.reason || emailResult.error}) - token logged to console`);
-            console.log(`🔗 Reset link: ${process.env.APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`);
+        try {
+            await twilioClient.messages.create({
+                body: `🔐 RinglyPro Password Reset\n\nClick here to reset your password:\n${resetLink}\n\nThis link expires in 1 hour.\n\nIf you didn't request this, ignore this message.`,
+                from: process.env.TWILIO_PHONE_NUMBER,
+                to: user.phone_number
+            });
+
+            console.log(`📱 Password reset SMS sent successfully to: ${user.phone_number}`);
+        } catch (smsError) {
+            console.error(`❌ SMS error:`, smsError.message);
+            console.log(`🔗 Reset link: ${resetLink}`);
         }
 
         res.json({
             success: true,
-            message: 'If an account exists with this email, you will receive a password reset link',
+            message: 'If an account exists, you will receive a password reset link via SMS',
             // REMOVE THIS IN PRODUCTION - only for testing
             resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined
         });
