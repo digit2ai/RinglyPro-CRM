@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protected Page Example - RinglyPro CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-2xl font-bold text-gray-800">Protected Page Example</h1>
+                    <button onclick="Auth.logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+                        Logout
+                    </button>
+                </div>
+            </div>
+
+            <!-- User Info -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">User Information</h2>
+                <div id="userInfo" class="space-y-2">
+                    <p class="text-gray-600">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Token Info -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Token Information</h2>
+                <div id="tokenInfo" class="space-y-2">
+                    <p class="text-gray-600">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Actions</h2>
+                <div class="space-x-4">
+                    <button onclick="testAuthenticatedRequest()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                        Test Authenticated Request
+                    </button>
+                    <button onclick="refreshTokenManually()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+                        Refresh Token
+                    </button>
+                    <button onclick="verifyTokenManually()" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded">
+                        Verify Token
+                    </button>
+                </div>
+                <div id="actionResult" class="mt-4"></div>
+            </div>
+
+            <!-- API Example -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Code Examples</h2>
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Require Authentication:</h3>
+                        <pre class="bg-gray-100 p-3 rounded text-sm"><code>Auth.requireAuth();</code></pre>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Get Token:</h3>
+                        <pre class="bg-gray-100 p-3 rounded text-sm"><code>const token = Auth.getToken();</code></pre>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Make Authenticated Request:</h3>
+                        <pre class="bg-gray-100 p-3 rounded text-sm"><code>const response = await Auth.makeAuthenticatedRequest('/api/auth/profile');
+const data = await response.json();</code></pre>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">Refresh Token:</h3>
+                        <pre class="bg-gray-100 p-3 rounded text-sm"><code>await Auth.refreshToken();</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include Auth Helper -->
+    <script src="/js/auth.js"></script>
+
+    <script>
+        // Require authentication - redirect to login if not authenticated
+        Auth.requireAuth();
+
+        // Load user information
+        async function loadUserInfo() {
+            const token = Auth.getToken();
+            const payload = Auth.parseToken(token);
+            const expiration = Auth.getTokenExpiration(token);
+            const timeUntilExpiration = Auth.getTimeUntilExpiration(token);
+
+            document.getElementById('userInfo').innerHTML = `
+                <p><strong>Email:</strong> ${payload.email || 'N/A'}</p>
+                <p><strong>User ID:</strong> ${payload.userId || 'N/A'}</p>
+                <p><strong>Business Name:</strong> ${payload.businessName || 'N/A'}</p>
+                <p><strong>Business Type:</strong> ${payload.businessType || 'N/A'}</p>
+            `;
+
+            document.getElementById('tokenInfo').innerHTML = `
+                <p><strong>Token Expires:</strong> ${expiration ? expiration.toLocaleString() : 'N/A'}</p>
+                <p><strong>Time Until Expiration:</strong> ${timeUntilExpiration || 'N/A'}</p>
+                <p><strong>Token (first 50 chars):</strong> <code class="bg-gray-100 px-2 py-1 rounded text-xs">${token.substring(0, 50)}...</code></p>
+            `;
+        }
+
+        // Test authenticated request
+        async function testAuthenticatedRequest() {
+            const resultDiv = document.getElementById('actionResult');
+            resultDiv.innerHTML = '<p class="text-blue-600">Loading...</p>';
+
+            try {
+                const response = await Auth.makeAuthenticatedRequest('/api/auth/profile');
+                const data = await response.json();
+
+                resultDiv.innerHTML = `
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                        <strong>Success!</strong> Profile loaded successfully.
+                        <pre class="mt-2 text-xs">${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Refresh token manually
+        async function refreshTokenManually() {
+            const resultDiv = document.getElementById('actionResult');
+            resultDiv.innerHTML = '<p class="text-blue-600">Refreshing token...</p>';
+
+            const success = await Auth.refreshToken();
+
+            if (success) {
+                resultDiv.innerHTML = `
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                        <strong>Success!</strong> Token refreshed successfully.
+                    </div>
+                `;
+                loadUserInfo(); // Reload info with new token
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                        <strong>Error:</strong> Failed to refresh token.
+                    </div>
+                `;
+            }
+        }
+
+        // Verify token manually
+        async function verifyTokenManually() {
+            const resultDiv = document.getElementById('actionResult');
+            resultDiv.innerHTML = '<p class="text-blue-600">Verifying token...</p>';
+
+            const isValid = await Auth.verifyToken();
+
+            if (isValid) {
+                resultDiv.innerHTML = `
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                        <strong>Valid!</strong> Your token is valid.
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                        <strong>Invalid!</strong> Your token is invalid or expired.
+                    </div>
+                `;
+            }
+        }
+
+        // Load user info on page load
+        loadUserInfo();
+    </script>
+</body>
+</html>
