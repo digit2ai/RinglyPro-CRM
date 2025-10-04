@@ -547,7 +547,7 @@ router.post('/create', async (req, res) => {
       appointmentTime,
       purpose: notes || 'General consultation',
       confirmationCode: confirmationCode,
-      source: 'crm_dashboard',
+      source: 'manual',
       duration: 30,
       notes: notes || null,
       status: 'confirmed'
