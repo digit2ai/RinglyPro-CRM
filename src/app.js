@@ -144,12 +144,32 @@ app.get('/login', (req, res) => {
   });
 });
 
-// Signup page route  
+// Signup page route
 app.get('/signup', (req, res) => {
-  res.render('signup', { 
+  res.render('signup', {
     title: `${CLIENT_NAME} - Sign Up`,
     clientName: CLIENT_NAME,
     clientId: CLIENT_ID
+  });
+});
+
+// Forgot password page route
+app.get('/forgot-password', (req, res) => {
+  res.render('forgot-password', {
+    title: `${CLIENT_NAME} - Forgot Password`,
+    clientName: CLIENT_NAME,
+    clientId: CLIENT_ID
+  });
+});
+
+// Reset password page route
+app.get('/reset-password', (req, res) => {
+  const token = req.query.token;
+  res.render('reset-password', {
+    title: `${CLIENT_NAME} - Reset Password`,
+    clientName: CLIENT_NAME,
+    clientId: CLIENT_ID,
+    token: token || ''
   });
 });
 

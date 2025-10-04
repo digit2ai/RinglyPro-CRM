@@ -467,8 +467,142 @@ router.post('/update-profile', async (req, res) => {
         });
     } catch (error) {
         console.error('Profile update error:', error);
-        res.status(500).json({ 
-            error: 'Failed to update profile' 
+        res.status(500).json({
+            error: 'Failed to update profile'
+        });
+    }
+});
+
+// POST /api/auth/forgot-password - Request password reset
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email is required'
+            });
+        }
+
+        // Find user by email
+        const user = await User.findOne({ where: { email } });
+
+        // Always return success for security (don't reveal if email exists)
+        if (!user) {
+            console.log(`Password reset requested for non-existent email: ${email}`);
+            return res.json({
+                success: true,
+                message: 'If an account exists with this email, you will receive a password reset link'
+            });
+        }
+
+        // Generate reset token (valid for 1 hour)
+        const resetToken = jwt.sign(
+            { userId: user.id, email: user.email, type: 'password_reset' },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        // Store reset token in user record
+        await user.update({
+            email_verification_token: resetToken // Reusing this field for password reset
+        });
+
+        console.log(`✅ Password reset token generated for: ${email}`);
+        console.log(`🔗 Reset link: ${process.env.APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`);
+
+        // TODO: Send email with reset link
+        // For now, just log the link
+
+        res.json({
+            success: true,
+            message: 'Password reset link has been sent to your email',
+            // REMOVE THIS IN PRODUCTION - only for testing
+            resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined
+        });
+
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to process password reset request'
+        });
+    }
+});
+
+// POST /api/auth/reset-password - Reset password with token
+router.post('/reset-password', async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                error: 'Token and new password are required'
+            });
+        }
+
+        // Validate password strength
+        if (newPassword.length < 8) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must be at least 8 characters long'
+            });
+        }
+
+        // Verify reset token
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+            if (decoded.type !== 'password_reset') {
+                throw new Error('Invalid token type');
+            }
+        } catch (err) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid or expired reset token'
+            });
+        }
+
+        // Find user
+        const user = await User.findOne({
+            where: {
+                id: decoded.userId,
+                email: decoded.email,
+                email_verification_token: token // Verify token matches
+            }
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid reset token or user not found'
+            });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update password and clear reset token
+        await user.update({
+            password_hash: hashedPassword,
+            email_verification_token: null // Clear the token
+        });
+
+        console.log(`✅ Password reset successful for: ${user.email}`);
+
+        res.json({
+            success: true,
+            message: 'Password has been reset successfully. You can now log in with your new password.'
+        });
+
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to reset password'
         });
     }
 });
