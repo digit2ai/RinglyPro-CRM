@@ -173,15 +173,14 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
 
-        const twiml = `
-            <?xml version="1.0" encoding="UTF-8"?>
-            <Response>
-                <Say voice="Polly.Joanna">Perfect! ${escapedName}, I have your phone number as ${escapedPhone}. Let me check availability and book you an appointment with ${escapedBusiness}. Please hold for just a moment.</Say>
-                <Redirect>/voice/rachel/book-appointment</Redirect>
-            </Response>
-        `;
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">Perfect ${escapedName}, I have your phone number as ${escapedPhone}. Let me check availability and book you an appointment with ${escapedBusiness}. Please hold for just a moment.</Say>
+    <Redirect>/voice/rachel/book-appointment</Redirect>
+</Response>`;
 
-        res.type('text/xml');
+        console.log('📤 Sending TwiML from collect-phone (English):', twiml.substring(0, 200));
+        res.set('Content-Type', 'text/xml; charset=utf-8');
         res.send(twiml);
 
     } catch (error) {
