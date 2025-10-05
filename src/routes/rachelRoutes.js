@@ -267,6 +267,19 @@ router.post('/voice/rachel/select-language', async (req, res) => {
         // Store language preference in session
         req.session.language = digits === '1' ? 'en' : digits === '2' ? 'es' : 'en';
 
+        // Save session before redirecting to ensure persistence across language switch
+        await new Promise((resolve, reject) => {
+            req.session.save((err) => {
+                if (err) {
+                    console.error('❌ Error saving session before language redirect:', err);
+                    reject(err);
+                } else {
+                    console.log('✅ Session saved before language redirect');
+                    resolve();
+                }
+            });
+        });
+
         if (digits === '1') {
             // English - Continue with Rachel
             res.redirect(307, '/voice/rachel/incoming?lang=en');

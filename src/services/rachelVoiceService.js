@@ -46,14 +46,27 @@ class MultiTenantRachelService {
             console.log(`📵 Rachel disabled for ${clientInfo.business_name}`);
             return this.createForwardResponse(clientInfo);
         }
-        
+
         // Store client info in session for use in subsequent requests
         session.client_id = clientInfo.client_id;
         session.business_name = clientInfo.business_name;
         session.booking_url = clientInfo.booking_url;
         session.call_sid = callSid;
         session.caller_number = fromNumber;
-        
+
+        // Save session before continuing to ensure data persists
+        await new Promise((resolve, reject) => {
+            session.save((err) => {
+                if (err) {
+                    console.error('❌ Error saving initial session:', err);
+                    reject(err);
+                } else {
+                    console.log(`✅ Initial session saved for client ${clientInfo.client_id}`);
+                    resolve();
+                }
+            });
+        });
+
         // Log call start
         await this.clientService.logCallStart(clientInfo.client_id, fromNumber, callSid);
 
