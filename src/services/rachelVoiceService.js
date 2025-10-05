@@ -235,7 +235,7 @@ class MultiTenantRachelService {
         const bookingText = `
             Great! I'd be happy to help you book an appointment with ${businessName}. 
             Let me gather some information from you. 
-            Can you please tell me your full name?
+            Can you please tell me your first name?
         `;
         
         const gather = twiml.gather({

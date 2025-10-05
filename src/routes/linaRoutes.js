@@ -141,17 +141,17 @@ router.post('/voice/lina/collect-name', async (req, res) => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
 
-        const twiml = `
-            <?xml version="1.0" encoding="UTF-8"?>
-            <Response>
-                <Gather input="speech" timeout="10" action="/voice/lina/collect-phone" method="POST" speechTimeout="auto" language="es-MX">
-                    <Say voice="Polly.Lupe" language="es-MX">Gracias ${escapedName}. Ahora, ¿puede decirme su número de teléfono, por favor?</Say>
-                </Gather>
-                <Redirect>/voice/lina/webhook</Redirect>
-            </Response>
-        `;
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech" timeout="5" action="/voice/lina/collect-phone" method="POST" speechTimeout="auto" language="es-MX">
+        <Say voice="Polly.Lupe" language="es-MX">Gracias ${escapedName}. Ahora puede decirme su número de teléfono por favor</Say>
+    </Gather>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intente de nuevo.</Say>
+    <Redirect>/voice/lina/collect-name</Redirect>
+</Response>`;
 
-        res.type('text/xml');
+        console.log('📤 Sending TwiML from collect-name:', twiml.substring(0, 200));
+        res.set('Content-Type', 'text/xml; charset=utf-8');
         res.send(twiml);
 
     } catch (error) {

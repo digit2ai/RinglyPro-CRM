@@ -101,17 +101,16 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
 
-        const twiml = `
-            <?xml version="1.0" encoding="UTF-8"?>
-            <Response>
-                <Gather input="speech" timeout="10" action="/voice/rachel/collect-phone" method="POST" speechTimeout="auto" language="en-US">
-                    <Say voice="Polly.Joanna">Thank you ${escapedName}. Now can you please tell me your phone number?</Say>
-                </Gather>
-                <Redirect>/voice/rachel/webhook</Redirect>
-            </Response>
-        `;
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech" timeout="5" action="/voice/rachel/collect-phone" method="POST" speechTimeout="auto" language="en-US">
+        <Say voice="Polly.Joanna">Thank you ${escapedName}. Now please tell me your phone number</Say>
+    </Gather>
+    <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
+    <Redirect>/voice/rachel/collect-name</Redirect>
+</Response>`;
 
-        res.type('text/xml');
+        res.set('Content-Type', 'text/xml; charset=utf-8');
         res.send(twiml);
 
     } catch (error) {

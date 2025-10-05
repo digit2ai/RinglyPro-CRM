@@ -131,7 +131,7 @@ class LinaSpanishVoiceService {
         const bookingText = `
             ¡Excelente! Con mucho gusto le ayudaré a agendar una cita con ${businessName}.
             Permítame recopilar algunos datos.
-            ¿Puede decirme su nombre completo, por favor?
+            Puede decirme su nombre por favor
         `;
 
         const gather = twiml.gather({
