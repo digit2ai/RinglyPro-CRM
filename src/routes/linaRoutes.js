@@ -143,7 +143,7 @@ router.post('/voice/lina/collect-name', async (req, res) => {
 
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="5" action="/voice/lina/collect-phone" method="POST" speechTimeout="auto" language="es-MX">
+    <Gather input="speech" timeout="10" speechTimeout="5" action="/voice/lina/collect-phone" method="POST" language="es-MX">
         <Say voice="Polly.Lupe" language="es-MX">Gracias ${escapedName}. Ahora puede decirme su número de teléfono por favor</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intente de nuevo.</Say>
@@ -253,15 +253,28 @@ const handleBookAppointmentSpanish = async (req, res) => {
 
         console.log(`📅 Spanish - Booking appointment for client ${clientId}: ${prospectName} (${prospectPhone})`);
 
-        const twiml = `
-            <?xml version="1.0" encoding="UTF-8"?>
-            <Response>
-                <Say voice="Polly.Lupe" language="es-MX">Excelentes noticias ${prospectName}! He agendado exitosamente su cita con ${businessName}. Recibirá un mensaje de texto con la confirmación y todos los detalles próximamente. Gracias por llamar, y esperamos hablar con usted pronto!</Say>
-                <Hangup/>
-            </Response>
-        `;
+        // Escape XML special characters
+        const escapedName = (prospectName || 'señor')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+        const escapedBusiness = (businessName || 'nuestra empresa')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
 
-        res.type('text/xml');
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Excelentes noticias ${escapedName}. He agendado exitosamente su cita con ${escapedBusiness}. Recibirá un mensaje de texto con la confirmación y todos los detalles próximamente. Gracias por llamar y esperamos hablar con usted pronto.</Say>
+    <Hangup/>
+</Response>`;
+
+        console.log('📤 Sending TwiML from book-appointment (Spanish)');
+        res.set('Content-Type', 'text/xml; charset=utf-8');
         res.send(twiml);
 
     } catch (error) {

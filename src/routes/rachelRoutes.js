@@ -103,7 +103,7 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
 
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="5" action="/voice/rachel/collect-phone" method="POST" speechTimeout="auto" language="en-US">
+    <Gather input="speech" timeout="10" speechTimeout="5" action="/voice/rachel/collect-phone" method="POST" language="en-US">
         <Say voice="Polly.Joanna">Thank you ${escapedName}. Now please tell me your phone number</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
@@ -211,19 +211,32 @@ const handleBookAppointment = async (req, res) => {
         const businessName = req.session.business_name || 'this business';
         
         console.log(`📅 Booking appointment for client ${clientId}: ${prospectName} (${prospectPhone})`);
-        
+
+        // Escape XML special characters
+        const escapedName = (prospectName || 'there')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+        const escapedBusiness = (businessName || 'this business')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+
         // TODO: Integrate with actual appointment booking system
         // For now, just confirm the booking
-        
-        const twiml = `
-            <?xml version="1.0" encoding="UTF-8"?>
-            <Response>
-                <Say voice="Polly.Joanna">Great news ${prospectName}! I've successfully booked your appointment with ${businessName}. You'll receive a text message confirmation shortly with all the details. Thank you for calling, and we look forward to speaking with you!</Say>
-                <Hangup/>
-            </Response>
-        `;
-        
-        res.type('text/xml');
+
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">Great news ${escapedName}. I've successfully booked your appointment with ${escapedBusiness}. You'll receive a text message confirmation shortly with all the details. Thank you for calling and we look forward to speaking with you.</Say>
+    <Hangup/>
+</Response>`;
+
+        console.log('📤 Sending TwiML from book-appointment (English)');
+        res.set('Content-Type', 'text/xml; charset=utf-8');
         res.send(twiml);
         
     } catch (error) {
