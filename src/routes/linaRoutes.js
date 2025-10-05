@@ -17,8 +17,9 @@ const router = express.Router();
 
 /**
  * Spanish greeting endpoint (called after language selection)
+ * Handle both GET (from redirects) and POST (from direct calls)
  */
-router.post('/voice/lina/incoming', async (req, res) => {
+const handleSpanishIncoming = async (req, res) => {
     try {
         console.log('📞 Spanish language selected - Lina webhook called');
 
@@ -65,7 +66,11 @@ router.post('/voice/lina/incoming', async (req, res) => {
         res.type('text/xml');
         res.send(twiml);
     }
-});
+};
+
+// Register both GET and POST routes
+router.post('/voice/lina/incoming', handleSpanishIncoming);
+router.get('/voice/lina/incoming', handleSpanishIncoming);
 
 /**
  * Process Spanish speech input endpoint

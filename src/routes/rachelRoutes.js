@@ -275,8 +275,9 @@ router.post('/voice/rachel/select-language', async (req, res) => {
 
 /**
  * English greeting endpoint (called after language selection)
+ * Handle both GET (from redirects) and POST (from direct calls)
  */
-router.post('/voice/rachel/incoming', async (req, res) => {
+const handleEnglishIncoming = async (req, res) => {
     try {
         console.log('📞 English language selected - Rachel continuing');
 
@@ -323,7 +324,11 @@ router.post('/voice/rachel/incoming', async (req, res) => {
         res.type('text/xml');
         res.send(twiml);
     }
-});
+};
+
+// Register both GET and POST routes
+router.post('/voice/rachel/incoming', handleEnglishIncoming);
+router.get('/voice/rachel/incoming', handleEnglishIncoming);
 
 /**
  * Fallback webhook endpoint
