@@ -183,7 +183,7 @@ router.post('/fix-current-number', async (req, res) => {
         // Fix the configuration
         const result = await twilioService.configureExistingNumber(
             currentNumber.sid,
-            1 // Client ID 1 for main account
+            1
         });
 
         res.json({
