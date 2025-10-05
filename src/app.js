@@ -57,6 +57,7 @@ const creditRoutes = require('./routes/credits'); // Credit system routes
 const voiceWebhookRouter = require('./routes/voiceWebhook'); // Rachel voice routes
 const rachelRoutes = require('./routes/rachelRoutes'); // Multi-tenant Rachel routes
 const twilioRoutes = require('./routes/twilio');
+const twilioAdminRoutes = require('./routes/twilioAdmin'); // Twilio number management
 
 // Import new forwarding routes
 const conditionalForwardRoutes = require('./routes/conditionalForward');
@@ -99,6 +100,9 @@ app.use('/api/forwarding-status', forwardingStatusRoutes);
 app.use('/api/voice', voiceBotRoutes);
 app.use('/voice', voiceBotRoutes);
 app.use('/webhook/twilio', twilioRoutes);
+
+// Twilio number administration (CRITICAL for credit tracking)
+app.use('/api/twilio', twilioAdminRoutes);
 
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
