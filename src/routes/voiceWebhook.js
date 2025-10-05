@@ -54,7 +54,7 @@ router.post('/incoming', async (req, res) => {
         }
 
         const response = await rachelVoice.createGreetingResponse();
-        
+
         res.type('text/xml');
         res.send(response.toString());
         
