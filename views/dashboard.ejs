@@ -3,7 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="description" content="RinglyPro - AI-Powered Phone Receptionist Service">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="RinglyPro">
+
     <title>RinglyPro CRM - Dashboard</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1ca42554f6a328ff4f6a5.png">
+    <link rel="apple-touch-icon" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1ca42554f6a328ff4f6a5.png">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
     <style>
         * {
             margin: 0;
@@ -1146,6 +1160,90 @@
                 border-radius: 0.75rem;
             }
         }
+
+        /* Footer Styles */
+        .app-footer {
+            background: #1f2937;
+            color: #9ca3af;
+            padding: 2rem 1.5rem;
+            margin-top: 3rem;
+            border-top: 1px solid #374151;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .footer-branding {
+            margin-bottom: 1rem;
+        }
+
+        .footer-branding h3 {
+            color: #f3f4f6;
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-branding p {
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: #93c5fd;
+            text-decoration: underline;
+        }
+
+        .footer-contact {
+            margin: 1.5rem 0;
+            font-size: 0.875rem;
+        }
+
+        .footer-contact p {
+            margin: 0.25rem 0;
+        }
+
+        .footer-contact a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+
+        .footer-contact a:hover {
+            text-decoration: underline;
+        }
+
+        .footer-copyright {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #374151;
+        }
+
+        @media (max-width: 768px) {
+            .footer-links {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1480,7 +1578,46 @@
         </div>
     </div>
 
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div class="footer-branding">
+                <h3>RinglyPro</h3>
+                <p>AI-Powered Phone Receptionist Service</p>
+            </div>
+
+            <div class="footer-links">
+                <a href="https://ringlypro.com/privacy" target="_blank">Privacy Policy</a>
+                <a href="https://ringlypro.com/terms" target="_blank">Terms of Service</a>
+            </div>
+
+            <div class="footer-contact">
+                <p><strong>Customer Service:</strong></p>
+                <p><a href="tel:+18886103810">(888) 610-3810</a></p>
+                <p><a href="mailto:info@digit2ai.com">info@digit2ai.com</a></p>
+            </div>
+
+            <div class="footer-copyright">
+                <p>RinglyPro is a service of Digit2ai LLC. © All rights reserved.</p>
+                <p style="margin-top: 0.5rem;">All registered trademarks herein are the property of their respective owners.</p>
+            </div>
+        </div>
+    </footer>
+
     <script>
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then((registration) => {
+                        console.log('ServiceWorker registered:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+
         // Extract CLIENT_ID from JWT token in localStorage
         function getClientIdFromToken() {
             const token = localStorage.getItem('token');
