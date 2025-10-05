@@ -56,9 +56,46 @@ class MultiTenantRachelService {
         
         // Log call start
         await this.clientService.logCallStart(clientInfo.client_id, fromNumber, callSid);
-        
-        // Create personalized greeting response
-        return await this.createPersonalizedGreeting(clientInfo);
+
+        // Create bilingual language selection menu
+        return await this.createLanguageSelectionMenu(clientInfo);
+    }
+
+    /**
+     * Create initial bilingual language selection menu
+     * @param {Object} clientInfo - Client information object
+     * @returns {string} TwiML response
+     */
+    async createLanguageSelectionMenu(clientInfo) {
+        const twiml = new twilio.twiml.VoiceResponse();
+
+        // Bilingual greeting: English first, then Spanish
+        const bilingualGreeting = `Hello and welcome to ${clientInfo.business_name}. For English, press 1. Para español, presione dos.`;
+
+        // Create gather for language selection (DTMF keypad input)
+        const gather = twiml.gather({
+            input: 'dtmf',
+            numDigits: 1,
+            timeout: 10,
+            action: '/voice/rachel/select-language',
+            method: 'POST'
+        });
+
+        // Try to use Rachel's voice for bilingual greeting
+        const audioUrl = await this.generateRachelAudio(bilingualGreeting);
+
+        if (audioUrl) {
+            gather.play(audioUrl);
+            console.log(`✅ Using Rachel's voice for bilingual greeting - ${clientInfo.business_name}`);
+        } else {
+            gather.say(bilingualGreeting, { voice: 'Polly.Joanna', language: 'en-US' });
+            console.warn(`⚠️ Fallback voice for bilingual greeting - ${clientInfo.business_name}`);
+        }
+
+        // If no input, default to English
+        twiml.redirect('/voice/rachel/incoming?lang=en');
+
+        return twiml.toString();
     }
 
     /**
@@ -68,10 +105,10 @@ class MultiTenantRachelService {
      */
     async createPersonalizedGreeting(clientInfo) {
         const twiml = new twilio.twiml.VoiceResponse();
-        
+
         // Generate personalized greeting text
         const greetingText = this.clientService.getClientGreetingText(clientInfo);
-        
+
         // Create speech gathering with personalized greeting
         const gather = twiml.gather({
             input: 'speech',
@@ -81,10 +118,10 @@ class MultiTenantRachelService {
             speechTimeout: 'auto',
             language: 'en-US'
         });
-        
+
         // Try to use Rachel's premium voice
         const audioUrl = await this.generateRachelAudio(greetingText);
-        
+
         if (audioUrl) {
             gather.play(audioUrl);
             console.log(`✅ Using Rachel's premium voice for ${clientInfo.business_name}`);
@@ -92,9 +129,9 @@ class MultiTenantRachelService {
             gather.say(greetingText, { voice: 'Polly.Joanna', language: 'en-US' });
             console.warn(`⚠️ Fallback voice for ${clientInfo.business_name}`);
         }
-        
+
         twiml.redirect('/voice/rachel/webhook');
-        
+
         return twiml.toString();
     }
 

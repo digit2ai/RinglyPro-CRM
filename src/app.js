@@ -55,7 +55,8 @@ const callLogRoutes = require('./routes/callLog'); // Call log routes
 const voiceBotRoutes = require('./routes/voiceBot');
 const creditRoutes = require('./routes/credits'); // Credit system routes
 const voiceWebhookRouter = require('./routes/voiceWebhook'); // Rachel voice routes
-const rachelRoutes = require('./routes/rachelRoutes'); // Multi-tenant Rachel routes
+const rachelRoutes = require('./routes/rachelRoutes'); // Multi-tenant Rachel routes (English)
+const linaRoutes = require('./routes/linaRoutes'); // Spanish voice routes (Lina)
 const twilioRoutes = require('./routes/twilio');
 const twilioAdminRoutes = require('./routes/twilioAdmin'); // Twilio number management
 
@@ -107,13 +108,17 @@ app.use('/api/twilio', twilioAdminRoutes);
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 
-// Rachel Voice webhook routes (ElevenLabs integration)
+// Rachel Voice webhook routes (ElevenLabs integration - English)
 app.use('/voice/rachel', voiceWebhookRouter);
 console.log('🎤 Rachel Voice webhook routes mounted at /voice/rachel/*');
 
-// Multi-tenant Rachel routes with client identification
+// Multi-tenant Rachel routes with client identification (English)
 app.use('/', rachelRoutes);
 console.log('🎯 Multi-tenant Rachel routes mounted - Client identification active');
+
+// Lina Voice routes (ElevenLabs integration - Spanish)
+app.use('/', linaRoutes);
+console.log('🇪🇸 Lina Spanish voice routes mounted - Bilingual support active');
 
 // =====================================================
 // PROTECTED ROUTES - Require Authentication

@@ -235,12 +235,103 @@ router.post('/voice/rachel/handle-pricing-response', async (req, res) => {
 });
 
 /**
+ * Language selection handler
+ */
+router.post('/voice/rachel/select-language', async (req, res) => {
+    try {
+        const digits = req.body.Digits || '';
+        console.log(`🌍 Language selected: ${digits === '1' ? 'English' : digits === '2' ? 'Spanish' : 'Unknown'}`);
+
+        // Store language preference in session
+        req.session.language = digits === '1' ? 'en' : digits === '2' ? 'es' : 'en';
+
+        if (digits === '1') {
+            // English - Continue with Rachel
+            res.redirect(307, '/voice/rachel/incoming?lang=en');
+        } else if (digits === '2') {
+            // Spanish - Route to Lina
+            res.redirect(307, '/voice/lina/incoming?lang=es');
+        } else {
+            // Invalid input - default to English
+            console.warn(`⚠️ Invalid language selection: ${digits}, defaulting to English`);
+            res.redirect(307, '/voice/rachel/incoming?lang=en');
+        }
+
+    } catch (error) {
+        console.error('Error handling language selection:', error);
+
+        const twiml = `
+            <?xml version="1.0" encoding="UTF-8"?>
+            <Response>
+                <Say voice="Polly.Joanna">I'm sorry, there was an error. Continuing in English.</Say>
+                <Redirect>/voice/rachel/incoming?lang=en</Redirect>
+            </Response>
+        `;
+
+        res.type('text/xml');
+        res.send(twiml);
+    }
+});
+
+/**
+ * English greeting endpoint (called after language selection)
+ */
+router.post('/voice/rachel/incoming', async (req, res) => {
+    try {
+        console.log('📞 English language selected - Rachel continuing');
+
+        // Get client info from session
+        const clientId = req.session.client_id;
+        const businessName = req.session.business_name;
+
+        if (!clientId) {
+            console.error("❌ No client context in session");
+            const twiml = `
+                <?xml version="1.0" encoding="UTF-8"?>
+                <Response>
+                    <Say voice="Polly.Joanna">Session expired. Please call back.</Say>
+                    <Hangup/>
+                </Response>
+            `;
+            res.type('text/xml');
+            return res.send(twiml);
+        }
+
+        // Reconstruct client info from session
+        const clientInfo = {
+            client_id: clientId,
+            business_name: businessName,
+            rachel_enabled: true
+        };
+
+        const twimlResponse = await rachelService.createPersonalizedGreeting(clientInfo);
+
+        res.type('text/xml');
+        res.send(twimlResponse);
+
+    } catch (error) {
+        console.error('Error in Rachel incoming:', error);
+
+        const twiml = `
+            <?xml version="1.0" encoding="UTF-8"?>
+            <Response>
+                <Say voice="Polly.Joanna">I'm sorry, there was an error. Please try calling again.</Say>
+                <Hangup/>
+            </Response>
+        `;
+
+        res.type('text/xml');
+        res.send(twiml);
+    }
+});
+
+/**
  * Fallback webhook endpoint
  */
 router.post('/voice/rachel/webhook', async (req, res) => {
     try {
         const businessName = req.session.business_name || 'us';
-        
+
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
             <Response>
@@ -248,13 +339,13 @@ router.post('/voice/rachel/webhook', async (req, res) => {
                 <Hangup/>
             </Response>
         `;
-        
+
         res.type('text/xml');
         res.send(twiml);
-        
+
     } catch (error) {
         console.error('Error in fallback webhook:', error);
-        
+
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
             <Response>
@@ -262,7 +353,7 @@ router.post('/voice/rachel/webhook', async (req, res) => {
                 <Hangup/>
             </Response>
         `;
-        
+
         res.type('text/xml');
         res.send(twiml);
     }
