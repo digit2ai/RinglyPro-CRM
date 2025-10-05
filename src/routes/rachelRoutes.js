@@ -79,12 +79,20 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
         const name = req.body.SpeechResult || '';
         const clientId = req.session.client_id;
         const businessName = req.session.business_name || 'this business';
-        
+
         console.log(`📝 Name collected for client ${clientId}: ${name}`);
-        
+
         // Store name in session
         req.session.prospect_name = name;
-        
+
+        // Save session before sending response
+        await new Promise((resolve, reject) => {
+            req.session.save((err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
             <Response>
@@ -94,13 +102,13 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
                 <Redirect>/voice/rachel/webhook</Redirect>
             </Response>
         `;
-        
+
         res.type('text/xml');
         res.send(twiml);
-        
+
     } catch (error) {
         console.error('Error collecting name:', error);
-        
+
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
             <Response>
@@ -108,7 +116,7 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
                 <Redirect>/voice/rachel/process-speech</Redirect>
             </Response>
         `;
-        
+
         res.type('text/xml');
         res.send(twiml);
     }
@@ -123,12 +131,21 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
         const clientId = req.session.client_id;
         const prospectName = req.session.prospect_name;
         const businessName = req.session.business_name || 'this business';
-        
+
         console.log(`📞 Phone collected for client ${clientId}: ${phone}`);
-        
+        console.log(`📝 Prospect name from session: ${prospectName}`);
+
         // Store phone in session
         req.session.prospect_phone = phone;
-        
+
+        // Save session before sending response
+        await new Promise((resolve, reject) => {
+            req.session.save((err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
             <Response>
@@ -136,13 +153,13 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
                 <Redirect>/voice/rachel/book-appointment</Redirect>
             </Response>
         `;
-        
+
         res.type('text/xml');
         res.send(twiml);
-        
+
     } catch (error) {
         console.error('Error collecting phone:', error);
-        
+
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
             <Response>
@@ -150,7 +167,7 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
                 <Redirect>/voice/rachel/collect-name</Redirect>
             </Response>
         `;
-        
+
         res.type('text/xml');
         res.send(twiml);
     }

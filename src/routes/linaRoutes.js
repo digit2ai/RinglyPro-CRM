@@ -114,6 +114,14 @@ router.post('/voice/lina/collect-name', async (req, res) => {
         // Store name in session
         req.session.prospect_name = name;
 
+        // Save session before sending response
+        await new Promise((resolve, reject) => {
+            req.session.save((err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
             <Response>
@@ -154,9 +162,18 @@ router.post('/voice/lina/collect-phone', async (req, res) => {
         const businessName = req.session.business_name || 'nuestra empresa';
 
         console.log(`📞 Spanish - Phone collected for client ${clientId}: ${phone}`);
+        console.log(`📝 Spanish - Prospect name from session: ${prospectName}`);
 
         // Store phone in session
         req.session.prospect_phone = phone;
+
+        // Save session before sending response
+        await new Promise((resolve, reject) => {
+            req.session.save((err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
 
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
