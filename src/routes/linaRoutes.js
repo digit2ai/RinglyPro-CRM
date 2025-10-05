@@ -110,23 +110,42 @@ router.post('/voice/lina/collect-name', async (req, res) => {
         const businessName = req.session.business_name || 'nuestra empresa';
 
         console.log(`📝 Spanish - Name collected for client ${clientId}: ${name}`);
+        console.log(`📋 Session data: clientId=${clientId}, businessName=${businessName}`);
 
         // Store name in session
         req.session.prospect_name = name;
 
         // Save session before sending response
-        await new Promise((resolve, reject) => {
-            req.session.save((err) => {
-                if (err) reject(err);
-                else resolve();
+        try {
+            await new Promise((resolve, reject) => {
+                req.session.save((err) => {
+                    if (err) {
+                        console.error('❌ Session save error in collect-name:', err);
+                        reject(err);
+                    } else {
+                        console.log('✅ Spanish - Session saved with prospect name');
+                        resolve();
+                    }
+                });
             });
-        });
+        } catch (sessionErr) {
+            console.error('❌ Failed to save session in collect-name:', sessionErr);
+            throw sessionErr; // Re-throw to trigger outer catch
+        }
+
+        // Escape XML special characters to prevent parse errors
+        const escapedName = name
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
 
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
             <Response>
                 <Gather input="speech" timeout="10" action="/voice/lina/collect-phone" method="POST" speechTimeout="auto" language="es-MX">
-                    <Say voice="Polly.Lupe" language="es-MX">Gracias ${name}. Ahora, ¿puede decirme su número de teléfono, por favor?</Say>
+                    <Say voice="Polly.Lupe" language="es-MX">Gracias ${escapedName}. Ahora, ¿puede decirme su número de teléfono, por favor?</Say>
                 </Gather>
                 <Redirect>/voice/lina/webhook</Redirect>
             </Response>
@@ -175,10 +194,30 @@ router.post('/voice/lina/collect-phone', async (req, res) => {
             });
         });
 
+        // Escape XML special characters to prevent parse errors
+        const escapedName = (prospectName || 'señor')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+        const escapedPhone = phone
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+        const escapedBusiness = (businessName || 'nuestra empresa')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
             <Response>
-                <Say voice="Polly.Lupe" language="es-MX">Perfecto! ${prospectName}, tengo su número como ${phone}. Déjeme verificar la disponibilidad y agendar su cita con ${businessName}. Por favor, espere un momento.</Say>
+                <Say voice="Polly.Lupe" language="es-MX">Perfecto! ${escapedName}, tengo su número como ${escapedPhone}. Déjeme verificar la disponibilidad y agendar su cita con ${escapedBusiness}. Por favor, espere un momento.</Say>
                 <Redirect>/voice/lina/book-appointment</Redirect>
             </Response>
         `;

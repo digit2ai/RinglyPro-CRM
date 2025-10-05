@@ -93,11 +93,19 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
             });
         });
 
+        // Escape XML special characters to prevent parse errors
+        const escapedName = name
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
             <Response>
                 <Gather input="speech" timeout="10" action="/voice/rachel/collect-phone" method="POST" speechTimeout="auto" language="en-US">
-                    <Say voice="Polly.Joanna">Thank you ${name}. Now can you please tell me your phone number?</Say>
+                    <Say voice="Polly.Joanna">Thank you ${escapedName}. Now can you please tell me your phone number?</Say>
                 </Gather>
                 <Redirect>/voice/rachel/webhook</Redirect>
             </Response>
@@ -146,10 +154,30 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
             });
         });
 
+        // Escape XML special characters to prevent parse errors
+        const escapedName = (prospectName || 'there')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+        const escapedPhone = phone
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+        const escapedBusiness = (businessName || 'this business')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
             <Response>
-                <Say voice="Polly.Joanna">Perfect! ${prospectName}, I have your phone number as ${phone}. Let me check availability and book you an appointment with ${businessName}. Please hold for just a moment.</Say>
+                <Say voice="Polly.Joanna">Perfect! ${escapedName}, I have your phone number as ${escapedPhone}. Let me check availability and book you an appointment with ${escapedBusiness}. Please hold for just a moment.</Say>
                 <Redirect>/voice/rachel/book-appointment</Redirect>
             </Response>
         `;
