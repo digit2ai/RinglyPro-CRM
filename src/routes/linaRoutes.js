@@ -187,8 +187,9 @@ router.post('/voice/lina/collect-phone', async (req, res) => {
 
 /**
  * Book appointment endpoint (Spanish)
+ * Handle both GET (from redirects) and POST
  */
-router.post('/voice/lina/book-appointment', async (req, res) => {
+const handleBookAppointmentSpanish = async (req, res) => {
     try {
         const clientId = req.session.client_id;
         const prospectName = req.session.prospect_name;
@@ -222,7 +223,11 @@ router.post('/voice/lina/book-appointment', async (req, res) => {
         res.type('text/xml');
         res.send(twiml);
     }
-});
+};
+
+// Register both GET and POST routes
+router.post('/voice/lina/book-appointment', handleBookAppointmentSpanish);
+router.get('/voice/lina/book-appointment', handleBookAppointmentSpanish);
 
 /**
  * Handle pricing response (Spanish)

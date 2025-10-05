@@ -158,8 +158,9 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
 
 /**
  * Book appointment endpoint - would integrate with appointment booking system
+ * Handle both GET (from redirects) and POST
  */
-router.post('/voice/rachel/book-appointment', async (req, res) => {
+const handleBookAppointment = async (req, res) => {
     try {
         const clientId = req.session.client_id;
         const prospectName = req.session.prospect_name;
@@ -196,7 +197,11 @@ router.post('/voice/rachel/book-appointment', async (req, res) => {
         res.type('text/xml');
         res.send(twiml);
     }
-});
+};
+
+// Register both GET and POST routes
+router.post('/voice/rachel/book-appointment', handleBookAppointment);
+router.get('/voice/rachel/book-appointment', handleBookAppointment);
 
 /**
  * Handle pricing response

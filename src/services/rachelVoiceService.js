@@ -76,7 +76,8 @@ class MultiTenantRachelService {
         const gather = twiml.gather({
             input: 'dtmf',
             numDigits: 1,
-            timeout: 10,
+            timeout: 3,  // Reduced from 10 to 3 seconds for faster response
+            finishOnKey: '',  // Don't wait for # key
             action: '/voice/rachel/select-language',
             method: 'POST'
         });
