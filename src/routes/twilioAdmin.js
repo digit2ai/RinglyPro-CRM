@@ -184,7 +184,7 @@ router.post('/fix-current-number', async (req, res) => {
         const result = await twilioService.configureExistingNumber(
             currentNumber.sid,
             1
-        });
+        );
 
         res.json({
             success: true,
