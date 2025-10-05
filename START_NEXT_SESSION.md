@@ -1,7 +1,7 @@
 # 🚀 START HERE - Next Session
 
-**Date:** October 5, 2025  
-**Status:** Fixes deployed, waiting for Render to go live  
+**Date:** October 5, 2025
+**Status:** Session persistence fixes deployed, waiting for Render to go live
 **Action:** Test appointment booking after deployment completes
 
 ---
@@ -10,8 +10,11 @@
 
 1. **DTMF Timeout:** Reduced from 10s to 3s - should fix double-press issue
 2. **Appointment Booking Routes:** Added GET handlers for redirect compatibility
+3. **Session Persistence:** Added explicit session.save() calls before redirects in name/phone collection
 
 **Deployment Status:** Pushed to GitHub, Render auto-deploying now (2-3 min)
+
+**Root Cause Found:** The appointment booking was failing because session data (prospect_name, prospect_phone) wasn't being saved before the redirect. When the next endpoint was called, the session data was lost.
 
 ---
 
@@ -90,12 +93,14 @@ tail -f /var/log/app.log
 ## 📝 FILES CHANGED:
 
 - `src/services/rachelVoiceService.js:79` - DTMF timeout 3s
-- `src/routes/rachelRoutes.js:163,203-204` - GET handler for booking
-- `src/routes/linaRoutes.js:192,229-230` - GET handler for booking
+- `src/routes/rachelRoutes.js:77-123,128-174` - Session.save() in collect-name & collect-phone + GET handlers
+- `src/routes/linaRoutes.js:106-152,157-203` - Session.save() in Spanish collect-name & collect-phone + GET handlers
 - `HANDOVER_DOCUMENT.md` - Full context
 
 ---
 
 **Next Action:** Wait 2-3 minutes for Render deployment, then test!
 
-**Commit:** c1e14a1 - "Fix: DTMF timeout reduced to 3s & add GET handlers"
+**Commits:**
+- c1e14a1 - "Fix: DTMF timeout reduced to 3s & add GET handlers"
+- 3e92596 - "Fix: Add explicit session.save() before redirects"
