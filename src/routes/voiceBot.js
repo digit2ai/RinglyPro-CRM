@@ -83,25 +83,37 @@ async function storeCallRecord(callSid, fromNumber, toNumber, status, direction,
             console.log('⚠️ Cannot store call - missing Call model or client_id');
             return;
         }
-        
+
+        // Handle Anonymous callers - use placeholder value instead of null
+        const sanitizedFromNumber = (fromNumber && fromNumber !== 'Anonymous' && fromNumber !== 'unknown')
+            ? fromNumber
+            : 'Anonymous';
+
+        const sanitizedToNumber = (toNumber && toNumber !== 'unknown')
+            ? toNumber
+            : 'Unknown';
+
         const callData = {
             twilio_call_sid: callSid,
-            from_number: fromNumber,
-            to_number: toNumber,
+            from_number: sanitizedFromNumber,
+            to_number: sanitizedToNumber,
             direction: direction,
             status: 'completed',
             call_status: status,
             duration: parseInt(duration) || 0,
             client_id: clientId,
+            caller_name: fromNumber === 'Anonymous' ? 'Anonymous Caller' : null,
             start_time: new Date(),
             end_time: new Date(),
             created_at: new Date(),
             updated_at: new Date()
         };
-        
+
+        console.log(`📝 Storing call: ${sanitizedFromNumber} → ${sanitizedToNumber} (${duration}s)`);
+
         const call = await Call.create(callData);
         console.log(`✅ Call record stored: ${call.id} for client ${clientId}`);
-        
+
     } catch (error) {
         console.error('❌ Error storing call record:', error.message);
     }
