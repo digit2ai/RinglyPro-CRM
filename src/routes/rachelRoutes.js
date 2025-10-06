@@ -327,6 +327,12 @@ const handleBookAppointment = async (req, res) => {
             appointmentTime = parsedDateTime.format('HH:mm:ss');
 
             console.log(`📆 Parsed appointment: date=${appointmentDate}, time=${appointmentTime}`);
+            console.log(`📋 Creating appointment: clientId=${clientId}, name="${prospectName}", phone="${prospectPhone}"`);
+
+            // Validate required data
+            if (!clientId) {
+                throw new Error('Missing clientId - cannot create appointment');
+            }
 
             // Create appointment in database
             const appointment = await Appointment.create({
@@ -341,10 +347,18 @@ const handleBookAppointment = async (req, res) => {
                 source: 'voice_booking'
             });
 
-            console.log(`✅ Appointment created: ID ${appointment.id}, Code: ${confirmationCode}`);
+            console.log(`✅✅✅ APPOINTMENT CREATED SUCCESSFULLY! ✅✅✅`);
+            console.log(`   📌 ID: ${appointment.id}`);
+            console.log(`   🏢 Client: ${clientId}`);
+            console.log(`   👤 Customer: ${prospectName} (${prospectPhone})`);
+            console.log(`   📅 DateTime: ${appointmentDate} ${appointmentTime}`);
+            console.log(`   🔑 Confirmation: ${confirmationCode}`);
 
         } catch (dbError) {
-            console.error('❌ Error creating appointment in database:', dbError);
+            console.error('❌❌❌ ERROR CREATING APPOINTMENT ❌❌❌');
+            console.error(`   Error message: ${dbError.message}`);
+            console.error(`   Full error:`, dbError);
+            console.error(`   Session: clientId=${clientId}, name="${prospectName}", phone="${prospectPhone}"`);
             // Continue anyway to provide user feedback
             confirmationCode = 'PENDING';
         }
