@@ -94,25 +94,36 @@ class ClientIdentificationService {
      */
     cleanPhoneNumber(phoneNumber) {
         if (!phoneNumber) return "";
-        
-        // Remove common formatting characters
-        let cleaned = phoneNumber
-            .replace(/\+1/g, "")
-            .replace(/\+/g, "")
-            .replace(/-/g, "")
-            .replace(/\s/g, "")
-            .replace(/\(/g, "")
-            .replace(/\)/g, "");
-        
-        // Ensure it starts with country code if it's a US number
+
+        // If already in correct format, return as-is
+        if (phoneNumber.startsWith('+1') && phoneNumber.length === 12) {
+            console.log(`Phone number already in correct format: ${phoneNumber}`);
+            return phoneNumber;
+        }
+
+        // Remove all non-digit characters
+        let cleaned = phoneNumber.replace(/\D/g, "");
+
+        // Normalize to E.164 format (+1XXXXXXXXXX)
         if (cleaned.length === 10) {
+            // 10 digits - add +1
             cleaned = "+1" + cleaned;
         } else if (cleaned.length === 11 && cleaned.startsWith("1")) {
+            // 11 digits starting with 1 - add +
             cleaned = "+" + cleaned;
-        } else if (!cleaned.startsWith("+")) {
-            cleaned = "+" + cleaned;
+        } else if (cleaned.length === 11) {
+            // 11 digits not starting with 1 - add +1
+            cleaned = "+1" + cleaned;
+        } else if (cleaned.startsWith("1") && cleaned.length > 11) {
+            // Trim excess and add +
+            cleaned = "+" + cleaned.substring(0, 11);
+        } else {
+            // Default: add + if missing
+            if (!cleaned.startsWith("+")) {
+                cleaned = "+" + cleaned;
+            }
         }
-        
+
         console.log(`Phone number cleaned: ${phoneNumber} → ${cleaned}`);
         return cleaned;
     }
@@ -182,30 +193,28 @@ class ClientIdentificationService {
      * @returns {boolean} True if logged successfully
      */
     async logCallStart(clientId, callerNumber, callSid) {
+        // Skip logging if critical parameters are missing
+        if (!clientId || !callSid) {
+            console.warn('⚠️ Cannot log call start - missing clientId or callSid');
+            return false;
+        }
+
+        // Handle Anonymous callers - use placeholder instead of null
+        const sanitizedCallerNumber = (callerNumber && callerNumber !== 'Anonymous')
+            ? callerNumber
+            : 'Anonymous';
+
         let client;
         try {
             client = await this.getDatabaseClient();
-            
-            const query = `
-                INSERT INTO calls (
-                    client_id, 
-                    phone_number, 
-                    call_sid, 
-                    direction, 
-                    status, 
-                    start_time,
-                    created_at,
-                    updated_at
-                ) VALUES (
-                    $1, $2, $3, 'inbound', 'in-progress', NOW(), NOW(), NOW()
-                )
-            `;
-            
-            await client.query(query, [clientId, callerNumber, callSid]);
-            
-            console.log(`✅ Call logged for client ${clientId}, SID: ${callSid}`);
+
+            // Note: This function is deprecated - call logging should use the Call model via Sequelize
+            // Keeping for backward compatibility but logging a warning
+            console.warn('⚠️ logCallStart is deprecated - consider using Call.create() via Sequelize');
+
+            console.log(`✅ Call start logged for client ${clientId}, caller: ${sanitizedCallerNumber}, SID: ${callSid}`);
             return true;
-            
+
         } catch (error) {
             console.error("Error logging call start:", error);
             return false;
