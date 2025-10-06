@@ -330,17 +330,15 @@ const handleBookAppointment = async (req, res) => {
 
             // Create appointment in database
             const appointment = await Appointment.create({
-                client_id: clientId,
-                customer_name: prospectName || 'Unknown',
-                customer_phone: prospectPhone || 'Unknown',
-                appointment_date: appointmentDate,
-                appointment_time: appointmentTime,
+                clientId: clientId,
+                customerName: prospectName || 'Unknown',
+                customerPhone: prospectPhone || 'Unknown',
+                appointmentDate: appointmentDate,
+                appointmentTime: appointmentTime,
                 duration: 30,
                 status: 'confirmed',
-                confirmation_code: confirmationCode,
-                source: 'voice_booking',
-                created_at: new Date(),
-                updated_at: new Date()
+                confirmationCode: confirmationCode,
+                source: 'voice_booking'
             });
 
             console.log(`✅ Appointment created: ID ${appointment.id}, Code: ${confirmationCode}`);
