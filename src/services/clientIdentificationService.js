@@ -26,13 +26,15 @@ class ClientIdentificationService {
     async identifyClientByNumber(ringlypro_number) {
         // Clean the phone number for comparison
         const cleanedNumber = this.cleanPhoneNumber(ringlypro_number);
-        
+
+        console.log(`🔍 Searching for client with: original="${ringlypro_number}", cleaned="${cleanedNumber}"`);
+
         let client;
         try {
             client = await this.getDatabaseClient();
-            
+
             const query = `
-                SELECT 
+                SELECT
                     id,
                     business_name,
                     custom_greeting,
@@ -46,12 +48,14 @@ class ClientIdentificationService {
                     timezone,
                     booking_enabled,
                     active
-                FROM clients 
+                FROM clients
                 WHERE ringlypro_number = $1 OR ringlypro_number = $2
             `;
-            
+
             // Try both original and cleaned number formats
+            console.log(`📞 Executing query with params: [$1="${ringlypro_number}", $2="${cleanedNumber}"]`);
             const result = await client.query(query, [ringlypro_number, cleanedNumber]);
+            console.log(`📊 Query returned ${result.rows.length} results`);
             
             if (result.rows.length > 0) {
                 const clientInfo = {
