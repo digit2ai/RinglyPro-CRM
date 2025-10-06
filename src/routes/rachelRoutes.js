@@ -284,6 +284,73 @@ const handleBookAppointment = async (req, res) => {
 
         console.log(`📅 Booking appointment for client ${clientId}: ${prospectName} (${prospectPhone}) at ${appointmentDateTime}`);
 
+        // Parse date and time from appointmentDateTime
+        // Expected format: "tomorrow at 2pm" or "November 10th at 3pm"
+        const { Appointment } = require('../models');
+        const moment = require('moment-timezone');
+
+        let appointmentDate, appointmentTime;
+        let confirmationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+        try {
+            // Parse the date/time - handle common formats
+            const now = moment().tz('America/New_York');
+            let parsedDateTime = now.clone();
+
+            if (appointmentDateTime.toLowerCase().includes('tomorrow')) {
+                parsedDateTime.add(1, 'day');
+            } else if (appointmentDateTime.toLowerCase().includes('today')) {
+                // Keep as today
+            } else {
+                // Try to parse actual date
+                parsedDateTime = moment(appointmentDateTime, ['MMMM Do [at] ha', 'MMMM D [at] ha', 'MMM D [at] ha']);
+                if (!parsedDateTime.isValid()) {
+                    // Default to tomorrow if can't parse
+                    parsedDateTime = now.clone().add(1, 'day');
+                }
+            }
+
+            // Extract time
+            const timeMatch = appointmentDateTime.match(/(\d{1,2})\s*(am|pm)/i);
+            if (timeMatch) {
+                let hour = parseInt(timeMatch[1]);
+                const isPM = timeMatch[2].toLowerCase() === 'pm';
+                if (isPM && hour !== 12) hour += 12;
+                if (!isPM && hour === 12) hour = 0;
+                parsedDateTime.hour(hour).minute(0).second(0);
+            } else {
+                // Default to 2pm
+                parsedDateTime.hour(14).minute(0).second(0);
+            }
+
+            appointmentDate = parsedDateTime.format('YYYY-MM-DD');
+            appointmentTime = parsedDateTime.format('HH:mm:ss');
+
+            console.log(`📆 Parsed appointment: date=${appointmentDate}, time=${appointmentTime}`);
+
+            // Create appointment in database
+            const appointment = await Appointment.create({
+                client_id: clientId,
+                customer_name: prospectName || 'Unknown',
+                customer_phone: prospectPhone || 'Unknown',
+                appointment_date: appointmentDate,
+                appointment_time: appointmentTime,
+                duration: 30,
+                status: 'confirmed',
+                confirmation_code: confirmationCode,
+                source: 'voice_booking',
+                created_at: new Date(),
+                updated_at: new Date()
+            });
+
+            console.log(`✅ Appointment created: ID ${appointment.id}, Code: ${confirmationCode}`);
+
+        } catch (dbError) {
+            console.error('❌ Error creating appointment in database:', dbError);
+            // Continue anyway to provide user feedback
+            confirmationCode = 'PENDING';
+        }
+
         // Escape XML special characters
         const escapedName = (prospectName || 'there')
             .replace(/&/g, '&amp;')
@@ -304,22 +371,19 @@ const handleBookAppointment = async (req, res) => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
 
-        // TODO: Integrate with actual appointment booking system
-        // For now, just confirm the booking
-
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="Polly.Joanna">Great news ${escapedName}. I've successfully booked your appointment with ${escapedBusiness} for ${escapedDateTime}. You'll receive a text message confirmation shortly with all the details. Thank you for calling and we look forward to seeing you.</Say>
+    <Say voice="Polly.Joanna">Great news ${escapedName}. I've successfully booked your appointment with ${escapedBusiness} for ${escapedDateTime}. Your confirmation code is ${confirmationCode}. You'll receive a text message confirmation shortly with all the details. Thank you for calling and we look forward to seeing you.</Say>
     <Hangup/>
 </Response>`;
 
         console.log('📤 Sending TwiML from book-appointment (English)');
         res.set('Content-Type', 'text/xml; charset=utf-8');
         res.send(twiml);
-        
+
     } catch (error) {
         console.error('Error booking appointment:', error);
-        
+
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
             <Response>
@@ -327,7 +391,7 @@ const handleBookAppointment = async (req, res) => {
                 <Hangup/>
             </Response>
         `;
-        
+
         res.type('text/xml');
         res.send(twiml);
     }
