@@ -112,9 +112,9 @@ app.use('/api/twilio', twilioAdminRoutes);
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 
-// Rachel Voice webhook routes (ElevenLabs integration - English)
-app.use('/voice/rachel', voiceWebhookRouter);
-console.log('🎤 Rachel Voice webhook routes mounted at /voice/rachel/*');
+// Rachel Voice webhook routes (ElevenLabs integration - English) - DEPRECATED
+// app.use('/voice/rachel', voiceWebhookRouter);
+// console.log('🎤 Rachel Voice webhook routes mounted at /voice/rachel/*');
 
 // Multi-tenant Rachel routes with client identification (English)
 app.use('/', rachelRoutes);
