@@ -1,6 +1,31 @@
 const express = require('express');
 const router = express.Router();
 
+// DEBUG: Get all clients (temporary for debugging)
+router.get('/debug/all-clients', async (req, res) => {
+    try {
+        const { sequelize } = require('../models');
+
+        const clients = await sequelize.query(
+            'SELECT id, business_name, ringlypro_number, rachel_enabled, active FROM clients ORDER BY id',
+            { type: sequelize.QueryTypes.SELECT }
+        );
+
+        res.json({
+            success: true,
+            count: clients.length,
+            clients: clients
+        });
+
+    } catch (error) {
+        console.error('Debug clients error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // GET /api/client/rachel-status/:client_id - Multi-tenant by client ID
 router.get('/rachel-status/:client_id', async (req, res) => {
     try {
