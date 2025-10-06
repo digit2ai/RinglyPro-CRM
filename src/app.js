@@ -69,6 +69,9 @@ const clientRoutes = require('./routes/client'); // Rachel toggle route from Tas
 // Import mobile CRM routes
 const mobileRoutes = require('./routes/mobile'); // Mobile CRM API routes
 
+// Import client provisioning routes
+const clientProvisioningRoutes = require('./routes/clientProvisioning'); // Automatic number provisioning
+
 console.log('📄 About to require auth routes...');
 const authRoutes = require('./routes/auth'); // User authentication routes
 console.log('✅ Auth routes required successfully, type:', typeof authRoutes);
@@ -89,6 +92,7 @@ app.use('/api/credits', creditRoutes);
 
 // Client management routes
 app.use('/api/client', clientRoutes); // Rachel toggle and client settings
+app.use('/api/clients', clientProvisioningRoutes); // Automatic client provisioning with Twilio numbers
 
 // Add Mobile CRM API routes
 app.use('/api/mobile', mobileRoutes);
