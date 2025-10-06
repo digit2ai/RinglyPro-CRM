@@ -282,8 +282,25 @@ app.get('/api/status', async (req, res) => {
 // Get dashboard data endpoint
 app.get('/api/dashboard', async (req, res) => {
   try {
-    const { Contact, Appointment, Message, Call } = require('./models');
+    const { Contact, Appointment, Message, Call, User } = require('./models');
     const { Op } = require('sequelize');
+    const jwt = require('jsonwebtoken');
+
+    // Extract and verify JWT token
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key');
+    const clientId = decoded.clientId;
+
+    if (!clientId) {
+      return res.status(401).json({ success: false, error: 'No client associated with this account' });
+    }
+
+    console.log(`📊 Loading dashboard for client ${clientId}`);
 
     // Get today's date range
     const todayStart = new Date();
@@ -291,7 +308,7 @@ app.get('/api/dashboard', async (req, res) => {
     const todayEnd = new Date();
     todayEnd.setHours(23, 59, 59, 999);
 
-    // Get counts and today's data
+    // Get counts and today's data - ALL FILTERED BY CLIENT ID
     const [
       totalContacts,
       todaysAppointments,
@@ -303,16 +320,18 @@ app.get('/api/dashboard', async (req, res) => {
       recentCalls
     ] = await Promise.all([
       // Counts
-      Contact.count(),
+      Contact.count({ where: { clientId } }),
       Appointment.count({
         where: {
-          date: {
+          clientId,
+          appointmentDate: {
             [Op.between]: [todayStart, todayEnd]
           }
         }
       }),
       Message.count({
         where: {
+          clientId,
           createdAt: {
             [Op.between]: [todayStart, todayEnd]
           }
@@ -320,26 +339,29 @@ app.get('/api/dashboard', async (req, res) => {
       }),
       Call.count({
         where: {
+          clientId,
           createdAt: {
             [Op.between]: [todayStart, todayEnd]
           }
         }
       }),
-      
+
       // Recent data
       Contact.findAll({
+        where: { clientId },
         limit: 5,
         order: [['createdAt', 'DESC']],
         attributes: ['id', 'firstName', 'lastName', 'phone', 'email']
       }),
       Appointment.findAll({
         where: {
-          date: {
+          clientId,
+          appointmentDate: {
             [Op.between]: [todayStart, todayEnd]
           }
         },
         limit: 10,
-        order: [['time', 'ASC']],
+        order: [['appointmentTime', 'ASC']],
         include: [{
           model: Contact,
           as: 'contact',
@@ -349,6 +371,7 @@ app.get('/api/dashboard', async (req, res) => {
       }),
       Message.findAll({
         where: {
+          clientId,
           createdAt: {
             [Op.between]: [todayStart, todayEnd]
           }
@@ -364,6 +387,7 @@ app.get('/api/dashboard', async (req, res) => {
       }),
       Call.findAll({
         where: {
+          clientId,
           createdAt: {
             [Op.between]: [todayStart, todayEnd]
           }
