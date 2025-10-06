@@ -26,6 +26,41 @@ router.get('/debug/all-clients', async (req, res) => {
     }
 });
 
+// DEBUG: Get appointments for a client
+router.get('/debug/appointments/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { sequelize } = require('../models');
+
+        const appointments = await sequelize.query(
+            `SELECT id, client_id, customer_name, customer_phone, appointment_date,
+                    appointment_time, status, confirmation_code, created_at
+             FROM appointments
+             WHERE client_id = :client_id
+             ORDER BY created_at DESC
+             LIMIT 50`,
+            {
+                replacements: { client_id },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        res.json({
+            success: true,
+            client_id: parseInt(client_id),
+            count: appointments.length,
+            appointments: appointments
+        });
+
+    } catch (error) {
+        console.error('Debug appointments error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // GET /api/client/rachel-status/:client_id - Multi-tenant by client ID
 router.get('/rachel-status/:client_id', async (req, res) => {
     try {
