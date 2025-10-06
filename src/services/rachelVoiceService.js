@@ -30,17 +30,45 @@ class MultiTenantRachelService {
         const toNumber = requestBody.To || '';
         const fromNumber = requestBody.From || '';
         const callSid = requestBody.CallSid || '';
-        
+
         console.log(`📞 Incoming call: ${fromNumber} → ${toNumber} (SID: ${callSid})`);
-        
-        // Identify the client by the called number (To)
-        const clientInfo = await this.clientService.identifyClientByNumber(toNumber);
-        
+
+        // Identify the client by the called number (To) using Sequelize models
+        const { Client } = require('../models');
+        let clientInfo = null;
+
+        try {
+            const client = await Client.findOne({
+                where: { ringlypro_number: toNumber }
+            });
+
+            if (client) {
+                clientInfo = {
+                    client_id: client.id,
+                    business_name: client.business_name,
+                    custom_greeting: client.custom_greeting,
+                    booking_url: client.booking_url,
+                    ringlypro_number: client.ringlypro_number,
+                    rachel_enabled: client.rachel_enabled,
+                    business_hours_start: client.business_hours_start,
+                    business_hours_end: client.business_hours_end,
+                    business_days: client.business_days,
+                    appointment_duration: client.appointment_duration,
+                    timezone: client.timezone,
+                    booking_enabled: client.booking_enabled,
+                    active: client.active
+                };
+                console.log(`✅ Client found via Sequelize: ${clientInfo.business_name} (ID: ${clientInfo.client_id})`);
+            }
+        } catch (error) {
+            console.error('Error looking up client via Sequelize:', error);
+        }
+
         if (!clientInfo) {
             console.error(`❌ No client found for number ${toNumber}`);
             return this.createErrorResponse("I'm sorry, there seems to be a configuration issue. Please call back later.");
         }
-        
+
         // Check if Rachel is enabled for this client
         if (!clientInfo.rachel_enabled) {
             console.log(`📵 Rachel disabled for ${clientInfo.business_name}`);
