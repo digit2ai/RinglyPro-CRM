@@ -175,8 +175,11 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
 
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="Polly.Joanna">Perfect ${escapedName}, I have your phone number as ${escapedPhone}. Let me check availability and book you an appointment with ${escapedBusiness}. Please hold for just a moment.</Say>
-    <Redirect>/voice/rachel/book-appointment</Redirect>
+    <Gather input="speech" timeout="10" speechTimeout="5" action="/voice/rachel/collect-datetime" method="POST" language="en-US">
+        <Say voice="Polly.Joanna">Perfect ${escapedName}. Now tell me what date and time you prefer for your appointment. For example you can say tomorrow at 10 AM or Friday at 2 PM</Say>
+    </Gather>
+    <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
+    <Redirect>/voice/rachel/collect-phone</Redirect>
 </Response>`;
 
         console.log('📤 Sending TwiML from collect-phone (English):', twiml.substring(0, 200));
@@ -200,6 +203,74 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
 });
 
 /**
+ * Collect date/time for appointment booking (English)
+ */
+router.post('/voice/rachel/collect-datetime', async (req, res) => {
+    try {
+        const datetime = req.body.SpeechResult || '';
+        const clientId = req.session.client_id;
+        const prospectName = req.session.prospect_name;
+        const prospectPhone = req.session.prospect_phone;
+        const businessName = req.session.business_name || 'this business';
+
+        console.log(`📅 DateTime collected for client ${clientId}: ${datetime}`);
+        console.log(`📝 Prospect info: ${prospectName} (${prospectPhone})`);
+
+        // Store datetime in session
+        req.session.appointment_datetime = datetime;
+
+        // Save session before sending response
+        await new Promise((resolve, reject) => {
+            req.session.save((err) => {
+                if (err) {
+                    console.error('❌ Session save error in collect-datetime:', err);
+                    reject(err);
+                } else {
+                    console.log('✅ Session saved with datetime');
+                    resolve();
+                }
+            });
+        });
+
+        // Escape XML special characters
+        const escapedName = (prospectName || 'there')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+        const escapedDateTime = datetime
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">Perfect ${escapedName}. Let me confirm your appointment for ${escapedDateTime}. Please hold while I check availability.</Say>
+    <Redirect>/voice/rachel/book-appointment</Redirect>
+</Response>`;
+
+        console.log('📤 Sending TwiML from collect-datetime (English)');
+        res.set('Content-Type', 'text/xml; charset=utf-8');
+        res.send(twiml);
+
+    } catch (error) {
+        console.error('Error collecting datetime:', error);
+
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">I'm sorry, there was an error. Please try again.</Say>
+    <Redirect>/voice/rachel/collect-phone</Redirect>
+</Response>`;
+
+        res.set('Content-Type', 'text/xml; charset=utf-8');
+        res.send(twiml);
+    }
+});
+
+/**
  * Book appointment endpoint - would integrate with appointment booking system
  * Handle both GET (from redirects) and POST
  */
@@ -208,9 +279,10 @@ const handleBookAppointment = async (req, res) => {
         const clientId = req.session.client_id;
         const prospectName = req.session.prospect_name;
         const prospectPhone = req.session.prospect_phone;
+        const appointmentDateTime = req.session.appointment_datetime || 'the requested time';
         const businessName = req.session.business_name || 'this business';
-        
-        console.log(`📅 Booking appointment for client ${clientId}: ${prospectName} (${prospectPhone})`);
+
+        console.log(`📅 Booking appointment for client ${clientId}: ${prospectName} (${prospectPhone}) at ${appointmentDateTime}`);
 
         // Escape XML special characters
         const escapedName = (prospectName || 'there')
@@ -225,13 +297,19 @@ const handleBookAppointment = async (req, res) => {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
+        const escapedDateTime = appointmentDateTime
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
 
         // TODO: Integrate with actual appointment booking system
         // For now, just confirm the booking
 
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="Polly.Joanna">Great news ${escapedName}. I've successfully booked your appointment with ${escapedBusiness}. You'll receive a text message confirmation shortly with all the details. Thank you for calling and we look forward to speaking with you.</Say>
+    <Say voice="Polly.Joanna">Great news ${escapedName}. I've successfully booked your appointment with ${escapedBusiness} for ${escapedDateTime}. You'll receive a text message confirmation shortly with all the details. Thank you for calling and we look forward to seeing you.</Say>
     <Hangup/>
 </Response>`;
 
