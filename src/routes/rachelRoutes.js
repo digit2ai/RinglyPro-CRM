@@ -359,11 +359,37 @@ const handleBookAppointment = async (req, res) => {
             console.error(`   Error message: ${dbError.message}`);
             console.error(`   Full error:`, dbError);
             console.error(`   Session: clientId=${clientId}, name="${prospectName}", phone="${prospectPhone}"`);
-            // Continue anyway to provide user feedback
-            confirmationCode = 'PENDING';
+
+            const isDuplicateSlot = dbError.message && (
+                dbError.message.includes('unique_time_slot_per_client') ||
+                dbError.message.includes('duplicate key') ||
+                dbError.message.includes('unique constraint')
+            );
+
+            const escapedName = (prospectName || 'there')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+
+            const errorTwiml = isDuplicateSlot
+                ? `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">I'm sorry ${escapedName}, that time slot is already booked. Please call back to schedule a different time. Thank you.</Say>
+    <Hangup/>
+</Response>`
+                : `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">I'm sorry ${escapedName}, there was an error booking your appointment. Please call back or visit our website to schedule. Thank you for your patience.</Say>
+    <Hangup/>
+</Response>`;
+
+            console.log('📤 Sending ERROR TwiML - appointment creation failed');
+            res.set('Content-Type', 'text/xml; charset=utf-8');
+            return res.send(errorTwiml);
         }
 
-        // Escape XML special characters
         const escapedName = (prospectName || 'there')
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -389,7 +415,7 @@ const handleBookAppointment = async (req, res) => {
     <Hangup/>
 </Response>`;
 
-        console.log('📤 Sending TwiML from book-appointment (English)');
+        console.log('📤 Sending SUCCESS TwiML - appointment created');
         res.set('Content-Type', 'text/xml; charset=utf-8');
         res.send(twiml);
 
