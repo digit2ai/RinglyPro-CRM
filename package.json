@@ -20,7 +20,8 @@
     "health-check": "node scripts/health-check.js",
     "appointment-stats": "node scripts/appointment-stats.js",
     "sync-models": "node scripts/sync-models.js",
-    "validate-env": "node scripts/validate-environment.js"
+    "validate-env": "node scripts/validate-environment.js",
+    "fix-constraint": "node scripts/fix-appointment-constraint.js"
   },
   "keywords": [
     "ringlypro",

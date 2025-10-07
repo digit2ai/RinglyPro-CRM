@@ -94,19 +94,16 @@ async function storeCallRecord(callSid, fromNumber, toNumber, status, direction,
             : 'Unknown';
 
         const callData = {
-            twilio_call_sid: callSid,
-            from_number: sanitizedFromNumber,
-            to_number: sanitizedToNumber,
+            twilioCallSid: callSid,
+            fromNumber: sanitizedFromNumber,
+            toNumber: sanitizedToNumber,
             direction: direction,
             status: 'completed',
-            call_status: status,
+            callStatus: status,
             duration: parseInt(duration) || 0,
-            client_id: clientId,
-            caller_name: fromNumber === 'Anonymous' ? 'Anonymous Caller' : null,
-            start_time: new Date(),
-            end_time: new Date(),
-            created_at: new Date(),
-            updated_at: new Date()
+            callerName: fromNumber === 'Anonymous' ? 'Anonymous Caller' : null,
+            startTime: new Date(),
+            endTime: new Date()
         };
 
         console.log(`📝 Storing call: ${sanitizedFromNumber} → ${sanitizedToNumber} (${duration}s)`);
