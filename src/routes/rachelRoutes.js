@@ -104,8 +104,8 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
 
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="10" speechTimeout="5" action="/voice/rachel/collect-phone" method="POST" language="en-US">
-        <Say voice="Polly.Joanna">Thank you ${escapedName}. Now please tell me your phone number</Say>
+    <Gather input="speech dtmf" timeout="10" speechTimeout="5" numDigits="10" action="/voice/rachel/collect-phone" method="POST" language="en-US">
+        <Say voice="Polly.Joanna">Thank you ${escapedName}. Now please say your 10 digit phone number, or enter it using your keypad.</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
     <Redirect>/voice/rachel/collect-name</Redirect>
@@ -135,17 +135,30 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
  */
 router.post('/voice/rachel/collect-phone', async (req, res) => {
     try {
-        const rawPhone = req.body.SpeechResult || '';
+        const digits = req.body.Digits || '';  // DTMF keypad input
+        const speechResult = req.body.SpeechResult || '';  // Voice input
         const clientId = req.session.client_id;
         const prospectName = req.session.prospect_name;
         const businessName = req.session.business_name || 'this business';
 
-        console.log(`📞 Phone collected for client ${clientId}: ${rawPhone}`);
+        let normalizedPhone;
 
-        // Normalize phone number from speech recognition
-        const normalizedPhone = normalizePhoneFromSpeech(rawPhone);
-        console.log(`📞 Normalized phone: ${rawPhone} → ${normalizedPhone}`);
+        if (digits) {
+            // User entered phone via keypad - this is already accurate
+            console.log(`📞 Phone entered via keypad for client ${clientId}: ${digits}`);
+            normalizedPhone = normalizePhoneFromSpeech(digits);  // Just formats it
+        } else if (speechResult) {
+            // User spoke the phone number - needs normalization
+            console.log(`📞 Phone spoken for client ${clientId}: ${speechResult}`);
+            normalizedPhone = normalizePhoneFromSpeech(speechResult);
+            console.log(`📞 Normalized from speech: ${speechResult} → ${normalizedPhone}`);
+        } else {
+            console.log(`⚠️ No phone input received for client ${clientId}`);
+            normalizedPhone = '';
+        }
+
         console.log(`📝 Prospect name from session: ${prospectName}`);
+        console.log(`✅ Final phone number: ${normalizedPhone}`);
 
         // Store normalized phone in session
         req.session.prospect_phone = normalizedPhone;
@@ -165,7 +178,7 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
-        const escapedPhone = phone
+        const escapedPhone = normalizedPhone
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')

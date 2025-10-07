@@ -144,8 +144,8 @@ router.post('/voice/lina/collect-name', async (req, res) => {
 
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="10" speechTimeout="5" action="/voice/lina/collect-phone" method="POST" language="es-MX">
-        <Say voice="Polly.Lupe" language="es-MX">Gracias ${escapedName}. Ahora puede decirme su número de teléfono por favor</Say>
+    <Gather input="speech dtmf" timeout="10" speechTimeout="5" numDigits="10" action="/voice/lina/collect-phone" method="POST" language="es-MX">
+        <Say voice="Polly.Lupe" language="es-MX">Gracias ${escapedName}. Ahora puede decir su número de teléfono de 10 dígitos, o marcarlo usando el teclado.</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intente de nuevo.</Say>
     <Redirect>/voice/lina/collect-name</Redirect>
@@ -176,17 +176,30 @@ router.post('/voice/lina/collect-name', async (req, res) => {
  */
 router.post('/voice/lina/collect-phone', async (req, res) => {
     try {
-        const rawPhone = req.body.SpeechResult || '';
+        const digits = req.body.Digits || '';  // DTMF keypad input
+        const speechResult = req.body.SpeechResult || '';  // Voice input
         const clientId = req.session.client_id;
         const prospectName = req.session.prospect_name;
         const businessName = req.session.business_name || 'nuestra empresa';
 
-        console.log(`📞 Spanish - Phone collected for client ${clientId}: ${rawPhone}`);
+        let normalizedPhone;
 
-        // Normalize phone number from speech recognition
-        const normalizedPhone = normalizePhoneFromSpeech(rawPhone);
-        console.log(`📞 Spanish - Normalized phone: ${rawPhone} → ${normalizedPhone}`);
+        if (digits) {
+            // User entered phone via keypad - this is already accurate
+            console.log(`📞 Spanish - Phone entered via keypad for client ${clientId}: ${digits}`);
+            normalizedPhone = normalizePhoneFromSpeech(digits);  // Just formats it
+        } else if (speechResult) {
+            // User spoke the phone number - needs normalization
+            console.log(`📞 Spanish - Phone spoken for client ${clientId}: ${speechResult}`);
+            normalizedPhone = normalizePhoneFromSpeech(speechResult);
+            console.log(`📞 Spanish - Normalized from speech: ${speechResult} → ${normalizedPhone}`);
+        } else {
+            console.log(`⚠️ Spanish - No phone input received for client ${clientId}`);
+            normalizedPhone = '';
+        }
+
         console.log(`📝 Spanish - Prospect name from session: ${prospectName}`);
+        console.log(`✅ Spanish - Final phone number: ${normalizedPhone}`);
 
         // Store normalized phone in session
         req.session.prospect_phone = normalizedPhone;
