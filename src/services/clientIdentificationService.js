@@ -178,9 +178,9 @@ class ClientIdentificationService {
             const greeting = `
                 Thank you for calling ${clientInfo.business_name}.
                 I'm Rachel, your AI assistant.
-                How can I help you today?
-                You can say book appointment to schedule a consultation,
-                or leave message to leave me a voicemail.
+                I can help you book an appointment,
+                or if you'd prefer, you can leave me a message and I'll make sure it's delivered promptly.
+                How may I assist you today?
             `;
 
             console.log(`Generated greeting for ${clientInfo.business_name}`);

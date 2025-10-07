@@ -75,7 +75,7 @@ class LinaSpanishVoiceService {
             timeGreeting = 'Buenas noches';
         }
 
-        return `${timeGreeting}, gracias por llamar a ${businessName}. Mi nombre es Lina, su asistente virtual. ¿En qué puedo ayudarle hoy? Puedo ayudarle a agendar una cita, o tomar un mensaje.`;
+        return `${timeGreeting}, gracias por llamar a ${businessName}. Mi nombre es Lina, su asistente virtual. Puedo ayudarle a agendar una cita, o si lo prefiere, puede dejarme un mensaje y me aseguraré de que se entregue de inmediato. ¿En qué puedo ayudarle hoy?`;
     }
 
     /**
@@ -230,10 +230,10 @@ class LinaSpanishVoiceService {
         const businessName = session.business_name || 'nuestra empresa';
 
         const voicemailText = `
-            Con gusto grabaré su mensaje para ${businessName}.
-            Después del tono, por favor deje su mensaje.
-            Tendrá hasta 3 minutos.
-            Presione numeral cuando termine.
+            Por supuesto, con mucho gusto tomaré su mensaje para ${businessName}.
+            Después del tono, por favor comparta su mensaje y me aseguraré de transmitirlo de inmediato.
+            Puede hablar hasta por 3 minutos.
+            Cuando termine, simplemente presione la tecla numeral o cuelgue.
         `;
 
         const audioUrl = await this.generateLinaAudio(voicemailText);
@@ -248,6 +248,7 @@ class LinaSpanishVoiceService {
             maxLength: 180,
             timeout: 5,
             transcribe: true,
+            transcriptionLanguage: 'es-MX',
             transcribeCallback: `${this.webhookBaseUrl}/voice/lina/voicemail-transcription`,
             action: `${this.webhookBaseUrl}/voice/lina/voicemail-complete`,
             method: 'POST',

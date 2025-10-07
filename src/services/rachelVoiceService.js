@@ -360,10 +360,10 @@ class MultiTenantRachelService {
         const businessName = session.business_name || 'this business';
 
         const voicemailText = `
-            I'll be happy to record your message for ${businessName}.
-            After the beep, please leave your message.
-            You'll have up to 3 minutes.
-            Press pound when you're done.
+            Of course, I'd be happy to take your message for ${businessName}.
+            After the tone, please share your message and I'll make sure it's passed along promptly.
+            You can speak for up to 3 minutes.
+            When you're finished, simply press the pound key or hang up.
         `;
 
         const audioUrl = await this.generateRachelAudio(voicemailText);
@@ -378,6 +378,7 @@ class MultiTenantRachelService {
             maxLength: 180,
             timeout: 5,
             transcribe: true,
+            transcriptionLanguage: 'en-US',
             transcribeCallback: `${this.webhookBaseUrl}/voice/rachel/voicemail-transcription`,
             action: `${this.webhookBaseUrl}/voice/rachel/voicemail-complete`,
             method: 'POST',
