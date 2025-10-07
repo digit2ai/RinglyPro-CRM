@@ -94,6 +94,7 @@ async function storeCallRecord(callSid, fromNumber, toNumber, status, direction,
             : 'Unknown';
 
         const callData = {
+            clientId: clientId,
             twilioCallSid: callSid,
             fromNumber: sanitizedFromNumber,
             toNumber: sanitizedToNumber,

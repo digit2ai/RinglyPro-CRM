@@ -3,6 +3,7 @@ const express = require('express');
 const LinaSpanishVoiceService = require('../services/linaVoiceService');
 const ClientIdentificationService = require('../services/clientIdentificationService');
 const path = require('path');
+const { normalizePhoneFromSpeech } = require('../utils/phoneNormalizer');
 
 // Initialize Lina service
 const linaService = new LinaSpanishVoiceService(
@@ -175,16 +176,20 @@ router.post('/voice/lina/collect-name', async (req, res) => {
  */
 router.post('/voice/lina/collect-phone', async (req, res) => {
     try {
-        const phone = req.body.SpeechResult || '';
+        const rawPhone = req.body.SpeechResult || '';
         const clientId = req.session.client_id;
         const prospectName = req.session.prospect_name;
         const businessName = req.session.business_name || 'nuestra empresa';
 
-        console.log(`📞 Spanish - Phone collected for client ${clientId}: ${phone}`);
+        console.log(`📞 Spanish - Phone collected for client ${clientId}: ${rawPhone}`);
+
+        // Normalize phone number from speech recognition
+        const normalizedPhone = normalizePhoneFromSpeech(rawPhone);
+        console.log(`📞 Spanish - Normalized phone: ${rawPhone} → ${normalizedPhone}`);
         console.log(`📝 Spanish - Prospect name from session: ${prospectName}`);
 
-        // Store phone in session
-        req.session.prospect_phone = phone;
+        // Store normalized phone in session
+        req.session.prospect_phone = normalizedPhone;
 
         // Save session before sending response
         await new Promise((resolve, reject) => {

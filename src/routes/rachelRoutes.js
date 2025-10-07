@@ -3,6 +3,7 @@ const express = require('express');
 const MultiTenantRachelService = require('../services/rachelVoiceService');
 const path = require('path');
 const fs = require('fs').promises;
+const { normalizePhoneFromSpeech } = require('../utils/phoneNormalizer');
 
 // Initialize Rachel service
 const rachelService = new MultiTenantRachelService(
@@ -134,16 +135,20 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
  */
 router.post('/voice/rachel/collect-phone', async (req, res) => {
     try {
-        const phone = req.body.SpeechResult || '';
+        const rawPhone = req.body.SpeechResult || '';
         const clientId = req.session.client_id;
         const prospectName = req.session.prospect_name;
         const businessName = req.session.business_name || 'this business';
 
-        console.log(`📞 Phone collected for client ${clientId}: ${phone}`);
+        console.log(`📞 Phone collected for client ${clientId}: ${rawPhone}`);
+
+        // Normalize phone number from speech recognition
+        const normalizedPhone = normalizePhoneFromSpeech(rawPhone);
+        console.log(`📞 Normalized phone: ${rawPhone} → ${normalizedPhone}`);
         console.log(`📝 Prospect name from session: ${prospectName}`);
 
-        // Store phone in session
-        req.session.prospect_phone = phone;
+        // Store normalized phone in session
+        req.session.prospect_phone = normalizedPhone;
 
         // Save session before sending response
         await new Promise((resolve, reject) => {

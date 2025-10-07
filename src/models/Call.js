@@ -8,15 +8,23 @@ const Call = sequelize.define('Call', {
     primaryKey: true,
     autoIncrement: true
   },
+  clientId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    field: 'client_id',
+    comment: 'References clients table - multi-tenant isolation'
+  },
   contactId: {
     type: DataTypes.INTEGER,
     allowNull: true,
+    field: 'contact_id',
     comment: 'References contacts table - nullable for unknown callers'
   },
   twilioCallSid: {
     type: DataTypes.STRING,
     allowNull: true,
     unique: true,
+    field: 'twilio_call_sid',
     comment: 'Twilio call SID for tracking'
   },
   direction: {
@@ -26,6 +34,7 @@ const Call = sequelize.define('Call', {
   fromNumber: {
     type: DataTypes.STRING,
     allowNull: false,
+    field: 'from_number',
     validate: {
       notEmpty: true
     }
@@ -33,6 +42,7 @@ const Call = sequelize.define('Call', {
   toNumber: {
     type: DataTypes.STRING,
     allowNull: false,
+    field: 'to_number',
     validate: {
       notEmpty: true
     }
@@ -43,7 +53,8 @@ const Call = sequelize.define('Call', {
   },
   callStatus: {
     type: DataTypes.ENUM('initiated', 'ringing', 'answered', 'completed', 'missed', 'failed', 'busy', 'no-answer'),
-    defaultValue: 'initiated'
+    defaultValue: 'initiated',
+    field: 'call_status'
   },
   duration: {
     type: DataTypes.INTEGER,
@@ -53,6 +64,7 @@ const Call = sequelize.define('Call', {
   recordingUrl: {
     type: DataTypes.STRING,
     allowNull: true,
+    field: 'recording_url',
     comment: 'URL to call recording if available'
   },
   cost: {
@@ -63,26 +75,31 @@ const Call = sequelize.define('Call', {
   startTime: {
     type: DataTypes.DATE,
     allowNull: true,
+    field: 'start_time',
     comment: 'When the call started'
   },
   endTime: {
     type: DataTypes.DATE,
     allowNull: true,
+    field: 'end_time',
     comment: 'When the call ended'
   },
   answeredBy: {
     type: DataTypes.STRING,
     allowNull: true,
+    field: 'answered_by',
     comment: 'Human or machine answered'
   },
   hangupCause: {
     type: DataTypes.STRING,
     allowNull: true,
+    field: 'hangup_cause',
     comment: 'Reason for call ending'
   },
   callerName: {
     type: DataTypes.STRING,
     allowNull: true,
+    field: 'caller_name',
     comment: 'Caller ID name if available'
   },
   notes: {
@@ -93,6 +110,9 @@ const Call = sequelize.define('Call', {
 }, {
   tableName: 'calls',
   timestamps: true,
+  underscored: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
   indexes: [
     {
       fields: ['contactId']
