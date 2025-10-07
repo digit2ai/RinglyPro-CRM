@@ -219,7 +219,7 @@ router.post('/voice/lina/collect-phone', async (req, res) => {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
-        const escapedPhone = phone
+        const escapedPhone = normalizedPhone
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
