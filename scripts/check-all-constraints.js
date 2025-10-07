@@ -61,8 +61,9 @@ async function checkAllConstraints() {
 
         indexes.forEach(idx => {
             const uniqueFlag = idx.is_unique ? 'UNIQUE' : 'NON-UNIQUE';
+            const columns = Array.isArray(idx.columns) ? idx.columns.join(', ') : String(idx.columns);
             console.log(`${uniqueFlag}: ${idx.index_name}`);
-            console.log(`  Columns: ${idx.columns.join(', ')}\n`);
+            console.log(`  Columns: ${columns}\n`);
         });
 
     } catch (error) {
