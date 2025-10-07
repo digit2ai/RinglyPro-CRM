@@ -681,4 +681,107 @@ router.post('/voice/lina/webhook', async (req, res) => {
     }
 });
 
+/**
+ * Handle voicemail recording completion (Spanish)
+ */
+router.post('/voice/lina/voicemail-complete', async (req, res) => {
+    try {
+        const {
+            RecordingUrl,
+            RecordingSid,
+            RecordingDuration,
+            CallSid
+        } = req.body;
+
+        console.log(`✅ Spanish voicemail recording completed: ${RecordingSid}, Duration: ${RecordingDuration}s`);
+
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Gracias por su mensaje. Le responderemos pronto. Adiós!</Say>
+    <Hangup/>
+</Response>`;
+
+        res.set('Content-Type', 'text/xml; charset=utf-8');
+        res.send(twiml);
+
+    } catch (error) {
+        console.error('Error handling Spanish voicemail completion:', error);
+
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Gracias. Adiós!</Say>
+    <Hangup/>
+</Response>`;
+
+        res.set('Content-Type', 'text/xml; charset=utf-8');
+        res.send(twiml);
+    }
+});
+
+/**
+ * Handle voicemail transcription callback (Spanish)
+ */
+router.post('/voice/lina/voicemail-transcription', async (req, res) => {
+    try {
+        const {
+            TranscriptionText,
+            TranscriptionSid,
+            RecordingSid,
+            RecordingUrl,
+            CallSid,
+            From,
+            To
+        } = req.body;
+
+        console.log(`📝 Spanish voicemail transcription received: ${TranscriptionSid}`);
+        console.log(`Transcripción: "${TranscriptionText}"`);
+
+        // Find client by RinglyPro number
+        const { Client, Message } = require('../models');
+        const client = await Client.findOne({
+            where: { ringlypro_number: To }
+        });
+
+        if (!client) {
+            console.warn(`⚠️ No client found for number ${To}`);
+            res.status(200).send('OK');
+            return;
+        }
+
+        // Summarize with Claude AI (Spanish)
+        const ClaudeAIService = require('../services/claudeAI');
+        const claudeAI = new ClaudeAIService();
+
+        let summary;
+        try {
+            summary = await claudeAI.summarizeVoicemail(TranscriptionText, From, 'es');
+        } catch (aiError) {
+            console.error('⚠️ Claude AI summarization failed, using fallback:', aiError.message);
+            summary = `Mensaje de voz de ${From}: ${TranscriptionText}`;
+        }
+
+        // Store voicemail in Messages table
+        await Message.create({
+            clientId: client.id,
+            contactId: null,
+            twilioSid: RecordingSid,
+            direction: 'incoming',
+            fromNumber: From,
+            toNumber: To,
+            body: summary,
+            status: 'received',
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+
+        console.log(`💾 Spanish voicemail stored for client ${client.id} (${client.business_name})`);
+
+        res.status(200).send('OK');
+
+    } catch (error) {
+        console.error('❌ Error processing Spanish voicemail transcription:', error);
+        res.status(200).send('OK'); // Always return 200 to Twilio
+    }
+});
+
 module.exports = router;

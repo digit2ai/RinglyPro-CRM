@@ -8,37 +8,49 @@ const creditSystem = new CreditSystem();
 // POST /webhook/twilio/voice - Handle call completion
 router.post('/voice', async (req, res) => {
     try {
-        const { 
-            CallSid, 
-            CallDuration, 
-            To, 
+        const {
+            CallSid,
+            CallDuration,
+            To,
             From,
-            CallStatus 
+            CallStatus
         } = req.body;
-        
+
+        console.log(`📞 Voice webhook: ${CallStatus} - CallSid: ${CallSid}, Duration: ${CallDuration}s, To: ${To}`);
+
         if (CallStatus === 'completed' && CallDuration) {
-            // Find client by business phone number
+            // Find client by RinglyPro phone number (To field)
+            const { Client } = require('../models');
+            const client = await Client.findOne({
+                where: { ringlypro_number: To }
+            });
+
+            if (!client) {
+                console.warn(`⚠️ No client found for number ${To}`);
+                res.type('text/xml');
+                res.send('<Response></Response>');
+                return;
+            }
+
+            const clientId = client.id;
             const durationSeconds = parseInt(CallDuration);
-            
-            // For MVP: Use client ID 1, later lookup by phone number
-            const clientId = 1;
-            
+
             // Track usage in credit system
             await creditSystem.trackUsage(clientId, {
                 callSid: CallSid,
                 durationSeconds: durationSeconds,
                 usageType: 'voice_call'
             });
-            
-            console.log(`Tracked call ${CallSid}: ${durationSeconds} seconds for client ${clientId}`);
+
+            console.log(`✅ Tracked call ${CallSid}: ${durationSeconds} seconds for client ${clientId} (${client.business_name})`);
         }
-        
+
         // Return TwiML response
         res.type('text/xml');
         res.send('<Response></Response>');
-        
+
     } catch (error) {
-        console.error('Twilio voice webhook error:', error);
+        console.error('❌ Twilio voice webhook error:', error);
         res.type('text/xml');
         res.send('<Response></Response>');
     }

@@ -75,7 +75,7 @@ class LinaSpanishVoiceService {
             timeGreeting = 'Buenas noches';
         }
 
-        return `${timeGreeting}, gracias por llamar a ${businessName}. Mi nombre es Lina, su asistente virtual. ¿En qué puedo ayudarle hoy? Puedo ayudarle a agendar una cita, obtener información sobre precios, o conectarlo con nuestro equipo.`;
+        return `${timeGreeting}, gracias por llamar a ${businessName}. Mi nombre es Lina, su asistente virtual. ¿En qué puedo ayudarle hoy? Puedo ayudarle a agendar una cita, o tomar un mensaje.`;
     }
 
     /**
@@ -99,6 +99,8 @@ class LinaSpanishVoiceService {
         // Process speech based on intent (Spanish keywords)
         if (this.containsKeywords(speechResult, ['cita', 'reservar', 'agendar', 'programar', 'demostración'])) {
             return await this.handleBookingRequest(speechResult, session);
+        } else if (this.containsKeywords(speechResult, ['mensaje', 'dejar mensaje', 'grabar', 'buzón', 'correo de voz'])) {
+            return await this.handleVoicemailRequest(session);
         } else if (this.containsKeywords(speechResult, ['precio', 'costo', 'cuánto cuesta', 'cuanto', 'tarifa'])) {
             return await this.handlePricingRequest(session);
         } else if (this.containsKeywords(speechResult, ['ayuda', 'soporte', 'hablar con', 'persona'])) {
@@ -219,6 +221,44 @@ class LinaSpanishVoiceService {
     }
 
     /**
+     * Handle voicemail request in Spanish
+     * @param {Object} session - Express session object
+     * @returns {string} TwiML response
+     */
+    async handleVoicemailRequest(session) {
+        const twiml = new twilio.twiml.VoiceResponse();
+        const businessName = session.business_name || 'nuestra empresa';
+
+        const voicemailText = `
+            Con gusto grabaré su mensaje para ${businessName}.
+            Después del tono, por favor deje su mensaje.
+            Tendrá hasta 3 minutos.
+            Presione numeral cuando termine.
+        `;
+
+        const audioUrl = await this.generateLinaAudio(voicemailText);
+        if (audioUrl) {
+            twiml.play(audioUrl);
+        } else {
+            twiml.say(voicemailText, { voice: 'Polly.Lupe', language: 'es-MX' });
+        }
+
+        // Record voicemail (max 3 minutes = 180 seconds)
+        twiml.record({
+            maxLength: 180,
+            timeout: 5,
+            transcribe: true,
+            transcribeCallback: `${this.webhookBaseUrl}/voice/lina/voicemail-transcription`,
+            action: `${this.webhookBaseUrl}/voice/lina/voicemail-complete`,
+            method: 'POST',
+            playBeep: true,
+            finishOnKey: '#*'
+        });
+
+        return twiml.toString();
+    }
+
+    /**
      * Handle unknown/unclear requests in Spanish
      * @param {string} speechResult - Original speech input
      * @param {Object} session - Express session object
@@ -230,7 +270,7 @@ class LinaSpanishVoiceService {
 
         const clarificationText = `
             Lo siento, no entendí bien.
-            Puedo ayudarle a agendar una cita, obtener información sobre precios, o conectarlo con el equipo de ${businessName}.
+            Puedo ayudarle a agendar una cita o tomar un mensaje.
             ¿Qué le gustaría hacer?
         `;
 

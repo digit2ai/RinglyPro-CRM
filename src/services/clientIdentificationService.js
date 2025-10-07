@@ -174,16 +174,15 @@ class ClientIdentificationService {
             // Use client's custom greeting if available
             return clientInfo.custom_greeting.trim();
         } else {
-            // Generate default personalized greeting
+            // Generate default personalized greeting with two main options
             const greeting = `
-                Thank you for calling ${clientInfo.business_name}. 
-                I'm Rachel, your AI assistant. 
-                How can I help you today? 
-                You can say book appointment to schedule a consultation, 
-                pricing to hear about our services, 
-                or speak with someone if you need to talk to a team member.
+                Thank you for calling ${clientInfo.business_name}.
+                I'm Rachel, your AI assistant.
+                How can I help you today?
+                You can say book appointment to schedule a consultation,
+                or leave message to leave me a voicemail.
             `;
-            
+
             console.log(`Generated greeting for ${clientInfo.business_name}`);
             return greeting.trim();
         }

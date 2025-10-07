@@ -21,14 +21,44 @@ router.get('/today', async (req, res) => {
 
     console.log('📱 Fetching today\'s messages from database...');
     const messages = await Message.getTodaysMessages();
-    
+
     console.log(`✅ Found ${messages.length} messages for today`);
     res.json(messages);
   } catch (error) {
     console.error('❌ Error fetching today\'s messages:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch messages',
-      details: error.message 
+      details: error.message
+    });
+  }
+});
+
+// GET /api/messages/client/:clientId - Get messages for a specific client
+router.get('/client/:clientId', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const { limit = 50, offset = 0 } = req.query;
+
+    if (!Message) {
+      console.log('⚠️ Message model not available');
+      return res.status(503).json({ error: 'Message service not available' });
+    }
+
+    console.log(`📱 Fetching messages for client ${clientId}...`);
+
+    const messages = await Message.findByClient(clientId, {
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: 'DESC'
+    });
+
+    console.log(`✅ Found ${messages.length} messages for client ${clientId}`);
+    res.json(messages);
+  } catch (error) {
+    console.error(`❌ Error fetching messages for client:`, error);
+    res.status(500).json({
+      error: 'Failed to fetch client messages',
+      details: error.message
     });
   }
 });

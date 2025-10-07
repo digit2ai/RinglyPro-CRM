@@ -761,13 +761,116 @@ router.get('/audio/:filename', async (req, res) => {
 });
 
 /**
+ * Handle voicemail recording completion
+ */
+router.post('/voice/rachel/voicemail-complete', async (req, res) => {
+    try {
+        const {
+            RecordingUrl,
+            RecordingSid,
+            RecordingDuration,
+            CallSid
+        } = req.body;
+
+        console.log(`✅ Voicemail recording completed: ${RecordingSid}, Duration: ${RecordingDuration}s`);
+
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">Thank you for your message. We'll get back to you soon. Goodbye!</Say>
+    <Hangup/>
+</Response>`;
+
+        res.set('Content-Type', 'text/xml; charset=utf-8');
+        res.send(twiml);
+
+    } catch (error) {
+        console.error('Error handling voicemail completion:', error);
+
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">Thank you. Goodbye!</Say>
+    <Hangup/>
+</Response>`;
+
+        res.set('Content-Type', 'text/xml; charset=utf-8');
+        res.send(twiml);
+    }
+});
+
+/**
+ * Handle voicemail transcription callback
+ */
+router.post('/voice/rachel/voicemail-transcription', async (req, res) => {
+    try {
+        const {
+            TranscriptionText,
+            TranscriptionSid,
+            RecordingSid,
+            RecordingUrl,
+            CallSid,
+            From,
+            To
+        } = req.body;
+
+        console.log(`📝 Voicemail transcription received: ${TranscriptionSid}`);
+        console.log(`Transcription: "${TranscriptionText}"`);
+
+        // Find client by RinglyPro number
+        const { Client, Message } = require('../models');
+        const client = await Client.findOne({
+            where: { ringlypro_number: To }
+        });
+
+        if (!client) {
+            console.warn(`⚠️ No client found for number ${To}`);
+            res.status(200).send('OK');
+            return;
+        }
+
+        // Summarize with Claude AI
+        const ClaudeAIService = require('../services/claudeAI');
+        const claudeAI = new ClaudeAIService();
+
+        let summary;
+        try {
+            summary = await claudeAI.summarizeVoicemail(TranscriptionText, From, 'en');
+        } catch (aiError) {
+            console.error('⚠️ Claude AI summarization failed, using fallback:', aiError.message);
+            summary = `Voicemail from ${From}: ${TranscriptionText}`;
+        }
+
+        // Store voicemail in Messages table
+        await Message.create({
+            clientId: client.id,
+            contactId: null,
+            twilioSid: RecordingSid,
+            direction: 'incoming',
+            fromNumber: From,
+            toNumber: To,
+            body: summary,
+            status: 'received',
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+
+        console.log(`💾 Voicemail stored for client ${client.id} (${client.business_name})`);
+
+        res.status(200).send('OK');
+
+    } catch (error) {
+        console.error('❌ Error processing voicemail transcription:', error);
+        res.status(200).send('OK'); // Always return 200 to Twilio
+    }
+});
+
+/**
  * Test endpoint to verify client identification
  */
 router.get('/voice/rachel/test-client/:number', async (req, res) => {
     try {
         const phoneNumber = req.params.number;
         const clientInfo = await rachelService.clientService.identifyClientByNumber(phoneNumber);
-        
+
         if (clientInfo) {
             res.json({
                 success: true,
@@ -780,7 +883,7 @@ router.get('/voice/rachel/test-client/:number', async (req, res) => {
                 message: `No client found for number: ${phoneNumber}`
             });
         }
-        
+
     } catch (error) {
         console.error('Error testing client identification:', error);
         res.status(500).json({

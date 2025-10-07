@@ -231,6 +231,8 @@ class MultiTenantRachelService {
         // Process speech based on intent
         if (this.containsKeywords(speechResult, ['book', 'appointment', 'schedule', 'demo'])) {
             return await this.handleBookingRequest(speechResult, session);
+        } else if (this.containsKeywords(speechResult, ['leave', 'message', 'voicemail', 'record'])) {
+            return await this.handleVoicemailRequest(session);
         } else if (this.containsKeywords(speechResult, ['price', 'pricing', 'cost', 'how much'])) {
             return await this.handlePricingRequest(session);
         } else if (this.containsKeywords(speechResult, ['support', 'help', 'speak with', 'talk to'])) {
@@ -349,6 +351,44 @@ class MultiTenantRachelService {
     }
 
     /**
+     * Handle voicemail request
+     * @param {Object} session - Express session object
+     * @returns {string} TwiML response
+     */
+    async handleVoicemailRequest(session) {
+        const twiml = new twilio.twiml.VoiceResponse();
+        const businessName = session.business_name || 'this business';
+
+        const voicemailText = `
+            I'll be happy to record your message for ${businessName}.
+            After the beep, please leave your message.
+            You'll have up to 3 minutes.
+            Press pound when you're done.
+        `;
+
+        const audioUrl = await this.generateRachelAudio(voicemailText);
+        if (audioUrl) {
+            twiml.play(audioUrl);
+        } else {
+            twiml.say(voicemailText, { voice: 'Polly.Joanna', language: 'en-US' });
+        }
+
+        // Record voicemail (max 3 minutes = 180 seconds)
+        twiml.record({
+            maxLength: 180,
+            timeout: 5,
+            transcribe: true,
+            transcribeCallback: `${this.webhookBaseUrl}/voice/rachel/voicemail-transcription`,
+            action: `${this.webhookBaseUrl}/voice/rachel/voicemail-complete`,
+            method: 'POST',
+            playBeep: true,
+            finishOnKey: '#*'
+        });
+
+        return twiml.toString();
+    }
+
+    /**
      * Handle unknown/unclear requests
      * @param {string} speechResult - Original speech input
      * @param {Object} session - Express session object
@@ -357,13 +397,13 @@ class MultiTenantRachelService {
     async handleUnknownRequest(speechResult, session) {
         const twiml = new twilio.twiml.VoiceResponse();
         const businessName = session.business_name || 'this business';
-        
+
         const clarificationText = `
-            I'm sorry, I didn't quite understand that. 
-            I can help you with booking an appointment, getting pricing information, or connecting you with ${businessName}'s team. 
+            I'm sorry, I didn't quite understand that.
+            I can help you with booking an appointment or taking a message.
             What would you like to do?
         `;
-        
+
         const gather = twiml.gather({
             input: 'speech',
             timeout: 10,
@@ -372,14 +412,14 @@ class MultiTenantRachelService {
             speechTimeout: 'auto',
             language: 'en-US'
         });
-        
+
         const audioUrl = await this.generateRachelAudio(clarificationText);
         if (audioUrl) {
             gather.play(audioUrl);
         } else {
             gather.say(clarificationText, { voice: 'Polly.Joanna' });
         }
-        
+
         return twiml.toString();
     }
 
