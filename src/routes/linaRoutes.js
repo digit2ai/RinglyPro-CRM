@@ -330,7 +330,188 @@ const handleBookAppointmentSpanish = async (req, res) => {
 
         console.log(`📅 Spanish - Booking appointment for client ${clientId}: ${prospectName} (${prospectPhone}) at ${appointmentDateTime}`);
 
-        // Escape XML special characters
+        const { Appointment } = require('../models');
+        const moment = require('moment-timezone');
+
+        let appointmentDate, appointmentTime;
+        let confirmationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+        try {
+            const now = moment().tz('America/New_York');
+            let parsedDateTime = now.clone();
+
+            const lowerText = appointmentDateTime.toLowerCase();
+            if (lowerText.includes('mañana') || lowerText.includes('manana')) {
+                parsedDateTime.add(1, 'day');
+            } else if (lowerText.includes('hoy')) {
+                // Keep as today
+            } else if (lowerText.includes('lunes')) {
+                parsedDateTime = parsedDateTime.day(1);
+            } else if (lowerText.includes('martes')) {
+                parsedDateTime = parsedDateTime.day(2);
+            } else if (lowerText.includes('miércoles') || lowerText.includes('miercoles')) {
+                parsedDateTime = parsedDateTime.day(3);
+            } else if (lowerText.includes('jueves')) {
+                parsedDateTime = parsedDateTime.day(4);
+            } else if (lowerText.includes('viernes')) {
+                parsedDateTime = parsedDateTime.day(5);
+            } else {
+                parsedDateTime.add(1, 'day');
+            }
+
+            const timeMatch = appointmentDateTime.match(/(\d{1,2})/);
+            if (timeMatch) {
+                let hour = parseInt(timeMatch[1]);
+                const isTarde = lowerText.includes('tarde');
+                const isMañana = lowerText.includes('mañana') || lowerText.includes('manana');
+
+                if (isTarde && hour < 12) hour += 12;
+                if (hour === 12 && isMañana) hour = 12;
+
+                parsedDateTime.hour(hour).minute(0).second(0);
+            } else {
+                parsedDateTime.hour(14).minute(0).second(0);
+            }
+
+            appointmentDate = parsedDateTime.format('YYYY-MM-DD');
+            appointmentTime = parsedDateTime.format('HH:mm:ss');
+
+            console.log(`📆 Parsed appointment: date=${appointmentDate}, time=${appointmentTime}`);
+            console.log(`📋 Creating appointment: clientId=${clientId}, name="${prospectName}", phone="${prospectPhone}"`);
+
+            if (!clientId) {
+                throw new Error('Missing clientId');
+            }
+
+            const appointment = await Appointment.create({
+                clientId: clientId,
+                customerName: prospectName || 'Desconocido',
+                customerPhone: prospectPhone || 'Desconocido',
+                appointmentDate: appointmentDate,
+                appointmentTime: appointmentTime,
+                duration: 30,
+                status: 'confirmed',
+                confirmationCode: confirmationCode,
+                source: 'voice_booking'
+            });
+
+            console.log(`✅✅✅ SPANISH APPOINTMENT CREATED! ✅✅✅`);
+            console.log(`   📌 ID: ${appointment.id}`);
+            console.log(`   🏢 Client: ${clientId}`);
+            console.log(`   👤 Customer: ${prospectName} (${prospectPhone})`);
+            console.log(`   📅 DateTime: ${appointmentDate} ${appointmentTime}`);
+            console.log(`   🔑 Confirmation: ${confirmationCode}`);
+
+        } catch (dbError) {
+            console.error('❌❌❌ ERROR CREATING SPANISH APPOINTMENT ❌❌❌');
+            console.error(`   Error message: ${dbError.message}`);
+            console.error(`   Full error:`, dbError);
+            console.error(`   Session: clientId=${clientId}, name="${prospectName}", phone="${prospectPhone}"`);
+
+            const isDuplicateSlot = dbError.message && (
+                dbError.message.includes('unique_time_slot_per_client') ||
+                dbError.message.includes('duplicate key') ||
+                dbError.message.includes('unique constraint')
+            );
+
+            const escapedName = (prospectName || 'señor')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+
+            let errorTwiml;
+
+            if (isDuplicateSlot) {
+                // Try to find available slots for the same day
+                try {
+                    const { Op } = require('sequelize');
+                    const bookedAppointments = await Appointment.findAll({
+                        where: {
+                            clientId: clientId,
+                            appointmentDate: appointmentDate,
+                            status: {
+                                [Op.in]: ['confirmed', 'pending', 'scheduled']
+                            }
+                        },
+                        attributes: ['appointmentTime'],
+                        order: [['appointmentTime', 'ASC']]
+                    });
+
+                    const bookedTimes = bookedAppointments.map(apt => apt.appointmentTime);
+                    console.log(`📋 Booked times for ${appointmentDate}:`, bookedTimes);
+
+                    // Business hours - typical slots (9am-5pm, 30-min intervals)
+                    const allSlots = [
+                        '09:00:00', '09:30:00', '10:00:00', '10:30:00', '11:00:00', '11:30:00',
+                        '12:00:00', '12:30:00', '13:00:00', '13:30:00', '14:00:00', '14:30:00',
+                        '15:00:00', '15:30:00', '16:00:00', '16:30:00', '17:00:00'
+                    ];
+
+                    const availableSlots = allSlots.filter(slot => !bookedTimes.includes(slot));
+                    console.log(`✅ Available slots for ${appointmentDate}:`, availableSlots);
+
+                    if (availableSlots.length > 0) {
+                        // Format first 3 available slots for speech (Spanish)
+                        const formatTimeForSpeechSpanish = (timeStr) => {
+                            const [hours, minutes] = timeStr.split(':');
+                            let hour = parseInt(hours);
+                            const isPM = hour >= 12;
+                            if (hour > 12) hour -= 12;
+                            if (hour === 0) hour = 12;
+
+                            // Spanish time format: "la 1 de la tarde" or "las 2 de la tarde"
+                            const article = hour === 1 ? 'la' : 'las';
+                            const period = isPM ? 'de la tarde' : 'de la mañana';
+
+                            if (minutes === '00') {
+                                return `${article} ${hour} ${period}`;
+                            } else {
+                                return `${article} ${hour} y ${minutes} ${period}`;
+                            }
+                        };
+
+                        const suggestions = availableSlots.slice(0, 3).map(formatTimeForSpeechSpanish);
+                        const suggestionText = suggestions.length === 1
+                            ? suggestions[0]
+                            : suggestions.length === 2
+                            ? `${suggestions[0]} o ${suggestions[1]}`
+                            : `${suggestions[0]}, ${suggestions[1]}, o ${suggestions[2]}`;
+
+                        errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Lo siento ${escapedName}, esa hora ya está reservada. Tenemos disponibilidad a ${suggestionText}. Por favor llame de nuevo para agendar una de estas horas. Gracias.</Say>
+    <Hangup/>
+</Response>`;
+                    } else {
+                        errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Lo siento ${escapedName}, esa hora ya está reservada y estamos completamente llenos ese día. Por favor llame de nuevo para agendar otro día. Gracias.</Say>
+    <Hangup/>
+</Response>`;
+                    }
+                } catch (slotCheckError) {
+                    console.error('Error checking available slots (Spanish):', slotCheckError);
+                    errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Lo siento ${escapedName}, esa hora ya está reservada. Por favor llame de nuevo para agendar otra hora. Gracias.</Say>
+    <Hangup/>
+</Response>`;
+                }
+            } else {
+                errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Lo siento ${escapedName}, hubo un error al agendar su cita. Por favor llame de nuevo o visite nuestro sitio web. Gracias por su paciencia.</Say>
+    <Hangup/>
+</Response>`;
+            }
+
+            console.log('📤 Sending ERROR TwiML (Spanish)');
+            res.set('Content-Type', 'text/xml; charset=utf-8');
+            return res.send(errorTwiml);
+        }
+
         const escapedName = (prospectName || 'señor')
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -352,11 +533,11 @@ const handleBookAppointmentSpanish = async (req, res) => {
 
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="Polly.Lupe" language="es-MX">Excelentes noticias ${escapedName}. He agendado exitosamente su cita con ${escapedBusiness} para ${escapedDateTime}. Recibirá un mensaje de texto con la confirmación y todos los detalles próximamente. Gracias por llamar y esperamos verle pronto.</Say>
+    <Say voice="Polly.Lupe" language="es-MX">Excelentes noticias ${escapedName}. He agendado exitosamente su cita con ${escapedBusiness} para ${escapedDateTime}. Su código de confirmación es ${confirmationCode}. Recibirá un mensaje de texto con todos los detalles. Gracias por llamar y esperamos verle pronto.</Say>
     <Hangup/>
 </Response>`;
 
-        console.log('📤 Sending TwiML from book-appointment (Spanish)');
+        console.log('📤 Sending SUCCESS TwiML (Spanish)');
         res.set('Content-Type', 'text/xml; charset=utf-8');
         res.send(twiml);
 

@@ -373,17 +373,83 @@ const handleBookAppointment = async (req, res) => {
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&apos;');
 
-            const errorTwiml = isDuplicateSlot
-                ? `<?xml version="1.0" encoding="UTF-8"?>
+            let errorTwiml;
+
+            if (isDuplicateSlot) {
+                // Try to find available slots for the same day
+                try {
+                    const { Op } = require('sequelize');
+                    const bookedAppointments = await Appointment.findAll({
+                        where: {
+                            clientId: clientId,
+                            appointmentDate: appointmentDate,
+                            status: {
+                                [Op.in]: ['confirmed', 'pending', 'scheduled']
+                            }
+                        },
+                        attributes: ['appointmentTime'],
+                        order: [['appointmentTime', 'ASC']]
+                    });
+
+                    const bookedTimes = bookedAppointments.map(apt => apt.appointmentTime);
+                    console.log(`📋 Booked times for ${appointmentDate}:`, bookedTimes);
+
+                    // Business hours - typical slots (9am-5pm, 30-min intervals)
+                    const allSlots = [
+                        '09:00:00', '09:30:00', '10:00:00', '10:30:00', '11:00:00', '11:30:00',
+                        '12:00:00', '12:30:00', '13:00:00', '13:30:00', '14:00:00', '14:30:00',
+                        '15:00:00', '15:30:00', '16:00:00', '16:30:00', '17:00:00'
+                    ];
+
+                    const availableSlots = allSlots.filter(slot => !bookedTimes.includes(slot));
+                    console.log(`✅ Available slots for ${appointmentDate}:`, availableSlots);
+
+                    if (availableSlots.length > 0) {
+                        // Format first 3 available slots for speech
+                        const formatTimeForSpeech = (timeStr) => {
+                            const [hours, minutes] = timeStr.split(':');
+                            let hour = parseInt(hours);
+                            const isPM = hour >= 12;
+                            if (hour > 12) hour -= 12;
+                            if (hour === 0) hour = 12;
+                            const period = isPM ? 'PM' : 'AM';
+                            return minutes === '00' ? `${hour} ${period}` : `${hour} ${minutes} ${period}`;
+                        };
+
+                        const suggestions = availableSlots.slice(0, 3).map(formatTimeForSpeech);
+                        const suggestionText = suggestions.length === 1
+                            ? suggestions[0]
+                            : suggestions.length === 2
+                            ? `${suggestions[0]} or ${suggestions[1]}`
+                            : `${suggestions[0]}, ${suggestions[1]}, or ${suggestions[2]}`;
+
+                        errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">I'm sorry ${escapedName}, that time slot is already booked. We have availability at ${suggestionText}. Please call back to schedule one of these times. Thank you.</Say>
+    <Hangup/>
+</Response>`;
+                    } else {
+                        errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">I'm sorry ${escapedName}, that time slot is already booked and we're fully booked for that day. Please call back to schedule a different day. Thank you.</Say>
+    <Hangup/>
+</Response>`;
+                    }
+                } catch (slotCheckError) {
+                    console.error('Error checking available slots:', slotCheckError);
+                    errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="Polly.Joanna">I'm sorry ${escapedName}, that time slot is already booked. Please call back to schedule a different time. Thank you.</Say>
     <Hangup/>
-</Response>`
-                : `<?xml version="1.0" encoding="UTF-8"?>
+</Response>`;
+                }
+            } else {
+                errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="Polly.Joanna">I'm sorry ${escapedName}, there was an error booking your appointment. Please call back or visit our website to schedule. Thank you for your patience.</Say>
     <Hangup/>
 </Response>`;
+            }
 
             console.log('📤 Sending ERROR TwiML - appointment creation failed');
             res.set('Content-Type', 'text/xml; charset=utf-8');
