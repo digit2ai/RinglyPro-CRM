@@ -3,6 +3,7 @@ const router = express.Router();
 
 // Import Contact model from models
 const { Contact } = require('../models');
+const { normalizePhoneFromSpeech } = require('../utils/phoneNormalizer');
 
 // Get all contacts
 router.get('/', async (req, res) => {
@@ -80,12 +81,16 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Check for existing contact by phone or email
+    // Normalize phone number
+    const normalizedPhone = normalizePhoneFromSpeech(phone.trim());
+    console.log(`📞 Creating contact - normalized phone: ${phone} → ${normalizedPhone}`);
+
+    // Check for existing contact by phone or email - use normalized phone
     const { Op } = require('sequelize');
     const existingContact = await Contact.findOne({
       where: {
         [Op.or]: [
-          { phone: phone },
+          { phone: normalizedPhone },
           { email: email }
         ]
       }
@@ -104,11 +109,11 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Create new contact in database
+    // Create new contact in database with normalized phone
     const contact = await Contact.create({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      phone: phone.trim(),
+      phone: normalizedPhone,
       email: email.trim().toLowerCase(),
       notes: notes ? notes.trim() : '',
       source,

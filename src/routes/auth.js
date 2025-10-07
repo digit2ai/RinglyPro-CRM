@@ -8,6 +8,7 @@ const twilioClient = twilio(
 );
 const { User, sequelize } = require('../models');
 const { sendPasswordResetEmail } = require('../services/emailService');
+const { normalizePhoneFromSpeech } = require('../utils/phoneNormalizer');
 const router = express.Router();
 
 // Import Client and CreditAccount models for appointment booking
@@ -72,11 +73,20 @@ router.post('/register', async (req, res) => {
         // Validate business phone for Rachel AI
         if (!businessPhone) {
             await transaction.rollback();
-            return res.status(400).json({ 
-                error: 'Business phone number is required for your Rachel AI system' 
+            return res.status(400).json({
+                error: 'Business phone number is required for your Rachel AI system'
             });
         }
-        
+
+        // Normalize phone numbers
+        const normalizedBusinessPhone = normalizePhoneFromSpeech(businessPhone);
+        const normalizedPhoneNumber = phoneNumber ? normalizePhoneFromSpeech(phoneNumber) : null;
+
+        console.log(`📞 Normalized business phone: ${businessPhone} → ${normalizedBusinessPhone}`);
+        if (phoneNumber) {
+            console.log(`📞 Normalized personal phone: ${phoneNumber} → ${normalizedPhoneNumber}`);
+        }
+
         // Validate terms acceptance
         if (!termsAccepted) {
             await transaction.rollback();
@@ -94,12 +104,12 @@ router.post('/register', async (req, res) => {
             });
         }
         
-        // Check if business phone already exists (for Rachel AI system)
-        const existingClient = await Client.findOne({ where: { business_phone: businessPhone } });
+        // Check if business phone already exists (for Rachel AI system) - use normalized version
+        const existingClient = await Client.findOne({ where: { business_phone: normalizedBusinessPhone } });
         if (existingClient) {
             await transaction.rollback();
-            return res.status(409).json({ 
-                error: 'A Rachel AI system already exists with this phone number' 
+            return res.status(409).json({
+                error: 'A Rachel AI system already exists with this phone number'
             });
         }
         
@@ -110,17 +120,17 @@ router.post('/register', async (req, res) => {
         // Clean up website_url - convert empty strings to null
         const cleanWebsiteUrl = websiteUrl && websiteUrl.trim() !== '' ? websiteUrl.trim() : null;
         
-        // Create user with all business fields
+        // Create user with all business fields - use normalized phone numbers
         const user = await User.create({
             email,
             password_hash: passwordHash,
             first_name: firstName,
             last_name: lastName,
             business_name: businessName,
-            business_phone: businessPhone,
+            business_phone: normalizedBusinessPhone,
             business_type: businessType,
             website_url: cleanWebsiteUrl,
-            phone_number: phoneNumber,
+            phone_number: normalizedPhoneNumber,
             business_description: businessDescription,
             business_hours: businessHours,
             services: services,
@@ -186,12 +196,12 @@ router.post('/register', async (req, res) => {
         try {
             client = await Client.create({
                 business_name: businessName,
-                business_phone: businessPhone,
-                ringlypro_number: twilioNumber,              // Twilio number
+                business_phone: normalizedBusinessPhone,
+                ringlypro_number: twilioNumber,              // Twilio number (already normalized from Twilio)
                 twilio_number_sid: twilioSid,                // Twilio SID
                 forwarding_status: 'active',                  // Active status
                 owner_name: `${firstName} ${lastName}`,
-                owner_phone: phoneNumber || businessPhone,
+                owner_phone: normalizedPhoneNumber || normalizedBusinessPhone,
                 owner_email: email,
                 custom_greeting: `Hello! Thank you for calling ${businessName}. I'm Rachel, your AI assistant.`,
                 business_hours_start: businessHours?.open ? businessHours.open + ':00' : '09:00:00',
