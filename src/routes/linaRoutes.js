@@ -4,6 +4,7 @@ const LinaSpanishVoiceService = require('../services/linaVoiceService');
 const ClientIdentificationService = require('../services/clientIdentificationService');
 const path = require('path');
 const { normalizePhoneFromSpeech } = require('../utils/phoneNormalizer');
+const { sendAppointmentConfirmationSpanish } = require('../services/appointmentNotification');
 
 // Initialize Lina service
 const linaService = new LinaSpanishVoiceService(
@@ -419,6 +420,37 @@ const handleBookAppointmentSpanish = async (req, res) => {
             console.log(`   👤 Customer: ${prospectName} (${prospectPhone})`);
             console.log(`   📅 DateTime: ${appointmentDate} ${appointmentTime}`);
             console.log(`   🔑 Confirmation: ${confirmationCode}`);
+
+            // Send Spanish SMS confirmation
+            try {
+                const { Client } = require('../models');
+                const client = await Client.findByPk(clientId);
+
+                if (client && client.ringlypro_number) {
+                    console.log(`📱 Enviando SMS de confirmación a ${prospectPhone}`);
+
+                    const smsResult = await sendAppointmentConfirmationSpanish({
+                        customerPhone: prospectPhone,
+                        customerName: prospectName,
+                        appointmentDate: appointmentDate,
+                        appointmentTime: appointmentTime,
+                        confirmationCode: confirmationCode,
+                        businessName: businessName,
+                        fromNumber: client.ringlypro_number
+                    });
+
+                    if (smsResult.success) {
+                        console.log(`✅ SMS confirmación enviado! SID: ${smsResult.messageSid}`);
+                    } else {
+                        console.error(`❌ SMS falló: ${smsResult.error}`);
+                    }
+                } else {
+                    console.warn(`⚠️  No se puede enviar SMS - cliente ${clientId} sin número RinglyPro`);
+                }
+            } catch (smsError) {
+                console.error(`❌ Error enviando SMS de confirmación:`, smsError);
+                // Don't fail the appointment if SMS fails
+            }
 
         } catch (dbError) {
             console.error('❌❌❌ ERROR CREATING SPANISH APPOINTMENT ❌❌❌');

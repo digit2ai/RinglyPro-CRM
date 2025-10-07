@@ -22,7 +22,8 @@
     "sync-models": "node scripts/sync-models.js",
     "validate-env": "node scripts/validate-environment.js",
     "fix-constraint": "node scripts/fix-appointment-constraint.js",
-    "normalize-phones": "node scripts/normalize-all-phone-numbers.js"
+    "normalize-phones": "node scripts/normalize-all-phone-numbers.js",
+    "drop-old-constraint": "node scripts/drop-old-unique-time-slot-constraint.js"
   },
   "keywords": [
     "ringlypro",

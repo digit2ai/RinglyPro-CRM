@@ -4,6 +4,7 @@ const MultiTenantRachelService = require('../services/rachelVoiceService');
 const path = require('path');
 const fs = require('fs').promises;
 const { normalizePhoneFromSpeech } = require('../utils/phoneNormalizer');
+const { sendAppointmentConfirmation } = require('../services/appointmentNotification');
 
 // Initialize Rachel service
 const rachelService = new MultiTenantRachelService(
@@ -371,6 +372,37 @@ const handleBookAppointment = async (req, res) => {
             console.log(`   👤 Customer: ${prospectName} (${prospectPhone})`);
             console.log(`   📅 DateTime: ${appointmentDate} ${appointmentTime}`);
             console.log(`   🔑 Confirmation: ${confirmationCode}`);
+
+            // Send SMS confirmation
+            try {
+                const { Client } = require('../models');
+                const client = await Client.findByPk(clientId);
+
+                if (client && client.ringlypro_number) {
+                    console.log(`📱 Sending SMS confirmation to ${prospectPhone}`);
+
+                    const smsResult = await sendAppointmentConfirmation({
+                        customerPhone: prospectPhone,
+                        customerName: prospectName,
+                        appointmentDate: appointmentDate,
+                        appointmentTime: appointmentTime,
+                        confirmationCode: confirmationCode,
+                        businessName: businessName,
+                        fromNumber: client.ringlypro_number
+                    });
+
+                    if (smsResult.success) {
+                        console.log(`✅ SMS confirmation sent! SID: ${smsResult.messageSid}`);
+                    } else {
+                        console.error(`❌ SMS failed: ${smsResult.error}`);
+                    }
+                } else {
+                    console.warn(`⚠️  Cannot send SMS - client ${clientId} has no RinglyPro number`);
+                }
+            } catch (smsError) {
+                console.error(`❌ Error sending SMS notification:`, smsError);
+                // Don't fail the appointment if SMS fails
+            }
 
         } catch (dbError) {
             console.error('❌❌❌ ERROR CREATING APPOINTMENT ❌❌❌');
