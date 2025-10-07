@@ -48,7 +48,7 @@ const { authenticateToken, getUserClient } = require('./middleware/auth');
 // Import routes
 const contactsRoutes = require('./routes/contacts');
 const appointmentsRoutes = require('./routes/appointments');
-const appointmentRoutes = require('./routes/appointment'); // Individual appointment routes
+// const appointmentRoutes = require('./routes/appointment'); // REMOVED: Was duplicate Appointment model, not routes
 const messagesRoutes = require('./routes/messages');
 const callsRoutes = require('./routes/calls'); // New call routes
 const callLogRoutes = require('./routes/callLog'); // Call log routes
@@ -84,7 +84,7 @@ console.log('✅ Auth routes mounted successfully');
 // Core CRM API routes
 app.use('/api/contacts', contactsRoutes);
 app.use('/api/appointments', appointmentsRoutes);
-app.use('/api/appointment', appointmentRoutes);
+// app.use('/api/appointment', appointmentRoutes); // REMOVED: Was loading duplicate model, not router
 app.use('/api/messages', messagesRoutes);
 app.use('/api/calls', callsRoutes);
 app.use('/api/call-log', callLogRoutes);
