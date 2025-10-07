@@ -97,19 +97,19 @@ Keep it professional and actionable for the business owner.`;
      * @returns {string} - Prompt for Claude
      */
     getSpanishSummarizationPrompt(transcription, callerPhone) {
-        return `Estás ayudando a resumir un mensaje de voz para un sistema CRM.
+        return `You are helping summarize a voicemail message for a CRM system. You MUST respond in Spanish.
 
-Mensaje de voz de: ${callerPhone}
-Transcripción: "${transcription}"
+Voicemail from: ${callerPhone}
+Transcription: "${transcription}"
 
-Por favor proporciona un resumen claro y conciso (máximo 2-3 oraciones) que capture:
-1. Quién llamó (usa el número de teléfono)
-2. El propósito/solicitud principal
-3. Cualquier acción necesaria o llamada de regreso
+Please provide a clear, concise summary (2-3 sentences max) IN SPANISH that captures:
+1. Who called (use the phone number)
+2. The main purpose/request
+3. Any action items or callbacks needed
 
-Formato: "Mensaje de voz de ${callerPhone}: [tu resumen aquí]"
+Format: "Mensaje de voz de ${callerPhone}: [your summary in Spanish here]"
 
-Mantenlo profesional y accionable para el dueño del negocio.`;
+IMPORTANT: Your entire response MUST be in Spanish. Keep it professional and actionable for the business owner.`;
     }
 }
 
