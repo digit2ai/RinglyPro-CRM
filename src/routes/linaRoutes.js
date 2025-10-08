@@ -396,11 +396,108 @@ const handleBookAppointmentSpanish = async (req, res) => {
             appointmentTime = parsedDateTime.format('HH:mm:ss');
 
             console.log(`📆 Parsed appointment: date=${appointmentDate}, time=${appointmentTime}`);
-            console.log(`📋 Creating appointment: clientId=${clientId}, name="${prospectName}", phone="${prospectPhone}"`);
 
             if (!clientId) {
                 throw new Error('Missing clientId');
             }
+
+            // ============= CHECK AVAILABILITY FIRST =============
+            const { Op } = require('sequelize');
+            const existingAppointment = await Appointment.findOne({
+                where: {
+                    clientId: clientId,
+                    appointmentDate: appointmentDate,
+                    appointmentTime: appointmentTime,
+                    status: {
+                        [Op.in]: ['confirmed', 'pending', 'scheduled']
+                    }
+                }
+            });
+
+            if (existingAppointment) {
+                console.log(`⚠️ Time slot ${appointmentDate} ${appointmentTime} already booked!`);
+
+                // Find available slots for the same day
+                const bookedAppointments = await Appointment.findAll({
+                    where: {
+                        clientId: clientId,
+                        appointmentDate: appointmentDate,
+                        status: {
+                            [Op.in]: ['confirmed', 'pending', 'scheduled']
+                        }
+                    },
+                    attributes: ['appointmentTime'],
+                    order: [['appointmentTime', 'ASC']]
+                });
+
+                const bookedTimes = bookedAppointments.map(apt => apt.appointmentTime);
+                console.log(`📋 Booked times for ${appointmentDate}:`, bookedTimes);
+
+                // Business hours - typical slots (9am-5pm, 30-min intervals)
+                const allSlots = [
+                    '09:00:00', '09:30:00', '10:00:00', '10:30:00', '11:00:00', '11:30:00',
+                    '12:00:00', '12:30:00', '13:00:00', '13:30:00', '14:00:00', '14:30:00',
+                    '15:00:00', '15:30:00', '16:00:00', '16:30:00', '17:00:00'
+                ];
+
+                const availableSlots = allSlots.filter(slot => !bookedTimes.includes(slot));
+                console.log(`✅ Available slots for ${appointmentDate}:`, availableSlots);
+
+                const escapedName = (prospectName || 'señor')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&apos;');
+
+                let errorTwiml;
+
+                if (availableSlots.length > 0) {
+                    // Format first 3 available slots for speech (Spanish)
+                    const formatTimeForSpeechSpanish = (timeStr) => {
+                        const [hours, minutes] = timeStr.split(':');
+                        let hour = parseInt(hours);
+                        const isPM = hour >= 12;
+                        if (hour > 12) hour -= 12;
+                        if (hour === 0) hour = 12;
+
+                        const article = hour === 1 ? 'la' : 'las';
+                        const period = isPM ? 'de la tarde' : 'de la mañana';
+
+                        if (minutes === '00') {
+                            return `${article} ${hour} ${period}`;
+                        } else {
+                            return `${article} ${hour} y ${minutes} ${period}`;
+                        }
+                    };
+
+                    const suggestions = availableSlots.slice(0, 3).map(formatTimeForSpeechSpanish);
+                    const suggestionText = suggestions.length === 1
+                        ? suggestions[0]
+                        : suggestions.length === 2
+                        ? `${suggestions[0]} o ${suggestions[1]}`
+                        : `${suggestions[0]}, ${suggestions[1]}, o ${suggestions[2]}`;
+
+                    errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Lo siento ${escapedName}, esa hora ya está reservada. Tenemos disponibilidad a ${suggestionText}. Por favor llame de nuevo para agendar una de estas horas. Gracias.</Say>
+    <Hangup/>
+</Response>`;
+                } else {
+                    errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Lo siento ${escapedName}, esa hora ya está reservada y estamos completamente llenos ese día. Por favor llame de nuevo para agendar otro día. Gracias.</Say>
+    <Hangup/>
+</Response>`;
+                }
+
+                console.log('📤 Sending SLOT UNAVAILABLE TwiML (Spanish)');
+                res.set('Content-Type', 'text/xml; charset=utf-8');
+                return res.send(errorTwiml);
+            }
+
+            console.log(`✅ Time slot ${appointmentDate} ${appointmentTime} is available!`);
+            console.log(`📋 Creating appointment: clientId=${clientId}, name="${prospectName}", phone="${prospectPhone}"`);
 
             const appointment = await Appointment.create({
                 clientId: clientId,
