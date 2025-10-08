@@ -4,8 +4,11 @@ const { Client } = require('pg');
 require('dotenv').config();
 
 async function addMissingUserColumns() {
+    // Use same database priority as app: CRM_DATABASE_URL || DATABASE_URL
+    const databaseUrl = process.env.CRM_DATABASE_URL || process.env.DATABASE_URL;
+
     const client = new Client({
-        connectionString: process.env.DATABASE_URL || process.env.CRM_DATABASE_URL,
+        connectionString: databaseUrl,
         ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
     });
 
