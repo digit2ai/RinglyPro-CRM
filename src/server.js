@@ -1,3 +1,4 @@
+// SMS sending feature - deployed 2025-10-07
 const app = require('./app');
 const sequelize = require('./config/database');
 const { syncDatabase } = require('./models'); // IMPORT DATABASE SYNC
