@@ -11,6 +11,51 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
 
+// GET /api/messages/recording/:recordingSid - Proxy Twilio recording (requires auth)
+router.get('/recording/:recordingSid', async (req, res) => {
+  try {
+    const { recordingSid } = req.params;
+
+    // Validate recording SID format
+    if (!recordingSid || !recordingSid.startsWith('RE')) {
+      return res.status(400).json({ error: 'Invalid recording SID' });
+    }
+
+    console.log(`🎵 Proxying recording: ${recordingSid}`);
+
+    // Fetch recording from Twilio with authentication
+    const fetch = (await import('node-fetch')).default;
+    const recordingUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Recordings/${recordingSid}`;
+
+    const response = await fetch(recordingUrl, {
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64')
+      }
+    });
+
+    if (!response.ok) {
+      console.error(`❌ Failed to fetch recording: ${response.status}`);
+      return res.status(response.status).json({ error: 'Failed to fetch recording from Twilio' });
+    }
+
+    // Stream the audio to the client
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Accept-Ranges', 'bytes');
+
+    const buffer = await response.buffer();
+    res.send(buffer);
+
+    console.log(`✅ Recording ${recordingSid} streamed successfully`);
+
+  } catch (error) {
+    console.error('❌ Error proxying recording:', error);
+    res.status(500).json({
+      error: 'Failed to load recording',
+      details: error.message
+    });
+  }
+});
+
 // GET /api/messages/today - Get today's messages from database
 router.get('/today', async (req, res) => {
   try {

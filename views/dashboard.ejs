@@ -2544,6 +2544,16 @@ Press the CALL button and wait for confirmation tone.
                 const isUnread = !msg.read;
                 const unreadIndicator = isUnread ? '<span style="display: inline-block; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; margin-right: 8px;"></span>' : '';
 
+                // Extract recording SID from Twilio URL and use proxy endpoint
+                let recordingProxyUrl = null;
+                if (msg.recordingUrl || msg.recording_url) {
+                    const twilioUrl = msg.recordingUrl || msg.recording_url;
+                    const recordingSidMatch = twilioUrl.match(/RE[a-f0-9]{32}/i);
+                    if (recordingSidMatch) {
+                        recordingProxyUrl = \`/api/messages/recording/\${recordingSidMatch[0]}\`;
+                    }
+                }
+
                 return `
                     <div class="message-card ${isUnread ? 'unread' : ''}" id="message-${index}" data-message-id="${msg.id}">
                         <div class="message-header" onclick="toggleMessage(${index}, ${msg.id}, ${isUnread})">
@@ -2559,7 +2569,7 @@ Press the CALL button and wait for confirmation tone.
                         <div class="message-body">
                             <div class="message-content">
                                 ${msg.body}
-                                ${msg.recordingUrl || msg.recording_url ? `
+                                ${recordingProxyUrl ? `
                                     <div style="margin-top: 1rem; padding: 1rem; background: #f3f4f6; border-radius: 0.5rem;">
                                         <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
                                             <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" style="color: #3b82f6;">
@@ -2569,7 +2579,7 @@ Press the CALL button and wait for confirmation tone.
                                             <strong style="color: #1f2937;">Voicemail Recording</strong>
                                         </div>
                                         <audio controls style="width: 100%; max-width: 400px;">
-                                            <source src="${msg.recordingUrl || msg.recording_url}" type="audio/mpeg">
+                                            <source src="${recordingProxyUrl}" type="audio/mpeg">
                                             Your browser does not support audio playback.
                                         </audio>
                                     </div>
