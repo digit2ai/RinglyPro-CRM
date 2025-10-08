@@ -163,15 +163,25 @@ router.post('/register', async (req, res) => {
             console.log(`🔍 Found available number: ${availableNumbers[0].phoneNumber}`);
 
             // Purchase the number
+            const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+
             const purchasedNumber = await twilioClient.incomingPhoneNumbers
                 .create({
                     phoneNumber: availableNumbers[0].phoneNumber,
-                    voiceUrl: `${process.env.WEBHOOK_BASE_URL}/voice/webhook/voice`,
+                    voiceUrl: `${webhookBaseUrl}/voice/rachel/`,
                     voiceMethod: 'POST',
-                    smsUrl: `${process.env.WEBHOOK_BASE_URL}/api/messages/incoming`,
+                    statusCallback: `${webhookBaseUrl}/voice/webhook/call-status`,
+                    statusCallbackMethod: 'POST',
+                    statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
+                    smsUrl: `${webhookBaseUrl}/api/messages/incoming`,
                     smsMethod: 'POST',
                     friendlyName: `RinglyPro - ${businessName}`
                 });
+
+            console.log(`✅ Configured webhooks for ${businessName}:`);
+            console.log(`   Voice: ${webhookBaseUrl}/voice/rachel/`);
+            console.log(`   Status: ${webhookBaseUrl}/voice/webhook/call-status`);
+            console.log(`   SMS: ${webhookBaseUrl}/api/messages/incoming`);
 
             twilioNumber = purchasedNumber.phoneNumber;
             twilioSid = purchasedNumber.sid;
