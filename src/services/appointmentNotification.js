@@ -125,7 +125,67 @@ async function sendAppointmentConfirmationSpanish({
     }
 }
 
+/**
+ * Send welcome SMS to new client after registration
+ *
+ * @param {Object} params - Welcome message parameters
+ * @param {string} params.ownerPhone - Client owner's phone number
+ * @param {string} params.ownerName - Client owner's name
+ * @param {string} params.businessName - Business name
+ * @param {string} params.ringlyproNumber - Assigned RinglyPro number
+ * @param {string} params.dashboardUrl - URL to dashboard
+ * @returns {Promise<Object>} Twilio message response
+ */
+async function sendWelcomeSMS({
+    ownerPhone,
+    ownerName,
+    businessName,
+    ringlyproNumber,
+    dashboardUrl = 'https://aiagent.ringlypro.com'
+}) {
+    try {
+        // Format the RinglyPro number for display
+        const formattedNumber = ringlyproNumber.replace(/(\+1)?(\d{3})(\d{3})(\d{4})/, '($2) $3-$4');
+
+        // Welcome message with activation instructions
+        const message = `Welcome to RinglyPro, ${ownerName}! 🎉\n\n` +
+            `Your AI assistant Rachel is ready for ${businessName}.\n\n` +
+            `📞 Your RinglyPro Number: ${formattedNumber}\n\n` +
+            `Next Steps:\n` +
+            `1. Log in at ${dashboardUrl}\n` +
+            `2. Toggle "Rachel AI" to ON\n` +
+            `3. Follow the call forwarding instructions for your carrier\n\n` +
+            `Once activated, Rachel will answer all calls to your business phone 24/7!\n\n` +
+            `Questions? Reply to this message.`;
+
+        console.log(`📱 Sending welcome SMS to ${ownerPhone}`);
+        console.log(`📝 Message: ${message}`);
+
+        const smsResponse = await twilioClient.messages.create({
+            body: message,
+            from: ringlyproNumber,  // Send from their new RinglyPro number
+            to: ownerPhone
+        });
+
+        console.log(`✅ Welcome SMS sent successfully! SID: ${smsResponse.sid}`);
+        return { success: true, messageSid: smsResponse.sid };
+
+    } catch (error) {
+        console.error('❌ Error sending welcome SMS:', error);
+        console.error(`   To: ${ownerPhone}`);
+        console.error(`   From: ${ringlyproNumber}`);
+        console.error(`   Error: ${error.message}`);
+
+        return {
+            success: false,
+            error: error.message,
+            code: error.code
+        };
+    }
+}
+
 module.exports = {
     sendAppointmentConfirmation,
-    sendAppointmentConfirmationSpanish
+    sendAppointmentConfirmationSpanish,
+    sendWelcomeSMS
 };

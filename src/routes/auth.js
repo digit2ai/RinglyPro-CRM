@@ -8,6 +8,7 @@ const twilioClient = twilio(
 );
 const { User, sequelize } = require('../models');
 const { sendPasswordResetEmail } = require('../services/emailService');
+const { sendWelcomeSMS } = require('../services/appointmentNotification');
 const { normalizePhoneFromSpeech } = require('../utils/phoneNormalizer');
 const router = express.Router();
 
@@ -269,7 +270,27 @@ router.post('/register', async (req, res) => {
         // FIXED BUG #3: Commit transaction only after everything succeeds
         await transaction.commit();
         console.log('✅ Transaction committed successfully');
-        
+
+        // Send welcome SMS with Rachel activation instructions (non-blocking)
+        try {
+            const smsResult = await sendWelcomeSMS({
+                ownerPhone: normalizedPhoneNumber || normalizedBusinessPhone,
+                ownerName: `${firstName} ${lastName}`,
+                businessName: businessName,
+                ringlyproNumber: twilioNumber,
+                dashboardUrl: process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'
+            });
+
+            if (smsResult.success) {
+                console.log(`✅ Welcome SMS sent to ${normalizedPhoneNumber || normalizedBusinessPhone}`);
+            } else {
+                console.log(`⚠️ Welcome SMS failed (non-critical): ${smsResult.error}`);
+            }
+        } catch (smsError) {
+            console.error('⚠️ Welcome SMS error (non-critical):', smsError.message);
+            // Don't fail registration if SMS fails
+        }
+
         // Generate JWT token
         const token = jwt.sign(
             { 
