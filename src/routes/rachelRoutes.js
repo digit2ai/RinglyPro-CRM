@@ -939,6 +939,7 @@ router.post('/voice/rachel/voicemail-transcription', async (req, res) => {
             clientId: client.id,
             contactId: null,
             twilioSid: RecordingSid,
+            recordingUrl: RecordingUrl,  // Store MP3 URL for playback
             direction: 'incoming',
             fromNumber: From,
             toNumber: To,
@@ -949,6 +950,7 @@ router.post('/voice/rachel/voicemail-transcription', async (req, res) => {
         });
 
         console.log(`💾 Voicemail stored for client ${client.id} (${client.business_name})`);
+        console.log(`🎵 Recording URL: ${RecordingUrl}`);
 
         res.status(200).send('OK');
 

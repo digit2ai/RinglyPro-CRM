@@ -24,6 +24,11 @@ const Message = sequelize.define('Message', {
     unique: true,
     comment: 'Twilio message SID for tracking'
   },
+  recordingUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Twilio recording URL for voicemails (allows listening to actual audio)'
+  },
   direction: {
     type: DataTypes.ENUM('incoming', 'outgoing'),
     allowNull: false
