@@ -742,6 +742,134 @@
             height: 1rem;
         }
 
+        /* Compose SMS Button */
+        .btn-compose-sms {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            transition: background 0.2s;
+        }
+
+        .btn-compose-sms:hover {
+            background: #059669;
+        }
+
+        .btn-compose-sms svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        /* SMS Compose Form */
+        .sms-compose-form {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .char-counter {
+            text-align: right;
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
+
+        .btn-cancel {
+            background: #e5e7eb;
+            color: #374151;
+            border: none;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background: #d1d5db;
+        }
+
+        .btn-send-sms {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.2s;
+        }
+
+        .btn-send-sms:hover {
+            background: #2563eb;
+        }
+
+        .btn-send-sms:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-send-sms svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
         /* Contact Search Modal */
         .modal-overlay {
             display: none;
@@ -1520,14 +1648,60 @@
         <div class="content-section" id="messagesSection">
             <div class="section-header">
                 <h2>Messages & Voicemails</h2>
-                <button onclick="refreshMessages()" class="btn-refresh" id="refreshMessagesBtn" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                        <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-                    </svg>
-                    <span id="refreshBtnText">Refresh</span>
-                </button>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button onclick="toggleComposeSMS()" class="btn-compose-sms" id="composeSMSBtn">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span>New SMS</span>
+                    </button>
+                    <button onclick="refreshMessages()" class="btn-refresh" id="refreshMessagesBtn" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                        </svg>
+                        <span id="refreshBtnText">Refresh</span>
+                    </button>
+                </div>
             </div>
+
+            <!-- SMS Compose Form (hidden by default) -->
+            <div id="smsComposeForm" class="sms-compose-form" style="display: none;">
+                <div class="form-group">
+                    <label for="smsRecipient">To (Phone Number):</label>
+                    <input
+                        type="tel"
+                        id="smsRecipient"
+                        placeholder="+1234567890"
+                        class="form-input"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="smsMessage">Message:</label>
+                    <textarea
+                        id="smsMessage"
+                        rows="4"
+                        placeholder="Type your message here..."
+                        class="form-textarea"
+                        maxlength="1600"
+                    ></textarea>
+                    <div class="char-counter">
+                        <span id="charCount">0</span> / 1600 characters
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button onclick="cancelComposeSMS()" class="btn-cancel">
+                        Cancel
+                    </button>
+                    <button onclick="sendSMSFromCRM()" class="btn-send-sms" id="sendSMSBtn">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                        </svg>
+                        <span id="sendBtnText">Send SMS</span>
+                    </button>
+                </div>
+            </div>
+
             <div id="messagesList">
                 <div class="loading">
                     <div class="spinner"></div>
@@ -2213,7 +2387,7 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                     </svg>
-                                    Reply via SMS
+                                    Reply
                                 </button>
                             </div>
                         </div>
@@ -2228,10 +2402,19 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
             messageCard.classList.toggle('expanded');
         }
 
-        // Reply to voicemail via SMS (opens device SMS app)
+        // Reply to voicemail via SMS (opens compose form with pre-filled number)
         function replySMS(phoneNumber) {
-            const smsUrl = `sms:${phoneNumber}`;
-            window.location.href = smsUrl;
+            // Show compose form
+            document.getElementById('smsComposeForm').style.display = 'block';
+
+            // Pre-fill phone number
+            document.getElementById('smsRecipient').value = phoneNumber;
+
+            // Focus on message input
+            document.getElementById('smsMessage').focus();
+
+            // Scroll to compose form
+            document.getElementById('smsComposeForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         // Get time ago helper
@@ -2305,6 +2488,107 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
                 console.log('⏹️ Messages auto-refresh stopped');
             }
         }
+
+        // SMS Compose Functions
+        function toggleComposeSMS() {
+            const form = document.getElementById('smsComposeForm');
+            if (form.style.display === 'none' || !form.style.display) {
+                form.style.display = 'block';
+                // Focus on recipient input
+                document.getElementById('smsRecipient').focus();
+            } else {
+                form.style.display = 'none';
+            }
+        }
+
+        function cancelComposeSMS() {
+            const form = document.getElementById('smsComposeForm');
+            form.style.display = 'none';
+            // Clear form fields
+            document.getElementById('smsRecipient').value = '';
+            document.getElementById('smsMessage').value = '';
+            document.getElementById('charCount').textContent = '0';
+        }
+
+        async function sendSMSFromCRM() {
+            const recipientInput = document.getElementById('smsRecipient');
+            const messageInput = document.getElementById('smsMessage');
+            const sendBtn = document.getElementById('sendSMSBtn');
+            const sendBtnText = document.getElementById('sendBtnText');
+
+            const recipient = recipientInput.value.trim();
+            const message = messageInput.value.trim();
+
+            // Validate inputs
+            if (!recipient) {
+                alert('Please enter a recipient phone number');
+                recipientInput.focus();
+                return;
+            }
+
+            if (!message) {
+                alert('Please enter a message');
+                messageInput.focus();
+                return;
+            }
+
+            // Disable button and show loading state
+            sendBtn.disabled = true;
+            sendBtnText.textContent = 'Sending...';
+
+            try {
+                const response = await authenticatedFetch('/api/messages/sms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        to: recipient,
+                        message: message,
+                        clientId: CLIENT_ID
+                    })
+                });
+
+                if (!response) {
+                    throw new Error('No response from server');
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Success!
+                    sendBtnText.textContent = 'Sent!';
+
+                    // Clear form
+                    setTimeout(() => {
+                        cancelComposeSMS();
+                        sendBtnText.textContent = 'Send SMS';
+
+                        // Refresh messages to show the sent message
+                        loadMessages();
+                    }, 1500);
+                } else {
+                    throw new Error(result.error || 'Failed to send SMS');
+                }
+            } catch (error) {
+                console.error('Error sending SMS:', error);
+                alert(`Failed to send SMS: ${error.message}`);
+                sendBtnText.textContent = 'Send SMS';
+            } finally {
+                sendBtn.disabled = false;
+            }
+        }
+
+        // Update character counter for SMS textarea
+        document.addEventListener('DOMContentLoaded', () => {
+            const smsMessageInput = document.getElementById('smsMessage');
+            if (smsMessageInput) {
+                smsMessageInput.addEventListener('input', (e) => {
+                    const charCount = e.target.value.length;
+                    document.getElementById('charCount').textContent = charCount;
+                });
+            }
+        });
 
         // Tab Switching
         function setupTabSwitching() {
