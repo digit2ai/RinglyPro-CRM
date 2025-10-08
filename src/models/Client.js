@@ -118,6 +118,7 @@ module.exports = (sequelize) => {
                 fields: ['business_phone']
             },
             {
+                unique: true,
                 fields: ['ringlypro_number']
             },
             {
