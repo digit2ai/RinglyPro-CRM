@@ -1,380 +1,660 @@
-# RinglyPro User Guide
+# RinglyPro CRM - User Guide
 
-**Quick Start Guide for Customers**
+## Welcome to RinglyPro
 
----
-
-## 📱 What is RinglyPro?
-
-RinglyPro is an AI-powered phone receptionist service. When customers call your business number, Rachel (our AI assistant) answers professionally, takes messages, and handles calls 24/7.
+RinglyPro is your AI-powered call assistant that answers calls 24/7, books appointments, and captures messages in both English and Spanish.
 
 ---
 
 ## 🚀 Getting Started
 
-### Step 1: Create Your Account
+### 1. System Access
 
-1. Go to https://aiagent.ringlypro.com
-2. Click **"Sign Up"**
-3. Enter your:
-   - Email address
-   - Password
-   - Business name
-4. Click **"Create Account"**
+1. Visit: https://aiagent.ringlypro.com
+2. Enter your email and password
+3. Click "Login"
 
-### Step 2: Add Credits
-
-**Every new account includes 100 FREE minutes per month!**
-
-For additional minutes:
-1. Click **"Add Credits"** in your dashboard
-2. Choose an amount:
-   - $10 = 50 minutes
-   - $20 = 100 minutes
-   - $50 = 250 minutes
-   - $100 = 500 minutes
-   - Custom amount
-3. Enter payment details (secured by Stripe)
-4. Click **"Add Credits"**
-5. Minutes appear instantly!
+**Forgot your password?** Use the "Reset Password" option on the login page.
 
 ---
 
-## 💰 Pricing
+## ⚙️ Initial Setup
 
-- **Free Tier:** 100 minutes/month (included with every account)
-- **Overage Rate:** $0.20 per minute
-- **No monthly fees**
-- **No contracts**
-- **Pay as you go**
+### 2. Activate Rachel AI
 
-### How It Works:
-- First 100 minutes each month: **FREE**
-- After 100 minutes: **$0.20/minute** (charged from your credit balance)
+Rachel is your AI assistant who answers all incoming calls.
 
-**Example:**
-- You use 150 minutes in a month
-- First 100 minutes: Free
-- Next 50 minutes: 50 × $0.20 = $10.00
+**Activation steps:**
 
----
+1. On the dashboard, locate the **"Rachel AI"** toggle
+2. Slide the toggle to **ON** (green)
+3. Call forwarding instructions will appear
 
-## 📞 Using Your RinglyPro Number
+### 3. Configure Call Forwarding
 
-### Your Phone Number
+For Rachel to answer your calls, you must forward your business phone to your RinglyPro number.
 
-When you sign up, you'll receive a RinglyPro phone number:
-- Example: **+1 (888) 610-3810**
-- Give this number to customers
-- Publish it on your website, business cards, ads
+**Your RinglyPro Number:** Displayed at the top of the dashboard
 
-### How Calls Work
+#### Instructions by Carrier:
 
-1. **Customer calls your RinglyPro number**
-2. **Rachel (AI) answers immediately**
-   - Professional greeting
-   - Takes messages
-   - Answers basic questions
-   - Available 24/7
-3. **You get notified**
-   - Check call logs in dashboard
-   - Listen to recordings
-   - See transcripts
+**AT&T:**
+- Dial: `*21*[your-ringlypro-number]#`
+- To deactivate: `##21#`
 
----
+**Verizon:**
+- Dial: `*72[your-ringlypro-number]`
+- Wait for 2 beeps, then hang up
+- To deactivate: `*73`
 
-## 🎯 Dashboard Features
+**T-Mobile:**
+- Dial: `**21*[your-ringlypro-number]#`
+- To deactivate: `##21#`
 
-### Main Dashboard
+**Sprint:**
+- Dial: `*72[your-ringlypro-number]`
+- Wait for confirmation
+- To deactivate: `*720`
 
-Login at https://aiagent.ringlypro.com to access:
+**Metro PCS:**
+- Dial: `**21*[your-ringlypro-number]#`
+- To deactivate: `##21#`
 
-**1. Credit Balance**
-- See remaining minutes
-- Free minutes used this month
-- Total minutes used
+**Cricket Wireless:**
+- Dial: `*72[your-ringlypro-number]`
+- To deactivate: `*73`
 
-**2. Call History**
-- Recent calls
-- Call duration
-- Date/time
-- Caller information
+**Boost Mobile:**
+- Dial: `*72[your-ringlypro-number]`
+- To deactivate: `*720`
 
-**3. Usage Statistics**
-- Minutes used today/week/month
-- Peak call times
-- Call trends
+**Google Voice:**
+- Go to voice.google.com
+- Navigate to Settings → Calls
+- Enable forwarding to RinglyPro number
 
-**4. Add Credits**
-- Quick top-up
-- Payment history
-- Transaction records
+**Landline:**
+- Dial: `72#[your-ringlypro-number]`
+- To deactivate: `73#`
+
+> **Note:** Replace `[your-ringlypro-number]` with your complete 10-digit number (no dashes or parentheses).
 
 ---
 
-## 💳 Managing Credits
+## 📞 How Rachel Works
 
-### Check Your Balance
+### Caller Experience
 
-1. Login to dashboard
-2. See balance at top: **"615 minutes remaining"**
-3. Green = plenty of credits
-4. Yellow = running low
-5. Red = need to add credits
+When someone calls your business number:
 
-### Add More Minutes
+1. **Language Selection:**
+   - "For English, press 1"
+   - "For Spanish, please press 2"
 
-1. Click **"Add Credits"** button
-2. Choose amount or enter custom
-3. Enter payment details
-4. Click **"Add Credits"**
-5. Balance updates instantly
+2. **Personalized Greeting:**
+   - Rachel greets with your business name
+   - Asks how she can help
 
-### Auto-Recharge (Coming Soon)
-- Set minimum balance (e.g., 50 minutes)
-- Auto-add credits when low
-- Never miss a call!
+3. **Available Options:**
+   - 📅 **Book Appointment** - "I'd like to schedule an appointment"
+   - 📝 **Leave Message** - "I'd like to leave a message"
+   - 💰 **Pricing Information** - "How much does it cost?"
+   - 👤 **Speak to Support** - "I'd like to speak with someone"
 
----
+### Voicemail
 
-## 🔐 Account Security
-
-### Password Reset
-
-**If you forget your password:**
-
-1. Go to https://aiagent.ringlypro.com
-2. Click **"Forgot Password?"**
-3. Enter your email address
-4. Click **"Send Reset Link"**
-5. **Reset link appears on screen** (copy it!)
-6. Click the link or paste in browser
-7. Enter new password
-8. Click **"Reset Password"**
-9. Done! Login with new password
-
-**Note:** Reset links expire after 1 hour for security.
-
-### Change Password
-
-1. Login to dashboard
-2. Click your profile (top right)
-3. Select **"Change Password"**
-4. Enter current password
-5. Enter new password
-6. Confirm new password
-7. Click **"Update Password"**
+- **In English:** Rachel transcribes and summarizes the message automatically
+- **In Spanish:** Audio recording is saved (no transcription)
+- All messages appear in the **"Messages"** tab with an unread counter
 
 ---
 
-## 📊 Understanding Your Usage
+## 📊 Using the Dashboard
 
-### Call Duration Calculation
+### Overview Tab
 
-- Charged per minute
-- Rounded up (e.g., 1:30 call = 2 minutes)
-- Only outbound calls are charged
-- Incoming calls to Rachel are charged
+**Quick view of:**
+- Total calls for the day
+- Messages received
+- Appointments scheduled
+- Weekly statistics
 
-### Free Minutes
+### Messages Tab
 
-- Reset on the 1st of each month
-- Use these first before paid credits
-- 100 minutes = ~3 hours of calls
+**Features:**
+- 📬 **Red badge** - Shows number of unread messages
+- 🎵 **Audio player** - Listen to voicemail recordings
+- ✅ **Mark as read** - Click message to expand and mark as read
+- 📞 **Sender information** - Phone number and time
 
-### Paid Balance
+**Message types:**
+- Voicemails with transcription (English)
+- Voicemails with recording (Spanish)
+- Incoming SMS messages
 
-- Never expires
-- Used after free minutes
-- Top up anytime
-- No minimum purchase
+### Appointments Tab
+
+**Manage your appointments:**
+- View scheduled appointments
+- Confirm/Cancel appointments
+- View history
+- Export to calendar
+
+### Calendar Tab
+
+**Availability settings:**
+- Business hours (start/end)
+- Operating days
+- Appointment duration
+- Time zone
+
+### Settings Tab
+
+**Customization:**
+- Business name
+- Rachel's custom greeting
+- Booking URL
+- Notification settings
+- Change password
 
 ---
 
-## 🛠️ Troubleshooting
+## 🔔 SMS Notifications
 
-### "My balance isn't decreasing after calls"
+You'll receive automatic SMS when:
+- ✅ You successfully register (welcome message)
+- 📅 A new appointment is scheduled
+- 📝 You receive a new voicemail
+- ❌ An appointment is cancelled
 
-✅ **FIXED!** This was a configuration issue that has been resolved as of October 4, 2025. All calls now properly deduct minutes.
+**To reply:** Simply respond to the SMS you received on your RinglyPro number.
 
-To verify:
-1. Make a 2-minute test call
+---
+
+## 🎯 Best Practices
+
+### For Maximum Effectiveness:
+
+1. **Keep Rachel Active 24/7:**
+   - Maintain forwarding active at all times
+   - Rachel never misses a call
+
+2. **Check Messages Daily:**
+   - Monitor the unread message counter
+   - Respond to leads quickly
+
+3. **Configure Your Calendar:**
+   - Keep your availability up to date
+   - Rachel will only offer available time slots
+
+4. **Customize Greeting:**
+   - Use a greeting that reflects your brand
+   - Mention promotions or special services
+
+5. **Test the System:**
+   - Call your own number
+   - Test both languages (English and Spanish)
+
+---
+
+## 🆘 Troubleshooting
+
+### Rachel isn't answering calls
+
+**Check:**
+- ✅ "Rachel AI" toggle is **ON** (green)
+- ✅ Call forwarding is activated correctly
+- ✅ You dialed the correct code for your carrier
+- ✅ You used your complete RinglyPro number (10 digits)
+
+**Test:**
+- Call your business number from another phone
+- Verify the call forwards correctly
+
+### I don't see voicemail messages
+
+**Check:**
+- ✅ You're viewing the correct tab: **Messages**
+- ✅ The message is from today (or use date filter)
+- ✅ You've refreshed the page (F5)
+
+**For Spanish recordings:**
+- Click the message to expand
+- Audio player will appear below the text
+- Click ▶️ to play
+
+### Call forwarding doesn't work
+
+**Try:**
+1. Deactivate forwarding (deactivation code)
 2. Wait 30 seconds
-3. Refresh dashboard
-4. Balance should decrease by 2 minutes
+3. Activate again (activation code)
+4. Test by calling your number
 
-### "Payment failed"
-
-1. Check card details are correct
-2. Ensure sufficient funds
-3. Try a different card
-4. Contact your bank if declined
-5. Email support if issue persists
-
-### "Can't login"
-
-1. Use **"Forgot Password"** to reset
-2. Check email is correct
-3. Try different browser
-4. Clear browser cache
-5. Contact support if still stuck
-
-### "Didn't receive password reset"
-
-**New system (no email needed!):**
-- Reset link appears directly on screen
-- Copy the link and open in browser
-- No email/SMS required
-- Instant password reset
+**If problem persists:**
+- Contact your phone carrier
+- Some plans require enabling call forwarding feature
 
 ---
 
-## 📞 Contact Support
+## 📱 Send SMS to Clients
 
-**Email:** support@ringlypro.com
-**Hours:** Monday-Friday, 9 AM - 5 PM EST
-**Response Time:** Within 24 hours
+### From the Dashboard:
 
-**For urgent issues:**
-- Account access problems
-- Billing questions
-- Technical issues
+1. Go to **Messages** tab
+2. Locate the client's message
+3. Click **"Send SMS"**
+4. Write your response
+5. Click **"Send"**
 
-Include in your message:
-- Your email address
-- Description of issue
-- Screenshots (if applicable)
+**Important:** SMS will be sent from your RinglyPro number, allowing two-way conversations.
 
 ---
 
-## 💡 Tips & Best Practices
+## 📞 Technical Support
 
-### Maximize Your Free Minutes
-- 100 free minutes = great for small businesses
-- Average call: 3-5 minutes
-- 100 minutes ≈ 20-30 customer calls/month
+### Need Help?
 
-### Keep Credits Topped Up
-- Add credits before running out
-- Recommended minimum: 50 minutes
-- Set reminders to check balance weekly
+**Support options:**
+- 📧 Email: support@ringlypro.com
+- 💬 Live chat: Available in dashboard
+- 📱 SMS: Reply to welcome message
+- 🌐 Help center: https://help.ringlypro.com
 
-### Monitor Your Usage
-- Check dashboard regularly
-- Watch for usage spikes
-- Plan credit purchases ahead
+### Report Issues
 
-### Test Your Number
-- Call your RinglyPro number monthly
-- Verify Rachel is working
-- Check call quality
-- Test message delivery
+Include in your report:
+- Problem description
+- Date and time it occurred
+- Calling number (if applicable)
+- Screenshots (if possible)
 
 ---
 
-## 🔒 Payment Security
+## 🔐 Security & Privacy
 
-**Your payment information is 100% secure:**
-
-- ✅ Powered by **Stripe** (industry leader)
-- ✅ PCI-DSS compliant
-- ✅ Bank-level encryption
-- ✅ We never store your card details
-- ✅ All transactions secured with SSL/TLS
-
-**Look for the "SECURED BY STRIPE" badge** on the payment form.
+- 🔒 All your data is encrypted
+- 🛡️ We comply with GDPR and privacy regulations
+- 🔑 Use strong passwords (minimum 8 characters)
+- 👤 Never share your login credentials
+- 🚪 Log out on public computers
 
 ---
 
-## 📈 Account Limits
+## ✨ Pro Tips
 
-| Feature | Limit |
-|---------|-------|
-| Free minutes/month | 100 |
-| Minimum credit purchase | $10 (50 min) |
-| Maximum credit purchase | $1000 (5000 min) |
-| Credits expiration | Never |
-| Free minutes expiration | Monthly (resets 1st) |
-| Phone numbers per account | 1 (contact for more) |
+### Maximize ROI:
 
----
+1. **Promote Your Number:**
+   - Use it in advertising
+   - Add to business cards
+   - Place on social media
 
-## 🎓 FAQ
+2. **Analyze Calls:**
+   - Review call patterns
+   - Identify peak hours
+   - Adjust availability based on demand
 
-**Q: Do my paid credits expire?**
-A: No! Paid credits never expire. Only the 100 free minutes reset monthly.
+3. **Respond Quickly:**
+   - Clients expect response within 24 hours
+   - Use templates for common responses
+   - Configure push notifications
 
-**Q: Can I get a refund?**
-A: Unused credits can be refunded within 30 days. Contact support.
-
-**Q: Can I change my phone number?**
-A: Not currently. Contact support for special requests.
-
-**Q: Is there a monthly fee?**
-A: No! Only pay $0.20/minute after your 100 free minutes.
-
-**Q: Can I cancel anytime?**
-A: Yes, no contracts. Stop using anytime. Credits remain in account.
-
-**Q: What happens if I run out of credits?**
-A: Calls will stop being answered. Add credits to resume service.
-
-**Q: Can multiple people use one account?**
-A: Yes! Share login credentials with your team.
-
-**Q: Do you record calls?**
-A: Yes, for quality and training. You can access recordings in dashboard.
-
-**Q: Can I forward calls to my phone?**
-A: Coming soon! Currently Rachel handles all calls.
-
-**Q: What if Rachel can't answer a question?**
-A: She'll take a message and you'll be notified.
+4. **Welcome Message:**
+   - Be professional but friendly
+   - Mention expected response times
+   - Include call to action
 
 ---
 
-## 🚀 Quick Reference
+## 📈 Next Steps
 
-### Common Tasks
+### Once Configured:
 
-**Add Credits:**
-Dashboard → "Add Credits" → Choose amount → Pay
-
-**Check Balance:**
-Dashboard → Top of page shows remaining minutes
-
-**View Call History:**
-Dashboard → "Call History" tab
-
-**Reset Password:**
-Login page → "Forgot Password?" → Copy reset link
-
-**Contact Support:**
-support@ringlypro.com
+1. ✅ Complete your profile in Settings
+2. ✅ Configure schedule in Calendar
+3. ✅ Customize Rachel's greeting
+4. ✅ Test both languages (English and Spanish)
+5. ✅ Share your new number with clients
 
 ---
 
-## 📱 Mobile Access
+**Thank you for choosing RinglyPro!**
 
-Access your dashboard on any device:
-- ✅ iPhone/iPad (Safari, Chrome)
-- ✅ Android (Chrome, Firefox)
-- ✅ Tablet (any browser)
-- ✅ Desktop (all browsers)
-
-**Responsive design** - works perfectly on all screen sizes!
+*Never miss another call. Rachel is ready to serve your customers 24/7.* 🚀
 
 ---
 
-## 🎉 Welcome to RinglyPro!
-
-Thank you for choosing RinglyPro for your business communications. Our AI receptionist Rachel is ready to help your business never miss a call!
-
-**Questions?** Email support@ringlypro.com
-**Ready to start?** Login at https://aiagent.ringlypro.com
+---
 
 ---
 
-**Last Updated:** October 4, 2025
-**Version:** 1.0
-**System Status:** ✅ All systems operational
+# Guía Rápida de Usuario - RinglyPro CRM
+
+## Bienvenido a RinglyPro
+
+RinglyPro es su asistente de llamadas con inteligencia artificial que atiende llamadas 24/7, reserva citas y captura mensajes en inglés y español.
+
+---
+
+## 🚀 Primeros Pasos
+
+### 1. Acceso al Sistema
+
+1. Visite: https://aiagent.ringlypro.com
+2. Ingrese su correo electrónico y contraseña
+3. Haga clic en "Iniciar Sesión"
+
+**¿Olvidó su contraseña?** Use la opción "Recuperar Contraseña" en la página de inicio de sesión.
+
+---
+
+## ⚙️ Configuración Inicial
+
+### 2. Activar Rachel AI
+
+Rachel es su asistente de IA que atiende todas las llamadas entrantes.
+
+**Pasos para activar:**
+
+1. En el panel de control, localice el interruptor **"Rachel AI"**
+2. Deslice el interruptor a la posición **ON** (verde)
+3. Aparecerán las instrucciones de desvío de llamadas
+
+### 3. Configurar Desvío de Llamadas
+
+Para que Rachel atienda sus llamadas, debe desviar su teléfono comercial a su número de RinglyPro.
+
+**Su número de RinglyPro:** Aparece en la parte superior del panel
+
+#### Instrucciones por Operador:
+
+**AT&T:**
+- Marque: `*21*[su-numero-ringlypro]#`
+- Para desactivar: `##21#`
+
+**Verizon:**
+- Marque: `*72[su-numero-ringlypro]`
+- Espere 2 tonos, luego cuelgue
+- Para desactivar: `*73`
+
+**T-Mobile:**
+- Marque: `**21*[su-numero-ringlypro]#`
+- Para desactivar: `##21#`
+
+**Sprint:**
+- Marque: `*72[su-numero-ringlypro]`
+- Espere confirmación
+- Para desactivar: `*720`
+
+**Metro PCS:**
+- Marque: `**21*[su-numero-ringlypro]#`
+- Para desactivar: `##21#`
+
+**Cricket Wireless:**
+- Marque: `*72[su-numero-ringlypro]`
+- Para desactivar: `*73`
+
+**Boost Mobile:**
+- Marque: `*72[su-numero-ringlypro]`
+- Para desactivar: `*720`
+
+**Google Voice:**
+- Acceda a voice.google.com
+- Vaya a Configuración → Llamadas
+- Active desvío al número de RinglyPro
+
+**Landline (Línea Fija):**
+- Marque: `72#[su-numero-ringlypro]`
+- Para desactivar: `73#`
+
+> **Nota:** Reemplace `[su-numero-ringlypro]` con su número completo de 10 dígitos (sin guiones ni paréntesis).
+
+---
+
+## 📞 Cómo Funciona Rachel
+
+### Experiencia del Cliente que Llama
+
+Cuando alguien llama a su número comercial:
+
+1. **Selección de Idioma:**
+   - "Para inglés, presione 1"
+   - "Para español, presione 2"
+
+2. **Saludo Personalizado:**
+   - Rachel saluda con el nombre de su empresa
+   - Pregunta cómo puede ayudar
+
+3. **Opciones Disponibles:**
+   - 📅 **Reservar Cita** - "Quiero agendar una cita"
+   - 📝 **Dejar Mensaje** - "Quiero dejar un mensaje"
+   - 💰 **Información de Precios** - "¿Cuánto cuesta?"
+   - 👤 **Hablar con Soporte** - "Quiero hablar con alguien"
+
+### Mensajes de Voz
+
+- **En Inglés:** Rachel transcribe y resume el mensaje automáticamente
+- **En Español:** Se guarda la grabación de audio (sin transcripción)
+- Todos los mensajes aparecen en la pestaña **"Messages"** con un contador de no leídos
+
+---
+
+## 📊 Uso del Panel de Control
+
+### Pestaña Overview (Resumen)
+
+**Vista rápida de:**
+- Total de llamadas del día
+- Mensajes recibidos
+- Citas programadas
+- Estadísticas de la semana
+
+### Pestaña Messages (Mensajes)
+
+**Funciones:**
+- 📬 **Badge rojo** - Muestra cantidad de mensajes sin leer
+- 🎵 **Reproductor de audio** - Escuche grabaciones de mensajes de voz
+- ✅ **Marcar como leído** - Haga clic en el mensaje para expandir y marcar como leído
+- 📞 **Información del remitente** - Número de teléfono y hora
+
+**Tipos de mensaje:**
+- Mensajes de voz con transcripción (inglés)
+- Mensajes de voz con grabación (español)
+- Mensajes SMS entrantes
+
+### Pestaña Appointments (Citas)
+
+**Gestione sus citas:**
+- Ver citas programadas
+- Confirmar/Cancelar citas
+- Ver historial
+- Exportar calendario
+
+### Pestaña Calendar (Calendario)
+
+**Configuración de disponibilidad:**
+- Horario comercial (inicio/fin)
+- Días de operación
+- Duración de citas
+- Zona horaria
+
+### Pestaña Settings (Configuración)
+
+**Personalización:**
+- Nombre del negocio
+- Saludo personalizado de Rachel
+- URL de reservas
+- Configuración de notificaciones
+- Cambiar contraseña
+
+---
+
+## 🔔 Notificaciones SMS
+
+Recibirá SMS automáticos cuando:
+- ✅ Se registre exitosamente (mensaje de bienvenida)
+- 📅 Se programe una nueva cita
+- 📝 Reciba un nuevo mensaje de voz
+- ❌ Se cancele una cita
+
+**Para responder:** Simplemente responda al SMS que recibió en su número de RinglyPro.
+
+---
+
+## 🎯 Mejores Prácticas
+
+### Para Máxima Efectividad:
+
+1. **Active Rachel 24/7:**
+   - Mantenga el desvío activo todo el tiempo
+   - Rachel nunca se pierde una llamada
+
+2. **Revise Mensajes Diariamente:**
+   - Verifique el contador de mensajes no leídos
+   - Responda a clientes potenciales rápidamente
+
+3. **Configure su Calendario:**
+   - Mantenga actualizada su disponibilidad
+   - Rachel solo ofrecerá horarios disponibles
+
+4. **Personalice el Saludo:**
+   - Use un saludo que refleje su marca
+   - Mencione promociones o servicios especiales
+
+5. **Pruebe el Sistema:**
+   - Llame a su propio número
+   - Verifique ambos idiomas (inglés y español)
+
+---
+
+## 🆘 Solución de Problemas
+
+### Rachel no está contestando llamadas
+
+**Verificar:**
+- ✅ El interruptor "Rachel AI" está en **ON** (verde)
+- ✅ El desvío de llamadas está activado correctamente
+- ✅ Marcó el código correcto para su operador
+- ✅ Usó su número de RinglyPro completo (10 dígitos)
+
+**Probar:**
+- Llame a su número comercial desde otro teléfono
+- Verifique que la llamada se desvíe correctamente
+
+### No veo los mensajes de voz
+
+**Verificar:**
+- ✅ Está viendo la pestaña correcta: **Messages**
+- ✅ El mensaje es de hoy (o use el filtro de fecha)
+- ✅ Ha refrescado la página (F5)
+
+**Para grabaciones en español:**
+- Haga clic en el mensaje para expandir
+- El reproductor de audio aparecerá debajo del texto
+- Haga clic en ▶️ para reproducir
+
+### El desvío de llamadas no funciona
+
+**Intentar:**
+1. Desactivar el desvío (código de desactivación)
+2. Esperar 30 segundos
+3. Activar nuevamente (código de activación)
+4. Probar llamando a su número
+
+**Si persiste el problema:**
+- Contacte a su operador telefónico
+- Algunos planes requieren activar el desvío de llamadas
+
+---
+
+## 📱 Enviar SMS a Clientes
+
+### Desde el Panel:
+
+1. Vaya a la pestaña **Messages**
+2. Localice el mensaje del cliente
+3. Haga clic en **"Send SMS"**
+4. Escriba su respuesta
+5. Haga clic en **"Enviar"**
+
+**Importante:** El SMS se enviará desde su número de RinglyPro, permitiendo conversaciones bidireccionales.
+
+---
+
+## 📞 Soporte Técnico
+
+### ¿Necesita Ayuda?
+
+**Opciones de soporte:**
+- 📧 Email: soporte@ringlypro.com
+- 💬 Chat en vivo: Disponible en el panel
+- 📱 SMS: Responda al mensaje de bienvenida
+- 🌐 Centro de ayuda: https://ayuda.ringlypro.com
+
+### Reportar Problemas
+
+Incluya en su reporte:
+- Descripción del problema
+- Fecha y hora que ocurrió
+- Número desde el cual llamaron (si aplica)
+- Capturas de pantalla (si es posible)
+
+---
+
+## 🔐 Seguridad y Privacidad
+
+- 🔒 Todos sus datos están encriptados
+- 🛡️ Cumplimos con GDPR y regulaciones de privacidad
+- 🔑 Use contraseñas seguras (mínimo 8 caracteres)
+- 👤 Nunca comparta sus credenciales de acceso
+- 🚪 Cierre sesión en computadoras públicas
+
+---
+
+## ✨ Consejos Profesionales
+
+### Maximice el ROI:
+
+1. **Promocione su Número:**
+   - Úselo en publicidad
+   - Añádalo a tarjetas de presentación
+   - Colóquelo en redes sociales
+
+2. **Analice las Llamadas:**
+   - Revise patrones de llamadas
+   - Identifique horas pico
+   - Ajuste disponibilidad según demanda
+
+3. **Responda Rápido:**
+   - Los clientes esperan respuesta en 24 horas
+   - Use plantillas para respuestas comunes
+   - Configure notificaciones push
+
+4. **Mensaje de Bienvenida:**
+   - Sea profesional pero amigable
+   - Mencione tiempos de respuesta esperados
+   - Incluya llamado a la acción
+
+---
+
+## 📈 Próximos Pasos
+
+### Una Vez Configurado:
+
+1. ✅ Complete su perfil en Settings
+2. ✅ Configure horario en Calendar
+3. ✅ Personalice saludo de Rachel
+4. ✅ Pruebe ambos idiomas (inglés y español)
+5. ✅ Comparta su nuevo número con clientes
+
+---
+
+**¡Gracias por elegir RinglyPro!**
+
+*Nunca vuelva a perder una llamada. Rachel está lista para atender a sus clientes 24/7.* 🚀
+
+---
+
+*Última actualización: Enero 2025*
+*Versión: 1.0*

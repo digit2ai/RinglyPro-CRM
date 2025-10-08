@@ -1707,6 +1707,12 @@
             Messages
             <span id="messagesBadge" class="tab-badge" style="display: none;">0</span>
         </button>
+        <button class="nav-tab" data-tab="userguide">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+            User Guide
+        </button>
     </div>
 
     <!-- Content Area -->
@@ -1754,6 +1760,36 @@
                 <div class="loading">
                     <div class="spinner"></div>
                     <p>Loading messages...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Guide Section -->
+        <div class="content-section" id="userguideSection">
+            <div class="section-header">
+                <h2>User Guide</h2>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button onclick="scrollToEnglish()" class="btn-secondary" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286H4.545zm1.634-.736L5.5 3.956h-.049l-.679 2.022H6.18z"/>
+                            <path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2zm7.138 9.995c.193.301.402.583.63.846-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14V8h-3v1.047h.765c-.318.844-.74 1.546-1.272 2.13a6.066 6.066 0 0 1-.415-.492 1.988 1.988 0 0 1-.94.31z"/>
+                        </svg>
+                        English
+                    </button>
+                    <button onclick="scrollToSpanish()" class="btn-secondary" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286H4.545zm1.634-.736L5.5 3.956h-.049l-.679 2.022H6.18z"/>
+                            <path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2zm7.138 9.995c.193.301.402.583.63.846-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14V8h-3v1.047h.765c-.318.844-.74 1.546-1.272 2.13a6.066 6.066 0 0 1-.415-.492 1.988 1.988 0 0 1-.94.31z"/>
+                        </svg>
+                        Español
+                    </button>
+                </div>
+            </div>
+
+            <div id="userGuideContent" style="padding: 2rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-height: 70vh; overflow-y: auto;">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading user guide...</p>
                 </div>
             </div>
         </div>
@@ -2737,12 +2773,100 @@ Press the CALL button and wait for confirmation tone.
                 tab.addEventListener('click', () => {
                     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
                     document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-                    
+
                     tab.classList.add('active');
                     const tabName = tab.dataset.tab;
                     document.getElementById(`${tabName}Section`).classList.add('active');
+
+                    // Load user guide when tab is clicked
+                    if (tabName === 'userguide') {
+                        loadUserGuide();
+                    }
                 });
             });
+        }
+
+        // Load and render user guide
+        let userGuideLoaded = false;
+        async function loadUserGuide() {
+            if (userGuideLoaded) return; // Only load once
+
+            const container = document.getElementById('userGuideContent');
+
+            try {
+                const response = await fetch('/USER_GUIDE.md');
+                if (!response.ok) throw new Error('Failed to load user guide');
+
+                const markdown = await response.text();
+
+                // Convert markdown to HTML (basic implementation)
+                let html = markdown
+                    // Headers
+                    .replace(/^### (.*$)/gim, '<h3 id="$1">$1</h3>')
+                    .replace(/^## (.*$)/gim, '<h2 id="$1">$1</h2>')
+                    .replace(/^# (.*$)/gim, '<h1 id="$1">$1</h1>')
+                    // Bold
+                    .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+                    // Italic
+                    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+                    // Code blocks
+                    .replace(/```(.*?)```/gims, '<pre><code>$1</code></pre>')
+                    // Inline code
+                    .replace(/`([^`]+)`/gim, '<code>$1</code>')
+                    // Links
+                    .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank">$1</a>')
+                    // Blockquotes
+                    .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
+                    // Horizontal rules
+                    .replace(/^---$/gim, '<hr>')
+                    // Line breaks
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/\n/g, '<br>');
+
+                // Wrap in paragraphs
+                html = '<div style="line-height: 1.6; color: #333;">' +
+                       '<style>' +
+                       '#userGuideContent h1 { font-size: 2rem; margin-top: 2rem; margin-bottom: 1rem; color: #1a202c; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }' +
+                       '#userGuideContent h2 { font-size: 1.5rem; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #2d3748; }' +
+                       '#userGuideContent h3 { font-size: 1.25rem; margin-top: 1rem; margin-bottom: 0.5rem; color: #4a5568; }' +
+                       '#userGuideContent code { background: #f7fafc; padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-family: monospace; color: #d53f8c; }' +
+                       '#userGuideContent pre { background: #2d3748; color: #e2e8f0; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }' +
+                       '#userGuideContent pre code { background: transparent; color: inherit; padding: 0; }' +
+                       '#userGuideContent blockquote { border-left: 4px solid #4299e1; padding-left: 1rem; margin: 1rem 0; color: #4a5568; background: #ebf8ff; padding: 0.75rem 1rem; border-radius: 0.25rem; }' +
+                       '#userGuideContent a { color: #4299e1; text-decoration: none; }' +
+                       '#userGuideContent a:hover { text-decoration: underline; }' +
+                       '#userGuideContent hr { border: none; border-top: 2px solid #e2e8f0; margin: 2rem 0; }' +
+                       '#userGuideContent ul, #userGuideContent ol { margin-left: 1.5rem; margin-bottom: 1rem; }' +
+                       '#userGuideContent li { margin-bottom: 0.5rem; }' +
+                       '</style>' +
+                       '<p>' + html + '</p>' +
+                       '</div>';
+
+                container.innerHTML = html;
+                userGuideLoaded = true;
+
+                console.log('✅ User guide loaded');
+
+            } catch (error) {
+                console.error('❌ Error loading user guide:', error);
+                container.innerHTML = '<p style="color: #e53e3e; text-align: center; padding: 2rem;">Failed to load user guide. Please try refreshing the page.</p>';
+            }
+        }
+
+        // Scroll to English section
+        function scrollToEnglish() {
+            const englishHeader = document.querySelector('#userGuideContent h1');
+            if (englishHeader) {
+                englishHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Scroll to Spanish section
+        function scrollToSpanish() {
+            const allH1s = document.querySelectorAll('#userGuideContent h1');
+            if (allH1s.length > 1) {
+                allH1s[1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
 
         // Contact Search

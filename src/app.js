@@ -148,9 +148,14 @@ app.get('/', async (req, res) => {
 // PUBLIC ROUTES - No authentication required
 // =====================================================
 
+// User Guide - serve markdown file
+app.get('/USER_GUIDE.md', (req, res) => {
+  res.sendFile(path.join(__dirname, '../USER_GUIDE.md'));
+});
+
 // Login page route
 app.get('/login', (req, res) => {
-  res.render('login', { 
+  res.render('login', {
     title: `${CLIENT_NAME} - Sign In`,
     clientName: CLIENT_NAME,
     clientId: CLIENT_ID
