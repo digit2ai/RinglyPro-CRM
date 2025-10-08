@@ -7,31 +7,31 @@ const CARRIER_CODES = {
         name: 'AT&T',
         conditional: {
             busy: '*67*{rachel_number}#',
-            no_answer: '*61*{rachel_number}#', 
+            no_answer: '*61*{rachel_number}#',
             unreachable: '*62*{rachel_number}#',
-            all_conditions: '*21*{rachel_number}#'
+            unconditional: '*21*{rachel_number}#'  // IMMEDIATE forward ALL calls
         },
         deactivate: {
             busy: '##67#',
             no_answer: '##61#',
-            unreachable: '##62#', 
-            all_conditions: '##21#'
+            unreachable: '##62#',
+            all: '##21#'
         },
-        recommended: 'all_conditions',
-        description: 'Forwards when busy, no answer, or unreachable'
+        recommended: 'unconditional',  // Changed to immediate forward
+        description: 'Forwards ALL calls immediately to Rachel AI'
     },
     
     'verizon': {
         name: 'Verizon',
         conditional: {
             busy_no_answer: '*71{rachel_number}',
-            unconditional: '*72{rachel_number}'
+            unconditional: '*72{rachel_number}'  // IMMEDIATE forward ALL calls
         },
         deactivate: {
             all: '*73'
         },
-        recommended: 'busy_no_answer',
-        description: 'Forwards after 3-4 rings when busy or no answer'
+        recommended: 'unconditional',  // Changed to immediate forward
+        description: 'Forwards ALL calls immediately to Rachel AI'
     },
     
     'tmobile': {
@@ -39,17 +39,17 @@ const CARRIER_CODES = {
         conditional: {
             busy: '**67*{rachel_number}#',
             no_answer: '**61*{rachel_number}#',
-            unreachable: '**62*{rachel_number}#', 
-            all_conditions: '**004*{rachel_number}*11#'
+            unreachable: '**62*{rachel_number}#',
+            unconditional: '**21*{rachel_number}#'  // IMMEDIATE forward ALL calls
         },
         deactivate: {
             busy: '##67#',
             no_answer: '##61#',
             unreachable: '##62#',
-            all_conditions: '##004#'
+            all: '##21#'
         },
-        recommended: 'all_conditions',
-        description: 'GSM standard codes - all conditional scenarios'
+        recommended: 'unconditional',  // Changed to immediate forward
+        description: 'Forwards ALL calls immediately to Rachel AI'
     },
     
     'sprint': {
@@ -58,14 +58,14 @@ const CARRIER_CODES = {
             busy_no_answer: '*28{rachel_number}',
             busy_only: '*74{rachel_number}',
             no_answer_only: '*73{rachel_number}',
-            unconditional: '*72{rachel_number}'
+            unconditional: '*72{rachel_number}'  // IMMEDIATE forward ALL calls
         },
         deactivate: {
             busy_no_answer: '*38',
             all: '*73'
         },
-        recommended: 'busy_no_answer', 
-        description: 'Combined busy and no answer forwarding'
+        recommended: 'unconditional',  // Changed to immediate forward
+        description: 'Forwards ALL calls immediately to Rachel AI'
     },
     
     'uscellular': {
@@ -73,15 +73,15 @@ const CARRIER_CODES = {
         conditional: {
             busy_no_answer: '*90*1{rachel_number}',
             no_answer_only: '*92*1{rachel_number}',
-            unconditional: '*72*1{rachel_number}'
+            unconditional: '*72*1{rachel_number}'  // IMMEDIATE forward ALL calls
         },
         deactivate: {
             busy: '*900',
             no_answer: '*920',
             all: '*720'
         },
-        recommended: 'busy_no_answer',
-        description: 'US Cellular specific conditional forwarding'
+        recommended: 'unconditional',  // Changed to immediate forward
+        description: 'Forwards ALL calls immediately to Rachel AI'
     },
     
     'boost': {
@@ -102,28 +102,28 @@ const CARRIER_CODES = {
         conditional: {
             busy: '**67*{rachel_number}#',
             no_answer: '**61*{rachel_number}#',
-            all_conditions: '**004*{rachel_number}*11#'
+            unconditional: '**21*{rachel_number}#'  // IMMEDIATE forward ALL calls
         },
         deactivate: {
             busy: '##67#',
-            no_answer: '##61#', 
-            all_conditions: '##004#'
+            no_answer: '##61#',
+            all: '##21#'
         },
-        recommended: 'all_conditions',
-        description: 'Uses T-Mobile GSM codes'
+        recommended: 'unconditional',  // Changed to immediate forward
+        description: 'Forwards ALL calls immediately to Rachel AI'
     },
     
     'visible': {
         name: 'Visible (Verizon)',
         conditional: {
             busy_no_answer: '*71{rachel_number}',
-            unconditional: '*72{rachel_number}'
+            unconditional: '*72{rachel_number}'  // IMMEDIATE forward ALL calls
         },
         deactivate: {
             all: '*73'
         },
-        recommended: 'busy_no_answer',
-        description: 'Verizon network codes'
+        recommended: 'unconditional',  // Changed to immediate forward
+        description: 'Forwards ALL calls immediately to Rachel AI'
     },
     
     'cricketwireless': {
@@ -131,15 +131,15 @@ const CARRIER_CODES = {
         conditional: {
             busy: '*67*{rachel_number}#',
             no_answer: '*61*{rachel_number}#',
-            all_conditions: '*21*{rachel_number}#'
+            unconditional: '*21*{rachel_number}#'  // IMMEDIATE forward ALL calls
         },
         deactivate: {
             busy: '##67#',
             no_answer: '##61#',
-            all_conditions: '##21#'
+            all: '##21#'
         },
-        recommended: 'all_conditions',
-        description: 'AT&T network - uses AT&T codes'
+        recommended: 'unconditional',  // Changed to immediate forward
+        description: 'Forwards ALL calls immediately to Rachel AI'
     }
 };
 
@@ -232,8 +232,8 @@ router.get('/setup/:carrier/:client_id', async (req, res) => {
             usage_notes: [
                 "Dial these codes from your business phone line",
                 "You'll hear a confirmation tone when successfully activated",
-                "Test by calling your business number and not answering",
-                "Calls will forward to Rachel after 3-4 rings",
+                "ALL calls will forward IMMEDIATELY to Rachel AI",
+                "Test by calling your business number - it will forward right away",
                 "Use deactivation code anytime to turn off forwarding"
             ]
         });
