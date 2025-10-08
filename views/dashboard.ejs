@@ -1739,13 +1739,13 @@
     </div>
 
     <!-- Calendar Settings Modal -->
-    <div class="modal-overlay" id="calendarModal">
-        <div class="modal-content" style="max-width: 600px;">
+    <div class="modal-overlay" id="calendarModal" style="align-items: center; justify-content: center;">
+        <div class="modal-content" style="max-width: 95vw; width: 800px; max-height: 95vh; border-radius: 0.75rem; display: flex; flex-direction: column;">
             <div class="modal-header">
                 <h3>Calendar Settings</h3>
                 <button class="close-modal" onclick="closeCalendarSettings()">×</button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="flex: 1; overflow-y: auto;">
                 <form id="calendarSettingsForm">
                     <!-- Global Enable/Disable Toggle -->
                     <div class="setting-row">
