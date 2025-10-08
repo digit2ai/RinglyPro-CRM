@@ -352,11 +352,11 @@ We apologize for any inconvenience. Please call us to reschedule.
   }
 });
 
-// POST /api/messages/webhook - Twilio webhook for incoming messages
-router.post('/webhook', async (req, res) => {
+// Shared handler for incoming SMS webhooks
+async function handleIncomingSMS(req, res) {
   try {
     const { MessageSid, From, To, Body, SmsStatus } = req.body;
-    
+
     console.log(`📥 Incoming SMS webhook received:`);
     console.log(`   SID: ${MessageSid}`);
     console.log(`   From: ${From}`);
@@ -366,11 +366,11 @@ router.post('/webhook', async (req, res) => {
 
     // Find client by ringlypro_number
     const clientQuery = `
-      SELECT id, business_name 
-      FROM clients 
+      SELECT id, business_name
+      FROM clients
       WHERE ringlypro_number = $1 AND active = TRUE
     `;
-    
+
     const [clientData] = await sequelize.query(clientQuery, {
       bind: [To],
       type: sequelize.QueryTypes.SELECT
@@ -390,7 +390,7 @@ router.post('/webhook', async (req, res) => {
           createdAt: new Date(),
           updatedAt: new Date()
         });
-        
+
         console.log(`💾 Incoming message stored in database with ID: ${savedMessage.id} for client ${clientData.id}`);
       } catch (dbError) {
         console.error('⚠️ Failed to store incoming message:', dbError.message);
@@ -410,13 +410,28 @@ router.post('/webhook', async (req, res) => {
     console.error('❌ Error processing incoming webhook:', error);
     res.status(500).send('Error processing webhook');
   }
-});
+}
+
+// POST /api/messages/incoming - Primary Twilio webhook for incoming messages (configured in Twilio)
+router.post('/incoming', handleIncomingSMS);
+
+// POST /api/messages/webhook - Alternate webhook endpoint (backward compatibility)
+router.post('/webhook', handleIncomingSMS);
 
 // GET /api/messages/webhook - Handle GET requests to webhook (for testing)
 router.get('/webhook', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'Webhook endpoint is working! Use POST for actual webhooks.',
-    endpoint: '/api/messages/webhook',
+    endpoint: '/api/messages/webhook or /api/messages/incoming',
+    method: 'POST'
+  });
+});
+
+// GET /api/messages/incoming - Handle GET requests to incoming (for testing)
+router.get('/incoming', (req, res) => {
+  res.json({
+    message: 'Incoming SMS webhook endpoint is working! Use POST for actual webhooks.',
+    endpoint: '/api/messages/incoming',
     method: 'POST'
   });
 });
