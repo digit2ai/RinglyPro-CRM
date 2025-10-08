@@ -654,6 +654,12 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
+        .message-card.unread {
+            background: #eff6ff;
+            border-left: 3px solid #3b82f6;
+            font-weight: 500;
+        }
+
         .message-header {
             padding: 1rem;
             display: flex;
@@ -2535,12 +2541,14 @@ Press the CALL button and wait for confirmation tone.
                 const createdDate = new Date(msg.createdAt || msg.created_at);
                 const timeAgo = getTimeAgo(createdDate);
                 const preview = msg.body.length > 100 ? msg.body.substring(0, 100) + '...' : msg.body;
+                const isUnread = !msg.read;
+                const unreadIndicator = isUnread ? '<span style="display: inline-block; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; margin-right: 8px;"></span>' : '';
 
                 return `
-                    <div class="message-card" id="message-${index}">
-                        <div class="message-header" onclick="toggleMessage(${index})">
+                    <div class="message-card ${isUnread ? 'unread' : ''}" id="message-${index}" data-message-id="${msg.id}">
+                        <div class="message-header" onclick="toggleMessage(${index}, ${msg.id}, ${isUnread})">
                             <div class="message-info">
-                                <h3>📞 ${msg.fromNumber || msg.from_number || 'Unknown'}</h3>
+                                <h3>${unreadIndicator}📞 ${msg.fromNumber || msg.from_number || 'Unknown'}</h3>
                                 <p>${timeAgo}</p>
                                 <div class="message-preview">${preview}</div>
                             </div>
@@ -2565,14 +2573,44 @@ Press the CALL button and wait for confirmation tone.
                 `;
             }).join('');
 
-            // Update badge counter
-            updateMessagesBadge(filteredMessages.length);
+            // Update badge counter - count only unread messages
+            const unreadCount = filteredMessages.filter(msg => !msg.read).length;
+            updateMessagesBadge(unreadCount);
         }
 
         // Toggle message expand/collapse
-        function toggleMessage(index) {
+        async function toggleMessage(index, messageId, isUnread) {
             const messageCard = document.getElementById(`message-${index}`);
+            const wasExpanded = messageCard.classList.contains('expanded');
+
             messageCard.classList.toggle('expanded');
+
+            // Mark as read when expanding an unread message
+            if (!wasExpanded && isUnread) {
+                try {
+                    const response = await authenticatedFetch(`/api/messages/${messageId}/mark-read`, {
+                        method: 'PATCH'
+                    });
+
+                    if (response && response.ok) {
+                        console.log(`✅ Message ${messageId} marked as read`);
+
+                        // Remove unread indicator
+                        messageCard.classList.remove('unread');
+                        const unreadDot = messageCard.querySelector('h3 span');
+                        if (unreadDot) unreadDot.remove();
+
+                        // Update badge counter (decrement by 1)
+                        const badge = document.getElementById('messagesBadge');
+                        if (badge && badge.textContent) {
+                            const currentCount = parseInt(badge.textContent);
+                            updateMessagesBadge(Math.max(0, currentCount - 1));
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error marking message as read:', error);
+                }
+            }
         }
 
         // Update messages badge counter

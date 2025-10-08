@@ -80,6 +80,12 @@ const Message = sequelize.define('Message', {
     type: DataTypes.DATE,
     allowNull: true
   },
+  read: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    allowNull: false,
+    comment: 'Whether the message has been read by the client'
+  },
   createdAt: {
     type: DataTypes.DATE,
     allowNull: false,

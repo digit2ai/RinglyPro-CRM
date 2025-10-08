@@ -63,6 +63,46 @@ router.get('/client/:clientId', async (req, res) => {
   }
 });
 
+// PATCH /api/messages/:messageId/mark-read - Mark message as read
+router.patch('/:messageId/mark-read', async (req, res) => {
+  try {
+    const { messageId } = req.params;
+
+    if (!Message) {
+      console.log('⚠️ Message model not available');
+      return res.status(503).json({ error: 'Message service not available' });
+    }
+
+    const message = await Message.findByPk(messageId);
+
+    if (!message) {
+      return res.status(404).json({
+        success: false,
+        error: 'Message not found'
+      });
+    }
+
+    // Mark as read
+    message.read = true;
+    await message.save();
+
+    console.log(`✅ Message ${messageId} marked as read`);
+
+    res.json({
+      success: true,
+      message: 'Message marked as read',
+      messageId: messageId
+    });
+
+  } catch (error) {
+    console.error(`❌ Error marking message as read:`, error);
+    res.status(500).json({
+      error: 'Failed to mark message as read',
+      details: error.message
+    });
+  }
+});
+
 // POST /api/messages/sms - Send SMS and store in database (MULTI-TENANT)
 router.post('/sms', async (req, res) => {
   try {
