@@ -780,6 +780,7 @@ router.post('/voice/lina/webhook', async (req, res) => {
 
 /**
  * Handle voicemail recording completion (Spanish)
+ * Since Twilio doesn't support Spanish transcription, we store the recording directly
  */
 router.post('/voice/lina/voicemail-complete', async (req, res) => {
     try {
@@ -787,10 +788,40 @@ router.post('/voice/lina/voicemail-complete', async (req, res) => {
             RecordingUrl,
             RecordingSid,
             RecordingDuration,
-            CallSid
+            CallSid,
+            From,
+            To
         } = req.body;
 
         console.log(`✅ Spanish voicemail recording completed: ${RecordingSid}, Duration: ${RecordingDuration}s`);
+        console.log(`🎵 Recording URL: ${RecordingUrl}`);
+
+        // Find client by RinglyPro number
+        const { Client, Message } = require('../models');
+        const client = await Client.findOne({
+            where: { ringlypro_number: To }
+        });
+
+        if (client) {
+            // Store voicemail with generic Spanish message (no transcription)
+            await Message.create({
+                clientId: client.id,
+                contactId: null,
+                twilioSid: RecordingSid,
+                recordingUrl: RecordingUrl,
+                direction: 'incoming',
+                fromNumber: From,
+                toNumber: To,
+                body: `📞 Mensaje de voz en español (${RecordingDuration}s) - Haga clic para escuchar la grabación`,
+                status: 'received',
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+
+            console.log(`💾 Spanish voicemail stored for client ${client.id} (${client.business_name})`);
+        } else {
+            console.warn(`⚠️ No client found for number ${To}`);
+        }
 
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>

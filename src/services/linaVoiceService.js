@@ -244,13 +244,13 @@ class LinaSpanishVoiceService {
         }
 
         // Record voicemail (max 3 minutes = 180 seconds)
-        // NOTE: Twilio transcription supports 'es' (Spanish) not 'es-MX' specifically
+        // NOTE: Twilio doesn't support Spanish transcription - disabled to avoid gibberish
         twiml.record({
             maxLength: 180,
             timeout: 5,
-            transcribe: true,
-            transcriptionLanguage: 'es',  // Changed from 'es-MX' - Twilio supports generic 'es'
-            transcribeCallback: `${this.webhookBaseUrl}/voice/lina/voicemail-transcription`,
+            transcribe: false,  // Disabled - Twilio doesn't support Spanish transcription properly
+            recordingStatusCallback: `${this.webhookBaseUrl}/voice/lina/voicemail-complete`,
+            recordingStatusCallbackMethod: 'POST',
             action: `${this.webhookBaseUrl}/voice/lina/voicemail-complete`,
             method: 'POST',
             playBeep: true,
