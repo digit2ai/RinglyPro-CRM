@@ -23,8 +23,7 @@ router.get('/recording/:recordingSid', async (req, res) => {
 
     console.log(`🎵 Proxying recording: ${recordingSid}`);
 
-    // Fetch recording from Twilio with authentication
-    const fetch = (await import('node-fetch')).default;
+    // Fetch recording from Twilio with authentication (using Node.js built-in fetch)
     const recordingUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Recordings/${recordingSid}`;
 
     const response = await fetch(recordingUrl, {
@@ -42,7 +41,8 @@ router.get('/recording/:recordingSid', async (req, res) => {
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Accept-Ranges', 'bytes');
 
-    const buffer = await response.buffer();
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
     res.send(buffer);
 
     console.log(`✅ Recording ${recordingSid} streamed successfully`);
