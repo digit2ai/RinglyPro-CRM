@@ -186,4 +186,177 @@ router.get('/list', async (req, res) => {
     }
 });
 
+// GET /api/client/calendar-settings/:client_id - Get calendar settings
+router.get('/calendar-settings/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { Client } = require('../models');
+
+        const client = await Client.findByPk(client_id, {
+            attributes: ['id', 'business_name', 'booking_enabled', 'calendar_settings', 'business_hours_start', 'business_hours_end', 'business_days', 'appointment_duration']
+        });
+
+        if (!client) {
+            return res.status(404).json({
+                success: false,
+                error: `Client with ID ${client_id} not found`
+            });
+        }
+
+        // Return calendar settings with defaults if not set
+        res.json({
+            success: true,
+            settings: {
+                booking_enabled: client.booking_enabled,
+                appointment_duration: client.appointment_duration,
+                calendar_settings: client.calendar_settings || getDefaultCalendarSettings(client),
+                legacy_hours: {
+                    business_hours_start: client.business_hours_start,
+                    business_hours_end: client.business_hours_end,
+                    business_days: client.business_days
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching calendar settings:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch calendar settings',
+            details: error.message
+        });
+    }
+});
+
+// PUT /api/client/calendar-settings/:client_id - Update calendar settings
+router.put('/calendar-settings/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { booking_enabled, calendar_settings, appointment_duration } = req.body;
+        const { Client } = require('../models');
+
+        // Validate input
+        if (typeof booking_enabled !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                error: 'booking_enabled must be a boolean'
+            });
+        }
+
+        if (!calendar_settings || typeof calendar_settings !== 'object') {
+            return res.status(400).json({
+                success: false,
+                error: 'calendar_settings must be an object'
+            });
+        }
+
+        // Validate calendar_settings structure
+        const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        for (const day of validDays) {
+            if (!calendar_settings[day]) {
+                return res.status(400).json({
+                    success: false,
+                    error: `Missing configuration for ${day}`
+                });
+            }
+
+            const dayConfig = calendar_settings[day];
+            if (typeof dayConfig.enabled !== 'boolean') {
+                return res.status(400).json({
+                    success: false,
+                    error: `Invalid enabled value for ${day}`
+                });
+            }
+
+            if (dayConfig.enabled && (!dayConfig.start || !dayConfig.end)) {
+                return res.status(400).json({
+                    success: false,
+                    error: `Missing start or end time for ${day}`
+                });
+            }
+        }
+
+        // Update client
+        const client = await Client.findByPk(client_id);
+
+        if (!client) {
+            return res.status(404).json({
+                success: false,
+                error: 'Client not found'
+            });
+        }
+
+        client.booking_enabled = booking_enabled;
+        client.calendar_settings = calendar_settings;
+        if (appointment_duration) {
+            client.appointment_duration = appointment_duration;
+        }
+
+        await client.save();
+
+        console.log(`✅ Calendar settings updated for client ${client_id} (${client.business_name})`);
+
+        res.json({
+            success: true,
+            message: 'Calendar settings updated successfully',
+            settings: {
+                booking_enabled: client.booking_enabled,
+                appointment_duration: client.appointment_duration,
+                calendar_settings: client.calendar_settings
+            }
+        });
+
+    } catch (error) {
+        console.error('Error updating calendar settings:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update calendar settings',
+            details: error.message
+        });
+    }
+});
+
+// Helper function to generate default calendar settings from legacy fields
+function getDefaultCalendarSettings(client) {
+    const defaultStart = client.business_hours_start || '09:00:00';
+    const defaultEnd = client.business_hours_end || '17:00:00';
+    const businessDays = client.business_days || 'Mon-Fri';
+
+    // Parse business_days (e.g., "Mon-Fri", "Mon,Wed,Fri")
+    const enabledDays = new Set();
+    if (businessDays.includes('-')) {
+        // Range format: "Mon-Fri"
+        enabledDays.add('monday');
+        enabledDays.add('tuesday');
+        enabledDays.add('wednesday');
+        enabledDays.add('thursday');
+        enabledDays.add('friday');
+    } else {
+        // Comma-separated format: "Mon,Wed,Fri"
+        const dayMap = {
+            'Mon': 'monday',
+            'Tue': 'tuesday',
+            'Wed': 'wednesday',
+            'Thu': 'thursday',
+            'Fri': 'friday',
+            'Sat': 'saturday',
+            'Sun': 'sunday'
+        };
+        businessDays.split(',').forEach(day => {
+            const normalized = dayMap[day.trim()];
+            if (normalized) enabledDays.add(normalized);
+        });
+    }
+
+    return {
+        monday: enabledDays.has('monday') ? { enabled: true, start: defaultStart.substring(0, 5), end: defaultEnd.substring(0, 5) } : { enabled: false },
+        tuesday: enabledDays.has('tuesday') ? { enabled: true, start: defaultStart.substring(0, 5), end: defaultEnd.substring(0, 5) } : { enabled: false },
+        wednesday: enabledDays.has('wednesday') ? { enabled: true, start: defaultStart.substring(0, 5), end: defaultEnd.substring(0, 5) } : { enabled: false },
+        thursday: enabledDays.has('thursday') ? { enabled: true, start: defaultStart.substring(0, 5), end: defaultEnd.substring(0, 5) } : { enabled: false },
+        friday: enabledDays.has('friday') ? { enabled: true, start: defaultStart.substring(0, 5), end: defaultEnd.substring(0, 5) } : { enabled: false },
+        saturday: enabledDays.has('saturday') ? { enabled: true, start: defaultStart.substring(0, 5), end: defaultEnd.substring(0, 5) } : { enabled: false },
+        sunday: enabledDays.has('sunday') ? { enabled: true, start: defaultStart.substring(0, 5), end: defaultEnd.substring(0, 5) } : { enabled: false }
+    };
+}
+
 module.exports = router;

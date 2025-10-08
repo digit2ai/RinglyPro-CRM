@@ -74,6 +74,12 @@ module.exports = (sequelize) => {
             type: DataTypes.BOOLEAN,
             defaultValue: true
         },
+        calendar_settings: {
+            type: DataTypes.JSON,
+            allowNull: true,
+            defaultValue: null,
+            comment: 'Per-day calendar configuration: {monday: {enabled: true, start: "09:00", end: "17:00"}, ...}'
+        },
         sms_notifications: {
             type: DataTypes.BOOLEAN,
             defaultValue: true

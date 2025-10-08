@@ -744,6 +744,162 @@
 
         /* SMS compose form CSS removed - using device SMS app instead */
 
+        /* Calendar Settings Modal */
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .setting-label {
+            flex: 1;
+        }
+
+        .setting-title {
+            display: block;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #111827;
+            margin-bottom: 0.25rem;
+        }
+
+        .setting-description {
+            display: block;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 1rem 0;
+        }
+
+        .section-heading {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+            margin: 1rem 0 0.75rem 0;
+        }
+
+        .day-setting {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            background: #f9fafb;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .day-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #111827;
+        }
+
+        .day-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .time-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .time-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .time-group label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+
+        .time-group input[type="time"] {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .time-group input[type="time"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .time-group input[type="time"]:disabled {
+            background: #f3f4f6;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: #374151;
+            cursor: pointer;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .btn-save {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-save:hover {
+            background: #2563eb;
+        }
+
+        .btn-save:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-calendar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-calendar:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #653b8b 100%);
+        }
+
         /* Contact Search Modal */
         .modal-overlay {
             display: none;
@@ -1471,6 +1627,12 @@
                 </svg>
                 Make Call
             </button>
+            <button class="action-btn btn-calendar" onclick="openCalendarSettings()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                Calendar Settings
+            </button>
             <button class="action-btn btn-credits" onclick="showCreditsInfo()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -1570,6 +1732,46 @@
                 <div id="contactResults">
                     <p style="font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">Recent Contacts</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Settings Modal -->
+    <div class="modal-overlay" id="calendarModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Calendar Settings</h3>
+                <button class="close-modal" onclick="closeCalendarSettings()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="calendarSettingsForm">
+                    <!-- Global Enable/Disable Toggle -->
+                    <div class="setting-row">
+                        <label class="setting-label">
+                            <span class="setting-title">Enable Appointment Booking</span>
+                            <span class="setting-description">Allow customers to book appointments via phone</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="bookingEnabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <!-- Day-by-Day Settings -->
+                    <h4 class="section-heading">Weekly Schedule</h4>
+
+                    <div id="daySettingsList">
+                        <!-- Days will be rendered here by JavaScript -->
+                    </div>
+
+                    <!-- Save Button -->
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel" onclick="closeCalendarSettings()">Cancel</button>
+                        <button type="submit" class="btn-save" id="saveCalendarBtn">Save Settings</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -2461,6 +2663,194 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
         function makeCall(phone, name) {
             window.location.href = `tel:${phone}`;
         }
+
+        // =====================================================
+        // CALENDAR SETTINGS FUNCTIONS
+        // =====================================================
+
+        let calendarSettingsData = null;
+
+        async function openCalendarSettings() {
+            document.getElementById('calendarModal').classList.add('active');
+            await loadCalendarSettings();
+        }
+
+        function closeCalendarSettings() {
+            document.getElementById('calendarModal').classList.remove('active');
+        }
+
+        async function loadCalendarSettings() {
+            try {
+                const response = await authenticatedFetch(`/api/client/calendar-settings/${CLIENT_ID}`);
+                if (!response) return;
+
+                const data = await response.json();
+
+                if (data.success) {
+                    calendarSettingsData = data.settings;
+                    renderCalendarSettings(data.settings);
+                }
+            } catch (error) {
+                console.error('Error loading calendar settings:', error);
+                alert('Failed to load calendar settings. Please try again.');
+            }
+        }
+
+        function renderCalendarSettings(settings) {
+            // Set booking enabled toggle
+            document.getElementById('bookingEnabled').checked = settings.booking_enabled;
+
+            // Render day settings
+            const daysContainer = document.getElementById('daySettingsList');
+            const days = [
+                { key: 'monday', label: 'Monday' },
+                { key: 'tuesday', label: 'Tuesday' },
+                { key: 'wednesday', label: 'Wednesday' },
+                { key: 'thursday', label: 'Thursday' },
+                { key: 'friday', label: 'Friday' },
+                { key: 'saturday', label: 'Saturday' },
+                { key: 'sunday', label: 'Sunday' }
+            ];
+
+            daysContainer.innerHTML = days.map(day => {
+                const dayConfig = settings.calendar_settings[day.key];
+                const isEnabled = dayConfig && dayConfig.enabled;
+                const allDayOff = !isEnabled;
+                const start = dayConfig && dayConfig.start ? dayConfig.start : '09:00';
+                const end = dayConfig && dayConfig.end ? dayConfig.end : '17:00';
+
+                return `
+                    <div class="day-setting">
+                        <div class="day-header">
+                            <div class="day-name">${day.label}</div>
+                            <div class="day-controls">
+                                <label class="checkbox-label">
+                                    <input type="checkbox"
+                                           id="allDayOff_${day.key}"
+                                           ${allDayOff ? 'checked' : ''}
+                                           onchange="toggleDayOff('${day.key}')">
+                                    <span>All Day Off</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="time-inputs" id="timeInputs_${day.key}">
+                            <div class="time-group">
+                                <label>Start Time</label>
+                                <input type="time"
+                                       id="start_${day.key}"
+                                       value="${start}"
+                                       ${allDayOff ? 'disabled' : ''}>
+                            </div>
+                            <div class="time-group">
+                                <label>End Time</label>
+                                <input type="time"
+                                       id="end_${day.key}"
+                                       value="${end}"
+                                       ${allDayOff ? 'disabled' : ''}>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleDayOff(dayKey) {
+            const checkbox = document.getElementById(`allDayOff_${dayKey}`);
+            const startInput = document.getElementById(`start_${dayKey}`);
+            const endInput = document.getElementById(`end_${dayKey}`);
+
+            if (checkbox.checked) {
+                // All day off - disable time inputs
+                startInput.disabled = true;
+                endInput.disabled = true;
+            } else {
+                // Day is enabled - enable time inputs
+                startInput.disabled = false;
+                endInput.disabled = false;
+            }
+        }
+
+        async function saveCalendarSettings(event) {
+            event.preventDefault();
+
+            const bookingEnabled = document.getElementById('bookingEnabled').checked;
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+            const calendarSettings = {};
+
+            for (const day of days) {
+                const allDayOff = document.getElementById(`allDayOff_${day}`).checked;
+
+                if (allDayOff) {
+                    calendarSettings[day] = { enabled: false };
+                } else {
+                    const start = document.getElementById(`start_${day}`).value;
+                    const end = document.getElementById(`end_${day}`).value;
+
+                    if (!start || !end) {
+                        alert(`Please set start and end times for ${day.charAt(0).toUpperCase() + day.slice(1)}`);
+                        return;
+                    }
+
+                    if (start >= end) {
+                        alert(`End time must be after start time for ${day.charAt(0).toUpperCase() + day.slice(1)}`);
+                        return;
+                    }
+
+                    calendarSettings[day] = {
+                        enabled: true,
+                        start: start,
+                        end: end
+                    };
+                }
+            }
+
+            // Save to API
+            const saveBtn = document.getElementById('saveCalendarBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                const response = await authenticatedFetch(`/api/client/calendar-settings/${CLIENT_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        booking_enabled: bookingEnabled,
+                        calendar_settings: calendarSettings,
+                        appointment_duration: calendarSettingsData.appointment_duration
+                    })
+                });
+
+                if (!response) {
+                    throw new Error('No response from server');
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Calendar settings saved successfully!');
+                    closeCalendarSettings();
+                } else {
+                    throw new Error(data.error || 'Failed to save settings');
+                }
+            } catch (error) {
+                console.error('Error saving calendar settings:', error);
+                alert(`Failed to save calendar settings: ${error.message}`);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Settings';
+            }
+        }
+
+        // Attach form submit handler
+        document.addEventListener('DOMContentLoaded', () => {
+            const calendarForm = document.getElementById('calendarSettingsForm');
+            if (calendarForm) {
+                calendarForm.addEventListener('submit', saveCalendarSettings);
+            }
+        });
 
         // =====================================================
         // APPOINTMENT MODAL FUNCTIONS
