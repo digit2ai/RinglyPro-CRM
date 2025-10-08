@@ -94,7 +94,8 @@ module.exports = (sequelize) => {
         },
         rachel_enabled: {
             type: DataTypes.BOOLEAN,
-            defaultValue: true
+            defaultValue: false,
+            comment: 'Client must toggle ON to enable Rachel AI and see forwarding instructions'
         },
         active: {
             type: DataTypes.BOOLEAN,

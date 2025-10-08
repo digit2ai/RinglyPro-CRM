@@ -223,7 +223,7 @@ router.post('/register', async (req, res) => {
                 sms_notifications: true,
                 monthly_free_minutes: 100,
                 per_minute_rate: 0.10,
-                rachel_enabled: true,
+                rachel_enabled: false,  // Client must toggle ON to activate Rachel AI
                 active: true,
                 user_id: user.id  // CRITICAL: Links client to user
             }, { transaction });

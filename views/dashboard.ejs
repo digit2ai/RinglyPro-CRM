@@ -2220,39 +2220,46 @@
 
         // Show forwarding instructions when toggle changes
         async function showForwardingInstructions(enabled) {
+            // ONLY show instructions when toggling ON (not when toggling OFF)
+            if (!enabled) {
+                console.log('Rachel AI disabled - no forwarding instructions needed');
+                return;
+            }
+
             try {
                 let carrier = localStorage.getItem('carrier_preference');
-                
+
                 if (!carrier) {
                     carrier = await promptForCarrier();
                     if (!carrier) return;
                     localStorage.setItem('carrier_preference', carrier);
                 }
-                
+
                 const response = await fetch(`/api/call-forwarding/setup/${carrier}/${CLIENT_ID}`);
                 const data = await response.json();
-                
+
                 if (data.success && data.setup && data.setup.recommended) {
-                    const code = enabled ? data.setup.recommended.activate : data.setup.recommended.deactivate;
-                    const action = enabled ? 'ACTIVATE' : 'DEACTIVATE';
+                    const code = data.setup.recommended.activate;
                     const businessPhone = data.client.business_phone;
                     const carrierName = data.carrier.name;
-                    
-                    const message = `
-${action} CALL FORWARDING
-Carrier: ${carrierName}
 
+                    const message = `
+✅ RACHEL AI ACTIVATED!
+
+To forward calls from your business phone to Rachel AI:
+
+Carrier: ${carrierName}
 From your business phone (${businessPhone}), dial:
 
 ${code}
 
 Press the CALL button and wait for confirmation tone.
 
-${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call forwarding to Rachel AI is now disabled.'}
+✅ All calls will then forward to Rachel AI!
 
 (To change carrier, clear browser data)
                     `.trim();
-                    
+
                     alert(message);
                 }
             } catch (error) {
