@@ -2559,6 +2559,21 @@ Press the CALL button and wait for confirmation tone.
                         <div class="message-body">
                             <div class="message-content">
                                 ${msg.body}
+                                ${msg.recordingUrl || msg.recording_url ? `
+                                    <div style="margin-top: 1rem; padding: 1rem; background: #f3f4f6; border-radius: 0.5rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" style="color: #3b82f6;">
+                                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                                <path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/>
+                                            </svg>
+                                            <strong style="color: #1f2937;">Voicemail Recording</strong>
+                                        </div>
+                                        <audio controls style="width: 100%; max-width: 400px;">
+                                            <source src="${msg.recordingUrl || msg.recording_url}" type="audio/mpeg">
+                                            Your browser does not support audio playback.
+                                        </audio>
+                                    </div>
+                                ` : ''}
                             </div>
                             <div class="message-actions">
                                 <button class="btn-reply-sms" onclick="sendSMS('${msg.fromNumber || msg.from_number}', 'Caller')">
