@@ -2335,9 +2335,13 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
             endDate.setDate(today.getDate() + days);
 
             const filtered = allAppointments.filter(apt => {
-                const aptDate = new Date(apt.date);
+                // Use appointmentDate (raw date) instead of date (formatted string)
+                const aptDate = new Date(apt.appointmentDate);
+                aptDate.setHours(0, 0, 0, 0);
                 return aptDate >= today && aptDate < endDate;
             });
+
+            console.log(`Filtering ${allAppointments.length} appointments for ${days} days:`, filtered.length, 'found');
 
             renderFilteredAppointments(filtered);
         }
