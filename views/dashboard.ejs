@@ -2550,7 +2550,7 @@ Press the CALL button and wait for confirmation tone.
                     const twilioUrl = msg.recordingUrl || msg.recording_url;
                     const recordingSidMatch = twilioUrl.match(/RE[a-f0-9]{32}/i);
                     if (recordingSidMatch) {
-                        recordingProxyUrl = \`/api/messages/recording/\${recordingSidMatch[0]}\`;
+                        recordingProxyUrl = '/api/messages/recording/' + recordingSidMatch[0];
                     }
                 }
 
