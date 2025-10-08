@@ -1843,6 +1843,7 @@
             loadRachelStatus();
             loadDashboard();
             loadCreditsBalance();
+            loadMessages(); // Load messages independently (fixes loading issue)
             setupTabSwitching();
             setupRachelToggle();
 
@@ -2054,7 +2055,9 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
         async function loadDashboard() {
             try {
                 const response = await authenticatedFetch(`/api/mobile/dashboard/today/${CLIENT_ID}`);
-                if (!response) return;
+                if (!response) {
+                    throw new Error('No response from server');
+                }
 
                 const data = await response.json();
 
@@ -2062,13 +2065,17 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
                     dashboardData = data.data;
                     renderAppointments(data.data.appointments);
                     renderCommunications(data.data.communications);
+                } else {
+                    throw new Error(data.message || 'Failed to load dashboard');
                 }
-
-                // Load messages separately
-                await loadMessages();
             } catch (error) {
                 console.error('Error loading dashboard:', error);
-                document.getElementById('appointmentsList').innerHTML = '<div class="empty-state"><p>Error loading appointments</p></div>';
+                document.getElementById('appointmentsList').innerHTML = `
+                    <div class="empty-state">
+                        <p>Error loading appointments</p>
+                        <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">${error.message}</p>
+                    </div>
+                `;
             }
         }
 
