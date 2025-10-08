@@ -900,6 +900,30 @@
             background: linear-gradient(135deg, #5568d3 0%, #653b8b 100%);
         }
 
+        /* Date Filter Tabs */
+        .filter-tab {
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            background: white;
+            color: #6b7280;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-tab:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+
+        .filter-tab.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
         /* Contact Search Modal */
         .modal-overlay {
             display: none;
@@ -1665,8 +1689,15 @@
     <div class="content">
         <!-- Today's Appointments -->
         <div class="content-section active" id="todaySection">
-            <div class="section-header">
-                <h2>Upcoming Appointments</h2>
+            <div class="section-header" style="flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
+                    <h2>Upcoming Appointments</h2>
+                    <div class="date-filter-tabs" style="display: flex; gap: 0.5rem;">
+                        <button class="filter-tab active" onclick="filterAppointmentsByDays(7)" data-days="7">7 days</button>
+                        <button class="filter-tab" onclick="filterAppointmentsByDays(14)" data-days="14">14 days</button>
+                        <button class="filter-tab" onclick="filterAppointmentsByDays(30)" data-days="30">30 days</button>
+                    </div>
+                </div>
                 <button onclick="openAppointmentModal()" class="btn-primary" style="display: flex; align-items: center; gap: 0.5rem;">
                     <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                         <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
@@ -2036,6 +2067,8 @@
         let dashboardData = null;
         let authToken = localStorage.getItem('token');
         let creditsData = null;
+        let allAppointments = []; // Store all appointments for filtering
+        let currentDaysFilter = 7; // Default to 7 days
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
@@ -2283,17 +2316,52 @@ ${enabled ? 'Calls will now forward to Rachel AI after a few rings.' : 'Call for
             }
         }
 
-        // Render Appointments
+        // Filter appointments by date range
+        function filterAppointmentsByDays(days) {
+            currentDaysFilter = days;
+
+            // Update active tab
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.getAttribute('data-days') == days) {
+                    tab.classList.add('active');
+                }
+            });
+
+            // Filter and render
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const endDate = new Date(today);
+            endDate.setDate(today.getDate() + days);
+
+            const filtered = allAppointments.filter(apt => {
+                const aptDate = new Date(apt.date);
+                return aptDate >= today && aptDate < endDate;
+            });
+
+            renderFilteredAppointments(filtered);
+        }
+
+        // Render Appointments (initial load - stores all)
         function renderAppointments(appointments) {
+            // Store all appointments
+            allAppointments = appointments || [];
+
+            // Apply current filter
+            filterAppointmentsByDays(currentDaysFilter);
+        }
+
+        // Render filtered appointments
+        function renderFilteredAppointments(appointments) {
             const container = document.getElementById('appointmentsList');
-            
+
             if (!appointments || appointments.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                         </svg>
-                        <p>No appointments scheduled for today</p>
+                        <p>No appointments scheduled in the next ${currentDaysFilter} days</p>
                     </div>
                 `;
                 return;
