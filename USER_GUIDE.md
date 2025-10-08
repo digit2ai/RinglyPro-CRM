@@ -98,8 +98,6 @@ When someone calls your business number:
 3. **Available Options:**
    - 📅 **Book Appointment** - "I'd like to schedule an appointment"
    - 📝 **Leave Message** - "I'd like to leave a message"
-   - 💰 **Pricing Information** - "How much does it cost?"
-   - 👤 **Speak to Support** - "I'd like to speak with someone"
 
 ### Voicemail
 
@@ -147,15 +145,6 @@ When someone calls your business number:
 - Operating days
 - Appointment duration
 - Time zone
-
-### Settings Tab
-
-**Customization:**
-- Business name
-- Rachel's custom greeting
-- Booking URL
-- Notification settings
-- Change password
 
 ---
 
@@ -429,8 +418,6 @@ Cuando alguien llama a su número comercial:
 3. **Opciones Disponibles:**
    - 📅 **Reservar Cita** - "Quiero agendar una cita"
    - 📝 **Dejar Mensaje** - "Quiero dejar un mensaje"
-   - 💰 **Información de Precios** - "¿Cuánto cuesta?"
-   - 👤 **Hablar con Soporte** - "Quiero hablar con alguien"
 
 ### Mensajes de Voz
 
@@ -478,15 +465,6 @@ Cuando alguien llama a su número comercial:
 - Días de operación
 - Duración de citas
 - Zona horaria
-
-### Pestaña Settings (Configuración)
-
-**Personalización:**
-- Nombre del negocio
-- Saludo personalizado de Rachel
-- URL de reservas
-- Configuración de notificaciones
-- Cambiar contraseña
 
 ---
 
