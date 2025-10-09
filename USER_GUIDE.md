@@ -16,21 +16,21 @@ AI call assistant that answers calls 24/7 in English and Spanish.
 - Copy your RinglyPro number from dashboard
 
 ### 3. Forward Calls
-Dial the code for your carrier using your RinglyPro number:
+Dial the code for your carrier. Replace `1234567890` with your RinglyPro 10-digit number:
 
 | Carrier | Activate | Deactivate |
 |---------|----------|------------|
-| AT&T | `*21*[number]#` | `##21#` |
-| Verizon | `*72[number]` | `*73` |
-| T-Mobile | `**21*[number]#` | `##21#` |
-| Sprint | `*72[number]` | `*720` |
-| Metro PCS | `**21*[number]#` | `##21#` |
-| Cricket | `*21*[number]#` | `##21#` |
-| Boost | `*72[number]` | `*720` |
+| AT&T | `*21*1234567890#` | `##21#` |
+| Verizon | `*721234567890` | `*73` |
+| T-Mobile | `**21*1234567890#` | `##21#` |
+| Sprint | `*721234567890` | `*720` |
+| Metro PCS | `**21*1234567890#` | `##21#` |
+| Cricket | `*21*1234567890#` | `##21#` |
+| Boost | `*721234567890` | `*720` |
 | Google Voice | Settings → Calls → Forward | - |
-| Landline | `72#[number]` | `73#` |
+| Landline | `72#1234567890` | `73#` |
 
-**Note:** Use 10-digit number without dashes.
+**Example:** If your RinglyPro number is (555) 123-4567, dial `*21*5551234567#` for AT&T
 
 ---
 
@@ -109,21 +109,21 @@ Asistente de llamadas con IA que atiende 24/7 en inglés y español.
 - Copie su número RinglyPro del panel
 
 ### 3. Desviar Llamadas
-Marque el código de su operador usando su número RinglyPro:
+Marque el código de su operador. Reemplace `1234567890` con su número RinglyPro de 10 dígitos:
 
 | Operador | Activar | Desactivar |
 |----------|---------|------------|
-| AT&T | `*21*[número]#` | `##21#` |
-| Verizon | `*72[número]` | `*73` |
-| T-Mobile | `**21*[número]#` | `##21#` |
-| Sprint | `*72[número]` | `*720` |
-| Metro PCS | `**21*[número]#` | `##21#` |
-| Cricket | `*21*[número]#` | `##21#` |
-| Boost | `*72[número]` | `*720` |
+| AT&T | `*21*1234567890#` | `##21#` |
+| Verizon | `*721234567890` | `*73` |
+| T-Mobile | `**21*1234567890#` | `##21#` |
+| Sprint | `*721234567890` | `*720` |
+| Metro PCS | `**21*1234567890#` | `##21#` |
+| Cricket | `*21*1234567890#` | `##21#` |
+| Boost | `*721234567890` | `*720` |
 | Google Voice | Configuración → Llamadas → Desviar | - |
-| Línea Fija | `72#[número]` | `73#` |
+| Línea Fija | `72#1234567890` | `73#` |
 
-**Nota:** Use número de 10 dígitos sin guiones.
+**Ejemplo:** Si su número RinglyPro es (555) 123-4567, marque `*21*5551234567#` para AT&T
 
 ---
 
