@@ -16,7 +16,9 @@ AI call assistant that answers calls 24/7 in English and Spanish.
 - Copy your RinglyPro number from dashboard
 
 ### 3. Forward Calls
-Toggle Rachel AI assistant on or off to and follow activation and deactivation instructions: Dial the code for your carrier. Replace 1234567890 with your RinglyPro 10-digit number.
+**To Activate:** Toggle **"Rachel AI"** to **ON**, then dial your carrier's activation code with your RinglyPro 10-digit number.
+
+**To Deactivate:** Toggle **"Rachel AI"** to **OFF**, then dial your carrier's deactivation code to stop forwarding.
 
 ---
 
@@ -95,7 +97,9 @@ Asistente de llamadas con IA que atiende 24/7 en inglés y español.
 - Copie su número RinglyPro del panel
 
 ### 3. Desviar Llamadas
-Active o desactive el asistente Rachel AI y siga las instrucciones de activación y desactivación: Marque el código de su operador. Reemplace 1234567890 con su número RinglyPro de 10 dígitos.
+**Para Activar:** Cambie **"Rachel AI"** a **ON**, luego marque el código de activación de su operador con su número RinglyPro de 10 dígitos.
+
+**Para Desactivar:** Cambie **"Rachel AI"** a **OFF**, luego marque el código de desactivación de su operador para detener el desvío.
 
 ---
 
