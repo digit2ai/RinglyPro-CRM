@@ -10,6 +10,7 @@ const { User, sequelize } = require('../models');
 const { sendPasswordResetEmail } = require('../services/emailService');
 const { sendWelcomeSMS } = require('../services/appointmentNotification');
 const { normalizePhoneFromSpeech } = require('../utils/phoneNormalizer');
+const { generateUniqueReferralCode, getClientByReferralCode } = require('../utils/referralCode');
 const router = express.Router();
 
 // Import Client and CreditAccount models for appointment booking
@@ -36,12 +37,12 @@ router.post('/register', async (req, res) => {
     const transaction = await sequelize.transaction();
     
     try {
-        const { 
-            email, 
-            password, 
-            firstName, 
-            lastName, 
-            businessName, 
+        const {
+            email,
+            password,
+            firstName,
+            lastName,
+            businessName,
             businessPhone,
             businessType,
             websiteUrl,
@@ -49,7 +50,8 @@ router.post('/register', async (req, res) => {
             businessDescription,
             businessHours,
             services,
-            termsAccepted
+            termsAccepted,
+            referralCode  // Optional: referral code from URL parameter
         } = req.body;
         
         console.log('📝 Registration attempt:', { email, firstName, lastName, businessName, businessType, businessPhone });
@@ -199,10 +201,39 @@ router.post('/register', async (req, res) => {
             });
         }
         
+        // ==================== REFERRAL SYSTEM ====================
+        // Generate unique referral code for new client
+        let newClientReferralCode = null;
+        let referrerId = null;
+
+        try {
+            newClientReferralCode = await generateUniqueReferralCode();
+            console.log(`🎁 Generated referral code for new client: ${newClientReferralCode}`);
+        } catch (referralError) {
+            console.error('⚠️ Failed to generate referral code:', referralError);
+            // Non-fatal: Continue without referral code
+        }
+
+        // Look up referrer if referral code provided
+        if (referralCode) {
+            try {
+                const referrer = await getClientByReferralCode(referralCode);
+                if (referrer) {
+                    referrerId = referrer.id;
+                    console.log(`🎁 Referral detected! Referred by client ${referrerId} (${referrer.business_name})`);
+                } else {
+                    console.log(`⚠️ Invalid referral code: ${referralCode}`);
+                }
+            } catch (referralError) {
+                console.error('⚠️ Error looking up referrer:', referralError);
+                // Non-fatal: Continue without referrer tracking
+            }
+        }
+
         // ==================== CREATE CLIENT RECORD ====================
         // FIXED BUG #3: Better error handling and validation
         console.log('🏢 Creating client record...');
-        
+
         let client = null;
         try {
             client = await Client.create({
@@ -225,6 +256,8 @@ router.post('/register', async (req, res) => {
                 monthly_free_minutes: 100,
                 per_minute_rate: 0.10,
                 rachel_enabled: false,  // Client must toggle ON to activate Rachel AI
+                referral_code: newClientReferralCode,  // Unique code for this client to share
+                referred_by: referrerId,  // ID of client who referred this signup
                 active: true,
                 user_id: user.id  // CRITICAL: Links client to user
             }, { transaction });

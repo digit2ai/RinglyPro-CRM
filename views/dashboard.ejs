@@ -150,6 +150,14 @@
             padding: 1rem;
         }
 
+        /* Referral Card */
+        .referral-card {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border: 2px solid #10b981;
+            border-radius: 0.75rem;
+            padding: 1rem;
+        }
+
         .rachel-toggle-row {
             display: flex;
             align-items: center;
@@ -1658,6 +1666,27 @@
                     </label>
                 </div>
             </div>
+
+            <!-- Referral Card -->
+            <div class="referral-card" style="margin-top: 1rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <svg style="width: 2rem; height: 2rem; color: #10b981;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                        <div>
+                            <h3 style="font-size: 1rem; font-weight: 600; margin: 0;">Share RinglyPro</h3>
+                            <p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0;" id="referralStats">Loading...</p>
+                        </div>
+                    </div>
+                    <button onclick="shareReferralLink()" style="background: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; font-weight: 500; cursor: pointer;">
+                        <svg style="width: 1.25rem; height: 1.25rem; display: inline-block; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                        </svg>
+                        Share
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -2141,6 +2170,7 @@
             loadDashboard();
             loadCreditsBalance();
             loadMessages(); // Load messages independently (fixes loading issue)
+            loadReferralStats(); // Load referral statistics
             setupTabSwitching();
             setupRachelToggle();
 
@@ -2368,9 +2398,83 @@ Press the CALL button and wait for confirmation tone.
             if (index >= 0 && index < carriers.length) {
                 return carriers[index].code;
             }
-            
+
             alert('Invalid selection. Please try again.');
             return null;
+        }
+
+        // ==================== REFERRAL SYSTEM ====================
+
+        // Load referral statistics
+        async function loadReferralStats() {
+            try {
+                const response = await authenticatedFetch(`/api/referral/${CLIENT_ID}`);
+                if (!response) return;
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const statsText = document.getElementById('referralStats');
+                    if (data.stats.totalReferrals > 0) {
+                        statsText.textContent = `${data.stats.totalReferrals} referral${data.stats.totalReferrals > 1 ? 's' : ''} • ${data.stats.activeReferrals} active`;
+                    } else {
+                        statsText.textContent = 'Share and earn commissions';
+                    }
+
+                    // Store referral link globally for sharing
+                    window.REFERRAL_LINK = data.client.referralLink;
+                    window.REFERRAL_CODE = data.client.referralCode;
+                }
+            } catch (error) {
+                console.error('Error loading referral stats:', error);
+                document.getElementById('referralStats').textContent = 'Share with friends';
+            }
+        }
+
+        // Share referral link
+        async function shareReferralLink() {
+            try {
+                if (!window.REFERRAL_LINK) {
+                    const response = await authenticatedFetch(`/api/referral/${CLIENT_ID}/link`);
+                    if (!response) return;
+
+                    const data = await response.json();
+                    if (!data.success) {
+                        alert('Unable to generate referral link. Please try again.');
+                        return;
+                    }
+
+                    window.REFERRAL_LINK = data.referralLink;
+                    window.REFERRAL_CODE = data.referralCode;
+                }
+
+                const shareData = {
+                    title: 'Join RinglyPro',
+                    text: `Join me on RinglyPro! Get your own AI assistant to handle calls 24/7. Sign up with my link and we both benefit!`,
+                    url: window.REFERRAL_LINK
+                };
+
+                // Try native share API (works on mobile)
+                if (navigator.share) {
+                    await navigator.share(shareData);
+                    console.log('Referral link shared successfully');
+                } else {
+                    // Fallback: Copy to clipboard
+                    await navigator.clipboard.writeText(window.REFERRAL_LINK);
+
+                    // Show custom alert with the link
+                    alert(`✅ Referral link copied to clipboard!\n\n${window.REFERRAL_LINK}\n\nYour referral code: ${window.REFERRAL_CODE}\n\nShare this link with colleagues and contacts to earn commissions!`);
+                }
+            } catch (error) {
+                console.error('Error sharing referral link:', error);
+
+                // Fallback: Just show the link
+                if (window.REFERRAL_LINK) {
+                    alert(`Your referral link:\n\n${window.REFERRAL_LINK}\n\nCode: ${window.REFERRAL_CODE}`);
+                } else {
+                    alert('Unable to share referral link. Please try again.');
+                }
+            }
         }
 
         // Load Dashboard Data

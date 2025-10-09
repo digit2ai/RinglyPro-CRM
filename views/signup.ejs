@@ -275,6 +275,13 @@
         let currentStep = 1;
         let registrationData = {};
 
+        // Extract referral code from URL parameter (?ref=ABC123)
+        const urlParams = new URLSearchParams(window.location.search);
+        const referralCode = urlParams.get('ref');
+        if (referralCode) {
+            console.log('Referral code detected:', referralCode);
+        }
+
         function nextStep() {
             if (!validateCurrentStep()) return;
 
@@ -377,7 +384,8 @@
                     close: document.getElementById('closeTime').value
                 },
                 services: document.getElementById('services').value,
-                termsAccepted: document.getElementById('termsAccepted').checked
+                termsAccepted: document.getElementById('termsAccepted').checked,
+                referralCode: referralCode || null  // Include referral code if present in URL
             };
 
             if (!registrationData.termsAccepted) {
