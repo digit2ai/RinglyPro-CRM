@@ -2427,16 +2427,33 @@ Press the CALL button and wait for confirmation tone.
             try {
                 if (!window.REFERRAL_LINK) {
                     const response = await authenticatedFetch(`/api/referral/${CLIENT_ID}/link`);
-                    if (!response) return;
+
+                    if (!response) {
+                        alert('⚠️ Referral System Not Yet Activated\n\nThe referral system needs to be set up in production.\n\nPlease contact support at info@digit2ai.com to activate your referral link.');
+                        return;
+                    }
 
                     const data = await response.json();
+
                     if (!data.success) {
-                        alert('Unable to generate referral link. Please try again.');
+                        alert('⚠️ Referral System Not Yet Activated\n\nYour referral code has not been generated yet.\n\nPlease contact support at info@digit2ai.com to activate your referral link.');
+                        return;
+                    }
+
+                    // Check if we actually got a referral link
+                    if (!data.referralLink || data.referralLink.includes('null')) {
+                        alert('⚠️ Referral Code Not Generated\n\nYour account does not have a referral code yet.\n\nPlease contact support at info@digit2ai.com to generate your referral code.');
                         return;
                     }
 
                     window.REFERRAL_LINK = data.referralLink;
                     window.REFERRAL_CODE = data.referralCode;
+                }
+
+                // Double-check we have a valid link before sharing
+                if (!window.REFERRAL_LINK || window.REFERRAL_LINK.includes('null')) {
+                    alert('⚠️ Referral Code Not Generated\n\nYour account does not have a referral code yet.\n\nPlease contact support at info@digit2ai.com to generate your referral code.');
+                    return;
                 }
 
                 const shareData = {
@@ -2469,11 +2486,11 @@ Press the CALL button and wait for confirmation tone.
             } catch (error) {
                 console.error('Error sharing referral link:', error);
 
-                // Fallback: Just show the link
-                if (window.REFERRAL_LINK) {
+                // Fallback: Just show the link if we have it
+                if (window.REFERRAL_LINK && !window.REFERRAL_LINK.includes('null')) {
                     alert(`Your referral link:\n\n${window.REFERRAL_LINK}\n\nCode: ${window.REFERRAL_CODE}`);
                 } else {
-                    alert('Unable to share referral link. Please try again.');
+                    alert('⚠️ Referral System Error\n\nUnable to generate referral link at this time.\n\nPlease contact support at info@digit2ai.com');
                 }
             }
         }
