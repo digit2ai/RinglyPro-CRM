@@ -150,14 +150,6 @@
             padding: 1rem;
         }
 
-        /* Referral Card */
-        .referral-card {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            border: 2px solid #10b981;
-            border-radius: 0.75rem;
-            padding: 1rem;
-        }
-
         .rachel-toggle-row {
             display: flex;
             align-items: center;
@@ -1666,27 +1658,6 @@
                     </label>
                 </div>
             </div>
-
-            <!-- Referral Card -->
-            <div class="referral-card" style="margin-top: 1rem;">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <svg style="width: 2rem; height: 2rem; color: #10b981;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
-                        <div>
-                            <h3 style="font-size: 1rem; font-weight: 600; margin: 0;">Share RinglyPro</h3>
-                            <p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0;" id="referralStats">Loading...</p>
-                        </div>
-                    </div>
-                    <button onclick="shareReferralLink()" style="background: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; font-weight: 500; cursor: pointer;">
-                        <svg style="width: 1.25rem; height: 1.25rem; display: inline-block; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
-                        </svg>
-                        Share
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -1717,6 +1688,13 @@
                 </svg>
                 Minutes
                 <div class="credit-amount" id="creditAmount">Loading...</div>
+            </button>
+            <button class="action-btn btn-share" onclick="shareReferralLink()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                </svg>
+                Share
+                <div class="credit-amount" id="referralCount" style="background: #10b981;">0</div>
             </button>
         </div>
     </div>
@@ -2409,16 +2387,17 @@ Press the CALL button and wait for confirmation tone.
         async function loadReferralStats() {
             try {
                 const response = await authenticatedFetch(`/api/referral/${CLIENT_ID}`);
-                if (!response) return;
+                if (!response) {
+                    console.log('No response from referral API - using fallback');
+                    return;
+                }
 
                 const data = await response.json();
 
                 if (data.success) {
-                    const statsText = document.getElementById('referralStats');
-                    if (data.stats.totalReferrals > 0) {
-                        statsText.textContent = `${data.stats.totalReferrals} referral${data.stats.totalReferrals > 1 ? 's' : ''} • ${data.stats.activeReferrals} active`;
-                    } else {
-                        statsText.textContent = 'Share and earn commissions';
+                    const countBadge = document.getElementById('referralCount');
+                    if (countBadge) {
+                        countBadge.textContent = data.stats.totalReferrals || 0;
                     }
 
                     // Store referral link globally for sharing
@@ -2427,7 +2406,11 @@ Press the CALL button and wait for confirmation tone.
                 }
             } catch (error) {
                 console.error('Error loading referral stats:', error);
-                document.getElementById('referralStats').textContent = 'Share with friends';
+                // Don't fail silently - keep the default 0 count
+                const countBadge = document.getElementById('referralCount');
+                if (countBadge) {
+                    countBadge.textContent = '0';
+                }
             }
         }
 

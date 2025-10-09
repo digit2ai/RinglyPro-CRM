@@ -14,9 +14,15 @@ router.get('/:clientId', async (req, res) => {
     try {
         const { clientId } = req.params;
 
-        // Get client info including referral code
+        // Get client info including referral code (with fallback if columns don't exist)
         const client = await Client.findByPk(clientId, {
             attributes: ['id', 'business_name', 'referral_code', 'referred_by']
+        }).catch(err => {
+            // If columns don't exist yet (before migration), return minimal client data
+            console.log('⚠️ Referral columns may not exist yet - returning defaults');
+            return Client.findByPk(clientId, {
+                attributes: ['id', 'business_name']
+            });
         });
 
         if (!client) {
@@ -26,13 +32,19 @@ router.get('/:clientId', async (req, res) => {
             });
         }
 
-        // Get referral statistics
-        const stats = await getReferralStats(clientId);
+        // Get referral statistics (handle case where columns don't exist)
+        let stats = { totalReferrals: 0, activeReferrals: 0, inactiveReferrals: 0, referrals: [] };
+        try {
+            stats = await getReferralStats(clientId);
+        } catch (statsError) {
+            console.log('⚠️ Unable to fetch referral stats - columns may not exist yet');
+        }
 
         // Build shareable link
         const baseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
-        const referralLink = client.referral_code
-            ? `${baseUrl}/signup?ref=${client.referral_code}`
+        const referralCode = client.referral_code || null;
+        const referralLink = referralCode
+            ? `${baseUrl}/signup?ref=${referralCode}`
             : null;
 
         res.json({
@@ -40,9 +52,9 @@ router.get('/:clientId', async (req, res) => {
             client: {
                 id: client.id,
                 businessName: client.business_name,
-                referralCode: client.referral_code,
+                referralCode: referralCode,
                 referralLink: referralLink,
-                wasReferred: !!client.referred_by
+                wasReferred: !!(client.referred_by)
             },
             stats: {
                 totalReferrals: stats.totalReferrals,
@@ -54,6 +66,7 @@ router.get('/:clientId', async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching referral stats:', error);
+        console.error('Stack:', error.stack);
         res.status(500).json({
             success: false,
             error: 'Failed to fetch referral statistics',
@@ -69,6 +82,12 @@ router.get('/:clientId/link', async (req, res) => {
 
         const client = await Client.findByPk(clientId, {
             attributes: ['referral_code', 'business_name']
+        }).catch(err => {
+            // If referral_code column doesn't exist yet, return minimal data
+            console.log('⚠️ Referral code column may not exist yet - returning minimal data');
+            return Client.findByPk(clientId, {
+                attributes: ['business_name']
+            });
         });
 
         if (!client) {
@@ -78,25 +97,30 @@ router.get('/:clientId/link', async (req, res) => {
             });
         }
 
-        if (!client.referral_code) {
-            return res.status(404).json({
-                success: false,
-                error: 'No referral code found for this client'
+        const referralCode = client.referral_code || null;
+
+        if (!referralCode) {
+            return res.status(200).json({
+                success: true,
+                referralCode: null,
+                referralLink: null,
+                shareMessage: 'Referral system not yet activated. Please run database migration.'
             });
         }
 
         const baseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
-        const referralLink = `${baseUrl}/signup?ref=${client.referral_code}`;
+        const referralLink = `${baseUrl}/signup?ref=${referralCode}`;
 
         res.json({
             success: true,
-            referralCode: client.referral_code,
+            referralCode: referralCode,
             referralLink: referralLink,
             shareMessage: `Join me on RinglyPro! Get your own AI assistant to handle calls 24/7. Sign up with my link: ${referralLink}`
         });
 
     } catch (error) {
         console.error('Error fetching referral link:', error);
+        console.error('Stack:', error.stack);
         res.status(500).json({
             success: false,
             error: 'Failed to fetch referral link',
