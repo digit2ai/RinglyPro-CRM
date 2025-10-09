@@ -2280,12 +2280,6 @@
 
         // Show forwarding instructions when toggle changes
         async function showForwardingInstructions(enabled) {
-            // ONLY show instructions when toggling ON (not when toggling OFF)
-            if (!enabled) {
-                console.log('Rachel AI disabled - no forwarding instructions needed');
-                return;
-            }
-
             try {
                 let carrier = localStorage.getItem('carrier_preference');
 
@@ -2299,11 +2293,15 @@
                 const data = await response.json();
 
                 if (data.success && data.setup && data.setup.recommended) {
-                    const code = data.setup.recommended.activate;
                     const businessPhone = data.client.business_phone;
                     const carrierName = data.carrier.name;
 
-                    const message = `
+                    let message;
+
+                    if (enabled) {
+                        // ACTIVATION instructions
+                        const activateCode = data.setup.recommended.activate;
+                        message = `
 ✅ RACHEL AI ACTIVATED!
 
 To forward calls from your business phone to Rachel AI:
@@ -2311,14 +2309,34 @@ To forward calls from your business phone to Rachel AI:
 Carrier: ${carrierName}
 From your business phone (${businessPhone}), dial:
 
-${code}
+${activateCode}
 
 Press the CALL button and wait for confirmation tone.
 
 ✅ All calls will then forward to Rachel AI!
 
 (To change carrier, clear browser data)
-                    `.trim();
+                        `.trim();
+                    } else {
+                        // DEACTIVATION instructions
+                        const deactivateCode = data.setup.recommended.deactivate;
+                        message = `
+⛔ RACHEL AI DEACTIVATED
+
+To stop forwarding calls to Rachel AI:
+
+Carrier: ${carrierName}
+From your business phone (${businessPhone}), dial:
+
+${deactivateCode}
+
+Press the CALL button and wait for confirmation tone.
+
+✅ Call forwarding has been turned off!
+
+(To change carrier, clear browser data)
+                        `.trim();
+                    }
 
                     alert(message);
                 }
