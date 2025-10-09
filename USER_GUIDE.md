@@ -9,6 +9,7 @@ AI call assistant that answers calls 24/7 in English and Spanish.
 ### 1. Login
 - Visit: https://aiagent.ringlypro.com
 - Enter email and password
+- **Tap "Share" → "Add to Home Screen"** for quick access
 
 ### 2. Activate Rachel
 - Toggle **"Rachel AI"** to **ON** (green)
@@ -24,7 +25,7 @@ Dial the code for your carrier using your RinglyPro number:
 | T-Mobile | `**21*[number]#` | `##21#` |
 | Sprint | `*72[number]` | `*720` |
 | Metro PCS | `**21*[number]#` | `##21#` |
-| Cricket | `*72[number]` | `*73` |
+| Cricket | `*21*[number]#` | `##21#` |
 | Boost | `*72[number]` | `*720` |
 | Google Voice | Settings → Calls → Forward | - |
 | Landline | `72#[number]` | `73#` |
@@ -82,9 +83,7 @@ Dial the code for your carrier using your RinglyPro number:
 ---
 
 ## Support
-- 📧 support@ringlypro.com
-- 💬 Live chat in dashboard
-- 📱 Reply to welcome SMS
+📧 info@digit2ai.com
 
 ---
 
@@ -103,6 +102,7 @@ Asistente de llamadas con IA que atiende 24/7 en inglés y español.
 ### 1. Iniciar Sesión
 - Visite: https://aiagent.ringlypro.com
 - Ingrese email y contraseña
+- **Toque "Compartir" → "Añadir a pantalla de inicio"** para acceso rápido
 
 ### 2. Activar Rachel
 - Cambie **"Rachel AI"** a **ON** (verde)
@@ -118,7 +118,7 @@ Marque el código de su operador usando su número RinglyPro:
 | T-Mobile | `**21*[número]#` | `##21#` |
 | Sprint | `*72[número]` | `*720` |
 | Metro PCS | `**21*[número]#` | `##21#` |
-| Cricket | `*72[número]` | `*73` |
+| Cricket | `*21*[número]#` | `##21#` |
 | Boost | `*72[número]` | `*720` |
 | Google Voice | Configuración → Llamadas → Desviar | - |
 | Línea Fija | `72#[número]` | `73#` |
@@ -176,9 +176,7 @@ Marque el código de su operador usando su número RinglyPro:
 ---
 
 ## Soporte
-- 📧 soporte@ringlypro.com
-- 💬 Chat en vivo en el panel
-- 📱 Responda al SMS de bienvenida
+📧 info@digit2ai.com
 
 ---
 
