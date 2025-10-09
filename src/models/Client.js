@@ -97,21 +97,21 @@ module.exports = (sequelize) => {
             defaultValue: false,
             comment: 'Client must toggle ON to enable Rachel AI and see forwarding instructions'
         },
-        referral_code: {
-            type: DataTypes.STRING(10),
-            allowNull: true,
-            unique: true,
-            comment: 'Unique referral code for this client to share with others'
-        },
-        referred_by: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'clients',
-                key: 'id'
-            },
-            comment: 'Client ID of the referrer (who referred this client)'
-        },
+        // referral_code: {
+        //     type: DataTypes.STRING(10),
+        //     allowNull: true,
+        //     unique: true,
+        //     comment: 'Unique referral code for this client to share with others'
+        // },
+        // referred_by: {
+        //     type: DataTypes.INTEGER,
+        //     allowNull: true,
+        //     references: {
+        //         model: 'clients',
+        //         key: 'id'
+        //     },
+        //     comment: 'Client ID of the referrer (who referred this client)'
+        // },
         active: {
             type: DataTypes.BOOLEAN,
             defaultValue: true
