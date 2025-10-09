@@ -20,17 +20,17 @@ Dial the code for your carrier. Replace `1234567890` with your RinglyPro 10-digi
 
 | Carrier | Activate | Deactivate |
 |---------|----------|------------|
-| AT&T | `*21*1234567890#` | `##21#` |
-| Verizon | `*721234567890` | `*73` |
-| T-Mobile | `**21*1234567890#` | `##21#` |
-| Sprint | `*721234567890` | `*720` |
-| Metro PCS | `**21*1234567890#` | `##21#` |
-| Cricket | `*21*1234567890#` | `##21#` |
-| Boost | `*721234567890` | `*720` |
+| AT&T | \*21\*1234567890# | ##21# |
+| Verizon | \*721234567890 | \*73 |
+| T-Mobile | \*\*21\*1234567890# | ##21# |
+| Sprint | \*721234567890 | \*720 |
+| Metro PCS | \*\*21\*1234567890# | ##21# |
+| Cricket | \*21\*1234567890# | ##21# |
+| Boost | \*721234567890 | \*720 |
 | Google Voice | Settings → Calls → Forward | - |
-| Landline | `72#1234567890` | `73#` |
+| Landline | 72#1234567890 | 73# |
 
-**Example:** If your RinglyPro number is (555) 123-4567, dial `*21*5551234567#` for AT&T
+**Example:** If your RinglyPro number is (555) 123-4567, dial \*21\*5551234567# for AT&T
 
 ---
 
@@ -113,17 +113,17 @@ Marque el código de su operador. Reemplace `1234567890` con su número RinglyPr
 
 | Operador | Activar | Desactivar |
 |----------|---------|------------|
-| AT&T | `*21*1234567890#` | `##21#` |
-| Verizon | `*721234567890` | `*73` |
-| T-Mobile | `**21*1234567890#` | `##21#` |
-| Sprint | `*721234567890` | `*720` |
-| Metro PCS | `**21*1234567890#` | `##21#` |
-| Cricket | `*21*1234567890#` | `##21#` |
-| Boost | `*721234567890` | `*720` |
+| AT&T | \*21\*1234567890# | ##21# |
+| Verizon | \*721234567890 | \*73 |
+| T-Mobile | \*\*21\*1234567890# | ##21# |
+| Sprint | \*721234567890 | \*720 |
+| Metro PCS | \*\*21\*1234567890# | ##21# |
+| Cricket | \*21\*1234567890# | ##21# |
+| Boost | \*721234567890 | \*720 |
 | Google Voice | Configuración → Llamadas → Desviar | - |
-| Línea Fija | `72#1234567890` | `73#` |
+| Línea Fija | 72#1234567890 | 73# |
 
-**Ejemplo:** Si su número RinglyPro es (555) 123-4567, marque `*21*5551234567#` para AT&T
+**Ejemplo:** Si su número RinglyPro es (555) 123-4567, marque \*21\*5551234567# para AT&T
 
 ---
 
