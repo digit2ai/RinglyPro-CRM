@@ -16,21 +16,7 @@ AI call assistant that answers calls 24/7 in English and Spanish.
 - Copy your RinglyPro number from dashboard
 
 ### 3. Forward Calls
-Toggle Rachel AI assistant on or off to and follow activation and deactivation instructions: Dial the code for your carrier. Replace 1234567890 with your RinglyPro 10-digit number:
-
-| Carrier | Activate | Deactivate |
-|---------|----------|------------|
-| AT&T | 211234567890# | ##21# |
-| Verizon | 721234567890 | 73 |
-| T-Mobile | 21*1234567890# | ##21# |
-| Sprint | 721234567890 | 720 |
-| Metro PCS | 21*1234567890# | ##21# |
-| Cricket | 211234567890# | ##21# |
-| Boost | 721234567890 | 720 |
-| Google Voice | Settings → Calls → Forward | - |
-| Landline | 72#1234567890 | 73# |
-
-**Example:** If your RinglyPro number is (555) 123-4567, dial 215551234567# for AT&T
+Toggle Rachel AI assistant on or off to and follow activation and deactivation instructions: Dial the code for your carrier. Replace 1234567890 with your RinglyPro 10-digit number.
 
 ---
 
@@ -109,21 +95,7 @@ Asistente de llamadas con IA que atiende 24/7 en inglés y español.
 - Copie su número RinglyPro del panel
 
 ### 3. Desviar Llamadas
-Active o desactive el asistente Rachel AI y siga las instrucciones de activación y desactivación: Marque el código de su operador. Reemplace 1234567890 con su número RinglyPro de 10 dígitos:
-
-| Operador | Activar | Desactivar |
-|----------|---------|------------|
-| AT&T | 211234567890# | ##21# |
-| Verizon | 721234567890 | 73 |
-| T-Mobile | 21*1234567890# | ##21# |
-| Sprint | 721234567890 | 720 |
-| Metro PCS | 21*1234567890# | ##21# |
-| Cricket | 211234567890# | ##21# |
-| Boost | 721234567890 | 720 |
-| Google Voice | Configuración → Llamadas → Desviar | - |
-| Línea Fija | 72#1234567890 | 73# |
-
-**Ejemplo:** Si su número RinglyPro es (555) 123-4567, marque 215551234567# para AT&T
+Active o desactive el asistente Rachel AI y siga las instrucciones de activación y desactivación: Marque el código de su operador. Reemplace 1234567890 con su número RinglyPro de 10 dígitos.
 
 ---
 
