@@ -302,6 +302,14 @@
             background: #7c3aed;
         }
 
+        .btn-share {
+            background: #f97316;
+        }
+
+        .btn-share:hover {
+            background: #ea580c;
+        }
+
         .credit-amount {
             font-size: 0.875rem;
             font-weight: 600;
@@ -2439,8 +2447,18 @@ Press the CALL button and wait for confirmation tone.
 
                 // Try native share API (works on mobile)
                 if (navigator.share) {
-                    await navigator.share(shareData);
-                    console.log('Referral link shared successfully');
+                    try {
+                        await navigator.share(shareData);
+                        console.log('✅ Referral link shared successfully');
+                    } catch (shareError) {
+                        // User canceled the share - this is normal, don't show error
+                        if (shareError.name === 'AbortError') {
+                            console.log('Share canceled by user');
+                            return; // Exit gracefully
+                        }
+                        // For other errors, fall through to clipboard copy
+                        throw shareError;
+                    }
                 } else {
                     // Fallback: Copy to clipboard
                     await navigator.clipboard.writeText(window.REFERRAL_LINK);
