@@ -316,6 +316,126 @@ router.put('/calendar-settings/:client_id', async (req, res) => {
     }
 });
 
+// GET /api/client/ivr-settings/:client_id - Get IVR settings
+router.get('/ivr-settings/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { Client } = require('../models');
+
+        const client = await Client.findByPk(client_id, {
+            attributes: ['id', 'business_name', 'ivr_enabled', 'ivr_options']
+        });
+
+        if (!client) {
+            return res.status(404).json({
+                success: false,
+                error: 'Client not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            settings: {
+                ivr_enabled: client.ivr_enabled || false,
+                ivr_options: client.ivr_options || []
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching IVR settings:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch IVR settings',
+            details: error.message
+        });
+    }
+});
+
+// PUT /api/client/ivr-settings/:client_id - Update IVR settings
+router.put('/ivr-settings/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { ivr_enabled, ivr_options } = req.body;
+        const { Client } = require('../models');
+
+        // Validate input
+        if (typeof ivr_enabled !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                error: 'ivr_enabled must be a boolean'
+            });
+        }
+
+        if (!Array.isArray(ivr_options)) {
+            return res.status(400).json({
+                success: false,
+                error: 'ivr_options must be an array'
+            });
+        }
+
+        // Validate max 3 departments
+        if (ivr_options.length > 3) {
+            return res.status(400).json({
+                success: false,
+                error: 'Maximum 3 IVR departments allowed'
+            });
+        }
+
+        // Validate each department
+        for (const dept of ivr_options) {
+            if (!dept.name || !dept.phone) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Each department must have a name and phone number'
+                });
+            }
+
+            if (typeof dept.enabled !== 'boolean') {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Each department must have an enabled boolean'
+                });
+            }
+        }
+
+        // Update client
+        const client = await Client.findByPk(client_id);
+
+        if (!client) {
+            return res.status(404).json({
+                success: false,
+                error: 'Client not found'
+            });
+        }
+
+        client.ivr_enabled = ivr_enabled;
+        client.ivr_options = ivr_options;
+
+        await client.save();
+
+        console.log(`✅ IVR settings updated for client ${client_id} (${client.business_name})`);
+        console.log(`   IVR Enabled: ${ivr_enabled}`);
+        console.log(`   Departments: ${ivr_options.length}`);
+
+        res.json({
+            success: true,
+            message: 'IVR settings updated successfully',
+            settings: {
+                ivr_enabled: client.ivr_enabled,
+                ivr_options: client.ivr_options
+            }
+        });
+
+    } catch (error) {
+        console.error('Error updating IVR settings:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update IVR settings',
+            details: error.message
+        });
+    }
+});
+
 // Helper function to generate default calendar settings from legacy fields
 function getDefaultCalendarSettings(client) {
     const defaultStart = client.business_hours_start || '09:00:00';

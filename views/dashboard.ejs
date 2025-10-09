@@ -310,6 +310,14 @@
             background: #ea580c;
         }
 
+        .btn-ivr {
+            background: #06b6d4;
+        }
+
+        .btn-ivr:hover {
+            background: #0891b2;
+        }
+
         .credit-amount {
             font-size: 0.875rem;
             font-weight: 600;
@@ -1704,6 +1712,13 @@
                 Share
                 <div class="credit-amount" id="referralCount" style="background: #10b981;">0</div>
             </button>
+            <button class="action-btn btn-ivr" onclick="openIVRSettings()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+                IVR
+                <div class="credit-amount" id="ivrStatus" style="background: #6b7280;">OFF</div>
+            </button>
         </div>
     </div>
 
@@ -1878,6 +1893,107 @@
                     <div class="modal-actions">
                         <button type="button" class="btn-cancel" onclick="closeCalendarSettings()">Cancel</button>
                         <button type="submit" class="btn-save" id="saveCalendarBtn">Save Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- IVR Settings Modal -->
+    <div class="modal-overlay" id="ivrModal" style="align-items: center; justify-content: center;">
+        <div class="modal-content" style="max-width: 95vw; width: 800px; max-height: 95vh; border-radius: 0.75rem; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h3>IVR Settings</h3>
+                <button class="close-modal" onclick="closeIVRSettings()">×</button>
+            </div>
+            <div class="modal-body" style="flex: 1; overflow-y: auto;">
+                <form id="ivrSettingsForm">
+                    <!-- Global Enable/Disable Toggle -->
+                    <div class="setting-row">
+                        <label class="setting-label">
+                            <span class="setting-title">Enable IVR (Call Transfer)</span>
+                            <span class="setting-description">Allow Rachel/Lina to offer call transfer options to your team</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="ivrEnabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <!-- Instructions -->
+                    <div style="background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                        <p style="margin: 0; font-size: 0.875rem; color: #374151;">
+                            <strong>How it works:</strong> When enabled, Rachel or Lina will offer callers the option to be transferred to one of your departments. Configure up to 3 transfer options below.
+                        </p>
+                    </div>
+
+                    <!-- Department Configuration -->
+                    <h4 class="section-heading">Transfer Options (Max 3)</h4>
+
+                    <!-- Department 1 -->
+                    <div class="ivr-department">
+                        <div class="setting-row" style="align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <label class="form-label">Department Name</label>
+                                <input type="text" id="dept1Name" class="form-input" placeholder="e.g., Sales, Support, Manager" maxlength="50">
+                            </div>
+                            <label class="toggle-switch" style="margin-left: 1rem; margin-top: 1.75rem;">
+                                <input type="checkbox" id="dept1Enabled">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div style="margin-top: 0.75rem;">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" id="dept1Phone" class="form-input" placeholder="+1 (555) 123-4567" maxlength="20">
+                        </div>
+                    </div>
+
+                    <div class="divider" style="margin: 1.5rem 0;"></div>
+
+                    <!-- Department 2 -->
+                    <div class="ivr-department">
+                        <div class="setting-row" style="align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <label class="form-label">Department Name</label>
+                                <input type="text" id="dept2Name" class="form-input" placeholder="e.g., Sales, Support, Manager" maxlength="50">
+                            </div>
+                            <label class="toggle-switch" style="margin-left: 1rem; margin-top: 1.75rem;">
+                                <input type="checkbox" id="dept2Enabled">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div style="margin-top: 0.75rem;">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" id="dept2Phone" class="form-input" placeholder="+1 (555) 123-4567" maxlength="20">
+                        </div>
+                    </div>
+
+                    <div class="divider" style="margin: 1.5rem 0;"></div>
+
+                    <!-- Department 3 -->
+                    <div class="ivr-department">
+                        <div class="setting-row" style="align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <label class="form-label">Department Name</label>
+                                <input type="text" id="dept3Name" class="form-input" placeholder="e.g., Sales, Support, Manager" maxlength="50">
+                            </div>
+                            <label class="toggle-switch" style="margin-left: 1rem; margin-top: 1.75rem;">
+                                <input type="checkbox" id="dept3Enabled">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div style="margin-top: 0.75rem;">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" id="dept3Phone" class="form-input" placeholder="+1 (555) 123-4567" maxlength="20">
+                        </div>
+                    </div>
+
+                    <!-- Save Button -->
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel" onclick="closeIVRSettings()">Cancel</button>
+                        <button type="submit" class="btn-save" id="saveIVRBtn">Save IVR Settings</button>
                     </div>
                 </form>
             </div>
@@ -3298,6 +3414,138 @@ Press the CALL button and wait for confirmation tone.
             if (calendarForm) {
                 calendarForm.addEventListener('submit', saveCalendarSettings);
             }
+        });
+
+        // =====================================================
+        // IVR SETTINGS FUNCTIONS
+        // =====================================================
+
+        let ivrSettingsData = null;
+
+        async function openIVRSettings() {
+            document.getElementById('ivrModal').classList.add('active');
+            await loadIVRSettings();
+        }
+
+        function closeIVRSettings() {
+            document.getElementById('ivrModal').classList.remove('active');
+        }
+
+        async function loadIVRSettings() {
+            try {
+                const response = await authenticatedFetch(`/api/client/ivr-settings/${CLIENT_ID}`);
+
+                if (!response) {
+                    console.error('No response from IVR settings API');
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    ivrSettingsData = data.settings;
+
+                    // Set IVR enabled toggle
+                    document.getElementById('ivrEnabled').checked = ivrSettingsData.ivr_enabled || false;
+
+                    // Load department settings
+                    const ivrOptions = ivrSettingsData.ivr_options || [];
+
+                    for (let i = 0; i < 3; i++) {
+                        const dept = ivrOptions[i] || { name: '', phone: '', enabled: false };
+                        const index = i + 1;
+
+                        document.getElementById(`dept${index}Name`).value = dept.name || '';
+                        document.getElementById(`dept${index}Phone`).value = dept.phone || '';
+                        document.getElementById(`dept${index}Enabled`).checked = dept.enabled || false;
+                    }
+
+                    // Update IVR status badge
+                    updateIVRStatusBadge(ivrSettingsData.ivr_enabled);
+                } else {
+                    console.error('Failed to load IVR settings:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading IVR settings:', error);
+            }
+        }
+
+        function updateIVRStatusBadge(enabled) {
+            const badge = document.getElementById('ivrStatus');
+            if (enabled) {
+                badge.textContent = 'ON';
+                badge.style.background = '#10b981';
+            } else {
+                badge.textContent = 'OFF';
+                badge.style.background = '#6b7280';
+            }
+        }
+
+        async function saveIVRSettings(e) {
+            e.preventDefault();
+
+            const ivrEnabled = document.getElementById('ivrEnabled').checked;
+
+            // Collect department settings
+            const ivrOptions = [];
+            for (let i = 1; i <= 3; i++) {
+                const name = document.getElementById(`dept${i}Name`).value.trim();
+                const phone = document.getElementById(`dept${i}Phone`).value.trim();
+                const enabled = document.getElementById(`dept${i}Enabled`).checked;
+
+                if (name && phone) {
+                    ivrOptions.push({ name, phone, enabled });
+                }
+            }
+
+            // Save to API
+            const saveBtn = document.getElementById('saveIVRBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                const response = await authenticatedFetch(`/api/client/ivr-settings/${CLIENT_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ivr_enabled: ivrEnabled,
+                        ivr_options: ivrOptions
+                    })
+                });
+
+                if (!response) {
+                    throw new Error('No response from server');
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('IVR settings saved successfully!');
+                    updateIVRStatusBadge(ivrEnabled);
+                    closeIVRSettings();
+                } else {
+                    alert('Error saving IVR settings: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error saving IVR settings:', error);
+                alert('Failed to save IVR settings. Please try again.');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save IVR Settings';
+            }
+        }
+
+        // Initialize IVR form handler
+        document.addEventListener('DOMContentLoaded', () => {
+            const ivrForm = document.getElementById('ivrSettingsForm');
+            if (ivrForm) {
+                ivrForm.addEventListener('submit', saveIVRSettings);
+            }
+
+            // Load initial IVR status
+            loadIVRSettings().catch(err => console.error('Error loading initial IVR status:', err));
         });
 
         // =====================================================
