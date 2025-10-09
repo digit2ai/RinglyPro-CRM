@@ -73,7 +73,14 @@ const mobileRoutes = require('./routes/mobile'); // Mobile CRM API routes
 const clientProvisioningRoutes = require('./routes/clientProvisioning'); // Automatic number provisioning
 
 // Import referral routes
-const referralRoutes = require('./routes/referral'); // Referral system
+let referralRoutes;
+try {
+    referralRoutes = require('./routes/referral'); // Referral system
+    console.log('✅ Referral routes loaded successfully');
+} catch (error) {
+    console.error('❌ Failed to load referral routes:', error.message);
+    console.error('Stack:', error.stack);
+}
 
 console.log('📄 About to require auth routes...');
 const authRoutes = require('./routes/auth'); // User authentication routes
@@ -98,7 +105,12 @@ app.use('/api/client', clientRoutes); // Rachel toggle and client settings
 app.use('/api/clients', clientProvisioningRoutes); // Automatic client provisioning with Twilio numbers
 
 // Referral system routes
-app.use('/api/referral', referralRoutes); // Referral link sharing and statistics
+if (referralRoutes) {
+    app.use('/api/referral', referralRoutes); // Referral link sharing and statistics
+    console.log('✅ Referral routes mounted at /api/referral');
+} else {
+    console.error('⚠️ Referral routes not available - skipping mount');
+}
 
 // Add Mobile CRM API routes
 app.use('/api/mobile', mobileRoutes);
@@ -222,7 +234,8 @@ app.get('/health', (req, res) => {
       stripe: process.env.STRIPE_SECRET_KEY ? 'configured' : 'not configured',
       authentication: 'enabled',
       client_identification: 'enabled',
-      call_forwarding: 'enabled'
+      call_forwarding: 'enabled',
+      referral_system: referralRoutes ? 'enabled' : 'disabled'
     },
     webhooks: {
       twilio_voice: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/webhook/twilio/voice`,
