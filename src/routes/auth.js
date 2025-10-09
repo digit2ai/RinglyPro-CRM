@@ -10,7 +10,19 @@ const { User, sequelize } = require('../models');
 const { sendPasswordResetEmail } = require('../services/emailService');
 const { sendWelcomeSMS } = require('../services/appointmentNotification');
 const { normalizePhoneFromSpeech } = require('../utils/phoneNormalizer');
-const { generateUniqueReferralCode, getClientByReferralCode } = require('../utils/referralCode');
+
+// Optional: Referral code utilities (won't crash if not available)
+let generateUniqueReferralCode = null;
+let getClientByReferralCode = null;
+try {
+    const referralUtils = require('../utils/referralCode');
+    generateUniqueReferralCode = referralUtils.generateUniqueReferralCode;
+    getClientByReferralCode = referralUtils.getClientByReferralCode;
+    console.log('✅ Referral utilities loaded in auth routes');
+} catch (error) {
+    console.log('⚠️ Referral utilities not available (optional) - signups will work without referral codes');
+}
+
 const router = express.Router();
 
 // Import Client and CreditAccount models for appointment booking
@@ -206,16 +218,19 @@ router.post('/register', async (req, res) => {
         let newClientReferralCode = null;
         let referrerId = null;
 
-        try {
-            newClientReferralCode = await generateUniqueReferralCode();
-            console.log(`🎁 Generated referral code for new client: ${newClientReferralCode}`);
-        } catch (referralError) {
-            console.error('⚠️ Failed to generate referral code:', referralError);
-            // Non-fatal: Continue without referral code
+        // Only try referral system if utilities are available
+        if (generateUniqueReferralCode) {
+            try {
+                newClientReferralCode = await generateUniqueReferralCode();
+                console.log(`🎁 Generated referral code for new client: ${newClientReferralCode}`);
+            } catch (referralError) {
+                console.error('⚠️ Failed to generate referral code:', referralError.message);
+                // Non-fatal: Continue without referral code
+            }
         }
 
-        // Look up referrer if referral code provided
-        if (referralCode) {
+        // Look up referrer if referral code provided AND utility is available
+        if (referralCode && getClientByReferralCode) {
             try {
                 const referrer = await getClientByReferralCode(referralCode);
                 if (referrer) {
@@ -225,7 +240,7 @@ router.post('/register', async (req, res) => {
                     console.log(`⚠️ Invalid referral code: ${referralCode}`);
                 }
             } catch (referralError) {
-                console.error('⚠️ Error looking up referrer:', referralError);
+                console.error('⚠️ Error looking up referrer:', referralError.message);
                 // Non-fatal: Continue without referrer tracking
             }
         }

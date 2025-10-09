@@ -72,14 +72,15 @@ const mobileRoutes = require('./routes/mobile'); // Mobile CRM API routes
 // Import client provisioning routes
 const clientProvisioningRoutes = require('./routes/clientProvisioning'); // Automatic number provisioning
 
-// Import referral routes
-let referralRoutes;
+// Import referral routes (optional - won't crash app if fails)
+let referralRoutes = null;
 try {
     referralRoutes = require('./routes/referral'); // Referral system
     console.log('✅ Referral routes loaded successfully');
 } catch (error) {
-    console.error('❌ Failed to load referral routes:', error.message);
-    console.error('Stack:', error.stack);
+    console.error('⚠️ Referral routes not loaded (optional feature):', error.message);
+    // Don't print full stack - this is expected before migration
+    referralRoutes = null;
 }
 
 console.log('📄 About to require auth routes...');
