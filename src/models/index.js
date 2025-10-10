@@ -182,15 +182,87 @@ if (Client && CreditAccount) {
       foreignKey: 'client_id',
       as: 'creditAccount'
     });
-    
+
     CreditAccount.belongsTo(Client, {
       foreignKey: 'client_id',
       as: 'client'
     });
-    
+
     console.log('Client-CreditAccount associations configured');
   } catch (error) {
     console.log('Could not set up Client-CreditAccount associations:', error.message);
+  }
+}
+
+if (User && AdminCommunication) {
+  try {
+    User.hasMany(AdminCommunication, {
+      foreignKey: 'admin_user_id',
+      as: 'adminCommunications'
+    });
+
+    AdminCommunication.belongsTo(User, {
+      foreignKey: 'admin_user_id',
+      as: 'admin'
+    });
+
+    console.log('User-AdminCommunication associations configured');
+  } catch (error) {
+    console.log('Could not set up User-AdminCommunication associations:', error.message);
+  }
+}
+
+if (Client && AdminCommunication) {
+  try {
+    Client.hasMany(AdminCommunication, {
+      foreignKey: 'client_id',
+      as: 'adminCommunications'
+    });
+
+    AdminCommunication.belongsTo(Client, {
+      foreignKey: 'client_id',
+      as: 'client'
+    });
+
+    console.log('Client-AdminCommunication associations configured');
+  } catch (error) {
+    console.log('Could not set up Client-AdminCommunication associations:', error.message);
+  }
+}
+
+if (User && AdminNote) {
+  try {
+    User.hasMany(AdminNote, {
+      foreignKey: 'admin_user_id',
+      as: 'adminNotes'
+    });
+
+    AdminNote.belongsTo(User, {
+      foreignKey: 'admin_user_id',
+      as: 'admin'
+    });
+
+    console.log('User-AdminNote associations configured');
+  } catch (error) {
+    console.log('Could not set up User-AdminNote associations:', error.message);
+  }
+}
+
+if (Client && AdminNote) {
+  try {
+    Client.hasMany(AdminNote, {
+      foreignKey: 'client_id',
+      as: 'adminNotes'
+    });
+
+    AdminNote.belongsTo(Client, {
+      foreignKey: 'client_id',
+      as: 'client'
+    });
+
+    console.log('Client-AdminNote associations configured');
+  } catch (error) {
+    console.log('Could not set up Client-AdminNote associations:', error.message);
   }
 }
 

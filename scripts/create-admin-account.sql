@@ -4,12 +4,14 @@
 -- Create admin user account (password will be hashed as 'Admin2024!')
 INSERT INTO users (
     email,
-    password,
+    password_hash,
     first_name,
     last_name,
-    phone,
+    phone_number,
     is_admin,
     admin_phone,
+    terms_accepted,
+    email_verified,
     created_at,
     updated_at
 ) VALUES (
@@ -20,13 +22,15 @@ INSERT INTO users (
     '+18886103810',
     TRUE,
     '+18886103810',
+    TRUE,
+    TRUE,
     NOW(),
     NOW()
 )
 ON CONFLICT (email) DO UPDATE SET
     is_admin = TRUE,
     admin_phone = '+18886103810',
-    phone = '+18886103810',
+    phone_number = '+18886103810',
     updated_at = NOW();
 
 -- Verify admin account created
@@ -35,7 +39,7 @@ SELECT
     email,
     first_name,
     last_name,
-    phone,
+    phone_number,
     is_admin,
     admin_phone,
     created_at

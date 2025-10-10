@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .admin-header {
+            background: white;
+            border-radius: 10px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-header h1 {
+            color: #667eea;
+            font-size: 24px;
+        }
+
+        .admin-header .user-info {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .main-panel {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .search-bar {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .search-bar button {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .search-bar button:hover {
+            background: #5568d3;
+        }
+
+        .clients-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .clients-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #666;
+            font-weight: 600;
+            border-bottom: 2px solid #e1e8ed;
+        }
+
+        .clients-table td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #e1e8ed;
+            font-size: 14px;
+        }
+
+        .clients-table tr:hover {
+            background: #f8f9fa;
+            cursor: pointer;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            padding: 20px 30px;
+            border-bottom: 2px solid #e1e8ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+            font-size: 20px;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-item {
+            margin-bottom: 15px;
+        }
+
+        .info-item label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .info-item value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e1e8ed;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .sms-panel {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .sms-history {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .sms-message {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .sms-message.outbound {
+            background: #e8f4fd;
+            margin-left: 40px;
+        }
+
+        .sms-message.inbound {
+            background: white;
+            margin-right: 40px;
+        }
+
+        .sms-message .meta {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .sms-message .body {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .sms-form textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .sms-form button {
+            margin-top: 10px;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .notes-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .note-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .note-item .note-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .note-item .note-body {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .add-note-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .add-note-form select,
+        .add-note-form textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            margin-bottom: 10px;
+        }
+
+        .add-note-form textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Header -->
+        <div class="admin-header">
+            <div>
+                <h1>👑 RinglyPro Admin Portal</h1>
+                <div class="user-info" id="userInfo">Loading...</div>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <h3>Total Clients</h3>
+                <div class="value" id="totalClients">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Active Clients</h3>
+                <div class="value" id="activeClients">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Revenue</h3>
+                <div class="value" id="totalRevenue">$0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Minutes</h3>
+                <div class="value" id="totalMinutes">0</div>
+            </div>
+        </div>
+
+        <!-- Main Panel -->
+        <div class="main-panel">
+            <h2 style="margin-bottom: 20px;">Client Management</h2>
+
+            <!-- Search Bar -->
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search clients by name, phone, or email..." onkeyup="handleSearchKeyup(event)">
+                <button onclick="searchClients()">Search</button>
+                <button onclick="loadClients()" style="background: #6c757d;">Show All</button>
+            </div>
+
+            <!-- Clients Table -->
+            <div id="clientsTableContainer">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <div>Loading clients...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Profile Modal -->
+    <div class="modal" id="clientModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="clientModalTitle">Client Profile</h2>
+                <button class="close-modal" onclick="closeClientModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('info')">Info</button>
+                    <button class="tab" onclick="switchTab('sms')">SMS</button>
+                    <button class="tab" onclick="switchTab('notes')">Notes</button>
+                    <button class="tab" onclick="switchTab('activity')">Activity</button>
+                </div>
+
+                <!-- Tab Contents -->
+                <div id="tab-info" class="tab-content active">
+                    <div class="info-grid" id="clientInfo">Loading...</div>
+                </div>
+
+                <div id="tab-sms" class="tab-content">
+                    <div class="sms-panel">
+                        <h3 style="margin-bottom: 15px;">SMS Communication</h3>
+                        <div class="sms-history" id="smsHistory">
+                            <div class="loading">Loading SMS history...</div>
+                        </div>
+                        <div class="sms-form">
+                            <textarea id="smsMessage" placeholder="Type your message to the client..."></textarea>
+                            <button onclick="sendSMS()">Send SMS</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-notes" class="tab-content">
+                    <div class="add-note-form">
+                        <h3 style="margin-bottom: 15px;">Add New Note</h3>
+                        <select id="noteType">
+                            <option value="general">General</option>
+                            <option value="technical">Technical Support</option>
+                            <option value="billing">Billing</option>
+                            <option value="support">Customer Support</option>
+                        </select>
+                        <textarea id="noteText" placeholder="Enter your note..."></textarea>
+                        <button onclick="addNote()" style="padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Add Note</button>
+                    </div>
+                    <div class="notes-list" id="notesList">
+                        <div class="loading">Loading notes...</div>
+                    </div>
+                </div>
+
+                <div id="tab-activity" class="tab-content">
+                    <div id="activityList">
+                        <div class="loading">Loading activity...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('token');
+        let currentClient = null;
+
+        // Check authentication and admin status
+        function checkAuth() {
+            if (!authToken) {
+                window.location.href = '/login';
+                return false;
+            }
+
+            // Decode JWT to check if admin
+            try {
+                const payload = JSON.parse(atob(authToken.split('.')[1]));
+
+                // Check if user is admin
+                if (payload.email !== 'info@digit2ai.com') {
+                    alert('Access denied. Admin access required.');
+                    window.location.href = '/';
+                    return false;
+                }
+
+                document.getElementById('userInfo').textContent = `Logged in as: ${payload.email}`;
+                return true;
+            } catch (error) {
+                console.error('Token parse error:', error);
+                window.location.href = '/login';
+                return false;
+            }
+        }
+
+        // Authenticated fetch wrapper
+        async function authenticatedFetch(url, options = {}) {
+            const headers = {
+                'Authorization': `Bearer ${authToken}`,
+                ...options.headers
+            };
+
+            const response = await fetch(url, { ...options, headers });
+
+            if (response.status === 401 || response.status === 403) {
+                alert('Session expired or unauthorized. Please login again.');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return null;
+            }
+
+            return response;
+        }
+
+        // Load overview stats
+        async function loadOverview() {
+            try {
+                const response = await authenticatedFetch('/api/admin/reports/overview');
+                if (!response) return;
+
+                const data = await response.json();
+                if (data.success) {
+                    const overview = data.overview;
+                    document.getElementById('totalClients').textContent = overview.total_clients || 0;
+                    document.getElementById('activeClients').textContent = overview.active_clients || 0;
+                    document.getElementById('totalRevenue').textContent = '$' + (parseFloat(overview.total_revenue) || 0).toFixed(2);
+                    document.getElementById('totalMinutes').textContent = Math.round(parseFloat(overview.total_minutes_used) || 0);
+                }
+            } catch (error) {
+                console.error('Error loading overview:', error);
+            }
+        }
+
+        // Load clients list
+        async function loadClients(search = '') {
+            try {
+                const url = search
+                    ? `/api/admin/clients?search=${encodeURIComponent(search)}`
+                    : '/api/admin/clients';
+
+                const response = await authenticatedFetch(url);
+                if (!response) return;
+
+                const data = await response.json();
+                if (data.success) {
+                    renderClientsTable(data.clients);
+                }
+            } catch (error) {
+                console.error('Error loading clients:', error);
+                document.getElementById('clientsTableContainer').innerHTML = `
+                    <div class="empty-state">
+                        <div>Error loading clients. Please try again.</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Render clients table
+        function renderClientsTable(clients) {
+            const container = document.getElementById('clientsTableContainer');
+
+            if (clients.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div>No clients found</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const table = `
+                <table class="clients-table">
+                    <thead>
+                        <tr>
+                            <th>Business Name</th>
+                            <th>Owner</th>
+                            <th>Phone</th>
+                            <th>Minutes Used</th>
+                            <th>Amount</th>
+                            <th>Signup Date</th>
+                            <th>Last Activity</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${clients.map(client => `
+                            <tr onclick="openClientProfile(${client.id})">
+                                <td><strong>${client.business_name}</strong></td>
+                                <td>${client.owner_name}</td>
+                                <td>${client.owner_phone}</td>
+                                <td>${Math.round(client.total_minutes_used || 0)} min</td>
+                                <td>$${(parseFloat(client.dollar_amount) || 0).toFixed(2)}</td>
+                                <td>${new Date(client.signup_date).toLocaleDateString()}</td>
+                                <td>${client.last_activity_at ? new Date(client.last_activity_at).toLocaleDateString() : 'Never'}</td>
+                                <td>
+                                    ${client.active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>'}
+                                    ${client.rachel_enabled ? '<span class="badge badge-info">Rachel</span>' : ''}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = table;
+        }
+
+        // Search clients
+        function searchClients() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            loadClients(searchTerm);
+        }
+
+        function handleSearchKeyup(event) {
+            if (event.key === 'Enter') {
+                searchClients();
+            }
+        }
+
+        // Open client profile modal
+        async function openClientProfile(clientId) {
+            currentClient = clientId;
+            document.getElementById('clientModal').classList.add('active');
+            document.getElementById('clientModalTitle').textContent = 'Loading...';
+
+            // Switch to info tab
+            switchTab('info');
+
+            try {
+                const response = await authenticatedFetch(`/api/admin/clients/${clientId}`);
+                if (!response) return;
+
+                const data = await response.json();
+                if (data.success) {
+                    renderClientInfo(data.client);
+                    renderActivity(data.recentActivity);
+                    renderNotes(data.notes);
+                }
+            } catch (error) {
+                console.error('Error loading client profile:', error);
+            }
+        }
+
+        // Close client modal
+        function closeClientModal() {
+            document.getElementById('clientModal').classList.remove('active');
+            currentClient = null;
+        }
+
+        // Switch tabs
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab contents
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            // Load SMS history when switching to SMS tab
+            if (tabName === 'sms' && currentClient) {
+                loadSMSHistory(currentClient);
+            }
+        }
+
+        // Render client info
+        function renderClientInfo(client) {
+            document.getElementById('clientModalTitle').textContent = client.business_name;
+
+            const infoHTML = `
+                <div class="info-item">
+                    <label>Business Name</label>
+                    <value>${client.business_name}</value>
+                </div>
+                <div class="info-item">
+                    <label>Owner Name</label>
+                    <value>${client.owner_name}</value>
+                </div>
+                <div class="info-item">
+                    <label>Owner Phone</label>
+                    <value>${client.owner_phone}</value>
+                </div>
+                <div class="info-item">
+                    <label>Owner Email</label>
+                    <value>${client.owner_email}</value>
+                </div>
+                <div class="info-item">
+                    <label>RinglyPro Number</label>
+                    <value>${client.ringlypro_number}</value>
+                </div>
+                <div class="info-item">
+                    <label>Minutes Used</label>
+                    <value>${Math.round(client.total_minutes_used || 0)} minutes</value>
+                </div>
+                <div class="info-item">
+                    <label>Dollar Amount</label>
+                    <value>$${(parseFloat(client.dollar_amount) || 0).toFixed(2)}</value>
+                </div>
+                <div class="info-item">
+                    <label>Monthly Free Minutes</label>
+                    <value>${client.monthly_free_minutes} minutes</value>
+                </div>
+                <div class="info-item">
+                    <label>Per Minute Rate</label>
+                    <value>$${parseFloat(client.per_minute_rate).toFixed(3)}</value>
+                </div>
+                <div class="info-item">
+                    <label>Total Appointments</label>
+                    <value>${client.total_appointments || 0}</value>
+                </div>
+                <div class="info-item">
+                    <label>Total Messages</label>
+                    <value>${client.total_messages || 0}</value>
+                </div>
+                <div class="info-item">
+                    <label>Total Calls</label>
+                    <value>${client.total_calls || 0}</value>
+                </div>
+                <div class="info-item">
+                    <label>Signup Date</label>
+                    <value>${new Date(client.created_at).toLocaleDateString()}</value>
+                </div>
+                <div class="info-item">
+                    <label>Last Activity</label>
+                    <value>${client.last_activity_at ? new Date(client.last_activity_at).toLocaleString() : 'Never'}</value>
+                </div>
+                <div class="info-item">
+                    <label>Rachel Enabled</label>
+                    <value>${client.rachel_enabled ? 'Yes' : 'No'}</value>
+                </div>
+                <div class="info-item">
+                    <label>Active Status</label>
+                    <value>${client.active ? 'Active' : 'Inactive'}</value>
+                </div>
+            `;
+
+            document.getElementById('clientInfo').innerHTML = infoHTML;
+        }
+
+        // Load SMS history
+        async function loadSMSHistory(clientId) {
+            try {
+                document.getElementById('smsHistory').innerHTML = '<div class="loading">Loading SMS history...</div>';
+
+                const response = await authenticatedFetch(`/api/admin/clients/${clientId}/sms-history`);
+                if (!response) return;
+
+                const data = await response.json();
+                if (data.success) {
+                    renderSMSHistory(data.communications);
+                }
+            } catch (error) {
+                console.error('Error loading SMS history:', error);
+                document.getElementById('smsHistory').innerHTML = '<div class="empty-state">Error loading SMS history</div>';
+            }
+        }
+
+        // Render SMS history
+        function renderSMSHistory(communications) {
+            const container = document.getElementById('smsHistory');
+
+            if (communications.length === 0) {
+                container.innerHTML = '<div class="empty-state">No SMS history</div>';
+                return;
+            }
+
+            const html = communications.map(comm => `
+                <div class="sms-message ${comm.direction}">
+                    <div class="meta">
+                        ${comm.direction === 'outbound' ? 'You' : 'Client'} •
+                        ${new Date(comm.created_at).toLocaleString()}
+                        ${comm.status ? ` • ${comm.status}` : ''}
+                    </div>
+                    <div class="body">${comm.message}</div>
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Send SMS
+        async function sendSMS() {
+            const message = document.getElementById('smsMessage').value.trim();
+            if (!message) {
+                alert('Please enter a message');
+                return;
+            }
+
+            if (!currentClient) return;
+
+            try {
+                // Get client phone from the info
+                const response = await authenticatedFetch(`/api/admin/clients/${currentClient}`);
+                if (!response) return;
+
+                const clientData = await response.json();
+                const toPhone = clientData.client.owner_phone;
+
+                const smsResponse = await authenticatedFetch(`/api/admin/clients/${currentClient}/send-sms`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message,
+                        to: toPhone
+                    })
+                });
+
+                if (!smsResponse) return;
+
+                const result = await smsResponse.json();
+                if (result.success) {
+                    alert('SMS sent successfully!');
+                    document.getElementById('smsMessage').value = '';
+                    loadSMSHistory(currentClient);
+                } else {
+                    alert('Failed to send SMS: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error sending SMS:', error);
+                alert('Failed to send SMS');
+            }
+        }
+
+        // Render notes
+        function renderNotes(notes) {
+            const container = document.getElementById('notesList');
+
+            if (notes.length === 0) {
+                container.innerHTML = '<div class="empty-state">No notes yet</div>';
+                return;
+            }
+
+            const html = notes.map(note => `
+                <div class="note-item">
+                    <div class="note-header">
+                        <span><strong>${note.note_type}</strong> by ${note.admin ? note.admin.email : 'Unknown'}</span>
+                        <span>${new Date(note.created_at).toLocaleString()}</span>
+                    </div>
+                    <div class="note-body">${note.note}</div>
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+        }
+
+        // Add note
+        async function addNote() {
+            const noteType = document.getElementById('noteType').value;
+            const noteText = document.getElementById('noteText').value.trim();
+
+            if (!noteText) {
+                alert('Please enter a note');
+                return;
+            }
+
+            if (!currentClient) return;
+
+            try {
+                const response = await authenticatedFetch(`/api/admin/clients/${currentClient}/notes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        note: noteText,
+                        noteType
+                    })
+                });
+
+                if (!response) return;
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Note added successfully!');
+                    document.getElementById('noteText').value = '';
+
+                    // Reload client profile to get updated notes
+                    const profileResponse = await authenticatedFetch(`/api/admin/clients/${currentClient}`);
+                    if (profileResponse) {
+                        const data = await profileResponse.json();
+                        if (data.success) {
+                            renderNotes(data.notes);
+                        }
+                    }
+                } else {
+                    alert('Failed to add note: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error adding note:', error);
+                alert('Failed to add note');
+            }
+        }
+
+        // Render activity
+        function renderActivity(activity) {
+            const container = document.getElementById('activityList');
+
+            if (activity.length === 0) {
+                container.innerHTML = '<div class="empty-state">No recent activity</div>';
+                return;
+            }
+
+            const html = activity.map(item => {
+                let icon = '📞';
+                let label = 'Call';
+                if (item.type === 'message') {
+                    icon = '💬';
+                    label = 'Message';
+                } else if (item.type === 'appointment') {
+                    icon = '📅';
+                    label = 'Appointment';
+                }
+
+                return `
+                    <div class="note-item">
+                        <div class="note-header">
+                            <span>${icon} ${label} • ${item.direction || ''}</span>
+                            <span>${new Date(item.created_at).toLocaleString()}</span>
+                        </div>
+                        <div class="note-body">
+                            ${item.phone || ''}
+                            ${item.duration ? ` • Duration: ${item.duration}s` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            if (checkAuth()) {
+                loadOverview();
+                loadClients();
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('clientModal').addEventListener('click', (e) => {
+            if (e.target.id === 'clientModal') {
+                closeClientModal();
+            }
+        });
+    </script>
+</body>
+</html>

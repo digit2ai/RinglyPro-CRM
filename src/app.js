@@ -116,6 +116,11 @@ if (referralRoutes) {
 // Add Mobile CRM API routes
 app.use('/api/mobile', mobileRoutes);
 
+// Admin Portal API routes (info@digit2ai.com only)
+const adminRoutes = require('./routes/admin');
+app.use('/api/admin', adminRoutes);
+console.log('👑 Admin portal API routes mounted at /api/admin');
+
 // Call forwarding API routes
 app.use('/api/call-forwarding', callForwardingRoutes);
 app.use('/api/forwarding-status', forwardingStatusRoutes);
@@ -151,7 +156,7 @@ console.log('🇪🇸 Lina Spanish voice routes mounted - Bilingual support acti
 app.get('/', async (req, res) => {
   try {
     // Render dashboard - authentication and clientId extraction happens client-side via JavaScript
-    res.render('dashboard', { 
+    res.render('dashboard', {
       title: `${CLIENT_NAME} CRM Dashboard`,
       currentDate: new Date().toLocaleDateString(),
       voiceEnabled: process.env.VOICE_ENABLED === 'true' || false,
@@ -160,6 +165,20 @@ app.get('/', async (req, res) => {
   } catch (error) {
     console.error('Dashboard error:', error);
     res.status(500).send('Error loading dashboard');
+  }
+});
+
+// Admin portal route - for info@digit2ai.com only
+app.get('/admin', async (req, res) => {
+  try {
+    res.render('admin', {
+      title: 'RinglyPro Admin Portal',
+      currentDate: new Date().toLocaleDateString(),
+      clientName: CLIENT_NAME
+    });
+  } catch (error) {
+    console.error('Admin portal error:', error);
+    res.status(500).send('Error loading admin portal');
   }
 });
 
