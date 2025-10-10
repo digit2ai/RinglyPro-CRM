@@ -9,6 +9,8 @@ let Appointment;
 let User;
 let Client;
 let CreditAccount;
+let AdminCommunication;
+let AdminNote;
 
 try {
   Message = require('./Message');
@@ -63,6 +65,22 @@ try {
   console.log('Note: CreditAccount model needed for billing system');
 }
 
+try {
+  AdminCommunication = require('./AdminCommunication')(sequelize);
+  console.log('AdminCommunication model imported successfully');
+} catch (error) {
+  console.log('AdminCommunication model not found:', error.message);
+  console.log('Note: AdminCommunication model needed for admin portal');
+}
+
+try {
+  AdminNote = require('./AdminNote')(sequelize);
+  console.log('AdminNote model imported successfully');
+} catch (error) {
+  console.log('AdminNote model not found:', error.message);
+  console.log('Note: AdminNote model needed for admin portal');
+}
+
 // Initialize models object
 const models = {
   sequelize
@@ -76,6 +94,8 @@ if (Appointment) models.Appointment = Appointment;
 if (User) models.User = User;
 if (Client) models.Client = Client;
 if (CreditAccount) models.CreditAccount = CreditAccount;
+if (AdminCommunication) models.AdminCommunication = AdminCommunication;
+if (AdminNote) models.AdminNote = AdminNote;
 
 // Set up associations if models exist
 if (Contact && Message) {
@@ -511,6 +531,8 @@ module.exports.Appointment = Appointment;
 module.exports.User = User;
 module.exports.Client = Client;
 module.exports.CreditAccount = CreditAccount;
+module.exports.AdminCommunication = AdminCommunication;
+module.exports.AdminNote = AdminNote;
 
 // Export AI services
 module.exports.BusinessAICustomizer = BusinessAICustomizer;
