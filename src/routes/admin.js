@@ -273,32 +273,10 @@ router.get('/clients/:client_id', async (req, res) => {
 
         console.log(`📋 Admin loading client profile: ${client_id}`);
 
-        // Get client details with aggregated stats
-        const query = `
-            SELECT
-                c.*,
-                -- Calculate last activity
-                GREATEST(
-                    COALESCE(MAX(calls.created_at), c.created_at),
-                    COALESCE(MAX(messages.created_at), c.created_at),
-                    COALESCE(MAX(appointments.created_at), c.created_at),
-                    c.created_at
-                ) as last_activity_at,
-                -- Convert duration from seconds to minutes
-                COALESCE(SUM(calls.duration) / 60.0, 0) as total_minutes_used,
-                ROUND(COALESCE(SUM(calls.duration) / 60.0, 0) * c.per_minute_rate, 2) as dollar_amount,
-                COUNT(DISTINCT appointments.id) as total_appointments,
-                COUNT(DISTINCT messages.id) as total_messages,
-                COUNT(DISTINCT calls.id) as total_calls
-            FROM clients c
-            LEFT JOIN calls ON calls.client_id = c.id
-            LEFT JOIN appointments ON appointments.client_id = c.id
-            LEFT JOIN messages ON messages.client_id = c.id
-            WHERE c.id = :client_id
-            GROUP BY c.id
-        `;
-
-        const [client] = await sequelize.query(query, {
+        // Get client base info
+        const [client] = await sequelize.query(`
+            SELECT * FROM clients WHERE id = :client_id
+        `, {
             replacements: { client_id },
             type: sequelize.QueryTypes.SELECT
         });
@@ -309,6 +287,36 @@ router.get('/clients/:client_id', async (req, res) => {
                 error: 'Client not found'
             });
         }
+
+        // Get aggregated stats for this client
+        const [stats] = await sequelize.query(`
+            SELECT
+                GREATEST(
+                    COALESCE(MAX(calls.created_at), :created_at),
+                    COALESCE(MAX(messages.created_at), :created_at),
+                    COALESCE(MAX(appointments.created_at), :created_at),
+                    :created_at
+                ) as last_activity_at,
+                COALESCE(SUM(calls.duration) / 60.0, 0) as total_minutes_used,
+                ROUND(COALESCE(SUM(calls.duration) / 60.0, 0) * :per_minute_rate, 2) as dollar_amount,
+                COUNT(DISTINCT appointments.id) as total_appointments,
+                COUNT(DISTINCT messages.id) as total_messages,
+                COUNT(DISTINCT calls.id) as total_calls
+            FROM (SELECT :client_id as id) c
+            LEFT JOIN calls ON calls.client_id = c.id
+            LEFT JOIN appointments ON appointments.client_id = c.id
+            LEFT JOIN messages ON messages.client_id = c.id
+        `, {
+            replacements: {
+                client_id,
+                created_at: client.created_at,
+                per_minute_rate: client.per_minute_rate
+            },
+            type: sequelize.QueryTypes.SELECT
+        });
+
+        // Merge stats into client object
+        Object.assign(client, stats);
 
         // Get recent activity
         const recentActivity = await sequelize.query(`
@@ -554,20 +562,33 @@ router.get('/search/phone/:phone', async (req, res) => {
 
         console.log(`🔍 Admin searching for phone: ${phone}`);
 
-        const clients = await sequelize.query(`
-            SELECT
-                c.*,
-                COALESCE(SUM(calls.duration) / 60.0, 0) as total_minutes_used,
-                ROUND(COALESCE(SUM(calls.duration) / 60.0, 0) * c.per_minute_rate, 2) as dollar_amount
-            FROM clients c
-            LEFT JOIN calls ON calls.client_id = c.id
-            WHERE c.owner_phone ILIKE :phone
-               OR c.business_phone ILIKE :phone
-            GROUP BY c.id
+        // First get matching clients
+        const clientMatches = await sequelize.query(`
+            SELECT * FROM clients
+            WHERE owner_phone ILIKE :phone
+               OR business_phone ILIKE :phone
         `, {
             replacements: { phone: `%${phone}%` },
             type: sequelize.QueryTypes.SELECT
         });
+
+        // Then get stats for each client
+        const clients = await Promise.all(clientMatches.map(async (c) => {
+            const [stats] = await sequelize.query(`
+                SELECT
+                    COALESCE(SUM(duration) / 60.0, 0) as total_minutes_used,
+                    ROUND(COALESCE(SUM(duration) / 60.0, 0) * :per_minute_rate, 2) as dollar_amount
+                FROM calls
+                WHERE client_id = :client_id
+            `, {
+                replacements: {
+                    client_id: c.id,
+                    per_minute_rate: c.per_minute_rate
+                },
+                type: sequelize.QueryTypes.SELECT
+            });
+            return { ...c, ...stats };
+        }));
 
         res.json({
             success: true,
