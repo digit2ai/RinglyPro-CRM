@@ -275,9 +275,9 @@ router.get('/clients/:client_id', async (req, res) => {
 
         // Get client base info
         const [client] = await sequelize.query(`
-            SELECT * FROM clients WHERE id = :client_id
+            SELECT * FROM clients WHERE id = $1
         `, {
-            replacements: { client_id },
+            bind: [parseInt(client_id)],
             type: sequelize.QueryTypes.SELECT
         });
 
@@ -351,7 +351,7 @@ router.get('/clients/:client_id', async (req, res) => {
                     duration,
                     from_number as phone
                 FROM calls
-                WHERE client_id = :client_id
+                WHERE client_id = $1
 
                 UNION ALL
 
@@ -362,7 +362,7 @@ router.get('/clients/:client_id', async (req, res) => {
                     NULL as duration,
                     from_number as phone
                 FROM messages
-                WHERE client_id = :client_id
+                WHERE client_id = $1
 
                 UNION ALL
 
@@ -373,18 +373,18 @@ router.get('/clients/:client_id', async (req, res) => {
                     NULL as duration,
                     customer_phone as phone
                 FROM appointments
-                WHERE client_id = :client_id
+                WHERE client_id = $1
             ) combined
             ORDER BY created_at DESC
             LIMIT 50
         `, {
-            replacements: { client_id },
+            bind: [parseInt(client_id)],
             type: sequelize.QueryTypes.SELECT
         });
 
         // Get admin notes
         const notes = await AdminNote.findAll({
-            where: { clientId: client_id },
+            where: { clientId: parseInt(client_id) },
             include: [{
                 model: User,
                 as: 'admin',
@@ -427,7 +427,7 @@ router.post('/clients/:client_id/send-sms', async (req, res) => {
             });
         }
 
-        const client = await Client.findByPk(client_id);
+        const client = await Client.findByPk(parseInt(client_id));
         if (!client) {
             return res.status(404).json({
                 success: false,
@@ -455,7 +455,7 @@ router.post('/clients/:client_id/send-sms', async (req, res) => {
         // Log to admin_communications table
         await AdminCommunication.create({
             adminUserId: req.adminId,
-            clientId: client_id,
+            clientId: parseInt(client_id),
             communicationType: 'sms',
             message,
             phoneNumber: to,
@@ -512,7 +512,7 @@ router.get('/clients/:client_id/sms-history', async (req, res) => {
 
         const communications = await AdminCommunication.findAll({
             where: {
-                clientId: client_id,
+                clientId: parseInt(client_id),
                 communicationType: 'sms'
             },
             include: [{
@@ -555,7 +555,7 @@ router.post('/clients/:client_id/notes', async (req, res) => {
 
         const adminNote = await AdminNote.create({
             adminUserId: req.adminId,
-            clientId: client_id,
+            clientId: parseInt(client_id),
             note,
             noteType
         });
@@ -599,18 +599,18 @@ router.get('/search/phone/:phone', async (req, res) => {
         const clients = await Promise.all(clientMatches.map(async (c) => {
             const [stats] = await sequelize.query(`
                 SELECT
-                    COALESCE(SUM(duration) / 60.0, 0) as total_minutes_used,
-                    ROUND(COALESCE(SUM(duration) / 60.0, 0) * :per_minute_rate, 2) as dollar_amount
+                    COALESCE(SUM(duration) / 60.0, 0) as total_minutes_used
                 FROM calls
-                WHERE client_id = :client_id
+                WHERE client_id = $1
             `, {
-                replacements: {
-                    client_id: c.id,
-                    per_minute_rate: c.per_minute_rate
-                },
+                bind: [parseInt(c.id)],
                 type: sequelize.QueryTypes.SELECT
             });
-            return { ...c, ...stats };
+            return {
+                ...c,
+                total_minutes_used: stats.total_minutes_used,
+                dollar_amount: (stats.total_minutes_used * parseFloat(c.per_minute_rate)).toFixed(2)
+            };
         }));
 
         res.json({
