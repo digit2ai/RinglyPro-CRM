@@ -18,6 +18,41 @@ const clientService = new ClientIdentificationService(process.env.DATABASE_URL);
 const router = express.Router();
 
 /**
+ * Create IVR menu for Spanish (same logic as English, different language)
+ */
+function createSpanishIVRMenu(client) {
+    const businessName = client.business_name;
+    const ivrOptions = client.ivr_options || [];
+
+    // Get enabled departments only
+    const enabledDepts = ivrOptions.filter(dept => dept.enabled);
+
+    // Build Spanish menu text
+    let menuText = `Hola, ha llamado a ${businessName}. `;
+    menuText += `Presione 1 para programar una cita. `;
+
+    // Add department options (starting from 2)
+    enabledDepts.forEach((dept, index) => {
+        const digit = index + 2;
+        menuText += `Presione ${digit} para comunicarse con ${dept.name}. `;
+    });
+
+    menuText += `Presione 9 para dejar un mensaje de voz. `;
+
+    const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="dtmf" numDigits="1" timeout="5" action="/voice/rachel/ivr-selection?lang=es" method="POST">
+        <Say voice="Polly.Lupe" language="es-MX">${menuText}</Say>
+    </Gather>
+    <Say voice="Polly.Lupe" language="es-MX">No recibí una selección. Adiós.</Say>
+    <Hangup/>
+</Response>`;
+
+    console.log(`📋 Spanish IVR Menu created for ${businessName}: ${enabledDepts.length} departments`);
+    return twiml;
+}
+
+/**
  * Spanish greeting endpoint (called after language selection)
  * Handle both GET (from redirects) and POST (from direct calls)
  */
@@ -42,7 +77,33 @@ const handleSpanishIncoming = async (req, res) => {
             return res.send(twiml);
         }
 
-        // Reconstruct client info from session
+        // Load full client info including IVR settings
+        const { Client } = require('../models');
+        const client = await Client.findByPk(clientId);
+
+        if (!client) {
+            console.error(`❌ Client ${clientId} not found`);
+            const twiml = `
+                <?xml version="1.0" encoding="UTF-8"?>
+                <Response>
+                    <Say voice="Polly.Lupe" language="es-MX">Lo siento, hubo un error. Por favor, llame de nuevo.</Say>
+                    <Hangup/>
+                </Response>
+            `;
+            res.type('text/xml');
+            return res.send(twiml);
+        }
+
+        // Check if IVR is enabled
+        if (client.ivr_enabled && client.ivr_options && client.ivr_options.length > 0) {
+            console.log(`✅ IVR enabled for ${businessName} - showing Spanish menu`);
+            const twiml = createSpanishIVRMenu(client);
+            res.type('text/xml');
+            return res.send(twiml);
+        }
+
+        // No IVR - use original personalized greeting (speech-based appointment booking)
+        console.log(`📞 No IVR for ${businessName} - using original Spanish flow`);
         const clientInfo = {
             client_id: clientId,
             business_name: businessName,

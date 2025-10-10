@@ -739,6 +739,174 @@ router.post('/voice/rachel/select-language', async (req, res) => {
 });
 
 /**
+ * Create IVR menu with dynamic options based on client configuration
+ * @param {Object} client - Client database record with IVR settings
+ * @param {String} language - 'en' or 'es'
+ * @returns {String} TwiML response
+ */
+function createIVRMenu(client, language = 'en') {
+    const businessName = client.business_name;
+    const ivrOptions = client.ivr_options || [];
+
+    // Get enabled departments only
+    const enabledDepts = ivrOptions.filter(dept => dept.enabled);
+
+    // Build menu text
+    let menuText = '';
+    if (language === 'en') {
+        menuText = `Hello, you've reached ${businessName}. `;
+        menuText += `Press 1 to schedule an appointment. `;
+
+        // Add department options (starting from 2)
+        enabledDepts.forEach((dept, index) => {
+            const digit = index + 2;
+            menuText += `Press ${digit} to reach ${dept.name}. `;
+        });
+
+        menuText += `Press 9 to leave a voicemail. `;
+    } else {
+        // Spanish
+        menuText = `Hola, ha llamado a ${businessName}. `;
+        menuText += `Presione 1 para programar una cita. `;
+
+        enabledDepts.forEach((dept, index) => {
+            const digit = index + 2;
+            menuText += `Presione ${digit} para comunicarse con ${dept.name}. `;
+        });
+
+        menuText += `Presione 9 para dejar un mensaje de voz. `;
+    }
+
+    const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
+
+    const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="dtmf" numDigits="1" timeout="5" action="/voice/rachel/ivr-selection?lang=${language}" method="POST">
+        <Say voice="${voice}">${menuText}</Say>
+    </Gather>
+    <Say voice="${voice}">I didn't receive a selection. Goodbye.</Say>
+    <Hangup/>
+</Response>`;
+
+    console.log(`📋 IVR Menu created for ${businessName} (${language}): ${enabledDepts.length} departments`);
+    return twiml;
+}
+
+/**
+ * Handle IVR menu selection
+ */
+router.post('/voice/rachel/ivr-selection', async (req, res) => {
+    try {
+        const digit = req.body.Digits || '';
+        const language = req.query.lang || 'en';
+        const clientId = req.session.client_id;
+        const businessName = req.session.business_name;
+
+        console.log(`🔢 IVR selection: ${digit} (${language}) for client ${clientId}`);
+
+        if (!clientId) {
+            const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="${voice}">Session expired. Please call back.</Say>
+    <Hangup/>
+</Response>`;
+            res.type('text/xml');
+            return res.send(twiml);
+        }
+
+        // Load client IVR settings
+        const { Client } = require('../models');
+        const client = await Client.findByPk(clientId);
+
+        if (!client) {
+            const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="${voice}">I'm sorry, there was an error. Please call back.</Say>
+    <Hangup/>
+</Response>`;
+            res.type('text/xml');
+            return res.send(twiml);
+        }
+
+        const enabledDepts = (client.ivr_options || []).filter(dept => dept.enabled);
+
+        // Handle selection
+        if (digit === '1') {
+            // Appointment booking
+            console.log(`📅 Appointment booking selected for ${businessName}`);
+            if (language === 'en') {
+                res.redirect(307, '/voice/rachel/collect-name');
+            } else {
+                res.redirect(307, '/voice/lina/collect-name');
+            }
+        } else if (digit === '9') {
+            // Voicemail
+            console.log(`📬 Voicemail selected for ${businessName}`);
+            if (language === 'en') {
+                res.redirect(307, '/voice/rachel/voicemail');
+            } else {
+                res.redirect(307, '/voice/lina/voicemail');
+            }
+        } else {
+            // Check if it's a department transfer (2, 3, 4, etc.)
+            const deptIndex = parseInt(digit) - 2;
+            if (deptIndex >= 0 && deptIndex < enabledDepts.length) {
+                const dept = enabledDepts[deptIndex];
+                console.log(`📞 Transferring to ${dept.name} (${dept.phone}) for ${businessName}`);
+
+                const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
+                const transferMsg = language === 'en'
+                    ? `Transferring you to ${dept.name}. Please hold.`
+                    : `Transfiriéndolo a ${dept.name}. Por favor espere.`;
+
+                const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="${voice}">${transferMsg}</Say>
+    <Dial timeout="30" callerId="${client.ringlypro_number}">
+        <Number>${dept.phone}</Number>
+    </Dial>
+    <Say voice="${voice}">The transfer failed. Please try again later. Goodbye.</Say>
+    <Hangup/>
+</Response>`;
+
+                res.type('text/xml');
+                return res.send(twiml);
+            } else {
+                // Invalid selection
+                console.log(`❌ Invalid IVR selection: ${digit}`);
+                const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
+                const errorMsg = language === 'en'
+                    ? 'Invalid selection. Goodbye.'
+                    : 'Selección inválida. Adiós.';
+
+                const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="${voice}">${errorMsg}</Say>
+    <Hangup/>
+</Response>`;
+
+                res.type('text/xml');
+                return res.send(twiml);
+            }
+        }
+
+    } catch (error) {
+        console.error('Error handling IVR selection:', error);
+        const voice = req.query.lang === 'es' ? 'Polly.Lupe' : 'Polly.Joanna';
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="${voice}">I'm sorry, there was an error. Please try calling again.</Say>
+    <Hangup/>
+</Response>`;
+
+        res.type('text/xml');
+        res.send(twiml);
+    }
+});
+
+/**
  * English greeting endpoint (called after language selection)
  * Handle both GET (from redirects) and POST (from direct calls)
  */
@@ -763,7 +931,33 @@ const handleEnglishIncoming = async (req, res) => {
             return res.send(twiml);
         }
 
-        // Reconstruct client info from session
+        // Load full client info including IVR settings
+        const { Client } = require('../models');
+        const client = await Client.findByPk(clientId);
+
+        if (!client) {
+            console.error(`❌ Client ${clientId} not found`);
+            const twiml = `
+                <?xml version="1.0" encoding="UTF-8"?>
+                <Response>
+                    <Say voice="Polly.Joanna">I'm sorry, there was an error. Please call back.</Say>
+                    <Hangup/>
+                </Response>
+            `;
+            res.type('text/xml');
+            return res.send(twiml);
+        }
+
+        // Check if IVR is enabled
+        if (client.ivr_enabled && client.ivr_options && client.ivr_options.length > 0) {
+            console.log(`✅ IVR enabled for ${businessName} - showing menu`);
+            const twiml = createIVRMenu(client, 'en');
+            res.type('text/xml');
+            return res.send(twiml);
+        }
+
+        // No IVR - use original personalized greeting (speech-based appointment booking)
+        console.log(`📞 No IVR for ${businessName} - using original flow`);
         const clientInfo = {
             client_id: clientId,
             business_name: businessName,
