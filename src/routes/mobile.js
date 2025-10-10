@@ -74,15 +74,20 @@ router.get('/dashboard/today/:client_id', async (req, res) => {
   
   try {
     console.log(`📊 Loading dashboard for client ${client_id}`);
-    
-    // Show appointments from today through next 14 days
+
+    // Get current date for debugging
+    const debugDateQuery = `SELECT CURRENT_DATE as today, CURRENT_DATE - INTERVAL '1 day' as yesterday, CURRENT_DATE + INTERVAL '14 days' as future`;
+    const [debugDate] = await sequelize.query(debugDateQuery, { type: sequelize.QueryTypes.SELECT });
+    console.log(`   Database dates: Yesterday=${debugDate.yesterday}, Today=${debugDate.today}, Future=${debugDate.future}`);
+
+    // Show appointments from yesterday through next 14 days (includes buffer for timezone differences)
     const appointmentsQuery = `
       SELECT id, customer_name as name, customer_phone as phone,
              appointment_time as time, appointment_date, notes, status, created_at
       FROM appointments
       WHERE client_id = $1
         AND status != 'cancelled'
-        AND appointment_date >= CURRENT_DATE
+        AND appointment_date >= CURRENT_DATE - INTERVAL '1 day'
         AND appointment_date <= CURRENT_DATE + INTERVAL '14 days'
       ORDER BY appointment_date ASC, appointment_time ASC
     `;
@@ -112,7 +117,14 @@ router.get('/dashboard/today/:client_id', async (req, res) => {
       sequelize.query(communicationsQuery, { bind: [client_id], type: sequelize.QueryTypes.SELECT })
     ]);
 
-    console.log(`📊 Query returned ${appointmentsResult.length} appointments`);
+    // Debug: Show total appointment count for this client
+    const [totalCount] = await sequelize.query(
+      `SELECT COUNT(*) as total FROM appointments WHERE client_id = $1 AND status != 'cancelled'`,
+      { bind: [client_id], type: sequelize.QueryTypes.SELECT }
+    );
+    console.log(`   Total active appointments for client ${client_id}: ${totalCount.total}`);
+
+    console.log(`📊 Query returned ${appointmentsResult.length} appointments in date range`);
     if (appointmentsResult.length > 0) {
       appointmentsResult.forEach(apt => {
         console.log(`   - Appointment ${apt.id}: ${apt.name} at ${apt.time} on ${apt.appointment_date}`);
