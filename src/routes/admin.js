@@ -323,17 +323,21 @@ router.get('/clients/:client_id', async (req, res) => {
             type: sequelize.QueryTypes.SELECT
         });
 
-        // Merge all stats
+        // Merge all stats with safe access
+        const callData = callStats && callStats[0] ? callStats[0] : { total_minutes_used: 0, total_calls: 0, last_call_at: null };
+        const apptData = appointmentStats && appointmentStats[0] ? appointmentStats[0] : { total_appointments: 0, last_appointment_at: null };
+        const msgData = messageStats && messageStats[0] ? messageStats[0] : { total_messages: 0, last_message_at: null };
+
         const stats = {
-            total_minutes_used: callStats[0].total_minutes_used,
-            dollar_amount: (callStats[0].total_minutes_used * parseFloat(client.per_minute_rate)).toFixed(2),
-            total_calls: callStats[0].total_calls,
-            total_appointments: appointmentStats[0].total_appointments,
-            total_messages: messageStats[0].total_messages,
+            total_minutes_used: parseFloat(callData.total_minutes_used) || 0,
+            dollar_amount: ((parseFloat(callData.total_minutes_used) || 0) * parseFloat(client.per_minute_rate || 0)).toFixed(2),
+            total_calls: parseInt(callData.total_calls) || 0,
+            total_appointments: parseInt(apptData.total_appointments) || 0,
+            total_messages: parseInt(msgData.total_messages) || 0,
             last_activity_at: [
-                callStats[0].last_call_at,
-                appointmentStats[0].last_appointment_at,
-                messageStats[0].last_message_at,
+                callData.last_call_at,
+                apptData.last_appointment_at,
+                msgData.last_message_at,
                 client.created_at
             ].filter(Boolean).sort().reverse()[0] || client.created_at
         };
@@ -405,10 +409,12 @@ router.get('/clients/:client_id', async (req, res) => {
 
     } catch (error) {
         console.error('❌ Admin client profile error:', error);
+        console.error('Stack trace:', error.stack);
         res.status(500).json({
             success: false,
             error: 'Failed to load client profile',
-            details: error.message
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });
@@ -597,7 +603,7 @@ router.get('/search/phone/:phone', async (req, res) => {
 
         // Then get stats for each client
         const clients = await Promise.all(clientMatches.map(async (c) => {
-            const [stats] = await sequelize.query(`
+            const results = await sequelize.query(`
                 SELECT
                     COALESCE(SUM(duration) / 60.0, 0) as total_minutes_used
                 FROM calls
@@ -606,10 +612,12 @@ router.get('/search/phone/:phone', async (req, res) => {
                 bind: [parseInt(c.id)],
                 type: sequelize.QueryTypes.SELECT
             });
+            const stats = results && results[0] ? results[0] : { total_minutes_used: 0 };
+            const minutes = parseFloat(stats.total_minutes_used) || 0;
             return {
                 ...c,
-                total_minutes_used: stats.total_minutes_used,
-                dollar_amount: (stats.total_minutes_used * parseFloat(c.per_minute_rate)).toFixed(2)
+                total_minutes_used: minutes,
+                dollar_amount: (minutes * parseFloat(c.per_minute_rate || 0)).toFixed(2)
             };
         }));
 
