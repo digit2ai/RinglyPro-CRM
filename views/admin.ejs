@@ -550,13 +550,13 @@
     </div>
 
     <script>
-        let authToken = localStorage.getItem('token');
+        let authToken = localStorage.getItem('adminToken');
         let currentClient = null;
 
         // Check authentication and admin status
         function checkAuth() {
             if (!authToken) {
-                window.location.href = '/login';
+                window.location.href = '/admin/login';
                 return false;
             }
 
@@ -575,7 +575,7 @@
                 return true;
             } catch (error) {
                 console.error('Token parse error:', error);
-                window.location.href = '/login';
+                window.location.href = '/admin/login';
                 return false;
             }
         }
@@ -591,8 +591,8 @@
 
             if (response.status === 401 || response.status === 403) {
                 alert('Session expired or unauthorized. Please login again.');
-                localStorage.removeItem('token');
-                window.location.href = '/login';
+                localStorage.removeItem('adminToken');
+                window.location.href = '/admin/login';
                 return null;
             }
 
@@ -1016,8 +1016,8 @@
 
         // Logout
         function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/login';
+            localStorage.removeItem('adminToken');
+            window.location.href = '/admin/login';
         }
 
         // Initialize

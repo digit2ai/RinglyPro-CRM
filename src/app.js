@@ -168,6 +168,13 @@ app.get('/', async (req, res) => {
   }
 });
 
+// Admin login page - no authentication required
+app.get('/admin/login', (req, res) => {
+  res.render('admin-login', {
+    title: 'Admin Portal - Sign In'
+  });
+});
+
 // Admin portal route - for info@digit2ai.com only
 app.get('/admin', async (req, res) => {
   try {

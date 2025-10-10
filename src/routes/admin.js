@@ -2,9 +2,93 @@
 // Only accessible by info@digit2ai.com
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const router = express.Router();
 const { sequelize, Client, User, AdminCommunication, AdminNote } = require('../models');
 const twilio = require('twilio');
+
+// ============= ADMIN LOGIN (NO AUTH REQUIRED) =============
+
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        console.log(`🔐 Admin login attempt: ${email}`);
+
+        // Only allow info@digit2ai.com
+        if (email !== 'info@digit2ai.com') {
+            console.log(`🚨 Non-admin email attempted admin login: ${email}`);
+            return res.status(403).json({
+                success: false,
+                error: 'Access denied'
+            });
+        }
+
+        // Find admin user
+        const user = await User.findOne({ where: { email } });
+
+        if (!user) {
+            console.log(`❌ Admin user not found: ${email}`);
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid credentials'
+            });
+        }
+
+        // Verify password
+        const validPassword = await bcrypt.compare(password, user.password_hash);
+
+        if (!validPassword) {
+            console.log(`❌ Invalid password for admin: ${email}`);
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid credentials'
+            });
+        }
+
+        // Check if user is admin
+        if (!user.is_admin) {
+            console.log(`🚨 Non-admin user attempted admin login: ${email}`);
+            return res.status(403).json({
+                success: false,
+                error: 'Admin access required'
+            });
+        }
+
+        // Generate JWT token
+        const token = jwt.sign(
+            {
+                userId: user.id,
+                email: user.email,
+                isAdmin: true
+            },
+            process.env.JWT_SECRET || 'your-super-secret-jwt-key',
+            { expiresIn: '24h' }
+        );
+
+        console.log(`✅ Admin login successful: ${email}`);
+
+        res.json({
+            success: true,
+            token,
+            user: {
+                id: user.id,
+                email: user.email,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                isAdmin: user.is_admin
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Admin login error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Login failed',
+            details: error.message
+        });
+    }
+});
 
 // Admin authentication middleware
 const authenticateAdmin = async (req, res, next) => {
