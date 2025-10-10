@@ -840,6 +840,55 @@ router.post('/voice/lina/webhook', async (req, res) => {
 });
 
 /**
+ * Voicemail recording endpoint (Spanish)
+ */
+router.post('/voice/lina/voicemail', async (req, res) => {
+    try {
+        console.log('📬 Spanish voicemail requested');
+
+        const twimlResponse = await linaService.handleVoicemailRequest(req.session);
+
+        res.type('text/xml');
+        res.send(twimlResponse);
+
+    } catch (error) {
+        console.error('Error in Spanish voicemail:', error);
+
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Lo siento, hubo un error con el buzón de voz. Por favor, intente llamar de nuevo.</Say>
+    <Hangup/>
+</Response>`;
+
+        res.type('text/xml');
+        res.send(twiml);
+    }
+});
+
+router.get('/voice/lina/voicemail', async (req, res) => {
+    try {
+        console.log('📬 Spanish voicemail requested (GET)');
+
+        const twimlResponse = await linaService.handleVoicemailRequest(req.session);
+
+        res.type('text/xml');
+        res.send(twimlResponse);
+
+    } catch (error) {
+        console.error('Error in Spanish voicemail:', error);
+
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Lo siento, hubo un error con el buzón de voz. Por favor, intente llamar de nuevo.</Say>
+    <Hangup/>
+</Response>`;
+
+        res.type('text/xml');
+        res.send(twiml);
+    }
+});
+
+/**
  * Handle voicemail recording completion (Spanish)
  * Since Twilio doesn't support Spanish transcription, we store the recording directly
  */

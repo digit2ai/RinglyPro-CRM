@@ -1050,6 +1050,55 @@ router.get('/audio/:filename', async (req, res) => {
 });
 
 /**
+ * Voicemail recording endpoint
+ */
+router.post('/voice/rachel/voicemail', async (req, res) => {
+    try {
+        console.log('📬 Voicemail requested');
+
+        const twimlResponse = await rachelService.handleVoicemailRequest(req.session);
+
+        res.type('text/xml');
+        res.send(twimlResponse);
+
+    } catch (error) {
+        console.error('Error in voicemail:', error);
+
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">I'm sorry, there was an error with voicemail. Please try calling again.</Say>
+    <Hangup/>
+</Response>`;
+
+        res.type('text/xml');
+        res.send(twiml);
+    }
+});
+
+router.get('/voice/rachel/voicemail', async (req, res) => {
+    try {
+        console.log('📬 Voicemail requested (GET)');
+
+        const twimlResponse = await rachelService.handleVoicemailRequest(req.session);
+
+        res.type('text/xml');
+        res.send(twimlResponse);
+
+    } catch (error) {
+        console.error('Error in voicemail:', error);
+
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">I'm sorry, there was an error with voicemail. Please try calling again.</Say>
+    <Hangup/>
+</Response>`;
+
+        res.type('text/xml');
+        res.send(twiml);
+    }
+});
+
+/**
  * Handle voicemail recording completion
  */
 router.post('/voice/rachel/voicemail-complete', async (req, res) => {
