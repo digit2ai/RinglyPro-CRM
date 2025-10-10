@@ -168,9 +168,9 @@ router.get('/clients', async (req, res) => {
 
                 -- Calculate last activity (most recent call, message, or appointment)
                 GREATEST(
-                    MAX(calls.created_at),
-                    MAX(messages.created_at),
-                    MAX(appointments.created_at),
+                    COALESCE(MAX(calls.created_at), c.created_at),
+                    COALESCE(MAX(messages.created_at), c.created_at),
+                    COALESCE(MAX(appointments.created_at), c.created_at),
                     c.created_at
                 ) as last_activity_at,
 
@@ -209,9 +209,9 @@ router.get('/clients', async (req, res) => {
 
         query += ` GROUP BY c.id`;
 
-        // Add sorting
+        // Add sorting (default to signup_date which is aliased from c.created_at)
         const validSortColumns = ['business_name', 'signup_date', 'last_activity_at', 'total_minutes_used', 'dollar_amount'];
-        const sortColumn = validSortColumns.includes(sortBy) ? sortBy : 'created_at';
+        const sortColumn = validSortColumns.includes(sortBy) ? sortBy : 'signup_date';
         const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
         query += ` ORDER BY ${sortColumn} ${order}`;
@@ -279,9 +279,9 @@ router.get('/clients/:client_id', async (req, res) => {
                 c.*,
                 -- Calculate last activity
                 GREATEST(
-                    MAX(calls.created_at),
-                    MAX(messages.created_at),
-                    MAX(appointments.created_at),
+                    COALESCE(MAX(calls.created_at), c.created_at),
+                    COALESCE(MAX(messages.created_at), c.created_at),
+                    COALESCE(MAX(appointments.created_at), c.created_at),
                     c.created_at
                 ) as last_activity_at,
                 -- Convert duration from seconds to minutes
@@ -557,8 +557,8 @@ router.get('/search/phone/:phone', async (req, res) => {
         const clients = await sequelize.query(`
             SELECT
                 c.*,
-                COALESCE(SUM(calls.duration), 0) as total_minutes_used,
-                ROUND(COALESCE(SUM(calls.duration), 0) / 60.0 * c.per_minute_rate, 2) as dollar_amount
+                COALESCE(SUM(calls.duration) / 60.0, 0) as total_minutes_used,
+                ROUND(COALESCE(SUM(calls.duration) / 60.0, 0) * c.per_minute_rate, 2) as dollar_amount
             FROM clients c
             LEFT JOIN calls ON calls.client_id = c.id
             WHERE c.owner_phone ILIKE :phone
