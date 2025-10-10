@@ -351,7 +351,7 @@ router.get('/clients/:client_id', async (req, res) => {
                 SELECT
                     'call' as type,
                     created_at,
-                    direction,
+                    direction::text as direction,
                     duration,
                     from_number as phone
                 FROM calls
@@ -362,8 +362,8 @@ router.get('/clients/:client_id', async (req, res) => {
                 SELECT
                     'message' as type,
                     created_at,
-                    direction,
-                    NULL as duration,
+                    direction::text as direction,
+                    NULL::integer as duration,
                     from_number as phone
                 FROM messages
                 WHERE client_id = $1
@@ -373,8 +373,8 @@ router.get('/clients/:client_id', async (req, res) => {
                 SELECT
                     'appointment' as type,
                     created_at,
-                    NULL as direction,
-                    NULL as duration,
+                    NULL::text as direction,
+                    NULL::integer as duration,
                     customer_phone as phone
                 FROM appointments
                 WHERE client_id = $1
