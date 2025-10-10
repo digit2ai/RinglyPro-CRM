@@ -99,6 +99,17 @@ module.exports = (sequelize) => {
         email_verification_token: {
             type: DataTypes.STRING(255),
             allowNull: true
+        },
+
+        // ADMIN FIELDS
+        is_admin: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
+        admin_phone: {
+            type: DataTypes.STRING(20),
+            allowNull: true
         }
     }, {
         tableName: 'users',
@@ -116,6 +127,9 @@ module.exports = (sequelize) => {
             },
             {
                 fields: ['onboarding_completed']
+            },
+            {
+                fields: ['is_admin']
             }
         ],
         
