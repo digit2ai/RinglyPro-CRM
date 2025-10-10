@@ -163,15 +163,22 @@ router.get('/clients', async (req, res) => {
                 c.rachel_enabled,
                 c.active,
                 c.created_at as signup_date,
-                c.last_activity_at,
                 c.monthly_free_minutes,
                 c.per_minute_rate,
 
-                -- Calculate minutes used from calls table
-                COALESCE(SUM(calls.duration), 0) as total_minutes_used,
+                -- Calculate last activity (most recent call, message, or appointment)
+                GREATEST(
+                    MAX(calls.created_at),
+                    MAX(messages.created_at),
+                    MAX(appointments.created_at),
+                    c.created_at
+                ) as last_activity_at,
+
+                -- Calculate minutes used from calls table (duration is in seconds, convert to minutes)
+                COALESCE(SUM(calls.duration) / 60.0, 0) as total_minutes_used,
 
                 -- Calculate dollar amount (minutes * rate)
-                ROUND(COALESCE(SUM(calls.duration), 0) / 60.0 * c.per_minute_rate, 2) as dollar_amount,
+                ROUND(COALESCE(SUM(calls.duration) / 60.0, 0) * c.per_minute_rate, 2) as dollar_amount,
 
                 -- Count appointments
                 COUNT(DISTINCT appointments.id) as total_appointments,
@@ -270,8 +277,16 @@ router.get('/clients/:client_id', async (req, res) => {
         const query = `
             SELECT
                 c.*,
-                COALESCE(SUM(calls.duration), 0) as total_minutes_used,
-                ROUND(COALESCE(SUM(calls.duration), 0) / 60.0 * c.per_minute_rate, 2) as dollar_amount,
+                -- Calculate last activity
+                GREATEST(
+                    MAX(calls.created_at),
+                    MAX(messages.created_at),
+                    MAX(appointments.created_at),
+                    c.created_at
+                ) as last_activity_at,
+                -- Convert duration from seconds to minutes
+                COALESCE(SUM(calls.duration) / 60.0, 0) as total_minutes_used,
+                ROUND(COALESCE(SUM(calls.duration) / 60.0, 0) * c.per_minute_rate, 2) as dollar_amount,
                 COUNT(DISTINCT appointments.id) as total_appointments,
                 COUNT(DISTINCT messages.id) as total_messages,
                 COUNT(DISTINCT calls.id) as total_calls
