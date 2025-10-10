@@ -102,14 +102,16 @@ module.exports = (sequelize) => {
         },
 
         // ADMIN FIELDS
-        is_admin: {
+        isAdmin: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
-            defaultValue: false
+            defaultValue: false,
+            field: 'is_admin'  // Explicitly map to database column
         },
-        admin_phone: {
+        adminPhone: {
             type: DataTypes.STRING(20),
-            allowNull: true
+            allowNull: true,
+            field: 'admin_phone'  // Explicitly map to database column
         }
     }, {
         tableName: 'users',
@@ -129,7 +131,7 @@ module.exports = (sequelize) => {
                 fields: ['onboarding_completed']
             },
             {
-                fields: ['is_admin']
+                fields: ['is_admin']  // Database column name, not model field
             }
         ],
         
