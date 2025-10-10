@@ -431,10 +431,10 @@ class MultiTenantRachelService {
      */
     async generateRachelAudio(text) {
         if (!this.elevenlabsApiKey) {
-            console.warn("ElevenLabs API key not configured");
+            console.warn("⚠️ ElevenLabs API key not configured - cannot use Rachel premium voice");
             return null;
         }
-        
+
         try {
             const url = `https://api.elevenlabs.io/v1/text-to-speech/${this.rachelVoiceId}`;
             const headers = {
@@ -442,10 +442,10 @@ class MultiTenantRachelService {
                 "Content-Type": "application/json",
                 "xi-api-key": this.elevenlabsApiKey
             };
-            
+
             // Clean text for speech synthesis
             const speechText = text.replace(/\n/g, " ").trim().replace(/\$/g, " dollars");
-            
+
             const ttsData = {
                 text: speechText,
                 model_id: "eleven_monolingual_v1",
@@ -454,31 +454,40 @@ class MultiTenantRachelService {
                     similarity_boost: 0.75
                 }
             };
-            
-            const response = await axios.post(url, ttsData, { 
-                headers, 
-                timeout: 10000,
+
+            console.log(`🎙️ Requesting ElevenLabs TTS for ${speechText.length} characters...`);
+            const response = await axios.post(url, ttsData, {
+                headers,
+                timeout: 15000,  // Increased from 10s to 15s
                 responseType: 'arraybuffer'
             });
-            
+
             if (response.status === 200) {
                 // Save audio temporarily
                 const audioFilename = `rachel_${uuidv4()}.mp3`;
                 const audioPath = path.join(this.audioDir, audioFilename);
-                
+
                 await fs.writeFile(audioPath, response.data);
-                
+
                 // Return URL that Twilio can access
                 const audioUrl = `${this.webhookBaseUrl}/audio/${audioFilename}`;
-                console.log(`✅ Rachel audio generated successfully`);
+                console.log(`✅ Rachel audio generated successfully: ${audioFilename} (${response.data.byteLength} bytes)`);
                 return audioUrl;
             } else {
-                console.warn(`ElevenLabs TTS failed: ${response.status}`);
+                console.warn(`⚠️ ElevenLabs TTS failed with status ${response.status}`);
                 return null;
             }
-            
+
         } catch (error) {
-            console.error("Error generating Rachel audio:", error.message);
+            if (error.code === 'ECONNABORTED') {
+                console.error(`❌ ElevenLabs TTS timeout after 15s`);
+            } else if (error.response) {
+                console.error(`❌ ElevenLabs TTS error: ${error.response.status} - ${error.response.statusText}`);
+            } else if (error.request) {
+                console.error(`❌ ElevenLabs TTS network error: No response received`);
+            } else {
+                console.error(`❌ Error generating Rachel audio: ${error.message}`);
+            }
             return null;
         }
     }

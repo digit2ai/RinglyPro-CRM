@@ -779,6 +779,7 @@ async function createIVRMenu(client, language = 'en') {
 
     // For English, try to use Rachel's premium voice
     if (language === 'en') {
+        console.log(`🎙️ Generating Rachel premium voice for IVR menu: "${menuText.substring(0, 50)}..."`);
         const audioUrl = await rachelService.generateRachelAudio(menuText);
 
         if (audioUrl) {
@@ -791,8 +792,10 @@ async function createIVRMenu(client, language = 'en') {
     <Say voice="Polly.Joanna">I didn't receive a selection. Goodbye.</Say>
     <Hangup/>
 </Response>`;
-            console.log(`📋 IVR Menu created with Rachel premium voice for ${businessName}: ${enabledDepts.length} departments`);
+            console.log(`✅ IVR Menu created with Rachel premium voice for ${businessName}: ${enabledDepts.length} departments, URL: ${audioUrl}`);
             return twiml;
+        } else {
+            console.warn(`⚠️ Rachel premium voice generation FAILED for ${businessName} - falling back to Polly.Joanna`);
         }
     }
 
