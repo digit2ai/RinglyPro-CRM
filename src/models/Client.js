@@ -84,17 +84,17 @@ module.exports = (sequelize) => {
             type: DataTypes.BOOLEAN,
             defaultValue: true
         },
-        // ivr_enabled: {
-        //     type: DataTypes.BOOLEAN,
-        //     defaultValue: false,
-        //     comment: 'Enable IVR (Interactive Voice Response) call transfer options'
-        // },
-        // ivr_options: {
-        //     type: DataTypes.JSON,
-        //     allowNull: true,
-        //     defaultValue: null,
-        //     comment: 'IVR department transfer options: [{name: "Sales", phone: "+1234567890", enabled: true}, ...]'
-        // },
+        ivr_enabled: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+            comment: 'Enable IVR (Interactive Voice Response) call transfer options'
+        },
+        ivr_options: {
+            type: DataTypes.JSON,
+            allowNull: true,
+            defaultValue: null,
+            comment: 'IVR department transfer options: [{name: "Sales", phone: "+1234567890", enabled: true}, ...]'
+        },
         monthly_free_minutes: {
             type: DataTypes.INTEGER,
             defaultValue: 100
