@@ -744,7 +744,7 @@ router.post('/voice/rachel/select-language', async (req, res) => {
  * @param {String} language - 'en' or 'es'
  * @returns {String} TwiML response
  */
-function createIVRMenu(client, language = 'en') {
+async function createIVRMenu(client, language = 'en') {
     const businessName = client.business_name;
     const ivrOptions = client.ivr_options || [];
 
@@ -777,8 +777,27 @@ function createIVRMenu(client, language = 'en') {
         menuText += `Presione 9 para dejar un mensaje de voz. `;
     }
 
-    const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
+    // For English, try to use Rachel's premium voice
+    if (language === 'en') {
+        const audioUrl = await rachelService.generateRachelAudio(menuText);
 
+        if (audioUrl) {
+            // Use premium Rachel voice
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="dtmf" numDigits="1" timeout="5" action="/voice/rachel/ivr-selection?lang=${language}" method="POST">
+        <Play>${audioUrl}</Play>
+    </Gather>
+    <Say voice="Polly.Joanna">I didn't receive a selection. Goodbye.</Say>
+    <Hangup/>
+</Response>`;
+            console.log(`📋 IVR Menu created with Rachel premium voice for ${businessName}: ${enabledDepts.length} departments`);
+            return twiml;
+        }
+    }
+
+    // Fallback to standard voice (or Spanish)
+    const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather input="dtmf" numDigits="1" timeout="5" action="/voice/rachel/ivr-selection?lang=${language}" method="POST">
@@ -951,7 +970,7 @@ const handleEnglishIncoming = async (req, res) => {
         // Check if IVR is enabled
         if (client.ivr_enabled && client.ivr_options && client.ivr_options.length > 0) {
             console.log(`✅ IVR enabled for ${businessName} - showing menu`);
-            const twiml = createIVRMenu(client, 'en');
+            const twiml = await createIVRMenu(client, 'en');
             res.type('text/xml');
             return res.send(twiml);
         }
