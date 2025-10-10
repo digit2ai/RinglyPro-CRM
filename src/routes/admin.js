@@ -590,27 +590,52 @@ router.get('/reports/overview', async (req, res) => {
     try {
         console.log('📊 Admin loading overview report');
 
+        // First get per-client revenue, then sum it up
         const overview = await sequelize.query(`
+            WITH client_stats AS (
+                SELECT
+                    c.id,
+                    c.active,
+                    c.rachel_enabled,
+                    COALESCE(SUM(calls.duration) / 60.0, 0) * c.per_minute_rate as client_revenue,
+                    COALESCE(SUM(calls.duration) / 60.0, 0) as client_minutes,
+                    COUNT(DISTINCT calls.id) as client_calls
+                FROM clients c
+                LEFT JOIN calls ON calls.client_id = c.id
+                GROUP BY c.id, c.active, c.rachel_enabled, c.per_minute_rate
+            )
             SELECT
-                COUNT(DISTINCT c.id) as total_clients,
-                COUNT(DISTINCT CASE WHEN c.active = TRUE THEN c.id END) as active_clients,
-                COUNT(DISTINCT CASE WHEN c.rachel_enabled = TRUE THEN c.id END) as rachel_enabled_clients,
-                COALESCE(SUM(calls.duration) / 60.0, 0) as total_minutes_used,
-                ROUND(COALESCE(SUM(calls.duration) / 60.0 * c.per_minute_rate, 0), 2) as total_revenue,
+                COUNT(*) as total_clients,
+                COUNT(CASE WHEN active = TRUE THEN 1 END) as active_clients,
+                COUNT(CASE WHEN rachel_enabled = TRUE THEN 1 END) as rachel_enabled_clients,
+                ROUND(COALESCE(SUM(client_minutes), 0), 2) as total_minutes_used,
+                ROUND(COALESCE(SUM(client_revenue), 0), 2) as total_revenue,
+                SUM(client_calls) as total_calls
+            FROM client_stats
+        `, {
+            type: sequelize.QueryTypes.SELECT
+        });
+
+        // Get total appointments and messages separately (simpler query)
+        const [activityStats] = await sequelize.query(`
+            SELECT
                 COUNT(DISTINCT appointments.id) as total_appointments,
-                COUNT(DISTINCT messages.id) as total_messages,
-                COUNT(DISTINCT calls.id) as total_calls
+                COUNT(DISTINCT messages.id) as total_messages
             FROM clients c
-            LEFT JOIN calls ON calls.client_id = c.id
             LEFT JOIN appointments ON appointments.client_id = c.id
             LEFT JOIN messages ON messages.client_id = c.id
         `, {
             type: sequelize.QueryTypes.SELECT
         });
 
+        // Merge the stats together
         res.json({
             success: true,
-            overview: overview[0]
+            overview: {
+                ...overview[0],
+                total_appointments: activityStats.total_appointments,
+                total_messages: activityStats.total_messages
+            }
         });
 
     } catch (error) {
