@@ -46,8 +46,9 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // Check if user is admin
-        if (!user.is_admin) {
+        // Check if user is admin (note: underscored:true converts is_admin to isAdmin)
+        console.log(`🔍 User admin status: isAdmin=${user.isAdmin}, is_admin=${user.is_admin}`);
+        if (!user.isAdmin) {
             console.log(`🚨 Non-admin user attempted admin login: ${email}`);
             return res.status(403).json({
                 success: false,
@@ -76,7 +77,7 @@ router.post('/login', async (req, res) => {
                 email: user.email,
                 firstName: user.first_name,
                 lastName: user.last_name,
-                isAdmin: user.is_admin
+                isAdmin: user.isAdmin
             }
         });
 
@@ -108,7 +109,7 @@ const authenticateAdmin = async (req, res, next) => {
         // Check if user is admin
         const user = await User.findByPk(decoded.userId);
 
-        if (!user || !user.is_admin) {
+        if (!user || !user.isAdmin) {
             console.log(`🚨 Non-admin user ${decoded.email} attempted to access admin portal`);
             return res.status(403).json({
                 success: false,
