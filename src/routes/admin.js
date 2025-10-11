@@ -177,9 +177,6 @@ router.get('/clients', async (req, res) => {
                 -- Calculate minutes used from calls table (duration is in seconds, convert to minutes)
                 COALESCE(SUM(calls.duration) / 60.0, 0) as total_minutes_used,
 
-                -- Calculate dollar amount (minutes * rate)
-                ROUND(COALESCE(SUM(calls.duration) / 60.0, 0) * c.per_minute_rate, 2) as dollar_amount,
-
                 -- Count appointments
                 COUNT(DISTINCT appointments.id) as total_appointments,
 
@@ -330,7 +327,6 @@ router.get('/clients/:client_id', async (req, res) => {
 
         const stats = {
             total_minutes_used: parseFloat(callData.total_minutes_used) || 0,
-            dollar_amount: ((parseFloat(callData.total_minutes_used) || 0) * parseFloat(client.per_minute_rate || 0)).toFixed(2),
             total_calls: parseInt(callData.total_calls) || 0,
             total_appointments: parseInt(apptData.total_appointments) || 0,
             total_messages: parseInt(msgData.total_messages) || 0,
@@ -616,8 +612,7 @@ router.get('/search/phone/:phone', async (req, res) => {
             const minutes = parseFloat(stats.total_minutes_used) || 0;
             return {
                 ...c,
-                total_minutes_used: minutes,
-                dollar_amount: (minutes * parseFloat(c.per_minute_rate || 0)).toFixed(2)
+                total_minutes_used: minutes
             };
         }));
 
@@ -642,26 +637,24 @@ router.get('/reports/overview', async (req, res) => {
     try {
         console.log('📊 Admin loading overview report');
 
-        // First get per-client revenue, then sum it up
+        // Get overview statistics
         const overview = await sequelize.query(`
             WITH client_stats AS (
                 SELECT
                     c.id,
                     c.active,
                     c.rachel_enabled,
-                    COALESCE(SUM(calls.duration) / 60.0, 0) * c.per_minute_rate as client_revenue,
                     COALESCE(SUM(calls.duration) / 60.0, 0) as client_minutes,
                     COUNT(DISTINCT calls.id) as client_calls
                 FROM clients c
                 LEFT JOIN calls ON calls.client_id = c.id
-                GROUP BY c.id, c.active, c.rachel_enabled, c.per_minute_rate
+                GROUP BY c.id, c.active, c.rachel_enabled
             )
             SELECT
                 COUNT(*) as total_clients,
                 COUNT(CASE WHEN active = TRUE THEN 1 END) as active_clients,
                 COUNT(CASE WHEN rachel_enabled = TRUE THEN 1 END) as rachel_enabled_clients,
                 ROUND(COALESCE(SUM(client_minutes), 0), 2) as total_minutes_used,
-                ROUND(COALESCE(SUM(client_revenue), 0), 2) as total_revenue,
                 SUM(client_calls) as total_calls
             FROM client_stats
         `, {

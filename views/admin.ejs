@@ -459,10 +459,6 @@
                 <div class="value" id="activeClients">-</div>
             </div>
             <div class="stat-card">
-                <h3>Total Revenue</h3>
-                <div class="value" id="totalRevenue">$0</div>
-            </div>
-            <div class="stat-card">
                 <h3>Total Minutes</h3>
                 <div class="value" id="totalMinutes">0</div>
             </div>
@@ -610,7 +606,6 @@
                     const overview = data.overview;
                     document.getElementById('totalClients').textContent = overview.total_clients || 0;
                     document.getElementById('activeClients').textContent = overview.active_clients || 0;
-                    document.getElementById('totalRevenue').textContent = '$' + (parseFloat(overview.total_revenue) || 0).toFixed(2);
                     document.getElementById('totalMinutes').textContent = Math.round(parseFloat(overview.total_minutes_used) || 0);
                 }
             } catch (error) {
@@ -663,7 +658,6 @@
                             <th>Owner</th>
                             <th>Phone</th>
                             <th>Minutes Used</th>
-                            <th>Amount</th>
                             <th>Signup Date</th>
                             <th>Last Activity</th>
                             <th>Status</th>
@@ -676,7 +670,6 @@
                                 <td>${client.owner_name}</td>
                                 <td>${client.owner_phone}</td>
                                 <td>${Math.round(client.total_minutes_used || 0)} min</td>
-                                <td>$${(parseFloat(client.dollar_amount) || 0).toFixed(2)}</td>
                                 <td>${new Date(client.signup_date).toLocaleDateString()}</td>
                                 <td>${client.last_activity_at ? new Date(client.last_activity_at).toLocaleDateString() : 'Never'}</td>
                                 <td>
@@ -778,10 +771,6 @@
                 <div class="info-item">
                     <label>Minutes Used</label>
                     <value>${Math.round(client.total_minutes_used || 0)} minutes</value>
-                </div>
-                <div class="info-item">
-                    <label>Dollar Amount</label>
-                    <value>$${(parseFloat(client.dollar_amount) || 0).toFixed(2)}</value>
                 </div>
                 <div class="info-item">
                     <label>Monthly Free Minutes</label>
