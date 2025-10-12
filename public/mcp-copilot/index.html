@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RinglyPro AI Copilot</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="copilot-container">
+        <div class="sidebar">
+            <h2>🤖 AI Copilot</h2>
+            <div class="connection-panel">
+                <h3>Connect CRM</h3>
+                <select id="crmType">
+                    <option value="">Select CRM...</option>
+                    <option value="hubspot">HubSpot</option>
+                    <option value="gohighlevel">GoHighLevel</option>
+                </select>
+
+                <div id="hubspotAuth" class="auth-form" style="display:none;">
+                    <input type="password" id="hubspotToken" placeholder="HubSpot Access Token">
+                    <button onclick="connectHubSpot()">Connect</button>
+                </div>
+
+                <div id="ghlAuth" class="auth-form" style="display:none;">
+                    <input type="password" id="ghlApiKey" placeholder="GHL API Key">
+                    <input type="text" id="ghlLocationId" placeholder="Location ID">
+                    <button onclick="connectGoHighLevel()">Connect</button>
+                </div>
+
+                <div id="connectionStatus"></div>
+            </div>
+
+            <div class="quick-actions">
+                <h3>Quick Actions</h3>
+                <button onclick="quickAction('search contacts')">🔍 Search Contacts</button>
+                <button onclick="quickAction('create contact')">➕ Create Contact</button>
+                <button onclick="quickAction('view deals')">💰 View Deals</button>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-header">
+                <h1>RinglyPro AI Copilot</h1>
+                <span id="crmStatus">Not Connected</span>
+            </div>
+
+            <div id="chatMessages" class="chat-messages"></div>
+
+            <div class="chat-input">
+                <input
+                    type="text"
+                    id="messageInput"
+                    placeholder="Ask me anything about your CRM..."
+                    onkeypress="handleKeyPress(event)"
+                >
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="copilot.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+services:
+  # RinglyPro MCP Integration Service
+  - type: web
+    name: ringlypro-mcp-api
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: cd mcp-integrations && npm install
+    startCommand: cd mcp-integrations && npm start
+    envVars:
+      - key: MCP_PORT
+        value: 3001
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: HUBSPOT_ACCESS_TOKEN
+        sync: false
+      - key: GHL_API_KEY
+        sync: false
+      - key: GHL_LOCATION_ID
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false

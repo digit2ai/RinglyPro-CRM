@@ -1,0 +1,27 @@
+{
+  "templates": [
+    {
+      "id": "new_contact_welcome",
+      "name": "New Contact Welcome Sequence",
+      "description": "Send welcome message when new contact is created",
+      "trigger": {
+        "type": "webhook",
+        "event": "contact.created"
+      },
+      "steps": [
+        {
+          "id": "step_1",
+          "name": "Send Welcome Email",
+          "type": "crm_action",
+          "config": {
+            "action": "send_email",
+            "params": {
+              "subject": "Welcome!",
+              "body": "Thanks for joining us!"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
