@@ -126,6 +126,27 @@
             font-weight: 500;
         }
 
+        .header-minutes-btn {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .header-minutes-btn:hover {
+            background: #7c3aed;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+        }
+
         .logout-btn {
             background: #ef4444;
             color: white;
@@ -1655,12 +1676,20 @@
                         <%= clientName %>
                     </p>
                 </div>
-                <button class="logout-btn" onclick="logout()">
-                    <svg style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                    Logout
-                </button>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <button class="header-minutes-btn" onclick="showCreditsInfo()">
+                        <svg style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span id="headerCreditAmount">Loading...</span>
+                    </button>
+                    <button class="logout-btn" onclick="logout()">
+                        <svg style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        Logout
+                    </button>
+                </div>
             </div>
             
             <!-- User Info -->
@@ -1690,13 +1719,6 @@
     <!-- Quick Actions -->
     <div class="quick-actions">
         <div class="action-grid">
-            <button class="action-btn btn-credits" onclick="showCreditsInfo()">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                Minutes
-                <div class="credit-amount" id="creditAmount">Loading...</div>
-            </button>
             <button class="action-btn btn-copilot" onclick="window.open('https://ringlypro-crm.onrender.com/mcp-copilot/', '_blank')">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -2343,10 +2365,10 @@
                     const paidBalance = parseFloat(data.data.balance) || 0;
                     const paidMinutes = Math.floor(paidBalance / 0.20);
                     const totalMinutes = freeMinutesRemaining + paidMinutes;
-                    
-                    // Display total minutes
-                    document.getElementById('creditAmount').textContent = `${totalMinutes} min`;
-                    
+
+                    // Display total minutes in header
+                    document.getElementById('headerCreditAmount').textContent = `${totalMinutes} min`;
+
                     // Check for low balance (< 10 minutes)
                     if (totalMinutes < 10) {
                         const alert = document.getElementById('lowBalanceAlert');
@@ -2359,7 +2381,7 @@
                 }
             } catch (error) {
                 console.error('Error loading credits:', error);
-                document.getElementById('creditAmount').textContent = 'N/A';
+                document.getElementById('headerCreditAmount').textContent = 'N/A';
             }
         }
 
