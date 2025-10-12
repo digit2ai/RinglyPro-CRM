@@ -81,6 +81,15 @@ try {
     console.log('⚠️ MCP integration routes not available:', error.message);
 }
 
+// Import GoHighLevel MCP routes
+let ghlMCPRoutes = null;
+try {
+    ghlMCPRoutes = require('./routes/gohighlevel-mcp'); // GoHighLevel MCP integration
+    console.log('✅ GoHighLevel MCP routes loaded successfully');
+} catch (error) {
+    console.log('⚠️ GoHighLevel MCP routes not available:', error.message);
+}
+
 // Import referral routes (optional - won't crash app if fails)
 let referralRoutes = null;
 try {
@@ -148,6 +157,14 @@ if (mcpRoutes) {
     console.log('🤖 MCP AI Copilot routes mounted at /api/mcp');
 } else {
     console.log('⚠️ MCP routes not available - skipping mount');
+}
+
+// GoHighLevel MCP integration routes
+if (ghlMCPRoutes) {
+    app.use('/api/ghl', ghlMCPRoutes);
+    console.log('🎯 GoHighLevel MCP routes mounted at /api/ghl');
+} else {
+    console.log('⚠️ GoHighLevel MCP routes not available - skipping mount');
 }
 
 // Conditional forwarding webhook (for business phone forwarding)
