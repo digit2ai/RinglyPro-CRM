@@ -3,11 +3,12 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 
-// Import MCP services
-const HubSpotMCPProxy = require('../../mcp-integrations/api/hubspot-proxy');
-const GoHighLevelMCPProxy = require('../../mcp-integrations/api/gohighlevel-proxy');
-const WebhookManager = require('../../mcp-integrations/webhooks/webhook-manager');
-const WorkflowEngine = require('../../mcp-integrations/workflows/workflow-engine');
+// Import MCP services - using absolute path from project root
+const projectRoot = path.join(__dirname, '../..');
+const HubSpotMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/hubspot-proxy'));
+const GoHighLevelMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/gohighlevel-proxy'));
+const WebhookManager = require(path.join(projectRoot, 'mcp-integrations/webhooks/webhook-manager'));
+const WorkflowEngine = require(path.join(projectRoot, 'mcp-integrations/workflows/workflow-engine'));
 
 // Initialize services
 const sessions = new Map();
@@ -26,7 +27,16 @@ router.get('/health', (req, res) => {
 
 // HubSpot connection
 router.post('/hubspot/connect', async (req, res) => {
+  console.log('🔗 HubSpot connection request received');
   const { accessToken } = req.body;
+
+  if (!accessToken) {
+    console.error('❌ Missing HubSpot access token');
+    return res.status(400).json({
+      success: false,
+      error: 'Access token is required'
+    });
+  }
 
   try {
     const proxy = new HubSpotMCPProxy(accessToken);
@@ -38,22 +48,33 @@ router.post('/hubspot/connect', async (req, res) => {
       createdAt: new Date()
     });
 
+    console.log('✅ HubSpot connected, session:', sessionId);
     res.json({
       success: true,
       sessionId,
       message: 'HubSpot connected successfully'
     });
   } catch (error) {
+    console.error('❌ HubSpot connection error:', error);
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message || 'Failed to connect to HubSpot'
     });
   }
 });
 
 // GoHighLevel connection
 router.post('/gohighlevel/connect', async (req, res) => {
+  console.log('🔗 GoHighLevel connection request received');
   const { apiKey, locationId } = req.body;
+
+  if (!apiKey || !locationId) {
+    console.error('❌ Missing GoHighLevel credentials');
+    return res.status(400).json({
+      success: false,
+      error: 'API Key and Location ID are required'
+    });
+  }
 
   try {
     const proxy = new GoHighLevelMCPProxy(apiKey, locationId);
@@ -65,41 +86,69 @@ router.post('/gohighlevel/connect', async (req, res) => {
       createdAt: new Date()
     });
 
+    console.log('✅ GoHighLevel connected, session:', sessionId);
     res.json({
       success: true,
       sessionId,
       message: 'GoHighLevel connected successfully'
     });
   } catch (error) {
+    console.error('❌ GoHighLevel connection error:', error);
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message || 'Failed to connect to GoHighLevel'
     });
   }
 });
 
 // AI Copilot chat
 router.post('/copilot/chat', async (req, res) => {
+  console.log('📩 MCP Chat request received:', { sessionId: req.body.sessionId, message: req.body.message?.substring(0, 50) });
+
   const { sessionId, message } = req.body;
+
+  if (!sessionId || !message) {
+    console.error('❌ Missing sessionId or message');
+    return res.status(400).json({
+      success: false,
+      error: 'Missing sessionId or message'
+    });
+  }
 
   const session = sessions.get(sessionId);
   if (!session) {
-    return res.status(401).json({ error: 'Invalid or expired session' });
+    console.error('❌ Invalid session:', sessionId);
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired session. Please reconnect to your CRM.'
+    });
   }
 
   try {
+    console.log('🤖 Processing message for session:', sessionId);
+
     // Simple intent parsing
     let response = "I'm here to help! Try asking me to search contacts or create a new contact.";
     let data = null;
 
-    if (message.toLowerCase().includes('search') || message.toLowerCase().includes('find')) {
-      const query = message.split(/search|find/i)[1].trim();
-      data = await session.proxy.searchContacts(query);
-      response = `I found ${data.length} contacts matching "${query}".`;
-    } else if (message.toLowerCase().includes('create contact')) {
+    const lowerMessage = message.toLowerCase();
+
+    if (lowerMessage.includes('search') || lowerMessage.includes('find')) {
+      const query = message.split(/search|find/i)[1]?.trim() || '';
+      if (query) {
+        console.log('🔍 Searching contacts:', query);
+        data = await session.proxy.searchContacts(query);
+        response = `I found ${data.length} contacts matching "${query}".`;
+      } else {
+        response = "Please provide a search term. Example: 'search john@example.com'";
+      }
+    } else if (lowerMessage.includes('create contact')) {
       response = "To create a contact, please provide: email, first name, and last name.";
+    } else if (lowerMessage.includes('deal') || lowerMessage.includes('opportunity')) {
+      response = "Would you like to view existing deals or create a new one?";
     }
 
+    console.log('✅ MCP Chat response ready');
     res.json({
       success: true,
       response,
@@ -107,9 +156,10 @@ router.post('/copilot/chat', async (req, res) => {
       suggestions: ['Search contacts', 'Create contact', 'View deals']
     });
   } catch (error) {
+    console.error('❌ MCP Chat error:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message || 'Internal server error'
     });
   }
 });
