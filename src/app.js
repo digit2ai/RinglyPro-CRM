@@ -72,6 +72,15 @@ const mobileRoutes = require('./routes/mobile'); // Mobile CRM API routes
 // Import client provisioning routes
 const clientProvisioningRoutes = require('./routes/clientProvisioning'); // Automatic number provisioning
 
+// Import MCP integration routes
+let mcpRoutes = null;
+try {
+    mcpRoutes = require('./routes/mcp'); // MCP AI Copilot integration
+    console.log('✅ MCP integration routes loaded successfully');
+} catch (error) {
+    console.log('⚠️ MCP integration routes not available:', error.message);
+}
+
 // Import referral routes (optional - won't crash app if fails)
 let referralRoutes = null;
 try {
@@ -132,6 +141,14 @@ app.use('/webhook/twilio', twilioRoutes);
 
 // Twilio number administration (CRITICAL for credit tracking)
 app.use('/api/twilio', twilioAdminRoutes);
+
+// MCP AI Copilot integration routes
+if (mcpRoutes) {
+    app.use('/api/mcp', mcpRoutes);
+    console.log('🤖 MCP AI Copilot routes mounted at /api/mcp');
+} else {
+    console.log('⚠️ MCP routes not available - skipping mount');
+}
 
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
