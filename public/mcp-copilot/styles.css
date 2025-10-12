@@ -190,3 +190,230 @@ button:hover {
 .status.error {
     background: #e74c3c;
 }
+
+/* ============================================ */
+/* MOBILE RESPONSIVE STYLES */
+/* ============================================ */
+
+/* Tablet and below */
+@media (max-width: 768px) {
+    .copilot-container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        max-height: 40vh;
+        border-bottom: 2px solid #34495e;
+    }
+
+    .sidebar-header {
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+    }
+
+    .bot-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .sidebar h2 {
+        font-size: 18px;
+    }
+
+    .connection-panel, .quick-actions {
+        margin-bottom: 20px;
+    }
+
+    .chat-header {
+        padding: 15px;
+    }
+
+    .chat-header h1 {
+        font-size: 18px;
+    }
+
+    .header-bot-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .chat-messages {
+        padding: 15px;
+    }
+
+    .message {
+        max-width: 90%;
+        font-size: 14px;
+    }
+
+    .chat-input {
+        padding: 15px;
+    }
+
+    .chat-input input {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+
+    .suggestions {
+        flex-wrap: wrap;
+    }
+
+    .quick-actions button {
+        font-size: 14px;
+    }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+    .sidebar {
+        max-height: 50vh;
+        padding: 15px;
+    }
+
+    .sidebar-header {
+        gap: 10px;
+    }
+
+    .bot-icon {
+        width: 35px;
+        height: 35px;
+    }
+
+    .sidebar h2 {
+        font-size: 16px;
+    }
+
+    .connection-panel h3, .quick-actions h3 {
+        font-size: 14px;
+    }
+
+    select, input {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 12px;
+    }
+
+    button {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .chat-header {
+        padding: 12px;
+        flex-wrap: wrap;
+    }
+
+    .chat-header h1 {
+        font-size: 16px;
+    }
+
+    .header-bot-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    #crmStatus {
+        font-size: 12px;
+        width: 100%;
+        text-align: center;
+        margin-top: 5px;
+    }
+
+    .chat-messages {
+        padding: 10px;
+    }
+
+    .message {
+        padding: 12px;
+        font-size: 13px;
+    }
+
+    .chat-input {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .chat-input button {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+
+    .suggestions button {
+        font-size: 11px;
+        padding: 6px 12px;
+    }
+}
+
+/* Landscape mobile optimization */
+@media (max-width: 768px) and (orientation: landscape) {
+    .copilot-container {
+        flex-direction: row;
+    }
+
+    .sidebar {
+        width: 280px;
+        max-height: 100vh;
+        border-bottom: none;
+        border-right: 2px solid #34495e;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+    button {
+        min-height: 44px; /* Apple's recommended touch target */
+    }
+
+    select {
+        min-height: 44px;
+    }
+
+    input {
+        min-height: 44px;
+    }
+
+    .suggestions button {
+        min-height: 36px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: #1a1a1a;
+    }
+
+    .chat-container {
+        background: #2d2d2d;
+    }
+
+    .message.assistant {
+        background: #3a3a3a;
+        color: #ffffff;
+    }
+
+    input, select {
+        background: #3a3a3a;
+        color: #ffffff;
+    }
+}
+
+/* Safe area support for notched devices */
+@supports (padding: max(0px)) {
+    .sidebar {
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+    }
+
+    .chat-header {
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+        padding-top: max(20px, env(safe-area-inset-top));
+    }
+
+    .chat-input {
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+}

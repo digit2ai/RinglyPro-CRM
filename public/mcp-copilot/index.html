@@ -2,7 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="AI-powered CRM assistant for HubSpot and GoHighLevel">
+    <meta name="theme-color" content="#34495e">
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AI Copilot">
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png">
+    <link rel="apple-touch-icon" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png">
+
     <title>RinglyPro AI Copilot</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -65,5 +79,87 @@
     </div>
 
     <script src="copilot.js"></script>
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/mcp-copilot/sw.js')
+                    .then((registration) => {
+                        console.log('✅ Service Worker registered successfully:', registration.scope);
+
+                        // Check for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New version available, prompt user to refresh
+                                    if (confirm('New version available! Reload to update?')) {
+                                        newWorker.postMessage({ action: 'skipWaiting' });
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch((error) => {
+                        console.log('❌ Service Worker registration failed:', error);
+                    });
+
+                // Listen for controller change (new SW activated)
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    window.location.reload();
+                });
+            });
+        }
+
+        // Install prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+
+            // Show install banner
+            const installBanner = document.createElement('div');
+            installBanner.innerHTML = `
+                <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+                            background: #2c3e50; color: white; padding: 15px 25px;
+                            border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                            z-index: 1000; max-width: 90%; text-align: center;">
+                    <p style="margin: 0 0 10px 0;">Install AI Copilot app?</p>
+                    <button onclick="installPWA()" style="background: #3498db; color: white; border: none;
+                                                          padding: 10px 20px; border-radius: 5px; cursor: pointer;
+                                                          margin-right: 10px;">Install</button>
+                    <button onclick="this.parentElement.parentElement.remove()"
+                            style="background: #95a5a6; color: white; border: none;
+                                   padding: 10px 20px; border-radius: 5px; cursor: pointer;">Later</button>
+                </div>
+            `;
+            document.body.appendChild(installBanner);
+        });
+
+        window.installPWA = async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User ${outcome} the install prompt`);
+                deferredPrompt = null;
+
+                // Remove banner
+                const banners = document.querySelectorAll('[style*="position: fixed"]');
+                banners.forEach(banner => banner.remove());
+            }
+        };
+
+        // Detect iOS standalone mode
+        if (window.navigator.standalone === true) {
+            console.log('🍎 Running as iOS PWA');
+        }
+
+        // Detect Android standalone mode
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            console.log('🤖 Running as Android PWA');
+        }
+    </script>
 </body>
 </html>
