@@ -137,13 +137,50 @@ router.post('/copilot/chat', async (req, res) => {
       const query = message.split(/search|find/i)[1]?.trim() || '';
       if (query) {
         console.log('🔍 Searching contacts:', query);
-        data = await session.proxy.searchContacts(query);
-        response = `I found ${data.length} contacts matching "${query}".`;
+        try {
+          data = await session.proxy.searchContacts(query);
+          response = `I found ${data?.length || 0} contacts matching "${query}".`;
+        } catch (searchError) {
+          console.error('❌ Search error:', searchError.message);
+          response = `Sorry, I encountered an error searching for "${query}". Please check your connection and try again.`;
+        }
       } else {
         response = "Please provide a search term. Example: 'search john@example.com'";
       }
-    } else if (lowerMessage.includes('create contact')) {
-      response = "To create a contact, please provide: email, first name, and last name.";
+    } else if (lowerMessage.includes('create contact') || lowerMessage.includes('add contact')) {
+      // Try to parse contact info from message
+      const emailMatch = message.match(/[\w.-]+@[\w.-]+\.\w+/);
+      const phoneMatch = message.match(/\+?1?\s*\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})/);
+
+      // Extract names - look for patterns like "John Doe" or "named John Doe"
+      const nameMatch = message.match(/(?:named|called|add)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
+
+      if (emailMatch || phoneMatch || nameMatch) {
+        try {
+          const contactData = {};
+
+          if (nameMatch) {
+            const names = nameMatch[1].split(' ');
+            contactData.firstName = names[0];
+            if (names.length > 1) contactData.lastName = names.slice(1).join(' ');
+          }
+
+          if (emailMatch) contactData.email = emailMatch[0];
+          if (phoneMatch) contactData.phone = phoneMatch[0];
+
+          console.log('📝 Creating contact:', contactData);
+          const result = await session.proxy.createContact(contactData);
+          response = `✅ Contact created successfully! ${contactData.firstName || 'New contact'} has been added to your CRM.`;
+          data = [result];
+        } catch (createError) {
+          console.error('❌ Create contact error:', createError.message);
+          response = `Sorry, I couldn't create the contact. Error: ${createError.message}`;
+        }
+      } else {
+        response = "To create a contact, please provide at least one of: name, email, or phone number.\n\nExample: 'Create contact named John Doe with email john@example.com and phone 813-555-1234'";
+      }
+    } else if (lowerMessage.includes('send sms') || lowerMessage.includes('send message') || lowerMessage.includes('text')) {
+      response = "To send an SMS, I need a contact ID or phone number and the message text.\n\nExample: 'Send SMS to john@example.com: Hello, thanks for signing up!'";
     } else if (lowerMessage.includes('deal') || lowerMessage.includes('opportunity')) {
       response = "Would you like to view existing deals or create a new one?";
     }
