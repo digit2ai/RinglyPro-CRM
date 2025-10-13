@@ -127,21 +127,78 @@ class GoHighLevelMCPProxy {
   }
 
   // MCP Protocol Methods (using official GHL MCP server)
-  async searchContacts(query, limit = 10) {
+  async searchContacts(query, limit = 5) {
     try {
       // Try official MCP protocol first
       const response = await this.callMCP('contacts_get-contacts', {
         query,
         limit
       });
-      return response.contacts || [];
+
+      // Filter results client-side to ensure exact matches appear first
+      let contacts = response.contacts || [];
+
+      // If we have results, filter and sort them
+      if (contacts.length > 0 && query) {
+        const lowerQuery = query.toLowerCase();
+
+        // Sort: exact matches first, then starts with, then contains
+        contacts.sort((a, b) => {
+          const aName = (a.contactName || `${a.firstName || ''} ${a.lastName || ''}`).toLowerCase();
+          const bName = (b.contactName || `${b.firstName || ''} ${b.lastName || ''}`).toLowerCase();
+          const aEmail = (a.email || '').toLowerCase();
+          const bEmail = (b.email || '').toLowerCase();
+
+          // Check if exact match
+          const aExact = aName === lowerQuery || aEmail === lowerQuery;
+          const bExact = bName === lowerQuery || bEmail === lowerQuery;
+          if (aExact && !bExact) return -1;
+          if (!aExact && bExact) return 1;
+
+          // Check if starts with
+          const aStarts = aName.startsWith(lowerQuery) || aEmail.startsWith(lowerQuery);
+          const bStarts = bName.startsWith(lowerQuery) || bEmail.startsWith(lowerQuery);
+          if (aStarts && !bStarts) return -1;
+          if (!aStarts && bStarts) return 1;
+
+          return 0;
+        });
+      }
+
+      // Enforce limit strictly
+      return contacts.slice(0, limit);
     } catch (error) {
       // Fallback to REST API
       console.log('⚠️ MCP failed, falling back to REST API');
       const response = await this.callAPI(
         `/contacts/?locationId=${this.locationId}&query=${encodeURIComponent(query)}&limit=${limit}`
       );
-      return response.contacts || [];
+
+      // Apply same filtering/sorting to REST API results
+      let contacts = response.contacts || [];
+      if (contacts.length > 0 && query) {
+        const lowerQuery = query.toLowerCase();
+        contacts.sort((a, b) => {
+          const aName = (a.contactName || `${a.firstName || ''} ${a.lastName || ''}`).toLowerCase();
+          const bName = (b.contactName || `${b.firstName || ''} ${b.lastName || ''}`).toLowerCase();
+          const aEmail = (a.email || '').toLowerCase();
+          const bEmail = (b.email || '').toLowerCase();
+
+          const aExact = aName === lowerQuery || aEmail === lowerQuery;
+          const bExact = bName === lowerQuery || bEmail === lowerQuery;
+          if (aExact && !bExact) return -1;
+          if (!aExact && bExact) return 1;
+
+          const aStarts = aName.startsWith(lowerQuery) || aEmail.startsWith(lowerQuery);
+          const bStarts = bName.startsWith(lowerQuery) || bEmail.startsWith(lowerQuery);
+          if (aStarts && !bStarts) return -1;
+          if (!aStarts && bStarts) return 1;
+
+          return 0;
+        });
+      }
+
+      return contacts.slice(0, limit);
     }
   }
 
