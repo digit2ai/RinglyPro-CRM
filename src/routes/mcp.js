@@ -140,34 +140,56 @@ router.post('/copilot/chat', async (req, res) => {
     if (lowerMessage.includes('create') && lowerMessage.includes('contact')) {
       // Try to parse contact info from message
       const emailMatch = message.match(/[\w.-]+@[\w.-]+\.\w+/);
-      const phoneMatch = message.match(/\+?1?\s*\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})/);
 
-      // Extract names - look for patterns like "named John Doe"
-      const nameMatch = message.match(/(?:named|called)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i);
+      // More flexible phone matching - also match "phone 8136414177" or just "8136414177"
+      let phoneMatch = message.match(/\+?1?\s*\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})/);
+      if (!phoneMatch) {
+        // Try matching after "phone" keyword
+        phoneMatch = message.match(/phone\s+(\d{10})/i);
+      }
+
+      // Extract names - multiple patterns
+      let nameMatch = message.match(/(?:named|called)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i);
+      if (!nameMatch) {
+        // Try "create contact [Name]" pattern (after "contact" and before email/phone/with)
+        nameMatch = message.match(/contact\s+([A-Za-z][A-Za-z\s]+?)(?:\s+(?:email|phone|with|$))/i);
+      }
 
       if (emailMatch || phoneMatch || nameMatch) {
         try {
           const contactData = {};
 
           if (nameMatch) {
-            const names = nameMatch[1].split(' ');
+            const fullName = nameMatch[1].trim();
+            const names = fullName.split(/\s+/);
             contactData.firstName = names[0];
             if (names.length > 1) contactData.lastName = names.slice(1).join(' ');
           }
 
           if (emailMatch) contactData.email = emailMatch[0];
-          if (phoneMatch) contactData.phone = phoneMatch[0];
+
+          if (phoneMatch) {
+            // Normalize phone number to E.164 format (+1XXXXXXXXXX)
+            let phone = phoneMatch[1] || phoneMatch[0];
+            phone = phone.replace(/\D/g, ''); // Remove non-digits
+            if (phone.length === 10) {
+              phone = `+1${phone}`; // Add US country code
+            } else if (phone.length === 11 && phone.startsWith('1')) {
+              phone = `+${phone}`;
+            }
+            contactData.phone = phone;
+          }
 
           console.log('📝 Creating contact:', contactData);
           const result = await session.proxy.createContact(contactData);
-          response = `✅ Contact created successfully! ${contactData.firstName || 'New contact'} has been added to your CRM.`;
+          response = `✅ Contact created successfully! ${contactData.firstName || 'New contact'} has been added to your CRM.\n\nName: ${contactData.firstName || ''} ${contactData.lastName || ''}\nEmail: ${contactData.email || 'N/A'}\nPhone: ${contactData.phone || 'N/A'}`;
           data = [result];
         } catch (createError) {
           console.error('❌ Create contact error:', createError.message);
           response = `Sorry, I couldn't create the contact. Error: ${createError.message}`;
         }
       } else {
-        response = "To create a contact, please provide at least one of: name, email, or phone number.\n\nExample: 'Create contact named John Doe with email john@example.com and phone 813-555-1234'";
+        response = "To create a contact, please provide at least one of: name, email, or phone number.\n\nExamples:\n• 'Create contact named John Doe with email john@example.com'\n• 'Create contact John phone 8136414177'\n• 'Create contact named Jane Smith phone 813-555-1234'";
       }
     }
     // BOOK APPOINTMENT (check before generic "appointment" or "calendar" handlers)
@@ -409,11 +431,26 @@ router.post('/copilot/chat', async (req, res) => {
           // If we have a phone number
           else if (phoneMatch) {
             recipient = phoneMatch[1].replace(/[\s()-]/g, ''); // Clean phone number
-            console.log('📱 Searching for contact by phone:', recipient);
-            const contacts = await session.proxy.searchContacts(recipient, 1);
+            // Normalize to E.164 format for searching
+            let normalizedPhone = recipient.replace(/\D/g, '');
+            if (normalizedPhone.length === 10) {
+              normalizedPhone = `+1${normalizedPhone}`;
+            } else if (normalizedPhone.length === 11 && normalizedPhone.startsWith('1')) {
+              normalizedPhone = `+${normalizedPhone}`;
+            }
+            console.log('📱 Searching for contact by phone:', normalizedPhone);
+            const contacts = await session.proxy.searchContacts(normalizedPhone, 1);
             if (contacts && contacts.length > 0) {
               contactId = contacts[0].id;
               console.log('✅ Found contact:', contactId);
+            } else {
+              // Try without normalization
+              console.log('📱 Retry search with original:', recipient);
+              const contactsRetry = await session.proxy.searchContacts(recipient, 1);
+              if (contactsRetry && contactsRetry.length > 0) {
+                contactId = contactsRetry[0].id;
+                console.log('✅ Found contact on retry:', contactId);
+              }
             }
           }
           // If we have a name, search for it
