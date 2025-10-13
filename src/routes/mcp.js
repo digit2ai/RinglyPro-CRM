@@ -316,10 +316,96 @@ router.post('/copilot/chat', async (req, res) => {
       } else {
         response = "To create a contact, please provide at least one of: name, email, or phone number.\n\nExample: 'Create contact named John Doe with email john@example.com and phone 813-555-1234'";
       }
-    } else if (lowerMessage.includes('send sms') || lowerMessage.includes('send message') || lowerMessage.includes('text')) {
+    }
+    // UPDATE CONTACT
+    else if (lowerMessage.includes('update contact')) {
+      response = "To update a contact, please provide:\n\n• Contact ID or email\n• Field to update\n• New value\n\nExample: 'Update contact john@example.com set phone to 555-1234'";
+    }
+    // SEND SMS
+    else if (lowerMessage.includes('send sms') || lowerMessage.includes('send message') || lowerMessage.includes('text')) {
       response = "To send an SMS, I need a contact ID or phone number and the message text.\n\nExample: 'Send SMS to john@example.com: Hello, thanks for signing up!'";
-    } else if (lowerMessage.includes('deal') || lowerMessage.includes('opportunity')) {
-      response = "Would you like to view existing deals or create a new one?";
+    }
+    // SEND EMAIL
+    else if (lowerMessage.includes('send email')) {
+      response = "To send an email, I need:\n\n• Contact ID or email address\n• Subject line\n• Message body\n\nExample: 'Send email to john@example.com subject Welcome message Hi John, welcome to our service!'";
+    }
+    // BOOK APPOINTMENT
+    else if (lowerMessage.includes('book appointment')) {
+      console.log('📅 Booking appointment request');
+      try {
+        const calendars = await session.proxy.getCalendars();
+        response = `To book an appointment, please provide:\n\n• Calendar (choose from below)\n• Contact name or email\n• Date and time\n• Duration\n\nAvailable Calendars:\n`;
+        if (calendars?.calendars && calendars.calendars.length > 0) {
+          calendars.calendars.forEach(cal => {
+            response += `• ${cal.name}\n`;
+          });
+        } else {
+          response += "No calendars found. Please set up calendars in GoHighLevel first.";
+        }
+        response += `\nExample: 'Book appointment for john@example.com on Main Calendar tomorrow at 2pm for 30 minutes'`;
+      } catch (error) {
+        response = `Error loading calendars: ${error.message}`;
+      }
+    }
+    // APPOINTMENT REMINDER
+    else if (lowerMessage.includes('appointment reminder') || lowerMessage.includes('send reminder')) {
+      response = "To send an appointment reminder:\n\n• Provide appointment ID or contact name\n• Reminder message (optional)\n\nExample: 'Send appointment reminder to john@example.com: Your appointment is tomorrow at 2pm'";
+    }
+    // ADD/MOVE OPPORTUNITY
+    else if (lowerMessage.includes('add opportunity') || lowerMessage.includes('move opportunity')) {
+      console.log('💰 Add/move opportunity request');
+      try {
+        const pipelines = await session.proxy.getPipelines();
+        response = `To add or move an opportunity:\n\n• Contact name or email\n• Pipeline and stage\n• Deal value (optional)\n\nAvailable Pipelines:\n`;
+        if (pipelines?.pipelines && pipelines.pipelines.length > 0) {
+          pipelines.pipelines.forEach(p => {
+            response += `• ${p.name}: `;
+            if (p.stages && p.stages.length > 0) {
+              response += p.stages.map(s => s.name).join(', ');
+            }
+            response += '\n';
+          });
+        } else {
+          response += "No pipelines found.";
+        }
+        response += `\nExample: 'Add opportunity for john@example.com to Sales Pipeline stage Lead with value $5000'`;
+      } catch (error) {
+        response = `Error loading pipelines: ${error.message}`;
+      }
+    }
+    // LOG PHONE CALL
+    else if (lowerMessage.includes('log phone call') || lowerMessage.includes('log call')) {
+      response = "To log a phone call:\n\n• Contact name or email\n• Call duration\n• Notes (optional)\n\nExample: 'Log phone call with john@example.com duration 15 minutes notes Discussed pricing options'";
+    }
+    // SEND REVIEW REQUEST
+    else if (lowerMessage.includes('review request') || lowerMessage.includes('send review')) {
+      response = "To send a review request:\n\n• Contact name or email\n• Platform (Google, Yelp, Facebook, etc.)\n• Custom message (optional)\n\nExample: 'Send review request to john@example.com for Google Reviews'";
+    }
+    // VIEW DASHBOARD
+    else if (lowerMessage.includes('view dashboard') || lowerMessage.includes('show dashboard') || lowerMessage.includes('dashboard')) {
+      console.log('📊 Getting dashboard data');
+      try {
+        const [opps, pipelines, calendars] = await Promise.all([
+          session.proxy.getOpportunities().catch(() => []),
+          session.proxy.getPipelines().catch(() => ({ pipelines: [] })),
+          session.proxy.getCalendars().catch(() => ({ calendars: [] }))
+        ]);
+
+        const totalOpps = opps?.length || 0;
+        const totalValue = opps?.reduce((sum, o) => sum + (parseFloat(o.monetaryValue) || 0), 0) || 0;
+        const totalPipelines = pipelines?.pipelines?.length || 0;
+        const totalCalendars = calendars?.calendars?.length || 0;
+
+        response = `📊 Dashboard Overview:\n\n`;
+        response += `💰 Opportunities: ${totalOpps}\n`;
+        response += `💵 Total Pipeline Value: $${totalValue.toFixed(2)}\n`;
+        response += `📈 Active Pipelines: ${totalPipelines}\n`;
+        response += `📅 Calendars: ${totalCalendars}\n`;
+
+        data = { opportunities: totalOpps, value: totalValue, pipelines: totalPipelines, calendars: totalCalendars };
+      } catch (error) {
+        response = `Error loading dashboard: ${error.message}`;
+      }
     }
 
     console.log('✅ MCP Chat response ready');
@@ -327,7 +413,17 @@ router.post('/copilot/chat', async (req, res) => {
       success: true,
       response,
       data,
-      suggestions: ['Search contacts', 'View deals', 'Show pipelines', 'List calendars', 'Show location info']
+      suggestions: [
+        'Search contacts',
+        'Create new contact',
+        'Update contact',
+        'Send SMS',
+        'Send email',
+        'Book appointment',
+        'View dashboard',
+        'Show pipelines',
+        'Add opportunity'
+      ]
     });
   } catch (error) {
     console.error('❌ MCP Chat error:', error);
