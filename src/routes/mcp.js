@@ -255,10 +255,24 @@ router.post('/copilot/chat', async (req, res) => {
           // Show some contact details if found
           if (data && data.length > 0) {
             const contactList = data.slice(0, 5).map(c => {
-              const name = c.contactName || `${c.firstName || ''} ${c.lastName || ''}`.trim() || 'Unnamed';
-              const email = c.email ? `(${c.email})` : '';
-              const phone = !c.email && c.phone ? `(${c.phone})` : '';
-              return `• ${name} ${email}${phone}`;
+              // Try multiple name field variations
+              let name = c.contactName || c.name || c.fullName || c.fullNameLowerCase;
+
+              // If no combined name, build from first/last
+              if (!name || name.trim() === '') {
+                const first = c.firstName || c.first_name || '';
+                const last = c.lastName || c.last_name || '';
+                name = `${first} ${last}`.trim();
+              }
+
+              // Still no name? Use email or phone
+              if (!name || name === '') {
+                name = c.email || c.phone || 'Unnamed Contact';
+              }
+
+              const email = c.email ? ` (${c.email})` : '';
+              const phone = !c.email && c.phone ? ` (${c.phone})` : '';
+              return `• ${name}${email}${phone}`;
             }).join('\n');
             response += `\n\n${contactList}`;
             if (data.length > 5) response += `\n... and ${data.length - 5} more`;

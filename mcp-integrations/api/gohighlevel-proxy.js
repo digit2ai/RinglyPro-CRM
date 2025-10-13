@@ -138,6 +138,12 @@ class GoHighLevelMCPProxy {
       // Filter results client-side to ensure exact matches appear first
       let contacts = response.contacts || [];
 
+      // Debug: Log contact structure
+      if (contacts.length > 0) {
+        console.log('🔍 First contact keys:', Object.keys(contacts[0]).join(','));
+        console.log('🔍 First contact sample:', JSON.stringify(contacts[0]).substring(0, 300));
+      }
+
       // If we have results, filter and sort them
       if (contacts.length > 0 && query) {
         const lowerQuery = query.toLowerCase();
