@@ -80,17 +80,16 @@ module.exports = (sequelize) => {
             defaultValue: null,
             comment: 'Per-day calendar configuration: {monday: {enabled: true, start: "09:00", end: "17:00"}, ...}'
         },
-        // TEMP DISABLED: Uncomment after running migration
-        // ghl_api_key: {
-        //     type: DataTypes.STRING(255),
-        //     allowNull: true,
-        //     comment: 'GoHighLevel Private Integration Token (PIT)'
-        // },
-        // ghl_location_id: {
-        //     type: DataTypes.STRING(20),
-        //     allowNull: true,
-        //     comment: 'GoHighLevel Location ID for MCP integration (20 characters)'
-        // },
+        ghl_api_key: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+            comment: 'GoHighLevel Private Integration Token (PIT)'
+        },
+        ghl_location_id: {
+            type: DataTypes.STRING(20),
+            allowNull: true,
+            comment: 'GoHighLevel Location ID for MCP integration (20 characters)'
+        },
         sms_notifications: {
             type: DataTypes.BOOLEAN,
             defaultValue: true
