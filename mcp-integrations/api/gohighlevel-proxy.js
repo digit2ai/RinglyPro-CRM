@@ -38,7 +38,26 @@ class GoHighLevelMCPProxy {
         throw new Error(response.data.error.message || 'MCP call failed');
       }
 
-      return response.data.result || response.data;
+      // MCP returns nested structure: result.content[0].text contains JSON string
+      const result = response.data.result;
+      if (result && result.content && result.content[0]) {
+        const textContent = result.content[0].text;
+        try {
+          // The text is a JSON string containing another JSON string, so we need to parse twice
+          const parsedOnce = JSON.parse(textContent);
+          if (parsedOnce.content && parsedOnce.content[0]) {
+            const actualData = JSON.parse(parsedOnce.content[0].text);
+            console.log('📦 Parsed MCP response:', actualData.success ? '✅ success' : '❌ failed');
+            return actualData.data || actualData;
+          }
+          return parsedOnce;
+        } catch (parseError) {
+          console.error('⚠️ Failed to parse MCP text content:', parseError.message);
+          return result;
+        }
+      }
+
+      return result || response.data;
     } catch (error) {
       console.error(`❌ MCP tool ${tool} failed:`, {
         status: error.response?.status,
