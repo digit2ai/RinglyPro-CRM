@@ -261,7 +261,20 @@ class GoHighLevelMCPProxy {
 
   async getOpportunities(filters = {}) {
     try {
-      return await this.searchOpportunities(filters);
+      const result = await this.searchOpportunities(filters);
+      console.log('🔍 Opportunities result type:', typeof result);
+      console.log('🔍 Opportunities result keys:', result ? Object.keys(result).join(',') : 'null');
+
+      // Handle different response formats
+      if (Array.isArray(result)) {
+        return result;
+      } else if (result?.opportunities) {
+        return result.opportunities;
+      } else if (result?.data?.opportunities) {
+        return result.data.opportunities;
+      }
+
+      return [];
     } catch (error) {
       console.log('⚠️ MCP failed, falling back to REST API');
       const response = await this.callAPI(
@@ -374,8 +387,22 @@ class GoHighLevelMCPProxy {
   async getCalendars() {
     try {
       // MCP doesn't have list calendars, use REST API
-      return await this.callAPI(`/calendars/?locationId=${this.locationId}`);
+      // GoHighLevel REST API expects query params in the request, not URL
+      const response = await axios({
+        method: 'GET',
+        url: `${this.baseURL}/calendars/`,
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+          'Version': '2021-07-28'
+        },
+        params: {
+          locationId: this.locationId
+        }
+      });
+      return response.data;
     } catch (error) {
+      console.error('❌ Get calendars failed:', error.response?.data || error.message);
       throw error;
     }
   }
@@ -389,15 +416,39 @@ class GoHighLevelMCPProxy {
 
   // Location (MCP Protocol)
   async getLocation() {
-    return await this.callMCP('locations_get-location', {
+    const result = await this.callMCP('locations_get-location', {
       locationId: this.locationId
     });
+    console.log('🏢 Location result type:', typeof result);
+    console.log('🏢 Location result keys:', result ? Object.keys(result).join(',') : 'null');
+
+    // Handle different response formats
+    if (result?.location) {
+      return result.location;
+    } else if (result?.data?.location) {
+      return result.data.location;
+    }
+
+    return result;
   }
 
   async getCustomFields() {
-    return await this.callMCP('locations_get-custom-fields', {
+    const result = await this.callMCP('locations_get-custom-fields', {
       locationId: this.locationId
     });
+    console.log('📝 Custom fields result type:', typeof result);
+    console.log('📝 Custom fields result keys:', result ? Object.keys(result).join(',') : 'null');
+
+    // Handle different response formats
+    if (Array.isArray(result)) {
+      return { customFields: result };
+    } else if (result?.customFields) {
+      return result;
+    } else if (result?.data?.customFields) {
+      return result.data;
+    }
+
+    return { customFields: [] };
   }
 
   // Payments (MCP Protocol)
