@@ -15,18 +15,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function autoLoadCredentials(clientId) {
     try {
+        updateConnectionStatus('Loading...', 'loading');
         const response = await fetch(`${window.location.origin}/api/client/crm-credentials/${clientId}`);
         const data = await response.json();
 
         if (data.success && data.credentials) {
             console.log('✅ CRM credentials loaded');
 
-            // Auto-load GoHighLevel if configured
+            // Auto-connect to GoHighLevel if configured
             if (data.credentials.gohighlevel && data.credentials.gohighlevel.configured) {
-                document.getElementById('crmType').value = 'gohighlevel';
-                document.getElementById('ghlAuth').style.display = 'block';
-                document.getElementById('ghlApiKey').value = data.credentials.gohighlevel.api_key;
-                document.getElementById('ghlLocationId').value = data.credentials.gohighlevel.location_id;
+                // Store credentials for connection
+                window.ghlCredentials = {
+                    apiKey: data.credentials.gohighlevel.api_key,
+                    locationId: data.credentials.gohighlevel.location_id
+                };
 
                 // Auto-connect
                 addMessage('system', '🔄 Auto-connecting to GoHighLevel...');
@@ -34,72 +36,25 @@ async function autoLoadCredentials(clientId) {
                 return;
             }
 
-            // Auto-load HubSpot if configured
-            if (data.credentials.hubspot && data.credentials.hubspot.configured) {
-                document.getElementById('crmType').value = 'hubspot';
-                document.getElementById('hubspotAuth').style.display = 'block';
-                document.getElementById('hubspotToken').value = data.credentials.hubspot.api_key;
-
-                // Auto-connect
-                addMessage('system', '🔄 Auto-connecting to HubSpot...');
-                await connectHubSpot();
-                return;
-            }
-
             // If no CRM configured
-            addMessage('system', '⚠️ No CRM credentials found. Please configure in Settings.');
+            updateConnectionStatus('Not configured', 'error');
+            addMessage('system', '⚠️ No GoHighLevel credentials found. Please configure in Settings.');
         }
     } catch (error) {
         console.error('❌ Failed to load CRM credentials:', error);
-        addMessage('system', '⚠️ Could not load saved credentials. Please enter manually.');
-    }
-}
-
-document.getElementById('crmType').addEventListener('change', (e) => {
-    document.getElementById('hubspotAuth').style.display = 'none';
-    document.getElementById('ghlAuth').style.display = 'none';
-
-    if (e.target.value === 'hubspot') {
-        document.getElementById('hubspotAuth').style.display = 'block';
-    } else if (e.target.value === 'gohighlevel') {
-        document.getElementById('ghlAuth').style.display = 'block';
-    }
-});
-
-async function connectHubSpot() {
-    const token = document.getElementById('hubspotToken').value;
-    if (!token) {
-        alert('Please enter your HubSpot access token');
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE}/hubspot/connect`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ accessToken: token })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            sessionId = data.sessionId;
-            crmType = 'hubspot';
-            updateConnectionStatus('Connected to HubSpot', 'success');
-            addMessage('system', '✅ Successfully connected to HubSpot!');
-        } else {
-            alert('Failed to connect: ' + data.error);
-        }
-    } catch (error) {
-        alert('Connection error: ' + error.message);
+        updateConnectionStatus('Connection failed', 'error');
+        addMessage('system', '⚠️ Could not load saved credentials. Please configure in Settings.');
     }
 }
 
 async function connectGoHighLevel() {
-    const apiKey = document.getElementById('ghlApiKey').value;
-    const locationId = document.getElementById('ghlLocationId').value;
+    // Use pre-loaded credentials from Settings
+    const apiKey = window.ghlCredentials?.apiKey;
+    const locationId = window.ghlCredentials?.locationId;
 
     if (!apiKey || !locationId) {
-        alert('Please enter both API Key and Location ID');
+        updateConnectionStatus('Not configured', 'error');
+        addMessage('error', '❌ GoHighLevel credentials not configured. Please go to Settings in the dashboard.');
         return;
     }
 
@@ -207,7 +162,25 @@ function handleKeyPress(event) {
 function updateConnectionStatus(message, status) {
     const statusDiv = document.getElementById('connectionStatus');
     statusDiv.textContent = message;
-    statusDiv.className = `status ${status}`;
 
-    document.getElementById('crmStatus').textContent = message;
+    // Update styling based on status
+    if (status === 'success') {
+        statusDiv.style.background = '#d1fae5';
+        statusDiv.style.color = '#065f46';
+    } else if (status === 'error') {
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#991b1b';
+    } else if (status === 'loading') {
+        statusDiv.style.background = '#fef3c7';
+        statusDiv.style.color = '#92400e';
+    } else {
+        statusDiv.style.background = '#f3f4f6';
+        statusDiv.style.color = '#6b7280';
+    }
+
+    // Update header status
+    const headerStatus = document.getElementById('crmStatus');
+    if (headerStatus) {
+        headerStatus.textContent = message;
+    }
 }

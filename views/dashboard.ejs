@@ -2103,7 +2103,7 @@
                                     placeholder="3lSeAHXNU9t09Hhp9oai"
                                     autocomplete="off"
                                 >
-                                <span class="form-hint">Your GoHighLevel Location ID (24 characters)</span>
+                                <span class="form-hint">Your GoHighLevel Location ID (20 characters)</span>
                             </div>
 
                             <p style="font-size: 0.75rem; color: #6b7280; margin-top: 1rem; line-height: 1.5;">
@@ -2112,37 +2112,6 @@
                                 2. Create a Private Integration<br>
                                 3. Copy the Private Integration Token (API Key)<br>
                                 4. Find your Location ID in the URL or Settings
-                            </p>
-                        </div>
-
-                        <!-- HubSpot Section -->
-                        <div class="crm-section">
-                            <h4>
-                                <span class="crm-logo">🟠</span>
-                                HubSpot
-                            </h4>
-
-                            <div class="form-group">
-                                <label for="hubspotApiKey">HubSpot API Key</label>
-                                <input
-                                    type="password"
-                                    id="hubspotApiKey"
-                                    name="hubspot_api_key"
-                                    placeholder="pat-xx-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                                    autocomplete="off"
-                                >
-                                <span class="form-hint">Your HubSpot Private App Access Token</span>
-                                <div id="hubspotApiKeyStatus" class="key-status not-configured" style="display: none;">
-                                    <span>●</span>
-                                    <span id="hubspotApiKeyStatusText">Not configured</span>
-                                </div>
-                            </div>
-
-                            <p style="font-size: 0.75rem; color: #6b7280; margin-top: 1rem; line-height: 1.5;">
-                                <strong>How to find this:</strong><br>
-                                1. Go to HubSpot Settings → Integrations → Private Apps<br>
-                                2. Create a new Private App<br>
-                                3. Copy the Access Token
                             </p>
                         </div>
 
@@ -3771,18 +3740,6 @@ Press the CALL button and wait for confirmation tone.
             if (settings.ghl_location_id) {
                 document.getElementById('ghlLocationId').value = settings.ghl_location_id;
             }
-
-            // HubSpot settings
-            if (settings.hubspot_api_key_set) {
-                document.getElementById('hubspotApiKey').placeholder = settings.hubspot_api_key || '••••••••••••';
-                document.getElementById('hubspotApiKeyStatus').style.display = 'inline-flex';
-                document.getElementById('hubspotApiKeyStatus').className = 'key-status configured';
-                document.getElementById('hubspotApiKeyStatusText').textContent = 'Configured';
-            } else {
-                document.getElementById('hubspotApiKeyStatus').style.display = 'inline-flex';
-                document.getElementById('hubspotApiKeyStatus').className = 'key-status not-configured';
-                document.getElementById('hubspotApiKeyStatusText').textContent = 'Not configured';
-            }
         }
 
         async function saveCRMSettings(e) {
@@ -3790,7 +3747,6 @@ Press the CALL button and wait for confirmation tone.
 
             const ghlApiKey = document.getElementById('ghlApiKey').value.trim();
             const ghlLocationId = document.getElementById('ghlLocationId').value.trim();
-            const hubspotApiKey = document.getElementById('hubspotApiKey').value.trim();
 
             // Validate GoHighLevel fields
             if (ghlApiKey && !ghlApiKey.startsWith('pit-')) {
@@ -3798,8 +3754,8 @@ Press the CALL button and wait for confirmation tone.
                 return;
             }
 
-            if (ghlLocationId && ghlLocationId.length !== 24) {
-                alert('GoHighLevel Location ID must be exactly 24 characters');
+            if (ghlLocationId && ghlLocationId.length !== 20) {
+                alert('GoHighLevel Location ID must be exactly 20 characters');
                 return;
             }
 
@@ -3807,7 +3763,6 @@ Press the CALL button and wait for confirmation tone.
             const updateData = {};
             if (ghlApiKey) updateData.ghl_api_key = ghlApiKey;
             if (ghlLocationId) updateData.ghl_location_id = ghlLocationId;
-            if (hubspotApiKey) updateData.hubspot_api_key = hubspotApiKey;
 
             // If no fields filled, just close
             if (Object.keys(updateData).length === 0) {

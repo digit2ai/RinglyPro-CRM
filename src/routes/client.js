@@ -443,7 +443,7 @@ router.get('/crm-settings/:client_id', async (req, res) => {
         const { Client } = require('../models');
 
         const client = await Client.findByPk(client_id, {
-            attributes: ['id', 'business_name', 'ghl_api_key', 'ghl_location_id', 'hubspot_api_key']
+            attributes: ['id', 'business_name', 'ghl_api_key', 'ghl_location_id']
         });
 
         if (!client) {
@@ -464,9 +464,7 @@ router.get('/crm-settings/:client_id', async (req, res) => {
             settings: {
                 ghl_api_key: client.ghl_api_key ? maskApiKey(client.ghl_api_key) : null,
                 ghl_api_key_set: !!client.ghl_api_key,
-                ghl_location_id: client.ghl_location_id,
-                hubspot_api_key: client.hubspot_api_key ? maskApiKey(client.hubspot_api_key) : null,
-                hubspot_api_key_set: !!client.hubspot_api_key
+                ghl_location_id: client.ghl_location_id
             }
         });
 
@@ -484,7 +482,7 @@ router.get('/crm-settings/:client_id', async (req, res) => {
 router.put('/crm-settings/:client_id', async (req, res) => {
     try {
         const { client_id } = req.params;
-        const { ghl_api_key, ghl_location_id, hubspot_api_key } = req.body;
+        const { ghl_api_key, ghl_location_id } = req.body;
         const { Client } = require('../models');
 
         const client = await Client.findByPk(client_id);
@@ -503,24 +501,19 @@ router.put('/crm-settings/:client_id', async (req, res) => {
         if (ghl_location_id !== undefined) {
             client.ghl_location_id = ghl_location_id || null;
         }
-        if (hubspot_api_key !== undefined) {
-            client.hubspot_api_key = hubspot_api_key || null;
-        }
 
         await client.save();
 
-        console.log(`✅ CRM integration settings updated for client ${client_id} (${client.business_name})`);
+        console.log(`✅ GoHighLevel integration settings updated for client ${client_id} (${client.business_name})`);
         console.log(`   GHL API Key: ${client.ghl_api_key ? 'Set' : 'Not set'}`);
         console.log(`   GHL Location ID: ${client.ghl_location_id || 'Not set'}`);
-        console.log(`   HubSpot API Key: ${client.hubspot_api_key ? 'Set' : 'Not set'}`);
 
         res.json({
             success: true,
-            message: 'CRM integration settings updated successfully',
+            message: 'GoHighLevel integration settings updated successfully',
             settings: {
                 ghl_api_key_set: !!client.ghl_api_key,
-                ghl_location_id: client.ghl_location_id,
-                hubspot_api_key_set: !!client.hubspot_api_key
+                ghl_location_id: client.ghl_location_id
             }
         });
 
@@ -541,7 +534,7 @@ router.get('/crm-credentials/:client_id', async (req, res) => {
         const { Client } = require('../models');
 
         const client = await Client.findByPk(client_id, {
-            attributes: ['id', 'business_name', 'ghl_api_key', 'ghl_location_id', 'hubspot_api_key']
+            attributes: ['id', 'business_name', 'ghl_api_key', 'ghl_location_id']
         });
 
         if (!client) {
@@ -559,10 +552,6 @@ router.get('/crm-credentials/:client_id', async (req, res) => {
                     api_key: client.ghl_api_key || null,
                     location_id: client.ghl_location_id || null,
                     configured: !!(client.ghl_api_key && client.ghl_location_id)
-                },
-                hubspot: {
-                    api_key: client.hubspot_api_key || null,
-                    configured: !!client.hubspot_api_key
                 }
             }
         });

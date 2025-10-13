@@ -86,14 +86,9 @@ module.exports = (sequelize) => {
             comment: 'GoHighLevel Private Integration Token (PIT)'
         },
         ghl_location_id: {
-            type: DataTypes.STRING(100),
+            type: DataTypes.STRING(20),
             allowNull: true,
-            comment: 'GoHighLevel Location ID for MCP integration'
-        },
-        hubspot_api_key: {
-            type: DataTypes.STRING(255),
-            allowNull: true,
-            comment: 'HubSpot API Key for CRM integration'
+            comment: 'GoHighLevel Location ID for MCP integration (20 characters)'
         },
         sms_notifications: {
             type: DataTypes.BOOLEAN,

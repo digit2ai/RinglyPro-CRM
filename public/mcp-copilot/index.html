@@ -28,25 +28,13 @@
                 <h2>AI Copilot</h2>
             </div>
             <div class="connection-panel">
-                <h3>Connect CRM</h3>
-                <select id="crmType">
-                    <option value="">Select CRM...</option>
-                    <option value="hubspot">HubSpot</option>
-                    <option value="gohighlevel">GoHighLevel</option>
-                </select>
-
-                <div id="hubspotAuth" class="auth-form" style="display:none;">
-                    <input type="password" id="hubspotToken" placeholder="HubSpot Access Token">
-                    <button onclick="connectHubSpot()">Connect</button>
+                <h3>GoHighLevel Status</h3>
+                <div id="connectionStatus" style="margin-top: 1rem; padding: 0.75rem; border-radius: 0.5rem; background: #f3f4f6; color: #6b7280; font-size: 0.875rem;">
+                    Not connected
                 </div>
-
-                <div id="ghlAuth" class="auth-form" style="display:none;">
-                    <input type="password" id="ghlApiKey" placeholder="GHL API Key">
-                    <input type="text" id="ghlLocationId" placeholder="Location ID">
-                    <button onclick="connectGoHighLevel()">Connect</button>
-                </div>
-
-                <div id="connectionStatus"></div>
+                <p style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.75rem; line-height: 1.5;">
+                    💡 Configure your API credentials in Settings to auto-connect
+                </p>
             </div>
 
             <div class="quick-actions">
