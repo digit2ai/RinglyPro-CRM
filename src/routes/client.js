@@ -507,13 +507,15 @@ router.put('/crm-settings/:client_id', async (req, res) => {
         const { sequelize } = require('../models');
 
         // First verify client exists
-        const [client] = await sequelize.query(
+        const result = await sequelize.query(
             'SELECT id, business_name FROM clients WHERE id = :client_id',
             {
                 replacements: { client_id },
                 type: sequelize.QueryTypes.SELECT
             }
         );
+
+        const client = result[0];
 
         if (!client) {
             return res.status(404).json({
@@ -566,6 +568,18 @@ router.put('/crm-settings/:client_id', async (req, res) => {
 
     } catch (error) {
         console.error('Error updating CRM settings:', error);
+        console.error('Error stack:', error.stack);
+
+        // If columns don't exist, provide helpful message
+        if (error.message && error.message.includes('column') && error.message.includes('does not exist')) {
+            return res.status(500).json({
+                success: false,
+                error: 'CRM columns not yet created in database',
+                details: 'Please run the database migration first',
+                migration_needed: true
+            });
+        }
+
         res.status(500).json({
             success: false,
             error: 'Failed to update CRM settings',
