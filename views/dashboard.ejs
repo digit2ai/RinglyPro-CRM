@@ -814,6 +814,125 @@
 
         /* SMS compose form CSS removed - using device SMS app instead */
 
+        /* Settings Modal - Tabs */
+        .settings-tabs {
+            display: flex;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 1.5rem;
+            gap: 0;
+        }
+
+        .settings-tab {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+            transition: all 0.2s;
+            margin-bottom: -2px;
+        }
+
+        .settings-tab:hover {
+            color: #111827;
+            background: #f9fafb;
+        }
+
+        .settings-tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .settings-tab-content {
+            display: none;
+        }
+
+        .settings-tab-content.active {
+            display: block;
+        }
+
+        /* CRM Integration Form Styles */
+        .crm-section {
+            margin-bottom: 2rem;
+            padding: 1.25rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            background: #f9fafb;
+        }
+
+        .crm-section h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #111827;
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .crm-section .crm-logo {
+            width: 24px;
+            height: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-family: monospace;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-group .form-hint {
+            display: block;
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.375rem;
+        }
+
+        .key-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.625rem;
+            border-radius: 0.25rem;
+            margin-top: 0.5rem;
+        }
+
+        .key-status.configured {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .key-status.not-configured {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
         /* Calendar Settings Modal */
         .setting-row {
             display: flex;
@@ -1719,7 +1838,7 @@
     <!-- Quick Actions -->
     <div class="quick-actions">
         <div class="action-grid">
-            <button class="action-btn btn-copilot" onclick="window.open('https://ringlypro-crm.onrender.com/mcp-copilot/', '_blank')">
+            <button class="action-btn btn-copilot" onclick="openMCPCopilot()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
@@ -1738,11 +1857,12 @@
                 </svg>
                 Make Call
             </button>
-            <button class="action-btn btn-calendar" onclick="openCalendarSettings()">
+            <button class="action-btn btn-calendar" onclick="openSettings()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
-                Calendar Settings
+                Settings
             </button>
             <button class="action-btn btn-share" onclick="shareReferralLink()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1898,15 +2018,27 @@
         </div>
     </div>
 
-    <!-- Calendar Settings Modal -->
+    <!-- Settings Modal (formerly Calendar Settings) -->
     <div class="modal-overlay" id="calendarModal" style="align-items: center; justify-content: center;">
-        <div class="modal-content" style="max-width: 95vw; width: 800px; max-height: 95vh; border-radius: 0.75rem; display: flex; flex-direction: column;">
+        <div class="modal-content" style="max-width: 95vw; width: 900px; max-height: 95vh; border-radius: 0.75rem; display: flex; flex-direction: column;">
             <div class="modal-header">
-                <h3>Calendar Settings</h3>
-                <button class="close-modal" onclick="closeCalendarSettings()">×</button>
+                <h3>Settings</h3>
+                <button class="close-modal" onclick="closeSettings()">×</button>
             </div>
             <div class="modal-body" style="flex: 1; overflow-y: auto;">
-                <form id="calendarSettingsForm">
+                <!-- Settings Tabs -->
+                <div class="settings-tabs">
+                    <button class="settings-tab active" onclick="switchSettingsTab('calendar')">
+                        📅 Calendar
+                    </button>
+                    <button class="settings-tab" onclick="switchSettingsTab('crm')">
+                        🔗 CRM Integrations
+                    </button>
+                </div>
+
+                <!-- Calendar Settings Tab -->
+                <div class="settings-tab-content active" id="calendarTabContent">
+                    <form id="calendarSettingsForm">
                     <!-- Global Enable/Disable Toggle -->
                     <div class="setting-row">
                         <label class="setting-label">
@@ -1930,10 +2062,105 @@
 
                     <!-- Save Button -->
                     <div class="modal-actions">
-                        <button type="button" class="btn-cancel" onclick="closeCalendarSettings()">Cancel</button>
-                        <button type="submit" class="btn-save" id="saveCalendarBtn">Save Settings</button>
+                        <button type="button" class="btn-cancel" onclick="closeSettings()">Cancel</button>
+                        <button type="submit" class="btn-save" id="saveCalendarBtn">Save Calendar Settings</button>
                     </div>
                 </form>
+                </div>
+
+                <!-- CRM Integrations Tab -->
+                <div class="settings-tab-content" id="crmTabContent">
+                    <form id="crmSettingsForm">
+                        <!-- GoHighLevel Section -->
+                        <div class="crm-section">
+                            <h4>
+                                <span class="crm-logo">🚀</span>
+                                GoHighLevel
+                            </h4>
+
+                            <div class="form-group">
+                                <label for="ghlApiKey">Private Integration Token (API Key)</label>
+                                <input
+                                    type="password"
+                                    id="ghlApiKey"
+                                    name="ghl_api_key"
+                                    placeholder="pit-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                                    autocomplete="off"
+                                >
+                                <span class="form-hint">Your GoHighLevel Private Integration Token (starts with "pit-")</span>
+                                <div id="ghlApiKeyStatus" class="key-status not-configured" style="display: none;">
+                                    <span>●</span>
+                                    <span id="ghlApiKeyStatusText">Not configured</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ghlLocationId">Location ID</label>
+                                <input
+                                    type="text"
+                                    id="ghlLocationId"
+                                    name="ghl_location_id"
+                                    placeholder="3lSeAHXNU9t09Hhp9oai"
+                                    autocomplete="off"
+                                >
+                                <span class="form-hint">Your GoHighLevel Location ID (24 characters)</span>
+                            </div>
+
+                            <p style="font-size: 0.75rem; color: #6b7280; margin-top: 1rem; line-height: 1.5;">
+                                <strong>How to find these:</strong><br>
+                                1. Go to GoHighLevel Settings → Integrations<br>
+                                2. Create a Private Integration<br>
+                                3. Copy the Private Integration Token (API Key)<br>
+                                4. Find your Location ID in the URL or Settings
+                            </p>
+                        </div>
+
+                        <!-- HubSpot Section -->
+                        <div class="crm-section">
+                            <h4>
+                                <span class="crm-logo">🟠</span>
+                                HubSpot
+                            </h4>
+
+                            <div class="form-group">
+                                <label for="hubspotApiKey">HubSpot API Key</label>
+                                <input
+                                    type="password"
+                                    id="hubspotApiKey"
+                                    name="hubspot_api_key"
+                                    placeholder="pat-xx-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                                    autocomplete="off"
+                                >
+                                <span class="form-hint">Your HubSpot Private App Access Token</span>
+                                <div id="hubspotApiKeyStatus" class="key-status not-configured" style="display: none;">
+                                    <span>●</span>
+                                    <span id="hubspotApiKeyStatusText">Not configured</span>
+                                </div>
+                            </div>
+
+                            <p style="font-size: 0.75rem; color: #6b7280; margin-top: 1rem; line-height: 1.5;">
+                                <strong>How to find this:</strong><br>
+                                1. Go to HubSpot Settings → Integrations → Private Apps<br>
+                                2. Create a new Private App<br>
+                                3. Copy the Access Token
+                            </p>
+                        </div>
+
+                        <!-- Info Box -->
+                        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.5rem; padding: 1rem; margin-top: 1.5rem;">
+                            <p style="font-size: 0.875rem; color: #1e40af; margin: 0; line-height: 1.6;">
+                                <strong>💡 Why configure this?</strong><br>
+                                Once configured, your CRM credentials will automatically load in the MCP Copilot interface. You won't need to enter them every time you use the AI assistant!
+                            </p>
+                        </div>
+
+                        <!-- Save Button -->
+                        <div class="modal-actions">
+                            <button type="button" class="btn-cancel" onclick="closeSettings()">Cancel</button>
+                            <button type="submit" class="btn-save" id="saveCrmBtn">Save CRM Settings</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -3267,19 +3494,65 @@ Press the CALL button and wait for confirmation tone.
             window.location.href = `tel:${phone}`;
         }
 
+        // Open MCP Copilot with auto-loaded credentials
+        function openMCPCopilot() {
+            const mcpUrl = `${window.location.origin}/mcp-copilot/?client_id=${CLIENT_ID}`;
+            window.open(mcpUrl, '_blank');
+        }
+
         // =====================================================
-        // CALENDAR SETTINGS FUNCTIONS
+        // SETTINGS MODAL FUNCTIONS (Calendar + CRM)
         // =====================================================
 
         let calendarSettingsData = null;
+        let crmSettingsData = null;
+        let currentSettingsTab = 'calendar';
 
-        async function openCalendarSettings() {
+        // Main Settings Modal Functions
+        async function openSettings() {
             document.getElementById('calendarModal').classList.add('active');
+            // Load both calendar and CRM settings
             await loadCalendarSettings();
+            await loadCRMSettings();
+            // Default to calendar tab
+            switchSettingsTab('calendar');
+        }
+
+        function closeSettings() {
+            document.getElementById('calendarModal').classList.remove('active');
+        }
+
+        // Legacy function names for backwards compatibility
+        function openCalendarSettings() {
+            openSettings();
         }
 
         function closeCalendarSettings() {
-            document.getElementById('calendarModal').classList.remove('active');
+            closeSettings();
+        }
+
+        // Tab Switching
+        function switchSettingsTab(tabName) {
+            currentSettingsTab = tabName;
+
+            // Update tab buttons
+            const tabs = document.querySelectorAll('.settings-tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Update tab content
+            const contents = document.querySelectorAll('.settings-tab-content');
+            contents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            if (tabName === 'calendar') {
+                document.getElementById('calendarTabContent').classList.add('active');
+            } else if (tabName === 'crm') {
+                document.getElementById('crmTabContent').classList.add('active');
+            }
         }
 
         async function loadCalendarSettings() {
@@ -3453,7 +3726,130 @@ Press the CALL button and wait for confirmation tone.
             if (calendarForm) {
                 calendarForm.addEventListener('submit', saveCalendarSettings);
             }
+
+            // CRM Settings form submit handler
+            const crmForm = document.getElementById('crmSettingsForm');
+            if (crmForm) {
+                crmForm.addEventListener('submit', saveCRMSettings);
+            }
         });
+
+        // =====================================================
+        // CRM INTEGRATION SETTINGS FUNCTIONS
+        // =====================================================
+
+        async function loadCRMSettings() {
+            try {
+                const response = await authenticatedFetch(`/api/client/crm-settings/${CLIENT_ID}`);
+                if (!response) return;
+
+                const data = await response.json();
+
+                if (data.success) {
+                    crmSettingsData = data.settings;
+                    renderCRMSettings(data.settings);
+                }
+            } catch (error) {
+                console.error('Error loading CRM settings:', error);
+                alert('Failed to load CRM settings. Please try again.');
+            }
+        }
+
+        function renderCRMSettings(settings) {
+            // GoHighLevel settings
+            if (settings.ghl_api_key_set) {
+                document.getElementById('ghlApiKey').placeholder = settings.ghl_api_key || '••••••••••••';
+                document.getElementById('ghlApiKeyStatus').style.display = 'inline-flex';
+                document.getElementById('ghlApiKeyStatus').className = 'key-status configured';
+                document.getElementById('ghlApiKeyStatusText').textContent = 'Configured';
+            } else {
+                document.getElementById('ghlApiKeyStatus').style.display = 'inline-flex';
+                document.getElementById('ghlApiKeyStatus').className = 'key-status not-configured';
+                document.getElementById('ghlApiKeyStatusText').textContent = 'Not configured';
+            }
+
+            if (settings.ghl_location_id) {
+                document.getElementById('ghlLocationId').value = settings.ghl_location_id;
+            }
+
+            // HubSpot settings
+            if (settings.hubspot_api_key_set) {
+                document.getElementById('hubspotApiKey').placeholder = settings.hubspot_api_key || '••••••••••••';
+                document.getElementById('hubspotApiKeyStatus').style.display = 'inline-flex';
+                document.getElementById('hubspotApiKeyStatus').className = 'key-status configured';
+                document.getElementById('hubspotApiKeyStatusText').textContent = 'Configured';
+            } else {
+                document.getElementById('hubspotApiKeyStatus').style.display = 'inline-flex';
+                document.getElementById('hubspotApiKeyStatus').className = 'key-status not-configured';
+                document.getElementById('hubspotApiKeyStatusText').textContent = 'Not configured';
+            }
+        }
+
+        async function saveCRMSettings(e) {
+            e.preventDefault();
+
+            const ghlApiKey = document.getElementById('ghlApiKey').value.trim();
+            const ghlLocationId = document.getElementById('ghlLocationId').value.trim();
+            const hubspotApiKey = document.getElementById('hubspotApiKey').value.trim();
+
+            // Validate GoHighLevel fields
+            if (ghlApiKey && !ghlApiKey.startsWith('pit-')) {
+                alert('GoHighLevel API Key must start with "pit-"');
+                return;
+            }
+
+            if (ghlLocationId && ghlLocationId.length !== 24) {
+                alert('GoHighLevel Location ID must be exactly 24 characters');
+                return;
+            }
+
+            // Prepare data (only include fields that were filled)
+            const updateData = {};
+            if (ghlApiKey) updateData.ghl_api_key = ghlApiKey;
+            if (ghlLocationId) updateData.ghl_location_id = ghlLocationId;
+            if (hubspotApiKey) updateData.hubspot_api_key = hubspotApiKey;
+
+            // If no fields filled, just close
+            if (Object.keys(updateData).length === 0) {
+                closeSettings();
+                return;
+            }
+
+            const saveBtn = document.getElementById('saveCrmBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                const response = await authenticatedFetch(`/api/client/crm-settings/${CLIENT_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                if (!response) {
+                    throw new Error('No response from server');
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('CRM integration settings saved successfully! ✅\n\nYour credentials will now auto-load in MCP Copilot.');
+                    closeSettings();
+                    // Reload settings to show updated status
+                    await loadCRMSettings();
+                } else {
+                    throw new Error(data.error || 'Failed to save CRM settings');
+                }
+            } catch (error) {
+                console.error('Error saving CRM settings:', error);
+                alert(`Failed to save CRM settings: ${error.message}`);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save CRM Settings';
+            }
+        }
 
         // =====================================================
         // IVR SETTINGS FUNCTIONS

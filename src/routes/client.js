@@ -436,6 +436,147 @@ router.put('/ivr-settings/:client_id', async (req, res) => {
     }
 });
 
+// GET /api/client/crm-settings/:client_id - Get CRM integration settings
+router.get('/crm-settings/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { Client } = require('../models');
+
+        const client = await Client.findByPk(client_id, {
+            attributes: ['id', 'business_name', 'ghl_api_key', 'ghl_location_id', 'hubspot_api_key']
+        });
+
+        if (!client) {
+            return res.status(404).json({
+                success: false,
+                error: `Client with ID ${client_id} not found`
+            });
+        }
+
+        // Return CRM settings (mask API keys for security - only show last 4 chars)
+        const maskApiKey = (key) => {
+            if (!key) return null;
+            return key.length > 8 ? `${key.substring(0, 4)}...${key.substring(key.length - 4)}` : '****';
+        };
+
+        res.json({
+            success: true,
+            settings: {
+                ghl_api_key: client.ghl_api_key ? maskApiKey(client.ghl_api_key) : null,
+                ghl_api_key_set: !!client.ghl_api_key,
+                ghl_location_id: client.ghl_location_id,
+                hubspot_api_key: client.hubspot_api_key ? maskApiKey(client.hubspot_api_key) : null,
+                hubspot_api_key_set: !!client.hubspot_api_key
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching CRM settings:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch CRM settings',
+            details: error.message
+        });
+    }
+});
+
+// PUT /api/client/crm-settings/:client_id - Update CRM integration settings
+router.put('/crm-settings/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { ghl_api_key, ghl_location_id, hubspot_api_key } = req.body;
+        const { Client } = require('../models');
+
+        const client = await Client.findByPk(client_id);
+
+        if (!client) {
+            return res.status(404).json({
+                success: false,
+                error: 'Client not found'
+            });
+        }
+
+        // Update fields only if provided (allow partial updates)
+        if (ghl_api_key !== undefined) {
+            client.ghl_api_key = ghl_api_key || null;
+        }
+        if (ghl_location_id !== undefined) {
+            client.ghl_location_id = ghl_location_id || null;
+        }
+        if (hubspot_api_key !== undefined) {
+            client.hubspot_api_key = hubspot_api_key || null;
+        }
+
+        await client.save();
+
+        console.log(`✅ CRM integration settings updated for client ${client_id} (${client.business_name})`);
+        console.log(`   GHL API Key: ${client.ghl_api_key ? 'Set' : 'Not set'}`);
+        console.log(`   GHL Location ID: ${client.ghl_location_id || 'Not set'}`);
+        console.log(`   HubSpot API Key: ${client.hubspot_api_key ? 'Set' : 'Not set'}`);
+
+        res.json({
+            success: true,
+            message: 'CRM integration settings updated successfully',
+            settings: {
+                ghl_api_key_set: !!client.ghl_api_key,
+                ghl_location_id: client.ghl_location_id,
+                hubspot_api_key_set: !!client.hubspot_api_key
+            }
+        });
+
+    } catch (error) {
+        console.error('Error updating CRM settings:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update CRM settings',
+            details: error.message
+        });
+    }
+});
+
+// GET /api/client/crm-credentials/:client_id - Get full CRM credentials (for MCP Copilot auto-load)
+router.get('/crm-credentials/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { Client } = require('../models');
+
+        const client = await Client.findByPk(client_id, {
+            attributes: ['id', 'business_name', 'ghl_api_key', 'ghl_location_id', 'hubspot_api_key']
+        });
+
+        if (!client) {
+            return res.status(404).json({
+                success: false,
+                error: `Client with ID ${client_id} not found`
+            });
+        }
+
+        // Return full credentials (not masked) for MCP Copilot auto-load
+        res.json({
+            success: true,
+            credentials: {
+                gohighlevel: {
+                    api_key: client.ghl_api_key || null,
+                    location_id: client.ghl_location_id || null,
+                    configured: !!(client.ghl_api_key && client.ghl_location_id)
+                },
+                hubspot: {
+                    api_key: client.hubspot_api_key || null,
+                    configured: !!client.hubspot_api_key
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching CRM credentials:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch CRM credentials',
+            details: error.message
+        });
+    }
+});
+
 // Helper function to generate default calendar settings from legacy fields
 function getDefaultCalendarSettings(client) {
     const defaultStart = client.business_hours_start || '09:00:00';

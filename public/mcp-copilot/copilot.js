@@ -2,6 +2,59 @@ let sessionId = null;
 let crmType = null;
 const API_BASE = window.location.origin + '/api/mcp';
 
+// Check for client_id in URL and auto-load credentials
+document.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientId = urlParams.get('client_id');
+
+    if (clientId) {
+        console.log('📋 Client ID detected:', clientId);
+        await autoLoadCredentials(clientId);
+    }
+});
+
+async function autoLoadCredentials(clientId) {
+    try {
+        const response = await fetch(`${window.location.origin}/api/client/crm-credentials/${clientId}`);
+        const data = await response.json();
+
+        if (data.success && data.credentials) {
+            console.log('✅ CRM credentials loaded');
+
+            // Auto-load GoHighLevel if configured
+            if (data.credentials.gohighlevel && data.credentials.gohighlevel.configured) {
+                document.getElementById('crmType').value = 'gohighlevel';
+                document.getElementById('ghlAuth').style.display = 'block';
+                document.getElementById('ghlApiKey').value = data.credentials.gohighlevel.api_key;
+                document.getElementById('ghlLocationId').value = data.credentials.gohighlevel.location_id;
+
+                // Auto-connect
+                addMessage('system', '🔄 Auto-connecting to GoHighLevel...');
+                await connectGoHighLevel();
+                return;
+            }
+
+            // Auto-load HubSpot if configured
+            if (data.credentials.hubspot && data.credentials.hubspot.configured) {
+                document.getElementById('crmType').value = 'hubspot';
+                document.getElementById('hubspotAuth').style.display = 'block';
+                document.getElementById('hubspotToken').value = data.credentials.hubspot.api_key;
+
+                // Auto-connect
+                addMessage('system', '🔄 Auto-connecting to HubSpot...');
+                await connectHubSpot();
+                return;
+            }
+
+            // If no CRM configured
+            addMessage('system', '⚠️ No CRM credentials found. Please configure in Settings.');
+        }
+    } catch (error) {
+        console.error('❌ Failed to load CRM credentials:', error);
+        addMessage('system', '⚠️ Could not load saved credentials. Please enter manually.');
+    }
+}
+
 document.getElementById('crmType').addEventListener('change', (e) => {
     document.getElementById('hubspotAuth').style.display = 'none';
     document.getElementById('ghlAuth').style.display = 'none';

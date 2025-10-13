@@ -80,6 +80,21 @@ module.exports = (sequelize) => {
             defaultValue: null,
             comment: 'Per-day calendar configuration: {monday: {enabled: true, start: "09:00", end: "17:00"}, ...}'
         },
+        ghl_api_key: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+            comment: 'GoHighLevel Private Integration Token (PIT)'
+        },
+        ghl_location_id: {
+            type: DataTypes.STRING(100),
+            allowNull: true,
+            comment: 'GoHighLevel Location ID for MCP integration'
+        },
+        hubspot_api_key: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+            comment: 'HubSpot API Key for CRM integration'
+        },
         sms_notifications: {
             type: DataTypes.BOOLEAN,
             defaultValue: true
