@@ -128,12 +128,118 @@ router.post('/copilot/chat', async (req, res) => {
     console.log('🤖 Processing message for session:', sessionId);
 
     // Simple intent parsing
-    let response = "I'm here to help! Try asking me to search contacts or create a new contact.";
+    let response = "I'm here to help! Try asking me to search contacts, view deals, list calendars, or show location info.";
     let data = null;
 
     const lowerMessage = message.toLowerCase();
 
-    if (lowerMessage.includes('search') || lowerMessage.includes('find')) {
+    // OPPORTUNITIES / DEALS
+    if (lowerMessage.includes('opportunit') || lowerMessage.includes('deal') || lowerMessage.includes('pipeline')) {
+      if (lowerMessage.includes('search') || lowerMessage.includes('show') || lowerMessage.includes('view') || lowerMessage.includes('list')) {
+        if (lowerMessage.includes('pipeline')) {
+          console.log('📊 Getting pipelines');
+          try {
+            const pipelines = await session.proxy.getPipelines();
+            response = `Found ${pipelines?.pipelines?.length || 0} pipelines:\n\n`;
+            if (pipelines?.pipelines) {
+              pipelines.pipelines.forEach(p => {
+                response += `• ${p.name} (${p.stages?.length || 0} stages)\n`;
+              });
+            }
+            data = pipelines?.pipelines || [];
+          } catch (error) {
+            response = `Error loading pipelines: ${error.message}`;
+          }
+        } else {
+          console.log('💰 Searching opportunities');
+          try {
+            const opps = await session.proxy.getOpportunities();
+            response = `Found ${opps?.length || 0} opportunities:\n\n`;
+            if (opps && opps.length > 0) {
+              opps.slice(0, 5).forEach(o => {
+                response += `• ${o.name || 'Untitled'} - $${o.monetaryValue || 0} (${o.status || 'open'})\n`;
+              });
+              if (opps.length > 5) response += `\n... and ${opps.length - 5} more`;
+            }
+            data = opps;
+          } catch (error) {
+            response = `Error loading opportunities: ${error.message}`;
+          }
+        }
+      } else {
+        response = "Try: 'show opportunities', 'view deals', or 'show all pipelines'";
+      }
+    }
+    // CALENDARS
+    else if (lowerMessage.includes('calendar') || lowerMessage.includes('appointment')) {
+      if (lowerMessage.includes('list') || lowerMessage.includes('show')) {
+        console.log('📅 Getting calendars');
+        try {
+          const calendars = await session.proxy.getCalendars();
+          response = `Found ${calendars?.calendars?.length || 0} calendars:\n\n`;
+          if (calendars?.calendars) {
+            calendars.calendars.forEach(cal => {
+              response += `• ${cal.name}\n`;
+            });
+          }
+          data = calendars?.calendars || [];
+        } catch (error) {
+          response = `Error loading calendars: ${error.message}`;
+        }
+      } else {
+        response = "Try: 'list calendars' or 'show calendars'";
+      }
+    }
+    // LOCATION INFO
+    else if (lowerMessage.includes('location') && (lowerMessage.includes('show') || lowerMessage.includes('info'))) {
+      console.log('🏢 Getting location info');
+      try {
+        const location = await session.proxy.getLocation();
+        response = `Location: ${location?.name || 'Unknown'}\n`;
+        if (location?.address) response += `Address: ${location.address}\n`;
+        if (location?.phone) response += `Phone: ${location.phone}\n`;
+        data = [location];
+      } catch (error) {
+        response = `Error loading location: ${error.message}`;
+      }
+    }
+    // CUSTOM FIELDS
+    else if (lowerMessage.includes('custom field')) {
+      console.log('📝 Getting custom fields');
+      try {
+        const fields = await session.proxy.getCustomFields();
+        response = `Found ${fields?.customFields?.length || 0} custom fields:\n\n`;
+        if (fields?.customFields) {
+          fields.customFields.slice(0, 10).forEach(f => {
+            response += `• ${f.name} (${f.dataType})\n`;
+          });
+        }
+        data = fields?.customFields || [];
+      } catch (error) {
+        response = `Error loading custom fields: ${error.message}`;
+      }
+    }
+    // TAGS
+    else if (lowerMessage.includes('add tag') || lowerMessage.includes('tag')) {
+      const contactIdMatch = message.match(/contact\s+([a-zA-Z0-9]+)/i);
+      const tagMatch = message.match(/tag[s]?\s+([^to]+?)(?:\s+to|$)/i);
+
+      if (contactIdMatch && tagMatch) {
+        const contactId = contactIdMatch[1];
+        const tags = tagMatch[1].split(',').map(t => t.trim());
+        console.log(`🏷️ Adding tags ${tags} to contact ${contactId}`);
+        try {
+          await session.proxy.addTags(contactId, tags);
+          response = `✅ Added ${tags.length} tag(s) to contact ${contactId}`;
+        } catch (error) {
+          response = `Error adding tags: ${error.message}`;
+        }
+      } else {
+        response = "To add tags: 'add tag VIP to contact CONTACT_ID' or 'add tags VIP, Customer to contact ID123'";
+      }
+    }
+    // CONTACT SEARCH
+    else if (lowerMessage.includes('search') || lowerMessage.includes('find')) {
       // Extract search query - remove common filler words
       let query = message.split(/search|find/i)[1]?.trim() || '';
 
@@ -207,7 +313,7 @@ router.post('/copilot/chat', async (req, res) => {
       success: true,
       response,
       data,
-      suggestions: ['Search contacts', 'Create contact', 'View deals']
+      suggestions: ['Search contacts', 'View deals', 'Show pipelines', 'List calendars', 'Show location info']
     });
   } catch (error) {
     console.error('❌ MCP Chat error:', error);
