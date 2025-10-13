@@ -80,16 +80,18 @@ module.exports = (sequelize) => {
             defaultValue: null,
             comment: 'Per-day calendar configuration: {monday: {enabled: true, start: "09:00", end: "17:00"}, ...}'
         },
-        ghl_api_key: {
-            type: DataTypes.STRING(255),
-            allowNull: true,
-            comment: 'GoHighLevel Private Integration Token (PIT)'
-        },
-        ghl_location_id: {
-            type: DataTypes.STRING(20),
-            allowNull: true,
-            comment: 'GoHighLevel Location ID for MCP integration (20 characters)'
-        },
+        // NOTE: Fields exist in DB but temporarily disabled in model to prevent breaking queries
+        // The API endpoints handle these fields directly without using the model
+        // ghl_api_key: {
+        //     type: DataTypes.STRING(255),
+        //     allowNull: true,
+        //     comment: 'GoHighLevel Private Integration Token (PIT)'
+        // },
+        // ghl_location_id: {
+        //     type: DataTypes.STRING(20),
+        //     allowNull: true,
+        //     comment: 'GoHighLevel Location ID for MCP integration (20 characters)'
+        // },
         sms_notifications: {
             type: DataTypes.BOOLEAN,
             defaultValue: true
