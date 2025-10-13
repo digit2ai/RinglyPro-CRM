@@ -440,18 +440,25 @@ router.put('/ivr-settings/:client_id', async (req, res) => {
 router.get('/crm-settings/:client_id', async (req, res) => {
     try {
         const { client_id } = req.params;
-        const { Client } = require('../models');
+        const { sequelize } = require('../models');
 
-        const client = await Client.findByPk(client_id, {
-            attributes: ['id', 'business_name', 'ghl_api_key', 'ghl_location_id']
-        });
+        // Use raw SQL to query CRM fields directly
+        const result = await sequelize.query(
+            'SELECT id, business_name, ghl_api_key, ghl_location_id FROM clients WHERE id = :client_id',
+            {
+                replacements: { client_id },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
 
-        if (!client) {
+        if (!result || result.length === 0) {
             return res.status(404).json({
                 success: false,
                 error: `Client with ID ${client_id} not found`
             });
         }
+
+        const client = result[0];
 
         // Return CRM settings (mask API keys for security - only show last 4 chars)
         const maskApiKey = (key) => {
@@ -497,9 +504,16 @@ router.put('/crm-settings/:client_id', async (req, res) => {
     try {
         const { client_id } = req.params;
         const { ghl_api_key, ghl_location_id } = req.body;
-        const { Client } = require('../models');
+        const { sequelize } = require('../models');
 
-        const client = await Client.findByPk(client_id);
+        // First verify client exists
+        const [client] = await sequelize.query(
+            'SELECT id, business_name FROM clients WHERE id = :client_id',
+            {
+                replacements: { client_id },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
 
         if (!client) {
             return res.status(404).json({
@@ -508,26 +522,45 @@ router.put('/crm-settings/:client_id', async (req, res) => {
             });
         }
 
-        // Update fields only if provided (allow partial updates)
+        // Build dynamic UPDATE query for partial updates
+        const updates = [];
+        const replacements = { client_id };
+
         if (ghl_api_key !== undefined) {
-            client.ghl_api_key = ghl_api_key || null;
+            updates.push('ghl_api_key = :ghl_api_key');
+            replacements.ghl_api_key = ghl_api_key || null;
         }
         if (ghl_location_id !== undefined) {
-            client.ghl_location_id = ghl_location_id || null;
+            updates.push('ghl_location_id = :ghl_location_id');
+            replacements.ghl_location_id = ghl_location_id || null;
         }
 
-        await client.save();
+        if (updates.length === 0) {
+            return res.json({
+                success: true,
+                message: 'No changes to update'
+            });
+        }
+
+        // Update with raw SQL
+        updates.push('updated_at = NOW()');
+        const updateQuery = `UPDATE clients SET ${updates.join(', ')} WHERE id = :client_id`;
+
+        await sequelize.query(updateQuery, {
+            replacements,
+            type: sequelize.QueryTypes.UPDATE
+        });
 
         console.log(`✅ GoHighLevel integration settings updated for client ${client_id} (${client.business_name})`);
-        console.log(`   GHL API Key: ${client.ghl_api_key ? 'Set' : 'Not set'}`);
-        console.log(`   GHL Location ID: ${client.ghl_location_id || 'Not set'}`);
+        console.log(`   GHL API Key: ${ghl_api_key !== undefined ? (ghl_api_key ? 'Set' : 'Cleared') : 'Unchanged'}`);
+        console.log(`   GHL Location ID: ${ghl_location_id !== undefined ? (ghl_location_id || 'Cleared') : 'Unchanged'}`);
 
         res.json({
             success: true,
             message: 'GoHighLevel integration settings updated successfully',
             settings: {
-                ghl_api_key_set: !!client.ghl_api_key,
-                ghl_location_id: client.ghl_location_id
+                ghl_api_key_set: ghl_api_key !== undefined ? !!ghl_api_key : undefined,
+                ghl_location_id: ghl_location_id !== undefined ? ghl_location_id : undefined
             }
         });
 
@@ -545,11 +578,18 @@ router.put('/crm-settings/:client_id', async (req, res) => {
 router.get('/crm-credentials/:client_id', async (req, res) => {
     try {
         const { client_id } = req.params;
-        const { Client } = require('../models');
+        const { sequelize } = require('../models');
 
-        const client = await Client.findByPk(client_id, {
-            attributes: ['id', 'business_name', 'ghl_api_key', 'ghl_location_id']
-        });
+        // Use raw SQL to query CRM fields directly
+        const result = await sequelize.query(
+            'SELECT id, business_name, ghl_api_key, ghl_location_id FROM clients WHERE id = :client_id',
+            {
+                replacements: { client_id },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        const client = result[0];
 
         if (!client) {
             return res.status(404).json({
