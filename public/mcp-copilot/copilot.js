@@ -15,30 +15,46 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function autoLoadCredentials(clientId) {
     try {
+        console.log('🔄 Auto-loading credentials for client:', clientId);
         updateConnectionStatus('Loading...', 'loading');
-        const response = await fetch(`${window.location.origin}/api/client/crm-credentials/${clientId}`);
+
+        const url = `${window.location.origin}/api/client/crm-credentials/${clientId}`;
+        console.log('📡 Fetching from:', url);
+
+        const response = await fetch(url);
+        console.log('📥 Response status:', response.status);
+
         const data = await response.json();
+        console.log('📦 Response data:', data);
 
         if (data.success && data.credentials) {
-            console.log('✅ CRM credentials loaded');
+            console.log('✅ CRM credentials loaded:', data.credentials);
 
             // Auto-connect to GoHighLevel if configured
             if (data.credentials.gohighlevel && data.credentials.gohighlevel.configured) {
+                console.log('🔗 GoHighLevel configured, auto-connecting...');
+
                 // Store credentials for connection
                 window.ghlCredentials = {
                     apiKey: data.credentials.gohighlevel.api_key,
                     locationId: data.credentials.gohighlevel.location_id
                 };
 
+                console.log('💾 Stored credentials:', window.ghlCredentials);
+
                 // Auto-connect
                 addMessage('system', '🔄 Auto-connecting to GoHighLevel...');
                 await connectGoHighLevel();
                 return;
+            } else {
+                console.log('⚠️ GoHighLevel not configured:', data.credentials.gohighlevel);
             }
 
             // If no CRM configured
             updateConnectionStatus('Not configured', 'error');
             addMessage('system', '⚠️ No GoHighLevel credentials found. Please configure in Settings.');
+        } else {
+            console.log('❌ Invalid response:', data);
         }
     } catch (error) {
         console.error('❌ Failed to load CRM credentials:', error);
