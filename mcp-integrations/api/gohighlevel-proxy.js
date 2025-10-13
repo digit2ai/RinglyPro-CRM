@@ -252,9 +252,16 @@ class GoHighLevelMCPProxy {
 
   async createContact(contactData) {
     try {
-      return await this.callMCP('contacts_create-contact', contactData);
+      console.log('📝 Creating contact with data:', JSON.stringify(contactData));
+      const result = await this.callMCP('contacts_create-contact', contactData);
+      console.log('✅ Contact created via MCP:', result?.id || 'unknown ID');
+      return result;
     } catch (error) {
       console.log('⚠️ MCP failed, falling back to REST API');
+      console.log('📝 REST API contact data:', JSON.stringify({
+        locationId: this.locationId,
+        ...contactData
+      }));
       return await this.callAPI('/contacts/', 'POST', {
         locationId: this.locationId,
         ...contactData
