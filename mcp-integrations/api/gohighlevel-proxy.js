@@ -33,21 +33,36 @@ class GoHighLevelMCPProxy {
       });
       console.log(`✅ MCP tool ${tool} succeeded`);
 
+      // MCP server returns Server-Sent Events (SSE) format, need to parse it
+      let parsedData = response.data;
+
+      // If response is a string (SSE format), parse it
+      if (typeof response.data === 'string') {
+        console.log('📡 Response is SSE format, parsing...');
+
+        // Extract JSON from SSE format: "event: message\ndata: {...}\n\n"
+        const dataMatch = response.data.match(/data: ({.*})/);
+        if (dataMatch) {
+          parsedData = JSON.parse(dataMatch[1]);
+          console.log('✅ Parsed SSE to JSON');
+        } else {
+          console.error('⚠️ Could not extract JSON from SSE');
+          throw new Error('Invalid SSE format');
+        }
+      }
+
       // Extract result from JSON-RPC response
-      if (response.data.error) {
-        throw new Error(response.data.error.message || 'MCP call failed');
+      if (parsedData.error) {
+        throw new Error(parsedData.error.message || 'MCP call failed');
       }
 
-      // MCP returns nested structure: result.content[0].text contains JSON string
-      const result = response.data.result;
-      console.log('🔍 Full response.data:', JSON.stringify(response.data).substring(0, 500));
-
+      const result = parsedData.result;
       if (!result) {
-        console.error('⚠️ No result in response.data');
-        return response.data;
+        console.error('⚠️ No result in parsed data');
+        return parsedData;
       }
 
-      console.log('🔍 Raw MCP result structure:', JSON.stringify(result).substring(0, 200));
+      console.log('🔍 Result structure:', JSON.stringify(result).substring(0, 200));
 
       if (result && result.content && result.content[0]) {
         const textContent = result.content[0].text;
