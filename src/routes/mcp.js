@@ -133,8 +133,89 @@ router.post('/copilot/chat', async (req, res) => {
 
     const lowerMessage = message.toLowerCase();
 
-    // OPPORTUNITIES / DEALS
-    if (lowerMessage.includes('opportunit') || lowerMessage.includes('deal') || lowerMessage.includes('pipeline')) {
+    // IMPORTANT: Check SPECIFIC commands FIRST before generic keywords
+    // This prevents "book appointment" from matching generic "appointment" handler
+
+    // CREATE NEW CONTACT (check before generic "contact" search)
+    if (lowerMessage.includes('create') && lowerMessage.includes('contact')) {
+      // Try to parse contact info from message
+      const emailMatch = message.match(/[\w.-]+@[\w.-]+\.\w+/);
+      const phoneMatch = message.match(/\+?1?\s*\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})/);
+
+      // Extract names - look for patterns like "named John Doe"
+      const nameMatch = message.match(/(?:named|called)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i);
+
+      if (emailMatch || phoneMatch || nameMatch) {
+        try {
+          const contactData = {};
+
+          if (nameMatch) {
+            const names = nameMatch[1].split(' ');
+            contactData.firstName = names[0];
+            if (names.length > 1) contactData.lastName = names.slice(1).join(' ');
+          }
+
+          if (emailMatch) contactData.email = emailMatch[0];
+          if (phoneMatch) contactData.phone = phoneMatch[0];
+
+          console.log('📝 Creating contact:', contactData);
+          const result = await session.proxy.createContact(contactData);
+          response = `✅ Contact created successfully! ${contactData.firstName || 'New contact'} has been added to your CRM.`;
+          data = [result];
+        } catch (createError) {
+          console.error('❌ Create contact error:', createError.message);
+          response = `Sorry, I couldn't create the contact. Error: ${createError.message}`;
+        }
+      } else {
+        response = "To create a contact, please provide at least one of: name, email, or phone number.\n\nExample: 'Create contact named John Doe with email john@example.com and phone 813-555-1234'";
+      }
+    }
+    // BOOK APPOINTMENT (check before generic "appointment" or "calendar" handlers)
+    else if (lowerMessage.includes('book') && lowerMessage.includes('appointment')) {
+      console.log('📅 Booking appointment request');
+      try {
+        const calendars = await session.proxy.getCalendars();
+        response = `To book an appointment, please provide:\n\n• Calendar (choose from below)\n• Contact name or email\n• Date and time\n• Duration\n\nAvailable Calendars:\n`;
+        if (calendars?.calendars && calendars.calendars.length > 0) {
+          calendars.calendars.forEach(cal => {
+            response += `• ${cal.name}\n`;
+          });
+        } else {
+          response += "No calendars found. Please set up calendars in GoHighLevel first.";
+        }
+        response += `\nExample: 'Book appointment for john@example.com on Main Calendar tomorrow at 2pm for 30 minutes'`;
+      } catch (error) {
+        response = `Error loading calendars: ${error.message}`;
+      }
+    }
+    // SEND APPOINTMENT REMINDER (check before generic "appointment" handler)
+    else if ((lowerMessage.includes('appointment') && lowerMessage.includes('reminder')) || lowerMessage.includes('send reminder')) {
+      response = "To send an appointment reminder:\n\n• Provide appointment ID or contact name\n• Reminder message (optional)\n\nExample: 'Send appointment reminder to john@example.com: Your appointment is tomorrow at 2pm'";
+    }
+    // ADD/MOVE OPPORTUNITY (check before generic "opportunity" handler)
+    else if (lowerMessage.includes('add') && lowerMessage.includes('opportunity')) {
+      console.log('💰 Add/move opportunity request');
+      try {
+        const pipelines = await session.proxy.getPipelines();
+        response = `To add or move an opportunity:\n\n• Contact name or email\n• Pipeline and stage\n• Deal value (optional)\n\nAvailable Pipelines:\n`;
+        if (pipelines?.pipelines && pipelines.pipelines.length > 0) {
+          pipelines.pipelines.forEach(p => {
+            response += `• ${p.name}: `;
+            if (p.stages && p.stages.length > 0) {
+              response += p.stages.map(s => s.name).join(', ');
+            }
+            response += '\n';
+          });
+        } else {
+          response += "No pipelines found.";
+        }
+        response += `\nExample: 'Add opportunity for john@example.com to Sales Pipeline stage Lead with value $5000'`;
+      } catch (error) {
+        response = `Error loading pipelines: ${error.message}`;
+      }
+    }
+    // OPPORTUNITIES / DEALS (generic handler)
+    else if (lowerMessage.includes('opportunit') || lowerMessage.includes('deal') || lowerMessage.includes('pipeline')) {
       if (lowerMessage.includes('search') || lowerMessage.includes('show') || lowerMessage.includes('view') || lowerMessage.includes('list')) {
         if (lowerMessage.includes('pipeline')) {
           console.log('📊 Getting pipelines');
@@ -284,38 +365,6 @@ router.post('/copilot/chat', async (req, res) => {
       } else {
         response = "Please provide a search term. Example: 'search Manuel' or 'find john@example.com'";
       }
-    } else if (lowerMessage.includes('create contact') || lowerMessage.includes('add contact')) {
-      // Try to parse contact info from message
-      const emailMatch = message.match(/[\w.-]+@[\w.-]+\.\w+/);
-      const phoneMatch = message.match(/\+?1?\s*\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})/);
-
-      // Extract names - look for patterns like "named John Doe" but not "Add contact named"
-      const nameMatch = message.match(/(?:named|called)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i);
-
-      if (emailMatch || phoneMatch || nameMatch) {
-        try {
-          const contactData = {};
-
-          if (nameMatch) {
-            const names = nameMatch[1].split(' ');
-            contactData.firstName = names[0];
-            if (names.length > 1) contactData.lastName = names.slice(1).join(' ');
-          }
-
-          if (emailMatch) contactData.email = emailMatch[0];
-          if (phoneMatch) contactData.phone = phoneMatch[0];
-
-          console.log('📝 Creating contact:', contactData);
-          const result = await session.proxy.createContact(contactData);
-          response = `✅ Contact created successfully! ${contactData.firstName || 'New contact'} has been added to your CRM.`;
-          data = [result];
-        } catch (createError) {
-          console.error('❌ Create contact error:', createError.message);
-          response = `Sorry, I couldn't create the contact. Error: ${createError.message}`;
-        }
-      } else {
-        response = "To create a contact, please provide at least one of: name, email, or phone number.\n\nExample: 'Create contact named John Doe with email john@example.com and phone 813-555-1234'";
-      }
     }
     // UPDATE CONTACT
     else if (lowerMessage.includes('update contact')) {
@@ -328,50 +377,6 @@ router.post('/copilot/chat', async (req, res) => {
     // SEND EMAIL
     else if (lowerMessage.includes('send email')) {
       response = "To send an email, I need:\n\n• Contact ID or email address\n• Subject line\n• Message body\n\nExample: 'Send email to john@example.com subject Welcome message Hi John, welcome to our service!'";
-    }
-    // BOOK APPOINTMENT
-    else if (lowerMessage.includes('book appointment')) {
-      console.log('📅 Booking appointment request');
-      try {
-        const calendars = await session.proxy.getCalendars();
-        response = `To book an appointment, please provide:\n\n• Calendar (choose from below)\n• Contact name or email\n• Date and time\n• Duration\n\nAvailable Calendars:\n`;
-        if (calendars?.calendars && calendars.calendars.length > 0) {
-          calendars.calendars.forEach(cal => {
-            response += `• ${cal.name}\n`;
-          });
-        } else {
-          response += "No calendars found. Please set up calendars in GoHighLevel first.";
-        }
-        response += `\nExample: 'Book appointment for john@example.com on Main Calendar tomorrow at 2pm for 30 minutes'`;
-      } catch (error) {
-        response = `Error loading calendars: ${error.message}`;
-      }
-    }
-    // APPOINTMENT REMINDER
-    else if (lowerMessage.includes('appointment reminder') || lowerMessage.includes('send reminder')) {
-      response = "To send an appointment reminder:\n\n• Provide appointment ID or contact name\n• Reminder message (optional)\n\nExample: 'Send appointment reminder to john@example.com: Your appointment is tomorrow at 2pm'";
-    }
-    // ADD/MOVE OPPORTUNITY
-    else if (lowerMessage.includes('add opportunity') || lowerMessage.includes('move opportunity')) {
-      console.log('💰 Add/move opportunity request');
-      try {
-        const pipelines = await session.proxy.getPipelines();
-        response = `To add or move an opportunity:\n\n• Contact name or email\n• Pipeline and stage\n• Deal value (optional)\n\nAvailable Pipelines:\n`;
-        if (pipelines?.pipelines && pipelines.pipelines.length > 0) {
-          pipelines.pipelines.forEach(p => {
-            response += `• ${p.name}: `;
-            if (p.stages && p.stages.length > 0) {
-              response += p.stages.map(s => s.name).join(', ');
-            }
-            response += '\n';
-          });
-        } else {
-          response += "No pipelines found.";
-        }
-        response += `\nExample: 'Add opportunity for john@example.com to Sales Pipeline stage Lead with value $5000'`;
-      } catch (error) {
-        response = `Error loading pipelines: ${error.message}`;
-      }
     }
     // LOG PHONE CALL
     else if (lowerMessage.includes('log phone call') || lowerMessage.includes('log call')) {
