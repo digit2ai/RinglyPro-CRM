@@ -371,8 +371,77 @@ router.post('/copilot/chat', async (req, res) => {
       response = "To update a contact, please provide:\n\n• Contact ID or email\n• Field to update\n• New value\n\nExample: 'Update contact john@example.com set phone to 555-1234'";
     }
     // SEND SMS
-    else if (lowerMessage.includes('send sms') || lowerMessage.includes('send message') || lowerMessage.includes('text')) {
-      response = "To send an SMS, I need a contact ID or phone number and the message text.\n\nExample: 'Send SMS to john@example.com: Hello, thanks for signing up!'";
+    else if (lowerMessage.includes('send sms') || lowerMessage.includes('send message') || (lowerMessage.includes('text') && lowerMessage.includes('to'))) {
+      // Parse: "send sms to [contact/phone/email] saying/: [message]"
+
+      // Try to extract phone number
+      const phoneMatch = message.match(/to\s+(\+?1?\s*\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4}))/i);
+
+      // Try to extract email
+      const emailMatch = message.match(/to\s+([\w.-]+@[\w.-]+\.\w+)/i);
+
+      // Try to extract contact name (after "to" and before "saying"/":")
+      const nameMatch = message.match(/to\s+([A-Za-z\s]+?)(?:\s+saying|\s*:)/i);
+
+      // Try to extract message (after "saying" or ":" or just the last part)
+      let messageText = null;
+      if (message.match(/saying\s+(.+)/i)) {
+        messageText = message.match(/saying\s+(.+)/i)[1];
+      } else if (message.match(/:\s*(.+)/)) {
+        messageText = message.match(/:\s*(.+)/)[1];
+      }
+
+      if ((phoneMatch || emailMatch || nameMatch) && messageText) {
+        try {
+          let contactId = null;
+          let recipient = null;
+
+          // If we have an email, search for the contact
+          if (emailMatch) {
+            recipient = emailMatch[1];
+            console.log('📧 Searching for contact by email:', recipient);
+            const contacts = await session.proxy.searchContacts(recipient, 1);
+            if (contacts && contacts.length > 0) {
+              contactId = contacts[0].id;
+              console.log('✅ Found contact:', contactId);
+            }
+          }
+          // If we have a phone number
+          else if (phoneMatch) {
+            recipient = phoneMatch[1].replace(/[\s()-]/g, ''); // Clean phone number
+            console.log('📱 Searching for contact by phone:', recipient);
+            const contacts = await session.proxy.searchContacts(recipient, 1);
+            if (contacts && contacts.length > 0) {
+              contactId = contacts[0].id;
+              console.log('✅ Found contact:', contactId);
+            }
+          }
+          // If we have a name, search for it
+          else if (nameMatch) {
+            recipient = nameMatch[1].trim();
+            console.log('👤 Searching for contact by name:', recipient);
+            const contacts = await session.proxy.searchContacts(recipient, 1);
+            if (contacts && contacts.length > 0) {
+              contactId = contacts[0].id;
+              console.log('✅ Found contact:', contactId);
+            }
+          }
+
+          if (contactId) {
+            console.log('💬 Sending SMS to contact:', contactId, 'Message:', messageText.substring(0, 50));
+            const result = await session.proxy.sendSMS(contactId, messageText);
+            response = `✅ SMS sent successfully to ${recipient}!\n\nMessage: "${messageText}"`;
+            data = [result];
+          } else {
+            response = `❌ Could not find contact: ${recipient}\n\nPlease make sure the contact exists in your CRM first, or provide the exact email/phone number.`;
+          }
+        } catch (smsError) {
+          console.error('❌ SMS send error:', smsError.message);
+          response = `Sorry, I couldn't send the SMS. Error: ${smsError.message}`;
+        }
+      } else {
+        response = "To send an SMS, I need a contact ID or phone number and the message text.\n\nExamples:\n• 'Send SMS to john@example.com saying Hello!'\n• 'Send SMS to 813-555-1234: This is a test'\n• 'Send SMS to John Doe saying Your appointment is confirmed'";
+      }
     }
     // SEND EMAIL
     else if (lowerMessage.includes('send email')) {
