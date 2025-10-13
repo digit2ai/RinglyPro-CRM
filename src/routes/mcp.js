@@ -417,6 +417,7 @@ router.post('/copilot/chat', async (req, res) => {
         try {
           let contactId = null;
           let recipient = null;
+          let normalizedPhone = null; // Declare at function scope
 
           // If we have an email, search for the contact
           if (emailMatch) {
@@ -432,7 +433,7 @@ router.post('/copilot/chat', async (req, res) => {
           else if (phoneMatch) {
             recipient = phoneMatch[1].replace(/[\s()-]/g, ''); // Clean phone number
             // Normalize to E.164 format for searching
-            let normalizedPhone = recipient.replace(/\D/g, '');
+            normalizedPhone = recipient.replace(/\D/g, '');
             if (normalizedPhone.length === 10) {
               normalizedPhone = `+1${normalizedPhone}`;
             } else if (normalizedPhone.length === 11 && normalizedPhone.startsWith('1')) {
