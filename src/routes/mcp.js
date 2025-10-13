@@ -166,8 +166,8 @@ router.post('/copilot/chat', async (req, res) => {
       const emailMatch = message.match(/[\w.-]+@[\w.-]+\.\w+/);
       const phoneMatch = message.match(/\+?1?\s*\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})/);
 
-      // Extract names - look for patterns like "John Doe" or "named John Doe"
-      const nameMatch = message.match(/(?:named|called|add)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
+      // Extract names - look for patterns like "named John Doe" but not "Add contact named"
+      const nameMatch = message.match(/(?:named|called)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i);
 
       if (emailMatch || phoneMatch || nameMatch) {
         try {

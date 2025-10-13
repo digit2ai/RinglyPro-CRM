@@ -40,6 +40,13 @@ class GoHighLevelMCPProxy {
 
       // MCP returns nested structure: result.content[0].text contains JSON string
       const result = response.data.result;
+      console.log('🔍 Full response.data:', JSON.stringify(response.data).substring(0, 500));
+
+      if (!result) {
+        console.error('⚠️ No result in response.data');
+        return response.data;
+      }
+
       console.log('🔍 Raw MCP result structure:', JSON.stringify(result).substring(0, 200));
 
       if (result && result.content && result.content[0]) {
