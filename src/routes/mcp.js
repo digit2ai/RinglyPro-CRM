@@ -438,18 +438,48 @@ router.post('/copilot/chat', async (req, res) => {
             } else if (normalizedPhone.length === 11 && normalizedPhone.startsWith('1')) {
               normalizedPhone = `+${normalizedPhone}`;
             }
+
             console.log('📱 Searching for contact by phone:', normalizedPhone);
-            const contacts = await session.proxy.searchContacts(normalizedPhone, 1);
+            let contacts = await session.proxy.searchContacts(normalizedPhone, 10);
+            console.log(`🔍 Search returned ${contacts?.length || 0} contacts`);
+
             if (contacts && contacts.length > 0) {
-              contactId = contacts[0].id;
-              console.log('✅ Found contact:', contactId);
-            } else {
-              // Try without normalization
-              console.log('📱 Retry search with original:', recipient);
-              const contactsRetry = await session.proxy.searchContacts(recipient, 1);
-              if (contactsRetry && contactsRetry.length > 0) {
-                contactId = contactsRetry[0].id;
-                console.log('✅ Found contact on retry:', contactId);
+              console.log('📋 First contact phone:', contacts[0].phone);
+              // Try to find exact match in results
+              const exactMatch = contacts.find(c =>
+                c.phone === normalizedPhone ||
+                c.phone === recipient ||
+                (c.phone && c.phone.replace(/\D/g, '') === normalizedPhone.replace(/\D/g, ''))
+              );
+              if (exactMatch) {
+                contactId = exactMatch.id;
+                console.log('✅ Found exact phone match:', contactId);
+              } else {
+                // Use first result
+                contactId = contacts[0].id;
+                console.log('⚠️ Using first search result:', contactId, 'phone:', contacts[0].phone);
+              }
+            }
+
+            // Try additional formats if not found
+            if (!contactId) {
+              const searchVariants = [
+                recipient,  // Original: 8136414177
+                normalizedPhone.substring(2), // Without +1: 8136414177
+                normalizedPhone.substring(1), // Without +: 18136414177
+              ];
+
+              for (const variant of searchVariants) {
+                if (variant !== normalizedPhone) { // Don't search same thing twice
+                  console.log('📱 Retry search with variant:', variant);
+                  const contactsRetry = await session.proxy.searchContacts(variant, 10);
+                  console.log(`🔍 Variant search returned ${contactsRetry?.length || 0} contacts`);
+                  if (contactsRetry && contactsRetry.length > 0) {
+                    contactId = contactsRetry[0].id;
+                    console.log('✅ Found contact with variant:', contactId);
+                    break;
+                  }
+                }
               }
             }
           }
@@ -470,7 +500,8 @@ router.post('/copilot/chat', async (req, res) => {
             response = `✅ SMS sent successfully to ${recipient}!\n\nMessage: "${messageText}"`;
             data = [result];
           } else {
-            response = `❌ Could not find contact: ${recipient}\n\nPlease make sure the contact exists in your CRM first, or provide the exact email/phone number.`;
+            console.error('❌ Could not find contact after all search attempts');
+            response = `❌ Could not find contact: ${recipient}\n\nSearched for phone: ${normalizedPhone || recipient}\n\nTip: Try searching for the contact first with "search ${recipient}" to verify they exist in your CRM, then use their email address to send SMS instead.`;
           }
         } catch (smsError) {
           console.error('❌ SMS send error:', smsError.message);
