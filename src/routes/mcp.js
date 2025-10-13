@@ -142,10 +142,14 @@ router.post('/copilot/chat', async (req, res) => {
       const emailMatch = message.match(/[\w.-]+@[\w.-]+\.\w+/);
 
       // More flexible phone matching - also match "phone 8136414177" or just "8136414177"
-      let phoneMatch = message.match(/\+?1?\s*\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})/);
+      let phoneMatch = message.match(/phone\s+(\d{10})/i); // Try "phone 8136414177" first
       if (!phoneMatch) {
-        // Try matching after "phone" keyword
-        phoneMatch = message.match(/phone\s+(\d{10})/i);
+        // Try formatted number: (813) 555-1234 or 813-555-1234
+        phoneMatch = message.match(/\+?1?\s*\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})/);
+      }
+      if (!phoneMatch) {
+        // Try any 10 consecutive digits
+        phoneMatch = message.match(/(\d{10})/);
       }
 
       // Extract names - multiple patterns
