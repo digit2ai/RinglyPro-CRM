@@ -341,6 +341,27 @@ router.post('/copilot/chat', async (req, res) => {
         response = "To add tags: 'add tag VIP to contact CONTACT_ID' or 'add tags VIP, Customer to contact ID123'";
       }
     }
+    // LIST ALL CONTACTS (diagnostic)
+    else if (lowerMessage.includes('list all contacts') || lowerMessage.includes('show all contacts')) {
+      console.log('📋 Listing all contacts (diagnostic)');
+      try {
+        // Get all contacts without search filter
+        const allContacts = await session.proxy.searchContacts('', 20);
+        response = `Found ${allContacts?.length || 0} contacts in your CRM:\n\n`;
+        if (allContacts && allContacts.length > 0) {
+          allContacts.slice(0, 10).forEach(c => {
+            const name = c.firstName || c.name || 'Unknown';
+            const phone = c.phone || 'No phone';
+            const email = c.email || 'No email';
+            response += `• ${name} - Phone: ${phone} - Email: ${email}\n`;
+          });
+          if (allContacts.length > 10) response += `\n... and ${allContacts.length - 10} more`;
+        }
+        data = allContacts;
+      } catch (error) {
+        response = `Error listing contacts: ${error.message}`;
+      }
+    }
     // CONTACT SEARCH
     else if (lowerMessage.includes('search') || lowerMessage.includes('find')) {
       // Extract search query - remove common filler words

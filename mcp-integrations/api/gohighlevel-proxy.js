@@ -129,14 +129,21 @@ class GoHighLevelMCPProxy {
   // MCP Protocol Methods (using official GHL MCP server)
   async searchContacts(query, limit = 5) {
     try {
+      console.log(`🔍 searchContacts called with query: "${query}", limit: ${limit}`);
+
       // Try official MCP protocol first
       const response = await this.callMCP('contacts_get-contacts', {
-        query,
+        query: query || '', // Ensure query is never undefined
         limit
       });
 
+      console.log(`📡 MCP response type:`, typeof response);
+      console.log(`📡 MCP response keys:`, response ? Object.keys(response).join(',') : 'null');
+
       // Filter results client-side to ensure exact matches appear first
-      let contacts = response.contacts || [];
+      let contacts = response.contacts || response || []; // Handle different response formats
+
+      console.log(`📊 Total contacts from API: ${Array.isArray(contacts) ? contacts.length : 'not an array'}`);
 
       // Debug: Log contact structure
       if (contacts.length > 0) {
