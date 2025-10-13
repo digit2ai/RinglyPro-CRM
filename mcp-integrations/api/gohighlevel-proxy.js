@@ -8,27 +8,43 @@ class GoHighLevelMCPProxy {
     this.locationId = locationId;
   }
 
-  // Call Official GHL MCP Server
+  // Call Official GHL MCP Server (JSON-RPC 2.0 Protocol)
   async callMCP(tool, input) {
     try {
-      console.log(`🔧 Calling GHL MCP tool: ${tool}`, input);
+      console.log(`🔧 Calling GHL MCP tool: ${tool}`, JSON.stringify(input));
       const response = await axios({
         method: 'POST',
         url: this.mcpURL,
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'locationId': this.locationId,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json, text/event-stream'  // MCP requires both!
         },
         data: {
-          tool,
-          input
+          jsonrpc: '2.0',
+          id: Date.now(),
+          method: 'tools/call',
+          params: {
+            name: tool,
+            arguments: input
+          }
         }
       });
       console.log(`✅ MCP tool ${tool} succeeded`);
-      return response.data;
+
+      // Extract result from JSON-RPC response
+      if (response.data.error) {
+        throw new Error(response.data.error.message || 'MCP call failed');
+      }
+
+      return response.data.result || response.data;
     } catch (error) {
-      console.error(`❌ MCP tool ${tool} failed:`, error.response?.data || error.message);
+      console.error(`❌ MCP tool ${tool} failed:`, {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
       throw error;
     }
   }
