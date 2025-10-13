@@ -134,18 +134,32 @@ router.post('/copilot/chat', async (req, res) => {
     const lowerMessage = message.toLowerCase();
 
     if (lowerMessage.includes('search') || lowerMessage.includes('find')) {
-      const query = message.split(/search|find/i)[1]?.trim() || '';
+      // Extract search query - remove common filler words
+      let query = message.split(/search|find/i)[1]?.trim() || '';
+
+      // Remove filler words like "contact", "contacts", "for", "the"
+      query = query.replace(/^(contact|contacts|for|the|a|an)\s+/i, '').trim();
+
       if (query) {
-        console.log('🔍 Searching contacts:', query);
+        console.log('🔍 Searching contacts with query:', query);
         try {
           data = await session.proxy.searchContacts(query);
           response = `I found ${data?.length || 0} contacts matching "${query}".`;
+
+          // Show some contact details if found
+          if (data && data.length > 0) {
+            const contactList = data.slice(0, 5).map(c =>
+              `• ${c.firstName || ''} ${c.lastName || ''} ${c.email ? '(' + c.email + ')' : ''}`
+            ).join('\n');
+            response += `\n\n${contactList}`;
+            if (data.length > 5) response += `\n... and ${data.length - 5} more`;
+          }
         } catch (searchError) {
           console.error('❌ Search error:', searchError.message);
           response = `Sorry, I encountered an error searching for "${query}". Please check your connection and try again.`;
         }
       } else {
-        response = "Please provide a search term. Example: 'search john@example.com'";
+        response = "Please provide a search term. Example: 'search Manuel' or 'find john@example.com'";
       }
     } else if (lowerMessage.includes('create contact') || lowerMessage.includes('add contact')) {
       // Try to parse contact info from message
