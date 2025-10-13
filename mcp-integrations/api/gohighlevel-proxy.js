@@ -144,14 +144,34 @@ class GoHighLevelMCPProxy {
         console.log('🔍 First contact sample:', JSON.stringify(contacts[0]).substring(0, 300));
       }
 
-      // If we have results, filter and sort them
+      // If we have results, FILTER and sort them
       if (contacts.length > 0 && query) {
         const lowerQuery = query.toLowerCase();
 
-        // Sort: exact matches first, then starts with, then contains
+        console.log(`🔍 Filtering ${contacts.length} contacts for query: "${query}"`);
+
+        // FIRST: Filter to only include contacts that actually match the query
+        contacts = contacts.filter(c => {
+          const name = (c.contactName || c.name || `${c.firstName || ''} ${c.lastName || ''}`).toLowerCase();
+          const email = (c.email || '').toLowerCase();
+          const phone = (c.phone || '').toLowerCase();
+          const company = (c.companyName || '').toLowerCase();
+
+          // Contact must match query in name, email, phone, or company
+          const matches = name.includes(lowerQuery) ||
+                         email.includes(lowerQuery) ||
+                         phone.includes(lowerQuery) ||
+                         company.includes(lowerQuery);
+
+          return matches;
+        });
+
+        console.log(`✅ Filtered down to ${contacts.length} matching contacts`);
+
+        // SECOND: Sort the filtered results: exact matches first, then starts with, then contains
         contacts.sort((a, b) => {
-          const aName = (a.contactName || `${a.firstName || ''} ${a.lastName || ''}`).toLowerCase();
-          const bName = (b.contactName || `${b.firstName || ''} ${b.lastName || ''}`).toLowerCase();
+          const aName = (a.contactName || a.name || `${a.firstName || ''} ${a.lastName || ''}`).toLowerCase();
+          const bName = (b.contactName || b.name || `${b.firstName || ''} ${b.lastName || ''}`).toLowerCase();
           const aEmail = (a.email || '').toLowerCase();
           const bEmail = (b.email || '').toLowerCase();
 
@@ -184,9 +204,24 @@ class GoHighLevelMCPProxy {
       let contacts = response.contacts || [];
       if (contacts.length > 0 && query) {
         const lowerQuery = query.toLowerCase();
+
+        // FIRST: Filter to only include contacts that actually match
+        contacts = contacts.filter(c => {
+          const name = (c.contactName || c.name || `${c.firstName || ''} ${c.lastName || ''}`).toLowerCase();
+          const email = (c.email || '').toLowerCase();
+          const phone = (c.phone || '').toLowerCase();
+          const company = (c.companyName || '').toLowerCase();
+
+          return name.includes(lowerQuery) ||
+                 email.includes(lowerQuery) ||
+                 phone.includes(lowerQuery) ||
+                 company.includes(lowerQuery);
+        });
+
+        // SECOND: Sort filtered results
         contacts.sort((a, b) => {
-          const aName = (a.contactName || `${a.firstName || ''} ${a.lastName || ''}`).toLowerCase();
-          const bName = (b.contactName || `${b.firstName || ''} ${b.lastName || ''}`).toLowerCase();
+          const aName = (a.contactName || a.name || `${a.firstName || ''} ${a.lastName || ''}`).toLowerCase();
+          const bName = (b.contactName || b.name || `${b.firstName || ''} ${b.lastName || ''}`).toLowerCase();
           const aEmail = (a.email || '').toLowerCase();
           const bEmail = (b.email || '').toLowerCase();
 
