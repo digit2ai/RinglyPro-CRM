@@ -148,9 +148,12 @@ router.post('/copilot/chat', async (req, res) => {
 
           // Show some contact details if found
           if (data && data.length > 0) {
-            const contactList = data.slice(0, 5).map(c =>
-              `• ${c.firstName || ''} ${c.lastName || ''} ${c.email ? '(' + c.email + ')' : ''}`
-            ).join('\n');
+            const contactList = data.slice(0, 5).map(c => {
+              const name = c.contactName || `${c.firstName || ''} ${c.lastName || ''}`.trim() || 'Unnamed';
+              const email = c.email ? `(${c.email})` : '';
+              const phone = !c.email && c.phone ? `(${c.phone})` : '';
+              return `• ${name} ${email}${phone}`;
+            }).join('\n');
             response += `\n\n${contactList}`;
             if (data.length > 5) response += `\n... and ${data.length - 5} more`;
           }
