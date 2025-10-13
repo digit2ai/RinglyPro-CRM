@@ -470,6 +470,20 @@ router.get('/crm-settings/:client_id', async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching CRM settings:', error);
+
+        // If columns don't exist yet (migration not run), return empty settings
+        if (error.message && error.message.includes('column') && error.message.includes('does not exist')) {
+            console.log('⚠️ CRM columns not yet created - migration needed');
+            return res.json({
+                success: true,
+                settings: {
+                    ghl_api_key: null,
+                    ghl_api_key_set: false,
+                    ghl_location_id: null
+                }
+            });
+        }
+
         res.status(500).json({
             success: false,
             error: 'Failed to fetch CRM settings',
@@ -558,6 +572,22 @@ router.get('/crm-credentials/:client_id', async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching CRM credentials:', error);
+
+        // If columns don't exist yet (migration not run), return empty credentials
+        if (error.message && error.message.includes('column') && error.message.includes('does not exist')) {
+            console.log('⚠️ CRM columns not yet created - migration needed');
+            return res.json({
+                success: true,
+                credentials: {
+                    gohighlevel: {
+                        api_key: null,
+                        location_id: null,
+                        configured: false
+                    }
+                }
+            });
+        }
+
         res.status(500).json({
             success: false,
             error: 'Failed to fetch CRM credentials',
