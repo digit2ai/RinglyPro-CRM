@@ -40,23 +40,39 @@ class GoHighLevelMCPProxy {
 
       // MCP returns nested structure: result.content[0].text contains JSON string
       const result = response.data.result;
+      console.log('🔍 Raw MCP result structure:', JSON.stringify(result).substring(0, 200));
+
       if (result && result.content && result.content[0]) {
         const textContent = result.content[0].text;
+        console.log('📄 Text content (first 200 chars):', textContent.substring(0, 200));
+
         try {
           // The text is a JSON string containing another JSON string, so we need to parse twice
           const parsedOnce = JSON.parse(textContent);
+          console.log('📦 Parsed once:', typeof parsedOnce, Object.keys(parsedOnce).join(','));
+
           if (parsedOnce.content && parsedOnce.content[0]) {
             const actualData = JSON.parse(parsedOnce.content[0].text);
             console.log('📦 Parsed MCP response:', actualData.success ? '✅ success' : '❌ failed');
+            console.log('📊 Data keys:', Object.keys(actualData.data || {}).join(','));
+
+            if (actualData.data && actualData.data.contacts) {
+              console.log('✅ Found', actualData.data.contacts.length, 'contacts');
+              return actualData.data;
+            }
+
             return actualData.data || actualData;
           }
+          console.log('⚠️ No nested content found, returning parsedOnce');
           return parsedOnce;
         } catch (parseError) {
           console.error('⚠️ Failed to parse MCP text content:', parseError.message);
+          console.error('⚠️ Text content was:', textContent.substring(0, 500));
           return result;
         }
       }
 
+      console.log('⚠️ No result.content found, returning raw result');
       return result || response.data;
     } catch (error) {
       console.error(`❌ MCP tool ${tool} failed:`, {
