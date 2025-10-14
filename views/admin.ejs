@@ -657,9 +657,9 @@
                             <th>Business Name</th>
                             <th>Owner</th>
                             <th>Phone</th>
+                            <th>Twilio Number</th>
                             <th>Minutes Used</th>
                             <th>Signup Date</th>
-                            <th>Last Activity</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -669,9 +669,9 @@
                                 <td><strong>${client.business_name}</strong></td>
                                 <td>${client.owner_name}</td>
                                 <td>${client.owner_phone}</td>
+                                <td>${client.ringlypro_number || 'Not assigned'}</td>
                                 <td>${Math.round(client.total_minutes_used || 0)} min</td>
                                 <td>${new Date(client.signup_date).toLocaleDateString()}</td>
-                                <td>${client.last_activity_at ? new Date(client.last_activity_at).toLocaleDateString() : 'Never'}</td>
                                 <td>
                                     ${client.active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>'}
                                     ${client.rachel_enabled ? '<span class="badge badge-info">Rachel</span>' : ''}
@@ -767,6 +767,14 @@
                 <div class="info-item">
                     <label>RinglyPro Number</label>
                     <value>${client.ringlypro_number}</value>
+                </div>
+                <div class="info-item">
+                    <label>Twilio Number SID</label>
+                    <value>${client.twilio_number_sid || 'Not assigned'}</value>
+                </div>
+                <div class="info-item">
+                    <label>Referred By</label>
+                    <value>${client.referrer_business_name || 'Direct signup'}</value>
                 </div>
                 <div class="info-item">
                     <label>Minutes Used</label>

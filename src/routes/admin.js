@@ -270,9 +270,14 @@ router.get('/clients/:client_id', async (req, res) => {
 
         console.log(`📋 Admin loading client profile: ${client_id}`);
 
-        // Get client base info
+        // Get client base info with referrer information
         const [client] = await sequelize.query(`
-            SELECT * FROM clients WHERE id = $1
+            SELECT
+                c.*,
+                ref.business_name as referrer_business_name
+            FROM clients c
+            LEFT JOIN clients ref ON c.referred_by = ref.id
+            WHERE c.id = $1
         `, {
             bind: [parseInt(client_id)],
             type: sequelize.QueryTypes.SELECT
