@@ -133,11 +133,60 @@ router.post('/copilot/chat', async (req, res) => {
 
     const lowerMessage = message.toLowerCase();
 
+    // Typo correction helper
+    function levenshtein(a, b) {
+      const matrix = [];
+      for (let i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+      }
+      for (let j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+      }
+      for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+          if (b.charAt(i - 1) === a.charAt(j - 1)) {
+            matrix[i][j] = matrix[i - 1][j - 1];
+          } else {
+            matrix[i][j] = Math.min(
+              matrix[i - 1][j - 1] + 1,
+              matrix[i][j - 1] + 1,
+              matrix[i - 1][j] + 1
+            );
+          }
+        }
+      }
+      return matrix[b.length][a.length];
+    }
+
+    // Auto-correct common command typos
+    const commands = ['location', 'calendar', 'contact', 'opportunity', 'pipeline', 'dashboard', 'email', 'search', 'create', 'update', 'appointment', 'sms'];
+    let correctedMessage = lowerMessage;
+    const words = lowerMessage.split(/\s+/);
+
+    words.forEach((word, idx) => {
+      if (word.length > 4) { // Only check words longer than 4 chars
+        commands.forEach(cmd => {
+          const distance = levenshtein(word, cmd);
+          if (distance === 1 && word !== cmd) { // 1 character difference
+            console.log(`🔧 Auto-correcting "${word}" → "${cmd}"`);
+            correctedMessage = correctedMessage.replace(word, cmd);
+          }
+        });
+      }
+    });
+
+    // Use corrected message if different
+    if (correctedMessage !== lowerMessage) {
+      console.log(`🔧 Original: "${lowerMessage}"`);
+      console.log(`✨ Corrected: "${correctedMessage}"`);
+    }
+    const processMessage = correctedMessage;
+
     // IMPORTANT: Check SPECIFIC commands FIRST before generic keywords
     // This prevents "book appointment" from matching generic "appointment" handler
 
     // CREATE NEW CONTACT (check before generic "contact" search)
-    if (lowerMessage.includes('create') && lowerMessage.includes('contact')) {
+    if (processMessage.includes('create') && processMessage.includes('contact')) {
       // Try to parse contact info from message
       const emailMatch = message.match(/[\w.-]+@[\w.-]+\.\w+/);
 
@@ -301,8 +350,8 @@ router.post('/copilot/chat', async (req, res) => {
         response = "Try: 'list calendars' or 'show calendars'";
       }
     }
-    // LOCATION INFO
-    else if (lowerMessage.includes('location') && (lowerMessage.includes('show') || lowerMessage.includes('info'))) {
+    // LOCATION INFO (with typo tolerance for "loaction")
+    else if ((lowerMessage.includes('location') || lowerMessage.includes('loaction')) && (lowerMessage.includes('show') || lowerMessage.includes('info') || lowerMessage.includes('view'))) {
       console.log('🏢 Getting location info');
       try {
         const location = await session.proxy.getLocation();
@@ -334,24 +383,46 @@ router.post('/copilot/chat', async (req, res) => {
     else if (lowerMessage.includes('email') && !lowerMessage.includes('add tag') && !lowerMessage.includes('remove tag')) {
       // Parse multiple formats:
       // 1. "send email to john@example.com subject Welcome body Hi John!"
-      // 2. "email contact Manuel Stagg with this is a test"
-      // 3. "email john@example.com: This is a message"
+      // 2. "send email to john@example.com subject Welcome" (use subject as body if no body)
+      // 3. "email contact Manuel Stagg with this is a test"
+      // 4. "email john@example.com: This is a message"
 
       let identifier = null;
       let subject = 'Message from AI Copilot';
       let body = null;
 
-      // Format 1: Full format with subject and body
+      // Format 1: Full format with "to", "subject", and optional "body"
       const fullEmailMatch = message.match(/to\s+([\w.-]+@[\w.-]+\.\w+)/i);
-      const fullSubjectMatch = message.match(/subject\s+([^body]+?)(?:\s+body|$)/i);
+      const fullSubjectMatch = message.match(/subject\s+(.+?)(?:\s+body\s+|$)/i);
       const fullBodyMatch = message.match(/body\s+(.+)/i);
 
-      if (fullEmailMatch && fullSubjectMatch && fullBodyMatch) {
+      if (fullEmailMatch && fullSubjectMatch) {
         identifier = fullEmailMatch[1];
         subject = fullSubjectMatch[1].trim();
-        body = fullBodyMatch[1].trim();
+        // If body exists, use it; otherwise use subject as body
+        body = fullBodyMatch ? fullBodyMatch[1].trim() : subject;
       }
-      // Format 2: "email contact NAME with MESSAGE" or "email NAME with MESSAGE"
+      // Format 2: "email contact NAME subject TEXT" or "email NAME subject TEXT"
+      else if (lowerMessage.includes('subject')) {
+        const nameSubjectMatch = message.match(/email\s+(?:contact\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+subject\s+(.+)/i);
+        const emailSubjectMatch = message.match(/email\s+([\w.-]+@[\w.-]+\.\w+)\s+subject\s+(.+)/i);
+        const phoneSubjectMatch = message.match(/email\s+(\d{10})\s+subject\s+(.+)/i);
+
+        if (nameSubjectMatch) {
+          identifier = nameSubjectMatch[1];
+          subject = nameSubjectMatch[2].trim();
+          body = subject;
+        } else if (emailSubjectMatch) {
+          identifier = emailSubjectMatch[1];
+          subject = emailSubjectMatch[2].trim();
+          body = subject;
+        } else if (phoneSubjectMatch) {
+          identifier = phoneSubjectMatch[1];
+          subject = phoneSubjectMatch[2].trim();
+          body = subject;
+        }
+      }
+      // Format 3: "email contact NAME with/saying MESSAGE"
       else {
         const contactNameMatch = message.match(/email\s+(?:contact\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:with|saying)\s+(.+)/i);
         const emailAddrMatch = message.match(/email\s+([\w.-]+@[\w.-]+\.\w+)\s*(?:with|saying|:)?\s*(.+)/i);
