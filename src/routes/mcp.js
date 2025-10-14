@@ -804,6 +804,226 @@ router.post('/copilot/chat', async (req, res) => {
       }
     }
     // (SEND EMAIL handler moved to line 333 - before tags)
+
+    // ═══════════════════════════════════════════════════════════════
+    // TASKS - Create, update, list tasks for contacts
+    // ═══════════════════════════════════════════════════════════════
+    else if (lowerMessage.includes('create task') || lowerMessage.includes('add task') || lowerMessage.includes('new task')) {
+      // Parse: "create task for john@example.com: Follow up on proposal"
+      // Parse: "add task to John Doe reminder Call back tomorrow"
+
+      const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
+      const nameMatch = message.match(/(?:for|to)\s+([A-Za-z\s]+?)(?:\s*:|\s+reminder|\s+task)/i);
+      const taskMatch = message.match(/(?::|task|reminder)\s+(.+)/i);
+
+      const identifier = emailMatch?.[1] || nameMatch?.[1];
+      const taskBody = taskMatch?.[1];
+
+      if (identifier && taskBody) {
+        try {
+          // Find contact first
+          const contacts = await session.proxy.searchContacts(identifier, 5);
+          let contactId = null;
+
+          if (contacts && contacts.length > 0) {
+            const match = contacts.find(c =>
+              c.email?.toLowerCase() === identifier.toLowerCase() ||
+              c.name?.toLowerCase() === identifier.toLowerCase()
+            );
+            contactId = match?.id || contacts[0]?.id;
+          }
+
+          if (contactId) {
+            const taskData = {
+              title: taskBody.substring(0, 50), // First 50 chars as title
+              body: taskBody,
+              dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
+              completed: false
+            };
+
+            await session.proxy.createTask(contactId, taskData);
+            response = `✅ Task created for ${identifier}!\n\n"${taskBody}"\n\nDue: Tomorrow`;
+          } else {
+            response = `❌ Could not find contact: ${identifier}`;
+          }
+        } catch (error) {
+          response = `Sorry, I couldn't create the task. Error: ${error.message}`;
+        }
+      } else {
+        response = "To create a task, I need:\n\n• Contact email or name\n• Task description\n\nExamples:\n• 'Create task for john@example.com: Follow up on proposal'\n• 'Add task to John Doe reminder Call back tomorrow'";
+      }
+    }
+    // LIST TASKS
+    else if (lowerMessage.includes('list tasks') || lowerMessage.includes('show tasks') || lowerMessage.includes('get tasks')) {
+      // Parse: "list tasks for john@example.com"
+
+      const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
+      const nameMatch = message.match(/(?:for|from)\s+([A-Za-z\s]+)/i);
+
+      const identifier = emailMatch?.[1] || nameMatch?.[1];
+
+      if (identifier) {
+        try {
+          // Find contact first
+          const contacts = await session.proxy.searchContacts(identifier, 5);
+          let contactId = null;
+
+          if (contacts && contacts.length > 0) {
+            const match = contacts.find(c =>
+              c.email?.toLowerCase() === identifier.toLowerCase() ||
+              c.name?.toLowerCase() === identifier.toLowerCase()
+            );
+            contactId = match?.id || contacts[0]?.id;
+          }
+
+          if (contactId) {
+            const result = await session.proxy.getTasks(contactId);
+            const tasks = result?.tasks || result || [];
+
+            if (tasks.length > 0) {
+              response = `✅ Found ${tasks.length} task(s) for ${identifier}:\n\n`;
+              tasks.forEach((task, idx) => {
+                const status = task.completed ? '✓' : '○';
+                response += `${status} ${task.title || task.body}\n`;
+              });
+              data = tasks;
+            } else {
+              response = `No tasks found for ${identifier}`;
+            }
+          } else {
+            response = `❌ Could not find contact: ${identifier}`;
+          }
+        } catch (error) {
+          response = `Sorry, I couldn't get the tasks. Error: ${error.message}`;
+        }
+      } else {
+        response = "To list tasks, I need a contact email or name.\n\nExample: 'List tasks for john@example.com'";
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // NOTES - Add notes to contacts
+    // ═══════════════════════════════════════════════════════════════
+    else if (lowerMessage.includes('add note') || lowerMessage.includes('create note') || (lowerMessage.includes('note') && lowerMessage.includes('to'))) {
+      // Parse: "add note to john@example.com: Customer interested in premium plan"
+
+      const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
+      const nameMatch = message.match(/(?:to|for)\s+([A-Za-z\s]+?)(?:\s*:|$)/i);
+      const noteMatch = message.match(/(?::|note)\s+(.+)/i);
+
+      const identifier = emailMatch?.[1] || nameMatch?.[1];
+      const noteBody = noteMatch?.[1];
+
+      if (identifier && noteBody) {
+        try {
+          // Find contact first
+          const contacts = await session.proxy.searchContacts(identifier, 5);
+          let contactId = null;
+
+          if (contacts && contacts.length > 0) {
+            const match = contacts.find(c =>
+              c.email?.toLowerCase() === identifier.toLowerCase() ||
+              c.name?.toLowerCase() === identifier.toLowerCase()
+            );
+            contactId = match?.id || contacts[0]?.id;
+          }
+
+          if (contactId) {
+            await session.proxy.addNote(contactId, noteBody);
+            response = `✅ Note added to ${identifier}!\n\n"${noteBody}"`;
+          } else {
+            response = `❌ Could not find contact: ${identifier}`;
+          }
+        } catch (error) {
+          response = `Sorry, I couldn't add the note. Error: ${error.message}`;
+        }
+      } else {
+        response = "To add a note, I need:\n\n• Contact email or name\n• Note text\n\nExamples:\n• 'Add note to john@example.com: Customer interested in premium plan'\n• 'Create note for John Doe: Follow up next week'";
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // WORKFLOWS - Add/remove contacts from workflows
+    // ═══════════════════════════════════════════════════════════════
+    else if (lowerMessage.includes('add to workflow') || lowerMessage.includes('enroll in workflow') || lowerMessage.includes('start workflow')) {
+      // Parse: "add john@example.com to workflow abc123"
+
+      const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
+      const nameMatch = message.match(/(?:add|enroll)\s+([A-Za-z\s]+?)\s+(?:to|in)/i);
+      const workflowMatch = message.match(/workflow\s+([a-zA-Z0-9_-]+)/i);
+
+      const identifier = emailMatch?.[1] || nameMatch?.[1];
+      const workflowId = workflowMatch?.[1];
+
+      if (identifier && workflowId) {
+        try {
+          // Find contact first
+          const contacts = await session.proxy.searchContacts(identifier, 5);
+          let contactId = null;
+
+          if (contacts && contacts.length > 0) {
+            const match = contacts.find(c =>
+              c.email?.toLowerCase() === identifier.toLowerCase() ||
+              c.name?.toLowerCase() === identifier.toLowerCase()
+            );
+            contactId = match?.id || contacts[0]?.id;
+          }
+
+          if (contactId) {
+            await session.proxy.addToWorkflow(contactId, workflowId);
+            response = `✅ Added ${identifier} to workflow ${workflowId}`;
+          } else {
+            response = `❌ Could not find contact: ${identifier}`;
+          }
+        } catch (error) {
+          response = `Sorry, I couldn't add to workflow. Error: ${error.message}`;
+        }
+      } else {
+        response = "To add to a workflow, I need:\n\n• Contact email or name\n• Workflow ID\n\nExample: 'Add john@example.com to workflow abc123'";
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CAMPAIGNS - Add contacts to campaigns
+    // ═══════════════════════════════════════════════════════════════
+    else if (lowerMessage.includes('add to campaign') || lowerMessage.includes('enroll in campaign')) {
+      // Parse: "add john@example.com to campaign xyz789"
+
+      const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
+      const nameMatch = message.match(/(?:add|enroll)\s+([A-Za-z\s]+?)\s+(?:to|in)/i);
+      const campaignMatch = message.match(/campaign\s+([a-zA-Z0-9_-]+)/i);
+
+      const identifier = emailMatch?.[1] || nameMatch?.[1];
+      const campaignId = campaignMatch?.[1];
+
+      if (identifier && campaignId) {
+        try {
+          // Find contact first
+          const contacts = await session.proxy.searchContacts(identifier, 5);
+          let contactId = null;
+
+          if (contacts && contacts.length > 0) {
+            const match = contacts.find(c =>
+              c.email?.toLowerCase() === identifier.toLowerCase() ||
+              c.name?.toLowerCase() === identifier.toLowerCase()
+            );
+            contactId = match?.id || contacts[0]?.id;
+          }
+
+          if (contactId) {
+            await session.proxy.addToCampaign(contactId, campaignId);
+            response = `✅ Added ${identifier} to campaign ${campaignId}`;
+          } else {
+            response = `❌ Could not find contact: ${identifier}`;
+          }
+        } catch (error) {
+          response = `Sorry, I couldn't add to campaign. Error: ${error.message}`;
+        }
+      } else {
+        response = "To add to a campaign, I need:\n\n• Contact email or name\n• Campaign ID\n\nExample: 'Add john@example.com to campaign xyz789'";
+      }
+    }
+
     // LOG PHONE CALL
     else if (lowerMessage.includes('log phone call') || lowerMessage.includes('log call')) {
       response = "To log a phone call:\n\n• Contact name or email\n• Call duration\n• Notes (optional)\n\nExample: 'Log phone call with john@example.com duration 15 minutes notes Discussed pricing options'";

@@ -519,13 +519,91 @@ class GoHighLevelMCPProxy {
     return await this.callMCP('payments_list-transactions', filters);
   }
 
-  // Workflows (REST API - not in MCP yet)
-  async addToWorkflow(contactId, workflowId) {
-    return await this.callAPI('/workflows/add-contact', 'POST', {
-      locationId: this.locationId,
-      contactId,
-      workflowId
+  // Workflows & Campaigns (REST API)
+  async addToWorkflow(contactId, workflowId, eventStartTime = null) {
+    console.log('🔄 Adding contact to workflow via REST API v2');
+    return await this.callAPI(`/contacts/${contactId}/workflow/${workflowId}`, 'POST', {
+      eventStartTime: eventStartTime || new Date().toISOString()
     });
+  }
+
+  async removeFromWorkflow(contactId, workflowId) {
+    console.log('🔄 Removing contact from workflow via REST API v2');
+    return await this.callAPI(`/contacts/${contactId}/workflow/${workflowId}`, 'DELETE');
+  }
+
+  async addToCampaign(contactId, campaignId) {
+    console.log('📢 Adding contact to campaign via REST API v2');
+    return await this.callAPI(`/contacts/${contactId}/campaigns/${campaignId}`, 'POST');
+  }
+
+  async removeFromCampaign(contactId, campaignId) {
+    console.log('📢 Removing contact from campaign via REST API v2');
+    return await this.callAPI(`/contacts/${contactId}/campaigns/${campaignId}`, 'DELETE');
+  }
+
+  // Tasks (REST API v2)
+  async createTask(contactId, taskData) {
+    console.log('✅ Creating task via REST API v2');
+    return await this.callAPI(`/contacts/${contactId}/tasks`, 'POST', {
+      ...taskData
+    });
+  }
+
+  async updateTask(contactId, taskId, updates) {
+    console.log('✅ Updating task via REST API v2');
+    return await this.callAPI(`/contacts/${contactId}/tasks/${taskId}`, 'PUT', updates);
+  }
+
+  async getTasks(contactId) {
+    console.log('✅ Getting tasks via REST API v2');
+    return await this.callAPI(`/contacts/${contactId}/tasks`, 'GET');
+  }
+
+  async deleteTask(contactId, taskId) {
+    console.log('✅ Deleting task via REST API v2');
+    return await this.callAPI(`/contacts/${contactId}/tasks/${taskId}`, 'DELETE');
+  }
+
+  // Notes (REST API v2)
+  async addNote(contactId, body) {
+    console.log('📝 Adding note via REST API v2');
+    return await this.callAPI(`/contacts/${contactId}/notes`, 'POST', {
+      body
+    });
+  }
+
+  async getNotes(contactId) {
+    console.log('📝 Getting notes via REST API v2');
+    return await this.callAPI(`/contacts/${contactId}/notes`, 'GET');
+  }
+
+  async updateNote(contactId, noteId, body) {
+    console.log('📝 Updating note via REST API v2');
+    return await this.callAPI(`/contacts/${contactId}/notes/${noteId}`, 'PUT', {
+      body
+    });
+  }
+
+  async deleteNote(contactId, noteId) {
+    console.log('📝 Deleting note via REST API v2');
+    return await this.callAPI(`/contacts/${contactId}/notes/${noteId}`, 'DELETE');
+  }
+
+  // Inbound Webhook Trigger (for workflows)
+  async triggerInboundWebhook(webhookUrl, payload) {
+    console.log('🪝 Triggering inbound webhook');
+    try {
+      const response = await axios.post(webhookUrl, payload, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      return response.data || { success: true };
+    } catch (error) {
+      console.error('❌ Webhook trigger failed:', error.response?.data || error.message);
+      throw error;
+    }
   }
 }
 
