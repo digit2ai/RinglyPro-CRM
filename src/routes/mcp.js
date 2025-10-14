@@ -331,22 +331,53 @@ router.post('/copilot/chat', async (req, res) => {
       }
     }
     // TAGS
-    else if (lowerMessage.includes('add tag') || lowerMessage.includes('tag')) {
-      const contactIdMatch = message.match(/contact\s+([a-zA-Z0-9]+)/i);
-      const tagMatch = message.match(/tag[s]?\s+([^to]+?)(?:\s+to|$)/i);
+    else if (lowerMessage.includes('add tag') || lowerMessage.includes('tag') || lowerMessage.includes('remove tag') || lowerMessage.includes('untag')) {
+      const isRemove = lowerMessage.includes('remove') || lowerMessage.includes('untag');
 
-      if (contactIdMatch && tagMatch) {
-        const contactId = contactIdMatch[1];
+      // Extract tags and contact identifier
+      const tagMatch = message.match(/tags?\s+([^to\s]+(?:\s*,\s*[^to\s]+)*)/i);
+      const emailMatch = message.match(/to\s+([\w.-]+@[\w.-]+\.\w+)/i);
+      const phoneMatch = message.match(/to\s+(\d{10})/i);
+      const contactMatch = message.match(/to\s+contact\s+([a-zA-Z0-9]+)/i) || message.match(/to\s+([A-Z][a-z]+)/i);
+
+      if (tagMatch && (emailMatch || phoneMatch || contactMatch)) {
         const tags = tagMatch[1].split(',').map(t => t.trim());
-        console.log(`🏷️ Adding tags ${tags} to contact ${contactId}`);
+        const identifier = emailMatch?.[1] || phoneMatch?.[1] || contactMatch?.[1];
+
+        console.log(`🏷️ ${isRemove ? 'Removing' : 'Adding'} tags ${tags} ${isRemove ? 'from' : 'to'} ${identifier}`);
+
         try {
-          await session.proxy.addTags(contactId, tags);
-          response = `✅ Added ${tags.length} tag(s) to contact ${contactId}`;
+          // Find contact first
+          const contacts = await session.proxy.searchContacts(identifier, 100);
+          let contactId = null;
+
+          if (contacts && contacts.length > 0) {
+            // Try to find exact match
+            const match = contacts.find(c =>
+              c.email === identifier ||
+              c.phone?.replace(/\D/g, '').includes(identifier.replace(/\D/g, '')) ||
+              c.name === identifier ||
+              c.firstName === identifier
+            );
+            contactId = match?.id || contacts[0]?.id;
+          }
+
+          if (contactId) {
+            if (isRemove) {
+              await session.proxy.removeTags(contactId, tags);
+              response = `✅ Removed ${tags.length} tag(s) from contact`;
+            } else {
+              await session.proxy.addTags(contactId, tags);
+              response = `✅ Added ${tags.length} tag(s) to contact`;
+            }
+          } else {
+            response = `❌ Could not find contact: ${identifier}`;
+          }
         } catch (error) {
-          response = `Error adding tags: ${error.message}`;
+          response = `Error ${isRemove ? 'removing' : 'adding'} tags: ${error.message}`;
         }
       } else {
-        response = "To add tags: 'add tag VIP to contact CONTACT_ID' or 'add tags VIP, Customer to contact ID123'";
+        response = "To add tags: 'add tag VIP to john@example.com' or 'add tags hot-lead, interested to 8136414177'";
       }
     }
     // LIST ALL CONTACTS (diagnostic)

@@ -1,0 +1,190 @@
+[33m═══════════════════════════════════════════════════════════[0m
+[33m  MCP Copilot Automated Test Suite[0m
+[33m═══════════════════════════════════════════════════════════[0m
+Session ID: test_1760468690106
+Test Data: TestUser4596 / 5551139579 / test1760468690106@example.com
+
+
+[33m▶ CONTACT OPERATIONS[0m
+
+[36m[TEST 1][0m Create Contact
+[34mMessage:[0m create contact TestUser4596 phone 5551139579 email test1760468690106@example.com
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 2][0m Search Contact by Name
+[34mMessage:[0m search TestUser4596
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 3][0m Search Contact by Phone
+[34mMessage:[0m search 5551139579
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 4][0m Search Contact by Email
+[34mMessage:[0m search test1760468690106@example.com
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 5][0m Update Contact
+[34mMessage:[0m update contact test1760468690106@example.com with tag test-updated
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 6][0m Add Tags
+[34mMessage:[0m add tag vip to test1760468690106@example.com
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 7][0m Add Multiple Tags
+[34mMessage:[0m add tags hot-lead, interested to test1760468690106@example.com
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 8][0m Remove Tags
+[34mMessage:[0m remove tag interested from test1760468690106@example.com
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 9][0m List All Contacts
+[34mMessage:[0m list all contacts
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[33m▶ COMMUNICATION OPERATIONS[0m
+
+[36m[TEST 10][0m Send SMS by Phone
+[34mMessage:[0m send sms to 5551139579 saying This is an automated test message
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 11][0m Send SMS by Email
+[34mMessage:[0m send sms to test1760468690106@example.com saying Another test SMS
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 12][0m Send Email
+[34mMessage:[0m send email to test1760468690106@example.com subject Test Email body This is a test email from automated testing
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[33m▶ OPPORTUNITY OPERATIONS[0m
+
+[36m[TEST 13][0m View Opportunities
+[34mMessage:[0m show opportunities
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 14][0m View Pipelines
+[34mMessage:[0m show pipelines
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 15][0m Add Opportunity
+[34mMessage:[0m add opportunity for test1760468690106@example.com value 5000 stage lead
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 16][0m Update Opportunity by Contact
+[34mMessage:[0m move test1760468690106@example.com opportunity to qualified
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[33m▶ CALENDAR OPERATIONS[0m
+
+[36m[TEST 17][0m List Calendars
+[34mMessage:[0m show calendars
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 18][0m View Calendar Events
+[34mMessage:[0m show calendar events
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 19][0m Book Appointment
+[34mMessage:[0m book appointment for test1760468690106@example.com tomorrow at 2pm
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[33m▶ OTHER OPERATIONS[0m
+
+[36m[TEST 20][0m Log Call
+[34mMessage:[0m log call with test1760468690106@example.com duration 15 minutes
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 21][0m Send Review Request
+[34mMessage:[0m send review request to test1760468690106@example.com
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 22][0m View Dashboard
+[34mMessage:[0m show dashboard
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[36m[TEST 23][0m View Location
+[34mMessage:[0m show location
+[31m✗ Error:[0m Invalid or expired session. Please reconnect to your CRM.
+
+[33m═══════════════════════════════════════════════════════════[0m
+[33m  TEST SUMMARY[0m
+[33m═══════════════════════════════════════════════════════════[0m
+Total Tests: 23
+[32mPassed: 0[0m
+[31mFailed: 23[0m
+Success Rate: 0.00%
+
+[31mFAILED TESTS:[0m
+1. Create Contact
+   Message: create contact TestUser4596 phone 5551139579 email test1760468690106@example.com
+   Error: Invalid or expired session. Please reconnect to your CRM.
+2. Search Contact by Name
+   Message: search TestUser4596
+   Error: Invalid or expired session. Please reconnect to your CRM.
+3. Search Contact by Phone
+   Message: search 5551139579
+   Error: Invalid or expired session. Please reconnect to your CRM.
+4. Search Contact by Email
+   Message: search test1760468690106@example.com
+   Error: Invalid or expired session. Please reconnect to your CRM.
+5. Update Contact
+   Message: update contact test1760468690106@example.com with tag test-updated
+   Error: Invalid or expired session. Please reconnect to your CRM.
+6. Add Tags
+   Message: add tag vip to test1760468690106@example.com
+   Error: Invalid or expired session. Please reconnect to your CRM.
+7. Add Multiple Tags
+   Message: add tags hot-lead, interested to test1760468690106@example.com
+   Error: Invalid or expired session. Please reconnect to your CRM.
+8. Remove Tags
+   Message: remove tag interested from test1760468690106@example.com
+   Error: Invalid or expired session. Please reconnect to your CRM.
+9. List All Contacts
+   Message: list all contacts
+   Error: Invalid or expired session. Please reconnect to your CRM.
+10. Send SMS by Phone
+   Message: send sms to 5551139579 saying This is an automated test message
+   Error: Invalid or expired session. Please reconnect to your CRM.
+11. Send SMS by Email
+   Message: send sms to test1760468690106@example.com saying Another test SMS
+   Error: Invalid or expired session. Please reconnect to your CRM.
+12. Send Email
+   Message: send email to test1760468690106@example.com subject Test Email body This is a test email from automated testing
+   Error: Invalid or expired session. Please reconnect to your CRM.
+13. View Opportunities
+   Message: show opportunities
+   Error: Invalid or expired session. Please reconnect to your CRM.
+14. View Pipelines
+   Message: show pipelines
+   Error: Invalid or expired session. Please reconnect to your CRM.
+15. Add Opportunity
+   Message: add opportunity for test1760468690106@example.com value 5000 stage lead
+   Error: Invalid or expired session. Please reconnect to your CRM.
+16. Update Opportunity by Contact
+   Message: move test1760468690106@example.com opportunity to qualified
+   Error: Invalid or expired session. Please reconnect to your CRM.
+17. List Calendars
+   Message: show calendars
+   Error: Invalid or expired session. Please reconnect to your CRM.
+18. View Calendar Events
+   Message: show calendar events
+   Error: Invalid or expired session. Please reconnect to your CRM.
+19. Book Appointment
+   Message: book appointment for test1760468690106@example.com tomorrow at 2pm
+   Error: Invalid or expired session. Please reconnect to your CRM.
+20. Log Call
+   Message: log call with test1760468690106@example.com duration 15 minutes
+   Error: Invalid or expired session. Please reconnect to your CRM.
+21. Send Review Request
+   Message: send review request to test1760468690106@example.com
+   Error: Invalid or expired session. Please reconnect to your CRM.
+22. View Dashboard
+   Message: show dashboard
+   Error: Invalid or expired session. Please reconnect to your CRM.
+23. View Location
+   Message: show location
+   Error: Invalid or expired session. Please reconnect to your CRM.
+
+[33m═══════════════════════════════════════════════════════════[0m
+
