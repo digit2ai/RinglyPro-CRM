@@ -259,21 +259,23 @@ class GoHighLevelMCPProxy {
   }
 
   async createContact(contactData) {
+    // TEMPORARY: Skip MCP, use REST API directly due to 403 issues
+    console.log('📝 Creating contact via REST API (MCP has 403 issues)');
+    console.log('📝 Contact data:', JSON.stringify({
+      locationId: this.locationId,
+      ...contactData
+    }));
+
     try {
-      console.log('📝 Creating contact with data:', JSON.stringify(contactData));
-      const result = await this.callMCP('contacts_create-contact', contactData);
-      console.log('✅ Contact created via MCP:', result?.id || 'unknown ID');
-      return result;
-    } catch (error) {
-      console.log('⚠️ MCP failed, falling back to REST API');
-      console.log('📝 REST API contact data:', JSON.stringify({
-        locationId: this.locationId,
-        ...contactData
-      }));
-      return await this.callAPI('/contacts/', 'POST', {
+      const result = await this.callAPI('/contacts/', 'POST', {
         locationId: this.locationId,
         ...contactData
       });
+      console.log('✅ Contact created via REST API:', result?.contact?.id || 'unknown ID');
+      return result;
+    } catch (error) {
+      console.error('❌ REST API contact creation failed:', error.response?.data || error.message);
+      throw error;
     }
   }
 
