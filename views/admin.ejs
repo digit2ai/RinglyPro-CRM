@@ -747,6 +747,16 @@
         function renderClientInfo(client) {
             document.getElementById('clientModalTitle').textContent = client.business_name;
 
+            // Debug: Log client data to see what we're getting
+            console.log('📊 Client data received:', {
+                id: client.id,
+                business_name: client.business_name,
+                referral_code: client.referral_code,
+                referred_by: client.referred_by,
+                referrer_business_name: client.referrer_business_name,
+                twilio_number_sid: client.twilio_number_sid
+            });
+
             const infoHTML = `
                 <div class="info-item">
                     <label>Business Name</label>
@@ -773,8 +783,16 @@
                     <value>${client.twilio_number_sid || 'Not assigned'}</value>
                 </div>
                 <div class="info-item">
+                    <label>Referral Code</label>
+                    <value>${client.referral_code || 'Not generated'}</value>
+                </div>
+                <div class="info-item">
                     <label>Referred By</label>
                     <value>${client.referrer_business_name || 'Direct signup'}</value>
+                </div>
+                <div class="info-item">
+                    <label>Referrer ID</label>
+                    <value>${client.referred_by || 'None (direct signup)'}</value>
                 </div>
                 <div class="info-item">
                     <label>Minutes Used</label>
