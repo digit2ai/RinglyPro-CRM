@@ -27,7 +27,10 @@ class GoHighLevelMCPProxy {
           method: 'tools/call',
           params: {
             name: tool,
-            arguments: input
+            arguments: {
+              locationId: this.locationId, // Add locationId to every MCP call
+              ...input
+            }
           }
         }
       });
