@@ -481,10 +481,23 @@ router.post('/copilot/chat', async (req, res) => {
               if (allContacts && allContacts.length > 0) {
                 // Find contact with matching phone (compare digits only)
                 const targetDigits = normalizedPhone.replace(/\D/g, '');
+                console.log('🎯 Looking for phone digits:', targetDigits);
+                console.log('🔍 Checking all contacts...');
+
+                // Log first 10 contacts with their phone numbers
+                allContacts.slice(0, 10).forEach((c, i) => {
+                  const digits = c.phone ? c.phone.replace(/\D/g, '') : 'no phone';
+                  console.log(`  [${i}] ${c.firstName || 'Unknown'} - Phone: ${c.phone} - Digits: ${digits}`);
+                });
+
                 const match = allContacts.find(c => {
                   if (!c.phone) return false;
                   const contactDigits = c.phone.replace(/\D/g, '');
-                  return contactDigits === targetDigits || contactDigits === targetDigits.substring(1); // Match with or without country code
+                  const matches = contactDigits === targetDigits || contactDigits === targetDigits.substring(1);
+                  if (matches) {
+                    console.log(`🎯 MATCH FOUND: ${c.firstName || c.email} - ${c.phone} matches ${normalizedPhone}`);
+                  }
+                  return matches;
                 });
 
                 if (match) {
@@ -492,7 +505,8 @@ router.post('/copilot/chat', async (req, res) => {
                   console.log('✅ Found contact by phone match:', contactId, 'name:', match.firstName || match.email);
                 } else {
                   console.log('❌ No contact found with phone matching:', normalizedPhone);
-                  console.log('📋 Sample phones in CRM:', allContacts.slice(0, 5).map(c => c.phone).join(', '));
+                  console.log('❌ Target digits:', targetDigits);
+                  console.log('📋 Total contacts checked:', allContacts.length);
                 }
               }
             } catch (fetchError) {
