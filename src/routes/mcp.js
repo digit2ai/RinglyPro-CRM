@@ -243,7 +243,17 @@ router.post('/copilot/chat', async (req, res) => {
           data = [result];
         } catch (createError) {
           console.error('❌ Create contact error:', createError.message);
-          response = `Sorry, I couldn't create the contact. Error: ${createError.message}`;
+          console.error('❌ Create contact stack:', createError.stack);
+
+          // Provide more helpful error messages
+          let errorMsg = createError.message;
+          if (errorMsg.includes('400')) {
+            errorMsg = `Contact may already exist or validation failed. Try:\n• Searching for the contact first: "find ${contactData.email || contactData.phone || contactData.firstName}"\n• Using different contact details`;
+          } else if (errorMsg.includes('duplicate') || errorMsg.includes('already exists')) {
+            errorMsg = `A contact with this ${contactData.email ? 'email' : 'phone number'} already exists. Try searching: "find ${contactData.email || contactData.phone}"`;
+          }
+
+          response = `Sorry, I couldn't create the contact.\n\n${errorMsg}`;
         }
       } else {
         response = "To create a contact, please provide at least one of: name, email, or phone number.\n\nExamples:\n• 'Create contact named John Doe with email john@example.com'\n• 'Create contact John phone 8136414177'\n• 'Create contact named Jane Smith phone 813-555-1234'";
@@ -593,7 +603,10 @@ router.post('/copilot/chat', async (req, res) => {
       // Parse: "update contact john@example.com with phone 5551234567" or "update contact john@example.com set email to new@email.com"
       const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
       const phoneIdentMatch = message.match(/contact\s+(\d{10})/i);
-      const nameMatch = message.match(/contact\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
+
+      // Improved name matching - stop BEFORE field keywords (phone, email, firstname, lastname)
+      // This prevents capturing "leonardo phone" as the name
+      const nameMatch = message.match(/contact\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)(?=\s+(?:phone|mobile|email|firstname|lastname|first\s*name|last\s*name)\s*:?\s*|$)/i);
 
       const identifier = emailMatch?.[1] || phoneIdentMatch?.[1] || nameMatch?.[1];
 
@@ -605,11 +618,15 @@ router.post('/copilot/chat', async (req, res) => {
           let contactId = null;
 
           if (contacts && contacts.length > 0) {
+            // Improved matching - case-insensitive name matching
             const match = contacts.find(c =>
               c.email === identifier ||
               c.phone?.replace(/\D/g, '').includes(identifier.replace(/\D/g, '')) ||
-              c.firstName === identifier ||
-              c.name === identifier
+              c.firstName?.toLowerCase() === identifier.toLowerCase() ||
+              c.lastName?.toLowerCase() === identifier.toLowerCase() ||
+              c.name?.toLowerCase() === identifier.toLowerCase() ||
+              // Also try matching full name if identifier contains space
+              (identifier.includes(' ') && c.name?.toLowerCase() === identifier.toLowerCase())
             );
             contactId = match?.id || contacts[0]?.id;
           }
@@ -618,10 +635,17 @@ router.post('/copilot/chat', async (req, res) => {
             // Extract update fields
             const updates = {};
 
-            // Check for phone update
-            const phoneMatch = message.match(/(?:phone|mobile)\s+(?:to\s+)?(\d{10})/i);
+            // Check for phone update - handle various formats: "phone 5551234567", "phone: 813-465-9575", "phone 8134456789"
+            const phoneMatch = message.match(/(?:phone|mobile)\s*:?\s*([\d-]+)/i);
             if (phoneMatch) {
-              updates.phone = `+1${phoneMatch[1]}`;
+              const cleanPhone = phoneMatch[1].replace(/\D/g, ''); // Remove all non-digits
+              if (cleanPhone.length === 10) {
+                updates.phone = `+1${cleanPhone}`;
+              } else if (cleanPhone.length === 11 && cleanPhone.startsWith('1')) {
+                updates.phone = `+${cleanPhone}`;
+              } else {
+                updates.phone = `+1${cleanPhone}`; // Try anyway
+              }
             }
 
             // Check for email update
