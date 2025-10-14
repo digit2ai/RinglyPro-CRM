@@ -155,8 +155,12 @@ router.post('/copilot/chat', async (req, res) => {
       // Extract names - multiple patterns
       let nameMatch = message.match(/(?:named|called)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i);
       if (!nameMatch) {
-        // Try "create contact [Name]" pattern (after "contact" and before email/phone/with)
-        nameMatch = message.match(/contact\s+([A-Za-z][A-Za-z\s]+?)(?:\s+(?:email|phone|with|$))/i);
+        // Try "create contact [Name]" pattern - match word(s) between "contact" and "phone"/"email"
+        nameMatch = message.match(/contact\s+([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+)*?)\s+(?:phone|email)/i);
+      }
+      if (!nameMatch) {
+        // Try single word after contact
+        nameMatch = message.match(/contact\s+([A-Za-z0-9]+)/i);
       }
 
       if (emailMatch || phoneMatch || nameMatch) {
@@ -513,7 +517,9 @@ router.post('/copilot/chat', async (req, res) => {
             data = [result];
           } else {
             console.error('❌ Could not find contact after all search attempts');
-            response = `❌ Could not find contact: ${recipient}\n\nSearched for phone: ${normalizedPhone || recipient}\n\nTip: Try searching for the contact first with "search ${recipient}" to verify they exist in your CRM, then use their email address to send SMS instead.`;
+
+            // WORKAROUND: Suggest using email which is more reliable
+            response = `❌ Could not find contact by phone: ${recipient}\n\nPhone search has indexing delays in GoHighLevel. Please use email instead:\n\nExample: "send sms to test2@example.com saying ${messageText}"\n\nOr wait 30-60 seconds for the contact to be indexed, then try again.`;
           }
         } catch (smsError) {
           console.error('❌ SMS send error:', smsError.message);
