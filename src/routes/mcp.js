@@ -457,7 +457,7 @@ router.post('/copilot/chat', async (req, res) => {
           // If we have a phone number
           else if (phoneMatch) {
             recipient = phoneMatch[1].replace(/[\s()-]/g, ''); // Clean phone number
-            // Normalize to E.164 format for searching
+            // Normalize to E.164 format
             normalizedPhone = recipient.replace(/\D/g, '');
             if (normalizedPhone.length === 10) {
               normalizedPhone = `+1${normalizedPhone}`;
@@ -465,48 +465,34 @@ router.post('/copilot/chat', async (req, res) => {
               normalizedPhone = `+${normalizedPhone}`;
             }
 
-            console.log('📱 Searching for contact by phone:', normalizedPhone);
-            let contacts = await session.proxy.searchContacts(normalizedPhone, 10);
-            console.log(`🔍 Search returned ${contacts?.length || 0} contacts`);
+            console.log('📱 Looking for contact with phone:', normalizedPhone);
 
-            if (contacts && contacts.length > 0) {
-              console.log('📋 First contact phone:', contacts[0].phone);
-              // Try to find exact match in results
-              const exactMatch = contacts.find(c =>
-                c.phone === normalizedPhone ||
-                c.phone === recipient ||
-                (c.phone && c.phone.replace(/\D/g, '') === normalizedPhone.replace(/\D/g, ''))
-              );
-              if (exactMatch) {
-                contactId = exactMatch.id;
-                console.log('✅ Found exact phone match:', contactId);
-              } else {
-                // Use first result
-                contactId = contacts[0].id;
-                console.log('⚠️ Using first search result:', contactId, 'phone:', contacts[0].phone);
-              }
-            }
+            // NEW APPROACH: Get ALL contacts and find match locally
+            // This bypasses GoHighLevel's search indexing delays
+            try {
+              console.log('📋 Fetching all contacts to find phone match...');
+              const allContacts = await session.proxy.searchContacts('', 100); // Get up to 100 contacts
+              console.log(`📊 Retrieved ${allContacts?.length || 0} total contacts`);
 
-            // Try additional formats if not found
-            if (!contactId) {
-              const searchVariants = [
-                recipient,  // Original: 8136414177
-                normalizedPhone.substring(2), // Without +1: 8136414177
-                normalizedPhone.substring(1), // Without +: 18136414177
-              ];
+              if (allContacts && allContacts.length > 0) {
+                // Find contact with matching phone (compare digits only)
+                const targetDigits = normalizedPhone.replace(/\D/g, '');
+                const match = allContacts.find(c => {
+                  if (!c.phone) return false;
+                  const contactDigits = c.phone.replace(/\D/g, '');
+                  return contactDigits === targetDigits || contactDigits === targetDigits.substring(1); // Match with or without country code
+                });
 
-              for (const variant of searchVariants) {
-                if (variant !== normalizedPhone) { // Don't search same thing twice
-                  console.log('📱 Retry search with variant:', variant);
-                  const contactsRetry = await session.proxy.searchContacts(variant, 10);
-                  console.log(`🔍 Variant search returned ${contactsRetry?.length || 0} contacts`);
-                  if (contactsRetry && contactsRetry.length > 0) {
-                    contactId = contactsRetry[0].id;
-                    console.log('✅ Found contact with variant:', contactId);
-                    break;
-                  }
+                if (match) {
+                  contactId = match.id;
+                  console.log('✅ Found contact by phone match:', contactId, 'name:', match.firstName || match.email);
+                } else {
+                  console.log('❌ No contact found with phone matching:', normalizedPhone);
+                  console.log('📋 Sample phones in CRM:', allContacts.slice(0, 5).map(c => c.phone).join(', '));
                 }
               }
+            } catch (fetchError) {
+              console.error('❌ Error fetching all contacts:', fetchError.message);
             }
           }
           // If we have a name, search for it
