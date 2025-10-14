@@ -330,8 +330,77 @@ router.post('/copilot/chat', async (req, res) => {
         response = `Error loading custom fields: ${error.message}`;
       }
     }
-    // TAGS
-    else if (lowerMessage.includes('add tag') || lowerMessage.includes('tag') || lowerMessage.includes('remove tag') || lowerMessage.includes('untag')) {
+    // SEND EMAIL (check BEFORE tags to avoid "email contact" matching "tag")
+    else if (lowerMessage.includes('email') && !lowerMessage.includes('add tag') && !lowerMessage.includes('remove tag')) {
+      // Parse multiple formats:
+      // 1. "send email to john@example.com subject Welcome body Hi John!"
+      // 2. "email contact Manuel Stagg with this is a test"
+      // 3. "email john@example.com: This is a message"
+
+      let identifier = null;
+      let subject = 'Message from AI Copilot';
+      let body = null;
+
+      // Format 1: Full format with subject and body
+      const fullEmailMatch = message.match(/to\s+([\w.-]+@[\w.-]+\.\w+)/i);
+      const fullSubjectMatch = message.match(/subject\s+([^body]+?)(?:\s+body|$)/i);
+      const fullBodyMatch = message.match(/body\s+(.+)/i);
+
+      if (fullEmailMatch && fullSubjectMatch && fullBodyMatch) {
+        identifier = fullEmailMatch[1];
+        subject = fullSubjectMatch[1].trim();
+        body = fullBodyMatch[1].trim();
+      }
+      // Format 2: "email contact NAME with MESSAGE" or "email NAME with MESSAGE"
+      else {
+        const contactNameMatch = message.match(/email\s+(?:contact\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:with|saying)\s+(.+)/i);
+        const emailAddrMatch = message.match(/email\s+([\w.-]+@[\w.-]+\.\w+)\s*(?:with|saying|:)?\s*(.+)/i);
+        const phoneEmailMatch = message.match(/email\s+(\d{10})\s+(?:with|saying)\s+(.+)/i);
+
+        if (contactNameMatch) {
+          identifier = contactNameMatch[1];
+          body = contactNameMatch[2];
+        } else if (emailAddrMatch) {
+          identifier = emailAddrMatch[1];
+          body = emailAddrMatch[2];
+        } else if (phoneEmailMatch) {
+          identifier = phoneEmailMatch[1];
+          body = phoneEmailMatch[2];
+        }
+      }
+
+      if (identifier && body) {
+        console.log('📧 Sending email to:', identifier);
+        try {
+          // Find contact
+          const contacts = await session.proxy.searchContacts(identifier, 100);
+          let contactId = null;
+
+          if (contacts && contacts.length > 0) {
+            const match = contacts.find(c =>
+              c.email === identifier ||
+              c.phone?.replace(/\D/g, '').includes(identifier.replace(/\D/g, '')) ||
+              c.firstName === identifier.split(' ')[0] ||
+              c.name?.toLowerCase() === identifier.toLowerCase()
+            );
+            contactId = match?.id || contacts[0]?.id;
+          }
+
+          if (contactId) {
+            await session.proxy.sendEmail(contactId, subject, body);
+            response = `✅ Email sent successfully!\n\nTo: ${identifier}\nSubject: ${subject}`;
+          } else {
+            response = `❌ Could not find contact: ${identifier}`;
+          }
+        } catch (error) {
+          response = `Sorry, I couldn't send the email. Error: ${error.message}`;
+        }
+      } else {
+        response = "To send an email, I need:\n\n• Contact email, phone, or name\n• Message\n\nExamples:\n• 'Send email to john@example.com subject Welcome body Hi John!'\n• 'Email contact John Smith with This is a test'\n• 'Email john@test.com: Quick message here'";
+      }
+    }
+    // TAGS (but NOT if it's an email/sms command that happens to contain "tag")
+    else if ((lowerMessage.includes('add tag') || lowerMessage.includes('remove tag') || lowerMessage.includes('untag')) && !lowerMessage.includes('email') && !lowerMessage.includes('sms')) {
       const isRemove = lowerMessage.includes('remove') || lowerMessage.includes('untag');
 
       // Extract tags and contact identifier
@@ -639,46 +708,7 @@ router.post('/copilot/chat', async (req, res) => {
         response = "To send an SMS, I need a contact ID or phone number and the message text.\n\nExamples:\n• 'Send SMS to john@example.com saying Hello!'\n• 'Send SMS to 813-555-1234: This is a test'\n• 'Send SMS to John Doe saying Your appointment is confirmed'";
       }
     }
-    // SEND EMAIL
-    else if (lowerMessage.includes('send email')) {
-      // Parse: "send email to john@example.com subject Welcome body Hi John!"
-      const emailMatch = message.match(/to\s+([\w.-]+@[\w.-]+\.\w+)/i);
-      const phoneMatch = message.match(/to\s+(\d{10})/i);
-      const subjectMatch = message.match(/subject\s+([^body]+?)(?:\s+body|$)/i);
-      const bodyMatch = message.match(/body\s+(.+)/i);
-
-      const identifier = emailMatch?.[1] || phoneMatch?.[1];
-      const subject = subjectMatch?.[1]?.trim();
-      const body = bodyMatch?.[1]?.trim();
-
-      if (identifier && subject && body) {
-        console.log('📧 Sending email to:', identifier);
-        try {
-          // Find contact
-          const contacts = await session.proxy.searchContacts(identifier, 100);
-          let contactId = null;
-
-          if (contacts && contacts.length > 0) {
-            const match = contacts.find(c =>
-              c.email === identifier ||
-              c.phone?.replace(/\D/g, '').includes(identifier.replace(/\D/g, ''))
-            );
-            contactId = match?.id || contacts[0]?.id;
-          }
-
-          if (contactId) {
-            await session.proxy.sendEmail(contactId, subject, body);
-            response = `✅ Email sent successfully!\n\nTo: ${identifier}\nSubject: ${subject}`;
-          } else {
-            response = `❌ Could not find contact: ${identifier}`;
-          }
-        } catch (error) {
-          response = `Sorry, I couldn't send the email. Error: ${error.message}`;
-        }
-      } else {
-        response = "To send an email, I need:\n\n• Contact email or phone\n• Subject line\n• Message body\n\nExample: 'Send email to john@example.com subject Welcome body Hi John, welcome to our service!'";
-      }
-    }
+    // (SEND EMAIL handler moved to line 333 - before tags)
     // LOG PHONE CALL
     else if (lowerMessage.includes('log phone call') || lowerMessage.includes('log call')) {
       response = "To log a phone call:\n\n• Contact name or email\n• Call duration\n• Notes (optional)\n\nExample: 'Log phone call with john@example.com duration 15 minutes notes Discussed pricing options'";
