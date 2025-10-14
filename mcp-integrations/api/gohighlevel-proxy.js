@@ -289,30 +289,37 @@ class GoHighLevelMCPProxy {
   }
 
   async updateContact(contactId, updates) {
-    try {
-      return await this.callMCP('contacts_update-contact', {
-        contactId,
-        ...updates
-      });
-    } catch (error) {
-      console.log('⚠️ MCP failed, falling back to REST API');
-      return await this.callAPI(`/contacts/${contactId}`, 'PUT', {
-        locationId: this.locationId,
-        ...updates
-      });
-    }
+    // Use REST API directly (MCP has 403 issues)
+    console.log('📝 Updating contact via REST API');
+    return await this.callAPI(`/contacts/${contactId}`, 'PUT', {
+      locationId: this.locationId,
+      ...updates
+    });
   }
 
   async upsertContact(contactData) {
-    return await this.callMCP('contacts_upsert-contact', contactData);
+    // Use REST API directly (MCP has 403 issues)
+    console.log('📝 Upserting contact via REST API');
+    return await this.callAPI('/contacts/upsert', 'POST', {
+      locationId: this.locationId,
+      ...contactData
+    });
   }
 
   async addTags(contactId, tags) {
-    return await this.callMCP('contacts_add-tags', { contactId, tags });
+    // Use REST API directly (MCP has 403 issues)
+    console.log('🏷️ Adding tags via REST API');
+    return await this.callAPI(`/contacts/${contactId}/tags`, 'POST', {
+      tags: Array.isArray(tags) ? tags : [tags]
+    });
   }
 
   async removeTags(contactId, tags) {
-    return await this.callMCP('contacts_remove-tags', { contactId, tags });
+    // Use REST API directly (MCP has 403 issues)
+    console.log('🏷️ Removing tags via REST API');
+    return await this.callAPI(`/contacts/${contactId}/tags`, 'DELETE', {
+      tags: Array.isArray(tags) ? tags : [tags]
+    });
   }
 
   async getAllTasks(contactId) {
@@ -356,8 +363,10 @@ class GoHighLevelMCPProxy {
   }
 
   async updateOpportunity(opportunityId, updates) {
-    return await this.callMCP('opportunities_update-opportunity', {
-      opportunityId,
+    // Use REST API directly (MCP has 403 issues)
+    console.log('💰 Updating opportunity via REST API');
+    return await this.callAPI(`/opportunities/${opportunityId}`, 'PUT', {
+      locationId: this.locationId,
       ...updates
     });
   }
@@ -391,7 +400,9 @@ class GoHighLevelMCPProxy {
   }
 
   async sendMessage(conversationId, type, message) {
-    return await this.callMCP('conversations_send-a-new-message', {
+    // Use REST API directly (MCP has 403 issues)
+    console.log('💬 Sending message via REST API');
+    return await this.callAPI('/conversations/messages', 'POST', {
       conversationId,
       type,
       message
@@ -399,31 +410,14 @@ class GoHighLevelMCPProxy {
   }
 
   async sendSMS(contactId, message) {
-    try {
-      // First, find or create conversation for contact
-      const conversations = await this.searchConversations({ contactId });
-      const conversationId = conversations[0]?.id;
-
-      if (conversationId) {
-        return await this.sendMessage(conversationId, 'SMS', message);
-      } else {
-        // Fallback to REST API
-        return await this.callAPI('/conversations/messages', 'POST', {
-          locationId: this.locationId,
-          contactId,
-          type: 'SMS',
-          message
-        });
-      }
-    } catch (error) {
-      console.log('⚠️ MCP failed, falling back to REST API');
-      return await this.callAPI('/conversations/messages', 'POST', {
-        locationId: this.locationId,
-        contactId,
-        type: 'SMS',
-        message
-      });
-    }
+    // Use REST API directly (MCP has 403 issues)
+    console.log('📱 Sending SMS via REST API');
+    return await this.callAPI('/conversations/messages', 'POST', {
+      locationId: this.locationId,
+      contactId,
+      type: 'SMS',
+      message
+    });
   }
 
   async sendEmail(contactId, subject, body) {
