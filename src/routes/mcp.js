@@ -449,8 +449,73 @@ router.post('/copilot/chat', async (req, res) => {
       }
     }
     // UPDATE CONTACT
-    else if (lowerMessage.includes('update contact')) {
-      response = "To update a contact, please provide:\n\n• Contact ID or email\n• Field to update\n• New value\n\nExample: 'Update contact john@example.com set phone to 555-1234'";
+    else if (lowerMessage.includes('update contact') || lowerMessage.includes('update') && lowerMessage.includes('contact')) {
+      // Parse: "update contact john@example.com with phone 5551234567" or "update contact john@example.com set email to new@email.com"
+      const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
+      const phoneIdentMatch = message.match(/contact\s+(\d{10})/i);
+      const nameMatch = message.match(/contact\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
+
+      const identifier = emailMatch?.[1] || phoneIdentMatch?.[1] || nameMatch?.[1];
+
+      if (identifier) {
+        console.log('🔄 Updating contact:', identifier);
+        try {
+          // Find the contact first
+          const contacts = await session.proxy.searchContacts(identifier, 100);
+          let contactId = null;
+
+          if (contacts && contacts.length > 0) {
+            const match = contacts.find(c =>
+              c.email === identifier ||
+              c.phone?.replace(/\D/g, '').includes(identifier.replace(/\D/g, '')) ||
+              c.firstName === identifier ||
+              c.name === identifier
+            );
+            contactId = match?.id || contacts[0]?.id;
+          }
+
+          if (contactId) {
+            // Extract update fields
+            const updates = {};
+
+            // Check for phone update
+            const phoneMatch = message.match(/(?:phone|mobile)\s+(?:to\s+)?(\d{10})/i);
+            if (phoneMatch) {
+              updates.phone = `+1${phoneMatch[1]}`;
+            }
+
+            // Check for email update
+            const newEmailMatch = message.match(/email\s+(?:to\s+)?([\w.-]+@[\w.-]+\.\w+)/i);
+            if (newEmailMatch && newEmailMatch[1] !== identifier) {
+              updates.email = newEmailMatch[1];
+            }
+
+            // Check for name update
+            const firstNameMatch = message.match(/(?:first\s*name|firstname)\s+(?:to\s+)?([A-Z][a-z]+)/i);
+            if (firstNameMatch) {
+              updates.firstName = firstNameMatch[1];
+            }
+
+            const lastNameMatch = message.match(/(?:last\s*name|lastname)\s+(?:to\s+)?([A-Z][a-z]+)/i);
+            if (lastNameMatch) {
+              updates.lastName = lastNameMatch[1];
+            }
+
+            if (Object.keys(updates).length > 0) {
+              await session.proxy.updateContact(contactId, updates);
+              response = `✅ Contact updated successfully!\n\n${Object.entries(updates).map(([k,v]) => `${k}: ${v}`).join('\n')}`;
+            } else {
+              response = "❌ No valid update fields found. Try:\n• 'update contact john@test.com phone 5551234567'\n• 'update contact john@test.com email new@email.com'";
+            }
+          } else {
+            response = `❌ Could not find contact: ${identifier}`;
+          }
+        } catch (error) {
+          response = `Error updating contact: ${error.message}`;
+        }
+      } else {
+        response = "To update a contact, please provide:\n\n• Contact email, phone, or name\n• Field to update\n• New value\n\nExample: 'Update contact john@example.com phone 5551234567'";
+      }
     }
     // SEND SMS
     else if (lowerMessage.includes('send sms') || lowerMessage.includes('send message') || (lowerMessage.includes('text') && lowerMessage.includes('to'))) {
@@ -576,7 +641,43 @@ router.post('/copilot/chat', async (req, res) => {
     }
     // SEND EMAIL
     else if (lowerMessage.includes('send email')) {
-      response = "To send an email, I need:\n\n• Contact ID or email address\n• Subject line\n• Message body\n\nExample: 'Send email to john@example.com subject Welcome message Hi John, welcome to our service!'";
+      // Parse: "send email to john@example.com subject Welcome body Hi John!"
+      const emailMatch = message.match(/to\s+([\w.-]+@[\w.-]+\.\w+)/i);
+      const phoneMatch = message.match(/to\s+(\d{10})/i);
+      const subjectMatch = message.match(/subject\s+([^body]+?)(?:\s+body|$)/i);
+      const bodyMatch = message.match(/body\s+(.+)/i);
+
+      const identifier = emailMatch?.[1] || phoneMatch?.[1];
+      const subject = subjectMatch?.[1]?.trim();
+      const body = bodyMatch?.[1]?.trim();
+
+      if (identifier && subject && body) {
+        console.log('📧 Sending email to:', identifier);
+        try {
+          // Find contact
+          const contacts = await session.proxy.searchContacts(identifier, 100);
+          let contactId = null;
+
+          if (contacts && contacts.length > 0) {
+            const match = contacts.find(c =>
+              c.email === identifier ||
+              c.phone?.replace(/\D/g, '').includes(identifier.replace(/\D/g, ''))
+            );
+            contactId = match?.id || contacts[0]?.id;
+          }
+
+          if (contactId) {
+            await session.proxy.sendEmail(contactId, subject, body);
+            response = `✅ Email sent successfully!\n\nTo: ${identifier}\nSubject: ${subject}`;
+          } else {
+            response = `❌ Could not find contact: ${identifier}`;
+          }
+        } catch (error) {
+          response = `Sorry, I couldn't send the email. Error: ${error.message}`;
+        }
+      } else {
+        response = "To send an email, I need:\n\n• Contact email or phone\n• Subject line\n• Message body\n\nExample: 'Send email to john@example.com subject Welcome body Hi John, welcome to our service!'";
+      }
     }
     // LOG PHONE CALL
     else if (lowerMessage.includes('log phone call') || lowerMessage.includes('log call')) {

@@ -37,18 +37,40 @@
                 </p>
             </div>
 
-            <div class="quick-actions">
-                <h3>Quick Actions</h3>
-                <button onclick="quickAction('create new contact')">➕ Create New Contact</button>
-                <button onclick="quickAction('update contact')">✏️ Update Contact</button>
-                <button onclick="quickAction('send sms')">💬 Send SMS Message</button>
-                <button onclick="quickAction('send email')">📧 Send Email</button>
-                <button onclick="quickAction('book appointment')">📅 Book Appointment</button>
-                <button onclick="quickAction('send appointment reminder')">🔔 Appointment Reminder</button>
-                <button onclick="quickAction('add opportunity')">💰 Add/Move Opportunity</button>
-                <button onclick="quickAction('log phone call')">📞 Log Phone Call</button>
-                <button onclick="quickAction('send review request')">⭐ Send Review Request</button>
-                <button onclick="quickAction('view dashboard')">📊 View Dashboard</button>
+            <div class="examples-section">
+                <h3>Command Examples</h3>
+
+                <div class="example-category">
+                    <h4>📇 Contact Management</h4>
+                    <code onclick="quickAction(this.textContent)">create contact John Smith phone 5551234567</code>
+                    <code onclick="quickAction(this.textContent)">search 8136414177</code>
+                    <code onclick="quickAction(this.textContent)">list all contacts</code>
+                    <code onclick="quickAction(this.textContent)">add tag vip to john@example.com</code>
+                </div>
+
+                <div class="example-category">
+                    <h4>💬 Communication</h4>
+                    <code onclick="quickAction(this.textContent)">send sms to 5551234567 saying Hello!</code>
+                    <code onclick="quickAction(this.textContent)">send email to john@test.com subject Welcome body Thanks for joining!</code>
+                </div>
+
+                <div class="example-category">
+                    <h4>💰 Opportunities</h4>
+                    <code onclick="quickAction(this.textContent)">show opportunities</code>
+                    <code onclick="quickAction(this.textContent)">show pipelines</code>
+                </div>
+
+                <div class="example-category">
+                    <h4>📅 Calendar</h4>
+                    <code onclick="quickAction(this.textContent)">show calendars</code>
+                    <code onclick="quickAction(this.textContent)">book appointment for john@test.com tomorrow at 2pm</code>
+                </div>
+
+                <div class="example-category">
+                    <h4>📊 Dashboard</h4>
+                    <code onclick="quickAction(this.textContent)">show dashboard</code>
+                    <code onclick="quickAction(this.textContent)">show location</code>
+                </div>
             </div>
         </div>
 
