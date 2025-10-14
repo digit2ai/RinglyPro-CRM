@@ -213,9 +213,9 @@ router.post('/copilot/chat', async (req, res) => {
       }
 
       if (emailMatch || phoneMatch || nameMatch) {
-        try {
-          const contactData = {};
+        const contactData = {}; // Move outside try block for error handler access
 
+        try {
           if (nameMatch) {
             const fullName = nameMatch[1].trim();
             const names = fullName.split(/\s+/);
@@ -485,10 +485,11 @@ router.post('/copilot/chat', async (req, res) => {
       const isRemove = lowerMessage.includes('remove') || lowerMessage.includes('untag');
 
       // Extract tags and contact identifier
+      // Support both "tag X to/from email" and "tag X to/from name"
       const tagMatch = message.match(/tags?\s+([^to\s]+(?:\s*,\s*[^to\s]+)*)/i);
-      const emailMatch = message.match(/to\s+([\w.-]+@[\w.-]+\.\w+)/i);
-      const phoneMatch = message.match(/to\s+(\d{10})/i);
-      const contactMatch = message.match(/to\s+contact\s+([a-zA-Z0-9]+)/i) || message.match(/to\s+([A-Z][a-z]+)/i);
+      const emailMatch = message.match(/(?:to|from)\s+([\w.-]+@[\w.-]+\.\w+)/i);
+      const phoneMatch = message.match(/(?:to|from)\s+(\d{10})/i);
+      const contactMatch = message.match(/(?:to|from)\s+contact\s+([a-zA-Z0-9]+)/i) || message.match(/(?:to|from)\s+([A-Z][a-z]+)/i);
 
       if (tagMatch && (emailMatch || phoneMatch || contactMatch)) {
         const tags = tagMatch[1].split(',').map(t => t.trim());
@@ -527,7 +528,11 @@ router.post('/copilot/chat', async (req, res) => {
           response = `Error ${isRemove ? 'removing' : 'adding'} tags: ${error.message}`;
         }
       } else {
-        response = "To add tags: 'add tag VIP to john@example.com' or 'add tags hot-lead, interested to 8136414177'";
+        if (isRemove) {
+          response = "To remove tags:\n• 'remove tag cold-lead from john@example.com'\n• 'untag john@example.com from inactive'";
+        } else {
+          response = "To add tags:\n• 'add tag VIP to john@example.com'\n• 'add tags hot-lead, interested to 8136414177'";
+        }
       }
     }
     // LIST ALL CONTACTS (diagnostic)
@@ -945,11 +950,12 @@ router.post('/copilot/chat', async (req, res) => {
     // ═══════════════════════════════════════════════════════════════
     // WORKFLOWS - Add/remove contacts from workflows
     // ═══════════════════════════════════════════════════════════════
-    else if (lowerMessage.includes('add to workflow') || lowerMessage.includes('enroll in workflow') || lowerMessage.includes('start workflow')) {
+    else if (lowerMessage.includes('workflow') && (lowerMessage.includes('add') || lowerMessage.includes('enroll') || lowerMessage.includes('start'))) {
       // Parse: "add john@example.com to workflow abc123"
+      // Parse: "enroll John in workflow xyz789"
 
       const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
-      const nameMatch = message.match(/(?:add|enroll)\s+([A-Za-z\s]+?)\s+(?:to|in)/i);
+      const nameMatch = message.match(/(?:add|enroll|start)\s+([A-Za-z\s]+?)\s+(?:to|in)/i);
       const workflowMatch = message.match(/workflow\s+([a-zA-Z0-9_-]+)/i);
 
       const identifier = emailMatch?.[1] || nameMatch?.[1];
@@ -986,8 +992,9 @@ router.post('/copilot/chat', async (req, res) => {
     // ═══════════════════════════════════════════════════════════════
     // CAMPAIGNS - Add contacts to campaigns
     // ═══════════════════════════════════════════════════════════════
-    else if (lowerMessage.includes('add to campaign') || lowerMessage.includes('enroll in campaign')) {
+    else if (lowerMessage.includes('campaign') && (lowerMessage.includes('add') || lowerMessage.includes('enroll'))) {
       // Parse: "add john@example.com to campaign xyz789"
+      // Parse: "enroll contact in campaign nurture"
 
       const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
       const nameMatch = message.match(/(?:add|enroll)\s+([A-Za-z\s]+?)\s+(?:to|in)/i);
