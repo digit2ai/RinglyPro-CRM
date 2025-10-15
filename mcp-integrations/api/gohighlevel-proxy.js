@@ -128,12 +128,17 @@ class GoHighLevelMCPProxy {
       const isJWT = !this.apiKey.startsWith('pit-');
       console.log(`🌐 API Request: ${method} ${endpoint}`);
       console.log(`🔑 Auth type: ${isJWT ? 'JWT' : 'PIT'}`);
+      console.log(`🔑 Token preview: ${this.apiKey.substring(0, 20)}...${this.apiKey.substring(this.apiKey.length - 10)}`);
+      console.log(`📍 Location ID: ${this.locationId}`);
 
-      // Build URL with query params if GET request and no ? already in endpoint
+      // JWT tokens have locationId embedded - don't add it as parameter
+      // PIT tokens need locationId as query parameter
       let url = `${this.baseURL}${endpoint}`;
-      if (method === 'GET' && !endpoint.includes('?')) {
-        // Add locationId as query param for GET requests
-        url += `?locationId=${this.locationId}`;
+      let params = undefined;
+
+      if (!isJWT && method === 'GET' && !endpoint.includes('?')) {
+        // Only add locationId for PIT tokens
+        params = { locationId: this.locationId };
       }
 
       const response = await axios({
@@ -141,8 +146,7 @@ class GoHighLevelMCPProxy {
         url,
         headers,
         data,
-        // Also add as params for axios to handle properly
-        params: method === 'GET' ? { locationId: this.locationId } : undefined
+        params
       });
       return response.data;
     } catch (error) {
@@ -280,16 +284,16 @@ class GoHighLevelMCPProxy {
   async createContact(contactData) {
     // TEMPORARY: Skip MCP, use REST API directly due to 403 issues
     console.log('📝 Creating contact via REST API (MCP has 403 issues)');
-    console.log('📝 Contact data:', JSON.stringify({
-      locationId: this.locationId,
-      ...contactData
-    }));
+
+    // JWT tokens have locationId embedded - don't add it to body
+    // PIT tokens need locationId in body
+    const isJWT = !this.apiKey.startsWith('pit-');
+    const payload = isJWT ? contactData : { locationId: this.locationId, ...contactData };
+
+    console.log('📝 Contact data:', JSON.stringify(payload));
 
     try {
-      const result = await this.callAPI('/contacts/', 'POST', {
-        locationId: this.locationId,
-        ...contactData
-      });
+      const result = await this.callAPI('/contacts/', 'POST', payload);
       console.log('✅ Contact created via REST API:', result?.contact?.id || 'unknown ID');
       return result;
     } catch (error) {
@@ -318,10 +322,9 @@ class GoHighLevelMCPProxy {
   async upsertContact(contactData) {
     // Use REST API directly (MCP has 403 issues)
     console.log('📝 Upserting contact via REST API');
-    return await this.callAPI('/contacts/upsert', 'POST', {
-      locationId: this.locationId,
-      ...contactData
-    });
+    const isJWT = !this.apiKey.startsWith('pit-');
+    const payload = isJWT ? contactData : { locationId: this.locationId, ...contactData };
+    return await this.callAPI('/contacts/upsert', 'POST', payload);
   }
 
   async addTags(contactId, tags) {
@@ -383,10 +386,9 @@ class GoHighLevelMCPProxy {
   async updateOpportunity(opportunityId, updates) {
     // Use REST API directly (MCP has 403 issues)
     console.log('💰 Updating opportunity via REST API');
-    return await this.callAPI(`/opportunities/${opportunityId}`, 'PUT', {
-      locationId: this.locationId,
-      ...updates
-    });
+    const isJWT = !this.apiKey.startsWith('pit-');
+    const payload = isJWT ? updates : { locationId: this.locationId, ...updates };
+    return await this.callAPI(`/opportunities/${opportunityId}`, 'PUT', payload);
   }
 
   async getPipelines() {
@@ -430,22 +432,19 @@ class GoHighLevelMCPProxy {
   async sendSMS(contactId, message) {
     // Use REST API directly (MCP has 403 issues)
     console.log('📱 Sending SMS via REST API');
-    return await this.callAPI('/conversations/messages', 'POST', {
-      locationId: this.locationId,
-      contactId,
-      type: 'SMS',
-      message
-    });
+    const isJWT = !this.apiKey.startsWith('pit-');
+    const payload = isJWT
+      ? { contactId, type: 'SMS', message }
+      : { locationId: this.locationId, contactId, type: 'SMS', message };
+    return await this.callAPI('/conversations/messages', 'POST', payload);
   }
 
   async sendEmail(contactId, subject, body) {
-    return await this.callAPI('/conversations/messages', 'POST', {
-      locationId: this.locationId,
-      contactId,
-      type: 'Email',
-      subject,
-      body
-    });
+    const isJWT = !this.apiKey.startsWith('pit-');
+    const payload = isJWT
+      ? { contactId, type: 'Email', subject, body }
+      : { locationId: this.locationId, contactId, type: 'Email', subject, body };
+    return await this.callAPI('/conversations/messages', 'POST', payload);
   }
 
   // Calendar (MCP Protocol)
