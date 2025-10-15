@@ -320,6 +320,13 @@ class GoHighLevelMCPProxy {
     return await this.callAPI(`/contacts/${contactId}`, 'PUT', updates);
   }
 
+  async deleteContact(contactId) {
+    // Use REST API to delete contact
+    console.log('🗑️ Deleting contact via REST API');
+    console.log('🗑️ Contact ID:', contactId);
+    return await this.callAPI(`/contacts/${contactId}`, 'DELETE');
+  }
+
   async upsertContact(contactData) {
     // Use REST API directly (MCP has 403 issues)
     console.log('📝 Upserting contact via REST API');
