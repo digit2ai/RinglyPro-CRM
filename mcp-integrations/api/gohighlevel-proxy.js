@@ -291,10 +291,9 @@ class GoHighLevelMCPProxy {
   async updateContact(contactId, updates) {
     // Use REST API directly (MCP has 403 issues)
     console.log('📝 Updating contact via REST API');
-    return await this.callAPI(`/contacts/${contactId}`, 'PUT', {
-      locationId: this.locationId,
-      ...updates
-    });
+    console.log('📝 Update payload:', JSON.stringify(updates));
+    // Don't include locationId in PUT body, only in headers/URL
+    return await this.callAPI(`/contacts/${contactId}`, 'PUT', updates);
   }
 
   async upsertContact(contactData) {

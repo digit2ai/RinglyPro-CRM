@@ -305,7 +305,7 @@ router.post('/copilot/chat', async (req, res) => {
     }
     // OPPORTUNITIES / DEALS (generic handler)
     else if (lowerMessage.includes('opportunit') || lowerMessage.includes('deal') || lowerMessage.includes('pipeline')) {
-      if (lowerMessage.includes('search') || lowerMessage.includes('show') || lowerMessage.includes('view') || lowerMessage.includes('list')) {
+      if (lowerMessage.includes('search') || lowerMessage.includes('show') || lowerMessage.includes('view') || lowerMessage.includes('list') || lowerMessage.includes('get')) {
         if (lowerMessage.includes('pipeline')) {
           console.log('📊 Getting pipelines');
           try {
@@ -818,11 +818,21 @@ router.post('/copilot/chat', async (req, res) => {
       // Parse: "add task to John Doe reminder Call back tomorrow"
 
       const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
-      const nameMatch = message.match(/(?:for|to)\s+([A-Za-z\s]+?)(?:\s*:|\s+reminder|\s+task)/i);
-      const taskMatch = message.match(/(?::|task|reminder)\s+(.+)/i);
+      const nameMatch = message.match(/(?:for|to)\s+([A-Za-z\s]+?)(?:\s*:|\s+reminder)/i);
+
+      // Extract task text - everything after the colon OR after "reminder"
+      let taskBody = null;
+      if (message.includes(':')) {
+        // "create task for sarah@test.com: Follow up" -> get text after colon
+        const colonMatch = message.match(/:\s*(.+)/i);
+        taskBody = colonMatch?.[1];
+      } else if (lowerMessage.includes('reminder')) {
+        // "add task to John reminder Call back" -> get text after "reminder"
+        const reminderMatch = message.match(/reminder\s+(.+)/i);
+        taskBody = reminderMatch?.[1];
+      }
 
       const identifier = emailMatch?.[1] || nameMatch?.[1];
-      const taskBody = taskMatch?.[1];
 
       if (identifier && taskBody) {
         try {
@@ -913,11 +923,13 @@ router.post('/copilot/chat', async (req, res) => {
       // Parse: "add note to john@example.com: Customer interested in premium plan"
 
       const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
-      const nameMatch = message.match(/(?:to|for)\s+([A-Za-z\s]+?)(?:\s*:|$)/i);
-      const noteMatch = message.match(/(?::|note)\s+(.+)/i);
+      const nameMatch = message.match(/(?:to|for)\s+([A-Za-z\s]+?)(?:\s*:)/i);
+
+      // Extract note text - everything after the colon
+      const colonMatch = message.match(/:\s*(.+)/i);
+      const noteBody = colonMatch?.[1];
 
       const identifier = emailMatch?.[1] || nameMatch?.[1];
-      const noteBody = noteMatch?.[1];
 
       if (identifier && noteBody) {
         try {
