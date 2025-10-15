@@ -9,6 +9,7 @@ const HubSpotMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/hub
 const GoHighLevelMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/gohighlevel-proxy'));
 const WebhookManager = require(path.join(projectRoot, 'mcp-integrations/webhooks/webhook-manager'));
 const WorkflowEngine = require(path.join(projectRoot, 'mcp-integrations/workflows/workflow-engine'));
+const { parseNaturalDate, parseDuration, formatFriendlyDate } = require('../utils/date-parser');
 
 // Initialize services
 const sessions = new Map();
@@ -1050,14 +1051,227 @@ router.post('/copilot/chat', async (req, res) => {
       }
     }
 
+    // LIST WORKFLOWS
+    else if (lowerMessage.includes('list workflows') || lowerMessage.includes('show workflows') || (lowerMessage.includes('get') && lowerMessage.includes('workflow'))) {
+      try {
+        const workflows = await session.proxy.getWorkflows();
+        if (workflows && workflows.length > 0) {
+          response = `📋 Available Workflows (${workflows.length}):\n\n`;
+          workflows.forEach(wf => {
+            response += `• ${wf.name} (ID: ${wf.id})\n`;
+          });
+          response += `\n💡 To add a contact: "add john@test.com to workflow ${workflows[0].id}"`;
+          data = workflows;
+        } else {
+          response = "No workflows found for this location.";
+        }
+      } catch (error) {
+        response = `Error listing workflows: ${error.message}`;
+      }
+    }
+
+    // LIST CAMPAIGNS
+    else if (lowerMessage.includes('list campaigns') || lowerMessage.includes('show campaigns') || (lowerMessage.includes('get') && lowerMessage.includes('campaign'))) {
+      try {
+        const campaigns = await session.proxy.getCampaigns();
+        if (campaigns && campaigns.length > 0) {
+          response = `📢 Available Campaigns (${campaigns.length}):\n\n`;
+          campaigns.forEach(camp => {
+            response += `• ${camp.name} (ID: ${camp.id})\n`;
+          });
+          response += `\n💡 To add a contact: "add john@test.com to campaign ${campaigns[0].id}"`;
+          data = campaigns;
+        } else {
+          response = "No campaigns found for this location.";
+        }
+      } catch (error) {
+        response = `Error listing campaigns: ${error.message}`;
+      }
+    }
+
+    // BOOK APPOINTMENT (with date/time parsing)
+    else if (lowerMessage.includes('book appointment') || lowerMessage.includes('schedule appointment') || lowerMessage.includes('create appointment')) {
+      const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
+      const nameMatch = message.match(/(?:for|with)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i);
+      const identifier = emailMatch?.[1] || nameMatch?.[1];
+
+      if (identifier) {
+        try {
+          // Parse date/time from message
+          let appointmentDate = new Date();
+          const dateTimeText = message.toLowerCase();
+
+          if (dateTimeText.match(/(tomorrow|today|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d{1,2}\s*(?:am|pm))/)) {
+            appointmentDate = parseNaturalDate(dateTimeText);
+          }
+
+          const duration = parseDuration(dateTimeText);
+
+          // Search for contact
+          const contacts = await session.proxy.searchContacts(identifier, 1);
+          if (contacts && contacts.length > 0) {
+            const contactId = contacts[0].id;
+
+            // Get available calendars
+            const calendarsData = await session.proxy.getCalendars();
+            const calendars = calendarsData?.calendars || [];
+
+            if (calendars.length > 0) {
+              const calendar = calendars[0]; // Use first available calendar
+
+              // Create appointment
+              const appointmentData = {
+                calendarId: calendar.id,
+                contactId: contactId,
+                startTime: appointmentDate.toISOString(),
+                endTime: new Date(appointmentDate.getTime() + duration * 60000).toISOString(),
+                title: `Appointment with ${contacts[0].contactName || identifier}`,
+                appointmentStatus: 'confirmed'
+              };
+
+              await session.proxy.createAppointment(appointmentData);
+              response = `✅ Appointment booked successfully!\n\n📅 ${formatFriendlyDate(appointmentDate)}\n⏱️ Duration: ${duration} minutes\n👤 Contact: ${contacts[0].contactName}\n📍 Calendar: ${calendar.name}`;
+              data = { appointment: appointmentData };
+            } else {
+              response = "❌ No calendars available. Please set up a calendar in GoHighLevel first.";
+            }
+          } else {
+            response = `❌ Contact not found: ${identifier}`;
+          }
+        } catch (error) {
+          response = `Error booking appointment: ${error.message}`;
+        }
+      } else {
+        response = "To book an appointment, please provide:\n\n• Contact email or name\n• Date/time (optional, defaults to now)\n\nExamples:\n• 'book appointment for john@test.com tomorrow at 2pm'\n• 'schedule appointment with John Smith next Friday at 3:30pm'";
+      }
+    }
+
+    // CREATE TASK/REMINDER WITH DUE DATE
+    else if ((lowerMessage.includes('create reminder') || lowerMessage.includes('set reminder') || lowerMessage.includes('remind me')) && !lowerMessage.includes('create task')) {
+      const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
+      const nameMatch = message.match(/(?:for|to)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*?)(?:\s*:|\s+(?:to|on|that))/i);
+      const identifier = emailMatch?.[1] || nameMatch?.[1];
+
+      let taskBody = null;
+      if (message.includes(':')) {
+        const colonMatch = message.match(/:\s*(.+?)(?:\s+(?:on|due|by))/i);
+        taskBody = colonMatch?.[1];
+      } else if (lowerMessage.includes('to ')) {
+        const reminderMatch = message.match(/(?:remind me|reminder)\s+to\s+(.+?)(?:\s+for|\s+on|\s+due|$)/i);
+        taskBody = reminderMatch?.[1];
+      }
+
+      if (identifier && taskBody) {
+        try {
+          // Parse due date
+          let dueDate = new Date();
+          const dateTimeText = message.toLowerCase();
+          if (dateTimeText.match(/(tomorrow|today|monday|tuesday|wednesday|thursday|friday|saturday|sunday|next|in \d+)/)) {
+            dueDate = parseNaturalDate(dateTimeText);
+          }
+
+          const contacts = await session.proxy.searchContacts(identifier, 1);
+          if (contacts && contacts.length > 0) {
+            const contactId = contacts[0].id;
+            await session.proxy.createTask(contactId, {
+              title: taskBody.substring(0, 100),
+              body: taskBody,
+              dueDate: dueDate.toISOString(),
+              completed: false
+            });
+            response = `✅ Reminder set!\n\n📝 ${taskBody}\n👤 For: ${contacts[0].contactName || identifier}\n📅 Due: ${formatFriendlyDate(dueDate)}`;
+          } else {
+            response = `❌ Contact not found: ${identifier}`;
+          }
+        } catch (error) {
+          response = `Error creating reminder: ${error.message}`;
+        }
+      } else {
+        response = "To set a reminder:\n\n• Contact email or name\n• What to remind\n• When (optional)\n\nExamples:\n• 'remind me to follow up with john@test.com on Friday'\n• 'create reminder for John: send proposal tomorrow'";
+      }
+    }
+
+    // MOVE OPPORTUNITY TO STAGE
+    else if (lowerMessage.includes('move opportunity') || lowerMessage.includes('update opportunity stage') || lowerMessage.includes('change opportunity')) {
+      const oppMatch = message.match(/opportunity\s+([a-zA-Z0-9_-]+)/i);
+      const stageMatch = message.match(/(?:to|stage)\s+([a-zA-Z\s]+?)(?:\s+stage|$)/i);
+
+      const opportunityId = oppMatch?.[1];
+      const stageName = stageMatch?.[1]?.trim();
+
+      if (opportunityId && stageName) {
+        try {
+          // Get pipelines to find stage ID
+          const pipelinesData = await session.proxy.getPipelines();
+          const pipelines = pipelinesData?.pipelines || [];
+
+          let stageId = null;
+          for (const pipeline of pipelines) {
+            const stage = pipeline.stages?.find(s =>
+              s.name.toLowerCase().includes(stageName.toLowerCase()) ||
+              stageName.toLowerCase().includes(s.name.toLowerCase())
+            );
+            if (stage) {
+              stageId = stage.id;
+              break;
+            }
+          }
+
+          if (stageId) {
+            await session.proxy.updateOpportunity(opportunityId, { stageId });
+            response = `✅ Opportunity ${opportunityId} moved to "${stageName}" stage!`;
+          } else {
+            response = `❌ Stage "${stageName}" not found. Available stages:\n\n${pipelines.map(p => p.stages.map(s => `• ${s.name}`).join('\n')).join('\n')}`;
+          }
+        } catch (error) {
+          response = `Error updating opportunity: ${error.message}`;
+        }
+      } else {
+        response = "To move an opportunity:\n\n• Opportunity ID\n• Target stage name\n\nExample: 'move opportunity abc123 to Won stage'";
+      }
+    }
+
+    // SEND REVIEW REQUEST
+    else if (lowerMessage.includes('review request') || lowerMessage.includes('send review') || lowerMessage.includes('request review')) {
+      const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
+      const nameMatch = message.match(/(?:to|from)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i);
+      const identifier = emailMatch?.[1] || nameMatch?.[1];
+
+      if (identifier) {
+        try {
+          const contacts = await session.proxy.searchContacts(identifier, 1);
+          if (contacts && contacts.length > 0) {
+            const contactId = contacts[0].id;
+            const contactName = contacts[0].contactName || contacts[0].firstName || identifier;
+
+            // Send review request via SMS or Email
+            const reviewMessage = `Hi ${contactName}! We'd love to hear about your experience. Please take a moment to leave us a review: [Review Link]`;
+
+            if (contacts[0].phone) {
+              await session.proxy.sendSMS(contactId, reviewMessage);
+              response = `✅ Review request sent via SMS to ${contactName}!\n\n📱 ${contacts[0].phone}`;
+            } else if (contacts[0].email) {
+              await session.proxy.sendEmail(contactId, 'We\'d love your feedback!', reviewMessage);
+              response = `✅ Review request sent via email to ${contactName}!\n\n📧 ${contacts[0].email}`;
+            } else {
+              response = `❌ Contact ${contactName} has no phone or email on file.`;
+            }
+          } else {
+            response = `❌ Contact not found: ${identifier}`;
+          }
+        } catch (error) {
+          response = `Error sending review request: ${error.message}`;
+        }
+      } else {
+        response = "To send a review request:\n\n• Contact email or name\n\nExample: 'send review request to john@test.com'";
+      }
+    }
+
     // LOG PHONE CALL
     else if (lowerMessage.includes('log phone call') || lowerMessage.includes('log call')) {
       response = "To log a phone call:\n\n• Contact name or email\n• Call duration\n• Notes (optional)\n\nExample: 'Log phone call with john@example.com duration 15 minutes notes Discussed pricing options'";
     }
-    // SEND REVIEW REQUEST
-    else if (lowerMessage.includes('review request') || lowerMessage.includes('send review')) {
-      response = "To send a review request:\n\n• Contact name or email\n• Platform (Google, Yelp, Facebook, etc.)\n• Custom message (optional)\n\nExample: 'Send review request to john@example.com for Google Reviews'";
-    }
+
     // VIEW DASHBOARD
     else if (lowerMessage.includes('view dashboard') || lowerMessage.includes('show dashboard') || lowerMessage.includes('dashboard')) {
       console.log('📊 Getting dashboard data');
