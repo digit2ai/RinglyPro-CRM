@@ -272,9 +272,9 @@
             button.disabled = true;
 
             try {
-                // Get client ID from URL or default to 15
+                // Get client ID from URL or use "auto" to find first client with GHL credentials
                 const urlParams = new URLSearchParams(window.location.search);
-                const clientId = urlParams.get('client_id') || '15';
+                const clientId = urlParams.get('client_id') || 'auto';
 
                 const response = await fetch(`/api/test-ghl/${clientId}`);
                 const data = await response.json();

@@ -3,29 +3,62 @@ const router = express.Router();
 const { runTests } = require('../../test-ghl-direct');
 
 // GET /api/test-ghl/:client_id - Run GHL API tests for a client
+// GET /api/test-ghl/auto - Automatically find a client with GHL credentials
 router.get('/:client_id', async (req, res) => {
     try {
-        const { client_id } = req.params;
+        let { client_id } = req.params;
         const { sequelize } = require('../models');
 
-        console.log(`🧪 Running GHL API tests for client ${client_id}...`);
+        let client;
+        let results;
 
-        // Get credentials from database
-        const [results] = await sequelize.query(
-            'SELECT ghl_api_key, ghl_location_id FROM clients WHERE id = :client_id',
-            {
-                replacements: { client_id },
-                type: sequelize.QueryTypes.SELECT
+        // If client_id is "auto", find the first client with GHL credentials
+        if (client_id === 'auto') {
+            console.log('🔍 Auto-detecting client with GHL credentials...');
+            results = await sequelize.query(
+                'SELECT id, business_name, ghl_api_key, ghl_location_id FROM clients WHERE ghl_api_key IS NOT NULL AND ghl_location_id IS NOT NULL LIMIT 1',
+                {
+                    type: sequelize.QueryTypes.SELECT
+                }
+            );
+
+            if (!results || results.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'No clients found with GHL credentials configured'
+                });
             }
-        );
 
-        const client = results[0];
+            client = results[0];
+            client_id = client.id;
+            console.log(`✅ Found client ${client_id}: ${client.business_name || 'Unknown'}`);
+        } else {
+            console.log(`🧪 Running GHL API tests for client ${client_id}...`);
 
-        if (!client || !client.ghl_api_key || !client.ghl_location_id) {
-            return res.status(404).json({
-                success: false,
-                error: 'No GHL credentials found for this client'
-            });
+            // Get credentials from database
+            results = await sequelize.query(
+                'SELECT id, business_name, ghl_api_key, ghl_location_id FROM clients WHERE id = :client_id',
+                {
+                    replacements: { client_id },
+                    type: sequelize.QueryTypes.SELECT
+                }
+            );
+
+            if (!results || results.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    error: `Client ${client_id} not found`
+                });
+            }
+
+            client = results[0];
+
+            if (!client.ghl_api_key || !client.ghl_location_id) {
+                return res.status(404).json({
+                    success: false,
+                    error: `No GHL credentials found for client ${client_id}`
+                });
+            }
         }
 
         console.log('✅ Credentials loaded, running tests...');
