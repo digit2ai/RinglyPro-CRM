@@ -2079,15 +2079,15 @@
                             </h4>
 
                             <div class="form-group">
-                                <label for="ghlApiKey">Private Integration Token (API Key)</label>
+                                <label for="ghlApiKey">GoHighLevel API Key</label>
                                 <input
                                     type="password"
                                     id="ghlApiKey"
                                     name="ghl_api_key"
-                                    placeholder="pit-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                                    placeholder="pit-xxxx... or eyJhbGciOiJIUzI1NiIs..."
                                     autocomplete="off"
                                 >
-                                <span class="form-hint">Your GoHighLevel Private Integration Token (starts with "pit-")</span>
+                                <span class="form-hint">Your GoHighLevel API Key (Private Integration Token or JWT)</span>
                                 <div id="ghlApiKeyStatus" class="key-status not-configured" style="display: none;">
                                     <span>●</span>
                                     <span id="ghlApiKeyStatusText">Not configured</span>
@@ -3850,8 +3850,9 @@
             const ghlLocationId = document.getElementById('ghlLocationId').value.trim();
 
             // Validate GoHighLevel fields
-            if (ghlApiKey && !ghlApiKey.startsWith('pit-')) {
-                alert('GoHighLevel API Key must start with "pit-"');
+            // API Key can be either PIT (starts with "pit-") or JWT token format
+            if (ghlApiKey && ghlApiKey.length < 10) {
+                alert('GoHighLevel API Key appears to be too short. Please check your key.');
                 return;
             }
 
