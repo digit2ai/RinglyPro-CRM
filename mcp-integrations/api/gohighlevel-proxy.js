@@ -34,6 +34,7 @@ class GoHighLevelMCPProxy {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'locationId': this.locationId,
+          'Version': '2021-07-28',
           'Content-Type': 'application/json',
           'Accept': 'application/json, text/event-stream'  // MCP requires both!
         },
@@ -117,19 +118,16 @@ class GoHighLevelMCPProxy {
   // Legacy REST API call (fallback)
   async callAPI(endpoint, method = 'GET', data = null) {
     try {
-      // JWT tokens might not need the Version header
+      // Both JWT and PIT tokens require the Version header
       const headers = {
         'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Version': '2021-07-28'
       };
 
-      // Only add Version header for non-JWT tokens (PIT format)
-      if (this.apiKey.startsWith('pit-')) {
-        headers['Version'] = '2021-07-28';
-      }
-
+      const isJWT = !this.apiKey.startsWith('pit-');
       console.log(`🌐 API Request: ${method} ${endpoint}`);
-      console.log(`🔑 Auth type: ${this.apiKey.startsWith('pit-') ? 'PIT' : 'JWT'}`);
+      console.log(`🔑 Auth type: ${isJWT ? 'JWT' : 'PIT'}`);
 
       // Build URL with query params if GET request and no ? already in endpoint
       let url = `${this.baseURL}${endpoint}`;
