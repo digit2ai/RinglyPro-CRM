@@ -190,16 +190,12 @@ router.post('/copilot/chat', async (req, res) => {
     }
     const processMessage = correctedMessage;
 
-    // Helper function to format contacts as a table
-    function formatContactsTable(contacts, maxDisplay = 20) {
+    // Helper function to format contacts as a clean bullet list
+    function formatContactsList(contacts, maxDisplay = 20) {
       if (!contacts || contacts.length === 0) return '';
 
       const displayContacts = contacts.slice(0, maxDisplay);
-
-      // Build table header
-      let table = '┌─────┬─────────────────────────┬──────────────────────────┬─────────────────────────────────┐\n';
-      table += '│ No. │ Name                    │ Phone                    │ Email                           │\n';
-      table += '├─────┼─────────────────────────┼──────────────────────────┼─────────────────────────────────┤\n';
+      let output = '';
 
       displayContacts.forEach((c, idx) => {
         // Get name
@@ -209,33 +205,19 @@ router.post('/copilot/chat', async (req, res) => {
           const last = c.lastName || c.last_name || '';
           name = `${first} ${last}`.trim();
         }
-        if (!name || name === '') name = 'Unnamed';
+        if (!name || name === '') name = 'Unnamed Contact';
 
-        // Truncate long names
-        if (name.length > 23) name = name.substring(0, 20) + '...';
+        const phone = c.phone ? `\n   📱 ${c.phone}` : '';
+        const email = c.email ? `\n   📧 ${c.email}` : '';
 
-        const phone = c.phone || 'N/A';
-        const email = c.email || 'N/A';
-
-        // Truncate long emails
-        const displayEmail = email.length > 31 ? email.substring(0, 28) + '...' : email;
-
-        // Pad strings to fixed width
-        const numStr = String(idx + 1).padEnd(3);
-        const nameStr = name.padEnd(23);
-        const phoneStr = phone.padEnd(24);
-        const emailStr = displayEmail.padEnd(31);
-
-        table += `│ ${numStr} │ ${nameStr} │ ${phoneStr} │ ${emailStr} │\n`;
+        output += `${idx + 1}. ${name}${phone}${email}\n\n`;
       });
 
-      table += '└─────┴─────────────────────────┴──────────────────────────┴─────────────────────────────────┘\n';
-
       if (contacts.length > maxDisplay) {
-        table += `\n... and ${contacts.length - maxDisplay} more contacts (showing ${maxDisplay} of ${contacts.length})\n`;
+        output += `... and ${contacts.length - maxDisplay} more contacts (showing ${maxDisplay} of ${contacts.length})\n`;
       }
 
-      return table;
+      return output;
     }
 
     // IMPORTANT: Check SPECIFIC commands FIRST before generic keywords
@@ -613,8 +595,8 @@ router.post('/copilot/chat', async (req, res) => {
 
         if (allContacts && allContacts.length > 0) {
           response = `📋 Found ${totalCount} contacts in your CRM:\n\n`;
-          response += formatContactsTable(allContacts, 20);
-          response += `\n💡 Tip: Search for specific contacts with "search John" or "find john@example.com"`;
+          response += formatContactsList(allContacts, 20);
+          response += `💡 Tip: Search for specific contacts with "search John" or "find john@example.com"`;
         } else {
           response = `No contacts found in your CRM.\n\n💡 Create your first contact with:\n"create contact John Doe email john@example.com phone 5551234567"`;
         }
@@ -640,7 +622,7 @@ router.post('/copilot/chat', async (req, res) => {
 
           if (data && data.length > 0) {
             response = `🔍 Found ${data.length} contact${data.length > 1 ? 's' : ''} matching "${query}":\n\n`;
-            response += formatContactsTable(data, 10);
+            response += formatContactsList(data, 10);
           } else {
             response = `No contacts found matching "${query}".\n\n💡 Try:\n• Using a different search term\n• Searching by email or phone number\n• Using "list contacts" to see all contacts`;
           }
@@ -828,7 +810,7 @@ router.post('/copilot/chat', async (req, res) => {
 
         if (filteredContacts.length > 0) {
           response = `📅 Contacts added in ${timePeriod}: ${filteredContacts.length}\n\n`;
-          response += formatContactsTable(filteredContacts, 20);
+          response += formatContactsList(filteredContacts, 20);
         } else {
           response = `📅 No contacts were added in ${timePeriod}.`;
         }
@@ -864,7 +846,7 @@ router.post('/copilot/chat', async (req, res) => {
 
           if (missingField.length > 0) {
             response = `🔍 Found ${missingField.length} contacts missing ${field}:\n\n`;
-            response += formatContactsTable(missingField, 20);
+            response += formatContactsList(missingField, 20);
           } else {
             response = `✅ All contacts have a ${field}.`;
           }
