@@ -1089,6 +1089,31 @@ router.post('/copilot/chat', async (req, res) => {
       }
     }
 
+    // LIST PIPELINES
+    else if (lowerMessage.includes('list pipelines') || lowerMessage.includes('show pipelines') || (lowerMessage.includes('get') && lowerMessage.includes('pipeline'))) {
+      try {
+        const pipelinesData = await session.proxy.getPipelines();
+        const pipelines = pipelinesData?.pipelines || [];
+
+        if (pipelines.length > 0) {
+          response = `📊 Available Pipelines (${pipelines.length}):\n\n`;
+          pipelines.forEach(pipeline => {
+            response += `**${pipeline.name}** (ID: ${pipeline.id})\n`;
+            if (pipeline.stages && pipeline.stages.length > 0) {
+              response += `  Stages: ${pipeline.stages.map(s => s.name).join(' → ')}\n`;
+            }
+            response += `\n`;
+          });
+          response += `💡 To move an opportunity: "move opportunity opp_123 to Won stage"`;
+          data = pipelines;
+        } else {
+          response = "No pipelines found for this location.";
+        }
+      } catch (error) {
+        response = `Error listing pipelines: ${error.message}`;
+      }
+    }
+
     // BOOK APPOINTMENT (with date/time parsing)
     else if (lowerMessage.includes('book appointment') || lowerMessage.includes('schedule appointment') || lowerMessage.includes('create appointment')) {
       const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
@@ -1264,6 +1289,100 @@ router.post('/copilot/chat', async (req, res) => {
         }
       } else {
         response = "To send a review request:\n\n• Contact email or name\n\nExample: 'send review request to john@test.com'";
+      }
+    }
+
+    // SCHEDULE SOCIAL MEDIA POST
+    else if (lowerMessage.includes('social post') || lowerMessage.includes('schedule social') || lowerMessage.includes('post to facebook') || lowerMessage.includes('post to instagram')) {
+      try {
+        // Extract post content
+        let postContent = null;
+        if (message.includes(':')) {
+          const colonMatch = message.match(/:\s*(.+?)$/i);
+          postContent = colonMatch?.[1];
+        }
+
+        if (!postContent) {
+          response = "To schedule a social media post:\n\n• Post content after ':'\n• Optional date/time (e.g., 'tomorrow', 'Friday at 2pm')\n\nExample: 'schedule social post for tomorrow: Check out our new product launch!'";
+        } else {
+          // Parse date/time if provided
+          let postDate = new Date();
+          const dateTimeText = message.toLowerCase();
+          if (dateTimeText.match(/(tomorrow|today|monday|tuesday|wednesday|thursday|friday|saturday|sunday|next|in \d+)/)) {
+            postDate = parseNaturalDate(dateTimeText);
+          } else {
+            // Default to immediate post
+            postDate = new Date();
+          }
+
+          // Determine platform
+          let platforms = ['facebook', 'instagram']; // Default to both
+          if (lowerMessage.includes('facebook')) {
+            platforms = ['facebook'];
+          } else if (lowerMessage.includes('instagram')) {
+            platforms = ['instagram'];
+          }
+
+          // Get social media accounts
+          const fbAccounts = await session.proxy.getSocialAccounts('facebook').catch(() => ({ accounts: [] }));
+          const igAccounts = await session.proxy.getSocialAccounts('instagram').catch(() => ({ accounts: [] }));
+
+          if (!fbAccounts?.accounts?.length && !igAccounts?.accounts?.length) {
+            response = "⚠️ No social media accounts connected. Please connect your Facebook or Instagram accounts in GoHighLevel first.";
+          } else {
+            // Create social media post
+            const postData = {
+              message: postContent,
+              scheduleTime: postDate.toISOString(),
+              platforms: platforms,
+              accounts: []
+            };
+
+            // Add available accounts
+            if (platforms.includes('facebook') && fbAccounts?.accounts?.length > 0) {
+              postData.accounts.push(...fbAccounts.accounts.map(acc => acc.id));
+            }
+            if (platforms.includes('instagram') && igAccounts?.accounts?.length > 0) {
+              postData.accounts.push(...igAccounts.accounts.map(acc => acc.id));
+            }
+
+            const result = await session.proxy.createSocialPost(postData);
+
+            response = `✅ Social media post scheduled!\n\n`;
+            response += `📱 Platforms: ${platforms.join(', ')}\n`;
+            response += `📅 Scheduled for: ${formatFriendlyDate(postDate)}\n`;
+            response += `📝 Content: ${postContent.substring(0, 100)}${postContent.length > 100 ? '...' : ''}`;
+            data = result;
+          }
+        }
+      } catch (error) {
+        console.error('❌ Social post error:', error);
+        response = `Error scheduling social post: ${error.message}`;
+      }
+    }
+
+    // LIST SOCIAL POSTS
+    else if (lowerMessage.includes('list social posts') || lowerMessage.includes('show social posts') || lowerMessage.includes('get social posts')) {
+      try {
+        const posts = await session.proxy.listSocialPosts({ limit: 20 });
+
+        if (posts && posts.posts && posts.posts.length > 0) {
+          response = `📱 Recent Social Media Posts (${posts.posts.length}):\n\n`;
+          posts.posts.forEach((post, idx) => {
+            response += `${idx + 1}. ${post.message ? post.message.substring(0, 50) + '...' : 'No content'}\n`;
+            response += `   Status: ${post.status || 'unknown'}\n`;
+            if (post.scheduleTime) {
+              response += `   Scheduled: ${formatFriendlyDate(new Date(post.scheduleTime))}\n`;
+            }
+            response += `\n`;
+          });
+          data = posts;
+        } else {
+          response = "No social media posts found.";
+        }
+      } catch (error) {
+        console.error('❌ List social posts error:', error);
+        response = `Error listing social posts: ${error.message}`;
       }
     }
 

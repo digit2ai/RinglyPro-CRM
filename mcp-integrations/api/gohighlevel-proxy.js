@@ -608,6 +608,39 @@ class GoHighLevelMCPProxy {
     return await this.callAPI(`/contacts/${contactId}/notes/${noteId}`, 'DELETE');
   }
 
+  // Social Media Posting (REST API v2)
+  async createSocialPost(postData) {
+    console.log('📱 Creating social media post via REST API v2');
+    return await this.callAPI(`/social-media-posting/${this.locationId}/posts`, 'POST', {
+      ...postData
+    });
+  }
+
+  async getSocialPost(postId) {
+    console.log('📱 Getting social media post via REST API v2');
+    return await this.callAPI(`/social-media-posting/${this.locationId}/posts/${postId}`, 'GET');
+  }
+
+  async listSocialPosts(filters = {}) {
+    console.log('📱 Listing social media posts via REST API v2');
+    return await this.callAPI(`/social-media-posting/${this.locationId}/posts/list`, 'POST', filters);
+  }
+
+  async updateSocialPost(postId, updates) {
+    console.log('📱 Updating social media post via REST API v2');
+    return await this.callAPI(`/social-media-posting/${this.locationId}/posts/${postId}`, 'PUT', updates);
+  }
+
+  async deleteSocialPost(postId) {
+    console.log('📱 Deleting social media post via REST API v2');
+    return await this.callAPI(`/social-media-posting/${this.locationId}/posts/${postId}`, 'DELETE');
+  }
+
+  async getSocialAccounts(platform = 'facebook') {
+    console.log(`📱 Getting ${platform} accounts via REST API v2`);
+    return await this.callAPI(`/social-media-posting/oauth/${this.locationId}/${platform}/accounts`, 'GET');
+  }
+
   // Inbound Webhook Trigger (for workflows)
   async triggerInboundWebhook(webhookUrl, payload) {
     console.log('🪝 Triggering inbound webhook');
