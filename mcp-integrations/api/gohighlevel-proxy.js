@@ -131,16 +131,17 @@ class GoHighLevelMCPProxy {
       console.log(`🔑 Token preview: ${this.apiKey.substring(0, 20)}...${this.apiKey.substring(this.apiKey.length - 10)}`);
       console.log(`📍 Location ID: ${this.locationId}`);
 
-      // JWT tokens have locationId embedded - don't add it as parameter
-      // PIT tokens need locationId as query parameter
+      // JWT tokens have locationId embedded - don't add it anywhere
+      // PIT tokens need locationId as query parameter for GET only
       let url = `${this.baseURL}${endpoint}`;
       let params = undefined;
 
       if (!isJWT && method === 'GET' && !endpoint.includes('?')) {
-        // Only add locationId for PIT tokens
+        // Only add locationId query param for PIT tokens on GET requests
         params = { locationId: this.locationId };
       }
 
+      // Don't modify data - methods should handle locationId themselves if needed
       const response = await axios({
         method,
         url,
