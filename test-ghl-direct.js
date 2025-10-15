@@ -63,8 +63,9 @@ class GHLAPITester {
       }
 
       // JWT tokens don't need locationId in body
+      // Only add locationId for PIT tokens on POST requests (not PUT/DELETE/PATCH)
       let payload = data;
-      if (!this.isJWT && data && method !== 'GET') {
+      if (!this.isJWT && data && method === 'POST') {
         payload = { locationId: this.locationId, ...data };
       }
 
