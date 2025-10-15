@@ -115,7 +115,7 @@ router.get('/:clientId/link', async (req, res) => {
             success: true,
             referralCode: referralCode,
             referralLink: referralLink,
-            shareMessage: `Join me on RinglyPro! Get your own AI assistant to handle calls 24/7. Sign up with my link: ${referralLink}`
+            shareMessage: `Join me on RinglyPro! Get your own FREE AI assistant to handle calls 24/7. Sign up with my link: ${referralLink}`
         });
 
     } catch (error) {
