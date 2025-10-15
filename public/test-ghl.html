@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoHighLevel API Test Results</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .run-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+
+        .run-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .run-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .results {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .summary-card.total {
+            background: #f0f0f0;
+        }
+
+        .summary-card.passed {
+            background: #d4edda;
+        }
+
+        .summary-card.failed {
+            background: #f8d7da;
+        }
+
+        .summary-card .number {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .summary-card .label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .test-list {
+            margin-top: 20px;
+        }
+
+        .test-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .test-item.passed {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+
+        .test-item.failed {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+
+        .test-icon {
+            font-size: 24px;
+        }
+
+        .test-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .test-error {
+            font-size: 12px;
+            color: #721c24;
+            margin-top: 5px;
+            padding-left: 34px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .analysis {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 8px;
+        }
+
+        .analysis h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .analysis p {
+            color: #856404;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .analysis.success {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .analysis.success h3,
+        .analysis.success p {
+            color: #155724;
+        }
+
+        .logs {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .logs pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 GoHighLevel API Test Suite</h1>
+            <p class="subtitle">Comprehensive backend testing of all GHL API operations</p>
+            <button class="run-button" onclick="runTests()">▶️ Run Tests</button>
+        </div>
+
+        <div class="results" id="results">
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Running comprehensive API tests...</p>
+                <p style="font-size: 14px; color: #999; margin-top: 10px;">This may take 15-30 seconds</p>
+            </div>
+
+            <div id="resultsContent" style="display: none;">
+                <h2>Test Results</h2>
+
+                <div class="summary" id="summary"></div>
+
+                <div id="analysis"></div>
+
+                <div class="test-list">
+                    <h3>Passed Tests</h3>
+                    <div id="passedTests"></div>
+                </div>
+
+                <div class="test-list">
+                    <h3>Failed Tests</h3>
+                    <div id="failedTests"></div>
+                </div>
+
+                <details style="margin-top: 30px;">
+                    <summary style="cursor: pointer; font-weight: bold; margin-bottom: 10px;">📋 View Full Logs</summary>
+                    <div class="logs" id="logs"></div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function runTests() {
+            const resultsDiv = document.getElementById('results');
+            const loadingDiv = document.getElementById('loading');
+            const resultsContent = document.getElementById('resultsContent');
+            const button = document.querySelector('.run-button');
+
+            // Show results panel and loading state
+            resultsDiv.classList.add('show');
+            loadingDiv.style.display = 'block';
+            resultsContent.style.display = 'none';
+            button.disabled = true;
+
+            try {
+                // Get client ID from URL or default to 15
+                const urlParams = new URLSearchParams(window.location.search);
+                const clientId = urlParams.get('client_id') || '15';
+
+                const response = await fetch(`/api/test-ghl/${clientId}`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error);
+                }
+
+                // Hide loading, show results
+                loadingDiv.style.display = 'none';
+                resultsContent.style.display = 'block';
+
+                // Display summary
+                displaySummary(data.summary);
+
+                // Display test results
+                displayTests(data.results);
+
+                // Display analysis
+                displayAnalysis(data.results, data.summary);
+
+                // Display logs
+                displayLogs(data.logs);
+
+            } catch (error) {
+                loadingDiv.innerHTML = `
+                    <p style="color: red;">❌ Error running tests</p>
+                    <p style="font-size: 14px; color: #666;">${error.message}</p>
+                `;
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        function displaySummary(summary) {
+            const summaryDiv = document.getElementById('summary');
+            summaryDiv.innerHTML = `
+                <div class="summary-card total">
+                    <div class="number">${summary.total}</div>
+                    <div class="label">Total Tests</div>
+                </div>
+                <div class="summary-card passed">
+                    <div class="number">${summary.passed}</div>
+                    <div class="label">Passed</div>
+                </div>
+                <div class="summary-card failed">
+                    <div class="number">${summary.failed}</div>
+                    <div class="label">Failed</div>
+                </div>
+                <div class="summary-card ${summary.passRate === 100 ? 'passed' : 'failed'}">
+                    <div class="number">${summary.passRate}%</div>
+                    <div class="label">Pass Rate</div>
+                </div>
+            `;
+        }
+
+        function displayTests(results) {
+            const passedDiv = document.getElementById('passedTests');
+            const failedDiv = document.getElementById('failedTests');
+
+            if (results.passed.length > 0) {
+                passedDiv.innerHTML = results.passed.map(name => `
+                    <div class="test-item passed">
+                        <span class="test-icon">✅</span>
+                        <span class="test-name">${name}</span>
+                    </div>
+                `).join('');
+            } else {
+                passedDiv.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No tests passed</p>';
+            }
+
+            if (results.failed.length > 0) {
+                failedDiv.innerHTML = results.failed.map(({ name, error }) => `
+                    <div class="test-item failed">
+                        <span class="test-icon">❌</span>
+                        <span class="test-name">${name}</span>
+                    </div>
+                    <div class="test-error">${error}</div>
+                `).join('');
+            } else {
+                failedDiv.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No tests failed 🎉</p>';
+            }
+        }
+
+        function displayAnalysis(results, summary) {
+            const analysisDiv = document.getElementById('analysis');
+
+            if (summary.passRate === 100) {
+                analysisDiv.innerHTML = `
+                    <div class="analysis success">
+                        <h3>🎉 All Tests Passed!</h3>
+                        <p>Your GoHighLevel API integration is working perfectly.</p>
+                        <p><strong>Conclusion:</strong> The JWT token and API configuration are correct. The issue must be in the frontend/session handling.</p>
+                    </div>
+                `;
+            } else if (summary.passed === 0) {
+                const firstError = results.failed[0]?.error || '';
+                let message = '';
+
+                if (firstError.includes('Invalid JWT') || firstError.includes('401')) {
+                    message = `
+                        <p><strong>Root Cause:</strong> JWT token is invalid, expired, or wrong type.</p>
+                        <p><strong>Solution:</strong> Generate a new API key from GoHighLevel:</p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>Go to GoHighLevel → Settings → Integrations</li>
+                            <li>Create a Private Integration Token (PIT)</li>
+                            <li>Copy the token (starts with "pit-")</li>
+                            <li>Update in RinglyPro Settings</li>
+                        </ul>
+                    `;
+                } else if (firstError.includes('403')) {
+                    message = `
+                        <p><strong>Root Cause:</strong> Token lacks required permissions.</p>
+                        <p><strong>Solution:</strong> Check token scopes in GoHighLevel settings.</p>
+                    `;
+                } else {
+                    message = `
+                        <p><strong>Unknown Issue:</strong> ${firstError}</p>
+                    `;
+                }
+
+                analysisDiv.innerHTML = `
+                    <div class="analysis">
+                        <h3>⚠️ All Tests Failed</h3>
+                        ${message}
+                    </div>
+                `;
+            } else {
+                analysisDiv.innerHTML = `
+                    <div class="analysis">
+                        <h3>⚠️ Partial Failures</h3>
+                        <p>Some operations work, some don't. This suggests:</p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>Token has limited permissions</li>
+                            <li>Certain endpoints have different requirements</li>
+                            <li>Review failed tests to identify the pattern</li>
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        function displayLogs(logs) {
+            const logsDiv = document.getElementById('logs');
+            logsDiv.innerHTML = '<pre>' + logs.join('\n') + '</pre>';
+        }
+    </script>
+</body>
+</html>
