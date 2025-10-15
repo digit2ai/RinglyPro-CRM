@@ -117,19 +117,40 @@ class GoHighLevelMCPProxy {
   // Legacy REST API call (fallback)
   async callAPI(endpoint, method = 'GET', data = null) {
     try {
+      // JWT tokens might not need the Version header
+      const headers = {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json'
+      };
+
+      // Only add Version header for non-JWT tokens (PIT format)
+      if (this.apiKey.startsWith('pit-')) {
+        headers['Version'] = '2021-07-28';
+      }
+
+      console.log(`🌐 API Request: ${method} ${endpoint}`);
+      console.log(`🔑 Auth type: ${this.apiKey.startsWith('pit-') ? 'PIT' : 'JWT'}`);
+
+      // Build URL with query params if GET request and no ? already in endpoint
+      let url = `${this.baseURL}${endpoint}`;
+      if (method === 'GET' && !endpoint.includes('?')) {
+        // Add locationId as query param for GET requests
+        url += `?locationId=${this.locationId}`;
+      }
+
       const response = await axios({
         method,
-        url: `${this.baseURL}${endpoint}`,
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'Version': '2021-07-28'
-        },
-        data
+        url,
+        headers,
+        data,
+        // Also add as params for axios to handle properly
+        params: method === 'GET' ? { locationId: this.locationId } : undefined
       });
       return response.data;
     } catch (error) {
-      console.error('GoHighLevel API Error:', error.response?.data || error.message);
+      console.error('GoHighLevel API Error:', error.response?.status, error.response?.data || error.message);
+      console.error('Request URL:', `${method} ${this.baseURL}${endpoint}`);
+      console.error('Request data:', data);
       throw error;
     }
   }
