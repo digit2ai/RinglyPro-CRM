@@ -193,8 +193,10 @@ router.post('/copilot/chat', async (req, res) => {
     // IMPORTANT: Check SPECIFIC commands FIRST before generic keywords
     // This prevents "book appointment" from matching generic "appointment" handler
 
-    // CREATE NEW CONTACT (check before generic "contact" search)
-    if (processMessage.includes('create') && processMessage.includes('contact')) {
+    // CREATE NEW CONTACT - Enhanced with schema patterns
+    // Patterns: "Create a new contact named {name}", "Create contact {name}"
+    if ((processMessage.includes('create') && processMessage.includes('contact')) ||
+        processMessage.match(/create\s+(?:a\s+)?(?:new\s+)?contact\s+named/i)) {
       // Try to parse contact info from message
       const emailMatch = message.match(/[\w.-]+@[\w.-]+\.\w+/);
 
@@ -737,6 +739,164 @@ router.post('/copilot/chat', async (req, res) => {
         }
       } else {
         response = "To update a contact, please provide:\n\n• Contact email, phone, or name\n• Field to update\n• New value\n\nExample: 'Update contact john@example.com phone 5551234567'";
+      }
+    }
+    // DELETE CONTACT - Schema pattern: "Delete contact {contact_name}"
+    else if (lowerMessage.includes('delete') && lowerMessage.includes('contact')) {
+      const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
+      const phoneMatch = message.match(/(\d{10})/);
+      const nameMatch = message.match(/contact\s+([A-Za-z\s]+)/i);
+
+      const identifier = emailMatch?.[1] || phoneMatch?.[1] || nameMatch?.[1]?.trim();
+
+      if (identifier) {
+        console.log('🗑️ Deleting contact:', identifier);
+        try {
+          const contacts = await session.proxy.searchContacts(identifier, 5);
+          let contactId = null;
+
+          if (contacts && contacts.length > 0) {
+            const match = contacts.find(c =>
+              c.email?.toLowerCase() === identifier.toLowerCase() ||
+              c.phone?.includes(identifier) ||
+              c.firstName?.toLowerCase().includes(identifier.toLowerCase()) ||
+              c.lastName?.toLowerCase().includes(identifier.toLowerCase())
+            );
+            if (match) {
+              contactId = match.id;
+              const contactName = match.firstName || match.email || identifier;
+
+              // Delete the contact
+              await session.proxy.deleteContact(contactId);
+              response = `✅ Contact "${contactName}" has been deleted successfully.`;
+            } else {
+              response = `❌ Could not find contact: ${identifier}`;
+            }
+          } else {
+            response = `❌ Could not find contact: ${identifier}`;
+          }
+        } catch (error) {
+          console.error('❌ Delete contact error:', error);
+          response = `Error deleting contact: ${error.message}`;
+        }
+      } else {
+        response = "To delete a contact, provide their email, phone, or name.\n\nExample: 'Delete contact john@example.com'";
+      }
+    }
+    // SHOW CONTACTS ADDED IN TIME PERIOD - Schema pattern: "Show all contacts added in {time_period}"
+    else if (lowerMessage.match(/(show|list|get).*(contacts?|leads?).*(added|created).*(in|during|from)/i) ||
+             lowerMessage.match(/(show|list|get).*(contacts?|leads?).*(today|yesterday|this week|last week|this month)/i)) {
+      console.log('📅 Showing contacts added in time period');
+      try {
+        // Extract time period
+        let timePeriod = 'today';
+        if (lowerMessage.includes('yesterday')) timePeriod = 'yesterday';
+        else if (lowerMessage.includes('this week')) timePeriod = 'this week';
+        else if (lowerMessage.includes('last week')) timePeriod = 'last week';
+        else if (lowerMessage.includes('this month')) timePeriod = 'this month';
+        else if (lowerMessage.includes('last month')) timePeriod = 'last month';
+
+        // Get all contacts and filter by date
+        const allContacts = await session.proxy.searchContacts('', 50);
+
+        // Calculate date range
+        const now = new Date();
+        let startDate = new Date();
+
+        if (timePeriod === 'today') {
+          startDate.setHours(0, 0, 0, 0);
+        } else if (timePeriod === 'yesterday') {
+          startDate.setDate(now.getDate() - 1);
+          startDate.setHours(0, 0, 0, 0);
+        } else if (timePeriod === 'this week') {
+          const dayOfWeek = now.getDay();
+          startDate.setDate(now.getDate() - dayOfWeek);
+          startDate.setHours(0, 0, 0, 0);
+        } else if (timePeriod === 'last week') {
+          const dayOfWeek = now.getDay();
+          startDate.setDate(now.getDate() - dayOfWeek - 7);
+          startDate.setHours(0, 0, 0, 0);
+        } else if (timePeriod === 'this month') {
+          startDate.setDate(1);
+          startDate.setHours(0, 0, 0, 0);
+        } else if (timePeriod === 'last month') {
+          startDate.setMonth(now.getMonth() - 1);
+          startDate.setDate(1);
+          startDate.setHours(0, 0, 0, 0);
+        }
+
+        // Filter contacts by date
+        const filteredContacts = allContacts?.filter(c => {
+          if (!c.dateAdded && !c.createdAt) return false;
+          const contactDate = new Date(c.dateAdded || c.createdAt);
+          return contactDate >= startDate;
+        }) || [];
+
+        response = `📅 Contacts added in ${timePeriod}: ${filteredContacts.length}\n\n`;
+
+        if (filteredContacts.length > 0) {
+          filteredContacts.slice(0, 10).forEach((c, idx) => {
+            const name = c.firstName || c.name || 'Unknown';
+            const email = c.email ? ` (${c.email})` : '';
+            const dateAdded = new Date(c.dateAdded || c.createdAt).toLocaleDateString();
+            response += `${idx + 1}. ${name}${email} - Added: ${dateAdded}\n`;
+          });
+          if (filteredContacts.length > 10) {
+            response += `\n... and ${filteredContacts.length - 10} more`;
+          }
+        } else {
+          response += `No contacts were added in ${timePeriod}.`;
+        }
+
+        data = filteredContacts;
+      } catch (error) {
+        console.error('❌ Show contacts by date error:', error);
+        response = `Error fetching contacts: ${error.message}`;
+      }
+    }
+    // FIND CONTACTS MISSING FIELD - Schema pattern: "Find all contacts missing {field_name}"
+    else if (lowerMessage.match(/(find|show|list).*(contacts?|leads?).*(missing|without|no)/i)) {
+      console.log('🔍 Finding contacts missing field');
+      try {
+        // Extract field name
+        let field = null;
+        if (lowerMessage.includes('email')) field = 'email';
+        else if (lowerMessage.includes('phone')) field = 'phone';
+        else if (lowerMessage.includes('name')) field = 'name';
+        else if (lowerMessage.includes('tag')) field = 'tags';
+
+        if (!field) {
+          response = "Please specify which field to check.\n\nExample: 'Find all contacts missing email'";
+        } else {
+          const allContacts = await session.proxy.searchContacts('', 50);
+          const missingField = allContacts?.filter(c => {
+            if (field === 'email') return !c.email;
+            if (field === 'phone') return !c.phone;
+            if (field === 'name') return !c.firstName && !c.name;
+            if (field === 'tags') return !c.tags || c.tags.length === 0;
+            return false;
+          }) || [];
+
+          response = `🔍 Found ${missingField.length} contacts missing ${field}:\n\n`;
+
+          if (missingField.length > 0) {
+            missingField.slice(0, 10).forEach((c, idx) => {
+              const name = c.firstName || c.name || 'Unknown';
+              const identifier = c.email || c.phone || 'No identifier';
+              response += `${idx + 1}. ${name} - ${identifier}\n`;
+            });
+            if (missingField.length > 10) {
+              response += `\n... and ${missingField.length - 10} more`;
+            }
+          } else {
+            response += `All contacts have a ${field}.`;
+          }
+
+          data = missingField;
+        }
+      } catch (error) {
+        console.error('❌ Find missing field error:', error);
+        response = `Error finding contacts: ${error.message}`;
       }
     }
     // SEND SMS

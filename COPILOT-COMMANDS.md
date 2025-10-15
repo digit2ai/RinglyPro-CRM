@@ -12,6 +12,7 @@
 
 ### Create Contact
 - `create contact John Doe email john@example.com phone 5551234567`
+- `create a new contact named Sarah Johnson`
 - `create contact Sarah Johnson phone 7275551234 email sarah@example.com`
 - `add contact Mike phone 8136414177`
 
@@ -19,6 +20,24 @@
 - `update contact john@example.com phone 5551234567`
 - `update contact john@example.com email newemail@example.com`
 - `update john@example.com set phone to 5559999999`
+
+### Delete Contact ⚠️
+- `delete contact john@example.com`
+- `delete contact John Doe`
+- `delete contact 5551234567`
+
+### Show Contacts by Time Period 🆕
+- `show contacts added today`
+- `show all contacts added this week`
+- `list contacts created yesterday`
+- `show contacts added this month`
+- `get contacts added last week`
+
+### Find Contacts Missing Fields 🆕
+- `find all contacts missing email`
+- `show contacts without phone`
+- `list contacts missing name`
+- `find contacts with no tags`
 
 ### Tags
 - `add tag vip to john@example.com`
