@@ -392,18 +392,30 @@
         let sessionId = null;
         let selectedPlatforms = [];
 
-        // Extract client_id from URL
+        // Extract client_id and session_id from URL
         const urlParams = new URLSearchParams(window.location.search);
         clientId = urlParams.get('client_id');
+        sessionId = urlParams.get('session_id');
 
         if (!clientId) {
-            showAlert('error', 'No client ID provided. Please open this page from the dashboard.');
+            showAlert('error', 'No client ID provided. Please open this page from MCP Copilot.');
+        }
+
+        if (!sessionId) {
+            showAlert('error', 'No session ID provided. Please open this page from MCP Copilot.');
         }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
-            await connectToGHL();
-            await loadPosts();
+            if (sessionId) {
+                // Already connected via MCP Copilot
+                updateStatus('connected', 'Connected via MCP Copilot');
+                await loadPosts();
+            } else {
+                // Fallback: try to connect
+                await connectToGHL();
+                await loadPosts();
+            }
             setupEventListeners();
         });
 

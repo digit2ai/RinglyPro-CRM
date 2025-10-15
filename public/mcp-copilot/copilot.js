@@ -1,6 +1,7 @@
 let sessionId = null;
 let crmType = null;
 const API_BASE = window.location.origin + '/api/mcp';
+let currentClientId = null;
 
 // Check for client_id in URL and auto-load credentials
 document.addEventListener('DOMContentLoaded', async () => {
@@ -8,10 +9,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     const clientId = urlParams.get('client_id');
 
     if (clientId) {
+        currentClientId = clientId;
         console.log('📋 Client ID detected:', clientId);
         await autoLoadCredentials(clientId);
     }
 });
+
+// Open Social Media Marketing Tool
+function openSocialMedia() {
+    if (!currentClientId) {
+        alert('Client ID not found. Please open MCP Copilot from the dashboard.');
+        return;
+    }
+
+    if (!sessionId) {
+        alert('Please connect to GoHighLevel first.');
+        return;
+    }
+
+    // Pass sessionId and clientId to social media page
+    const socialUrl = `${window.location.origin}/mcp-copilot/social-media.html?client_id=${currentClientId}&session_id=${sessionId}`;
+    window.open(socialUrl, '_blank');
+}
 
 async function autoLoadCredentials(clientId) {
     try {
