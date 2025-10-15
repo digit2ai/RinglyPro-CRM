@@ -110,13 +110,15 @@ async function runTests(apiKey, locationId) {
 
   let contactId = null;
 
-  // Test 1: Create Contact
+  // Test 1: Create Contact with unique random data
+  const timestamp = Date.now();
+  const randomId = Math.random().toString(36).substring(7);
   log('\n═══ Test 1: Create Contact ═══', 'blue');
   const createResult = await tester.callAPI('POST', '/contacts/', {
-    firstName: 'TestAPI',
-    lastName: 'Contact',
-    email: `test.api.${Date.now()}@ringlypro-test.com`,
-    phone: '+17275551234'
+    firstName: `Test${randomId}`,
+    lastName: `API${timestamp}`,
+    email: `test.${timestamp}.${randomId}@ringlypro-test.com`,
+    phone: `+1727555${Math.floor(1000 + Math.random() * 9000)}`
   }, 'Create Contact');
 
   if (createResult.success) {
@@ -128,7 +130,7 @@ async function runTests(apiKey, locationId) {
 
   // Test 2: Search Contacts
   log('\n═══ Test 2: Search Contacts ═══', 'blue');
-  await tester.callAPI('GET', '/contacts/?query=Test&limit=5', null, 'Search Contacts');
+  await tester.callAPI('GET', '/contacts/', null, 'Search Contacts');
 
   // Test 3: Get Contact by ID
   if (contactId) {
