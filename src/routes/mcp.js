@@ -190,6 +190,54 @@ router.post('/copilot/chat', async (req, res) => {
     }
     const processMessage = correctedMessage;
 
+    // Helper function to format contacts as a table
+    function formatContactsTable(contacts, maxDisplay = 20) {
+      if (!contacts || contacts.length === 0) return '';
+
+      const displayContacts = contacts.slice(0, maxDisplay);
+
+      // Build table header
+      let table = '┌─────┬─────────────────────────┬──────────────────────────┬─────────────────────────────────┐\n';
+      table += '│ No. │ Name                    │ Phone                    │ Email                           │\n';
+      table += '├─────┼─────────────────────────┼──────────────────────────┼─────────────────────────────────┤\n';
+
+      displayContacts.forEach((c, idx) => {
+        // Get name
+        let name = c.contactName || c.name || c.fullName || c.fullNameLowerCase;
+        if (!name || name.trim() === '') {
+          const first = c.firstName || c.first_name || '';
+          const last = c.lastName || c.last_name || '';
+          name = `${first} ${last}`.trim();
+        }
+        if (!name || name === '') name = 'Unnamed';
+
+        // Truncate long names
+        if (name.length > 23) name = name.substring(0, 20) + '...';
+
+        const phone = c.phone || 'N/A';
+        const email = c.email || 'N/A';
+
+        // Truncate long emails
+        const displayEmail = email.length > 31 ? email.substring(0, 28) + '...' : email;
+
+        // Pad strings to fixed width
+        const numStr = String(idx + 1).padEnd(3);
+        const nameStr = name.padEnd(23);
+        const phoneStr = phone.padEnd(24);
+        const emailStr = displayEmail.padEnd(31);
+
+        table += `│ ${numStr} │ ${nameStr} │ ${phoneStr} │ ${emailStr} │\n`;
+      });
+
+      table += '└─────┴─────────────────────────┴──────────────────────────┴─────────────────────────────────┘\n';
+
+      if (contacts.length > maxDisplay) {
+        table += `\n... and ${contacts.length - maxDisplay} more contacts (showing ${maxDisplay} of ${contacts.length})\n`;
+      }
+
+      return table;
+    }
+
     // IMPORTANT: Check SPECIFIC commands FIRST before generic keywords
     // This prevents "book appointment" from matching generic "appointment" handler
 
@@ -563,44 +611,10 @@ router.post('/copilot/chat', async (req, res) => {
         const allContacts = await session.proxy.searchContacts('', 50);
         const totalCount = allContacts?.length || 0;
 
-        response = `📋 Found ${totalCount} contacts in your CRM:\n\n`;
-
         if (allContacts && allContacts.length > 0) {
-          // Show up to 20 contacts with better formatting
-          const displayCount = Math.min(20, allContacts.length);
-
-          allContacts.slice(0, displayCount).forEach((c, idx) => {
-            // Try multiple name field variations
-            let name = c.contactName || c.name || c.fullName || c.fullNameLowerCase;
-
-            // If no combined name, build from first/last
-            if (!name || name.trim() === '') {
-              const first = c.firstName || c.first_name || '';
-              const last = c.lastName || c.last_name || '';
-              name = `${first} ${last}`.trim();
-            }
-
-            // Still no name? Use email or phone
-            if (!name || name === '') {
-              name = 'Unnamed Contact';
-            }
-
-            const phone = c.phone ? `📱 ${c.phone}` : '';
-            const email = c.email ? `📧 ${c.email}` : '';
-            const contact_info = [phone, email].filter(Boolean).join(' | ');
-
-            response += `${idx + 1}. ${name}\n`;
-            if (contact_info) {
-              response += `   ${contact_info}\n`;
-            }
-            response += '\n';
-          });
-
-          if (allContacts.length > displayCount) {
-            response += `... and ${allContacts.length - displayCount} more contacts\n\n`;
-          }
-
-          response += `💡 Tip: Search for specific contacts with "search John" or "find john@example.com"`;
+          response = `📋 Found ${totalCount} contacts in your CRM:\n\n`;
+          response += formatContactsTable(allContacts, 20);
+          response += `\n💡 Tip: Search for specific contacts with "search John" or "find john@example.com"`;
         } else {
           response = `No contacts found in your CRM.\n\n💡 Create your first contact with:\n"create contact John Doe email john@example.com phone 5551234567"`;
         }
@@ -623,32 +637,12 @@ router.post('/copilot/chat', async (req, res) => {
         console.log('🔍 Searching contacts with query:', query);
         try {
           data = await session.proxy.searchContacts(query);
-          response = `I found ${data?.length || 0} contacts matching "${query}".`;
 
-          // Show some contact details if found
           if (data && data.length > 0) {
-            const contactList = data.slice(0, 5).map(c => {
-              // Try multiple name field variations
-              let name = c.contactName || c.name || c.fullName || c.fullNameLowerCase;
-
-              // If no combined name, build from first/last
-              if (!name || name.trim() === '') {
-                const first = c.firstName || c.first_name || '';
-                const last = c.lastName || c.last_name || '';
-                name = `${first} ${last}`.trim();
-              }
-
-              // Still no name? Use email or phone
-              if (!name || name === '') {
-                name = c.email || c.phone || 'Unnamed Contact';
-              }
-
-              const email = c.email ? ` (${c.email})` : '';
-              const phone = !c.email && c.phone ? ` (${c.phone})` : '';
-              return `• ${name}${email}${phone}`;
-            }).join('\n');
-            response += `\n\n${contactList}`;
-            if (data.length > 5) response += `\n... and ${data.length - 5} more`;
+            response = `🔍 Found ${data.length} contact${data.length > 1 ? 's' : ''} matching "${query}":\n\n`;
+            response += formatContactsTable(data, 10);
+          } else {
+            response = `No contacts found matching "${query}".\n\n💡 Try:\n• Using a different search term\n• Searching by email or phone number\n• Using "list contacts" to see all contacts`;
           }
         } catch (searchError) {
           console.error('❌ Search error:', searchError.message);
@@ -832,20 +826,11 @@ router.post('/copilot/chat', async (req, res) => {
           return contactDate >= startDate;
         }) || [];
 
-        response = `📅 Contacts added in ${timePeriod}: ${filteredContacts.length}\n\n`;
-
         if (filteredContacts.length > 0) {
-          filteredContacts.slice(0, 10).forEach((c, idx) => {
-            const name = c.firstName || c.name || 'Unknown';
-            const email = c.email ? ` (${c.email})` : '';
-            const dateAdded = new Date(c.dateAdded || c.createdAt).toLocaleDateString();
-            response += `${idx + 1}. ${name}${email} - Added: ${dateAdded}\n`;
-          });
-          if (filteredContacts.length > 10) {
-            response += `\n... and ${filteredContacts.length - 10} more`;
-          }
+          response = `📅 Contacts added in ${timePeriod}: ${filteredContacts.length}\n\n`;
+          response += formatContactsTable(filteredContacts, 20);
         } else {
-          response += `No contacts were added in ${timePeriod}.`;
+          response = `📅 No contacts were added in ${timePeriod}.`;
         }
 
         data = filteredContacts;
@@ -877,19 +862,11 @@ router.post('/copilot/chat', async (req, res) => {
             return false;
           }) || [];
 
-          response = `🔍 Found ${missingField.length} contacts missing ${field}:\n\n`;
-
           if (missingField.length > 0) {
-            missingField.slice(0, 10).forEach((c, idx) => {
-              const name = c.firstName || c.name || 'Unknown';
-              const identifier = c.email || c.phone || 'No identifier';
-              response += `${idx + 1}. ${name} - ${identifier}\n`;
-            });
-            if (missingField.length > 10) {
-              response += `\n... and ${missingField.length - 10} more`;
-            }
+            response = `🔍 Found ${missingField.length} contacts missing ${field}:\n\n`;
+            response += formatContactsTable(missingField, 20);
           } else {
-            response += `All contacts have a ${field}.`;
+            response = `✅ All contacts have a ${field}.`;
           }
 
           data = missingField;
