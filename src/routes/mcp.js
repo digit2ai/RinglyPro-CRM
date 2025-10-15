@@ -543,24 +543,69 @@ router.post('/copilot/chat', async (req, res) => {
         }
       }
     }
-    // LIST ALL CONTACTS (diagnostic)
-    else if (lowerMessage.includes('list all contacts') || lowerMessage.includes('show all contacts')) {
-      console.log('📋 Listing all contacts (diagnostic)');
+    // LIST ALL CONTACTS - Enhanced natural language support
+    else if (
+      lowerMessage.includes('list all contacts') ||
+      lowerMessage.includes('show all contacts') ||
+      lowerMessage.includes('get all contacts') ||
+      lowerMessage.includes('view all contacts') ||
+      lowerMessage.includes('display all contacts') ||
+      lowerMessage.match(/\b(list|show|get|view|display)\s+(my\s+)?contacts?\b/) ||
+      lowerMessage.match(/\b(all|entire)\s+contact\s+list\b/) ||
+      lowerMessage === 'contacts' ||
+      lowerMessage === 'all contacts'
+    ) {
+      console.log('📋 Listing all contacts');
       try {
-        // Get all contacts without search filter
-        const allContacts = await session.proxy.searchContacts('', 20);
-        response = `Found ${allContacts?.length || 0} contacts in your CRM:\n\n`;
+        // Get all contacts without search filter (increased limit to 50)
+        const allContacts = await session.proxy.searchContacts('', 50);
+        const totalCount = allContacts?.length || 0;
+
+        response = `📋 Found ${totalCount} contacts in your CRM:\n\n`;
+
         if (allContacts && allContacts.length > 0) {
-          allContacts.slice(0, 10).forEach(c => {
-            const name = c.firstName || c.name || 'Unknown';
-            const phone = c.phone || 'No phone';
-            const email = c.email || 'No email';
-            response += `• ${name} - Phone: ${phone} - Email: ${email}\n`;
+          // Show up to 20 contacts with better formatting
+          const displayCount = Math.min(20, allContacts.length);
+
+          allContacts.slice(0, displayCount).forEach((c, idx) => {
+            // Try multiple name field variations
+            let name = c.contactName || c.name || c.fullName || c.fullNameLowerCase;
+
+            // If no combined name, build from first/last
+            if (!name || name.trim() === '') {
+              const first = c.firstName || c.first_name || '';
+              const last = c.lastName || c.last_name || '';
+              name = `${first} ${last}`.trim();
+            }
+
+            // Still no name? Use email or phone
+            if (!name || name === '') {
+              name = 'Unnamed Contact';
+            }
+
+            const phone = c.phone ? `📱 ${c.phone}` : '';
+            const email = c.email ? `📧 ${c.email}` : '';
+            const contact_info = [phone, email].filter(Boolean).join(' | ');
+
+            response += `${idx + 1}. ${name}\n`;
+            if (contact_info) {
+              response += `   ${contact_info}\n`;
+            }
+            response += '\n';
           });
-          if (allContacts.length > 10) response += `\n... and ${allContacts.length - 10} more`;
+
+          if (allContacts.length > displayCount) {
+            response += `... and ${allContacts.length - displayCount} more contacts\n\n`;
+          }
+
+          response += `💡 Tip: Search for specific contacts with "search John" or "find john@example.com"`;
+        } else {
+          response = `No contacts found in your CRM.\n\n💡 Create your first contact with:\n"create contact John Doe email john@example.com phone 5551234567"`;
         }
+
         data = allContacts;
       } catch (error) {
+        console.error('❌ List contacts error:', error);
         response = `Error listing contacts: ${error.message}`;
       }
     }
