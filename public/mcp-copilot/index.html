@@ -43,142 +43,99 @@
             </div>
 
             <div class="examples-section">
-                <h3>🧪 Testing Workflow</h3>
+                <h3>📚 User Guide - Click Any Command</h3>
                 <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem; line-height: 1.5;">
-                    Complete end-to-end test of all CRM functions. Click each step in order.
+                    Click any command below to execute it instantly. Commands use natural language.
                 </p>
 
-                <div class="example-category" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-                    <h4 style="color: white; margin-bottom: 0.5rem;">🎯 Test Contact: Sarah Johnson</h4>
-                    <p style="color: rgba(255,255,255,0.9); font-size: 0.75rem; margin: 0;">
-                        Email: sarah.johnson.test@example.com | Phone: 7275551234
-                    </p>
-                </div>
-
                 <div class="example-category">
-                    <h4>Step 1️⃣: Create Contact</h4>
-                    <code onclick="quickAction(this.textContent)">create contact Sarah Johnson phone 7275551234 email sarah.johnson.test@example.com</code>
-                </div>
-
-                <div class="example-category">
-                    <h4>Step 2️⃣: Verify Contact Created</h4>
-                    <code onclick="quickAction(this.textContent)">search Sarah Johnson</code>
-                    <code onclick="quickAction(this.textContent)">find sarah.johnson.test@example.com</code>
-                </div>
-
-                <div class="example-category">
-                    <h4>Step 3️⃣: Update Contact Info</h4>
-                    <code onclick="quickAction(this.textContent)">update contact sarah.johnson.test@example.com phone 7275559999</code>
-                </div>
-
-                <div class="example-category">
-                    <h4>Step 4️⃣: Add Tags</h4>
-                    <code onclick="quickAction(this.textContent)">add tag vip to sarah.johnson.test@example.com</code>
-                    <code onclick="quickAction(this.textContent)">add tag hot-lead to sarah.johnson.test@example.com</code>
-                </div>
-
-                <div class="example-category">
-                    <h4>Step 5️⃣: Send SMS</h4>
-                    <code onclick="quickAction(this.textContent)">send sms to sarah.johnson.test@example.com saying Hi Sarah! Welcome to our CRM. We're excited to work with you!</code>
-                </div>
-
-                <div class="example-category">
-                    <h4>Step 6️⃣: Send Email</h4>
-                    <code onclick="quickAction(this.textContent)">email sarah.johnson.test@example.com subject Welcome to RinglyPro body Thank you for joining us Sarah! We'll be in touch soon.</code>
-                </div>
-
-                <div class="example-category">
-                    <h4>Step 7️⃣: Create Task</h4>
-                    <code onclick="quickAction(this.textContent)">create task for sarah.johnson.test@example.com: Follow up on initial consultation and send pricing proposal</code>
-                </div>
-
-                <div class="example-category">
-                    <h4>Step 8️⃣: Add Note</h4>
-                    <code onclick="quickAction(this.textContent)">add note to sarah.johnson.test@example.com: Customer is interested in premium package. Mentioned budget of $5000/month. Needs demo next week.</code>
-                </div>
-
-                <div class="example-category">
-                    <h4>Step 9️⃣: List Tasks & Verify</h4>
-                    <code onclick="quickAction(this.textContent)">list tasks for sarah.johnson.test@example.com</code>
-                </div>
-
-                <div class="example-category">
-                    <h4>Step 🔟: View Location & Calendars</h4>
-                    <code onclick="quickAction(this.textContent)">show location</code>
-                    <code onclick="quickAction(this.textContent)">show calendars</code>
-                </div>
-
-                <div class="example-category">
-                    <h4>Step 1️⃣1️⃣: View Dashboard</h4>
-                    <code onclick="quickAction(this.textContent)">show dashboard</code>
-                </div>
-
-                <div class="example-category">
-                    <h4>Step 1️⃣2️⃣: Remove Tag (Cleanup Test)</h4>
-                    <code onclick="quickAction(this.textContent)">remove tag hot-lead from sarah.johnson.test@example.com</code>
-                </div>
-
-                <div class="example-category">
-                    <h4>Step 1️⃣3️⃣: Final Verification</h4>
-                    <code onclick="quickAction(this.textContent)">search Sarah</code>
-                </div>
-
-                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0;">
-
-                <h3>📚 Quick Reference</h3>
-
-                <div class="example-category">
-                    <h4>📇 Contact Management</h4>
+                    <h4>🔍 Search Contacts</h4>
+                    <code onclick="quickAction(this.textContent)">list contacts</code>
+                    <code onclick="quickAction(this.textContent)">show all contacts</code>
                     <code onclick="quickAction(this.textContent)">search John</code>
-                    <code onclick="quickAction(this.textContent)">find 8136414177</code>
-                    <code onclick="quickAction(this.textContent)">update contact john@test.com phone 8136414177</code>
+                    <code onclick="quickAction(this.textContent)">find john@example.com</code>
                 </div>
 
                 <div class="example-category">
-                    <h4>💬 Communication</h4>
-                    <code onclick="quickAction(this.textContent)">send sms to john@test.com saying Hello!</code>
-                    <code onclick="quickAction(this.textContent)">text 5551234567: Your appointment is confirmed</code>
-                    <code onclick="quickAction(this.textContent)">email john@test.com subject Welcome body Thanks!</code>
-                    <code onclick="quickAction(this.textContent)">send email to contact with Follow up</code>
+                    <h4>➕ Create & Update Contacts</h4>
+                    <code onclick="quickAction(this.textContent)">create contact John Doe email john@example.com phone 5551234567</code>
+                    <code onclick="quickAction(this.textContent)">create a new contact named Sarah Johnson</code>
+                    <code onclick="quickAction(this.textContent)">update contact john@example.com phone 5559999999</code>
                 </div>
 
                 <div class="example-category">
-                    <h4>✅ Tasks & Notes</h4>
-                    <code onclick="quickAction(this.textContent)">create task for john@test.com: Follow up on proposal</code>
-                    <code onclick="quickAction(this.textContent)">add task to John reminder Call back tomorrow</code>
-                    <code onclick="quickAction(this.textContent)">list tasks for john@test.com</code>
-                    <code onclick="quickAction(this.textContent)">add note to john@test.com: Customer interested in premium</code>
+                    <h4>🗑️ Delete & Filter Contacts</h4>
+                    <code onclick="quickAction(this.textContent)">show contacts added today</code>
+                    <code onclick="quickAction(this.textContent)">show contacts added this week</code>
+                    <code onclick="quickAction(this.textContent)">find contacts missing email</code>
+                    <code onclick="quickAction(this.textContent)">find contacts without phone</code>
                 </div>
 
                 <div class="example-category">
-                    <h4>💰 Opportunities</h4>
+                    <h4>🏷️ Tags</h4>
+                    <code onclick="quickAction(this.textContent)">add tag vip to john@example.com</code>
+                    <code onclick="quickAction(this.textContent)">add tag hot-lead to john@example.com</code>
+                    <code onclick="quickAction(this.textContent)">remove tag hot-lead from john@example.com</code>
+                </div>
+
+                <div class="example-category">
+                    <h4>💬 Send SMS</h4>
+                    <code onclick="quickAction(this.textContent)">send sms to john@example.com saying Hello!</code>
+                    <code onclick="quickAction(this.textContent)">text john@example.com: Your appointment is confirmed</code>
+                </div>
+
+                <div class="example-category">
+                    <h4>📧 Send Email</h4>
+                    <code onclick="quickAction(this.textContent)">email john@example.com subject Welcome body Thanks for joining!</code>
+                    <code onclick="quickAction(this.textContent)">send email to john@example.com with subject Follow up</code>
+                </div>
+
+                <div class="example-category">
+                    <h4>✅ Tasks</h4>
+                    <code onclick="quickAction(this.textContent)">create task for john@example.com: Follow up on proposal</code>
+                    <code onclick="quickAction(this.textContent)">list tasks for john@example.com</code>
+                </div>
+
+                <div class="example-category">
+                    <h4>📝 Notes</h4>
+                    <code onclick="quickAction(this.textContent)">add note to john@example.com: Customer interested in premium package</code>
+                </div>
+
+                <div class="example-category">
+                    <h4>💰 Opportunities & Pipelines</h4>
                     <code onclick="quickAction(this.textContent)">show opportunities</code>
-                    <code onclick="quickAction(this.textContent)">list opportunities</code>
+                    <code onclick="quickAction(this.textContent)">list deals</code>
                     <code onclick="quickAction(this.textContent)">show pipelines</code>
-                    <code onclick="quickAction(this.textContent)">get pipelines</code>
                 </div>
 
                 <div class="example-category">
                     <h4>📅 Calendar & Appointments</h4>
                     <code onclick="quickAction(this.textContent)">show calendars</code>
-                    <code onclick="quickAction(this.textContent)">list calendars</code>
-                    <code onclick="quickAction(this.textContent)">book appointment for john@test.com</code>
+                    <code onclick="quickAction(this.textContent)">book appointment for john@example.com</code>
+                    <code onclick="quickAction(this.textContent)">set reminder for john@example.com tomorrow</code>
                 </div>
 
                 <div class="example-category">
                     <h4>🔄 Workflows & Campaigns</h4>
-                    <code onclick="quickAction(this.textContent)">add john@test.com to workflow abc123</code>
-                    <code onclick="quickAction(this.textContent)">enroll John in workflow xyz789</code>
-                    <code onclick="quickAction(this.textContent)">add john@test.com to campaign welcome</code>
-                    <code onclick="quickAction(this.textContent)">enroll contact in campaign nurture</code>
+                    <code onclick="quickAction(this.textContent)">add john@example.com to workflow abc123</code>
+                    <code onclick="quickAction(this.textContent)">add john@example.com to campaign welcome</code>
                 </div>
 
                 <div class="example-category">
                     <h4>📊 Dashboard & Location</h4>
                     <code onclick="quickAction(this.textContent)">show dashboard</code>
-                    <code onclick="quickAction(this.textContent)">view dashboard</code>
                     <code onclick="quickAction(this.textContent)">show location</code>
-                    <code onclick="quickAction(this.textContent)">get location info</code>
+                </div>
+
+                <div class="example-category">
+                    <h4>⭐ Reviews</h4>
+                    <code onclick="quickAction(this.textContent)">request review from john@example.com</code>
+                </div>
+
+                <div class="example-category">
+                    <h4>📱 Social Media</h4>
+                    <code onclick="quickAction(this.textContent)">schedule social post for tomorrow: Check out our new product!</code>
+                    <code onclick="quickAction(this.textContent)">list social posts</code>
                 </div>
             </div>
         </div>
