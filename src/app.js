@@ -159,6 +159,11 @@ if (mcpRoutes) {
     console.log('⚠️ MCP routes not available - skipping mount');
 }
 
+// GHL API Test Route (for debugging)
+const testGHLRoutes = require('./routes/test-ghl');
+app.use('/api/test-ghl', testGHLRoutes);
+console.log('🧪 GHL API Test routes mounted at /api/test-ghl');
+
 // GoHighLevel MCP integration routes
 if (ghlMCPRoutes) {
     app.use('/api/ghl', ghlMCPRoutes);
