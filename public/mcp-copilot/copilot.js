@@ -154,7 +154,14 @@ function addMessage(type, text, data = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${type}`;
 
-    let content = `<p>${text}</p>`;
+    // Preserve line breaks by converting \n to <br> and escaping HTML
+    const formattedText = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\n/g, '<br>');
+
+    let content = `<p style="white-space: pre-wrap;">${formattedText}</p>`;
 
     if (data && Array.isArray(data) && data.length > 0) {
         content += '<div class="data-results">';
