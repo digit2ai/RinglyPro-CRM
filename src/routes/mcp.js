@@ -68,6 +68,11 @@ router.post('/gohighlevel/connect', async (req, res) => {
   console.log('🔗 GoHighLevel connection request received');
   const { apiKey, locationId } = req.body;
 
+  // DEBUG: Log what we received
+  console.log('🔍 DEBUG - API Key received:', apiKey ? `${apiKey.substring(0, 20)}...${apiKey.substring(apiKey.length - 10)}` : 'MISSING');
+  console.log('🔍 DEBUG - Location ID received:', locationId || 'MISSING');
+  console.log('🔍 DEBUG - API Key starts with pit-?', apiKey?.startsWith('pit-') ? 'YES (PIT)' : 'NO (JWT or other)');
+
   if (!apiKey || !locationId) {
     console.error('❌ Missing GoHighLevel credentials');
     return res.status(400).json({
@@ -87,6 +92,8 @@ router.post('/gohighlevel/connect', async (req, res) => {
     });
 
     console.log('✅ GoHighLevel connected, session:', sessionId);
+    console.log('✅ Proxy initialized with token type:', apiKey.startsWith('pit-') ? 'PIT' : 'JWT');
+
     res.json({
       success: true,
       sessionId,
