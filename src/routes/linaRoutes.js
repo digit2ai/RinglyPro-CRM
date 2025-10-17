@@ -906,6 +906,23 @@ router.post('/voice/lina/voicemail-complete', async (req, res) => {
         console.log(`✅ Spanish voicemail recording completed: ${RecordingSid}, Duration: ${RecordingDuration}s`);
         console.log(`🎵 Recording URL: ${RecordingUrl}`);
 
+        // Validate required parameters
+        if (!To) {
+            console.warn(`⚠️ Voicemail completion missing 'To' number, using session fallback`);
+            // Try to get from session
+            const toNumber = req.session?.ringlypro_number;
+            if (!toNumber) {
+                console.error(`❌ Cannot determine target number for voicemail`);
+                const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Gracias por su mensaje. Adiós!</Say>
+    <Hangup/>
+</Response>`;
+                res.set('Content-Type', 'text/xml; charset=utf-8');
+                return res.send(twiml);
+            }
+        }
+
         // Find client by RinglyPro number
         const { Client, Message } = require('../models');
         const client = await Client.findOne({

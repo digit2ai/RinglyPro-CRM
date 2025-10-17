@@ -858,19 +858,36 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
         if (digit === '1') {
             // Appointment booking
             console.log(`📅 Appointment booking selected for ${businessName}`);
-            if (language === 'en') {
-                res.redirect(307, '/voice/rachel/collect-name');
-            } else {
-                res.redirect(307, '/voice/lina/collect-name');
-            }
+
+            // Generate TwiML to start appointment booking flow
+            const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
+            const namePrompt = language === 'en'
+                ? 'Great! I\'d be happy to help you book an appointment. Can you please tell me your first name?'
+                : 'Excelente! Me encantaría ayudarle a reservar una cita. ¿Puede decirme su nombre?';
+
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/${language === 'en' ? 'rachel' : 'lina'}/collect-name" method="POST" language="${language === 'en' ? 'en-US' : 'es-MX'}">
+        <Say voice="${voice}">${namePrompt}</Say>
+    </Gather>
+    <Say voice="${voice}">I didn't catch that. Let me try again.</Say>
+    <Redirect>/voice/${language === 'en' ? 'rachel' : 'lina'}/incoming?lang=${language}</Redirect>
+</Response>`;
+
+            res.type('text/xml');
+            return res.send(twiml);
         } else if (digit === '9') {
             // Voicemail
             console.log(`📬 Voicemail selected for ${businessName}`);
-            if (language === 'en') {
-                res.redirect(307, '/voice/rachel/voicemail');
-            } else {
-                res.redirect(307, '/voice/lina/voicemail');
-            }
+
+            // Redirect to voicemail using TwiML Redirect
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Redirect method="POST">/voice/${language === 'en' ? 'rachel' : 'lina'}/voicemail</Redirect>
+</Response>`;
+
+            res.type('text/xml');
+            return res.send(twiml);
         } else {
             // Check if it's a department transfer (2, 3, 4, etc.)
             const deptIndex = parseInt(digit) - 2;
