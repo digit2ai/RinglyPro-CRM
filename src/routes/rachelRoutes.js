@@ -103,7 +103,26 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
 
-        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+        // Generate phone prompt with Rachel's premium voice
+        const phonePrompt = `Thank you ${name}. <break time="0.5s"/> Now please say your 10 digit phone number, or enter it using your keypad.`;
+        console.log(`🎙️ Generating Rachel premium voice for phone collection`);
+
+        const audioUrl = await rachelService.generateRachelAudio(phonePrompt);
+
+        if (audioUrl) {
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech dtmf" timeout="12" speechTimeout="3" numDigits="10" action="/voice/rachel/collect-phone" method="POST" language="en-US">
+        <Play>${audioUrl}</Play>
+    </Gather>
+    <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
+    <Redirect>/voice/rachel/collect-name</Redirect>
+</Response>`;
+            res.set('Content-Type', 'text/xml; charset=utf-8');
+            res.send(twiml);
+        } else {
+            // Fallback to Polly
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather input="speech dtmf" timeout="12" speechTimeout="3" numDigits="10" action="/voice/rachel/collect-phone" method="POST" language="en-US">
         <Say voice="Polly.Joanna">Thank you ${escapedName}. Now please say your 10 digit phone number, or enter it using your keypad.</Say>
@@ -111,9 +130,9 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
     <Redirect>/voice/rachel/collect-name</Redirect>
 </Response>`;
-
-        res.set('Content-Type', 'text/xml; charset=utf-8');
-        res.send(twiml);
+            res.set('Content-Type', 'text/xml; charset=utf-8');
+            res.send(twiml);
+        }
 
     } catch (error) {
         console.error('Error collecting name:', error);
@@ -179,20 +198,28 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
-        const escapedPhone = normalizedPhone
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&apos;');
-        const escapedBusiness = (businessName || 'this business')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&apos;');
 
-        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+        // Generate datetime prompt with Rachel's premium voice
+        const datetimePrompt = `Perfect ${prospectName || 'there'}. <break time="0.5s"/> Now tell me what date and time you prefer for your appointment. <break time="0.5s"/> For example you can say tomorrow at 10 AM or Friday at 2 PM`;
+        console.log(`🎙️ Generating Rachel premium voice for datetime collection`);
+
+        const audioUrl = await rachelService.generateRachelAudio(datetimePrompt);
+
+        if (audioUrl) {
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-datetime" method="POST" language="en-US">
+        <Play>${audioUrl}</Play>
+    </Gather>
+    <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
+    <Redirect>/voice/rachel/collect-phone</Redirect>
+</Response>`;
+            console.log('📤 Sending TwiML from collect-phone with Rachel premium voice');
+            res.set('Content-Type', 'text/xml; charset=utf-8');
+            res.send(twiml);
+        } else {
+            // Fallback to Polly
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-datetime" method="POST" language="en-US">
         <Say voice="Polly.Joanna">Perfect ${escapedName}. Now tell me what date and time you prefer for your appointment. For example you can say tomorrow at 10 AM or Friday at 2 PM</Say>
@@ -200,10 +227,10 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
     <Redirect>/voice/rachel/collect-phone</Redirect>
 </Response>`;
-
-        console.log('📤 Sending TwiML from collect-phone (English):', twiml.substring(0, 200));
-        res.set('Content-Type', 'text/xml; charset=utf-8');
-        res.send(twiml);
+            console.log('📤 Sending TwiML from collect-phone (fallback to Polly)');
+            res.set('Content-Type', 'text/xml; charset=utf-8');
+            res.send(twiml);
+        }
 
     } catch (error) {
         console.error('Error collecting phone:', error);
@@ -251,29 +278,45 @@ router.post('/voice/rachel/collect-datetime', async (req, res) => {
             });
         });
 
-        // Escape XML special characters
-        const escapedName = (prospectName || 'there')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&apos;');
-        const escapedDateTime = datetime
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&apos;');
+        // Generate confirmation prompt with Rachel's premium voice
+        const confirmPrompt = `Perfect ${prospectName || 'there'}. <break time="0.5s"/> Let me confirm your appointment for ${datetime}. <break time="0.5s"/> Please hold while I check availability.`;
+        console.log(`🎙️ Generating Rachel premium voice for appointment confirmation`);
 
-        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+        const audioUrl = await rachelService.generateRachelAudio(confirmPrompt);
+
+        if (audioUrl) {
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Play>${audioUrl}</Play>
+    <Redirect>/voice/rachel/book-appointment</Redirect>
+</Response>`;
+            console.log('📤 Sending TwiML from collect-datetime with Rachel premium voice');
+            res.set('Content-Type', 'text/xml; charset=utf-8');
+            res.send(twiml);
+        } else {
+            // Fallback to Polly
+            const escapedName = (prospectName || 'there')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+            const escapedDateTime = datetime
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="Polly.Joanna">Perfect ${escapedName}. Let me confirm your appointment for ${escapedDateTime}. Please hold while I check availability.</Say>
     <Redirect>/voice/rachel/book-appointment</Redirect>
 </Response>`;
-
-        console.log('📤 Sending TwiML from collect-datetime (English)');
-        res.set('Content-Type', 'text/xml; charset=utf-8');
-        res.send(twiml);
+            console.log('📤 Sending TwiML from collect-datetime (fallback to Polly)');
+            res.set('Content-Type', 'text/xml; charset=utf-8');
+            res.send(twiml);
+        }
 
     } catch (error) {
         console.error('Error collecting datetime:', error);
@@ -601,34 +644,51 @@ const handleBookAppointment = async (req, res) => {
             return res.send(errorTwiml);
         }
 
-        const escapedName = (prospectName || 'there')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&apos;');
-        const escapedBusiness = (businessName || 'this business')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&apos;');
-        const escapedDateTime = appointmentDateTime
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&apos;');
+        // Generate success confirmation with Rachel's premium voice
+        const successMessage = `Great news ${prospectName || 'there'}. <break time="0.5s"/> I've successfully booked your appointment with ${businessName || 'this business'} for ${appointmentDateTime}. <break time="0.5s"/> Your confirmation code is ${confirmationCode}. <break time="0.5s"/> You'll receive a text message confirmation shortly with all the details. <break time="0.5s"/> Thank you for calling and we look forward to seeing you.`;
+        console.log(`🎙️ Generating Rachel premium voice for success confirmation`);
 
-        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+        const audioUrl = await rachelService.generateRachelAudio(successMessage);
+
+        if (audioUrl) {
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Play>${audioUrl}</Play>
+    <Hangup/>
+</Response>`;
+            console.log('📤 Sending SUCCESS TwiML with Rachel premium voice - appointment created');
+            res.set('Content-Type', 'text/xml; charset=utf-8');
+            res.send(twiml);
+        } else {
+            // Fallback to Polly
+            const escapedName = (prospectName || 'there')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+            const escapedBusiness = (businessName || 'this business')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+            const escapedDateTime = appointmentDateTime
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="Polly.Joanna">Great news ${escapedName}. I've successfully booked your appointment with ${escapedBusiness} for ${escapedDateTime}. Your confirmation code is ${confirmationCode}. You'll receive a text message confirmation shortly with all the details. Thank you for calling and we look forward to seeing you.</Say>
     <Hangup/>
 </Response>`;
-
-        console.log('📤 Sending SUCCESS TwiML - appointment created');
-        res.set('Content-Type', 'text/xml; charset=utf-8');
-        res.send(twiml);
+            console.log('📤 Sending SUCCESS TwiML (fallback to Polly) - appointment created');
+            res.set('Content-Type', 'text/xml; charset=utf-8');
+            res.send(twiml);
+        }
 
     } catch (error) {
         console.error('Error booking appointment:', error);
@@ -859,23 +919,54 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
             // Appointment booking
             console.log(`📅 Appointment booking selected for ${businessName}`);
 
-            // Generate TwiML to start appointment booking flow
-            const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
+            // Generate TwiML to start appointment booking flow with premium voice
             const namePrompt = language === 'en'
-                ? 'Great! I\'d be happy to help you book an appointment. Can you please tell me your first name?'
+                ? 'Great! I\'d be happy to help you book an appointment. <break time="0.5s"/> Can you please tell me your first name?'
                 : 'Excelente! Me encantaría ayudarle a reservar una cita. ¿Puede decirme su nombre?';
 
-            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+            // Try to use premium voice for English (Rachel) or Spanish (Lina)
+            if (language === 'en') {
+                console.log(`🎙️ Generating Rachel premium voice for appointment booking prompt`);
+                rachelService.generateRachelAudio(namePrompt).then(audioUrl => {
+                    if (audioUrl) {
+                        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/${language === 'en' ? 'rachel' : 'lina'}/collect-name" method="POST" language="${language === 'en' ? 'en-US' : 'es-MX'}">
-        <Say voice="${voice}">${namePrompt}</Say>
+    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-name" method="POST" language="en-US">
+        <Play>${audioUrl}</Play>
     </Gather>
-    <Say voice="${voice}">I didn't catch that. Let me try again.</Say>
-    <Redirect>/voice/${language === 'en' ? 'rachel' : 'lina'}/incoming?lang=${language}</Redirect>
+    <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
+    <Redirect>/voice/rachel/incoming?lang=en</Redirect>
 </Response>`;
-
-            res.type('text/xml');
-            return res.send(twiml);
+                        res.type('text/xml');
+                        res.send(twiml);
+                    } else {
+                        // Fallback to Polly
+                        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-name" method="POST" language="en-US">
+        <Say voice="Polly.Joanna">${namePrompt}</Say>
+    </Gather>
+    <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
+    <Redirect>/voice/rachel/incoming?lang=en</Redirect>
+</Response>`;
+                        res.type('text/xml');
+                        res.send(twiml);
+                    }
+                });
+                return; // Exit early since we're handling response in promise
+            } else {
+                // Spanish - use Polly.Lupe for now (or can add Lina premium voice)
+                const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/lina/collect-name" method="POST" language="es-MX">
+        <Say voice="Polly.Lupe">${namePrompt}</Say>
+    </Gather>
+    <Say voice="Polly.Lupe">No escuché eso. Intentemos de nuevo.</Say>
+    <Redirect>/voice/lina/incoming?lang=es</Redirect>
+</Response>`;
+                res.type('text/xml');
+                return res.send(twiml);
+            }
         } else if (digit === '9') {
             // Voicemail
             console.log(`📬 Voicemail selected for ${businessName}`);
