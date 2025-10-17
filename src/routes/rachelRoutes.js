@@ -372,17 +372,25 @@ const handleBookAppointment = async (req, res) => {
                 }
             }
 
-            // Extract time
-            const timeMatch = appointmentDateTime.match(/(\d{1,2})\s*(am|pm)/i);
+            // Extract time - handle various formats: "10am", "10 am", "10 a.m.", "10a.m."
+            const timeMatch = appointmentDateTime.match(/(\d{1,2})\s*(?:a\.?m\.?|p\.?m\.?)/i);
             if (timeMatch) {
-                let hour = parseInt(timeMatch[1]);
-                const isPM = timeMatch[2].toLowerCase() === 'pm';
-                if (isPM && hour !== 12) hour += 12;
-                if (!isPM && hour === 12) hour = 0;
+                let hour = parseInt(timeMatch[0].match(/\d{1,2}/)[0]);
+                const isPM = /p\.?m\.?/i.test(timeMatch[0]);
+                const isAM = /a\.?m\.?/i.test(timeMatch[0]);
+
+                if (isPM && hour !== 12) {
+                    hour += 12;  // Convert PM to 24-hour (except 12pm stays 12)
+                } else if (isAM && hour === 12) {
+                    hour = 0;  // 12am = midnight = 00:00
+                }
+
                 parsedDateTime.hour(hour).minute(0).second(0);
+                console.log(`⏰ Time parsed: ${timeMatch[0]} → ${hour}:00 (isPM: ${isPM}, isAM: ${isAM})`);
             } else {
-                // Default to 2pm
+                // Default to 2pm if no time specified
                 parsedDateTime.hour(14).minute(0).second(0);
+                console.log(`⏰ No time found in "${appointmentDateTime}", defaulting to 2pm`);
             }
 
             appointmentDate = parsedDateTime.format('YYYY-MM-DD');
