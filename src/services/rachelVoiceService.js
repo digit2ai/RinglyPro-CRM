@@ -110,14 +110,14 @@ class MultiTenantRachelService {
     async createLanguageSelectionMenu(clientInfo) {
         const twiml = new twilio.twiml.VoiceResponse();
 
-        // Bilingual greeting: All in English to avoid pronunciation issues
-        const bilingualGreeting = `Hello and welcome to ${clientInfo.business_name}. For English, press 1. For Spanish, please press 2.`;
+        // Bilingual greeting: All in English to avoid pronunciation issues with brief pause for decision time
+        const bilingualGreeting = `Hello and welcome to ${clientInfo.business_name}. <break time="1s"/> For English, press 1. <break time="0.5s"/> For Spanish, please press 2.`;
 
         // Create gather for language selection (DTMF keypad input)
         const gather = twiml.gather({
             input: 'dtmf',
             numDigits: 1,
-            timeout: 3,  // Reduced from 10 to 3 seconds for faster response
+            timeout: 8,  // Increased from 3 to 8 seconds to give callers more time to decide
             finishOnKey: '',  // Don't wait for # key
             action: '/voice/rachel/select-language',
             method: 'POST'
@@ -154,10 +154,10 @@ class MultiTenantRachelService {
         // Create speech gathering with personalized greeting
         const gather = twiml.gather({
             input: 'speech',
-            timeout: 5,
+            timeout: 8,  // Increased from 5 to 8 seconds
             action: '/voice/rachel/process-speech',
             method: 'POST',
-            speechTimeout: 'auto',
+            speechTimeout: 3,  // Changed from 'auto' to 3 seconds for more consistent detection
             language: 'en-US'
         });
 
@@ -263,17 +263,19 @@ class MultiTenantRachelService {
         const businessName = session.business_name || 'this business';
         
         const bookingText = `
-            Great! I'd be happy to help you book an appointment with ${businessName}. 
-            Let me gather some information from you. 
+            Great! I'd be happy to help you book an appointment with ${businessName}.
+            <break time="0.5s"/>
+            Let me gather some information from you.
+            <break time="0.5s"/>
             Can you please tell me your first name?
         `;
         
         const gather = twiml.gather({
             input: 'speech',
-            timeout: 10,
+            timeout: 12,  // Increased from 10 to 12 seconds
             action: '/voice/rachel/collect-name',
             method: 'POST',
-            speechTimeout: 'auto',
+            speechTimeout: 3,  // Changed from 'auto' to 3 seconds for more consistent detection
             language: 'en-US'
         });
         
@@ -297,17 +299,19 @@ class MultiTenantRachelService {
         const businessName = session.business_name || 'this business';
         
         const pricingText = `
-            Thank you for your interest in ${businessName}'s services. 
-            I'd be happy to connect you with someone who can discuss pricing and options with you. 
+            Thank you for your interest in ${businessName}'s services.
+            <break time="0.5s"/>
+            I'd be happy to connect you with someone who can discuss pricing and options with you.
+            <break time="0.8s"/>
             Would you like me to schedule a consultation call, or would you prefer to speak with someone right now?
         `;
         
         const gather = twiml.gather({
             input: 'speech',
-            timeout: 10,
+            timeout: 12,  // Increased from 10 to 12 seconds
             action: '/voice/rachel/handle-pricing-response',
             method: 'POST',
-            speechTimeout: 'auto',
+            speechTimeout: 3,  // Changed from 'auto' to 3 seconds for more consistent detection
             language: 'en-US'
         });
         
@@ -401,16 +405,18 @@ class MultiTenantRachelService {
 
         const clarificationText = `
             I'm sorry, I didn't quite understand that.
+            <break time="0.5s"/>
             I can help you with booking an appointment or taking a message.
+            <break time="0.8s"/>
             What would you like to do?
         `;
 
         const gather = twiml.gather({
             input: 'speech',
-            timeout: 10,
+            timeout: 12,  // Increased from 10 to 12 seconds
             action: '/voice/rachel/process-speech',
             method: 'POST',
-            speechTimeout: 'auto',
+            speechTimeout: 3,  // Changed from 'auto' to 3 seconds for more consistent detection
             language: 'en-US'
         });
 

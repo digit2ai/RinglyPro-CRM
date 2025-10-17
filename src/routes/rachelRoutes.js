@@ -105,7 +105,7 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
 
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech dtmf" timeout="10" speechTimeout="5" numDigits="10" action="/voice/rachel/collect-phone" method="POST" language="en-US">
+    <Gather input="speech dtmf" timeout="12" speechTimeout="3" numDigits="10" action="/voice/rachel/collect-phone" method="POST" language="en-US">
         <Say voice="Polly.Joanna">Thank you ${escapedName}. Now please say your 10 digit phone number, or enter it using your keypad.</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
@@ -194,7 +194,7 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
 
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="10" speechTimeout="5" action="/voice/rachel/collect-datetime" method="POST" language="en-US">
+    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-datetime" method="POST" language="en-US">
         <Say voice="Polly.Joanna">Perfect ${escapedName}. Now tell me what date and time you prefer for your appointment. For example you can say tomorrow at 10 AM or Friday at 2 PM</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
@@ -786,7 +786,7 @@ async function createIVRMenu(client, language = 'en') {
             // Use premium Rachel voice
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf" numDigits="1" timeout="5" action="/voice/rachel/ivr-selection?lang=${language}" method="POST">
+    <Gather input="dtmf" numDigits="1" timeout="8" action="/voice/rachel/ivr-selection?lang=${language}" method="POST">
         <Play>${audioUrl}</Play>
     </Gather>
     <Say voice="Polly.Joanna">I didn't receive a selection. Goodbye.</Say>
@@ -803,7 +803,7 @@ async function createIVRMenu(client, language = 'en') {
     const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf" numDigits="1" timeout="5" action="/voice/rachel/ivr-selection?lang=${language}" method="POST">
+    <Gather input="dtmf" numDigits="1" timeout="8" action="/voice/rachel/ivr-selection?lang=${language}" method="POST">
         <Say voice="${voice}">${menuText}</Say>
     </Gather>
     <Say voice="${voice}">I didn't receive a selection. Goodbye.</Say>
