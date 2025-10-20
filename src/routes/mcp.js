@@ -1666,7 +1666,9 @@ router.post('/copilot/chat', async (req, res) => {
     // LIST SOCIAL POSTS
     else if (lowerMessage.includes('list social posts') || lowerMessage.includes('show social posts') || lowerMessage.includes('get social posts')) {
       try {
+        console.log('📋 Fetching social posts list...');
         const posts = await session.proxy.listSocialPosts({ limit: 20 });
+        console.log('📋 Posts response:', JSON.stringify(posts, null, 2));
 
         if (posts && posts.posts && posts.posts.length > 0) {
           response = `📱 Recent Social Media Posts (${posts.posts.length}):\n\n`;
@@ -1680,10 +1682,12 @@ router.post('/copilot/chat', async (req, res) => {
           });
           data = posts;
         } else {
-          response = "No social media posts found.";
+          console.log('⚠️ No posts found in response:', posts);
+          response = "No social media posts found.\n\nThis could mean:\n1. No posts have been created yet\n2. Social media feature not enabled in GoHighLevel\n3. Check GoHighLevel Social Planner directly";
         }
       } catch (error) {
         console.error('❌ List social posts error:', error);
+        console.error('❌ Error details:', error.response?.data || error.stack);
         response = `Error listing social posts: ${error.message}`;
       }
     }

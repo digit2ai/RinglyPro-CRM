@@ -884,6 +884,7 @@
             if (!sessionId) return;
 
             try {
+                console.log('🔄 Loading social posts...');
                 const response = await fetch(`${window.location.origin}/api/mcp/copilot/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -891,17 +892,23 @@
                 });
 
                 const data = await response.json();
+                console.log('📋 Load posts response:', data);
 
                 if (data.success && data.data?.posts && data.data.posts.length > 0) {
+                    console.log(`✅ Loaded ${data.data.posts.length} posts`);
                     renderPosts(data.data.posts);
                 } else {
+                    console.log('⚠️ No posts found or empty response');
                     showEmptyState();
                 }
             } catch (error) {
-                console.error('Load posts error:', error);
+                console.error('❌ Load posts error:', error);
                 document.getElementById('postsList').innerHTML = `
                     <div class="empty-state">
-                        <p>Failed to load posts</p>
+                        <p style="color: #ef4444;">Failed to load posts</p>
+                        <p style="font-size: 0.875rem; color: #6b7280; margin-top: 8px;">
+                            Check browser console for details
+                        </p>
                     </div>
                 `;
             }
