@@ -26,6 +26,138 @@ router.get('/health', (req, res) => {
   });
 });
 
+// Generate AI-powered hashtag suggestions
+router.post('/generate-hashtags', async (req, res) => {
+  console.log('🏷️ Hashtag generation request received');
+  const { category, clientId } = req.body;
+
+  if (!category) {
+    return res.status(400).json({
+      success: false,
+      error: 'Market category is required'
+    });
+  }
+
+  try {
+    // Define audience-specific hashtag templates for RinglyPro's B2B2C strategy
+    const hashtagsByCategory = {
+      // PRIMARY TARGET: Chamber of Commerce Leaders (they share to all members)
+      chamberleaders: [
+        '#ChamberOfCommerce', '#ChamberLeaders', '#BusinessCommunity', '#LocalBusiness', '#SupportLocalBusiness',
+        '#SmallBusinessSupport', '#ChamberMember', '#NetworkingEvents', '#BusinessLeadership', '#CommunityLeaders',
+        '#EconomicDevelopment', '#BusinessNetworking', '#ChamberBenefits', '#ShopLocal', '#LocalEconomy'
+      ],
+      // Chamber Members - All business types that chambers serve
+      chambermembers: [
+        '#SmallBusiness', '#SmallBusinessOwner', '#LocalBusiness', '#Entrepreneur', '#BusinessOwner',
+        '#SmallBiz', '#SupportSmallBusiness', '#SmallBusinessSaturday', '#ShopSmall', '#BusinessGrowth',
+        '#EntrepreneurLife', '#SmallBusinessMarketing', '#BusinessSuccess', '#SmallBusinessTips', '#GrowYourBusiness'
+      ],
+      // Solopreneurs - Solo business owners (key target for automation)
+      solopreneur: [
+        '#Solopreneur', '#SolopreneurLife', '#SoloBusiness', '#OnePerson Business', '#FreelanceLife',
+        '#SelfEmployed', '#WorkFromAnywhere', '#IndependentBusiness', '#SolopreneurSuccess', '#SoloBusinessOwner',
+        '#FreelancerLife', '#OneManBusiness', '#SoloEntrepreneur', '#BusinessAutomation', '#TimeManagement'
+      ],
+      // Home Services - Plumbers, HVAC, Electricians (miss calls = lost revenue)
+      homeservices: [
+        '#HomeServices', '#HomeRepair', '#Plumbing', '#HVAC', '#Electrician',
+        '#HomeImprovement', '#Contractor', '#HandymanServices', '#LocalContractor', '#HomeServicePro',
+        '#PlumbingServices', '#HVACServices', '#ElectricalServices', '#HomeMaintenanceServices', '#24x7Service'
+      ],
+      // Real Estate - Agents need to answer every lead call
+      realestate: [
+        '#RealEstate', '#RealEstateAgent', '#Realtor', '#RealEstateBusiness', '#RealEstateLife',
+        '#RealEstateMarketing', '#RealEstateInvestor', '#PropertyManagement', '#RealtorLife', '#RealEstateSales',
+        '#RealEstateLeads', '#HomeListings', '#RealEstateSuccess', '#RealEstateTips', '#RealEstateServices'
+      ],
+      // Law Firms - Never miss a client call
+      lawfirms: [
+        '#LawFirm', '#Attorney', '#Lawyer', '#LegalServices', '#LawPractice',
+        '#AttorneyAtLaw', '#LegalAdvice', '#LawOffice', '#LawyerLife', '#LegalProfessional',
+        '#LegalMarketing', '#LawFirmMarketing', '#AttorneyServices', '#LegalBusiness', '#LawFirmManagement'
+      ],
+      // Contractors & Construction
+      contractors: [
+        '#Contractor', '#Construction', '#GeneralContractor', '#ConstructionBusiness', '#ConstructionLife',
+        '#BuildingContractor', '#ContractorLife', '#ConstructionServices', '#ContractorServices', '#HomeBuilder',
+        '#ConstructionCompany', '#ContractorMarketing', '#ConstructionIndustry', '#Remodeling', '#HomeConstruction'
+      ],
+      // Property Management
+      propertymanagement: [
+        '#PropertyManagement', '#PropertyManager', '#RentalProperty', '#RealEstateManagement', '#PropertyManagementServices',
+        '#RentalManagement', '#CommercialProperty', '#ResidentialProperty', '#PropertyManagementCompany', '#LandlordLife',
+        '#RentalBusiness', '#PropertyServices', '#TenantManagement', '#RealEstateServices', '#PropertyCare'
+      ],
+      // Salons, Spas & Beauty - Appointment-based businesses
+      salons: [
+        '#Salon', '#BeautySalon', '#HairSalon', '#Spa', '#BeautyBusiness',
+        '#SalonOwner', '#SalonLife', '#BeautyServices', '#SalonMarketing', '#SpaServices',
+        '#HairStylist', '#BeautyProfessional', '#SalonAppointments', '#BeautyIndustry', '#SalonBusiness'
+      ],
+      // Automotive Services
+      automotive: [
+        '#AutoRepair', '#AutoShop', '#CarRepair', '#MechanicShop', '#AutoService',
+        '#CarMaintenance', '#AutoCare', '#MechanicLife', '#AutoRepairShop', '#CarService',
+        '#AutomotiveBusiness', '#AutoIndustry', '#CarCare', '#AutoTech', '#AutoRepairServices'
+      ],
+      // Business Consultants & Coaches
+      consulting: [
+        '#BusinessConsultant', '#BusinessCoach', '#Consultant', '#Coaching', '#BusinessConsulting',
+        '#BusinessCoaching', '#ConsultingServices', '#BusinessAdvisor', '#ManagementConsulting', '#ConsultantLife',
+        '#BusinessStrategy', '#CoachingBusiness', '#ProfessionalServices', '#BusinessMentor', '#ConsultingBusiness'
+      ],
+      // Accountants & Financial Services
+      accountants: [
+        '#Accountant', '#Accounting', '#CPA', '#Bookkeeping', '#TaxServices',
+        '#AccountingFirm', '#AccountingServices', '#FinancialServices', '#Bookkeeper', '#TaxPreparation',
+        '#AccountingBusiness', '#SmallBusinessAccounting', '#CPAFirm', '#FinancialAdvisor', '#AccountingLife'
+      ],
+      // Insurance Agencies
+      insurance: [
+        '#Insurance', '#InsuranceAgent', '#InsuranceAgency', '#InsuranceBusiness', '#InsuranceServices',
+        '#LifeInsurance', '#HealthInsurance', '#InsuranceBroker', '#InsuranceAdvisor', '#InsuranceSales',
+        '#InsuranceMarketing', '#InsuranceProfessional', '#InsuranceIndustry', '#InsuranceLife', '#InsuranceAgencyOwner'
+      ],
+      // Retail & Small Shops
+      retail: [
+        '#Retail', '#RetailBusiness', '#SmallShop', '#RetailStore', '#ShopLocal',
+        '#RetailOwner', '#SmallRetail', '#RetailMarketing', '#RetailLife', '#ShopSmallBusiness',
+        '#RetailServices', '#RetailIndustry', '#LocalRetail', '#RetailShopOwner', '#IndependentRetail'
+      ]
+    };
+
+    // Get hashtags for the selected category
+    const categoryHashtags = hashtagsByCategory[category] || [];
+
+    if (categoryHashtags.length === 0) {
+      return res.json({
+        success: true,
+        hashtags: ['#Business', '#Marketing', '#SmallBusiness', '#Success', '#Growth'],
+        message: 'Using default hashtags'
+      });
+    }
+
+    // Return a curated selection (10-12 hashtags)
+    const selectedHashtags = categoryHashtags.slice(0, 12);
+
+    console.log(`✅ Generated ${selectedHashtags.length} hashtags for category: ${category}`);
+
+    res.json({
+      success: true,
+      hashtags: selectedHashtags,
+      category: category
+    });
+
+  } catch (error) {
+    console.error('❌ Hashtag generation error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to generate hashtags'
+    });
+  }
+});
+
 // HubSpot connection
 router.post('/hubspot/connect', async (req, res) => {
   console.log('🔗 HubSpot connection request received');

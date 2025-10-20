@@ -4217,16 +4217,15 @@
                         return;
                     }
 
-                    // Calculate all time slots between start and end
-                    const timeSlots = [];
-                    let currentTime = startTime;
-                    while (currentTime < endTime) {
-                        timeSlots.push(currentTime);
-                        currentTime = addTimeToSlot(currentTime, 30);
-                    }
+                    // Calculate duration in minutes between start and end time
+                    const [startHours, startMins] = startTime.split(':').map(Number);
+                    const [endHours, endMins] = endTime.split(':').map(Number);
+                    const startTotalMins = startHours * 60 + startMins;
+                    const endTotalMins = endHours * 60 + endMins;
+                    const duration = endTotalMins - startTotalMins;
 
-                    if (timeSlots.length === 0) {
-                        errorDiv.textContent = 'Invalid time range selected.';
+                    if (duration <= 0) {
+                        errorDiv.textContent = 'End time must be after start time.';
                         errorDiv.style.display = 'block';
                         return;
                     }
@@ -4236,33 +4235,27 @@
                     submitBtn.innerHTML = '<span class="loading-spinner"></span> Creating...';
 
                     try {
-                        // Create an appointment for each 30-minute slot
-                        const promises = timeSlots.map(timeSlot => {
-                            return authenticatedFetch('/api/appointments/create', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    customerName,
-                                    customerPhone,
-                                    customerEmail,
-                                    appointmentDate,
-                                    appointmentTime: timeSlot,
-                                    notes
-                                })
-                            });
+                        // Create a single appointment with the calculated duration
+                        const response = await authenticatedFetch('/api/appointments/create', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                customerName,
+                                customerPhone,
+                                customerEmail,
+                                appointmentDate,
+                                appointmentTime: startTime,
+                                duration: duration,
+                                notes
+                            })
                         });
 
-                        const responses = await Promise.all(promises);
-
-                        // Check if all succeeded
-                        const allSucceeded = responses.every(r => r && r.ok);
-
-                        if (allSucceeded) {
+                        if (response && response.ok) {
                             // Show success message
-                            successDiv.textContent = `Successfully blocked ${timeSlots.length} time slot(s) from ${formatTimeSlot(startTime)} to ${formatTimeSlot(endTime)}`;
+                            successDiv.textContent = `Successfully created appointment from ${formatTimeSlot(startTime)} to ${formatTimeSlot(endTime)} (${duration} minutes)`;
                             successDiv.style.display = 'block';
 
-                            // Reload dashboard to show new appointments
+                            // Reload dashboard to show new appointment
                             await loadDashboard();
 
                             // Close modal after 2 seconds
@@ -4272,7 +4265,7 @@
                                 submitBtn.textContent = 'Create Appointment';
                             }, 2000);
                         } else {
-                            throw new Error('Some time slots could not be booked');
+                            throw new Error('Failed to create appointment');
                         }
                     } catch (error) {
                         console.error('Error creating appointments:', error);

@@ -308,6 +308,215 @@
         .char-counter.error {
             color: #ef4444;
         }
+
+        .image-preview-container {
+            margin-top: 10px;
+            position: relative;
+            display: none;
+        }
+
+        .image-preview-container.active {
+            display: block;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .remove-image-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .remove-image-btn:hover {
+            background: #dc2626;
+        }
+
+        .upload-btn {
+            display: inline-block;
+            padding: 10px 16px;
+            background: #6366f1;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .upload-btn:hover {
+            background: #4f46e5;
+        }
+
+        .hashtag-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .hashtag-tag {
+            padding: 6px 12px;
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #3b82f6;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .hashtag-tag:hover {
+            background: #dbeafe;
+            transform: translateY(-2px);
+        }
+
+        .hashtag-tag.added {
+            background: #d1fae5;
+            border-color: #10b981;
+            color: #065f46;
+        }
+
+        .preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .preview-modal.active {
+            display: flex;
+        }
+
+        .preview-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .preview-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #1f2937;
+        }
+
+        .preview-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .preview-close:hover {
+            background: #f3f4f6;
+        }
+
+        .preview-body {
+            padding: 20px;
+        }
+
+        .preview-image {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .preview-text {
+            font-size: 0.875rem;
+            color: #1f2937;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            margin-bottom: 15px;
+        }
+
+        .preview-meta {
+            font-size: 0.75rem;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 15px;
+        }
+
+        .preview-actions {
+            padding: 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -341,9 +550,50 @@
 
                 <form id="postForm">
                     <div class="form-group">
+                        <label>Target Audience</label>
+                        <select id="marketCategory">
+                            <option value="">Select target audience (optional)</option>
+                            <option value="chamberleaders">🏛️ Chamber of Commerce Leaders</option>
+                            <option value="chambermembers">🤝 Chamber Members - All Businesses</option>
+                            <option value="solopreneur">👔 Solopreneurs & Solo Business Owners</option>
+                            <option value="homeservices">🔧 Home Services (Plumbing, HVAC, Electrical)</option>
+                            <option value="realestate">🏡 Real Estate Agents & Brokers</option>
+                            <option value="lawfirms">⚖️ Law Firms & Legal Services</option>
+                            <option value="contractors">👷 Contractors & Construction</option>
+                            <option value="propertymanagement">🏢 Property Management</option>
+                            <option value="salons">💇 Salons, Spas & Beauty Services</option>
+                            <option value="automotive">🚗 Automotive Services & Repair</option>
+                            <option value="consulting">💼 Business Consultants & Coaches</option>
+                            <option value="accountants">📊 Accountants & Financial Services</option>
+                            <option value="insurance">🛡️ Insurance Agencies</option>
+                            <option value="retail">🛍️ Retail & Small Shops</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label>Post Content *</label>
                         <textarea id="postContent" placeholder="Write your social media post here..." required></textarea>
                         <div class="char-counter" id="charCounter">0 / 280</div>
+
+                        <!-- Hashtag Suggestions -->
+                        <div id="hashtagSuggestionsContainer" style="display: none;">
+                            <label style="margin-top: 10px; display: block;">Suggested Hashtags (click to add)</label>
+                            <div class="hashtag-suggestions" id="hashtagSuggestions"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Image/Media</label>
+                        <label for="imageUpload" class="upload-btn">
+                            📷 Upload Image
+                        </label>
+                        <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+
+                        <!-- Image Preview -->
+                        <div class="image-preview-container" id="imagePreviewContainer">
+                            <img id="imagePreview" class="image-preview" alt="Preview">
+                            <button type="button" class="remove-image-btn" id="removeImageBtn">×</button>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -366,6 +616,10 @@
                         </small>
                     </div>
 
+                    <button type="button" class="btn-primary" id="previewBtn" style="margin-bottom: 10px;">
+                        👁️ Preview Post
+                    </button>
+
                     <button type="submit" class="btn-primary" id="submitBtn">
                         📤 Schedule Post
                     </button>
@@ -387,10 +641,35 @@
         </div>
     </div>
 
+    <!-- Preview Modal -->
+    <div class="preview-modal" id="previewModal">
+        <div class="preview-content">
+            <div class="preview-header">
+                <h3>📱 Post Preview</h3>
+                <button class="preview-close" id="closePreviewBtn">×</button>
+            </div>
+            <div class="preview-body">
+                <img id="previewModalImage" class="preview-image" style="display: none;" alt="Post image">
+                <div class="preview-text" id="previewModalText"></div>
+                <div class="preview-meta">
+                    <div id="previewModalPlatforms" style="margin-bottom: 8px;"></div>
+                    <div id="previewModalSchedule"></div>
+                </div>
+            </div>
+            <div class="preview-actions">
+                <button class="btn-secondary" id="closePreviewBtn2">Close</button>
+                <button class="btn-primary" id="scheduleFromPreviewBtn" style="flex: 1;">
+                    📤 Schedule Post
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let clientId = null;
         let sessionId = null;
         let selectedPlatforms = [];
+        let uploadedImageData = null;
 
         // Extract client_id and session_id from URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -445,6 +724,52 @@
                 } else if (length > 250) {
                     counter.classList.add('warning');
                 }
+            });
+
+            // Market category change - generate hashtags
+            document.getElementById('marketCategory').addEventListener('change', async (e) => {
+                const category = e.target.value;
+                if (category) {
+                    await generateHashtags(category);
+                } else {
+                    document.getElementById('hashtagSuggestionsContainer').style.display = 'none';
+                }
+            });
+
+            // Image upload
+            document.getElementById('imageUpload').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        uploadedImageData = event.target.result;
+                        document.getElementById('imagePreview').src = uploadedImageData;
+                        document.getElementById('imagePreviewContainer').classList.add('active');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Remove image
+            document.getElementById('removeImageBtn').addEventListener('click', () => {
+                uploadedImageData = null;
+                document.getElementById('imageUpload').value = '';
+                document.getElementById('imagePreviewContainer').classList.remove('active');
+            });
+
+            // Preview button
+            document.getElementById('previewBtn').addEventListener('click', () => {
+                showPreview();
+            });
+
+            // Close preview buttons
+            document.getElementById('closePreviewBtn').addEventListener('click', closePreview);
+            document.getElementById('closePreviewBtn2').addEventListener('click', closePreview);
+
+            // Schedule from preview
+            document.getElementById('scheduleFromPreviewBtn').addEventListener('click', async () => {
+                closePreview();
+                await createPost();
             });
 
             // Form submission
@@ -638,6 +963,111 @@
             setTimeout(() => {
                 alert.remove();
             }, 5000);
+        }
+
+        // Generate AI-powered hashtag suggestions
+        async function generateHashtags(category) {
+            try {
+                const container = document.getElementById('hashtagSuggestionsContainer');
+                const suggestionsDiv = document.getElementById('hashtagSuggestions');
+
+                // Show loading state
+                container.style.display = 'block';
+                suggestionsDiv.innerHTML = '<span style="color: #6b7280; font-size: 0.875rem;">Generating hashtags...</span>';
+
+                const response = await fetch(`${window.location.origin}/api/mcp/generate-hashtags`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category, clientId })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.hashtags && data.hashtags.length > 0) {
+                    suggestionsDiv.innerHTML = data.hashtags.map(tag => `
+                        <span class="hashtag-tag" onclick="addHashtag('${tag}')">${tag}</span>
+                    `).join('');
+                } else {
+                    suggestionsDiv.innerHTML = '<span style="color: #6b7280; font-size: 0.875rem;">No suggestions available</span>';
+                }
+            } catch (error) {
+                console.error('Error generating hashtags:', error);
+                document.getElementById('hashtagSuggestions').innerHTML =
+                    '<span style="color: #ef4444; font-size: 0.875rem;">Failed to generate hashtags</span>';
+            }
+        }
+
+        // Add hashtag to post content
+        function addHashtag(hashtag) {
+            const textarea = document.getElementById('postContent');
+            const currentText = textarea.value;
+
+            // Check if hashtag already exists
+            if (currentText.includes(hashtag)) {
+                showAlert('warning', 'Hashtag already added!');
+                return;
+            }
+
+            // Add hashtag with space if needed
+            const separator = currentText && !currentText.endsWith(' ') ? ' ' : '';
+            textarea.value = currentText + separator + hashtag + ' ';
+
+            // Update character counter
+            textarea.dispatchEvent(new Event('input'));
+
+            // Visual feedback
+            event.target.classList.add('added');
+            setTimeout(() => event.target.classList.remove('added'), 1000);
+        }
+
+        // Show preview modal
+        function showPreview() {
+            const content = document.getElementById('postContent').value.trim();
+            const scheduleTime = document.getElementById('scheduleTime').value;
+
+            if (!content) {
+                showAlert('error', 'Please enter post content');
+                return;
+            }
+
+            if (selectedPlatforms.length === 0) {
+                showAlert('error', 'Please select at least one platform');
+                return;
+            }
+
+            // Update preview modal
+            document.getElementById('previewModalText').textContent = content;
+
+            // Show/hide image
+            const imageEl = document.getElementById('previewModalImage');
+            if (uploadedImageData) {
+                imageEl.src = uploadedImageData;
+                imageEl.style.display = 'block';
+            } else {
+                imageEl.style.display = 'none';
+            }
+
+            // Update platforms
+            const platformIcons = {
+                facebook: '📘',
+                instagram: '📷'
+            };
+            document.getElementById('previewModalPlatforms').innerHTML =
+                `<strong>Platforms:</strong> ${selectedPlatforms.map(p => `${platformIcons[p]} ${p.charAt(0).toUpperCase() + p.slice(1)}`).join(', ')}`;
+
+            // Update schedule
+            const scheduleText = scheduleTime
+                ? `Scheduled for: ${new Date(scheduleTime).toLocaleString()}`
+                : 'Posting immediately';
+            document.getElementById('previewModalSchedule').innerHTML = `<strong>${scheduleText}</strong>`;
+
+            // Show modal
+            document.getElementById('previewModal').classList.add('active');
+        }
+
+        // Close preview modal
+        function closePreview() {
+            document.getElementById('previewModal').classList.remove('active');
         }
     </script>
 </body>

@@ -504,6 +504,7 @@ router.post('/create', async (req, res) => {
       customerPhone,
       appointmentDate,
       appointmentTime,
+      duration,
       notes
     } = req.body;
 
@@ -548,7 +549,7 @@ router.post('/create', async (req, res) => {
       purpose: notes || 'General consultation',
       confirmationCode: confirmationCode,
       source: 'manual',
-      duration: 30,
+      duration: duration || 30,
       notes: notes || null,
       status: 'confirmed'
     });
