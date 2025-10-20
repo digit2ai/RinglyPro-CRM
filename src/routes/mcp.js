@@ -1642,18 +1642,24 @@ router.post('/copilot/chat', async (req, res) => {
               postData.accounts.push(...igAccounts.accounts.map(acc => acc.id));
             }
 
+            console.log('📱 Creating social post with data:', JSON.stringify(postData, null, 2));
             const result = await session.proxy.createSocialPost(postData);
+            console.log('✅ Social post created successfully:', JSON.stringify(result, null, 2));
 
             response = `✅ Social media post scheduled!\n\n`;
             response += `📱 Platforms: ${platforms.join(', ')}\n`;
             response += `📅 Scheduled for: ${formatFriendlyDate(postDate)}\n`;
-            response += `📝 Content: ${postContent.substring(0, 100)}${postContent.length > 100 ? '...' : ''}`;
+            response += `📝 Content: ${postContent.substring(0, 100)}${postContent.length > 100 ? '...' : ''}\n\n`;
+            response += `Post ID: ${result?.id || 'N/A'}\n`;
+            response += `Status: ${result?.status || 'Scheduled'}\n`;
+            response += `\n✅ Check your GoHighLevel Social Planner to confirm!`;
             data = result;
           }
         }
       } catch (error) {
         console.error('❌ Social post error:', error);
-        response = `Error scheduling social post: ${error.message}`;
+        console.error('❌ Error details:', error.response?.data || error.stack);
+        response = `❌ Error scheduling social post: ${error.message}\n\nPlease check:\n1. Facebook/Instagram accounts are connected in GoHighLevel\n2. Your GoHighLevel API key has social media permissions\n3. Your account has active social media features enabled`;
       }
     }
 
