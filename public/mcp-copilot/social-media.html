@@ -832,8 +832,8 @@
                 return;
             }
 
-            if (content.length > 280) {
-                showAlert('error', 'Post content is too long (max 280 characters)');
+            if (content.length > 2200) {
+                showAlert('error', 'Post content is too long (max 2,200 characters)');
                 return;
             }
 
@@ -864,7 +864,7 @@
                 if (data.success) {
                     showAlert('success', '✅ Post scheduled successfully!');
                     document.getElementById('postForm').reset();
-                    document.getElementById('charCounter').textContent = '0 / 280';
+                    document.getElementById('charCounter').textContent = '0 / 2,200';
                     selectedPlatforms = [];
                     document.querySelectorAll('.platform-btn').forEach(btn => btn.classList.remove('active'));
                     await loadPosts();
