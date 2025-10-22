@@ -22,6 +22,14 @@ async function startServer() {
         await syncDatabase();
         console.log('✅ Database models synchronized successfully');
         console.log('📊 SMS history will be stored in PostgreSQL');
+
+        // AUTO-MIGRATE SENDGRID COLUMNS
+        try {
+          const { autoMigrateSendGrid } = require('../scripts/auto-migrate-sendgrid');
+          await autoMigrateSendGrid();
+        } catch (error) {
+          console.log('⚠️ SendGrid auto-migration skipped:', error.message);
+        }
       } else {
         console.log('⚠️ No DATABASE_URL provided, running without database');
       }
