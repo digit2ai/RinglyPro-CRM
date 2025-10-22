@@ -750,6 +750,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        client_id: clientId,
                         to,
                         template: selectedTemplate !== 'custom_marketing' ? selectedTemplate : null,
                         subject,
@@ -833,7 +834,10 @@
                         const response = await fetch(`${window.location.origin}/api/email/send-bulk`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ emails: batch })
+                            body: JSON.stringify({
+                                client_id: clientId,
+                                emails: batch
+                            })
                         });
 
                         const data = await response.json();

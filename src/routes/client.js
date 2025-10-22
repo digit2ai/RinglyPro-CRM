@@ -444,7 +444,7 @@ router.get('/crm-settings/:client_id', async (req, res) => {
 
         // Use raw SQL to query CRM fields directly
         const result = await sequelize.query(
-            'SELECT id, business_name, ghl_api_key, ghl_location_id FROM clients WHERE id = :client_id',
+            'SELECT id, business_name, ghl_api_key, ghl_location_id, sendgrid_api_key, sendgrid_from_email, sendgrid_from_name, sendgrid_reply_to FROM clients WHERE id = :client_id',
             {
                 replacements: { client_id },
                 type: sequelize.QueryTypes.SELECT
@@ -471,7 +471,11 @@ router.get('/crm-settings/:client_id', async (req, res) => {
             settings: {
                 ghl_api_key: client.ghl_api_key ? maskApiKey(client.ghl_api_key) : null,
                 ghl_api_key_set: !!client.ghl_api_key,
-                ghl_location_id: client.ghl_location_id
+                ghl_location_id: client.ghl_location_id,
+                sendgrid_api_key_set: !!client.sendgrid_api_key,
+                sendgrid_from_email: client.sendgrid_from_email,
+                sendgrid_from_name: client.sendgrid_from_name,
+                sendgrid_reply_to: client.sendgrid_reply_to
             }
         });
 
@@ -503,7 +507,7 @@ router.get('/crm-settings/:client_id', async (req, res) => {
 router.put('/crm-settings/:client_id', async (req, res) => {
     try {
         const { client_id } = req.params;
-        const { ghl_api_key, ghl_location_id } = req.body;
+        const { ghl_api_key, ghl_location_id, sendgrid_api_key, sendgrid_from_email, sendgrid_from_name, sendgrid_reply_to } = req.body;
         const { sequelize } = require('../models');
 
         // First verify client exists
@@ -528,6 +532,7 @@ router.put('/crm-settings/:client_id', async (req, res) => {
         const updates = [];
         const replacements = { client_id };
 
+        // GoHighLevel fields
         if (ghl_api_key !== undefined) {
             updates.push('ghl_api_key = :ghl_api_key');
             replacements.ghl_api_key = ghl_api_key || null;
@@ -535,6 +540,24 @@ router.put('/crm-settings/:client_id', async (req, res) => {
         if (ghl_location_id !== undefined) {
             updates.push('ghl_location_id = :ghl_location_id');
             replacements.ghl_location_id = ghl_location_id || null;
+        }
+
+        // SendGrid fields
+        if (sendgrid_api_key !== undefined) {
+            updates.push('sendgrid_api_key = :sendgrid_api_key');
+            replacements.sendgrid_api_key = sendgrid_api_key || null;
+        }
+        if (sendgrid_from_email !== undefined) {
+            updates.push('sendgrid_from_email = :sendgrid_from_email');
+            replacements.sendgrid_from_email = sendgrid_from_email || null;
+        }
+        if (sendgrid_from_name !== undefined) {
+            updates.push('sendgrid_from_name = :sendgrid_from_name');
+            replacements.sendgrid_from_name = sendgrid_from_name || null;
+        }
+        if (sendgrid_reply_to !== undefined) {
+            updates.push('sendgrid_reply_to = :sendgrid_reply_to');
+            replacements.sendgrid_reply_to = sendgrid_reply_to || null;
         }
 
         if (updates.length === 0) {
@@ -553,16 +576,24 @@ router.put('/crm-settings/:client_id', async (req, res) => {
             type: sequelize.QueryTypes.UPDATE
         });
 
-        console.log(`✅ GoHighLevel integration settings updated for client ${client_id} (${client.business_name})`);
-        console.log(`   GHL API Key: ${ghl_api_key !== undefined ? (ghl_api_key ? 'Set' : 'Cleared') : 'Unchanged'}`);
-        console.log(`   GHL Location ID: ${ghl_location_id !== undefined ? (ghl_location_id || 'Cleared') : 'Unchanged'}`);
+        console.log(`✅ CRM integration settings updated for client ${client_id} (${client.business_name})`);
+        if (ghl_api_key !== undefined || ghl_location_id !== undefined) {
+            console.log(`   GHL API Key: ${ghl_api_key !== undefined ? (ghl_api_key ? 'Set' : 'Cleared') : 'Unchanged'}`);
+            console.log(`   GHL Location ID: ${ghl_location_id !== undefined ? (ghl_location_id || 'Cleared') : 'Unchanged'}`);
+        }
+        if (sendgrid_api_key !== undefined || sendgrid_from_email !== undefined) {
+            console.log(`   SendGrid API Key: ${sendgrid_api_key !== undefined ? (sendgrid_api_key ? 'Set' : 'Cleared') : 'Unchanged'}`);
+            console.log(`   SendGrid From Email: ${sendgrid_from_email || 'Unchanged'}`);
+        }
 
         res.json({
             success: true,
-            message: 'GoHighLevel integration settings updated successfully',
+            message: 'CRM integration settings updated successfully',
             settings: {
                 ghl_api_key_set: ghl_api_key !== undefined ? !!ghl_api_key : undefined,
-                ghl_location_id: ghl_location_id !== undefined ? ghl_location_id : undefined
+                ghl_location_id: ghl_location_id !== undefined ? ghl_location_id : undefined,
+                sendgrid_api_key_set: sendgrid_api_key !== undefined ? !!sendgrid_api_key : undefined,
+                sendgrid_from_email: sendgrid_from_email !== undefined ? sendgrid_from_email : undefined
             }
         });
 

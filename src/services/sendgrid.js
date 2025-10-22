@@ -1,30 +1,56 @@
 /**
- * SendGrid Email Service for RinglyPro
+ * SendGrid Email Service for RinglyPro (Multi-Tenant)
  * Handles transactional and marketing emails via SendGrid API
+ * Each client can have their own SendGrid configuration
  */
 
 const sgMail = require('@sendgrid/mail');
+const { sequelize } = require('../models');
 
-// Initialize SendGrid with API key
-if (process.env.SENDGRID_API_KEY) {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    console.log('✅ SendGrid initialized');
-} else {
-    console.warn('⚠️ SENDGRID_API_KEY not set - email sending disabled');
+/**
+ * Get SendGrid credentials for a specific client
+ * @param {Number} clientId Client ID
+ * @returns {Promise<Object>} Client's SendGrid configuration
+ */
+async function getClientSendGridConfig(clientId) {
+    if (!clientId) {
+        throw new Error('Client ID is required for email sending');
+    }
+
+    try {
+        const result = await sequelize.query(
+            'SELECT sendgrid_api_key, sendgrid_from_email, sendgrid_from_name, sendgrid_reply_to FROM clients WHERE id = :client_id',
+            {
+                replacements: { client_id: clientId },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (!result || result.length === 0) {
+            throw new Error(`Client ${clientId} not found`);
+        }
+
+        const client = result[0];
+
+        if (!client.sendgrid_api_key) {
+            throw new Error(`SendGrid not configured for client ${clientId}. Please configure SendGrid in CRM Settings.`);
+        }
+
+        if (!client.sendgrid_from_email) {
+            throw new Error(`SendGrid From Email not configured for client ${clientId}`);
+        }
+
+        return {
+            apiKey: client.sendgrid_api_key,
+            fromEmail: client.sendgrid_from_email,
+            fromName: client.sendgrid_from_name || 'RinglyPro',
+            replyTo: client.sendgrid_reply_to || client.sendgrid_from_email
+        };
+    } catch (error) {
+        console.error(`Error fetching SendGrid config for client ${clientId}:`, error);
+        throw error;
+    }
 }
-
-// Default from addresses
-const FROM = {
-    email: process.env.SENDGRID_FROM_EMAIL || 'notify@ringlypro.com',
-    name: process.env.SENDGRID_FROM_NAME || 'RinglyPro'
-};
-
-const MARKETING_FROM = {
-    email: process.env.SENDGRID_MARKETING_FROM || 'updates@ringlypro.com',
-    name: process.env.SENDGRID_FROM_NAME || 'RinglyPro'
-};
-
-const REPLY_TO = process.env.SENDGRID_REPLY_TO || 'info@digit2ai.com';
 
 // SendGrid Dynamic Template IDs
 // TODO: Replace with actual template IDs after creating in SendGrid
@@ -37,8 +63,9 @@ const TEMPLATES = {
 };
 
 /**
- * Send email via SendGrid
+ * Send email via SendGrid (Multi-Tenant)
  * @param {Object} options Email options
+ * @param {Number} options.clientId Client ID (REQUIRED for multi-tenant)
  * @param {String} options.to Recipient email
  * @param {String} options.template Template name from TEMPLATES
  * @param {Object} options.data Dynamic template data
@@ -50,6 +77,7 @@ const TEMPLATES = {
  * @returns {Promise} SendGrid response
  */
 async function sendEmail({
+    clientId,
     to,
     template = null,
     data = {},
@@ -59,19 +87,25 @@ async function sendEmail({
     subject = null,
     html = null
 }) {
-    if (!process.env.SENDGRID_API_KEY) {
-        throw new Error('SendGrid API key not configured');
-    }
+    // Get client-specific SendGrid configuration
+    const config = await getClientSendGridConfig(clientId);
 
-    // Determine from address based on category
-    const fromAddress = from || (category === 'marketing' ? MARKETING_FROM : FROM);
+    // Initialize SendGrid with client's API key
+    const clientSgMail = require('@sendgrid/mail');
+    clientSgMail.setApiKey(config.apiKey);
+
+    // Determine from address
+    const fromAddress = from || {
+        email: config.fromEmail,
+        name: config.fromName
+    };
 
     // Build message
     const msg = {
         to,
         from: fromAddress,
-        replyTo: REPLY_TO,
-        categories: [category]
+        replyTo: config.replyTo,
+        categories: [category, `client_${clientId}`]
     };
 
     // Use template or raw content
@@ -102,58 +136,67 @@ async function sendEmail({
         };
     }
 
-    // Send email
+    // Send email using client's SendGrid configuration
     try {
-        console.log(`📧 Sending ${category} email to ${to} (template: ${template || 'custom'})`);
-        const response = await sgMail.send(msg);
-        console.log(`✅ Email sent successfully (msg ID: ${response[0].headers['x-message-id']})`);
+        console.log(`📧 [Client ${clientId}] Sending ${category} email to ${to} (template: ${template || 'custom'})`);
+        const response = await clientSgMail.send(msg);
+        console.log(`✅ [Client ${clientId}] Email sent successfully (msg ID: ${response[0].headers['x-message-id']})`);
         return response;
     } catch (error) {
-        console.error('❌ SendGrid error:', error.response?.body || error.message);
+        console.error(`❌ [Client ${clientId}] SendGrid error:`, error.response?.body || error.message);
         throw error;
     }
 }
 
 /**
- * Send bulk emails (batch)
+ * Send bulk emails (batch) - Multi-Tenant
+ * @param {Number} clientId Client ID
  * @param {Array} emails Array of email objects
  * @returns {Promise} SendGrid response
  */
-async function sendBulkEmails(emails) {
-    if (!process.env.SENDGRID_API_KEY) {
-        throw new Error('SendGrid API key not configured');
-    }
+async function sendBulkEmails(clientId, emails) {
+    // Get client-specific SendGrid configuration
+    const config = await getClientSendGridConfig(clientId);
+
+    // Initialize SendGrid with client's API key
+    const clientSgMail = require('@sendgrid/mail');
+    clientSgMail.setApiKey(config.apiKey);
 
     const messages = emails.map(email => ({
         to: email.to,
-        from: email.from || (email.category === 'marketing' ? MARKETING_FROM : FROM),
-        replyTo: REPLY_TO,
+        from: email.from || {
+            email: config.fromEmail,
+            name: config.fromName
+        },
+        replyTo: config.replyTo,
         templateId: email.template ? TEMPLATES[email.template] : undefined,
         dynamicTemplateData: email.data || {},
         subject: email.subject,
         html: email.html,
-        categories: [email.category || 'transactional']
+        categories: [email.category || 'transactional', `client_${clientId}`]
     }));
 
     try {
-        console.log(`📧 Sending ${messages.length} bulk emails`);
-        const response = await sgMail.send(messages);
-        console.log(`✅ Bulk emails sent successfully`);
+        console.log(`📧 [Client ${clientId}] Sending ${messages.length} bulk emails`);
+        const response = await clientSgMail.send(messages);
+        console.log(`✅ [Client ${clientId}] Bulk emails sent successfully`);
         return response;
     } catch (error) {
-        console.error('❌ SendGrid bulk error:', error.response?.body || error.message);
+        console.error(`❌ [Client ${clientId}] SendGrid bulk error:`, error.response?.body || error.message);
         throw error;
     }
 }
 
 /**
- * Preview email in sandbox mode (no actual delivery)
+ * Preview email in sandbox mode (no actual delivery) - Multi-Tenant
+ * @param {Number} clientId Client ID
  * @param {String} template Template name
  * @param {Object} data Dynamic template data
  * @returns {Promise} SendGrid response
  */
-async function previewEmail(template, data = {}) {
+async function previewEmail(clientId, template, data = {}) {
     return sendEmail({
+        clientId,
         to: 'test@example.com',
         template,
         data,
@@ -217,7 +260,6 @@ module.exports = {
     sendBulkEmails,
     previewEmail,
     getEmailStats,
-    TEMPLATES,
-    FROM,
-    MARKETING_FROM
+    getClientSendGridConfig,
+    TEMPLATES
 };

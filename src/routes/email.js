@@ -19,7 +19,15 @@ const pool = new Pool({
  */
 router.post('/send', async (req, res) => {
     try {
-        const { to, template, data, category, subject, html } = req.body;
+        const { to, template, data, category, subject, html, client_id } = req.body;
+
+        // Client ID is required for multi-tenant support
+        if (!client_id) {
+            return res.status(400).json({
+                success: false,
+                error: 'client_id is required'
+            });
+        }
 
         if (!to) {
             return res.status(400).json({
@@ -29,6 +37,7 @@ router.post('/send', async (req, res) => {
         }
 
         const result = await sendEmail({
+            clientId: client_id,
             to,
             template,
             data,
@@ -57,7 +66,15 @@ router.post('/send', async (req, res) => {
  */
 router.post('/send-bulk', async (req, res) => {
     try {
-        const { emails } = req.body;
+        const { emails, client_id } = req.body;
+
+        // Client ID is required for multi-tenant support
+        if (!client_id) {
+            return res.status(400).json({
+                success: false,
+                error: 'client_id is required'
+            });
+        }
 
         if (!Array.isArray(emails) || emails.length === 0) {
             return res.status(400).json({
@@ -66,7 +83,7 @@ router.post('/send-bulk', async (req, res) => {
             });
         }
 
-        const result = await sendBulkEmails(emails);
+        const result = await sendBulkEmails(client_id, emails);
 
         res.json({
             success: true,
@@ -88,7 +105,15 @@ router.post('/send-bulk', async (req, res) => {
  */
 router.post('/preview', async (req, res) => {
     try {
-        const { template, data } = req.body;
+        const { template, data, client_id } = req.body;
+
+        // Client ID is required for multi-tenant support
+        if (!client_id) {
+            return res.status(400).json({
+                success: false,
+                error: 'client_id is required'
+            });
+        }
 
         if (!template) {
             return res.status(400).json({
@@ -97,7 +122,7 @@ router.post('/preview', async (req, res) => {
             });
         }
 
-        await previewEmail(template, data);
+        await previewEmail(client_id, template, data);
 
         res.json({
             success: true,
