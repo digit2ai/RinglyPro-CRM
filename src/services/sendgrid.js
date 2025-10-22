@@ -124,9 +124,14 @@ async function sendEmail({
         msg.headers = {
             'List-Unsubscribe': `<mailto:unsubscribe@ringlypro.com>, <${process.env.APP_BASE_URL || 'https://ringlypro.com'}/unsubscribe>`
         };
-        msg.asm = {
-            groupId: parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || '0')
-        };
+
+        // Only add ASM unsubscribe group if a valid group ID is configured
+        const unsubscribeGroupId = parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || '0');
+        if (unsubscribeGroupId > 0) {
+            msg.asm = {
+                groupId: unsubscribeGroupId
+            };
+        }
     }
 
     // Sandbox mode for testing
