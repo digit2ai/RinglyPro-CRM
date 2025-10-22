@@ -193,7 +193,13 @@ router.get('/config-status/:client_id', async (req, res) => {
         const { client_id } = req.params;
 
         const result = await pool.query(
-            'SELECT sendgrid_api_key IS NOT NULL as has_api_key, sendgrid_from_email FROM clients WHERE id = $1',
+            `SELECT
+                sendgrid_api_key IS NOT NULL as has_api_key,
+                LENGTH(sendgrid_api_key) as api_key_length,
+                sendgrid_from_email,
+                sendgrid_from_name,
+                sendgrid_reply_to
+             FROM clients WHERE id = $1`,
             [client_id]
         );
 
@@ -211,8 +217,14 @@ router.get('/config-status/:client_id', async (req, res) => {
             success: true,
             configured: isConfigured,
             has_api_key: client.has_api_key,
+            api_key_length: client.api_key_length,
             has_from_email: !!client.sendgrid_from_email,
-            from_email: client.sendgrid_from_email || null
+            from_email: client.sendgrid_from_email || null,
+            from_name: client.sendgrid_from_name || null,
+            reply_to: client.sendgrid_reply_to || null,
+            message: isConfigured
+                ? 'SendGrid is configured and ready'
+                : 'SendGrid not configured - please add API key and from email in CRM Settings'
         });
     } catch (error) {
         console.error('Config status error:', error);

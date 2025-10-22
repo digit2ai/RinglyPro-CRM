@@ -139,12 +139,23 @@ async function sendEmail({
     // Send email using client's SendGrid configuration
     try {
         console.log(`📧 [Client ${clientId}] Sending ${category} email to ${to} (template: ${template || 'custom'})`);
+        console.log(`📧 [Client ${clientId}] From: ${msg.from.email || msg.from} (${msg.from.name || 'no name'})`);
+        console.log(`📧 [Client ${clientId}] Reply-To: ${msg.replyTo}`);
+
         const response = await clientSgMail.send(msg);
         console.log(`✅ [Client ${clientId}] Email sent successfully (msg ID: ${response[0].headers['x-message-id']})`);
         return response;
     } catch (error) {
         console.error(`❌ [Client ${clientId}] SendGrid error:`, error.response?.body || error.message);
-        throw error;
+
+        // Extract detailed error information
+        if (error.response?.body?.errors) {
+            const errorMessages = error.response.body.errors.map(e => e.message).join(', ');
+            console.error(`❌ [Client ${clientId}] SendGrid detailed errors: ${errorMessages}`);
+            throw new Error(`SendGrid error: ${errorMessages}`);
+        }
+
+        throw new Error(error.message || 'SendGrid send failed');
     }
 }
 
