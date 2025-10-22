@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
             min-height: 100vh;
             padding: 2rem;
         }
@@ -118,7 +118,7 @@
         .form-select:focus,
         .form-textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #1e40af;
         }
 
         .form-textarea {
@@ -130,7 +130,7 @@
         .btn-primary {
             width: 100%;
             padding: 0.75rem 1.5rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
             color: white;
             border: none;
             border-radius: 0.5rem;
@@ -237,7 +237,7 @@
         .stat-value {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #667eea;
+            color: #1e40af;
         }
 
         .stat-label {
@@ -255,7 +255,7 @@
         }
 
         .email-item:hover {
-            border-color: #667eea;
+            border-color: #1e40af;
         }
 
         .email-header {
@@ -329,7 +329,7 @@
             height: 40px;
             border: 4px solid #f3f4f6;
             border-radius: 50%;
-            border-top-color: #667eea;
+            border-top-color: #1e40af;
             animation: spin 1s ease-in-out infinite;
         }
 
@@ -354,13 +354,13 @@
         }
 
         .template-card:hover {
-            border-color: #667eea;
+            border-color: #1e40af;
             background: #f9fafb;
         }
 
         .template-card.selected {
-            border-color: #667eea;
-            background: #eff6ff;
+            border-color: #1e40af;
+            background: #dbeafe;
         }
 
         .template-icon {
@@ -423,7 +423,7 @@
                     <div class="form-group">
                         <label>Recipient Mode</label>
                         <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                            <button type="button" onclick="toggleRecipientMode('single')" id="singleModeBtn" class="btn-secondary" style="flex: 1; background: #667eea; color: white;">
+                            <button type="button" onclick="toggleRecipientMode('single')" id="singleModeBtn" class="btn-secondary" style="flex: 1; background: #1e40af; color: white;">
                                 Single Recipient
                             </button>
                             <button type="button" onclick="toggleRecipientMode('bulk')" id="bulkModeBtn" class="btn-secondary" style="flex: 1;">
@@ -626,7 +626,7 @@
             if (mode === 'single') {
                 singleSection.style.display = 'block';
                 bulkSection.style.display = 'none';
-                singleBtn.style.background = '#667eea';
+                singleBtn.style.background = '#1e40af';
                 singleBtn.style.color = 'white';
                 bulkBtn.style.background = '#f3f4f6';
                 bulkBtn.style.color = '#374151';
@@ -634,7 +634,7 @@
             } else {
                 singleSection.style.display = 'none';
                 bulkSection.style.display = 'block';
-                bulkBtn.style.background = '#667eea';
+                bulkBtn.style.background = '#1e40af';
                 bulkBtn.style.color = 'white';
                 singleBtn.style.background = '#f3f4f6';
                 singleBtn.style.color = '#374151';
