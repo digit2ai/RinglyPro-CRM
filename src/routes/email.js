@@ -139,13 +139,21 @@ router.post('/preview', async (req, res) => {
 
 /**
  * Get email statistics
- * GET /api/email/stats?range=7d&category=marketing
+ * GET /api/email/stats?range=7d&category=marketing&client_id=15
  */
 router.get('/stats', async (req, res) => {
     try {
-        const { range, category } = req.query;
+        const { range, category, client_id } = req.query;
 
-        const stats = await getEmailStats(range || '7d', category, pool);
+        // Client ID is required for multi-tenant support
+        if (!client_id) {
+            return res.status(400).json({
+                success: false,
+                error: 'client_id is required'
+            });
+        }
+
+        const stats = await getEmailStats(range || '7d', category, pool, client_id);
 
         res.json({
             success: true,
@@ -254,11 +262,24 @@ router.post('/webhooks/sendgrid', express.raw({ type: 'application/json' }), asy
  */
 router.get('/events', async (req, res) => {
     try {
-        const { limit = 50, event, email, category } = req.query;
+        const { limit = 50, event, email, category, client_id } = req.query;
+
+        // Client ID is required for multi-tenant support
+        if (!client_id) {
+            return res.status(400).json({
+                success: false,
+                error: 'client_id is required'
+            });
+        }
 
         let query = 'SELECT * FROM email_events WHERE 1=1';
         const params = [];
         let paramCount = 1;
+
+        // Filter by client_id using category (categories include client_X tag)
+        query += ` AND category LIKE $${paramCount}`;
+        params.push(`%client_${client_id}%`);
+        paramCount++;
 
         if (event) {
             query += ` AND event = $${paramCount}`;

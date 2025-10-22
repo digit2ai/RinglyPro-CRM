@@ -708,6 +708,13 @@
         }
 
         async function sendEmail() {
+            // Validate client ID first
+            if (!clientId) {
+                showAlert('error', 'Client ID missing. Please reload from MCP Copilot.');
+                console.error('clientId is null or undefined');
+                return;
+            }
+
             const subject = document.getElementById('emailSubject').value.trim();
             const html = document.getElementById('emailMessage').value.trim();
             const category = document.getElementById('emailCategory').value;
@@ -886,8 +893,10 @@
         }
 
         async function loadEmailStats() {
+            if (!clientId) return; // Skip if no client ID
+
             try {
-                const response = await fetch(`${window.location.origin}/api/email/stats?range=7d`);
+                const response = await fetch(`${window.location.origin}/api/email/stats?range=7d&client_id=${clientId}`);
                 const data = await response.json();
 
                 if (data.success) {
@@ -902,8 +911,10 @@
         }
 
         async function loadRecentEmails() {
+            if (!clientId) return; // Skip if no client ID
+
             try {
-                const response = await fetch(`${window.location.origin}/api/email/events?limit=10`);
+                const response = await fetch(`${window.location.origin}/api/email/events?limit=10&client_id=${clientId}`);
                 const data = await response.json();
 
                 if (data.success && data.events && data.events.length > 0) {

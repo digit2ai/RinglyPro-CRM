@@ -206,12 +206,14 @@ async function previewEmail(clientId, template, data = {}) {
 }
 
 /**
- * Get email statistics from database
+ * Get email statistics from database (Multi-Tenant)
  * @param {String} range Time range: 24h, 7d, 30d
  * @param {String} category Optional category filter
+ * @param {Object} pool Database connection pool
+ * @param {Number} clientId Client ID for filtering
  * @returns {Promise<Object>} Stats object
  */
-async function getEmailStats(range = '7d', category = null, pool) {
+async function getEmailStats(range = '7d', category = null, pool, clientId) {
     const intervals = {
         '24h': '24 hours',
         '7d': '7 days',
@@ -233,9 +235,19 @@ async function getEmailStats(range = '7d', category = null, pool) {
     `;
 
     const params = [];
+    let paramCount = 1;
+
+    // Filter by client_id (categories include client_X tag)
+    if (clientId) {
+        query += ` AND category LIKE $${paramCount}`;
+        params.push(`%client_${clientId}%`);
+        paramCount++;
+    }
+
     if (category) {
-        query += ' AND category = $1';
+        query += ` AND category = $${paramCount}`;
         params.push(category);
+        paramCount++;
     }
 
     try {
