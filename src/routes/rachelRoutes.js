@@ -822,27 +822,27 @@ async function createIVRMenu(client, language = 'en') {
     // Build menu text
     let menuText = '';
     if (language === 'en') {
-        menuText = `Hello, you've reached ${businessName}. `;
-        menuText += `Press 1 to schedule an appointment. `;
+        menuText = `Hello! This is Lina from ${businessName}. I'm here to help you today. <break time="0.8s"/> `;
+        menuText += `To schedule an appointment, please press 1. <break time="0.5s"/> `;
 
         // Add department options (starting from 2)
         enabledDepts.forEach((dept, index) => {
             const digit = index + 2;
-            menuText += `Press ${digit} to reach ${dept.name}. `;
+            menuText += `For ${dept.name}, press ${digit}. <break time="0.5s"/> `;
         });
 
-        menuText += `Press 9 to leave a voicemail. `;
+        menuText += `Or, to leave a voicemail message, press 9. `;
     } else {
         // Spanish
-        menuText = `Hola, ha llamado a ${businessName}. `;
-        menuText += `Presione 1 para programar una cita. `;
+        menuText = `¡Hola! Habla Lina de ${businessName}. Estoy aquí para ayudarle. <break time="0.8s"/> `;
+        menuText += `Para programar una cita, presione 1. <break time="0.5s"/> `;
 
         enabledDepts.forEach((dept, index) => {
             const digit = index + 2;
-            menuText += `Presione ${digit} para comunicarse con ${dept.name}. `;
+            menuText += `Para ${dept.name}, presione ${digit}. <break time="0.5s"/> `;
         });
 
-        menuText += `Presione 9 para dejar un mensaje de voz. `;
+        menuText += `O, para dejar un mensaje de voz, presione 9. `;
     }
 
     // For English, try to use Rachel's premium voice

@@ -27,17 +27,17 @@ function createSpanishIVRMenu(client) {
     // Get enabled departments only
     const enabledDepts = ivrOptions.filter(dept => dept.enabled);
 
-    // Build Spanish menu text
-    let menuText = `Hola, ha llamado a ${businessName}. `;
-    menuText += `Presione 1 para programar una cita. `;
+    // Build Spanish menu text with warm, empathetic tone
+    let menuText = `¡Hola! Habla Lina de ${businessName}. Estoy aquí para ayudarle. <break time="0.8s"/> `;
+    menuText += `Para programar una cita, presione 1. <break time="0.5s"/> `;
 
     // Add department options (starting from 2)
     enabledDepts.forEach((dept, index) => {
         const digit = index + 2;
-        menuText += `Presione ${digit} para comunicarse con ${dept.name}. `;
+        menuText += `Para ${dept.name}, presione ${digit}. <break time="0.5s"/> `;
     });
 
-    menuText += `Presione 9 para dejar un mensaje de voz. `;
+    menuText += `O, para dejar un mensaje de voz, presione 9. `;
 
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>

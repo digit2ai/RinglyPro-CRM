@@ -110,8 +110,8 @@ class MultiTenantRachelService {
     async createLanguageSelectionMenu(clientInfo) {
         const twiml = new twilio.twiml.VoiceResponse();
 
-        // Bilingual greeting: All in English to avoid pronunciation issues with brief pause for decision time
-        const bilingualGreeting = `Hello and welcome to ${clientInfo.business_name}. <break time="1s"/> For English, press 1. <break time="0.5s"/> For Spanish, please press 2.`;
+        // Bilingual greeting: Introduce as Lina with warm, empathetic tone
+        const bilingualGreeting = `Hello! Thank you for calling ${clientInfo.business_name}. My name is Lina, and I'm here to assist you. <break time="1s"/> For English, please press 1. <break time="0.8s"/> Para español, presione 2.`;
 
         // Create gather for language selection (DTMF keypad input)
         const gather = twiml.gather({
