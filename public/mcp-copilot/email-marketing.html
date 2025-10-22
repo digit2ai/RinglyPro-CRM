@@ -419,11 +419,58 @@
                         </div>
                     </div>
 
-                    <!-- Recipient -->
+                    <!-- Recipient Mode Toggle -->
                     <div class="form-group">
+                        <label>Recipient Mode</label>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                            <button type="button" onclick="toggleRecipientMode('single')" id="singleModeBtn" class="btn-secondary" style="flex: 1; background: #667eea; color: white;">
+                                Single Recipient
+                            </button>
+                            <button type="button" onclick="toggleRecipientMode('bulk')" id="bulkModeBtn" class="btn-secondary" style="flex: 1;">
+                                Bulk Email List
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Single Recipient -->
+                    <div class="form-group" id="singleRecipientSection">
                         <label>Recipient Email *</label>
                         <input type="email" id="recipientEmail" class="form-input"
-                               placeholder="contact@example.com" required>
+                               placeholder="contact@example.com">
+                    </div>
+
+                    <!-- Bulk Recipients -->
+                    <div class="form-group" id="bulkRecipientSection" style="display: none;">
+                        <label>Upload Email List</label>
+                        <div style="margin-bottom: 1rem;">
+                            <input type="file" id="emailListFile" accept=".csv,.txt"
+                                   style="display: none;" onchange="handleFileUpload(event)">
+                            <button type="button" onclick="document.getElementById('emailListFile').click()"
+                                    class="btn-secondary" style="width: 100%; margin-bottom: 0.5rem;">
+                                Choose CSV/TXT File
+                            </button>
+                            <p style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.5rem;">
+                                Upload a CSV or TXT file with one email per line
+                            </p>
+                        </div>
+
+                        <label>Or Paste Email List (one per line)</label>
+                        <textarea id="emailListText" class="form-input" rows="6"
+                                  placeholder="contact1@example.com&#10;contact2@example.com&#10;contact3@example.com"
+                                  oninput="updateEmailCount()"></textarea>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                            <span style="font-size: 0.75rem; color: #6b7280;">
+                                <span id="emailCount">0</span> emails detected
+                            </span>
+                            <button type="button" onclick="validateEmails()" class="btn-secondary"
+                                    style="font-size: 0.75rem; padding: 0.25rem 0.75rem;">
+                                Validate Emails
+                            </button>
+                        </div>
+                        <div id="invalidEmails" style="margin-top: 0.5rem; display: none;">
+                            <p style="font-size: 0.75rem; color: #ef4444; font-weight: 600;">Invalid emails found:</p>
+                            <ul id="invalidEmailsList" style="font-size: 0.75rem; color: #ef4444; margin-left: 1.5rem;"></ul>
+                        </div>
                     </div>
 
                     <!-- Subject -->
@@ -566,16 +613,134 @@
             });
         }
 
+        let recipientMode = 'single'; // Track current mode
+
+        function toggleRecipientMode(mode) {
+            recipientMode = mode;
+            const singleSection = document.getElementById('singleRecipientSection');
+            const bulkSection = document.getElementById('bulkRecipientSection');
+            const singleBtn = document.getElementById('singleModeBtn');
+            const bulkBtn = document.getElementById('bulkModeBtn');
+            const sendBtn = document.getElementById('sendBtn');
+
+            if (mode === 'single') {
+                singleSection.style.display = 'block';
+                bulkSection.style.display = 'none';
+                singleBtn.style.background = '#667eea';
+                singleBtn.style.color = 'white';
+                bulkBtn.style.background = '#f3f4f6';
+                bulkBtn.style.color = '#374151';
+                sendBtn.textContent = '📤 Send Email';
+            } else {
+                singleSection.style.display = 'none';
+                bulkSection.style.display = 'block';
+                bulkBtn.style.background = '#667eea';
+                bulkBtn.style.color = 'white';
+                singleBtn.style.background = '#f3f4f6';
+                singleBtn.style.color = '#374151';
+                sendBtn.textContent = '📤 Send Bulk Emails';
+            }
+        }
+
+        function updateEmailCount() {
+            const text = document.getElementById('emailListText').value;
+            const emails = extractEmails(text);
+            document.getElementById('emailCount').textContent = emails.length;
+        }
+
+        function extractEmails(text) {
+            const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+            const emails = [];
+
+            for (const line of lines) {
+                // Handle CSV format (email might be in quotes or have commas)
+                const parts = line.split(',').map(p => p.trim().replace(/['"]/g, ''));
+                for (const part of parts) {
+                    if (part && part.includes('@')) {
+                        emails.push(part);
+                    }
+                }
+            }
+
+            return [...new Set(emails)]; // Remove duplicates
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                document.getElementById('emailListText').value = content;
+                updateEmailCount();
+                showAlert('success', `File loaded: ${file.name}`);
+            };
+            reader.onerror = function() {
+                showAlert('error', 'Error reading file');
+            };
+            reader.readAsText(file);
+        }
+
+        function validateEmails() {
+            const text = document.getElementById('emailListText').value;
+            const emails = extractEmails(text);
+
+            if (emails.length === 0) {
+                showAlert('warning', 'No emails found to validate');
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const invalid = emails.filter(email => !emailRegex.test(email));
+
+            const invalidSection = document.getElementById('invalidEmails');
+            const invalidList = document.getElementById('invalidEmailsList');
+
+            if (invalid.length > 0) {
+                invalidList.innerHTML = invalid.map(email => `<li>${email}</li>`).join('');
+                invalidSection.style.display = 'block';
+                showAlert('warning', `Found ${invalid.length} invalid email(s)`);
+            } else {
+                invalidSection.style.display = 'none';
+                showAlert('success', `All ${emails.length} emails are valid!`);
+            }
+        }
+
         async function sendEmail() {
-            const to = document.getElementById('recipientEmail').value.trim();
             const subject = document.getElementById('emailSubject').value.trim();
             const html = document.getElementById('emailMessage').value.trim();
             const category = document.getElementById('emailCategory').value;
 
-            if (!to || !subject || !html) {
-                showAlert('error', 'Please fill in all required fields');
+            if (!subject || !html) {
+                showAlert('error', 'Please fill in subject and message');
                 return;
             }
+
+            // Check recipient mode
+            if (recipientMode === 'single') {
+                const to = document.getElementById('recipientEmail').value.trim();
+                if (!to) {
+                    showAlert('error', 'Please enter recipient email');
+                    return;
+                }
+                await sendSingleEmail(to, subject, html, category);
+            } else {
+                const emailListText = document.getElementById('emailListText').value.trim();
+                if (!emailListText) {
+                    showAlert('error', 'Please enter or upload email list');
+                    return;
+                }
+                const emails = extractEmails(emailListText);
+                if (emails.length === 0) {
+                    showAlert('error', 'No valid emails found in list');
+                    return;
+                }
+                await sendBulkEmails(emails, subject, html, category);
+            }
+        }
+
+        async function sendSingleEmail(to, subject, html, category) {
 
             try {
                 document.getElementById('sendBtn').disabled = true;
@@ -614,7 +779,105 @@
                 showAlert('error', 'Failed to send email: ' + error.message);
             } finally {
                 document.getElementById('sendBtn').disabled = false;
-                document.getElementById('sendBtn').textContent = '📤 Send Email';
+                document.getElementById('sendBtn').textContent = recipientMode === 'single' ? '📤 Send Email' : '📤 Send Bulk Emails';
+            }
+        }
+
+        async function sendBulkEmails(emails, subject, html, category) {
+            const sendBtn = document.getElementById('sendBtn');
+            const totalEmails = emails.length;
+
+            // Validate emails first
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const validEmails = emails.filter(email => emailRegex.test(email));
+            const invalidCount = totalEmails - validEmails.length;
+
+            if (validEmails.length === 0) {
+                showAlert('error', 'No valid emails found in list');
+                return;
+            }
+
+            if (invalidCount > 0) {
+                if (!confirm(`Found ${invalidCount} invalid email(s). Send to ${validEmails.length} valid emails?`)) {
+                    return;
+                }
+            }
+
+            try {
+                sendBtn.disabled = true;
+                sendBtn.textContent = `⏳ Sending to ${validEmails.length} recipients...`;
+
+                // Build bulk email array
+                const emailsToSend = validEmails.map(email => ({
+                    to: email,
+                    template: selectedTemplate !== 'custom_marketing' ? selectedTemplate : null,
+                    subject,
+                    html,
+                    category,
+                    data: {
+                        subject,
+                        message: html
+                    }
+                }));
+
+                // Send in batches of 100 (SendGrid recommendation)
+                const batchSize = 100;
+                let successCount = 0;
+                let failedCount = 0;
+
+                for (let i = 0; i < emailsToSend.length; i += batchSize) {
+                    const batch = emailsToSend.slice(i, i + batchSize);
+                    sendBtn.textContent = `⏳ Sending batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(emailsToSend.length / batchSize)}...`;
+
+                    try {
+                        const response = await fetch(`${window.location.origin}/api/email/send-bulk`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ emails: batch })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            successCount += batch.length;
+                        } else {
+                            failedCount += batch.length;
+                            console.error('Batch failed:', data.error);
+                        }
+                    } catch (error) {
+                        failedCount += batch.length;
+                        console.error('Batch error:', error);
+                    }
+
+                    // Small delay between batches to avoid rate limits
+                    if (i + batchSize < emailsToSend.length) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+
+                // Show results
+                if (successCount > 0 && failedCount === 0) {
+                    showAlert('success', `✅ Successfully sent ${successCount} email(s)!`);
+                    document.getElementById('emailForm').reset();
+                    document.getElementById('emailListText').value = '';
+                    document.getElementById('emailCount').textContent = '0';
+                    document.getElementById('subjectCounter').textContent = '0 / 200';
+                    document.getElementById('messageCounter').textContent = '0 characters';
+                } else if (successCount > 0 && failedCount > 0) {
+                    showAlert('warning', `⚠️ Sent ${successCount} email(s), ${failedCount} failed`);
+                } else {
+                    showAlert('error', `❌ Failed to send emails. Please try again.`);
+                }
+
+                await loadRecentEmails();
+                await loadEmailStats();
+
+            } catch (error) {
+                console.error('Bulk send error:', error);
+                showAlert('error', 'Failed to send bulk emails: ' + error.message);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = '📤 Send Bulk Emails';
             }
         }
 

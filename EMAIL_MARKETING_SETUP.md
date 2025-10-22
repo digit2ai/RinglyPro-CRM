@@ -301,11 +301,55 @@ Or click the "📧 Email Marketing" button in the MCP Copilot sidebar.
 
 ### Features:
 - **Template Selection**: Custom, Chamber Invite, Follow-up
+- **Single & Bulk Email Modes**: Send to one recipient or upload email lists
+- **CSV/TXT Upload**: Upload files with email addresses
+- **Email List Validation**: Automatically detect and validate email addresses
+- **Batch Processing**: Sends bulk emails in batches of 100 (SendGrid best practice)
 - **Compose Emails**: Rich text editor with character counter
 - **Category Selection**: Marketing, Chamber Outreach, Transactional
 - **Email Stats**: Sent, delivered, open rate, click rate
 - **Recent Emails**: View last 10 emails sent
 - **Real-time Updates**: Auto-refresh stats and history
+
+### How to Send Bulk Emails:
+
+1. **Click "Bulk Email List" button** at the top of the compose form
+2. **Upload a file** (CSV or TXT format):
+   - Click "Choose CSV/TXT File"
+   - Select your file with one email per line
+   - File will be automatically loaded and parsed
+3. **Or paste email list directly**:
+   - One email per line
+   - Supports CSV format with commas
+   - Automatically removes duplicates
+4. **Validate emails** (optional):
+   - Click "Validate Emails" button
+   - View any invalid emails found
+   - Invalid emails will be filtered out before sending
+5. **Compose your message**:
+   - Select a template or use custom HTML
+   - Write subject and message
+   - Choose email category
+6. **Send**:
+   - Click "Send Bulk Emails"
+   - Progress shown for large batches
+   - Success/failure count displayed
+
+**Example CSV format:**
+```csv
+john@example.com
+jane@company.com
+"contact@business.com"
+sales@startup.com, support@startup.com
+```
+
+**Example TXT format:**
+```
+john@example.com
+jane@company.com
+contact@business.com
+sales@startup.com
+```
 
 ## 🔐 Security Best Practices
 
