@@ -46,6 +46,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Don't cache POST, PUT, DELETE requests - only GET requests can be cached
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -53,7 +58,7 @@ self.addEventListener('fetch', (event) => {
         return response || fetch(event.request)
           .then((fetchResponse) => {
             // Don't cache API calls
-            if (event.request.url.includes('/api/mcp/')) {
+            if (event.request.url.includes('/api/')) {
               return fetchResponse;
             }
 

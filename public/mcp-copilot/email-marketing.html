@@ -783,7 +783,9 @@
                     body: JSON.stringify(payload)
                 });
 
+                console.log('📤 Send response status:', response.status);
                 const data = await response.json();
+                console.log('📤 Send response data:', data);
 
                 if (data.success) {
                     showAlert('success', '✅ Email sent successfully!');
