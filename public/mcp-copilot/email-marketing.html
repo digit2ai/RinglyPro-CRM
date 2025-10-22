@@ -400,25 +400,6 @@
                 </h2>
 
                 <form id="emailForm">
-                    <!-- Template Selection -->
-                    <div class="form-group">
-                        <label>Email Template (Optional)</label>
-                        <div class="template-grid" id="templateGrid">
-                            <div class="template-card" data-template="custom_marketing">
-                                <div class="template-icon">📨</div>
-                                <div class="template-name">Custom</div>
-                            </div>
-                            <div class="template-card" data-template="chamber_invite">
-                                <div class="template-icon">🏛️</div>
-                                <div class="template-name">Chamber Invite</div>
-                            </div>
-                            <div class="template-card" data-template="missed_call_followup">
-                                <div class="template-icon">📞</div>
-                                <div class="template-name">Follow-up</div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Recipient Mode Toggle -->
                     <div class="form-group">
                         <label>Recipient Mode</label>
@@ -489,27 +470,37 @@
                         <div class="char-counter" id="messageCounter">0 characters</div>
                     </div>
 
-                    <!-- Category -->
+                    <!-- Image Upload (Optional) -->
                     <div class="form-group">
-                        <label>Email Category</label>
-                        <select id="emailCategory" class="form-select">
-                            <option value="marketing">Marketing</option>
-                            <option value="chamber_outreach">Chamber Outreach</option>
-                            <option value="transactional">Transactional</option>
-                            <option value="announcement">Announcement</option>
-                        </select>
+                        <label>Add Image (Optional)</label>
+                        <input type="file" id="emailImage" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                        <button type="button" onclick="document.getElementById('emailImage').click()" class="btn-secondary" style="width: 100%; margin-bottom: 0.5rem;">
+                            📷 Choose Image
+                        </button>
+                        <div id="imagePreviewContainer" style="display: none; margin-top: 1rem;">
+                            <img id="imagePreview" style="max-width: 100%; border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                            <button type="button" onclick="removeImage()" class="btn-secondary" style="width: 100%; font-size: 0.875rem; padding: 0.5rem;">
+                                ❌ Remove Image
+                            </button>
+                        </div>
                     </div>
 
-                    <button type="submit" class="btn-primary" id="sendBtn">
-                        📤 Send Email
-                    </button>
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="button" onclick="previewEmail()" class="btn-secondary" style="flex: 1;">
+                            👁️ Preview
+                        </button>
+                        <button type="submit" class="btn-primary" id="sendBtn" style="flex: 2;">
+                            📤 Send Email
+                        </button>
+                    </div>
                 </form>
             </div>
 
             <!-- Sidebar -->
             <div>
-                <!-- Email Stats -->
-                <div class="card" style="margin-bottom: 2rem;">
+                <!-- Email Stats (Hidden until webhook is configured) -->
+                <div class="card" style="margin-bottom: 2rem; display: none;">
                     <h2>
                         <span>📊</span>
                         Email Stats (7 Days)
@@ -535,8 +526,8 @@
                     </div>
                 </div>
 
-                <!-- Recent Emails -->
-                <div class="card">
+                <!-- Recent Emails (Hidden until webhook is configured) -->
+                <div class="card" style="display: none;">
                     <h2>
                         <span>📬</span>
                         Recent Emails
@@ -556,6 +547,8 @@
     <script>
         let clientId = null;
         let selectedTemplate = 'custom_marketing';
+        let uploadedImageData = null;
+        let recipientMode = 'single';
 
         // Extract client_id from URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -576,23 +569,10 @@
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('🔄 DOMContentLoaded - clientId:', clientId);
             setupEventListeners();
-            await loadEmailStats();
-            await loadRecentEmails();
+            // Email stats and recent emails hidden until webhook is configured
         });
 
         function setupEventListeners() {
-            // Template selection
-            document.querySelectorAll('.template-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
-                    card.classList.add('selected');
-                    selectedTemplate = card.dataset.template;
-                });
-            });
-
-            // Select first template by default
-            document.querySelector('.template-card').classList.add('selected');
-
             // Subject character counter
             document.getElementById('emailSubject').addEventListener('input', (e) => {
                 const length = e.target.value.length;
@@ -723,13 +703,15 @@
             }
 
             const subject = document.getElementById('emailSubject').value.trim();
-            const html = document.getElementById('emailMessage').value.trim();
-            const category = document.getElementById('emailCategory').value;
+            const message = document.getElementById('emailMessage').value.trim();
 
-            if (!subject || !html) {
+            if (!subject || !message) {
                 showAlert('error', 'Please fill in subject and message');
                 return;
             }
+
+            // Convert plain text to HTML with proper formatting
+            const html = formatEmailHTML(message);
 
             // Check recipient mode
             if (recipientMode === 'single') {
@@ -738,7 +720,7 @@
                     showAlert('error', 'Please enter recipient email');
                     return;
                 }
-                await sendSingleEmail(to, subject, html, category);
+                await sendSingleEmail(to, subject, html);
             } else {
                 const emailListText = document.getElementById('emailListText').value.trim();
                 if (!emailListText) {
@@ -750,11 +732,41 @@
                     showAlert('error', 'No valid emails found in list');
                     return;
                 }
-                await sendBulkEmails(emails, subject, html, category);
+                await sendBulkEmails(emails, subject, html);
             }
         }
 
-        async function sendSingleEmail(to, subject, html, category) {
+        function formatEmailHTML(message) {
+            // Convert plain text to HTML with proper formatting
+            let html = message;
+
+            // Replace line breaks with <br> tags
+            html = html.replace(/\n/g, '<br>');
+
+            // Wrap in basic email template with image if uploaded
+            let emailContent = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            `;
+
+            if (uploadedImageData) {
+                emailContent += `
+                    <div style="margin-bottom: 20px; text-align: center;">
+                        <img src="${uploadedImageData}" style="max-width: 100%; height: auto; border-radius: 8px;">
+                    </div>
+                `;
+            }
+
+            emailContent += `
+                    <div style="color: #333; line-height: 1.6;">
+                        ${html}
+                    </div>
+                </div>
+            `;
+
+            return emailContent;
+        }
+
+        async function sendSingleEmail(to, subject, html) {
             console.log('📤 sendSingleEmail - clientId:', clientId);
 
             try {
@@ -764,10 +776,10 @@
                 const payload = {
                     client_id: clientId,
                     to,
-                    template: selectedTemplate !== 'custom_marketing' ? selectedTemplate : null,
+                    template: null,  // Always use custom HTML
                     subject,
                     html,
-                    category,
+                    category: 'marketing',  // Default to marketing
                     data: {
                         subject,
                         message: html
@@ -806,7 +818,7 @@
             }
         }
 
-        async function sendBulkEmails(emails, subject, html, category) {
+        async function sendBulkEmails(emails, subject, html) {
             const sendBtn = document.getElementById('sendBtn');
             const totalEmails = emails.length;
 
@@ -833,10 +845,10 @@
                 // Build bulk email array
                 const emailsToSend = validEmails.map(email => ({
                     to: email,
-                    template: selectedTemplate !== 'custom_marketing' ? selectedTemplate : null,
+                    template: null,  // Always use custom HTML
                     subject,
                     html,
-                    category,
+                    category: 'marketing',  // Default to marketing
                     data: {
                         subject,
                         message: html
@@ -1004,6 +1016,106 @@
             setTimeout(() => {
                 alert.remove();
             }, 5000);
+        }
+
+        // Image Upload Functions
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showAlert('error', 'Please select a valid image file');
+                return;
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showAlert('error', 'Image size must be less than 5MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadedImageData = e.target.result;
+                document.getElementById('imagePreview').src = uploadedImageData;
+                document.getElementById('imagePreviewContainer').style.display = 'block';
+                showAlert('success', 'Image uploaded successfully!');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage() {
+            uploadedImageData = null;
+            document.getElementById('imagePreview').src = '';
+            document.getElementById('imagePreviewContainer').style.display = 'none';
+            document.getElementById('emailImage').value = '';
+            showAlert('success', 'Image removed');
+        }
+
+        // Email Preview Function
+        function previewEmail() {
+            const subject = document.getElementById('emailSubject').value.trim();
+            const message = document.getElementById('emailMessage').value.trim();
+
+            if (!subject || !message) {
+                showAlert('error', 'Please fill in subject and message to preview');
+                return;
+            }
+
+            // Generate HTML
+            const html = formatEmailHTML(message);
+
+            // Open preview in new window
+            const previewWindow = window.open('', 'Email Preview', 'width=600,height=800');
+            previewWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Email Preview - ${subject}</title>
+                    <style>
+                        body {
+                            margin: 0;
+                            padding: 20px;
+                            font-family: Arial, sans-serif;
+                            background: #f3f4f6;
+                        }
+                        .preview-header {
+                            background: white;
+                            padding: 20px;
+                            border-radius: 8px;
+                            margin-bottom: 20px;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        }
+                        .preview-header h2 {
+                            margin: 0 0 10px 0;
+                            color: #1f2937;
+                        }
+                        .preview-subject {
+                            font-size: 18px;
+                            font-weight: 600;
+                            color: #374151;
+                        }
+                        .preview-body {
+                            background: white;
+                            border-radius: 8px;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                            overflow: hidden;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="preview-header">
+                        <h2>📧 Email Preview</h2>
+                        <div class="preview-subject">Subject: ${subject}</div>
+                    </div>
+                    <div class="preview-body">
+                        ${html}
+                    </div>
+                </body>
+                </html>
+            `);
+            previewWindow.document.close();
         }
     </script>
 </body>
