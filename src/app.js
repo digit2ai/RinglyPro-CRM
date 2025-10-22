@@ -90,6 +90,9 @@ try {
     console.log('⚠️ GoHighLevel MCP routes not available:', error.message);
 }
 
+// Import email marketing routes (SendGrid integration)
+const emailRoutes = require('./routes/email'); // Email marketing with SendGrid
+
 // Import referral routes (optional - won't crash app if fails)
 let referralRoutes = null;
 try {
@@ -171,6 +174,10 @@ if (ghlMCPRoutes) {
 } else {
     console.log('⚠️ GoHighLevel MCP routes not available - skipping mount');
 }
+
+// Email Marketing routes (SendGrid integration)
+app.use('/api/email', emailRoutes);
+console.log('📧 Email Marketing routes mounted at /api/email');
 
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
@@ -298,21 +305,27 @@ app.get('/health', (req, res) => {
       voice: process.env.ELEVENLABS_API_KEY ? 'configured' : 'not configured',
       rachel_voice: process.env.ELEVENLABS_API_KEY ? 'active' : 'disabled',
       stripe: process.env.STRIPE_SECRET_KEY ? 'configured' : 'not configured',
+      sendgrid: process.env.SENDGRID_API_KEY ? 'configured' : 'not configured',
       authentication: 'enabled',
       client_identification: 'enabled',
       call_forwarding: 'enabled',
-      referral_system: referralRoutes ? 'enabled' : 'disabled'
+      referral_system: referralRoutes ? 'enabled' : 'disabled',
+      email_marketing: process.env.SENDGRID_API_KEY ? 'enabled' : 'disabled'
     },
     webhooks: {
       twilio_voice: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/webhook/twilio/voice`,
       rachel_voice: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/voice/rachel/`,
       conditional_forward: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/webhook/conditional-forward`,
-      rachel_client_test: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/voice/rachel/test-client/+18886103810`
+      rachel_client_test: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/voice/rachel/test-client/+18886103810`,
+      sendgrid_events: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:3000'}/api/email/webhooks/sendgrid`
     },
     api_endpoints: {
       rachel_toggle: '/api/client/rachel-toggle',
       call_forwarding_setup: '/api/call-forwarding/setup/:carrier',
-      forwarding_status: '/api/forwarding-status'
+      forwarding_status: '/api/forwarding-status',
+      email_send: '/api/email/send',
+      email_stats: '/api/email/stats',
+      email_events: '/api/email/events'
     }
   });
 });

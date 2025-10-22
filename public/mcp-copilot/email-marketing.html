@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Marketing - RinglyPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2rem;
+            color: white;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 968px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 150px;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            padding: 0.5rem 1rem;
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .char-counter {
+            text-align: right;
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        .char-counter.warning {
+            color: #f59e0b;
+        }
+
+        .char-counter.error {
+            color: #ef4444;
+        }
+
+        .alert-container {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: white;
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert-success {
+            background: #10b981;
+        }
+
+        .alert-error {
+            background: #ef4444;
+        }
+
+        .alert-warning {
+            background: #f59e0b;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        .email-item {
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            transition: border-color 0.2s;
+        }
+
+        .email-item:hover {
+            border-color: #667eea;
+        }
+
+        .email-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .email-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .email-status.delivered {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .email-status.sent {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .email-status.bounced {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .email-to {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .email-subject {
+            color: #374151;
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .email-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #9ca3af;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f4f6;
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .template-card {
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .template-card:hover {
+            border-color: #667eea;
+            background: #f9fafb;
+        }
+
+        .template-card.selected {
+            border-color: #667eea;
+            background: #eff6ff;
+        }
+
+        .template-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .template-name {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📧 Email Marketing</h1>
+            <p>Send targeted emails to your contacts and Chamber partners</p>
+            <div class="status-indicator" id="statusIndicator">
+                <div class="status-dot"></div>
+                <span id="statusText">Connected to SendGrid</span>
+            </div>
+        </div>
+
+        <!-- Alert Container -->
+        <div class="alert-container" id="alertContainer"></div>
+
+        <!-- Main Content -->
+        <div class="content-grid">
+            <!-- Email Composer -->
+            <div class="card">
+                <h2>
+                    <span>✍️</span>
+                    Compose Email
+                </h2>
+
+                <form id="emailForm">
+                    <!-- Template Selection -->
+                    <div class="form-group">
+                        <label>Email Template (Optional)</label>
+                        <div class="template-grid" id="templateGrid">
+                            <div class="template-card" data-template="custom_marketing">
+                                <div class="template-icon">📨</div>
+                                <div class="template-name">Custom</div>
+                            </div>
+                            <div class="template-card" data-template="chamber_invite">
+                                <div class="template-icon">🏛️</div>
+                                <div class="template-name">Chamber Invite</div>
+                            </div>
+                            <div class="template-card" data-template="missed_call_followup">
+                                <div class="template-icon">📞</div>
+                                <div class="template-name">Follow-up</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recipient -->
+                    <div class="form-group">
+                        <label>Recipient Email *</label>
+                        <input type="email" id="recipientEmail" class="form-input"
+                               placeholder="contact@example.com" required>
+                    </div>
+
+                    <!-- Subject -->
+                    <div class="form-group">
+                        <label>Subject Line *</label>
+                        <input type="text" id="emailSubject" class="form-input"
+                               placeholder="Your email subject" required maxlength="200">
+                        <div class="char-counter" id="subjectCounter">0 / 200</div>
+                    </div>
+
+                    <!-- Message -->
+                    <div class="form-group">
+                        <label>Email Message *</label>
+                        <textarea id="emailMessage" class="form-textarea"
+                                  placeholder="Write your email message here..." required></textarea>
+                        <div class="char-counter" id="messageCounter">0 characters</div>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="form-group">
+                        <label>Email Category</label>
+                        <select id="emailCategory" class="form-select">
+                            <option value="marketing">Marketing</option>
+                            <option value="chamber_outreach">Chamber Outreach</option>
+                            <option value="transactional">Transactional</option>
+                            <option value="announcement">Announcement</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-primary" id="sendBtn">
+                        📤 Send Email
+                    </button>
+                </form>
+            </div>
+
+            <!-- Sidebar -->
+            <div>
+                <!-- Email Stats -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <h2>
+                        <span>📊</span>
+                        Email Stats (7 Days)
+                    </h2>
+
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="sentCount">--</div>
+                            <div class="stat-label">Sent</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="deliveredCount">--</div>
+                            <div class="stat-label">Delivered</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="openRate">--%</div>
+                            <div class="stat-label">Open Rate</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="clickRate">--%</div>
+                            <div class="stat-label">Click Rate</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Emails -->
+                <div class="card">
+                    <h2>
+                        <span>📬</span>
+                        Recent Emails
+                    </h2>
+
+                    <div id="emailsList">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <p style="margin-top: 1rem; color: #6b7280;">Loading emails...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let clientId = null;
+        let selectedTemplate = 'custom_marketing';
+
+        // Extract client_id from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        clientId = urlParams.get('client_id');
+
+        if (!clientId) {
+            console.error('No client_id provided');
+            showAlert('error', 'Client ID missing. Please access from MCP Copilot.');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            setupEventListeners();
+            await loadEmailStats();
+            await loadRecentEmails();
+        });
+
+        function setupEventListeners() {
+            // Template selection
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedTemplate = card.dataset.template;
+                });
+            });
+
+            // Select first template by default
+            document.querySelector('.template-card').classList.add('selected');
+
+            // Subject character counter
+            document.getElementById('emailSubject').addEventListener('input', (e) => {
+                const length = e.target.value.length;
+                const counter = document.getElementById('subjectCounter');
+                counter.textContent = `${length} / 200`;
+
+                counter.classList.remove('warning', 'error');
+                if (length > 200) {
+                    counter.classList.add('error');
+                } else if (length > 180) {
+                    counter.classList.add('warning');
+                }
+            });
+
+            // Message character counter
+            document.getElementById('emailMessage').addEventListener('input', (e) => {
+                const length = e.target.value.length;
+                document.getElementById('messageCounter').textContent = `${length} characters`;
+            });
+
+            // Form submission
+            document.getElementById('emailForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await sendEmail();
+            });
+        }
+
+        async function sendEmail() {
+            const to = document.getElementById('recipientEmail').value.trim();
+            const subject = document.getElementById('emailSubject').value.trim();
+            const html = document.getElementById('emailMessage').value.trim();
+            const category = document.getElementById('emailCategory').value;
+
+            if (!to || !subject || !html) {
+                showAlert('error', 'Please fill in all required fields');
+                return;
+            }
+
+            try {
+                document.getElementById('sendBtn').disabled = true;
+                document.getElementById('sendBtn').textContent = '⏳ Sending...';
+
+                const response = await fetch(`${window.location.origin}/api/email/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to,
+                        template: selectedTemplate !== 'custom_marketing' ? selectedTemplate : null,
+                        subject,
+                        html,
+                        category,
+                        data: {
+                            subject,
+                            message: html
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('success', '✅ Email sent successfully!');
+                    document.getElementById('emailForm').reset();
+                    document.getElementById('subjectCounter').textContent = '0 / 200';
+                    document.getElementById('messageCounter').textContent = '0 characters';
+                    await loadRecentEmails();
+                    await loadEmailStats();
+                } else {
+                    throw new Error(data.error || 'Failed to send email');
+                }
+            } catch (error) {
+                console.error('Send email error:', error);
+                showAlert('error', 'Failed to send email: ' + error.message);
+            } finally {
+                document.getElementById('sendBtn').disabled = false;
+                document.getElementById('sendBtn').textContent = '📤 Send Email';
+            }
+        }
+
+        async function loadEmailStats() {
+            try {
+                const response = await fetch(`${window.location.origin}/api/email/stats?range=7d`);
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('sentCount').textContent = data.stats.delivered || 0;
+                    document.getElementById('deliveredCount').textContent = data.stats.delivered || 0;
+                    document.getElementById('openRate').textContent = data.stats.open_rate + '%';
+                    document.getElementById('clickRate').textContent = data.stats.click_rate + '%';
+                }
+            } catch (error) {
+                console.error('Load stats error:', error);
+            }
+        }
+
+        async function loadRecentEmails() {
+            try {
+                const response = await fetch(`${window.location.origin}/api/email/events?limit=10`);
+                const data = await response.json();
+
+                if (data.success && data.events && data.events.length > 0) {
+                    renderEmails(data.events);
+                } else {
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('Load emails error:', error);
+                document.getElementById('emailsList').innerHTML = `
+                    <div class="empty-state">
+                        <p>Failed to load emails</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderEmails(emails) {
+            const container = document.getElementById('emailsList');
+
+            container.innerHTML = emails.map(email => `
+                <div class="email-item">
+                    <div class="email-header">
+                        <span class="email-to">${email.email}</span>
+                        <span class="email-status ${email.event}">${email.event}</span>
+                    </div>
+                    <div class="email-meta">
+                        <span>📧 ${email.category || 'N/A'}</span>
+                        <span>⏰ ${new Date(email.timestamp).toLocaleString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showEmptyState() {
+            document.getElementById('emailsList').innerHTML = `
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76"/>
+                    </svg>
+                    <p>No emails sent yet</p>
+                    <p style="font-size: 0.75rem; margin-top: 0.5rem;">Your sent emails will appear here</p>
+                </div>
+            `;
+        }
+
+        function showAlert(type, message) {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+
+            container.appendChild(alert);
+
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

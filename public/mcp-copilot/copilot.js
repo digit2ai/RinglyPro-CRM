@@ -32,6 +32,18 @@ function openSocialMedia() {
     window.open(socialUrl, '_blank');
 }
 
+// Open Email Marketing Tool
+function openEmailMarketing() {
+    if (!currentClientId) {
+        alert('Client ID not found. Please open MCP Copilot from the dashboard.');
+        return;
+    }
+
+    // Email marketing doesn't require GHL session
+    const emailUrl = `${window.location.origin}/mcp-copilot/email-marketing.html?client_id=${currentClientId}`;
+    window.open(emailUrl, '_blank');
+}
+
 async function autoLoadCredentials(clientId) {
     try {
         console.log('🔄 Auto-loading credentials for client:', clientId);
