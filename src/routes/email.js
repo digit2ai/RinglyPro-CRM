@@ -185,6 +185,45 @@ router.get('/templates', (req, res) => {
 });
 
 /**
+ * Check SendGrid configuration status
+ * GET /api/email/config-status/:client_id
+ */
+router.get('/config-status/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+
+        const result = await pool.query(
+            'SELECT sendgrid_api_key IS NOT NULL as has_api_key, sendgrid_from_email FROM clients WHERE id = $1',
+            [client_id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Client not found'
+            });
+        }
+
+        const client = result.rows[0];
+        const isConfigured = client.has_api_key && client.sendgrid_from_email;
+
+        res.json({
+            success: true,
+            configured: isConfigured,
+            has_api_key: client.has_api_key,
+            has_from_email: !!client.sendgrid_from_email,
+            from_email: client.sendgrid_from_email || null
+        });
+    } catch (error) {
+        console.error('Config status error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
  * SendGrid Event Webhook
  * POST /api/email/webhooks/sendgrid
  *
