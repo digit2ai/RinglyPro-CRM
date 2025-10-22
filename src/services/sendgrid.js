@@ -109,14 +109,18 @@ async function sendEmail({
     };
 
     // Use template or raw content
-    if (template && TEMPLATES[template]) {
-        msg.templateId = TEMPLATES[template];
+    // Only use template if it's a valid template ID (not the placeholder 'd-XXXXXXXXXXXXXXX')
+    const templateId = template && TEMPLATES[template];
+    const isValidTemplate = templateId && !templateId.includes('XXXXXXXXXXXXXXX');
+
+    if (isValidTemplate) {
+        msg.templateId = templateId;
         msg.dynamicTemplateData = data;
     } else if (subject && html) {
         msg.subject = subject;
         msg.html = html;
     } else {
-        throw new Error('Must provide either template or subject+html');
+        throw new Error('Must provide either a valid template or subject+html');
     }
 
     // Add marketing compliance headers
