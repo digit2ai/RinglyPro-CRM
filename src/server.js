@@ -30,6 +30,14 @@ async function startServer() {
         } catch (error) {
           console.log('⚠️ SendGrid auto-migration skipped:', error.message);
         }
+
+        // AUTO-MIGRATE EMAIL EVENTS TABLE
+        try {
+          const { autoMigrateEmailEvents } = require('../scripts/auto-migrate-email-events');
+          await autoMigrateEmailEvents();
+        } catch (error) {
+          console.log('⚠️ Email events auto-migration skipped:', error.message);
+        }
       } else {
         console.log('⚠️ No DATABASE_URL provided, running without database');
       }
