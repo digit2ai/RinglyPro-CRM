@@ -561,13 +561,20 @@
         const urlParams = new URLSearchParams(window.location.search);
         clientId = urlParams.get('client_id');
 
+        console.log('📋 Client ID from URL:', clientId);
+        console.log('📋 Full URL:', window.location.href);
+        console.log('📋 Search params:', window.location.search);
+
         if (!clientId) {
-            console.error('No client_id provided');
+            console.error('❌ No client_id provided in URL');
             showAlert('error', 'Client ID missing. Please access from MCP Copilot.');
+        } else {
+            console.log('✅ Client ID loaded:', clientId);
         }
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🔄 DOMContentLoaded - clientId:', clientId);
             setupEventListeners();
             await loadEmailStats();
             await loadRecentEmails();
@@ -748,26 +755,32 @@
         }
 
         async function sendSingleEmail(to, subject, html, category) {
+            console.log('📤 sendSingleEmail - clientId:', clientId);
 
             try {
                 document.getElementById('sendBtn').disabled = true;
                 document.getElementById('sendBtn').textContent = '⏳ Sending...';
 
+                const payload = {
+                    client_id: clientId,
+                    to,
+                    template: selectedTemplate !== 'custom_marketing' ? selectedTemplate : null,
+                    subject,
+                    html,
+                    category,
+                    data: {
+                        subject,
+                        message: html
+                    }
+                };
+
+                console.log('📤 Send payload:', payload);
+                console.log('📤 POST to:', `${window.location.origin}/api/email/send`);
+
                 const response = await fetch(`${window.location.origin}/api/email/send`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        client_id: clientId,
-                        to,
-                        template: selectedTemplate !== 'custom_marketing' ? selectedTemplate : null,
-                        subject,
-                        html,
-                        category,
-                        data: {
-                            subject,
-                            message: html
-                        }
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 const data = await response.json();
@@ -893,11 +906,19 @@
         }
 
         async function loadEmailStats() {
-            if (!clientId) return; // Skip if no client ID
+            if (!clientId) {
+                console.log('⚠️ Skipping loadEmailStats - no clientId');
+                return;
+            }
+
+            const url = `${window.location.origin}/api/email/stats?range=7d&client_id=${clientId}`;
+            console.log('📊 Loading stats from:', url);
 
             try {
-                const response = await fetch(`${window.location.origin}/api/email/stats?range=7d&client_id=${clientId}`);
+                const response = await fetch(url);
+                console.log('📊 Stats response status:', response.status);
                 const data = await response.json();
+                console.log('📊 Stats data:', data);
 
                 if (data.success) {
                     document.getElementById('sentCount').textContent = data.stats.delivered || 0;
@@ -911,11 +932,19 @@
         }
 
         async function loadRecentEmails() {
-            if (!clientId) return; // Skip if no client ID
+            if (!clientId) {
+                console.log('⚠️ Skipping loadRecentEmails - no clientId');
+                return;
+            }
+
+            const url = `${window.location.origin}/api/email/events?limit=10&client_id=${clientId}`;
+            console.log('📧 Loading recent emails from:', url);
 
             try {
-                const response = await fetch(`${window.location.origin}/api/email/events?limit=10&client_id=${clientId}`);
+                const response = await fetch(url);
+                console.log('📧 Events response status:', response.status);
                 const data = await response.json();
+                console.log('📧 Events data:', data);
 
                 if (data.success && data.events && data.events.length > 0) {
                     renderEmails(data.events);
