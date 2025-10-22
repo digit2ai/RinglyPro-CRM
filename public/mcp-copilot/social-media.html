@@ -893,12 +893,23 @@
 
                 const data = await response.json();
                 console.log('📋 Load posts response:', data);
+                console.log('📋 Response structure - success:', data.success, 'data:', data.data, 'posts:', data.data?.posts);
 
-                if (data.success && data.data?.posts && data.data.posts.length > 0) {
-                    console.log(`✅ Loaded ${data.data.posts.length} posts`);
-                    renderPosts(data.data.posts);
+                // Check multiple possible response structures
+                let posts = null;
+                if (data.data?.posts && data.data.posts.length > 0) {
+                    posts = data.data.posts;
+                } else if (data.posts && data.posts.length > 0) {
+                    posts = data.posts;
+                } else if (data.data?.data?.posts && data.data.data.posts.length > 0) {
+                    posts = data.data.data.posts;
+                }
+
+                if (posts && posts.length > 0) {
+                    console.log(`✅ Loaded ${posts.length} posts`);
+                    renderPosts(posts);
                 } else {
-                    console.log('⚠️ No posts found or empty response');
+                    console.log('⚠️ No posts found. Full response:', JSON.stringify(data, null, 2));
                     showEmptyState();
                 }
             } catch (error) {
@@ -992,7 +1003,7 @@
 
                 if (data.success && data.hashtags && data.hashtags.length > 0) {
                     suggestionsDiv.innerHTML = data.hashtags.map(tag => `
-                        <span class="hashtag-tag" onclick="addHashtag('${tag}')">${tag}</span>
+                        <span class="hashtag-tag" onclick="addHashtag('${tag}', this)">${tag}</span>
                     `).join('');
                 } else {
                     suggestionsDiv.innerHTML = '<span style="color: #6b7280; font-size: 0.875rem;">No suggestions available</span>';
@@ -1005,7 +1016,7 @@
         }
 
         // Add hashtag to post content
-        function addHashtag(hashtag) {
+        function addHashtag(hashtag, clickedElement) {
             const textarea = document.getElementById('postContent');
             const currentText = textarea.value;
 
@@ -1022,9 +1033,11 @@
             // Update character counter
             textarea.dispatchEvent(new Event('input'));
 
-            // Visual feedback
-            event.target.classList.add('added');
-            setTimeout(() => event.target.classList.remove('added'), 1000);
+            // Visual feedback - if clicked element provided
+            if (clickedElement) {
+                clickedElement.classList.add('added');
+                setTimeout(() => clickedElement.classList.remove('added'), 1000);
+            }
         }
 
         // Show preview modal
