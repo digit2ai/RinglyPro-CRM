@@ -938,6 +938,10 @@
         }
 
         function formatEmailHTML(messageHTML) {
+            console.log('📝 Formatting email HTML...');
+            console.log('📝 Has uploaded image:', !!uploadedImageData);
+            console.log('📝 Message HTML length:', messageHTML.length);
+
             // Message is already formatted HTML from rich text editor
             // Just wrap in email template with image if uploaded
             let emailContent = `
@@ -945,9 +949,10 @@
             `;
 
             if (uploadedImageData) {
+                console.log('📝 Adding image to email (data length:', uploadedImageData.length, ')');
                 emailContent += `
                     <div style="margin-bottom: 20px; text-align: center;">
-                        <img src="${uploadedImageData}" style="max-width: 100%; height: auto; border-radius: 8px;">
+                        <img src="${uploadedImageData}" style="max-width: 100%; height: auto; border-radius: 8px;" alt="Email Image">
                     </div>
                 `;
             }
@@ -958,6 +963,8 @@
                     </div>
                 </div>
             `;
+
+            console.log('📝 Final email HTML length:', emailContent.length);
 
             return emailContent;
         }
@@ -982,7 +989,14 @@
                     }
                 };
 
-                console.log('📤 Send payload:', payload);
+                console.log('📤 Send payload (without html):', {
+                    client_id: payload.client_id,
+                    to: payload.to,
+                    subject: payload.subject,
+                    html_length: payload.html.length,
+                    category: payload.category
+                });
+                console.log('📤 HTML content (first 500 chars):', payload.html.substring(0, 500));
                 console.log('📤 POST to:', `${window.location.origin}/api/email/send`);
 
                 const response = await fetch(`${window.location.origin}/api/email/send`, {
