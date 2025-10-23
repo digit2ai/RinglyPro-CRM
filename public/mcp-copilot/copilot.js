@@ -44,6 +44,108 @@ function openEmailMarketing() {
     window.open(emailUrl, '_blank');
 }
 
+// Connect to Business Collector
+async function connectBusinessCollector() {
+    try {
+        const btn = document.getElementById('businessCollectorBtn');
+        const statusDiv = document.getElementById('businessCollectorStatus');
+
+        // Update button state
+        btn.disabled = true;
+        btn.innerHTML = '🔄 Connecting...';
+        statusDiv.style.display = 'block';
+        statusDiv.textContent = 'Connecting to Business Collector...';
+        statusDiv.style.background = '#fef3c7';
+        statusDiv.style.color = '#92400e';
+
+        const response = await fetch(`${API_BASE}/business-collector/connect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            sessionId = data.sessionId;
+            crmType = 'business-collector';
+
+            // Update UI
+            btn.innerHTML = '✅ Connected';
+            btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            statusDiv.textContent = `Connected (v${data.version})`;
+            statusDiv.style.background = '#d1fae5';
+            statusDiv.style.color = '#065f46';
+
+            // Update header
+            const headerStatus = document.getElementById('crmStatus');
+            if (headerStatus) {
+                headerStatus.textContent = 'Business Collector Connected';
+                headerStatus.style.background = '#10b981';
+            }
+
+            // Add system message
+            addMessage('system', '✅ Connected to Business Collector! Try: "Collect Real Estate Agents in Florida"');
+            addMessage('system', '💡 Example commands:\n• "Collect [Category] in [Location]"\n• "Find Dentists in Miami"\n• "Get Plumbers in Tampa, FL"');
+
+            // Re-enable button with disconnect option
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.onclick = disconnectBusinessCollector;
+            }, 1000);
+        } else {
+            throw new Error(data.error || 'Connection failed');
+        }
+    } catch (error) {
+        console.error('Connection error:', error);
+
+        const btn = document.getElementById('businessCollectorBtn');
+        const statusDiv = document.getElementById('businessCollectorStatus');
+
+        btn.disabled = false;
+        btn.innerHTML = '❌ Connection Failed';
+        btn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+
+        statusDiv.textContent = `Error: ${error.message}`;
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#991b1b';
+
+        addMessage('system', `❌ Failed to connect: ${error.message}`);
+
+        // Reset after 3 seconds
+        setTimeout(() => {
+            btn.innerHTML = '🔍 Business Collector';
+            btn.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+        }, 3000);
+    }
+}
+
+// Disconnect from Business Collector
+function disconnectBusinessCollector() {
+    sessionId = null;
+    crmType = null;
+
+    const btn = document.getElementById('businessCollectorBtn');
+    const statusDiv = document.getElementById('businessCollectorStatus');
+
+    btn.innerHTML = '🔍 Business Collector';
+    btn.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+    btn.onclick = connectBusinessCollector;
+
+    statusDiv.textContent = 'Not connected';
+    statusDiv.style.background = '#f3f4f6';
+    statusDiv.style.color = '#6b7280';
+
+    // Update header
+    const headerStatus = document.getElementById('crmStatus');
+    if (headerStatus) {
+        headerStatus.textContent = 'Not Connected';
+        headerStatus.style.background = '#6b7280';
+    }
+
+    addMessage('system', '👋 Disconnected from Business Collector');
+}
+
 async function autoLoadCredentials(clientId) {
     try {
         console.log('🔄 Auto-loading credentials for client:', clientId);
