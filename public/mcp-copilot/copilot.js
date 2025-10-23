@@ -252,6 +252,11 @@ async function sendMessage() {
         if (data.success) {
             addMessage('assistant', data.response, data.data);
 
+            // Handle CSV download if provided
+            if (data.csvData && data.csvFilename) {
+                downloadCSV(data.csvData, data.csvFilename);
+            }
+
             if (data.suggestions) {
                 addSuggestions(data.suggestions);
             }
@@ -313,6 +318,29 @@ function handleKeyPress(event) {
     if (event.key === 'Enter') {
         sendMessage();
     }
+}
+
+function downloadCSV(csvData, filename) {
+    // Create a blob from the CSV data
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+
+    // Create a temporary link to trigger download
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Clean up the URL object
+    URL.revokeObjectURL(url);
+
+    // Add a message to confirm download
+    addMessage('system', `📥 CSV file "${filename}" downloaded successfully!`);
 }
 
 function updateConnectionStatus(message, status) {

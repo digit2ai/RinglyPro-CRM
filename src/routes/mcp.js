@@ -382,6 +382,62 @@ router.post('/copilot/chat', async (req, res) => {
   try {
     console.log('🤖 Processing message for session:', sessionId);
 
+    // Helper function to convert businesses to CSV
+    function convertToCSV(businesses) {
+      if (!businesses || businesses.length === 0) return '';
+
+      // CSV headers
+      const headers = [
+        'Business Name',
+        'Category',
+        'Phone',
+        'Email',
+        'Website',
+        'Street',
+        'City',
+        'State',
+        'ZIP',
+        'Country',
+        'Source',
+        'Confidence',
+        'Notes'
+      ];
+
+      // Build CSV rows
+      const rows = [headers.join(',')];
+
+      for (const b of businesses) {
+        const row = [
+          escapeCSV(b.business_name || ''),
+          escapeCSV(b.category || ''),
+          escapeCSV(b.phone || b.phone_e164 || ''),
+          escapeCSV(b.email || ''),
+          escapeCSV(b.website || b.domain || ''),
+          escapeCSV(b.street || b.address_1 || ''),
+          escapeCSV(b.city || ''),
+          escapeCSV(b.state || ''),
+          escapeCSV(b.postal_code || b.zip || ''),
+          escapeCSV(b.country || 'USA'),
+          escapeCSV(b.source_url || ''),
+          escapeCSV((b.confidence || 0).toString()),
+          escapeCSV(b.notes || '')
+        ];
+        rows.push(row.join(','));
+      }
+
+      return rows.join('\n');
+    }
+
+    function escapeCSV(value) {
+      if (!value) return '';
+      const str = String(value);
+      // Escape quotes and wrap in quotes if contains comma, quote, or newline
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    }
+
     // Simple intent parsing
     let response = "I'm here to help! Try asking me to search contacts, view deals, list calendars, or show location info.";
     let data = null;
@@ -472,6 +528,39 @@ router.post('/copilot/chat', async (req, res) => {
 
     // BUSINESS COLLECTOR - Handle business collection intents
     if (session.type === 'business-collector') {
+      // Check for CSV export request
+      if (/export|download|csv/i.test(processMessage)) {
+        if (!session.lastCollectionResults || !session.lastCollectionResults.businesses) {
+          response = 'No results to export. Please collect some businesses first!';
+          return res.json({
+            success: true,
+            response,
+            suggestions: [
+              'Collect Real Estate Agents in Florida',
+              'Find Dentists in Miami',
+              'Get Plumbers in Tampa'
+            ]
+          });
+        }
+
+        // Generate CSV data
+        const businesses = session.lastCollectionResults.businesses;
+        const csvData = convertToCSV(businesses);
+
+        response = `CSV file ready with ${businesses.length} businesses!\n\nClick the download link below to save the file.`;
+
+        return res.json({
+          success: true,
+          response,
+          csvData,
+          csvFilename: `business-leads-${Date.now()}.csv`,
+          suggestions: [
+            'Collect different category',
+            'View full details'
+          ]
+        });
+      }
+
       // Pattern: "Collect [Category] in [Location]", "Find [Category] in [Location]", "Get [Category] in [Location]"
       const categoryMatch = message.match(/(?:collect|find|get|search)\s+(?:leads\s+for\s+)?([^in]+?)\s+in\s+([^,]+)/i);
 
@@ -492,14 +581,17 @@ router.post('/copilot/chat', async (req, res) => {
           response = `Found ${result.summary.total} ${category} in ${geography}!\n\n${displayText}`;
           data = result;
 
+          // Store last results in session for CSV export
+          session.lastCollectionResults = result;
+
           return res.json({
             success: true,
             response,
             data,
             suggestions: [
-              'Collect leads for another category',
               'Export results to CSV',
-              'Import to CRM'
+              'Collect different category',
+              'View full details'
             ]
           });
         } catch (error) {
