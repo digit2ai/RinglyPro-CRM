@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const HubSpotMCPProxy = require('./api/hubspot-proxy');
 const GoHighLevelMCPProxy = require('./api/gohighlevel-proxy');
+const BusinessCollectorMCPProxy = require('./api/business-collector-proxy');
 const { ClaudeIntegration } = require('./api/claude-integration');
 const VoiceHandler = require('./voice/voice-handler');
 const TTSService = require('./voice/tts-service');
@@ -89,6 +90,100 @@ app.post('/api/mcp/gohighlevel/connect', async (req, res) => {
   }
 });
 
+// Business Collector - No auth required (public service)
+app.post('/api/mcp/business-collector/connect', async (req, res) => {
+  try {
+    const proxy = new BusinessCollectorMCPProxy();
+    const sessionId = `bc_${Date.now()}`;
+
+    // Check if the service is healthy
+    const health = await proxy.checkHealth();
+    if (!health.success) {
+      throw new Error('Business Collector service is offline');
+    }
+
+    sessions.set(sessionId, {
+      type: 'business-collector',
+      proxy,
+      createdAt: new Date()
+    });
+
+    res.json({
+      success: true,
+      sessionId,
+      message: 'Business Collector connected successfully',
+      serviceStatus: health.status,
+      version: health.version
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Business Collector - Collect businesses
+app.post('/api/mcp/business-collector/collect', async (req, res) => {
+  const { sessionId, category, geography, maxResults, synonyms, sourceHints } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'business-collector') {
+    return res.status(401).json({ error: 'Invalid session' });
+  }
+
+  try {
+    const result = await session.proxy.collectBusinesses({
+      category,
+      geography,
+      maxResults: maxResults || 100,
+      synonyms,
+      sourceHints
+    });
+
+    res.json({
+      success: result.success,
+      meta: result.meta,
+      summary: result.summary,
+      businesses: result.businesses,
+      displayText: result.success ?
+        session.proxy.formatForDisplay(result.businesses, 10) :
+        null,
+      error: result.error
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Business Collector - Quick collect
+app.get('/api/mcp/business-collector/quick', async (req, res) => {
+  const { category, geography, max } = req.query;
+
+  try {
+    const proxy = new BusinessCollectorMCPProxy();
+    const result = await proxy.quickCollect(category, geography, parseInt(max) || 50);
+
+    res.json({
+      success: result.success,
+      summary: result.summary,
+      businesses: result.businesses,
+      displayText: result.success ?
+        proxy.formatForDisplay(result.businesses, 10) :
+        null,
+      error: result.error
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // AI Copilot chat
 app.post('/api/mcp/copilot/chat', async (req, res) => {
   const { sessionId, message } = req.body;
@@ -100,10 +195,42 @@ app.post('/api/mcp/copilot/chat', async (req, res) => {
 
   try {
     // Simple intent parsing
-    let response = "I'm here to help! Try asking me to search contacts or create a new contact.";
+    let response = "I'm here to help! Try asking me to search contacts, create a contact, or collect business leads.";
     let data = null;
+    let suggestions = ['Search contacts', 'Create contact', 'View deals', 'Collect business leads'];
 
-    if (message.toLowerCase().includes('search') || message.toLowerCase().includes('find')) {
+    // Business Collector intents
+    if (session.type === 'business-collector') {
+      if (message.toLowerCase().includes('collect') || message.toLowerCase().includes('find businesses') || message.toLowerCase().includes('get leads')) {
+        // Extract category and geography from message
+        const categoryMatch = message.match(/(?:collect|find|get)\s+(?:leads\s+for\s+)?([^in]+?)\s+in\s+([^,]+)/i);
+
+        if (categoryMatch) {
+          const category = categoryMatch[1].trim();
+          const geography = categoryMatch[2].trim();
+
+          data = await session.proxy.collectBusinesses({
+            category,
+            geography,
+            maxResults: 50
+          });
+
+          if (data.success) {
+            response = `Found ${data.summary.total} ${category} in ${geography}!\n\n${session.proxy.formatForDisplay(data.businesses, 5)}\n\n...and ${data.summary.total - 5} more.`;
+          } else {
+            response = `Sorry, I couldn't collect businesses: ${data.error}`;
+          }
+        } else {
+          response = "To collect business leads, say something like: 'Collect Real Estate Agents in Florida' or 'Find Plumbers in Tampa, FL'";
+        }
+
+        suggestions = ['Collect Real Estate Agents in Florida', 'Find Dentists in Miami', 'Get Plumbers in Tampa'];
+      } else {
+        response = "I can help you collect business leads! Try asking: 'Collect [Category] in [Location]'. For example: 'Collect Real Estate Agents in Florida'";
+      }
+    }
+    // CRM intents (HubSpot, GoHighLevel)
+    else if (message.toLowerCase().includes('search') || message.toLowerCase().includes('find')) {
       const query = message.split(/search|find/i)[1].trim();
       data = await session.proxy.searchContacts(query);
       response = `I found ${data.length} contacts matching "${query}".`;
@@ -115,7 +242,7 @@ app.post('/api/mcp/copilot/chat', async (req, res) => {
       success: true,
       response,
       data,
-      suggestions: ['Search contacts', 'Create contact', 'View deals']
+      suggestions
     });
   } catch (error) {
     res.status(500).json({
