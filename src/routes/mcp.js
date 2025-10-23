@@ -7,6 +7,7 @@ const path = require('path');
 const projectRoot = path.join(__dirname, '../..');
 const HubSpotMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/hubspot-proxy'));
 const GoHighLevelMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/gohighlevel-proxy'));
+const BusinessCollectorMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/business-collector-proxy'));
 const WebhookManager = require(path.join(projectRoot, 'mcp-integrations/webhooks/webhook-manager'));
 const WorkflowEngine = require(path.join(projectRoot, 'mcp-integrations/workflows/workflow-engine'));
 const { parseNaturalDate, parseDuration, formatFriendlyDate } = require('../utils/date-parser');
@@ -241,6 +242,120 @@ router.post('/gohighlevel/connect', async (req, res) => {
   }
 });
 
+// Business Collector connection
+router.post('/business-collector/connect', async (req, res) => {
+  console.log('🔗 Business Collector connection request received');
+
+  try {
+    const proxy = new BusinessCollectorMCPProxy();
+    const sessionId = `bc_${Date.now()}`;
+
+    // Check if Business Collector service is healthy
+    const health = await proxy.checkHealth();
+    if (!health.success) {
+      throw new Error('Business Collector service is offline');
+    }
+
+    sessions.set(sessionId, {
+      type: 'business-collector',
+      proxy,
+      createdAt: new Date()
+    });
+
+    console.log('✅ Business Collector connected, session:', sessionId);
+
+    res.json({
+      success: true,
+      sessionId,
+      message: 'Business Collector connected successfully',
+      serviceStatus: health.status,
+      version: health.version
+    });
+  } catch (error) {
+    console.error('❌ Business Collector connection error:', error);
+    res.status(400).json({
+      success: false,
+      error: error.message || 'Failed to connect to Business Collector'
+    });
+  }
+});
+
+// Business Collector - Full collection
+router.post('/business-collector/collect', async (req, res) => {
+  console.log('📊 Business Collector collection request received');
+  const { sessionId, category, geography, maxResults } = req.body;
+
+  if (!sessionId) {
+    return res.status(400).json({ success: false, error: 'Session ID required' });
+  }
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'business-collector') {
+    return res.status(401).json({ success: false, error: 'Invalid session' });
+  }
+
+  if (!category || !geography) {
+    return res.status(400).json({
+      success: false,
+      error: 'Category and geography are required'
+    });
+  }
+
+  try {
+    const result = await session.proxy.collectBusinesses({
+      category,
+      geography,
+      maxResults: maxResults || 100
+    });
+
+    const displayText = session.proxy.formatForDisplay(result.businesses);
+
+    res.json({
+      success: true,
+      summary: result.summary,
+      businesses: result.businesses,
+      displayText
+    });
+  } catch (error) {
+    console.error('❌ Business collection error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to collect businesses'
+    });
+  }
+});
+
+// Business Collector - Quick collection (no session required)
+router.get('/business-collector/quick', async (req, res) => {
+  console.log('⚡ Quick business collection request received');
+  const { category, geography, max } = req.query;
+
+  if (!category || !geography) {
+    return res.status(400).json({
+      success: false,
+      error: 'Category and geography query parameters are required'
+    });
+  }
+
+  try {
+    const proxy = new BusinessCollectorMCPProxy();
+    const result = await proxy.quickCollect(category, geography, parseInt(max) || 50);
+
+    res.json({
+      success: true,
+      summary: result.summary,
+      businesses: result.businesses,
+      displayText: proxy.formatForDisplay(result.businesses)
+    });
+  } catch (error) {
+    console.error('❌ Quick collection error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to collect businesses'
+    });
+  }
+});
+
 // AI Copilot chat
 router.post('/copilot/chat', async (req, res) => {
   console.log('📩 MCP Chat request received:', { sessionId: req.body.sessionId, message: req.body.message?.substring(0, 50) });
@@ -354,6 +469,71 @@ router.post('/copilot/chat', async (req, res) => {
 
     // IMPORTANT: Check SPECIFIC commands FIRST before generic keywords
     // This prevents "book appointment" from matching generic "appointment" handler
+
+    // BUSINESS COLLECTOR - Handle business collection intents
+    if (session.type === 'business-collector') {
+      // Pattern: "Collect [Category] in [Location]", "Find [Category] in [Location]", "Get [Category] in [Location]"
+      const categoryMatch = message.match(/(?:collect|find|get|search)\s+(?:leads\s+for\s+)?([^in]+?)\s+in\s+([^,]+)/i);
+
+      if (categoryMatch) {
+        const category = categoryMatch[1].trim();
+        const geography = categoryMatch[2].trim();
+
+        try {
+          console.log(`🔍 Collecting ${category} in ${geography}`);
+          const result = await session.proxy.collectBusinesses({
+            category,
+            geography,
+            maxResults: 100
+          });
+
+          const displayText = session.proxy.formatForDisplay(result.businesses);
+
+          response = `Found ${result.summary.total} ${category} in ${geography}!\n\n${displayText}`;
+          data = result;
+
+          return res.json({
+            success: true,
+            response,
+            data,
+            suggestions: [
+              'Collect leads for another category',
+              'Export results to CSV',
+              'Import to CRM'
+            ]
+          });
+        } catch (error) {
+          console.error('❌ Business collection error:', error);
+          response = `Failed to collect businesses: ${error.message}`;
+          return res.json({
+            success: false,
+            response,
+            suggestions: [
+              'Try a broader location (e.g., "Florida" instead of "Small Town")',
+              'Check category spelling',
+              'Try: "Collect Real Estate Agents in Florida"'
+            ]
+          });
+        }
+      } else {
+        // No valid pattern found, provide guidance
+        response = `I can help you collect business leads! Try:\n\n` +
+          `• "Collect Real Estate Agents in Florida"\n` +
+          `• "Find Dentists in Miami"\n` +
+          `• "Get Plumbers in Tampa, FL"\n` +
+          `• "Collect leads for Lawyers in California"`;
+
+        return res.json({
+          success: true,
+          response,
+          suggestions: [
+            'Collect Real Estate Agents in Florida',
+            'Find Dentists in Miami',
+            'Get Plumbers in Tampa'
+          ]
+        });
+      }
+    }
 
     // CREATE NEW CONTACT - Enhanced with schema patterns
     // Patterns: "Create a new contact named {name}", "Create contact {name}"
