@@ -458,6 +458,38 @@
             border-radius: 0.5rem;
             padding: 1.5rem;
         }
+
+        /* Rich Text Editor */
+        .toolbar-btn {
+            background: white;
+            border: 1px solid #d1d5db;
+            padding: 0.375rem 0.625rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            min-width: 32px;
+            transition: all 0.2s;
+        }
+
+        .toolbar-btn:hover {
+            background: #e5e7eb;
+            border-color: #9ca3af;
+        }
+
+        .toolbar-btn:active {
+            background: #d1d5db;
+        }
+
+        .rich-text-editor:empty:before {
+            content: attr(placeholder);
+            color: #9ca3af;
+            pointer-events: none;
+        }
+
+        .rich-text-editor:focus {
+            border-color: #1e40af !important;
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -473,6 +505,14 @@
                     <strong>Subject:</strong> <span id="previewSubject"></span>
                 </div>
                 <div class="preview-email-content" id="previewContent"></div>
+                <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem;">
+                    <button onclick="sendFromPreview()" class="btn-primary" style="flex: 2; padding: 0.75rem;">
+                        📤 Send Email
+                    </button>
+                    <button onclick="closePreview()" class="btn-secondary" style="flex: 1; padding: 0.75rem; background: #6b7280; color: white;">
+                        Cancel
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -566,8 +606,49 @@
                     <!-- Message -->
                     <div class="form-group">
                         <label>Email Message *</label>
-                        <textarea id="emailMessage" class="form-textarea"
-                                  placeholder="Write your email message here..." required></textarea>
+
+                        <!-- Rich Text Toolbar -->
+                        <div class="rich-text-toolbar" style="background: #f3f4f6; padding: 0.5rem; border-radius: 0.5rem 0.5rem 0 0; border: 1px solid #d1d5db; display: flex; gap: 0.25rem; flex-wrap: wrap;">
+                            <button type="button" onclick="formatText('bold')" class="toolbar-btn" title="Bold">
+                                <strong>B</strong>
+                            </button>
+                            <button type="button" onclick="formatText('italic')" class="toolbar-btn" title="Italic">
+                                <em>I</em>
+                            </button>
+                            <button type="button" onclick="formatText('underline')" class="toolbar-btn" title="Underline">
+                                <u>U</u>
+                            </button>
+                            <div style="width: 1px; background: #d1d5db; margin: 0 0.25rem;"></div>
+                            <button type="button" onclick="formatText('insertUnorderedList')" class="toolbar-btn" title="Bullet List">
+                                ☰
+                            </button>
+                            <button type="button" onclick="formatText('insertOrderedList')" class="toolbar-btn" title="Numbered List">
+                                ⋮
+                            </button>
+                            <div style="width: 1px; background: #d1d5db; margin: 0 0.25rem;"></div>
+                            <button type="button" onclick="formatText('justifyLeft')" class="toolbar-btn" title="Align Left">
+                                ≡
+                            </button>
+                            <button type="button" onclick="formatText('justifyCenter')" class="toolbar-btn" title="Align Center">
+                                ≣
+                            </button>
+                            <button type="button" onclick="formatText('justifyRight')" class="toolbar-btn" title="Align Right">
+                                ≡
+                            </button>
+                            <div style="width: 1px; background: #d1d5db; margin: 0 0.25rem;"></div>
+                            <button type="button" onclick="insertLink()" class="toolbar-btn" title="Insert Link">
+                                🔗
+                            </button>
+                            <button type="button" onclick="formatText('removeFormat')" class="toolbar-btn" title="Clear Formatting">
+                                ✕
+                            </button>
+                        </div>
+
+                        <!-- Rich Text Editor -->
+                        <div id="emailMessage" class="rich-text-editor" contenteditable="true"
+                             placeholder="Write your email message here..."
+                             style="min-height: 200px; max-height: 400px; overflow-y: auto; padding: 1rem; border: 1px solid #d1d5db; border-top: none; border-radius: 0 0 0.5rem 0.5rem; background: white; outline: none;"
+                             oninput="updateCharCount()"></div>
                         <div class="char-counter" id="messageCounter">0 characters</div>
                     </div>
 
@@ -701,6 +782,26 @@
             });
         }
 
+        // Rich Text Editor Functions
+        function formatText(command) {
+            document.execCommand(command, false, null);
+            document.getElementById('emailMessage').focus();
+        }
+
+        function insertLink() {
+            const url = prompt('Enter URL:');
+            if (url) {
+                document.execCommand('createLink', false, url);
+            }
+            document.getElementById('emailMessage').focus();
+        }
+
+        function updateCharCount() {
+            const editor = document.getElementById('emailMessage');
+            const text = editor.textContent || editor.innerText;
+            document.getElementById('messageCounter').textContent = `${text.length} characters`;
+        }
+
         function toggleRecipientMode(mode) {
             recipientMode = mode;
             const singleSection = document.getElementById('singleRecipientSection');
@@ -802,14 +903,15 @@
             }
 
             const subject = document.getElementById('emailSubject').value.trim();
-            const message = document.getElementById('emailMessage').value.trim();
+            const messageEditor = document.getElementById('emailMessage');
+            const message = messageEditor.innerHTML.trim();
 
-            if (!subject || !message) {
+            if (!subject || !message || message === '') {
                 showAlert('error', 'Please fill in subject and message');
                 return;
             }
 
-            // Convert plain text to HTML with proper formatting
+            // Get rich HTML content and wrap in email template
             const html = formatEmailHTML(message);
 
             // Check recipient mode
@@ -835,14 +937,9 @@
             }
         }
 
-        function formatEmailHTML(message) {
-            // Convert plain text to HTML with proper formatting
-            let html = message;
-
-            // Replace line breaks with <br> tags
-            html = html.replace(/\n/g, '<br>');
-
-            // Wrap in basic email template with image if uploaded
+        function formatEmailHTML(messageHTML) {
+            // Message is already formatted HTML from rich text editor
+            // Just wrap in email template with image if uploaded
             let emailContent = `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             `;
@@ -857,7 +954,7 @@
 
             emailContent += `
                     <div style="color: #333; line-height: 1.6;">
-                        ${html}
+                        ${messageHTML}
                     </div>
                 </div>
             `;
@@ -1155,14 +1252,15 @@
         // Email Preview Function
         function previewEmail() {
             const subject = document.getElementById('emailSubject').value.trim();
-            const message = document.getElementById('emailMessage').value.trim();
+            const messageEditor = document.getElementById('emailMessage');
+            const message = messageEditor.innerHTML.trim();
 
-            if (!subject || !message) {
+            if (!subject || !message || message === '') {
                 showAlert('error', 'Please fill in subject and message to preview');
                 return;
             }
 
-            // Generate HTML
+            // Generate HTML with rich text formatting
             const html = formatEmailHTML(message);
 
             // Show in modal (no popup blockers!)
@@ -1173,6 +1271,14 @@
 
         function closePreview() {
             document.getElementById('previewModal').classList.remove('active');
+        }
+
+        function sendFromPreview() {
+            // Close preview modal
+            closePreview();
+
+            // Trigger send
+            sendEmail();
         }
 
         // Close modal when clicking outside
