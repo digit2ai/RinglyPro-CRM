@@ -373,9 +373,110 @@
             color: #1f2937;
             font-size: 0.875rem;
         }
+
+        /* Preview Modal */
+        .preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .preview-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-modal-content {
+            background: white;
+            border-radius: 1rem;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .preview-modal-header {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 1rem 1rem 0 0;
+            z-index: 10;
+        }
+
+        .preview-modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .preview-close-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .preview-close-btn:hover {
+            background: #dc2626;
+        }
+
+        .preview-modal-body {
+            padding: 1.5rem;
+        }
+
+        .preview-subject {
+            background: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .preview-subject strong {
+            color: #374151;
+        }
+
+        .preview-email-content {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
     </style>
 </head>
 <body>
+    <!-- Preview Modal -->
+    <div class="preview-modal" id="previewModal">
+        <div class="preview-modal-content">
+            <div class="preview-modal-header">
+                <div class="preview-modal-title">📧 Email Preview</div>
+                <button class="preview-close-btn" onclick="closePreview()">✕ Close</button>
+            </div>
+            <div class="preview-modal-body">
+                <div class="preview-subject">
+                    <strong>Subject:</strong> <span id="previewSubject"></span>
+                </div>
+                <div class="preview-email-content" id="previewContent"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <!-- Header -->
         <div class="header">
@@ -1064,57 +1165,23 @@
             // Generate HTML
             const html = formatEmailHTML(message);
 
-            // Open preview in new window
-            const previewWindow = window.open('', 'Email Preview', 'width=600,height=800');
-            previewWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Email Preview - ${subject}</title>
-                    <style>
-                        body {
-                            margin: 0;
-                            padding: 20px;
-                            font-family: Arial, sans-serif;
-                            background: #f3f4f6;
-                        }
-                        .preview-header {
-                            background: white;
-                            padding: 20px;
-                            border-radius: 8px;
-                            margin-bottom: 20px;
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        }
-                        .preview-header h2 {
-                            margin: 0 0 10px 0;
-                            color: #1f2937;
-                        }
-                        .preview-subject {
-                            font-size: 18px;
-                            font-weight: 600;
-                            color: #374151;
-                        }
-                        .preview-body {
-                            background: white;
-                            border-radius: 8px;
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                            overflow: hidden;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="preview-header">
-                        <h2>📧 Email Preview</h2>
-                        <div class="preview-subject">Subject: ${subject}</div>
-                    </div>
-                    <div class="preview-body">
-                        ${html}
-                    </div>
-                </body>
-                </html>
-            `);
-            previewWindow.document.close();
+            // Show in modal (no popup blockers!)
+            document.getElementById('previewSubject').textContent = subject;
+            document.getElementById('previewContent').innerHTML = html;
+            document.getElementById('previewModal').classList.add('active');
         }
+
+        function closePreview() {
+            document.getElementById('previewModal').classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('previewModal');
+            if (e.target === modal) {
+                closePreview();
+            }
+        });
     </script>
 </body>
 </html>
