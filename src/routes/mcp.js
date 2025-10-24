@@ -558,6 +558,7 @@ router.post('/business-collector/export-to-ghl', async (req, res) => {
 
         // Prepare contact data for GHL
         const contactData = {
+          locationId: ghl_location_id,
           firstName: business.business_name || 'Unknown Business',
           phone: phone,
           email: business.email || undefined,
