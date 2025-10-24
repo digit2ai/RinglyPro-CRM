@@ -387,3 +387,25 @@
 .calls-list::-webkit-scrollbar-thumb:hover {
     background: #5a6f8f;
 }
+
+/* Ad-Hoc Single Call Form Styles */
+.bc-adhoc-call {
+    padding: 30px;
+    color: white;
+}
+
+.bc-adhoc-call h3 {
+    margin: 0 0 10px 0;
+    color: #3498db;
+    font-size: 20px;
+}
+
+.bc-adhoc-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.bc-adhoc-actions button {
+    flex: 1;
+}
