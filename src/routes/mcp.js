@@ -383,12 +383,12 @@ router.post('/copilot/chat', async (req, res) => {
     console.log('🤖 Processing message for session:', sessionId);
 
     // Helper function to convert businesses to CSV for outbound caller app
-    // Format: Name,phone,tag (3 columns only)
+    // Format: Name,phone,Website (3 columns)
     function convertToCSV(businesses) {
       if (!businesses || businesses.length === 0) return '';
 
       // CSV headers matching outbound caller app format
-      const headers = ['Name', 'phone', 'tag'];
+      const headers = ['Name', 'phone', 'Website'];
 
       // Build CSV rows
       const rows = [headers.join(',')];
@@ -398,10 +398,13 @@ router.post('/copilot/chat', async (req, res) => {
         let phone = b.phone || b.phone_e164 || '';
         phone = phone.replace(/[^\d]/g, ''); // Remove all non-digit characters
 
+        // Get website URL
+        const website = b.website || b.domain || '';
+
         const row = [
           escapeCSV(b.business_name || ''),
           phone,  // Phone number without escaping (just digits)
-          ''      // Tag field empty (as per example)
+          escapeCSV(website)  // Website URL
         ];
         rows.push(row.join(','));
       }
@@ -534,7 +537,7 @@ router.post('/copilot/chat', async (req, res) => {
         const geography = (meta.geography || 'unknown').toLowerCase().replace(/\s+/g, '-');
         const filename = `${category}-${geography}-${businesses.length}-leads.csv`;
 
-        response = `📥 Outbound Calling List Ready!\n\n✅ ${businesses.length} businesses with phone numbers\n📋 Format: Name, phone, tag\n🎯 Ready to upload to your outbound caller app`;
+        response = `📥 Outbound Calling List Ready!\n\n✅ ${businesses.length} businesses with phone numbers\n📋 Format: Name, phone, Website\n🎯 Ready to upload to your outbound caller app`;
 
         return res.json({
           success: true,
