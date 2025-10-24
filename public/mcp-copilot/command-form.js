@@ -155,9 +155,10 @@ class CommandFormManager {
     let html = '';
 
     for (const [key, category] of Object.entries(COMMAND_TEMPLATES)) {
+      const categoryId = `category-${key}`;
       html += `
-        <div class="command-category">
-          <h4>${category.icon} ${category.category}</h4>
+        <div class="command-category collapsed" id="${categoryId}">
+          <h4 onclick="commandFormManager.toggleCategory('${categoryId}')">${category.icon} ${category.category}</h4>
           <div class="command-buttons">
             ${category.commands.map(cmd => `
               <button class="command-btn" onclick="commandFormManager.openForm(COMMAND_TEMPLATES.${key}.commands.find(c => c.id === '${cmd.id}'))">
@@ -170,6 +171,14 @@ class CommandFormManager {
     }
 
     container.innerHTML = html;
+  }
+
+  // Toggle category collapse
+  toggleCategory(categoryId) {
+    const category = document.getElementById(categoryId);
+    if (category) {
+      category.classList.toggle('collapsed');
+    }
   }
 }
 

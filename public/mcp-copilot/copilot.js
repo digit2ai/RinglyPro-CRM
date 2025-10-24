@@ -86,8 +86,7 @@ async function connectBusinessCollector() {
                     headerStatus.style.background = '#10b981';
                 }
 
-                // Add system message
-                addMessage('system', '✅ Connected to Business Collector! Opening collection form...');
+                // Silent connection - no chat message
 
                 // Re-enable button
                 btn.disabled = false;
@@ -183,8 +182,7 @@ async function autoLoadCredentials(clientId) {
 
                 console.log('💾 Stored credentials:', window.ghlCredentials);
 
-                // Auto-connect
-                addMessage('system', '🔄 Auto-connecting to GoHighLevel...');
+                // Auto-connect silently (no chat message)
                 await connectGoHighLevel();
                 return;
             } else {
@@ -227,7 +225,7 @@ async function connectGoHighLevel() {
             sessionId = data.sessionId;
             crmType = 'gohighlevel';
             updateConnectionStatus('Connected to GoHighLevel', 'success');
-            addMessage('system', '✅ Successfully connected to GoHighLevel!');
+            // Silent connection - no chat message
         } else {
             alert('Failed to connect: ' + data.error);
         }
