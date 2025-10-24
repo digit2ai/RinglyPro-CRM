@@ -518,6 +518,154 @@ router.post('/copilot/chat', async (req, res) => {
 
     // BUSINESS COLLECTOR - Handle business collection intents
     if (session.type === 'business-collector') {
+      // Check for outbound caller request
+      if (/outbound.*caller|start.*calling|call.*leads|auto.*call/i.test(processMessage)) {
+        if (!session.lastCollectionResults || !session.lastCollectionResults.businesses) {
+          response = 'No leads to call. Please collect some businesses first!';
+          return res.json({
+            success: true,
+            response,
+            suggestions: [
+              'Collect Real Estate Agents in Florida',
+              'Find Dentists in Miami',
+              'Get Plumbers in Tampa'
+            ]
+          });
+        }
+
+        const businesses = session.lastCollectionResults.businesses;
+        const leadsWithPhones = businesses.filter(b => b.phone || b.phone_e164);
+
+        if (leadsWithPhones.length === 0) {
+          response = '❌ No phone numbers found in collected leads. Please collect businesses with phone numbers first.';
+          return res.json({
+            success: true,
+            response,
+            suggestions: [
+              'Collect Real Estate Agents in Florida',
+              'Find Dentists in Miami'
+            ]
+          });
+        }
+
+        // Store leads in session for outbound calling
+        session.outboundLeads = leadsWithPhones;
+
+        response = `📞 Outbound Caller Ready!\n\n✅ ${leadsWithPhones.length} leads with phone numbers loaded\n🎯 Auto-calling with 2-minute intervals\n🤖 AI voice with machine detection\n\n⚠️ Important:\n• Each call connects to live customers\n• Press 1 connects to your agent phone\n• Press 2 adds to do-not-call list\n• Voicemail detection included\n\nReady to start calling?`;
+
+        return res.json({
+          success: true,
+          response,
+          outboundCallerReady: true,
+          totalLeads: leadsWithPhones.length,
+          suggestions: [
+            'Start calling now',
+            'View call settings',
+            'Export to CSV instead'
+          ]
+        });
+      }
+
+      // Check for start calling confirmation
+      if (/start.*calling|begin.*calls|call.*now/i.test(processMessage) && session.outboundLeads) {
+        const outboundCallerService = require('../services/outbound-caller');
+
+        try {
+          const result = await outboundCallerService.startAutoCalling(
+            session.outboundLeads,
+            2 // 2 minutes interval
+          );
+
+          response = `🚀 Auto-Calling Started!\n\n📊 Status:\n• Total leads: ${result.totalLeads}\n• Interval: ${result.intervalMinutes} minutes\n• Currently calling lead #1\n\n🎯 Calls will continue automatically every ${result.intervalMinutes} minutes.\n\nYou can stop calling at any time.`;
+
+          return res.json({
+            success: true,
+            response,
+            callingStarted: true,
+            suggestions: [
+              'Stop calling',
+              'Check status',
+              'View call logs'
+            ]
+          });
+        } catch (error) {
+          console.error('Error starting outbound calling:', error);
+          response = `❌ Failed to start calling: ${error.message}\n\n⚠️ Please check:\n• Twilio credentials configured\n• TWILIO_ACCOUNT_SID set\n• TWILIO_AUTH_TOKEN set\n• TWILIO_PHONE_NUMBER set`;
+
+          return res.json({
+            success: false,
+            response,
+            suggestions: [
+              'Export to CSV instead',
+              'Collect different leads'
+            ]
+          });
+        }
+      }
+
+      // Check for stop calling request
+      if (/stop.*calling|stop.*calls|pause.*calling/i.test(processMessage)) {
+        const outboundCallerService = require('../services/outbound-caller');
+
+        try {
+          const result = outboundCallerService.stopAutoCalling();
+
+          if (result.wasCalling) {
+            response = `⏸️ Auto-Calling Stopped!\n\n📊 Summary:\n• Calls made: ${result.callsMade}\n• Total leads: ${result.totalLeads}\n• Remaining: ${result.totalLeads - result.callsMade}\n\nYou can restart calling anytime.`;
+          } else {
+            response = `ℹ️ Auto-calling is not currently active.`;
+          }
+
+          return res.json({
+            success: true,
+            response,
+            suggestions: [
+              'Start calling now',
+              'View call logs',
+              'Export to CSV'
+            ]
+          });
+        } catch (error) {
+          console.error('Error stopping calling:', error);
+          response = `❌ Failed to stop calling: ${error.message}`;
+
+          return res.json({
+            success: false,
+            response
+          });
+        }
+      }
+
+      // Check for call status request
+      if (/status|check.*calling|call.*progress/i.test(processMessage)) {
+        const outboundCallerService = require('../services/outbound-caller');
+
+        try {
+          const status = outboundCallerService.getStatus();
+
+          if (status.isRunning) {
+            response = `📊 Calling Status:\n\n✅ Auto-calling is ACTIVE\n• Current: Lead #${status.currentIndex} of ${status.totalLeads}\n• Completed: ${status.callsMade} calls\n• Remaining: ${status.remaining} leads\n• Interval: ${status.intervalMinutes} minutes\n\n🎯 Next call in ~${status.intervalMinutes} minutes`;
+          } else {
+            response = `📊 Calling Status:\n\n⏸️ Auto-calling is PAUSED\n• Total calls made: ${status.callsMade}\n• Total leads: ${status.totalLeads}`;
+          }
+
+          return res.json({
+            success: true,
+            response,
+            data: status,
+            suggestions: status.isRunning ? ['Stop calling', 'View call logs'] : ['Start calling now', 'View call logs']
+          });
+        } catch (error) {
+          console.error('Error getting status:', error);
+          response = `❌ Failed to get status: ${error.message}`;
+
+          return res.json({
+            success: false,
+            response
+          });
+        }
+      }
+
       // Check for CSV export request
       if (/export|download|csv/i.test(processMessage)) {
         if (!session.lastCollectionResults || !session.lastCollectionResults.businesses) {

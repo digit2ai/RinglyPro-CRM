@@ -93,6 +93,9 @@ try {
 // Import email marketing routes (SendGrid integration)
 const emailRoutes = require('./routes/email'); // Email marketing with SendGrid
 
+// Import outbound caller routes
+const outboundCallerRoutes = require('./routes/outbound-caller'); // Twilio outbound calling integration
+
 // Import referral routes (optional - won't crash app if fails)
 let referralRoutes = null;
 try {
@@ -178,6 +181,10 @@ if (ghlMCPRoutes) {
 // Email Marketing routes (SendGrid integration)
 app.use('/api/email', emailRoutes);
 console.log('📧 Email Marketing routes mounted at /api/email');
+
+// Outbound Caller routes (Twilio integration)
+app.use('/api/outbound-caller', outboundCallerRoutes);
+console.log('📞 Outbound Caller routes mounted at /api/outbound-caller');
 
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);

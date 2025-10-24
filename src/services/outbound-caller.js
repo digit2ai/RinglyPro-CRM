@@ -1,0 +1,364 @@
+// Outbound Caller Service - Twilio Integration
+const twilio = require('twilio');
+const logger = require('../utils/logger');
+
+class OutboundCallerService {
+  constructor() {
+    this.twilioClient = null;
+    this.twilioNumber = null;
+    this.agentNumber = null;
+    this.callingInterval = null;
+    this.currentLeads = [];
+    this.currentIndex = 0;
+    this.isRunning = false;
+    this.callLogs = [];
+    this.intervalDelay = 120000; // 2 minutes default
+
+    this.initializeTwilio();
+  }
+
+  initializeTwilio() {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    this.twilioNumber = process.env.TWILIO_PHONE_NUMBER;
+    this.agentNumber = process.env.AGENT_PHONE_NUMBER;
+
+    if (accountSid && authToken && this.twilioNumber) {
+      this.twilioClient = twilio(accountSid, authToken);
+      logger.info('Twilio client initialized successfully');
+    } else {
+      logger.warn('Twilio credentials not configured - outbound calling disabled');
+    }
+  }
+
+  /**
+   * Validate phone number format
+   */
+  validatePhone(phone) {
+    // Remove all non-digit characters
+    const cleaned = phone.replace(/[^\d]/g, '');
+
+    // Must be 10 or 11 digits
+    if (cleaned.length !== 10 && cleaned.length !== 11) {
+      return { valid: false, error: 'Invalid phone number length' };
+    }
+
+    // Normalize to 11 digits with country code
+    const normalized = cleaned.length === 10 ? '1' + cleaned : cleaned;
+
+    // Check for invalid area codes
+    const invalidAreaCodes = ['555', '911', '000', '111'];
+    const areaCode = normalized.substring(1, 4);
+
+    if (invalidAreaCodes.includes(areaCode)) {
+      return { valid: false, error: 'Invalid area code' };
+    }
+
+    // Check for test numbers
+    if (normalized.startsWith('1555') || normalized === '15555555555') {
+      return { valid: false, error: 'Test number detected' };
+    }
+
+    return { valid: true, normalized: '+' + normalized };
+  }
+
+  /**
+   * Make a single outbound call
+   */
+  async makeCall(phoneNumber, leadData = {}) {
+    if (!this.twilioClient) {
+      throw new Error('Twilio not configured');
+    }
+
+    const validation = this.validatePhone(phoneNumber);
+    if (!validation.valid) {
+      logger.warn(`Invalid phone number ${phoneNumber}: ${validation.error}`);
+      return {
+        success: false,
+        error: validation.error,
+        phone: phoneNumber
+      };
+    }
+
+    try {
+      logger.info(`Making call to ${validation.normalized}`);
+
+      const call = await this.twilioClient.calls.create({
+        to: validation.normalized,
+        from: this.twilioNumber,
+        url: `${process.env.BASE_URL || 'http://localhost:3000'}/api/outbound-caller/voice`,
+        statusCallback: `${process.env.BASE_URL || 'http://localhost:3000'}/api/outbound-caller/call-status`,
+        statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
+        machineDetection: 'DetectMessageEnd', // Voicemail detection
+        machineDetectionTimeout: 5000,
+        record: false
+      });
+
+      const logEntry = {
+        callSid: call.sid,
+        phone: validation.normalized,
+        leadData,
+        status: 'initiated',
+        timestamp: new Date(),
+        direction: 'outbound'
+      };
+
+      this.callLogs.push(logEntry);
+
+      logger.info(`Call initiated: ${call.sid} to ${validation.normalized}`);
+
+      return {
+        success: true,
+        callSid: call.sid,
+        phone: validation.normalized,
+        status: call.status
+      };
+
+    } catch (error) {
+      logger.error(`Error making call to ${phoneNumber}:`, error.message);
+
+      const errorLog = {
+        phone: phoneNumber,
+        error: error.message,
+        timestamp: new Date(),
+        status: 'failed'
+      };
+
+      this.callLogs.push(errorLog);
+
+      return {
+        success: false,
+        error: error.message,
+        phone: phoneNumber
+      };
+    }
+  }
+
+  /**
+   * Start auto-calling from lead list
+   */
+  async startAutoCalling(leads, intervalMinutes = 2) {
+    if (this.isRunning) {
+      throw new Error('Auto-calling already in progress');
+    }
+
+    if (!leads || leads.length === 0) {
+      throw new Error('No leads provided');
+    }
+
+    this.currentLeads = leads;
+    this.currentIndex = 0;
+    this.isRunning = true;
+    this.intervalDelay = intervalMinutes * 60 * 1000;
+
+    logger.info(`Starting auto-calling: ${leads.length} leads, ${intervalMinutes} min intervals`);
+
+    // Make first call immediately
+    await this.makeNextCall();
+
+    // Schedule remaining calls
+    this.callingInterval = setInterval(async () => {
+      await this.makeNextCall();
+    }, this.intervalDelay);
+
+    return {
+      success: true,
+      totalLeads: leads.length,
+      intervalMinutes,
+      status: 'started'
+    };
+  }
+
+  /**
+   * Make next call in the queue
+   */
+  async makeNextCall() {
+    if (!this.isRunning || this.currentIndex >= this.currentLeads.length) {
+      this.stopAutoCalling();
+      return;
+    }
+
+    const lead = this.currentLeads[this.currentIndex];
+    const phone = lead.phone || lead.phone_e164;
+
+    if (!phone) {
+      logger.warn(`Lead ${this.currentIndex + 1} has no phone number, skipping`);
+      this.currentIndex++;
+      return;
+    }
+
+    await this.makeCall(phone, {
+      name: lead.business_name || lead.name,
+      category: lead.category,
+      index: this.currentIndex + 1,
+      total: this.currentLeads.length
+    });
+
+    this.currentIndex++;
+  }
+
+  /**
+   * Stop auto-calling
+   */
+  stopAutoCalling() {
+    if (this.callingInterval) {
+      clearInterval(this.callingInterval);
+      this.callingInterval = null;
+    }
+
+    const wasCalling = this.isRunning;
+    this.isRunning = false;
+
+    logger.info(`Auto-calling stopped. Called ${this.currentIndex}/${this.currentLeads.length} leads`);
+
+    return {
+      success: true,
+      status: 'stopped',
+      callsMade: this.currentIndex,
+      totalLeads: this.currentLeads.length,
+      wasCalling
+    };
+  }
+
+  /**
+   * Get current calling status
+   */
+  getStatus() {
+    return {
+      isRunning: this.isRunning,
+      currentIndex: this.currentIndex,
+      totalLeads: this.currentLeads.length,
+      callsMade: this.currentIndex,
+      remaining: Math.max(0, this.currentLeads.length - this.currentIndex),
+      recentLogs: this.callLogs.slice(-10), // Last 10 calls
+      intervalMinutes: this.intervalDelay / 60000
+    };
+  }
+
+  /**
+   * Generate TwiML for voice interaction
+   */
+  generateVoiceTwiML(machineDetection = null) {
+    const twiml = new twilio.twiml.VoiceResponse();
+
+    if (machineDetection === 'machine_end_beep' || machineDetection === 'machine_end_silence') {
+      // Voicemail detected - leave message
+      twiml.say({
+        voice: 'alice',
+        language: 'en-US'
+      }, 'Hello, this is a message from RinglyPro. We wanted to reach out regarding your business. Please call us back at your convenience. Thank you.');
+
+      twiml.pause({ length: 1 });
+      twiml.hangup();
+
+    } else {
+      // Human answered
+      const gather = twiml.gather({
+        numDigits: 1,
+        action: '/api/outbound-caller/gather',
+        method: 'POST',
+        timeout: 10
+      });
+
+      gather.say({
+        voice: 'alice',
+        language: 'en-US'
+      }, 'Hello! This is Rachel from RinglyPro. We help businesses like yours grow with automated calling solutions. Press 1 to speak with an agent, or press 2 to be added to our do not call list.');
+
+      // If no input, repeat
+      twiml.say({
+        voice: 'alice',
+        language: 'en-US'
+      }, 'We did not receive any input. Goodbye.');
+
+      twiml.hangup();
+    }
+
+    return twiml.toString();
+  }
+
+  /**
+   * Handle gather response (user pressed key)
+   */
+  handleGather(digits) {
+    const twiml = new twilio.twiml.VoiceResponse();
+
+    if (digits === '1') {
+      // Connect to agent
+      twiml.say({
+        voice: 'alice',
+        language: 'en-US'
+      }, 'Please hold while we connect you to an agent.');
+
+      if (this.agentNumber) {
+        twiml.dial({
+          timeout: 30,
+          callerId: this.twilioNumber
+        }, this.agentNumber);
+      } else {
+        twiml.say({
+          voice: 'alice',
+          language: 'en-US'
+        }, 'Sorry, no agent is available at the moment. Please try again later. Goodbye.');
+      }
+
+    } else if (digits === '2') {
+      // Do not call
+      twiml.say({
+        voice: 'alice',
+        language: 'en-US'
+      }, 'You have been added to our do not call list. You will not receive any more calls from us. Goodbye.');
+
+    } else {
+      // Invalid input
+      twiml.say({
+        voice: 'alice',
+        language: 'en-US'
+      }, 'Invalid input. Goodbye.');
+    }
+
+    twiml.hangup();
+    return twiml.toString();
+  }
+
+  /**
+   * Update call status from webhook
+   */
+  updateCallStatus(callSid, status, answeredBy = null) {
+    const log = this.callLogs.find(l => l.callSid === callSid);
+
+    if (log) {
+      log.status = status;
+      log.answeredBy = answeredBy;
+      log.updatedAt = new Date();
+
+      logger.info(`Call ${callSid} status updated: ${status}${answeredBy ? ` (${answeredBy})` : ''}`);
+    }
+
+    return { success: true, callSid, status };
+  }
+
+  /**
+   * Cleanup on shutdown
+   */
+  cleanup() {
+    this.stopAutoCalling();
+    logger.info('Outbound caller service cleaned up');
+  }
+}
+
+// Singleton instance
+const outboundCallerService = new OutboundCallerService();
+
+// Cleanup on process exit
+process.on('exit', () => outboundCallerService.cleanup());
+process.on('SIGINT', () => {
+  outboundCallerService.cleanup();
+  process.exit(0);
+});
+process.on('SIGTERM', () => {
+  outboundCallerService.cleanup();
+  process.exit(0);
+});
+
+module.exports = outboundCallerService;
