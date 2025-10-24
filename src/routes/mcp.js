@@ -308,6 +308,17 @@ router.post('/business-collector/collect', async (req, res) => {
       maxResults: maxResults || 100
     });
 
+    // Check if the proxy returned an error
+    if (!result.success) {
+      console.error('❌ Business collection failed:', result.error);
+      console.error('Details:', result.details);
+      return res.status(500).json({
+        success: false,
+        error: result.error || 'Business Collector service is unavailable',
+        details: result.details
+      });
+    }
+
     const displayText = session.proxy.formatForDisplay(result.businesses);
 
     res.json({
