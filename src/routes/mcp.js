@@ -394,16 +394,22 @@ router.post('/copilot/chat', async (req, res) => {
       const rows = [headers.join(',')];
 
       for (const b of businesses) {
-        // Format phone number: remove +, -, spaces, parentheses - digits only
+        // Format phone number: normalize to include US country code
         let phone = b.phone || b.phone_e164 || '';
         phone = phone.replace(/[^\d]/g, ''); // Remove all non-digit characters
+
+        // Add US country code (1) if missing and phone is 10 digits
+        if (phone.length === 10) {
+          phone = '1' + phone;  // Convert 8134893222 → 18134893222
+        }
+        // If already has country code, keep as is
 
         // Get website URL
         const website = b.website || b.domain || '';
 
         const row = [
           escapeCSV(b.business_name || ''),
-          phone,  // Phone number without escaping (just digits)
+          phone,  // Phone number with country code (11 digits: 1 + 10)
           escapeCSV(website)  // Website URL
         ];
         rows.push(row.join(','));
