@@ -420,17 +420,24 @@ router.post('/business-collector/save', async (req, res) => {
           }
         }
 
-        // Insert business into database
+        // Build location string (e.g., "Miami, FL")
+        const location = business.city && business.state
+          ? `${business.city}, ${business.state}`
+          : (business.state || null);
+
+        // Insert business into database with new fields
         const result = await sequelize.query(
           `INSERT INTO business_directory (
             business_name, phone_number, website, email,
             street, city, state, postal_code, country,
             category, source_url, confidence, notes, client_id,
+            location, call_status, call_attempts,
             created_at, updated_at
           ) VALUES (
             :businessName, :phone, :website, :email,
             :street, :city, :state, :postalCode, :country,
             :category, :sourceUrl, :confidence, :notes, :clientId,
+            :location, :callStatus, :callAttempts,
             CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
           ) RETURNING id`,
           {
@@ -448,7 +455,10 @@ router.post('/business-collector/save', async (req, res) => {
               sourceUrl: business.source_url || null,
               confidence: business.confidence || null,
               notes: business.notes || null,
-              clientId: parseInt(clientId)
+              clientId: parseInt(clientId),
+              location: location,
+              callStatus: 'TO_BE_CALLED',
+              callAttempts: 0
             },
             type: QueryTypes.INSERT
           }
@@ -556,6 +566,11 @@ router.post('/business-collector/export-to-ghl', async (req, res) => {
           phone = '+' + phone;
         }
 
+        // Build location string for GHL
+        const businessLocation = business.city && business.state
+          ? `${business.city}, ${business.state}`
+          : (business.state || '');
+
         // Prepare contact data for GHL
         const contactData = {
           locationId: ghl_location_id,
@@ -568,8 +583,13 @@ router.post('/business-collector/export-to-ghl', async (req, res) => {
           state: business.state || undefined,
           postalCode: business.postal_code || undefined,
           country: business.country || 'US',
-          source: 'Business Collector',
-          tags: ['NEW LEAD', business.category || 'Uncategorized']
+          source: `Business Collector - ${businessLocation}`,
+          tags: [
+            'NEW LEAD',
+            'TO_BE_CALLED',
+            business.category || 'Uncategorized',
+            businessLocation || 'Location Unknown'
+          ].filter(tag => tag) // Remove empty tags
         };
 
         console.log(`📤 Exporting to GHL: ${business.business_name}`);
