@@ -92,6 +92,15 @@ async function handleAdHocCallSubmit(e) {
     }
 
     try {
+        // Step 1: Save to database
+        addMessage('system', `💾 Saving contact to database...`);
+        await saveAdHocContactToDatabase(phone, name);
+
+        // Step 2: Export to GHL CRM
+        addMessage('system', `📤 Exporting to GHL CRM...`);
+        await exportAdHocContactToGHL(phone, name);
+
+        // Step 3: Make the call
         addMessage('system', `📞 Initiating call to ${phone}...`);
 
         const response = await fetch('/api/outbound-caller/call', {
@@ -125,6 +134,77 @@ async function handleAdHocCallSubmit(e) {
         console.error('Error making ad-hoc call:', error);
         alert('Failed to initiate call. Check server logs.');
         addMessage('system', `❌ Call failed: ${error.message}`);
+    }
+}
+
+// Save ad-hoc contact to database
+async function saveAdHocContactToDatabase(phone, name) {
+    if (!currentClientId) {
+        console.warn('No client ID - skipping database save');
+        return;
+    }
+
+    try {
+        const contact = {
+            business_name: name || 'Ad-Hoc Call',
+            phone: phone,
+            category: 'Ad-Hoc Outbound Call',
+            source_url: 'Manual Entry',
+            notes: `Ad-hoc call initiated on ${new Date().toLocaleString()}`
+        };
+
+        const response = await fetch(`${API_BASE}/business-collector/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                clientId: currentClientId,
+                businesses: [contact]
+            })
+        });
+
+        const data = await response.json();
+        if (data.success && data.saved > 0) {
+            addMessage('system', `✅ Contact saved to database`);
+        }
+    } catch (error) {
+        console.error('Error saving ad-hoc contact:', error);
+        // Don't fail the call if database save fails
+    }
+}
+
+// Export ad-hoc contact to GHL CRM
+async function exportAdHocContactToGHL(phone, name) {
+    if (!currentClientId) {
+        console.warn('No client ID - skipping GHL export');
+        return;
+    }
+
+    try {
+        const contact = {
+            business_name: name || 'Ad-Hoc Call',
+            phone: phone,
+            category: 'Ad-Hoc Outbound Call',
+            notes: `Ad-hoc call initiated on ${new Date().toLocaleString()}`
+        };
+
+        const response = await fetch(`${API_BASE}/business-collector/export-to-ghl`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                clientId: currentClientId,
+                businesses: [contact]
+            })
+        });
+
+        const data = await response.json();
+        if (data.success && data.exported > 0) {
+            addMessage('system', `✅ Contact exported to GHL CRM with "NEW LEAD" tag`);
+        } else if (data.skipped > 0) {
+            addMessage('system', `ℹ️ Contact already exists in GHL CRM`);
+        }
+    } catch (error) {
+        console.error('Error exporting ad-hoc contact to GHL:', error);
+        // Don't fail the call if GHL export fails
     }
 }
 
