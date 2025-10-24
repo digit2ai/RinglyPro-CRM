@@ -482,6 +482,84 @@ router.post('/business-collector/save', async (req, res) => {
   }
 });
 
+// Business Collector - Get collected businesses from database
+router.get('/business-collector/directory/:clientId', async (req, res) => {
+  console.log('📂 Get business directory request received');
+  const { clientId } = req.params;
+  const { limit = 100, offset = 0, category, state } = req.query;
+
+  if (!clientId) {
+    return res.status(400).json({
+      success: false,
+      error: 'Client ID is required'
+    });
+  }
+
+  try {
+    console.log(`📊 Fetching business directory for client ${clientId}...`);
+
+    // Build WHERE clause with filters
+    let whereClause = 'WHERE client_id = :clientId';
+    const replacements = { clientId: parseInt(clientId), limit: parseInt(limit), offset: parseInt(offset) };
+
+    if (category) {
+      whereClause += ' AND category ILIKE :category';
+      replacements.category = `%${category}%`;
+    }
+
+    if (state) {
+      whereClause += ' AND state = :state';
+      replacements.state = state;
+    }
+
+    // Get businesses
+    const businesses = await sequelize.query(
+      `SELECT
+        id, business_name, phone_number, website, email,
+        street, city, state, postal_code, country,
+        category, source_url, confidence, notes,
+        created_at, updated_at
+      FROM business_directory
+      ${whereClause}
+      ORDER BY created_at DESC
+      LIMIT :limit OFFSET :offset`,
+      {
+        replacements,
+        type: QueryTypes.SELECT
+      }
+    );
+
+    // Get total count
+    const countResult = await sequelize.query(
+      `SELECT COUNT(*) as total FROM business_directory ${whereClause}`,
+      {
+        replacements: { clientId: parseInt(clientId), category: replacements.category, state: replacements.state },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const total = parseInt(countResult[0].total);
+
+    console.log(`✅ Found ${businesses.length} businesses (total: ${total})`);
+
+    res.json({
+      success: true,
+      businesses,
+      total,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      hasMore: (parseInt(offset) + businesses.length) < total
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching business directory:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to fetch business directory'
+    });
+  }
+});
+
 // AI Copilot chat
 router.post('/copilot/chat', async (req, res) => {
   console.log('📩 MCP Chat request received:', { sessionId: req.body.sessionId, message: req.body.message?.substring(0, 50) });
