@@ -183,42 +183,8 @@ function createBusinessCollectorModal() {
                     <h3 id="bcResultsTitle"></h3>
                     <div id="bcResultsList"></div>
                     <div class="bc-actions">
-                        <button class="bc-btn-primary" onclick="startOutboundCalling()">📞 Call All Leads</button>
-                        <button class="bc-btn-secondary" onclick="showAdHocCallForm()">📞 Single Call</button>
+                        <button class="bc-btn-primary" onclick="startOutboundCalling()">📞 Start Outbound Caller</button>
                     </div>
-                </div>
-
-                <!-- Ad-Hoc Single Call Form -->
-                <div class="bc-adhoc-call" id="bcAdHocCall" style="display: none;">
-                    <h3>📞 Make Single Outbound Call</h3>
-                    <p style="color: #95a5a6; font-size: 14px; margin-bottom: 15px;">
-                        Make an instant call to any phone number for ad-hoc outreach
-                    </p>
-                    <form id="adHocCallForm" class="bc-form">
-                        <div class="bc-form-group">
-                            <label for="adHocPhone">Phone Number *</label>
-                            <input
-                                type="tel"
-                                id="adHocPhone"
-                                placeholder="e.g., (555) 123-4567 or +15551234567"
-                                required
-                                pattern="[\d\s\(\)\-\+]+"
-                            >
-                            <small>US format: 10 digits or with country code</small>
-                        </div>
-                        <div class="bc-form-group">
-                            <label for="adHocName">Contact Name (Optional)</label>
-                            <input
-                                type="text"
-                                id="adHocName"
-                                placeholder="e.g., John Smith"
-                            >
-                        </div>
-                        <div class="bc-adhoc-actions">
-                            <button type="submit" class="bc-btn-success">📞 Call Now</button>
-                            <button type="button" class="bc-btn-secondary" onclick="closeAdHocCallForm()">Cancel</button>
-                        </div>
-                    </form>
                 </div>
             </div>
         </div>
@@ -227,9 +193,8 @@ function createBusinessCollectorModal() {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     businessCollectorModal = document.getElementById('businessCollectorModal');
 
-    // Add form submit handlers
+    // Add form submit handler
     document.getElementById('bcForm').addEventListener('submit', handleBusinessCollectorSubmit);
-    document.getElementById('adHocCallForm').addEventListener('submit', handleAdHocCall);
 }
 
 // Handle form submission
@@ -556,77 +521,6 @@ function closeBusinessCollectorForm() {
         businessCollectorModal.style.display = 'none';
         document.getElementById('bcForm').style.display = 'block';
         document.getElementById('bcResults').style.display = 'none';
-        document.getElementById('bcAdHocCall').style.display = 'none';
         currentLeads = null;
-    }
-}
-
-// Show ad-hoc call form
-function showAdHocCallForm() {
-    document.getElementById('bcResults').style.display = 'none';
-    document.getElementById('bcAdHocCall').style.display = 'block';
-}
-
-// Close ad-hoc call form
-function closeAdHocCallForm() {
-    document.getElementById('bcAdHocCall').style.display = 'none';
-    document.getElementById('bcResults').style.display = 'block';
-    document.getElementById('adHocCallForm').reset();
-}
-
-// Handle ad-hoc single call
-async function handleAdHocCall(e) {
-    e.preventDefault();
-
-    const phone = document.getElementById('adHocPhone').value.trim();
-    const name = document.getElementById('adHocName').value.trim();
-
-    if (!phone) {
-        alert('Please enter a phone number');
-        return;
-    }
-
-    // Confirm before calling
-    const confirmMsg = name
-        ? `Make a call to ${name} at ${phone}?\n\nThis will make a REAL call using Twilio.`
-        : `Make a call to ${phone}?\n\nThis will make a REAL call using Twilio.`;
-
-    if (!confirm(confirmMsg)) {
-        return;
-    }
-
-    try {
-        addMessage('system', `📞 Initiating call to ${phone}...`);
-
-        const response = await fetch('/api/outbound-caller/call', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                phone: phone,
-                leadData: {
-                    name: name || 'Unknown',
-                    source: 'adhoc'
-                }
-            })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            addMessage('system', `✅ Call initiated successfully! Call SID: ${data.callSid}`);
-            addMessage('system', `📞 Calling ${phone}... Status: ${data.status}`);
-
-            // Reset form and close
-            document.getElementById('adHocCallForm').reset();
-            closeAdHocCallForm();
-            closeBusinessCollectorForm();
-        } else {
-            alert('Error making call: ' + (data.error || 'Unknown error'));
-            addMessage('system', `❌ Call failed: ${data.error}`);
-        }
-    } catch (error) {
-        console.error('Error making ad-hoc call:', error);
-        alert('Failed to initiate call. Check server logs.');
-        addMessage('system', `❌ Call failed: ${error.message}`);
     }
 }
