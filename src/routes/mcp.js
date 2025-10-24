@@ -551,8 +551,7 @@ router.post('/copilot/chat', async (req, res) => {
           csvData,
           csvFilename: filename,
           suggestions: [
-            'Collect different category',
-            'View full details'
+            'Outbound Caller'
           ]
         });
       }
@@ -586,8 +585,7 @@ router.post('/copilot/chat', async (req, res) => {
             data,
             suggestions: [
               'Export results to CSV',
-              'Collect different category',
-              'View full details'
+              'Outbound Caller'
             ]
           });
         } catch (error) {
