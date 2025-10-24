@@ -293,6 +293,9 @@ async function saveBusinessesToDatabase(businesses) {
                 console.log(`⚠️ Skipped ${data.duplicates} duplicates`);
             }
             addMessage('system', `💾 Saved ${data.saved} businesses to your directory${data.duplicates > 0 ? ` (${data.duplicates} duplicates skipped)` : ''}`);
+
+            // Auto-export to GHL CRM with "NEW LEAD" tag
+            await exportBusinessesToGHL(businesses);
         } else {
             console.error('Failed to save businesses:', data.error);
             addMessage('system', `⚠️ Warning: Could not save businesses to database`);
@@ -300,6 +303,52 @@ async function saveBusinessesToDatabase(businesses) {
     } catch (error) {
         console.error('Error saving businesses to database:', error);
         // Don't show error to user - this is a background operation
+    }
+}
+
+// Export businesses to GHL CRM with "NEW LEAD" tag
+async function exportBusinessesToGHL(businesses) {
+    if (!currentClientId || !businesses || businesses.length === 0) {
+        return;
+    }
+
+    try {
+        console.log(`📤 Exporting ${businesses.length} businesses to GHL CRM...`);
+
+        const response = await fetch(`${API_BASE}/business-collector/export-to-ghl`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                clientId: currentClientId,
+                businesses: businesses
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log(`✅ Exported ${data.exported} contacts to GHL CRM`);
+            if (data.exported > 0) {
+                addMessage('system', `📤 Exported ${data.exported} contacts to GHL CRM with "NEW LEAD" tag${data.skipped > 0 ? ` (${data.skipped} skipped)` : ''}`);
+            }
+            if (data.failed > 0) {
+                console.warn(`⚠️ Failed to export ${data.failed} contacts to GHL`);
+                addMessage('system', `⚠️ Failed to export ${data.failed} contacts to GHL CRM`);
+            }
+        } else {
+            // If GHL is not configured, silently skip (don't alarm the user)
+            if (data.error && data.error.includes('not configured')) {
+                console.log('ℹ️ GHL CRM not configured for this client - skipping export');
+            } else {
+                console.error('Failed to export to GHL:', data.error);
+                addMessage('system', `⚠️ Could not export to GHL CRM: ${data.error}`);
+            }
+        }
+    } catch (error) {
+        console.error('Error exporting businesses to GHL:', error);
+        // Don't show error to user if GHL is not configured
     }
 }
 

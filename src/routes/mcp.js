@@ -482,6 +482,163 @@ router.post('/business-collector/save', async (req, res) => {
   }
 });
 
+// Business Collector - Export businesses to GHL CRM with "NEW LEAD" tag
+router.post('/business-collector/export-to-ghl', async (req, res) => {
+  console.log('📤 Export businesses to GHL CRM request received');
+  const { clientId, businesses } = req.body;
+
+  if (!clientId) {
+    return res.status(400).json({
+      success: false,
+      error: 'Client ID is required'
+    });
+  }
+
+  if (!businesses || !Array.isArray(businesses) || businesses.length === 0) {
+    return res.status(400).json({
+      success: false,
+      error: 'Businesses array is required and must not be empty'
+    });
+  }
+
+  try {
+    // Get client's GHL credentials from database
+    const clientData = await sequelize.query(
+      'SELECT ghl_api_key, ghl_location_id FROM clients WHERE id = :clientId LIMIT 1',
+      {
+        replacements: { clientId: parseInt(clientId) },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!clientData || clientData.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    const { ghl_api_key, ghl_location_id } = clientData[0];
+
+    if (!ghl_api_key || !ghl_location_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'GHL API credentials not configured for this client. Please add GHL API Key and Location ID in client settings.'
+      });
+    }
+
+    console.log(`🔑 Using GHL credentials for client ${clientId}`);
+    console.log(`📍 Location ID: ${ghl_location_id}`);
+
+    const GHL_BASE_URL = 'https://services.leadconnectorhq.com';
+    const GHL_API_VERSION = '2021-07-28';
+
+    const exported = [];
+    const failed = [];
+    const skipped = [];
+
+    for (const business of businesses) {
+      try {
+        // Skip if no phone number
+        if (!business.phone) {
+          console.log(`⚠️ Skipping ${business.business_name}: No phone number`);
+          skipped.push({ name: business.business_name, reason: 'No phone number' });
+          continue;
+        }
+
+        // Format phone number (remove non-digits, ensure it starts with country code)
+        let phone = business.phone.replace(/\D/g, '');
+        if (phone.length === 10) {
+          phone = '1' + phone; // Add US country code
+        }
+        if (!phone.startsWith('+')) {
+          phone = '+' + phone;
+        }
+
+        // Prepare contact data for GHL
+        const contactData = {
+          firstName: business.business_name || 'Unknown Business',
+          phone: phone,
+          email: business.email || undefined,
+          website: business.website || undefined,
+          address1: business.street || undefined,
+          city: business.city || undefined,
+          state: business.state || undefined,
+          postalCode: business.postal_code || undefined,
+          country: business.country || 'US',
+          source: 'Business Collector',
+          tags: ['NEW LEAD', business.category || 'Uncategorized'],
+          customField: {
+            category: business.category || '',
+            source_url: business.source_url || '',
+            confidence: business.confidence || ''
+          }
+        };
+
+        console.log(`📤 Exporting to GHL: ${business.business_name}`);
+
+        // Call GHL API to create contact
+        const response = await axios({
+          method: 'POST',
+          url: `${GHL_BASE_URL}/contacts/`,
+          headers: {
+            'Authorization': `Bearer ${ghl_api_key}`,
+            'Version': GHL_API_VERSION,
+            'Content-Type': 'application/json'
+          },
+          data: contactData
+        });
+
+        if (response.data && response.data.contact) {
+          console.log(`✅ Exported to GHL: ${business.business_name} (Contact ID: ${response.data.contact.id})`);
+          exported.push({
+            name: business.business_name,
+            contactId: response.data.contact.id,
+            phone: phone
+          });
+        } else {
+          console.log(`⚠️ Unexpected GHL response for ${business.business_name}`);
+          failed.push({ name: business.business_name, reason: 'Unexpected API response' });
+        }
+
+      } catch (error) {
+        console.error(`❌ Failed to export ${business.business_name} to GHL:`, error.response?.data || error.message);
+
+        // Check if it's a duplicate contact error
+        if (error.response?.data?.message?.includes('duplicate') ||
+            error.response?.data?.message?.includes('already exists')) {
+          skipped.push({ name: business.business_name, reason: 'Already exists in GHL' });
+        } else {
+          failed.push({
+            name: business.business_name,
+            reason: error.response?.data?.message || error.message
+          });
+        }
+      }
+    }
+
+    console.log(`✅ GHL Export Summary: ${exported.length} exported, ${skipped.length} skipped, ${failed.length} failed`);
+
+    res.json({
+      success: true,
+      exported: exported.length,
+      skipped: skipped.length,
+      failed: failed.length,
+      exportedContacts: exported,
+      skippedContacts: skipped,
+      failedContacts: failed,
+      message: `Exported ${exported.length} contacts to GHL CRM with "NEW LEAD" tag${skipped.length > 0 ? ` (${skipped.length} skipped)` : ''}${failed.length > 0 ? ` (${failed.length} failed)` : ''}`
+    });
+
+  } catch (error) {
+    console.error('❌ Error exporting businesses to GHL:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to export businesses to GHL CRM'
+    });
+  }
+});
+
 // Business Collector - Get collected businesses from database
 router.get('/business-collector/directory/:clientId', async (req, res) => {
   console.log('📂 Get business directory request received');
