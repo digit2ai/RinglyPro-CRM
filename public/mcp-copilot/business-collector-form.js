@@ -308,7 +308,7 @@ async function saveBusinessesToDatabase(businesses) {
 function exportLeadsToCSV() {
     if (!currentLeads) return;
 
-    const headers = ['Name', 'phone', 'Website'];
+    const headers = ['Business Name', 'Category', 'Phone', 'Website'];
     const rows = [headers.join(',')];
 
     currentLeads.forEach(b => {
@@ -316,19 +316,20 @@ function exportLeadsToCSV() {
         if (phone.length === 10) phone = '1' + phone;
 
         const name = (b.business_name || '').replace(/"/g, '""');
+        const category = (b.category || '').replace(/"/g, '""');
         const website = b.website || '';
 
-        rows.push(`"${name}",${phone},"${website}"`);
+        rows.push(`"${name}","${category}",${phone},"${website}"`);
     });
 
     const csvContent = rows.join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `leads-${currentLeads.length}.csv`;
+    link.download = `business-leads-${Date.now()}.csv`;
     link.click();
 
-    addMessage('system', `✅ Exported ${currentLeads.length} leads to CSV`);
+    addMessage('system', `✅ Exported ${currentLeads.length} leads to CSV with category`);
 }
 
 // Start outbound calling
