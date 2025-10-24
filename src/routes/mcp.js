@@ -382,45 +382,26 @@ router.post('/copilot/chat', async (req, res) => {
   try {
     console.log('🤖 Processing message for session:', sessionId);
 
-    // Helper function to convert businesses to CSV
+    // Helper function to convert businesses to CSV for outbound caller app
+    // Format: Name,phone,tag (3 columns only)
     function convertToCSV(businesses) {
       if (!businesses || businesses.length === 0) return '';
 
-      // CSV headers
-      const headers = [
-        'Business Name',
-        'Category',
-        'Phone',
-        'Email',
-        'Website',
-        'Street',
-        'City',
-        'State',
-        'ZIP',
-        'Country',
-        'Source',
-        'Confidence',
-        'Notes'
-      ];
+      // CSV headers matching outbound caller app format
+      const headers = ['Name', 'phone', 'tag'];
 
       // Build CSV rows
       const rows = [headers.join(',')];
 
       for (const b of businesses) {
+        // Format phone number: remove +, -, spaces, parentheses - digits only
+        let phone = b.phone || b.phone_e164 || '';
+        phone = phone.replace(/[^\d]/g, ''); // Remove all non-digit characters
+
         const row = [
           escapeCSV(b.business_name || ''),
-          escapeCSV(b.category || ''),
-          escapeCSV(b.phone || b.phone_e164 || ''),
-          escapeCSV(b.email || ''),
-          escapeCSV(b.website || b.domain || ''),
-          escapeCSV(b.street || b.address_1 || ''),
-          escapeCSV(b.city || ''),
-          escapeCSV(b.state || ''),
-          escapeCSV(b.postal_code || b.zip || ''),
-          escapeCSV(b.country || 'USA'),
-          escapeCSV(b.source_url || ''),
-          escapeCSV((b.confidence || 0).toString()),
-          escapeCSV(b.notes || '')
+          phone,  // Phone number without escaping (just digits)
+          ''      // Tag field empty (as per example)
         ];
         rows.push(row.join(','));
       }
@@ -547,13 +528,19 @@ router.post('/copilot/chat', async (req, res) => {
         const businesses = session.lastCollectionResults.businesses;
         const csvData = convertToCSV(businesses);
 
-        response = `CSV file ready with ${businesses.length} businesses!\n\nClick the download link below to save the file.`;
+        // Create descriptive filename from category and geography
+        const meta = session.lastCollectionResults.meta || {};
+        const category = (meta.category || 'businesses').toLowerCase().replace(/\s+/g, '-');
+        const geography = (meta.geography || 'unknown').toLowerCase().replace(/\s+/g, '-');
+        const filename = `${category}-${geography}-${businesses.length}-leads.csv`;
+
+        response = `📥 Outbound Calling List Ready!\n\n✅ ${businesses.length} businesses with phone numbers\n📋 Format: Name, phone, tag\n🎯 Ready to upload to your outbound caller app`;
 
         return res.json({
           success: true,
           response,
           csvData,
-          csvFilename: `business-leads-${Date.now()}.csv`,
+          csvFilename: filename,
           suggestions: [
             'Collect different category',
             'View full details'
