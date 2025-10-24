@@ -569,12 +569,7 @@ router.post('/business-collector/export-to-ghl', async (req, res) => {
           postalCode: business.postal_code || undefined,
           country: business.country || 'US',
           source: 'Business Collector',
-          tags: ['NEW LEAD', business.category || 'Uncategorized'],
-          customField: {
-            category: business.category || '',
-            source_url: business.source_url || '',
-            confidence: business.confidence || ''
-          }
+          tags: ['NEW LEAD', business.category || 'Uncategorized']
         };
 
         console.log(`📤 Exporting to GHL: ${business.business_name}`);
