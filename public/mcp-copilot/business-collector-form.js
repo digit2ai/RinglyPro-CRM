@@ -332,7 +332,7 @@ function exportLeadsToCSV() {
 }
 
 // Start outbound calling
-function startOutboundCalling() {
+async function startOutboundCalling() {
     if (!currentLeads) return;
 
     const leadsWithPhones = currentLeads.filter(b => b.phone);
@@ -342,10 +342,176 @@ function startOutboundCalling() {
         return;
     }
 
-    if (confirm(`Start calling ${leadsWithPhones.length} leads?\n\nThis will make REAL calls!`)) {
-        closeBusinessCollectorForm();
-        addMessage('user', 'Outbound Caller');
-        // Trigger outbound calling flow
+    if (!confirm(`Start calling ${leadsWithPhones.length} leads?\n\nThis will make REAL calls using Twilio!\n\nCalls will be made every 2 minutes.`)) {
+        return;
+    }
+
+    try {
+        // Start auto-calling
+        const response = await fetch('/api/outbound-caller/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                leads: leadsWithPhones,
+                intervalMinutes: 2
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            closeBusinessCollectorForm();
+            addMessage('system', `📞 Outbound Caller started! Calling ${leadsWithPhones.length} leads every 2 minutes.`);
+
+            // Show progress modal
+            showOutboundCallerProgress();
+        } else {
+            alert('Error starting calls: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error starting outbound caller:', error);
+        alert('Failed to start outbound caller. Check server logs.');
+    }
+}
+
+// Show outbound caller progress modal
+let progressModal = null;
+let progressInterval = null;
+
+function showOutboundCallerProgress() {
+    // Create progress modal if doesn't exist
+    if (!progressModal) {
+        const modalHTML = `
+            <div id="callingProgressModal" class="bc-modal">
+                <div class="bc-modal-content" style="max-width: 600px;">
+                    <div class="bc-modal-header">
+                        <h2>📞 Outbound Calling in Progress</h2>
+                        <button class="bc-close-btn" onclick="closeProgressModal()">&times;</button>
+                    </div>
+
+                    <div class="calling-status">
+                        <div class="status-summary">
+                            <h3 id="callingStatusText">Starting calls...</h3>
+                            <div class="progress-bar">
+                                <div id="callingProgressBar" class="progress-fill"></div>
+                            </div>
+                            <p id="callingStats">Preparing to call leads...</p>
+                        </div>
+
+                        <div class="recent-calls">
+                            <h4>Recent Calls</h4>
+                            <div id="recentCallsList" class="calls-list">
+                                <p style="text-align: center; color: #999;">No calls yet...</p>
+                            </div>
+                        </div>
+
+                        <div class="calling-actions" style="margin-top: 20px;">
+                            <button onclick="stopOutboundCalling()" class="bc-btn-danger">⏹️ Stop Calling</button>
+                            <button onclick="refreshCallingStatus()" class="bc-btn-secondary">🔄 Refresh</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        progressModal = document.getElementById('callingProgressModal');
+    }
+
+    progressModal.style.display = 'flex';
+
+    // Start polling for status updates every 10 seconds
+    refreshCallingStatus();
+    progressInterval = setInterval(refreshCallingStatus, 10000);
+}
+
+// Refresh calling status
+async function refreshCallingStatus() {
+    try {
+        const response = await fetch('/api/outbound-caller/status');
+        const data = await response.json();
+
+        if (data.success) {
+            const { isRunning, callsMade, totalLeads, remaining, recentLogs } = data;
+
+            // Update status text
+            if (isRunning) {
+                document.getElementById('callingStatusText').textContent =
+                    `Calling ${callsMade}/${totalLeads} leads`;
+            } else {
+                document.getElementById('callingStatusText').textContent =
+                    `Completed - ${callsMade}/${totalLeads} calls made`;
+            }
+
+            // Update progress bar
+            const percentage = totalLeads > 0 ? (callsMade / totalLeads * 100) : 0;
+            document.getElementById('callingProgressBar').style.width = percentage + '%';
+
+            // Update stats
+            document.getElementById('callingStats').textContent =
+                `${remaining} leads remaining • Next call in ~${data.intervalMinutes || 2} minutes`;
+
+            // Update recent calls list
+            const callsList = document.getElementById('recentCallsList');
+            if (recentLogs && recentLogs.length > 0) {
+                callsList.innerHTML = recentLogs.reverse().map(log => `
+                    <div class="call-log-entry">
+                        <span class="call-phone">${log.phone || 'Unknown'}</span>
+                        <span class="call-status status-${log.status}">${log.status || 'unknown'}</span>
+                        <span class="call-time">${log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : ''}</span>
+                    </div>
+                `).join('');
+            }
+
+            // Stop polling if not running
+            if (!isRunning && progressInterval) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching calling status:', error);
+    }
+}
+
+// Stop outbound calling
+async function stopOutboundCalling() {
+    if (!confirm('Stop calling? Remaining leads will not be called.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/outbound-caller/stop', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            addMessage('system', `⏹️ Outbound calling stopped. Made ${data.callsMade}/${data.totalLeads} calls.`);
+            refreshCallingStatus();
+
+            if (progressInterval) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+            }
+        }
+    } catch (error) {
+        console.error('Error stopping calls:', error);
+        alert('Failed to stop calling');
+    }
+}
+
+// Close progress modal
+function closeProgressModal() {
+    if (progressModal) {
+        progressModal.style.display = 'none';
+    }
+
+    if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
     }
 }
 

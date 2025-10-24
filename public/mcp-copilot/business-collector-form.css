@@ -224,3 +224,166 @@
 .bc-modal-content::-webkit-scrollbar-thumb:hover {
     background: #5a6f8f;
 }
+
+/* Outbound Caller Progress Modal Styles */
+.calling-status {
+    padding: 30px;
+    color: white;
+}
+
+.status-summary {
+    margin-bottom: 30px;
+}
+
+.status-summary h3 {
+    margin: 0 0 15px 0;
+    font-size: 20px;
+    color: #3498db;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background: #2c3e50;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    transition: width 0.5s ease;
+    width: 0%;
+}
+
+.status-summary p {
+    color: #95a5a6;
+    margin: 0;
+    font-size: 14px;
+}
+
+.recent-calls {
+    background: #2c3e50;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.recent-calls h4 {
+    margin: 0 0 15px 0;
+    color: white;
+    font-size: 16px;
+}
+
+.calls-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.call-log-entry {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 10px;
+    padding: 12px;
+    background: #34495e;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    align-items: center;
+}
+
+.call-phone {
+    color: white;
+    font-weight: 500;
+}
+
+.call-status {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    text-align: center;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.call-status.status-initiated {
+    background: #3498db;
+    color: white;
+}
+
+.call-status.status-ringing {
+    background: #f39c12;
+    color: white;
+}
+
+.call-status.status-answered,
+.call-status.status-in-progress,
+.call-status.status-completed {
+    background: #27ae60;
+    color: white;
+}
+
+.call-status.status-failed,
+.call-status.status-busy,
+.call-status.status-no-answer {
+    background: #e74c3c;
+    color: white;
+}
+
+.call-time {
+    color: #95a5a6;
+    font-size: 12px;
+    text-align: right;
+}
+
+.calling-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.bc-btn-danger,
+.bc-btn-secondary {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.bc-btn-danger {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+}
+
+.bc-btn-secondary {
+    background: #4a5f7f;
+    color: white;
+}
+
+.bc-btn-danger:hover,
+.bc-btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Scrollbar for calls list */
+.calls-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.calls-list::-webkit-scrollbar-track {
+    background: #2c3e50;
+}
+
+.calls-list::-webkit-scrollbar-thumb {
+    background: #4a5f7f;
+    border-radius: 3px;
+}
+
+.calls-list::-webkit-scrollbar-thumb:hover {
+    background: #5a6f8f;
+}
