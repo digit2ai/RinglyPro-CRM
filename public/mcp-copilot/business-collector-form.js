@@ -4,6 +4,20 @@
 let businessCollectorModal = null;
 let currentLeads = null;
 
+// US Cities by State - Top cities for each state
+const US_CITIES_BY_STATE = {
+    'Florida': ['Miami', 'Orlando', 'Tampa', 'Jacksonville', 'Fort Lauderdale', 'St. Petersburg', 'Tallahassee', 'Cape Coral', 'Port St. Lucie', 'Pembroke Pines', 'Hollywood', 'Miramar', 'Coral Springs', 'Clearwater', 'Palm Bay', 'Lakeland', 'Pompano Beach', 'West Palm Beach', 'Boca Raton', 'Gainesville', 'Fort Myers', 'Daytona Beach', 'Sarasota', 'Kissimmee', 'Naples', 'Deerfield Beach', 'Boynton Beach', 'Delray Beach', 'Melbourne', 'Ocala', 'Pensacola', 'Brandon', 'Spring Hill', 'Largo'],
+    'Texas': ['Houston', 'San Antonio', 'Dallas', 'Austin', 'Fort Worth', 'El Paso', 'Arlington', 'Corpus Christi', 'Plano', 'Laredo', 'Lubbock', 'Irving', 'Garland', 'Frisco', 'McKinney', 'Amarillo', 'Grand Prairie', 'Brownsville', 'Pasadena', 'Mesquite', 'Killeen', 'McAllen', 'Waco', 'Carrollton', 'Pearland', 'Denton', 'Midland', 'Abilene', 'Round Rock', 'The Woodlands', 'Richardson', 'Tyler', 'College Station', 'Lewisville', 'Sugar Land'],
+    'California': ['Los Angeles', 'San Diego', 'San Jose', 'San Francisco', 'Fresno', 'Sacramento', 'Long Beach', 'Oakland', 'Bakersfield', 'Anaheim', 'Santa Ana', 'Riverside', 'Stockton', 'Irvine', 'Chula Vista', 'Fremont', 'San Bernardino', 'Modesto', 'Fontana', 'Oxnard', 'Moreno Valley', 'Huntington Beach', 'Glendale', 'Santa Clarita', 'Garden Grove', 'Oceanside', 'Rancho Cucamonga', 'Santa Rosa', 'Ontario', 'Elk Grove', 'Corona', 'Lancaster', 'Palmdale', 'Salinas', 'Hayward', 'Pomona', 'Sunnyvale', 'Escondido', 'Pasadena', 'Torrance', 'Orange', 'Fullerton', 'Thousand Oaks', 'Visalia', 'Simi Valley', 'Concord', 'Roseville'],
+    'New York': ['New York City', 'Buffalo', 'Rochester', 'Yonkers', 'Syracuse', 'Albany', 'New Rochelle', 'Mount Vernon', 'Schenectady', 'Utica', 'White Plains', 'Hempstead', 'Troy', 'Niagara Falls', 'Binghamton', 'Freeport', 'Valley Stream', 'Long Beach', 'Spring Valley', 'Levittown', 'Poughkeepsie', 'West Seneca', 'Cheektowaga', 'West Babylon', 'Hicksville'],
+    'Georgia': ['Atlanta', 'Augusta', 'Columbus', 'Macon', 'Savannah', 'Athens', 'Sandy Springs', 'Roswell', 'Johns Creek', 'Albany', 'Warner Robins', 'Alpharetta', 'Marietta', 'Valdosta', 'Smyrna', 'Dunwoody', 'Rome', 'East Point', 'Milton', 'Peachtree City', 'Gainesville', 'Hinesville', 'Newnan', 'Kennesaw', 'Douglasville'],
+    'North Carolina': ['Charlotte', 'Raleigh', 'Greensboro', 'Durham', 'Winston-Salem', 'Fayetteville', 'Cary', 'Wilmington', 'High Point', 'Concord', 'Greenville', 'Asheville', 'Gastonia', 'Jacksonville', 'Chapel Hill', 'Rocky Mount', 'Burlington', 'Wilson', 'Huntersville', 'Kannapolis', 'Apex', 'Hickory', 'Goldsboro', 'Indian Trail', 'Monroe'],
+    'Arizona': ['Phoenix', 'Tucson', 'Mesa', 'Chandler', 'Scottsdale', 'Glendale', 'Gilbert', 'Tempe', 'Peoria', 'Surprise', 'Yuma', 'Avondale', 'Goodyear', 'Flagstaff', 'Buckeye', 'Lake Havasu City', 'Casa Grande', 'Sierra Vista', 'Maricopa', 'Oro Valley', 'Prescott', 'Bullhead City', 'Prescott Valley', 'Apache Junction', 'Marana'],
+    'Nevada': ['Las Vegas', 'Henderson', 'Reno', 'North Las Vegas', 'Sparks', 'Carson City', 'Fernley', 'Elko', 'Mesquite', 'Boulder City', 'Fallon', 'Winnemucca', 'West Wendover', 'Ely', 'Yerington'],
+    'Colorado': ['Denver', 'Colorado Springs', 'Aurora', 'Fort Collins', 'Lakewood', 'Thornton', 'Arvada', 'Westminster', 'Pueblo', 'Centennial', 'Boulder', 'Greeley', 'Longmont', 'Loveland', 'Grand Junction', 'Broomfield', 'Castle Rock', 'Commerce City', 'Parker', 'Littleton', 'Northglenn', 'Brighton', 'Englewood', 'Wheat Ridge', 'Fountain'],
+    'Washington': ['Seattle', 'Spokane', 'Tacoma', 'Vancouver', 'Bellevue', 'Kent', 'Everett', 'Renton', 'Spokane Valley', 'Federal Way', 'Yakima', 'Bellingham', 'Kennewick', 'Auburn', 'Pasco', 'Marysville', 'Lakewood', 'Redmond', 'Shoreline', 'Richland', 'Kirkland', 'Burien', 'Sammamish', 'Olympia', 'Lacey', 'Edmonds', 'Bremerton', 'Puyallup', 'Wenatchee', 'Mount Vernon']
+};
+
 // Open Business Collector Form Modal
 function openBusinessCollectorForm() {
     if (!sessionId) {
@@ -157,8 +171,10 @@ function createBusinessCollectorModal() {
 
                     <div class="bc-form-group">
                         <label for="bcCity">City (Optional)</label>
-                        <input type="text" id="bcCity" placeholder="e.g., Tampa, Miami, Orlando...">
-                        <small>Leave blank to search entire state</small>
+                        <select id="bcCity">
+                            <option value="">Select a city or leave blank for entire state...</option>
+                        </select>
+                        <small>Cities populate based on selected state</small>
                     </div>
 
                     <div class="bc-form-group">
@@ -195,6 +211,36 @@ function createBusinessCollectorModal() {
 
     // Add form submit handler
     document.getElementById('bcForm').addEventListener('submit', handleBusinessCollectorSubmit);
+
+    // Add state change listener to populate cities
+    document.getElementById('bcState').addEventListener('change', populateCitiesForState);
+}
+
+// Populate cities dropdown based on selected state
+function populateCitiesForState() {
+    const state = document.getElementById('bcState').value;
+    const citySelect = document.getElementById('bcCity');
+
+    // Clear existing options
+    citySelect.innerHTML = '<option value="">Select a city or leave blank for entire state...</option>';
+
+    // If no state selected, return
+    if (!state) {
+        return;
+    }
+
+    // Get cities for selected state
+    const cities = US_CITIES_BY_STATE[state] || [];
+
+    // Populate city dropdown
+    cities.forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        option.textContent = city;
+        citySelect.appendChild(option);
+    });
+
+    console.log(`✅ Populated ${cities.length} cities for ${state}`);
 }
 
 // Handle form submission
@@ -203,7 +249,7 @@ async function handleBusinessCollectorSubmit(e) {
 
     const category = document.getElementById('bcCategory').value;
     const state = document.getElementById('bcState').value;
-    const city = document.getElementById('bcCity').value.trim();
+    const city = document.getElementById('bcCity').value; // Now a dropdown value
     const maxResults = parseInt(document.getElementById('bcMaxResults').value);
 
     const location = city ? `${city}, ${state}` : state;
