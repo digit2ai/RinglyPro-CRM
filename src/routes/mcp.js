@@ -551,7 +551,7 @@ router.post('/copilot/chat', async (req, res) => {
         // Store leads in session for outbound calling
         session.outboundLeads = leadsWithPhones;
 
-        response = `📞 Outbound Caller Ready!\n\n✅ ${leadsWithPhones.length} leads with phone numbers loaded\n🎯 Auto-calling with 2-minute intervals\n🤖 AI voice with machine detection\n\n⚠️ Important:\n• Each call connects to live customers\n• Press 1 connects to your agent phone\n• Press 2 adds to do-not-call list\n• Voicemail detection included\n\nReady to start calling?`;
+        response = `📞 Outbound Caller Ready!\n\n✅ ${leadsWithPhones.length} leads with phone numbers loaded\n🎯 Auto-calling with 2-minute intervals\n🤖 Machine detection included\n\n⚠️ Important:\n• Human answers → Directly connected to GHL Voice Bot\n• Voicemail detected → Rachel AI leaves professional message\n• Each call from +12396103810\n\nReady to start calling?`;
 
         return res.json({
           success: true,

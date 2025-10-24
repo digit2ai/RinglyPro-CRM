@@ -242,7 +242,7 @@ class OutboundCallerService {
     const twiml = new twilio.twiml.VoiceResponse();
 
     if (machineDetection === 'machine_end_beep' || machineDetection === 'machine_end_silence') {
-      // Voicemail detected - leave message
+      // Voicemail detected - leave message with Rachel AI
       twiml.say({
         voice: 'alice',
         language: 'en-US'
@@ -252,26 +252,23 @@ class OutboundCallerService {
       twiml.hangup();
 
     } else {
-      // Human answered
-      const gather = twiml.gather({
-        numDigits: 1,
-        action: '/api/outbound-caller/gather',
-        method: 'POST',
-        timeout: 10
-      });
+      // Human answered - forward directly to GHL Voice Bot
+      logger.info('Human answered - forwarding to GHL Voice Bot at ' + this.agentNumber);
 
-      gather.say({
-        voice: 'alice',
-        language: 'en-US'
-      }, 'Hello! This is Rachel from RinglyPro. We help businesses like yours grow with automated calling solutions. Press 1 to speak with an agent, or press 2 to be added to our do not call list.');
-
-      // If no input, repeat
-      twiml.say({
-        voice: 'alice',
-        language: 'en-US'
-      }, 'We did not receive any input. Goodbye.');
-
-      twiml.hangup();
+      if (this.agentNumber) {
+        // Direct transfer to GHL Voice Bot (no Rachel introduction)
+        twiml.dial({
+          timeout: 30,
+          callerId: this.twilioNumber
+        }, this.agentNumber);
+      } else {
+        // Fallback if agent number not configured
+        twiml.say({
+          voice: 'alice',
+          language: 'en-US'
+        }, 'We are experiencing technical difficulties. Please try again later.');
+        twiml.hangup();
+      }
     }
 
     return twiml.toString();
