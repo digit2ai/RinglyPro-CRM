@@ -227,9 +227,9 @@ async function handleBusinessCollectorSubmit(e) {
 
         const data = await response.json();
 
-        if (data.success && data.data) {
-            currentLeads = data.data.businesses;
-            displayBusinessCollectorResults(data.data, category, location);
+        if (data.success && data.businesses) {
+            currentLeads = data.businesses;
+            displayBusinessCollectorResults(data, category, location);
         } else {
             alert('Error: ' + (data.error || 'Failed to collect leads'));
             document.getElementById('bcForm').style.display = 'block';
@@ -244,7 +244,7 @@ async function handleBusinessCollectorSubmit(e) {
 }
 
 // Display results
-function displayBusinessCollectorResults(data, category, location) {
+async function displayBusinessCollectorResults(data, category, location) {
     const businesses = data.businesses || [];
 
     document.getElementById('bcResultsTitle').textContent =
@@ -265,6 +265,43 @@ function displayBusinessCollectorResults(data, category, location) {
     }
 
     document.getElementById('bcResults').style.display = 'block';
+
+    // Auto-save businesses to database
+    if (currentClientId && businesses.length > 0) {
+        await saveBusinessesToDatabase(businesses);
+    }
+}
+
+// Save businesses to database
+async function saveBusinessesToDatabase(businesses) {
+    try {
+        console.log(`💾 Saving ${businesses.length} businesses to database...`);
+
+        const response = await fetch(`${API_BASE}/business-collector/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                clientId: currentClientId,
+                businesses: businesses
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log(`✅ Saved ${data.saved} businesses to directory`);
+            if (data.duplicates > 0) {
+                console.log(`⚠️ Skipped ${data.duplicates} duplicates`);
+            }
+            addMessage('system', `💾 Saved ${data.saved} businesses to your directory${data.duplicates > 0 ? ` (${data.duplicates} duplicates skipped)` : ''}`);
+        } else {
+            console.error('Failed to save businesses:', data.error);
+            addMessage('system', `⚠️ Warning: Could not save businesses to database`);
+        }
+    } catch (error) {
+        console.error('Error saving businesses to database:', error);
+        // Don't show error to user - this is a background operation
+    }
 }
 
 // Export to CSV

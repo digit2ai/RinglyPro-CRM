@@ -2,6 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
+const sequelize = require('../config/database');
+const { QueryTypes } = require('sequelize');
 
 // Import MCP services - using absolute path from project root
 const projectRoot = path.join(__dirname, '../..');
@@ -363,6 +365,119 @@ router.get('/business-collector/quick', async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to collect businesses'
+    });
+  }
+});
+
+// Business Collector - Save businesses to database
+router.post('/business-collector/save', async (req, res) => {
+  console.log('💾 Save businesses to database request received');
+  const { clientId, businesses } = req.body;
+
+  if (!clientId) {
+    return res.status(400).json({
+      success: false,
+      error: 'Client ID is required'
+    });
+  }
+
+  if (!businesses || !Array.isArray(businesses) || businesses.length === 0) {
+    return res.status(400).json({
+      success: false,
+      error: 'Businesses array is required and must not be empty'
+    });
+  }
+
+  try {
+    console.log(`📊 Saving ${businesses.length} businesses for client ${clientId}...`);
+
+    // Prepare bulk insert data
+    const savedBusinesses = [];
+    const duplicates = [];
+
+    for (const business of businesses) {
+      try {
+        // Check if business already exists (duplicate detection by phone number)
+        if (business.phone) {
+          const existing = await sequelize.query(
+            `SELECT id FROM business_directory
+             WHERE client_id = :clientId AND phone_number = :phone
+             LIMIT 1`,
+            {
+              replacements: {
+                clientId: parseInt(clientId),
+                phone: business.phone
+              },
+              type: QueryTypes.SELECT
+            }
+          );
+
+          if (existing && existing.length > 0) {
+            console.log(`⚠️ Duplicate found: ${business.business_name} (${business.phone})`);
+            duplicates.push(business.business_name);
+            continue;
+          }
+        }
+
+        // Insert business into database
+        const result = await sequelize.query(
+          `INSERT INTO business_directory (
+            business_name, phone_number, website, email,
+            street, city, state, postal_code, country,
+            category, source_url, confidence, notes, client_id,
+            created_at, updated_at
+          ) VALUES (
+            :businessName, :phone, :website, :email,
+            :street, :city, :state, :postalCode, :country,
+            :category, :sourceUrl, :confidence, :notes, :clientId,
+            CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+          ) RETURNING id`,
+          {
+            replacements: {
+              businessName: business.business_name || 'Unknown',
+              phone: business.phone || null,
+              website: business.website || null,
+              email: business.email || null,
+              street: business.street || null,
+              city: business.city || null,
+              state: business.state || null,
+              postalCode: business.postal_code || null,
+              country: business.country || 'US',
+              category: business.category || null,
+              sourceUrl: business.source_url || null,
+              confidence: business.confidence || null,
+              notes: business.notes || null,
+              clientId: parseInt(clientId)
+            },
+            type: QueryTypes.INSERT
+          }
+        );
+
+        savedBusinesses.push(business.business_name);
+        console.log(`✅ Saved: ${business.business_name}`);
+
+      } catch (error) {
+        console.error(`❌ Error saving business ${business.business_name}:`, error.message);
+        // Continue with next business even if one fails
+      }
+    }
+
+    console.log(`✅ Successfully saved ${savedBusinesses.length} businesses`);
+    console.log(`⚠️ Skipped ${duplicates.length} duplicates`);
+
+    res.json({
+      success: true,
+      saved: savedBusinesses.length,
+      duplicates: duplicates.length,
+      duplicateNames: duplicates,
+      message: `Saved ${savedBusinesses.length} businesses to directory${duplicates.length > 0 ? ` (${duplicates.length} duplicates skipped)` : ''}`
+    });
+
+  } catch (error) {
+    console.error('❌ Error saving businesses to database:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to save businesses to database'
     });
   }
 });
