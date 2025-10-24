@@ -241,51 +241,33 @@ class OutboundCallerService {
   generateVoiceTwiML(machineDetection = null) {
     const twiml = new twilio.twiml.VoiceResponse();
 
-    if (machineDetection === 'machine_end_beep' || machineDetection === 'machine_end_silence') {
-      // Voicemail detected - leave message with Rachel Premium Voice from ElevenLabs
-      logger.info('Voicemail detected - leaving message with Rachel ElevenLabs Premium Voice');
+    // ALWAYS play Rachel Premium Voice message and hang up
+    // No transfer to GHL - saves costs and avoids AI-to-AI conversations
+    // Compliant with telemarketing regulations (informational message only)
+    logger.info('Call answered - playing Rachel Premium Voice informational message');
 
-      // New RinglyPro informational voicemail message
-      const voicemailMessage = "Hi, this is Lina from RinglyPro.com. I just wanted to share a quick informational update — RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send follow-up messages automatically, so you never miss a lead even after hours. This call is purely informational — there's no signup or payment required. If you'd like to learn more, you can visit RinglyPro.com anytime. Thanks for listening, and have a great day!";
+    // RinglyPro informational voicemail message
+    const voicemailMessage = "Hi, this is Lina from RinglyPro.com. I just wanted to share a quick informational update — RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send follow-up messages automatically, so you never miss a lead even after hours. This call is purely informational — there's no signup or payment required. If you'd like to learn more, you can visit RinglyPro.com anytime. Thanks for listening, and have a great day!";
 
-      // Check if ElevenLabs voice URL is configured (pre-generated audio file)
-      const elevenLabsVoiceUrl = process.env.ELEVENLABS_VOICEMAIL_URL;
+    // Check if ElevenLabs voice URL is configured (pre-generated audio file)
+    const elevenLabsVoiceUrl = process.env.ELEVENLABS_VOICEMAIL_URL;
 
-      if (elevenLabsVoiceUrl) {
-        // Play pre-generated Rachel ElevenLabs Premium Voice audio
-        twiml.play(elevenLabsVoiceUrl);
-        logger.info('Playing ElevenLabs Rachel Premium Voice from: ' + elevenLabsVoiceUrl);
-      } else {
-        // Fallback to Twilio Polly voice if ElevenLabs not configured
-        logger.warn('ElevenLabs voice URL not configured, falling back to Twilio Polly');
-        twiml.say({
-          voice: 'Polly.Joanna',
-          language: 'en-US'
-        }, voicemailMessage);
-      }
-
-      twiml.pause({ length: 1 });
-      twiml.hangup();
-
+    if (elevenLabsVoiceUrl) {
+      // Play pre-generated Rachel ElevenLabs Premium Voice audio
+      twiml.play(elevenLabsVoiceUrl);
+      logger.info('Playing ElevenLabs Rachel Premium Voice from: ' + elevenLabsVoiceUrl);
     } else {
-      // Human answered - forward directly to GHL Voice Bot
-      logger.info('Human answered - forwarding to GHL Voice Bot at ' + this.agentNumber);
-
-      if (this.agentNumber) {
-        // Direct transfer to GHL Voice Bot (no Rachel introduction)
-        twiml.dial({
-          timeout: 30,
-          callerId: this.twilioNumber
-        }, this.agentNumber);
-      } else {
-        // Fallback if agent number not configured
-        twiml.say({
-          voice: 'Polly.Joanna',
-          language: 'en-US'
-        }, 'We are experiencing technical difficulties. Please try again later.');
-        twiml.hangup();
-      }
+      // Fallback to Twilio Polly voice if ElevenLabs not configured
+      logger.warn('ElevenLabs voice URL not configured, falling back to Twilio Polly');
+      twiml.say({
+        voice: 'Polly.Joanna',
+        language: 'en-US'
+      }, voicemailMessage);
     }
+
+    // Pause briefly then hang up
+    twiml.pause({ length: 1 });
+    twiml.hangup();
 
     return twiml.toString();
   }
