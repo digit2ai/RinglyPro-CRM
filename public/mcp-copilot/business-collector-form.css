@@ -1,0 +1,226 @@
+/* Business Collector Form Modal Styles */
+/* Matches RinglyPro AI Copilot dark blue theme (#2c3e50) */
+
+.bc-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(44, 62, 80, 0.95);
+    align-items: center;
+    justify-content: center;
+}
+
+.bc-modal-content {
+    background: #34495e;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.bc-modal-header {
+    background: #2c3e50;
+    color: white;
+    padding: 20px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bc-modal-header h2 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.bc-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 32px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+}
+
+.bc-close-btn:hover {
+    color: #e74c3c;
+}
+
+.bc-form {
+    padding: 30px;
+}
+
+.bc-form-group {
+    margin-bottom: 20px;
+}
+
+.bc-form-group label {
+    display: block;
+    color: white;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.bc-form-group select,
+.bc-form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #4a5f7f;
+    border-radius: 8px;
+    font-size: 15px;
+    background: #2c3e50;
+    color: white;
+    transition: all 0.3s;
+}
+
+.bc-form-group select:focus,
+.bc-form-group input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.bc-form-group small {
+    display: block;
+    color: #95a5a6;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.bc-form-group option {
+    background: #2c3e50;
+    color: white;
+}
+
+.bc-form-group optgroup {
+    background: #34495e;
+    color: #3498db;
+    font-weight: 600;
+}
+
+.bc-submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.bc-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(17, 153, 142, 0.3);
+}
+
+.bc-loading {
+    text-align: center;
+    padding: 60px 30px;
+    color: white;
+}
+
+.bc-spinner {
+    border: 4px solid #4a5f7f;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.bc-results {
+    padding: 30px;
+    color: white;
+}
+
+.bc-results h3 {
+    margin-bottom: 20px;
+    color: white;
+    font-size: 18px;
+}
+
+.bc-business-card {
+    background: #2c3e50;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.bc-business-card strong {
+    color: #3498db;
+    font-size: 15px;
+}
+
+.bc-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.bc-btn-success,
+.bc-btn-primary {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.bc-btn-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+}
+
+.bc-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.bc-btn-success:hover,
+.bc-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Scrollbar styling for modal content */
+.bc-modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.bc-modal-content::-webkit-scrollbar-track {
+    background: #2c3e50;
+}
+
+.bc-modal-content::-webkit-scrollbar-thumb {
+    background: #4a5f7f;
+    border-radius: 4px;
+}
+
+.bc-modal-content::-webkit-scrollbar-thumb:hover {
+    background: #5a6f8f;
+}

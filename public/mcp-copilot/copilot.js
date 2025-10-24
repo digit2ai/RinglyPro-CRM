@@ -50,52 +50,60 @@ async function connectBusinessCollector() {
         const btn = document.getElementById('businessCollectorBtn');
         const statusDiv = document.getElementById('businessCollectorStatus');
 
-        // Update button state
-        btn.disabled = true;
-        btn.innerHTML = '🔄 Connecting...';
-        statusDiv.style.display = 'block';
-        statusDiv.textContent = 'Connecting to Business Collector...';
-        statusDiv.style.background = '#fef3c7';
-        statusDiv.style.color = '#92400e';
+        // If not connected yet, establish connection first
+        if (!sessionId || crmType !== 'business-collector') {
+            // Update button state
+            btn.disabled = true;
+            btn.innerHTML = '🔄 Connecting...';
+            statusDiv.style.display = 'block';
+            statusDiv.textContent = 'Connecting to Business Collector...';
+            statusDiv.style.background = '#fef3c7';
+            statusDiv.style.color = '#92400e';
 
-        const response = await fetch(`${API_BASE}/business-collector/connect`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({})
-        });
+            const response = await fetch(`${API_BASE}/business-collector/connect`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (data.success) {
-            sessionId = data.sessionId;
-            crmType = 'business-collector';
+            if (data.success) {
+                sessionId = data.sessionId;
+                crmType = 'business-collector';
 
-            // Update UI
-            btn.innerHTML = '✅ Connected';
-            btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-            statusDiv.textContent = `Connected (v${data.version})`;
-            statusDiv.style.background = '#d1fae5';
-            statusDiv.style.color = '#065f46';
+                // Update UI
+                btn.innerHTML = '✅ Connected';
+                btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                statusDiv.textContent = `Connected (v${data.version})`;
+                statusDiv.style.background = '#d1fae5';
+                statusDiv.style.color = '#065f46';
 
-            // Update header
-            const headerStatus = document.getElementById('crmStatus');
-            if (headerStatus) {
-                headerStatus.textContent = 'Business Collector Connected';
-                headerStatus.style.background = '#10b981';
-            }
+                // Update header
+                const headerStatus = document.getElementById('crmStatus');
+                if (headerStatus) {
+                    headerStatus.textContent = 'Business Collector Connected';
+                    headerStatus.style.background = '#10b981';
+                }
 
-            // Add system message
-            addMessage('system', '✅ Connected to Business Collector! Try: "Collect Real Estate Agents in Florida"');
-            addMessage('system', '💡 Example commands:\n• "Collect [Category] in [Location]"\n• "Find Dentists in Miami"\n• "Get Plumbers in Tampa, FL"');
+                // Add system message
+                addMessage('system', '✅ Connected to Business Collector! Opening collection form...');
 
-            // Re-enable button with disconnect option
-            setTimeout(() => {
+                // Re-enable button
                 btn.disabled = false;
-                btn.onclick = disconnectBusinessCollector;
-            }, 1000);
-        } else {
-            throw new Error(data.error || 'Connection failed');
+            } else {
+                throw new Error(data.error || 'Connection failed');
+            }
         }
+
+        // Open the Business Collector form modal
+        if (typeof openBusinessCollectorForm === 'function') {
+            openBusinessCollectorForm();
+        } else {
+            console.error('Business Collector form not loaded');
+            addMessage('error', 'Business Collector form not available. Please refresh the page.');
+        }
+
     } catch (error) {
         console.error('Connection error:', error);
 
