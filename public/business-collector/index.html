@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RinglyPro Business Collector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .results h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .business-card {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .business-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .business-info {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .action-buttons {
+            display: none;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-buttons.show {
+            display: flex;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .helper-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Business Collector</h1>
+            <p>Collect verified business leads with phone numbers & websites</p>
+        </div>
+
+        <div class="form-container">
+            <form id="collectorForm">
+                <div class="form-group">
+                    <label for="category">Business Category *</label>
+                    <select id="category" required>
+                        <option value="">Select a category...</option>
+                        <optgroup label="Home & Property Services">
+                            <option value="lawn care service">Lawn Care & Landscaping</option>
+                            <option value="tree service">Tree Trimming & Removal</option>
+                            <option value="pool cleaning service">Pool Cleaning & Maintenance</option>
+                            <option value="pest control service">Pest Control</option>
+                            <option value="pressure washing service">Pressure Washing</option>
+                            <option value="roofing contractor">Roofing & Gutters</option>
+                            <option value="painting contractor">Painting Contractors</option>
+                            <option value="plumber">Plumbing</option>
+                            <option value="electrician">Electrical Services</option>
+                            <option value="HVAC contractor">HVAC (Air Conditioning & Heating)</option>
+                            <option value="garage door repair">Garage Door Repair</option>
+                            <option value="handyman service">Handyman Services</option>
+                            <option value="flooring contractor">Flooring & Tile</option>
+                            <option value="fence contractor">Fence Installation & Repair</option>
+                            <option value="carpet cleaning service">Carpet Cleaning</option>
+                            <option value="window cleaning service">Window Cleaning</option>
+                            <option value="junk removal service">Junk Removal</option>
+                            <option value="home remodeling contractor">Home Remodeling</option>
+                            <option value="cleaning service">Cleaning Services</option>
+                            <option value="appliance repair service">Appliance Repair</option>
+                        </optgroup>
+                        <optgroup label="Real Estate & Housing">
+                            <option value="real estate agent">Real Estate Agents</option>
+                            <option value="property management company">Property Managers</option>
+                            <option value="apartment complex">Apartment Complexes</option>
+                            <option value="home inspection service">Home Inspectors</option>
+                            <option value="mortgage lender">Mortgage Loan Officers</option>
+                            <option value="title company">Title Companies</option>
+                            <option value="real estate photography service">Real Estate Photographers</option>
+                        </optgroup>
+                        <optgroup label="Health, Wellness & Personal Care">
+                            <option value="chiropractor">Chiropractors</option>
+                            <option value="dentist">Dentists & Orthodontists</option>
+                            <option value="physical therapy clinic">Physical Therapists</option>
+                            <option value="massage therapist">Massage Therapists</option>
+                            <option value="medical spa">Med Spas</option>
+                            <option value="hair salon">Hair Salons & Barbershops</option>
+                            <option value="nail salon">Nail Salons</option>
+                            <option value="personal trainer">Personal Trainers & Gyms</option>
+                            <option value="nutritionist">Nutritionists & Dieticians</option>
+                            <option value="counseling service">Counseling & Therapy</option>
+                        </optgroup>
+                        <optgroup label="Professional Services">
+                            <option value="insurance agency">Insurance Agents</option>
+                            <option value="financial planner">Financial Advisors</option>
+                            <option value="accounting firm">Accountants & Tax Preparers</option>
+                            <option value="law firm">Lawyers & Legal Services</option>
+                            <option value="notary public">Notaries</option>
+                            <option value="business consultant">Consultants & Coaches</option>
+                        </optgroup>
+                        <optgroup label="Auto & Transportation">
+                            <option value="auto repair shop">Auto Repair</option>
+                            <option value="auto detailing service">Car Detailing</option>
+                            <option value="mobile mechanic">Mobile Mechanics</option>
+                            <option value="towing service">Towing Services</option>
+                            <option value="car dealership">Car Dealerships</option>
+                            <option value="driving school">Driving Schools</option>
+                            <option value="auto glass repair">Auto Glass Repair</option>
+                        </optgroup>
+                        <optgroup label="Events & Lifestyle">
+                            <option value="wedding planner">Wedding Planners</option>
+                            <option value="photographer">Photographers & Videographers</option>
+                            <option value="DJ service">DJs & Entertainment</option>
+                            <option value="catering service">Caterers & Food Trucks</option>
+                            <option value="party equipment rental">Party Rentals</option>
+                            <option value="event venue">Event Venues</option>
+                            <option value="florist">Florists</option>
+                        </optgroup>
+                        <optgroup label="Pet & Animal Services">
+                            <option value="dog grooming service">Dog Groomers</option>
+                            <option value="veterinarian">Veterinarians</option>
+                            <option value="pet boarding service">Pet Boarding & Daycare</option>
+                            <option value="dog trainer">Dog Training</option>
+                        </optgroup>
+                        <optgroup label="Medical & Healthcare">
+                            <option value="medical clinic">Medical Clinics</option>
+                            <option value="medical billing service">Medical Billing</option>
+                            <option value="home health care service">Home Health Care</option>
+                            <option value="optometrist">Optometrists & Eye Clinics</option>
+                            <option value="dental clinic">Dental Offices</option>
+                            <option value="speech therapist">Speech & Occupational Therapy</option>
+                        </optgroup>
+                        <optgroup label="Education & Tutoring">
+                            <option value="tutoring service">Private Tutors</option>
+                            <option value="test preparation center">Test Prep Centers</option>
+                            <option value="childcare center">Childcare & Preschools</option>
+                            <option value="art school">Art & Music Schools</option>
+                        </optgroup>
+                        <optgroup label="Technology & Marketing">
+                            <option value="web design agency">Web Design Agencies</option>
+                            <option value="marketing agency">Marketing Consultants</option>
+                            <option value="IT services">IT Support & MSPs</option>
+                            <option value="SEO service">SEO & Social Media</option>
+                        </optgroup>
+                        <optgroup label="Construction & B2B">
+                            <option value="general contractor">General Contractors</option>
+                            <option value="excavation contractor">Excavation & Concrete</option>
+                            <option value="welding service">Welding & Fabrication</option>
+                            <option value="equipment rental service">Equipment Rental</option>
+                        </optgroup>
+                    </select>
+                    <p class="helper-text">Choose the type of business you want to collect</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="state">State *</label>
+                    <select id="state" required>
+                        <option value="">Select a state...</option>
+                        <option value="Florida">Florida</option>
+                        <option value="Texas">Texas</option>
+                        <option value="California">California</option>
+                        <option value="New York">New York</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="North Carolina">North Carolina</option>
+                        <option value="Arizona">Arizona</option>
+                        <option value="Nevada">Nevada</option>
+                        <option value="Colorado">Colorado</option>
+                        <option value="Washington">Washington</option>
+                        <option value="Oregon">Oregon</option>
+                        <option value="Illinois">Illinois</option>
+                        <option value="Ohio">Ohio</option>
+                        <option value="Pennsylvania">Pennsylvania</option>
+                        <option value="Michigan">Michigan</option>
+                        <option value="Virginia">Virginia</option>
+                        <option value="Tennessee">Tennessee</option>
+                        <option value="South Carolina">South Carolina</option>
+                        <option value="Alabama">Alabama</option>
+                        <option value="Louisiana">Louisiana</option>
+                        <option value="Mississippi">Mississippi</option>
+                        <option value="Arkansas">Arkansas</option>
+                        <option value="Missouri">Missouri</option>
+                        <option value="Kansas">Kansas</option>
+                        <option value="Oklahoma">Oklahoma</option>
+                        <option value="Nebraska">Nebraska</option>
+                        <option value="Iowa">Iowa</option>
+                        <option value="Wisconsin">Wisconsin</option>
+                        <option value="Minnesota">Minnesota</option>
+                        <option value="Indiana">Indiana</option>
+                        <option value="Kentucky">Kentucky</option>
+                        <option value="West Virginia">West Virginia</option>
+                        <option value="Maryland">Maryland</option>
+                        <option value="Delaware">Delaware</option>
+                        <option value="New Jersey">New Jersey</option>
+                        <option value="Connecticut">Connecticut</option>
+                        <option value="Rhode Island">Rhode Island</option>
+                        <option value="Massachusetts">Massachusetts</option>
+                        <option value="Vermont">Vermont</option>
+                        <option value="New Hampshire">New Hampshire</option>
+                        <option value="Maine">Maine</option>
+                        <option value="Utah">Utah</option>
+                        <option value="Idaho">Idaho</option>
+                        <option value="Montana">Montana</option>
+                        <option value="Wyoming">Wyoming</option>
+                        <option value="North Dakota">North Dakota</option>
+                        <option value="South Dakota">South Dakota</option>
+                        <option value="New Mexico">New Mexico</option>
+                        <option value="Alaska">Alaska</option>
+                        <option value="Hawaii">Hawaii</option>
+                    </select>
+                    <p class="helper-text">Select the state to search in</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="city">City (Optional)</label>
+                    <input type="text" id="city" placeholder="e.g., Tampa, Miami, Orlando...">
+                    <p class="helper-text">Leave blank to search entire state, or enter specific city</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="maxResults">Number of Leads</label>
+                    <select id="maxResults">
+                        <option value="50">50 leads</option>
+                        <option value="100" selected>100 leads</option>
+                        <option value="150">150 leads</option>
+                        <option value="200">200 leads</option>
+                    </select>
+                    <p class="helper-text">More leads = longer collection time</p>
+                </div>
+
+                <button type="submit" class="btn" id="collectBtn">
+                    🔍 Collect Leads
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Collecting leads from Google Places...</p>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">This may take 30-60 seconds</p>
+            </div>
+
+            <div class="results" id="results">
+                <div class="stats" id="stats"></div>
+                <h3 id="resultsTitle"></h3>
+                <div id="businessList"></div>
+                <div class="action-buttons">
+                    <button class="btn btn-success" id="exportBtn">📥 Export to CSV</button>
+                    <button class="btn btn-secondary" id="outboundBtn">📞 Outbound Caller</button>
+                    <button class="btn btn-secondary" id="newSearchBtn">🔄 New Search</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="collector.js"></script>
+</body>
+</html>
