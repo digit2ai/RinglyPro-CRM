@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prospect Manager - RinglyPro CRM</title>
+    <link rel="stylesheet" href="prospect-manager.css">
+    <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png">
+</head>
+<body>
+    <div class="prospect-manager-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" class="logo">
+                <h1>Prospect Manager</h1>
+            </div>
+            <div class="header-right">
+                <a href="index.html" class="back-link">← Back to Copilot</a>
+            </div>
+        </div>
+
+        <!-- Scheduler Controls -->
+        <div class="scheduler-panel">
+            <h2>📞 Automated Calling Scheduler</h2>
+
+            <!-- Status Display -->
+            <div class="status-card" id="statusCard">
+                <div class="status-indicator" id="statusIndicator">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span class="status-text" id="statusText">Stopped</span>
+                </div>
+                <div class="status-info" id="statusInfo">
+                    <p>Scheduler is not running</p>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-section" id="progressSection" style="display: none;">
+                <div class="progress-header">
+                    <span id="progressLabel">Progress</span>
+                    <span id="progressCount">0 / 0 called</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalProspects">-</div>
+                    <div class="stat-label">Total Prospects</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="calledToday">-</div>
+                    <div class="stat-label">Called Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="remainingToday">-</div>
+                    <div class="stat-label">Remaining</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="nextCallTime">-</div>
+                    <div class="stat-label">Next Call</div>
+                </div>
+            </div>
+
+            <!-- Control Buttons -->
+            <div class="controls-section">
+                <div class="filters-row">
+                    <div class="filter-group">
+                        <label for="clientIdFilter">Client ID (optional)</label>
+                        <input type="number" id="clientIdFilter" placeholder="15">
+                    </div>
+                    <div class="filter-group">
+                        <label for="locationFilter">Location Filter (optional)</label>
+                        <input type="text" id="locationFilter" placeholder="Tampa, FL">
+                    </div>
+                    <div class="filter-group">
+                        <label for="categoryFilter">Category Filter (optional)</label>
+                        <input type="text" id="categoryFilter" placeholder="pool service">
+                    </div>
+                </div>
+
+                <div class="buttons-row">
+                    <button class="btn btn-start" id="startBtn" onclick="startScheduler()">
+                        ▶️ Start Scheduler
+                    </button>
+                    <button class="btn btn-pause" id="pauseBtn" onclick="pauseScheduler()" disabled>
+                        ⏸️ Pause
+                    </button>
+                    <button class="btn btn-resume" id="resumeBtn" onclick="resumeScheduler()" disabled>
+                        ▶️ Resume
+                    </button>
+                    <button class="btn btn-stop" id="stopBtn" onclick="stopScheduler()" disabled>
+                        ⏹️ Stop
+                    </button>
+                </div>
+            </div>
+
+            <!-- Schedule Configuration -->
+            <details class="config-section">
+                <summary>⚙️ Schedule Configuration</summary>
+                <div class="config-content">
+                    <p class="config-info">
+                        <strong>Current Schedule:</strong> Every 2 minutes, Monday-Friday, 9am-5pm EST<br>
+                        <strong>Daily Limit:</strong> 200 calls per day<br>
+                        <strong>Hourly Limit:</strong> 30 calls per hour
+                    </p>
+                    <p class="config-note">
+                        💡 The scheduler automatically respects business hours and will skip weekends and after-hours times.
+                    </p>
+                </div>
+            </details>
+        </div>
+
+        <!-- Prospect List -->
+        <div class="prospect-list-panel">
+            <div class="panel-header">
+                <h2>📋 Prospect List</h2>
+                <button class="btn btn-refresh" onclick="loadProspects()">
+                    🔄 Refresh
+                </button>
+            </div>
+
+            <!-- List Filters -->
+            <div class="list-filters">
+                <div class="filter-group">
+                    <label for="statusFilterList">Status</label>
+                    <select id="statusFilterList" onchange="loadProspects()">
+                        <option value="">All</option>
+                        <option value="TO_BE_CALLED" selected>To Be Called</option>
+                        <option value="CALLED">Called</option>
+                        <option value="FAILED">Failed</option>
+                        <option value="SKIPPED">Skipped</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="searchInput">Search</label>
+                    <input type="text" id="searchInput" placeholder="Business name or phone..." onkeyup="filterProspects()">
+                </div>
+            </div>
+
+            <!-- Prospect Table -->
+            <div class="table-container">
+                <table class="prospect-table" id="prospectTable">
+                    <thead>
+                        <tr>
+                            <th>Business Name</th>
+                            <th>Phone</th>
+                            <th>Location</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Attempts</th>
+                            <th>Last Called</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody id="prospectTableBody">
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 2rem; color: #9ca3af;">
+                                Click "Refresh" to load prospects
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination">
+                <button class="btn btn-sm" onclick="previousPage()" id="prevBtn" disabled>← Previous</button>
+                <span id="pageInfo">Page 1 of 1</span>
+                <button class="btn btn-sm" onclick="nextPage()" id="nextBtn" disabled>Next →</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="prospect-manager.js"></script>
+</body>
+</html>

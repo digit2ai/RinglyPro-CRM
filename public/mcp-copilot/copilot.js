@@ -44,6 +44,13 @@ function openEmailMarketing() {
     window.open(emailUrl, '_blank');
 }
 
+// Open Prospect Manager
+function openProspectManager() {
+    // Prospect Manager doesn't require client ID (works for all clients)
+    const prospectUrl = `${window.location.origin}/mcp-copilot/prospect-manager.html`;
+    window.open(prospectUrl, '_blank');
+}
+
 // Connect to Business Collector
 async function connectBusinessCollector() {
     try {
