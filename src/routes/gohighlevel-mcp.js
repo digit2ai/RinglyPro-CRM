@@ -130,23 +130,66 @@ router.put('/contacts/:contactId', ghlAuth, async (req, res) => {
   res.json(result);
 });
 
-// Search/List contacts
+// Search/List contacts with pagination support
 router.post('/contacts/search', ghlAuth, async (req, res) => {
   console.log('🔍 Searching GHL contacts...');
-  const { query, email, phone, limit = 1000 } = req.body; // Increased default limit to 1000
+  const { query, email, phone, limit = 1000 } = req.body;
 
   console.log(`📊 Contact search - limit requested: ${req.body.limit || 'none (using default)'}, using: ${limit}`);
 
-  let endpoint = `/contacts/?limit=${limit}`;
-  if (query) endpoint += `&query=${encodeURIComponent(query)}`;
-  if (email) endpoint += `&email=${encodeURIComponent(email)}`;
-  if (phone) endpoint += `&phone=${encodeURIComponent(phone)}`;
+  try {
+    let allContacts = [];
+    let nextPageUrl = null;
+    let pageCount = 0;
+    const maxPages = Math.ceil(limit / 100); // GHL max is 100 per page
 
-  const result = await callGHL(req.ghlConfig, 'GET', endpoint);
+    // First request
+    let endpoint = `/contacts/?limit=100`; // GHL max per request is 100
+    if (query) endpoint += `&query=${encodeURIComponent(query)}`;
+    if (email) endpoint += `&email=${encodeURIComponent(email)}`;
+    if (phone) endpoint += `&phone=${encodeURIComponent(phone)}`;
 
-  console.log(`📊 GHL returned ${result.contacts?.length || 0} contacts`);
+    // Fetch all pages until we have enough contacts or no more pages
+    do {
+      pageCount++;
+      console.log(`📄 Fetching page ${pageCount}...`);
 
-  res.json(result);
+      const result = await callGHL(req.ghlConfig, 'GET', nextPageUrl || endpoint);
+
+      if (result.success && result.data?.contacts) {
+        allContacts = allContacts.concat(result.data.contacts);
+        console.log(`✅ Page ${pageCount}: ${result.data.contacts.length} contacts (total: ${allContacts.length})`);
+
+        // Check for next page
+        nextPageUrl = result.data.nextPageUrl || result.data.meta?.nextPageUrl || null;
+
+        // Stop if we have enough contacts or no more pages
+        if (allContacts.length >= limit || !nextPageUrl || pageCount >= maxPages) {
+          break;
+        }
+      } else {
+        console.error('❌ Failed to fetch page:', result.error);
+        break;
+      }
+    } while (nextPageUrl && allContacts.length < limit && pageCount < maxPages);
+
+    console.log(`📊 Final result: ${allContacts.length} contacts from ${pageCount} pages`);
+
+    res.json({
+      success: true,
+      data: {
+        contacts: allContacts.slice(0, limit), // Trim to requested limit
+        total: allContacts.length
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Contact search error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 // Add tags to contact
