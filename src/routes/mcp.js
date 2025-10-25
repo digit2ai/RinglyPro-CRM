@@ -464,7 +464,11 @@ router.post('/business-collector/save', async (req, res) => {
           }
         );
 
-        savedBusinesses.push(business.business_name);
+        savedBusinesses.push({
+          name: business.business_name,
+          phone: business.phone,
+          data: business
+        });
         console.log(`✅ Saved: ${business.business_name}`);
 
       } catch (error) {
@@ -476,12 +480,117 @@ router.post('/business-collector/save', async (req, res) => {
     console.log(`✅ Successfully saved ${savedBusinesses.length} businesses`);
     console.log(`⚠️ Skipped ${duplicates.length} duplicates`);
 
+    // AUTO-EXPORT TO GHL: Attempt to export saved businesses to GoHighLevel
+    let ghlExported = 0;
+    let ghlFailed = 0;
+
+    try {
+      // Get GHL credentials for this client
+      const credentials = await sequelize.query(
+        `SELECT ghl_api_key, ghl_location_id FROM clients WHERE id = :clientId`,
+        {
+          replacements: { clientId: parseInt(clientId) },
+          type: QueryTypes.SELECT
+        }
+      );
+
+      if (credentials && credentials.length > 0 && credentials[0].ghl_api_key && credentials[0].ghl_location_id) {
+        const { ghl_api_key, ghl_location_id } = credentials[0];
+        console.log(`🔑 Found GHL credentials for client ${clientId}, auto-exporting ${savedBusinesses.length} businesses...`);
+
+        const GHL_BASE_URL = 'https://services.leadconnectorhq.com';
+        const GHL_API_VERSION = '2021-07-28';
+
+        for (const saved of savedBusinesses) {
+          try {
+            const business = saved.data;
+
+            // Skip if no phone number
+            if (!business.phone) {
+              console.log(`⚠️ Skipping GHL export for ${business.business_name}: No phone number`);
+              continue;
+            }
+
+            // Format phone number
+            let phone = business.phone.replace(/\D/g, '');
+            if (phone.length === 10) {
+              phone = '1' + phone;
+            }
+            if (!phone.startsWith('+')) {
+              phone = '+' + phone;
+            }
+
+            // Build location string
+            const businessLocation = business.city && business.state
+              ? `${business.city}, ${business.state}`
+              : (business.state || '');
+
+            // Prepare contact data for GHL
+            const contactData = {
+              locationId: ghl_location_id,
+              firstName: business.business_name || 'Unknown Business',
+              phone: phone,
+              email: business.email || undefined,
+              website: business.website || undefined,
+              address1: business.street || undefined,
+              city: business.city || undefined,
+              state: business.state || undefined,
+              postalCode: business.postal_code || undefined,
+              country: business.country || 'US',
+              source: `Business Collector - ${businessLocation}`,
+              tags: [
+                'NEW LEAD',
+                'TO_BE_CALLED',
+                business.category || 'Uncategorized',
+                businessLocation || 'Location Unknown'
+              ].filter(tag => tag)
+            };
+
+            // Call GHL API to create contact
+            const response = await axios({
+              method: 'POST',
+              url: `${GHL_BASE_URL}/contacts/`,
+              headers: {
+                'Authorization': `Bearer ${ghl_api_key}`,
+                'Version': GHL_API_VERSION,
+                'Content-Type': 'application/json'
+              },
+              data: contactData
+            });
+
+            if (response.data && response.data.contact) {
+              console.log(`✅ Auto-exported to GHL: ${business.business_name} (Contact ID: ${response.data.contact.id})`);
+              ghlExported++;
+            }
+
+          } catch (error) {
+            // Silently handle duplicates in GHL
+            if (error.response?.data?.message?.includes('duplicate') ||
+                error.response?.data?.message?.includes('already exists')) {
+              console.log(`⚠️ ${saved.name} already exists in GHL`);
+            } else {
+              console.error(`❌ Failed to auto-export ${saved.name} to GHL:`, error.response?.data || error.message);
+              ghlFailed++;
+            }
+          }
+        }
+
+        console.log(`✅ GHL Auto-Export: ${ghlExported} exported, ${ghlFailed} failed`);
+      } else {
+        console.log(`⚠️ No GHL credentials found for client ${clientId}, skipping auto-export`);
+      }
+    } catch (error) {
+      console.error('❌ Error during GHL auto-export:', error.message);
+    }
+
     res.json({
       success: true,
       saved: savedBusinesses.length,
       duplicates: duplicates.length,
       duplicateNames: duplicates,
-      message: `Saved ${savedBusinesses.length} businesses to directory${duplicates.length > 0 ? ` (${duplicates.length} duplicates skipped)` : ''}`
+      ghlExported: ghlExported,
+      ghlFailed: ghlFailed,
+      message: `Saved ${savedBusinesses.length} businesses to directory${duplicates.length > 0 ? ` (${duplicates.length} duplicates skipped)` : ''}${ghlExported > 0 ? ` and auto-exported ${ghlExported} to GHL` : ''}`
     });
 
   } catch (error) {
