@@ -1805,8 +1805,8 @@ router.post('/copilot/chat', async (req, res) => {
         else if (lowerMessage.includes('this month')) timePeriod = 'this month';
         else if (lowerMessage.includes('last month')) timePeriod = 'last month';
 
-        // Get all contacts and filter by date
-        const allContacts = await session.proxy.searchContacts('', 50);
+        // Get all contacts and filter by date (increased limit to 1000)
+        const allContacts = await session.proxy.searchContacts('', 1000);
 
         // Calculate date range
         const now = new Date();
@@ -1843,7 +1843,7 @@ router.post('/copilot/chat', async (req, res) => {
 
         if (filteredContacts.length > 0) {
           response = `📅 Contacts added in ${timePeriod}: ${filteredContacts.length}\n\n`;
-          response += formatContactsList(filteredContacts, 20);
+          response += formatContactsList(filteredContacts, 1000); // Show all contacts, not just 20
         } else {
           response = `📅 No contacts were added in ${timePeriod}.`;
         }
@@ -1868,7 +1868,7 @@ router.post('/copilot/chat', async (req, res) => {
         if (!field) {
           response = "Please specify which field to check.\n\nExample: 'Find all contacts missing email'";
         } else {
-          const allContacts = await session.proxy.searchContacts('', 50);
+          const allContacts = await session.proxy.searchContacts('', 1000); // Increased limit to 1000
           const missingField = allContacts?.filter(c => {
             if (field === 'email') return !c.email;
             if (field === 'phone') return !c.phone;
@@ -1879,7 +1879,7 @@ router.post('/copilot/chat', async (req, res) => {
 
           if (missingField.length > 0) {
             response = `🔍 Found ${missingField.length} contacts missing ${field}:\n\n`;
-            response += formatContactsList(missingField, 20);
+            response += formatContactsList(missingField, 1000); // Show all contacts
           } else {
             response = `✅ All contacts have a ${field}.`;
           }

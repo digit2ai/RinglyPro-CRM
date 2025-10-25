@@ -33,6 +33,80 @@ function closeMobilePopup() {
     document.body.style.overflow = '';
 }
 
+// Show query results in mobile popup
+async function showMobileResultsPopup(message) {
+    const modal = document.getElementById('mobilePopupModal');
+    const titleEl = document.getElementById('mobilePopupTitle');
+    const content = document.getElementById('mobilePopupContent');
+
+    titleEl.textContent = '📊 Results';
+    content.innerHTML = '<div style="padding: 20px; text-align: center;">Loading...</div>';
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    try {
+        const response = await fetch(`${API_BASE}/copilot/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId, message })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Format response with proper line breaks and styling
+            const formattedText = data.response
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\n/g, '<br>');
+
+            let html = `
+                <div style="padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                    <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 15px; white-space: pre-wrap;">
+                        ${formattedText}
+                    </div>
+            `;
+
+            // Add data results if available
+            if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+                html += `<div style="margin-top: 20px; font-size: 14px; color: #6b7280;">Total Results: ${data.data.length}</div>`;
+            }
+
+            // Add CSV download button if available
+            if (data.csvData && data.csvFilename) {
+                html += `
+                    <button onclick="downloadCSVFromPopup('${data.csvData}', '${data.csvFilename}')"
+                            style="margin-top: 20px; width: 100%; padding: 15px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                        📥 Download CSV
+                    </button>
+                `;
+            }
+
+            html += '</div>';
+            content.innerHTML = html;
+        } else {
+            content.innerHTML = `<div style="padding: 20px; color: #ef4444;">Error: ${data.error}</div>`;
+        }
+    } catch (error) {
+        content.innerHTML = `<div style="padding: 20px; color: #ef4444;">Failed to load results</div>`;
+    }
+}
+
+// Download CSV from mobile popup
+function downloadCSVFromPopup(csvData, filename) {
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
 // Check for client_id in URL and auto-load credentials
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -301,6 +375,13 @@ async function sendMessage() {
     if (!message) return;
     if (!sessionId) {
         alert('Please connect to a CRM first');
+        return;
+    }
+
+    // On mobile, show popup with results
+    if (isMobile()) {
+        showMobileResultsPopup(message);
+        input.value = '';
         return;
     }
 
