@@ -3,6 +3,8 @@ const express = require('express');
 const router = express.Router();
 const scheduledAutoCallerService = require('../services/scheduled-auto-caller');
 const logger = require('../utils/logger');
+const sequelize = require('../config/database');
+const { QueryTypes } = require('sequelize');
 
 /**
  * POST /api/scheduled-caller/start
@@ -126,6 +128,120 @@ router.post('/config', (req, res) => {
   } catch (error) {
     logger.error('Error updating scheduler config:', error);
     res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/scheduled-caller/prospects
+ * Get list of prospects from database
+ * Query params: status, clientId, location, category, limit, offset
+ */
+router.get('/prospects', async (req, res) => {
+  try {
+    const {
+      status = 'TO_BE_CALLED',
+      clientId,
+      location,
+      category,
+      limit = 100,
+      offset = 0
+    } = req.query;
+
+    // Build WHERE clause dynamically
+    let whereConditions = [];
+    const replacements = {};
+
+    if (status) {
+      whereConditions.push('call_status = :status');
+      replacements.status = status;
+    }
+
+    if (clientId) {
+      whereConditions.push('client_id = :clientId');
+      replacements.clientId = parseInt(clientId);
+    }
+
+    if (location) {
+      whereConditions.push('location = :location');
+      replacements.location = location;
+    }
+
+    if (category) {
+      whereConditions.push('category ILIKE :category');
+      replacements.category = `%${category}%`;
+    }
+
+    const whereClause = whereConditions.length > 0
+      ? 'WHERE ' + whereConditions.join(' AND ')
+      : '';
+
+    // Get total count
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM business_directory
+      ${whereClause}
+    `;
+
+    const countResult = await sequelize.query(countQuery, {
+      replacements,
+      type: QueryTypes.SELECT
+    });
+
+    const total = parseInt(countResult[0].total);
+
+    // Get prospects
+    const query = `
+      SELECT
+        id,
+        business_name,
+        phone_number,
+        email,
+        website,
+        street,
+        city,
+        state,
+        postal_code,
+        location,
+        category,
+        call_status,
+        call_attempts,
+        last_called_at,
+        call_result,
+        call_notes,
+        created_at,
+        updated_at
+      FROM business_directory
+      ${whereClause}
+      ORDER BY created_at DESC
+      LIMIT :limit
+      OFFSET :offset
+    `;
+
+    replacements.limit = parseInt(limit);
+    replacements.offset = parseInt(offset);
+
+    const prospects = await sequelize.query(query, {
+      replacements,
+      type: QueryTypes.SELECT
+    });
+
+    logger.info(`📋 Fetched ${prospects.length} prospects (total: ${total})`);
+
+    res.json({
+      success: true,
+      prospects,
+      total,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      hasMore: (parseInt(offset) + prospects.length) < total
+    });
+
+  } catch (error) {
+    logger.error('Error fetching prospects:', error);
+    res.status(500).json({
       success: false,
       error: error.message
     });

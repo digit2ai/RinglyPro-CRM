@@ -236,14 +236,26 @@ async function loadProspects() {
     const statusFilter = document.getElementById('statusFilterList').value;
 
     try {
-        // For now, we'll use the MCP endpoint to get prospects
-        // TODO: Create dedicated /api/scheduled-caller/prospects endpoint
         showNotification('📊 Loading prospects...', 'info');
 
-        // Placeholder - will be implemented with analytics API
-        setTimeout(() => {
-            showNotification('✅ Prospects loaded', 'success');
-        }, 1000);
+        // Build query params
+        const params = new URLSearchParams();
+        if (statusFilter) params.append('status', statusFilter);
+        params.append('limit', '100');
+        params.append('offset', '0');
+
+        const response = await fetch(`${API_BASE}/api/scheduled-caller/prospects?${params.toString()}`);
+        const data = await response.json();
+
+        if (data.success) {
+            allProspects = data.prospects;
+            filteredProspects = allProspects;
+            currentPage = 1;
+            renderProspects();
+            showNotification(`✅ Loaded ${data.total} prospects`, 'success');
+        } else {
+            showNotification(`❌ Error: ${data.error}`, 'error');
+        }
 
     } catch (error) {
         console.error('Error loading prospects:', error);
