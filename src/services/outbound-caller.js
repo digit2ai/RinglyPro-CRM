@@ -1,6 +1,8 @@
 // Outbound Caller Service - Twilio Integration
 const twilio = require('twilio');
 const logger = require('../utils/logger');
+const sequelize = require('../config/database');
+const { QueryTypes } = require('sequelize');
 
 class OutboundCallerService {
   constructor() {
@@ -319,7 +321,7 @@ class OutboundCallerService {
   /**
    * Update call status from webhook
    */
-  updateCallStatus(callSid, status, answeredBy = null) {
+  async updateCallStatus(callSid, status, answeredBy = null) {
     const log = this.callLogs.find(l => l.callSid === callSid);
 
     if (log) {
@@ -328,6 +330,54 @@ class OutboundCallerService {
       log.updatedAt = new Date();
 
       logger.info(`Call ${callSid} status updated: ${status}${answeredBy ? ` (${answeredBy})` : ''}`);
+    }
+
+    // Update database when call is completed
+    if (status === 'completed' && log && log.phone) {
+      try {
+        // Remove + and country code to match database phone format
+        const phoneNumber = log.phone.replace(/^\+1/, '');
+
+        // Determine call result based on answeredBy and status
+        let callResult = 'completed';
+        if (answeredBy === 'machine_start' || answeredBy === 'machine_end_beep' || answeredBy === 'machine_end_silence') {
+          callResult = 'voicemail';
+        } else if (answeredBy === 'human') {
+          callResult = 'human';
+        } else if (status === 'no-answer') {
+          callResult = 'no_answer';
+        } else if (status === 'busy') {
+          callResult = 'busy';
+        } else if (status === 'failed') {
+          callResult = 'failed';
+        }
+
+        logger.info(`📊 Updating database for phone ${phoneNumber}: status=CALLED, result=${callResult}`);
+
+        // Update business_directory table
+        await sequelize.query(
+          `UPDATE business_directory
+           SET call_status = 'CALLED',
+               call_attempts = call_attempts + 1,
+               last_called_at = CURRENT_TIMESTAMP,
+               call_result = :callResult,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE phone_number = :phoneNumber`,
+          {
+            replacements: {
+              phoneNumber: phoneNumber,
+              callResult: callResult
+            },
+            type: QueryTypes.UPDATE
+          }
+        );
+
+        logger.info(`✅ Database updated successfully for ${phoneNumber}`);
+
+      } catch (dbError) {
+        logger.error(`❌ Failed to update database for call ${callSid}:`, dbError.message);
+        // Don't throw - webhook should still succeed even if DB update fails
+      }
     }
 
     return { success: true, callSid, status };
