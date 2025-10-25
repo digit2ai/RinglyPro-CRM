@@ -24,19 +24,52 @@
         }
 
         .header {
-            text-align: center;
-            color: white;
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 2rem;
         }
 
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.5rem;
+        }
+
         .header h1 {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+            font-size: 1.75rem;
+            color: #1f2937;
+            font-weight: 700;
+            margin: 0;
         }
 
         .header p {
-            font-size: 1rem;
-            opacity: 0.9;
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin: 0.25rem 0 0 0;
+        }
+
+        .back-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            background: #f3f4f6;
         }
 
         .status-indicator {
@@ -520,11 +553,15 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>📧 Email Marketing</h1>
-            <p>Send targeted emails to your contacts and Chamber partners</p>
-            <div class="status-indicator" id="statusIndicator">
-                <div class="status-dot"></div>
-                <span id="statusText">Connected to SendGrid</span>
+            <div class="header-left">
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" class="logo">
+                <div>
+                    <h1>📧 Email Marketing</h1>
+                    <p>Send targeted emails to your contacts and Chamber partners</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <a href="index.html" class="back-link">← Back to Copilot</a>
             </div>
         </div>
 

@@ -36,12 +36,25 @@
             justify-content: space-between;
         }
 
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.5rem;
+        }
+
         .header h1 {
             font-size: 1.5rem;
             color: #1f2937;
             display: flex;
             align-items: center;
             gap: 10px;
+            margin: 0;
         }
 
         .back-btn {
@@ -523,11 +536,14 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>
-                <span>📱</span>
-                Social Media Marketing
-            </h1>
-            <a href="/" class="back-btn">← Back to Dashboard</a>
+            <div class="header-left">
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" class="logo">
+                <h1>
+                    <span>📱</span>
+                    Social Media Marketing
+                </h1>
+            </div>
+            <a href="index.html" class="back-btn">← Back to Copilot</a>
         </div>
 
         <!-- Status Bar -->
