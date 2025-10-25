@@ -137,7 +137,7 @@ router.post('/config', (req, res) => {
 /**
  * GET /api/scheduled-caller/prospects
  * Get list of prospects from database
- * Query params: status, clientId, location, category, limit, offset
+ * Query params: status, clientId (REQUIRED), location, category, limit, offset
  */
 router.get('/prospects', async (req, res) => {
   try {
@@ -150,6 +150,14 @@ router.get('/prospects', async (req, res) => {
       offset = 0
     } = req.query;
 
+    // SECURITY: clientId is REQUIRED for multi-tenant data isolation
+    if (!clientId) {
+      return res.status(400).json({
+        success: false,
+        error: 'clientId is required for data security'
+      });
+    }
+
     // Build WHERE clause dynamically
     let whereConditions = [];
     const replacements = {};
@@ -159,10 +167,9 @@ router.get('/prospects', async (req, res) => {
       replacements.status = status;
     }
 
-    if (clientId) {
-      whereConditions.push('client_id = :clientId');
-      replacements.clientId = parseInt(clientId);
-    }
+    // ALWAYS filter by client_id (REQUIRED for multi-tenant security)
+    whereConditions.push('client_id = :clientId');
+    replacements.clientId = parseInt(clientId);
 
     if (location) {
       whereConditions.push('location = :location');

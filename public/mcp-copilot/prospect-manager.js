@@ -253,8 +253,9 @@ async function loadProspects() {
     try {
         showNotification('📊 Loading prospects...', 'info');
 
-        // Build query params
+        // Build query params - ALWAYS include client ID for multi-tenant security
         const params = new URLSearchParams();
+        params.append('clientId', currentClientId); // REQUIRED - enforces data isolation
         if (statusFilter) params.append('status', statusFilter);
         params.append('limit', '100');
         params.append('offset', '0');
