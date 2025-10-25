@@ -3,23 +3,6 @@ let crmType = null;
 const API_BASE = window.location.origin + '/api/mcp';
 let currentClientId = null;
 
-// Mobile sidebar toggle functions
-function toggleMobileSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('mobileOverlay');
-
-    sidebar.classList.toggle('mobile-open');
-    overlay.classList.toggle('active');
-}
-
-function closeMobileSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('mobileOverlay');
-
-    sidebar.classList.remove('mobile-open');
-    overlay.classList.remove('active');
-}
-
 // Check for client_id in URL and auto-load credentials
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
