@@ -688,19 +688,24 @@ button:hover {
 /* Mobile popup modal - only visible on mobile */
 .mobile-popup-modal {
     display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: white;
-    z-index: 2000;
-    overflow-y: auto;
-    animation: slideInRight 0.3s ease-out;
 }
 
-.mobile-popup-modal.active {
-    display: block;
+/* Show modal only on mobile when active */
+@media (max-width: 768px) {
+    .mobile-popup-modal.active {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        height: 100vh;
+        background: white;
+        z-index: 9999;
+        overflow: hidden;
+        animation: slideInRight 0.3s ease-out;
+    }
 }
 
 @keyframes slideInRight {
@@ -712,56 +717,60 @@ button:hover {
     }
 }
 
-/* Mobile popup header */
-.mobile-popup-header {
-    position: sticky;
-    top: 0;
-    background: #2c3e50;
-    color: white;
-    padding: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    z-index: 10;
-}
+@media (max-width: 768px) {
+    /* Mobile popup header */
+    .mobile-popup-header {
+        position: sticky;
+        top: 0;
+        background: #2c3e50;
+        color: white;
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+    }
 
-.mobile-popup-header h2 {
-    margin: 0;
-    font-size: 18px;
-    flex: 1;
-}
+    .mobile-popup-header h2 {
+        margin: 0;
+        font-size: 18px;
+        flex: 1;
+    }
 
-.mobile-popup-close {
-    background: transparent;
-    border: none;
-    color: white;
-    font-size: 28px;
-    cursor: pointer;
-    padding: 0;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: background 0.2s;
-}
+    .mobile-popup-close {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 28px;
+        cursor: pointer;
+        padding: 0;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.2s;
+    }
 
-.mobile-popup-close:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
+    .mobile-popup-close:active {
+        background: rgba(255, 255, 255, 0.2);
+    }
 
-/* Mobile popup content */
-.mobile-popup-content {
-    padding: 0;
-    width: 100%;
-    height: calc(100vh - 60px);
-    overflow-y: auto;
-}
+    /* Mobile popup content */
+    .mobile-popup-content {
+        padding: 0;
+        width: 100%;
+        height: calc(100vh - 60px);
+        overflow-y: auto;
+        background: white;
+    }
 
-.mobile-popup-content iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
+    .mobile-popup-content iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: block;
+    }
 }

@@ -133,7 +133,7 @@ router.put('/contacts/:contactId', ghlAuth, async (req, res) => {
 // Search/List contacts
 router.post('/contacts/search', ghlAuth, async (req, res) => {
   console.log('🔍 Searching GHL contacts...');
-  const { query, email, phone, limit = 20 } = req.body;
+  const { query, email, phone, limit = 1000 } = req.body; // Increased default limit to 1000
 
   let endpoint = `/contacts/?limit=${limit}`;
   if (query) endpoint += `&query=${encodeURIComponent(query)}`;
