@@ -3,6 +3,36 @@ let crmType = null;
 const API_BASE = window.location.origin + '/api/mcp';
 let currentClientId = null;
 
+// Mobile detection
+function isMobile() {
+    return window.innerWidth <= 768;
+}
+
+// Mobile popup functions
+function openMobilePopup(title, url) {
+    const modal = document.getElementById('mobilePopupModal');
+    const titleEl = document.getElementById('mobilePopupTitle');
+    const content = document.getElementById('mobilePopupContent');
+
+    titleEl.textContent = title;
+    content.innerHTML = `<iframe src="${url}" style="width: 100%; height: 100%; border: none;"></iframe>`;
+    modal.classList.add('active');
+
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMobilePopup() {
+    const modal = document.getElementById('mobilePopupModal');
+    const content = document.getElementById('mobilePopupContent');
+
+    modal.classList.remove('active');
+    content.innerHTML = '';
+
+    // Restore body scroll
+    document.body.style.overflow = '';
+}
+
 // Check for client_id in URL and auto-load credentials
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -29,7 +59,13 @@ function openSocialMedia() {
 
     // Pass sessionId and clientId to social media page
     const socialUrl = `${window.location.origin}/mcp-copilot/social-media.html?client_id=${currentClientId}&session_id=${sessionId}`;
-    window.open(socialUrl, '_blank');
+
+    // Use popup on mobile, new tab on desktop
+    if (isMobile()) {
+        openMobilePopup('📱 Social Media Marketing', socialUrl);
+    } else {
+        window.open(socialUrl, '_blank');
+    }
 }
 
 // Open Email Marketing Tool
@@ -41,7 +77,13 @@ function openEmailMarketing() {
 
     // Email marketing doesn't require GHL session
     const emailUrl = `${window.location.origin}/mcp-copilot/email-marketing.html?client_id=${currentClientId}`;
-    window.open(emailUrl, '_blank');
+
+    // Use popup on mobile, new tab on desktop
+    if (isMobile()) {
+        openMobilePopup('📧 Email Marketing', emailUrl);
+    } else {
+        window.open(emailUrl, '_blank');
+    }
 }
 
 // Open Prospect Manager
@@ -53,7 +95,13 @@ function openProspectManager() {
 
     // Pass client ID to Prospect Manager
     const prospectUrl = `${window.location.origin}/mcp-copilot/prospect-manager.html?client_id=${currentClientId}`;
-    window.open(prospectUrl, '_blank');
+
+    // Use popup on mobile, new tab on desktop
+    if (isMobile()) {
+        openMobilePopup('📊 Prospect Manager', prospectUrl);
+    } else {
+        window.open(prospectUrl, '_blank');
+    }
 }
 
 // Connect to Business Collector
