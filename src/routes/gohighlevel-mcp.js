@@ -135,12 +135,17 @@ router.post('/contacts/search', ghlAuth, async (req, res) => {
   console.log('🔍 Searching GHL contacts...');
   const { query, email, phone, limit = 1000 } = req.body; // Increased default limit to 1000
 
+  console.log(`📊 Contact search - limit requested: ${req.body.limit || 'none (using default)'}, using: ${limit}`);
+
   let endpoint = `/contacts/?limit=${limit}`;
   if (query) endpoint += `&query=${encodeURIComponent(query)}`;
   if (email) endpoint += `&email=${encodeURIComponent(email)}`;
   if (phone) endpoint += `&phone=${encodeURIComponent(phone)}`;
 
   const result = await callGHL(req.ghlConfig, 'GET', endpoint);
+
+  console.log(`📊 GHL returned ${result.contacts?.length || 0} contacts`);
+
   res.json(result);
 });
 
