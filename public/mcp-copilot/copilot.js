@@ -46,8 +46,13 @@ function openEmailMarketing() {
 
 // Open Prospect Manager
 function openProspectManager() {
-    // Prospect Manager doesn't require client ID (works for all clients)
-    const prospectUrl = `${window.location.origin}/mcp-copilot/prospect-manager.html`;
+    if (!currentClientId) {
+        alert('Client ID not found. Please open MCP Copilot from the dashboard.');
+        return;
+    }
+
+    // Pass client ID to Prospect Manager
+    const prospectUrl = `${window.location.origin}/mcp-copilot/prospect-manager.html?client_id=${currentClientId}`;
     window.open(prospectUrl, '_blank');
 }
 

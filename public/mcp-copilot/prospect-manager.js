@@ -8,10 +8,24 @@ let pageSize = 50;
 let allProspects = [];
 let filteredProspects = [];
 let statusCheckInterval = null;
+let currentClientId = null;
+
+// Get client ID from URL parameters
+function getClientIdFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('client_id');
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📊 Prospect Manager initialized');
+
+    // Get and set client ID from URL or use default
+    currentClientId = getClientIdFromURL() || '15'; // Default to 15 if not provided
+    document.getElementById('clientIdFilter').value = currentClientId;
+
+    console.log(`👤 Client ID: ${currentClientId}`);
+
     loadSchedulerStatus();
     loadProspects();
 
@@ -124,12 +138,13 @@ function updateSchedulerUI(status) {
  * Start the scheduler
  */
 async function startScheduler() {
-    const clientId = document.getElementById('clientIdFilter').value;
     const location = document.getElementById('locationFilter').value;
     const category = document.getElementById('categoryFilter').value;
 
-    const payload = {};
-    if (clientId) payload.clientId = parseInt(clientId);
+    // Always use the current client ID from session
+    const payload = {
+        clientId: parseInt(currentClientId)
+    };
     if (location) payload.location = location;
     if (category) payload.category = category;
 
