@@ -1687,11 +1687,16 @@ router.post('/copilot/chat', async (req, res) => {
 
       // Improved name matching - handles both formats:
       // Format 1: "contact NAME field" - stop BEFORE field keywords
-      // Format 2: "field of contact NAME" - capture NAME after "contact"
+      // Format 2: "field of contact NAME to VALUE" - capture NAME, stop before "to"
       const nameMatch1 = message.match(/contact\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)(?=\s+(?:phone|mobile|email|firstname|lastname|first\s*name|last\s*name)\s*:?\s*|$)/i);
-      const nameMatch2 = message.match(/of\s+contact\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)/i);
+      const nameMatch2 = message.match(/of\s+contact\s+([A-Za-z]+)(?:\s+to\s+|\s+$)/i);
 
-      const identifier = emailMatch?.[1] || phoneIdentMatch?.[1] || nameMatch1?.[1] || nameMatch2?.[1];
+      let identifier = emailMatch?.[1] || phoneIdentMatch?.[1] || nameMatch1?.[1] || nameMatch2?.[1];
+
+      // Clean up identifier - remove trailing "to" or other filler words
+      if (identifier) {
+        identifier = identifier.replace(/\s+(to|with|and|the)$/i, '').trim();
+      }
 
       if (identifier) {
         console.log('🔄 Updating contact:', identifier);

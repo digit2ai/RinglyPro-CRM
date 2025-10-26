@@ -276,10 +276,10 @@ class GoHighLevelMCPProxy {
   async searchContacts(query, limit = 1000) {
     console.log(`🔍 searchContacts called with query: "${query}", limit: ${limit}`);
 
-    // TEMPORARY: Skip MCP for large queries and use REST API with proper pagination
-    // MCP doesn't seem to support pagination properly
-    if (limit > 100 || !query) {
-      console.log(`🔄 Using REST API for large query (limit: ${limit}, query: "${query}")`);
+    // Use REST API only for listing ALL contacts (no query)
+    // For searches with a query, always use MCP as REST API query parameter doesn't work with PIT tokens
+    if (!query && limit > 100) {
+      console.log(`🔄 Using REST API for listing all contacts (limit: ${limit})`);
       try {
         return await this.searchContactsViaREST(query, limit);
       } catch (restError) {
