@@ -20,11 +20,6 @@ const US_CITIES_BY_STATE = {
 
 // Open Business Collector Form Modal
 function openBusinessCollectorForm() {
-    if (!sessionId) {
-        addMessage('error', 'Please connect to Business Collector first');
-        return;
-    }
-
     // Create modal if doesn't exist
     if (!businessCollectorModal) {
         createBusinessCollectorModal();
