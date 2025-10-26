@@ -279,15 +279,15 @@ class GoHighLevelMCPProxy {
     try {
       console.log(`🔍 Using MCP for search (single page only - GHL pagination is broken)`);
 
-      // IMPORTANT: Only fetch first page (20 results max)
+      // IMPORTANT: Only fetch first page (100 results to have more to filter from)
       // GHL pagination returns the same cursor every time, causing infinite loops
-      // and showing duplicate contacts. Limit to single page to avoid this.
-      const currentLimit = Math.min(limit, 20); // Max 20 results
+      // We'll fetch more and filter client-side
+      const fetchLimit = 100;
 
       // Build arguments for MCP call - NO PAGINATION
       const mcpArgs = {
-        query: query || '',
-        limit: currentLimit
+        query: query || '', // MCP server doesn't filter properly, so we'll do it client-side
+        limit: fetchLimit
       };
 
       // Try official MCP protocol - single page only
@@ -304,10 +304,56 @@ class GoHighLevelMCPProxy {
         return [];
       }
 
-      console.log(`✅ Retrieved ${contacts.length} contacts (limited to ${currentLimit}, no pagination)`);
+      console.log(`✅ Retrieved ${contacts.length} contacts from MCP`);
 
-      // Return ONLY the first page - no pagination to avoid duplicates
-      return contacts.slice(0, currentLimit);
+      // CLIENT-SIDE FILTERING (GHL MCP doesn't filter properly)
+      if (query && query.trim()) {
+        const lowerQuery = query.toLowerCase().trim();
+        console.log(`🔍 Client-side filtering for: "${lowerQuery}"`);
+
+        contacts = contacts.filter(contact => {
+          const name = (contact.name || contact.firstName || contact.fullName || '').toLowerCase();
+          const lastName = (contact.lastName || '').toLowerCase();
+          const email = (contact.email || '').toLowerCase();
+          const phone = (contact.phone || '').replace(/\D/g, '');
+          const queryPhone = lowerQuery.replace(/\D/g, '');
+          const companyName = (contact.companyName || contact.businessName || '').toLowerCase();
+
+          // Match on name, email, phone, or company
+          return name.includes(lowerQuery) ||
+                 lastName.includes(lowerQuery) ||
+                 email.includes(lowerQuery) ||
+                 companyName.includes(lowerQuery) ||
+                 (queryPhone && phone.includes(queryPhone));
+        });
+
+        console.log(`✅ Filtered to ${contacts.length} matching contacts`);
+
+        // Sort results - exact matches first, then starts-with, then contains
+        contacts.sort((a, b) => {
+          const aName = (a.name || a.firstName || a.fullName || '').toLowerCase();
+          const bName = (b.name || b.firstName || b.fullName || '').toLowerCase();
+          const aEmail = (a.email || '').toLowerCase();
+          const bEmail = (b.email || '').toLowerCase();
+
+          // Exact match priority
+          const aExact = aName === lowerQuery || aEmail === lowerQuery;
+          const bExact = bName === lowerQuery || bEmail === lowerQuery;
+          if (aExact && !bExact) return -1;
+          if (!aExact && bExact) return 1;
+
+          // Starts-with priority
+          const aStarts = aName.startsWith(lowerQuery) || aEmail.startsWith(lowerQuery);
+          const bStarts = bName.startsWith(lowerQuery) || bEmail.startsWith(lowerQuery);
+          if (aStarts && !bStarts) return -1;
+          if (!aStarts && bStarts) return 1;
+
+          return 0;
+        });
+      }
+
+      // Return limited results
+      return contacts.slice(0, limit);
     } catch (error) {
       console.error('❌ MCP search error:', error);
       return [];
