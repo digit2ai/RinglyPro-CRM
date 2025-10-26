@@ -178,9 +178,18 @@ router.post('/contacts/search', ghlAuth, async (req, res) => {
         allContacts = allContacts.concat(result.data.contacts);
         console.log(`✅ Page ${pageCount}: ${result.data.contacts.length} contacts (total: ${allContacts.length})`);
 
-        // Check for next page
+        // Check for next page - log full response structure to debug
+        console.log(`📦 GHL Response structure:`, JSON.stringify({
+          contactsCount: result.data.contacts?.length,
+          hasNextPageUrl: !!result.data.nextPageUrl,
+          hasMeta: !!result.data.meta,
+          metaKeys: result.data.meta ? Object.keys(result.data.meta) : [],
+          totalInMeta: result.data.meta?.total,
+          nextPageInMeta: result.data.meta?.nextPageUrl
+        }));
+
         nextPageUrl = result.data.nextPageUrl || result.data.meta?.nextPageUrl || null;
-        console.log(`🔗 Next page URL: ${nextPageUrl ? 'exists' : 'none'}`);
+        console.log(`🔗 Next page URL: ${nextPageUrl || 'NONE FOUND'}`);
 
         // Stop if we have enough contacts or no more pages
         if (allContacts.length >= limit || !nextPageUrl || pageCount >= maxPages) {
