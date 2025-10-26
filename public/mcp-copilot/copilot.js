@@ -1,6 +1,6 @@
 let sessionId = null;
 let crmType = null;
-const API_BASE = window.location.origin + '/api/mcp';
+// API_BASE is defined globally in index.html
 let currentClientId = null;
 
 // Mobile detection

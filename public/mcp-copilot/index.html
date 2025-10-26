@@ -474,12 +474,18 @@
         <div id="mobilePopupContent" class="mobile-popup-content"></div>
     </div>
 
+    <!-- Global Configuration (must load first) -->
+    <script>
+        // Define API_BASE globally for all scripts
+        const API_BASE = window.location.origin + '/api/mcp';
+    </script>
+
     <!-- Scripts -->
-    <script src="command-templates.js?v=100"></script>
-    <script src="command-form.js?v=100"></script>
-    <script src="business-collector-form.js?v=100"></script>
-    <script src="adhoc-call.js?v=100"></script>
-    <script src="copilot.js?v=100"></script>
+    <script src="command-templates.js?v=101"></script>
+    <script src="command-form.js?v=101"></script>
+    <script src="business-collector-form.js?v=101"></script>
+    <script src="adhoc-call.js?v=101"></script>
+    <script src="copilot.js?v=101"></script>
 
     <script>
         // Open copilot chat (scroll to chat section)

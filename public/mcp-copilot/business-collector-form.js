@@ -3,7 +3,6 @@
 
 console.log('✅ business-collector-form.js loaded');
 
-const API_BASE = window.location.origin + '/api/mcp';
 let businessCollectorModal = null;
 let currentLeads = null;
 
