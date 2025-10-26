@@ -64,14 +64,6 @@ const COMMAND_TEMPLATES = {
         buildCommand: (data) => `search contacts ${data.query}`
       },
       {
-        id: 'list_all_contacts',
-        label: 'List All Contacts',
-        icon: '📋',
-        description: 'Show all contacts in your CRM',
-        fields: [],
-        buildCommand: () => 'list all contacts'
-      },
-      {
         id: 'add_note',
         label: 'Add Note',
         icon: '📝',
