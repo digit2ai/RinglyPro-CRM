@@ -111,8 +111,22 @@
 
     <!-- Initialize Command Form Manager -->
     <script>
-        // Function to show conversational AI agent help in chat
+        // Function to show conversational AI agent
         function showConversationalAgentHelp() {
+            // Check if mobile (screen width <= 768px)
+            const isMobile = window.innerWidth <= 768;
+
+            if (isMobile) {
+                // Mobile: Open full-screen modal with chat interface
+                openConversationalAgentModal();
+            } else {
+                // Desktop: Show help message in existing chat panel
+                showHelpInChat();
+            }
+        }
+
+        // Desktop: Show help in chat panel
+        function showHelpInChat() {
             const chatMessages = document.getElementById('chatMessages');
             const helpMessage = document.createElement('div');
             helpMessage.className = 'message assistant';
@@ -170,6 +184,154 @@
 
             // Focus the input box
             document.getElementById('messageInput').focus();
+        }
+
+        // Mobile: Open full-screen modal with chat interface
+        function openConversationalAgentModal() {
+            const modal = document.getElementById('mobilePopupModal');
+            const title = document.getElementById('mobilePopupTitle');
+            const content = document.getElementById('mobilePopupContent');
+
+            title.textContent = '🤖 CRM AI Agent';
+
+            // Create full chat interface in modal
+            content.innerHTML = `
+                <div style="display: flex; flex-direction: column; height: 100%; background: #f8f9fa;">
+                    <!-- Welcome Message -->
+                    <div style="padding: 1rem; background: white; border-bottom: 2px solid #e5e7eb; overflow-y: auto; max-height: 40vh;">
+                        <div style="font-size: 0.95rem; line-height: 1.6; color: #374151;">
+                            <strong style="font-size: 1.1rem; color: #10b981;">🤖 Welcome!</strong><br><br>
+
+                            I'm your AI assistant for managing contacts.<br>
+                            Just type what you want to do below!<br><br>
+
+                            <strong style="color: #059669;">✅ What I Can Do:</strong><br><br>
+
+                            <strong>✅ Create Contact</strong><br>
+                            Type: <em>"create contact"</em><br><br>
+
+                            <strong>✅ Search Contacts</strong><br>
+                            Type: <em>"find John"</em><br><br>
+
+                            <strong>✅ Update Contact</strong><br>
+                            Type: <em>"update contact"</em><br><br>
+
+                            <strong>✅ Send SMS/Email</strong><br>
+                            Type: <em>"send sms"</em> or <em>"send email"</em><br><br>
+
+                            <strong>✅ Add/Remove Tags</strong><br>
+                            Type: <em>"add tag"</em> or <em>"remove tag"</em><br><br>
+
+                            <strong style="color: #059669;">💡 Tips:</strong><br>
+                            • I'll guide you step-by-step<br>
+                            • Type "cancel" anytime to stop<br>
+                            • I confirm before making changes<br><br>
+
+                            <strong style="color: #10b981;">👉 Try: "create contact"</strong>
+                        </div>
+                    </div>
+
+                    <!-- Chat Messages Area -->
+                    <div id="modalChatMessages" style="flex: 1; overflow-y: auto; padding: 1rem; background: #f8f9fa;">
+                        <!-- Messages will appear here -->
+                    </div>
+
+                    <!-- Chat Input -->
+                    <div style="padding: 1rem; background: white; border-top: 2px solid #e5e7eb;">
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input
+                                type="text"
+                                id="modalMessageInput"
+                                placeholder="Type your command here..."
+                                style="flex: 1; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-size: 16px;"
+                                onkeypress="handleModalKeyPress(event)"
+                            />
+                            <button
+                                onclick="sendModalMessage()"
+                                style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem;"
+                            >
+                                Send
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.add('active');
+
+            // Focus the modal input
+            setTimeout(() => {
+                document.getElementById('modalMessageInput').focus();
+            }, 300);
+        }
+
+        // Handle Enter key in modal
+        function handleModalKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendModalMessage();
+            }
+        }
+
+        // Send message from modal (reuses existing sendMessage logic)
+        function sendModalMessage() {
+            const input = document.getElementById('modalMessageInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message to modal chat
+            const modalMessages = document.getElementById('modalChatMessages');
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.textContent = message;
+            userMsg.style.cssText = 'background: #3b82f6; color: white; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 0.5rem; max-width: 80%; margin-left: auto; text-align: right;';
+            modalMessages.appendChild(userMsg);
+            modalMessages.scrollTop = modalMessages.scrollHeight;
+
+            input.value = '';
+
+            // Send to backend using existing chat logic
+            // We'll use the main sendMessage function but capture the response
+            const originalInput = document.getElementById('messageInput');
+            const originalValue = originalInput.value;
+            originalInput.value = message;
+
+            // Trigger send and capture response
+            fetch('/api/mcp/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    message: message,
+                    sessionId: sessionStorage.getItem('sessionId') || 'mobile-session-' + Date.now()
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Add assistant response to modal chat
+                const assistantMsg = document.createElement('div');
+                assistantMsg.className = 'message assistant';
+                assistantMsg.innerHTML = data.response.replace(/\n/g, '<br>');
+                assistantMsg.style.cssText = 'background: #f3f4f6; color: #1f2937; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 0.5rem; max-width: 80%;';
+                modalMessages.appendChild(assistantMsg);
+                modalMessages.scrollTop = modalMessages.scrollHeight;
+
+                // Restore original input
+                originalInput.value = originalValue;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'message error';
+                errorMsg.textContent = 'Error: ' + error.message;
+                errorMsg.style.cssText = 'background: #ef4444; color: white; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 0.5rem;';
+                modalMessages.appendChild(errorMsg);
+                modalMessages.scrollTop = modalMessages.scrollHeight;
+
+                originalInput.value = originalValue;
+            });
         }
 
         document.addEventListener('DOMContentLoaded', () => {
