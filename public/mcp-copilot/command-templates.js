@@ -3,108 +3,63 @@
 
 const COMMAND_TEMPLATES = {
   // ===== CONTACTS =====
+  // NOTE: Contact operations now use the Conversational Agent
+  // Just type naturally: "create contact", "update contact", "add tag", etc.
+  // The agent will guide you through each step with questions.
   contacts: {
     category: 'Contacts',
     icon: '📇',
     commands: [
       {
-        id: 'create_contact',
-        label: 'Create Contact',
-        icon: '➕',
-        description: 'Add a new contact to your CRM',
-        fields: [
-          { name: 'name', label: 'Full Name', type: 'text', required: true, placeholder: 'John Doe' },
-          { name: 'email', label: 'Email', type: 'email', required: false, placeholder: 'john@example.com' },
-          { name: 'phone', label: 'Phone', type: 'tel', required: false, placeholder: '5551234567' }
-        ],
-        buildCommand: (data) => `create contact ${data.name} email ${data.email || ''} phone ${data.phone || ''}`
-      },
-      {
-        id: 'update_contact',
-        label: 'Update Contact',
-        icon: '✏️',
-        description: 'Update contact information',
-        fields: [
-          { name: 'identifier', label: 'Contact Name/Email/Phone', type: 'text', required: true, placeholder: 'john@example.com' },
-          { name: 'field', label: 'Field to Update', type: 'select', required: true, options: ['phone', 'email', 'firstName', 'lastName', 'address', 'city', 'state', 'postalCode', 'country'] },
-          { name: 'value', label: 'New Value', type: 'text', required: true, placeholder: 'New value' }
-        ],
-        buildCommand: (data) => `update ${data.field} of contact ${data.identifier} to ${data.value}`
-      },
-      {
-        id: 'add_tag',
-        label: 'Add Tag',
-        icon: '🏷️',
-        description: 'Add a tag to a contact',
-        fields: [
-          { name: 'identifier', label: 'Contact Name/Email/Phone', type: 'text', required: true, placeholder: 'john@example.com' },
-          { name: 'tag', label: 'Tag Name', type: 'text', required: true, placeholder: 'Hot Lead' }
-        ],
-        buildCommand: (data) => `add tag ${data.tag} to contact ${data.identifier}`
-      },
-      {
-        id: 'remove_tag',
-        label: 'Remove Tag',
-        icon: '🏷️',
-        description: 'Remove a tag from a contact',
-        fields: [
-          { name: 'identifier', label: 'Contact Name/Email/Phone', type: 'text', required: true, placeholder: 'john@example.com' },
-          { name: 'tag', label: 'Tag Name', type: 'text', required: true, placeholder: 'Hot Lead' }
-        ],
-        buildCommand: (data) => `remove tag ${data.tag} from contact ${data.identifier}`
-      },
-      {
-        id: 'search_contacts',
-        label: 'Search Contacts',
-        icon: '🔍',
-        description: 'Search for contacts by name, email, or phone',
-        fields: [
-          { name: 'query', label: 'Search Query', type: 'text', required: true, placeholder: 'john@example.com or John Doe' }
-        ],
-        buildCommand: (data) => `search contacts ${data.query}`
-      },
-      {
-        id: 'add_note',
-        label: 'Add Note',
-        icon: '📝',
-        description: 'Add a note to a contact',
-        fields: [
-          { name: 'identifier', label: 'Contact Name/Email/Phone', type: 'text', required: true, placeholder: 'john@example.com' },
-          { name: 'note', label: 'Note', type: 'textarea', required: true, placeholder: 'Follow up next week...' }
-        ],
-        buildCommand: (data) => `add note to contact ${data.identifier}: ${data.note}`
+        id: 'contact_help',
+        label: 'How to Use Contact Commands',
+        icon: '💡',
+        description: 'Learn how to use the conversational agent for contacts',
+        fields: [],
+        buildCommand: () => `💡 **How to Manage Contacts**
+
+Just type what you want to do in plain language, and I'll guide you through the steps:
+
+**Create a Contact:**
+Type: "create contact"
+→ I'll ask for name, phone, and email
+
+**Update a Contact:**
+Type: "update contact"
+→ I'll ask which contact and what to update
+
+**Add/Remove Tags:**
+Type: "add tag" or "remove tag"
+→ I'll ask which contact and tag name
+
+**Send SMS/Email:**
+Type: "send sms" or "send email"
+→ I'll ask which contact and message
+
+**Search Contacts:**
+Type: "search contacts John" or "find john@example.com"
+→ I'll show matching contacts
+
+**Cancel Anytime:**
+Type "cancel" at any step to stop
+
+Examples:
+• "create contact"
+• "update contact"
+• "add tag to contact"
+• "send sms"
+• "search contacts john@example.com"`
       }
     ]
   },
 
   // ===== MESSAGING =====
+  // NOTE: SMS and Email now use the Conversational Agent
+  // Just type "send sms" or "send email" and I'll guide you
   messaging: {
     category: 'Messaging',
     icon: '💬',
     commands: [
-      {
-        id: 'send_sms',
-        label: 'Send SMS',
-        icon: '📱',
-        description: 'Send an SMS to a contact',
-        fields: [
-          { name: 'recipient', label: 'Contact Name/Email/Phone', type: 'text', required: true, placeholder: 'john@example.com or 5551234567' },
-          { name: 'message', label: 'Message', type: 'textarea', required: true, placeholder: 'Your message here...' }
-        ],
-        buildCommand: (data) => `send sms to ${data.recipient} saying: ${data.message}`
-      },
-      {
-        id: 'send_email',
-        label: 'Send Email',
-        icon: '📧',
-        description: 'Send an email to a contact',
-        fields: [
-          { name: 'recipient', label: 'Contact Name/Email', type: 'text', required: true, placeholder: 'john@example.com' },
-          { name: 'subject', label: 'Subject', type: 'text', required: true, placeholder: 'Email subject' },
-          { name: 'message', label: 'Message', type: 'textarea', required: true, placeholder: 'Email body...' }
-        ],
-        buildCommand: (data) => `send email to ${data.recipient} subject ${data.subject} body: ${data.message}`
-      },
       {
         id: 'reply_last_message',
         label: 'Reply to Last Message',
