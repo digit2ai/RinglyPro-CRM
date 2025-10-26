@@ -23,6 +23,12 @@ const US_CITIES_BY_STATE = {
 // Open Business Collector Form Modal
 function openBusinessCollectorForm() {
     console.log('📋 openBusinessCollectorForm called');
+
+    // Refresh connection to prevent timeout during long form fills
+    if (typeof refreshConnectionOnFormOpen === 'function') {
+        refreshConnectionOnFormOpen();
+    }
+
     // Create modal if doesn't exist
     if (!businessCollectorModal) {
         console.log('📋 Creating Business Collector modal...');

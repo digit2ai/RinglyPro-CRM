@@ -1614,6 +1614,40 @@ router.get('/business-collector/directory/:clientId', async (req, res) => {
   }
 });
 
+// Keep-Alive endpoint to prevent session timeout (multi-tenant optimization)
+router.post('/copilot/keep-alive', async (req, res) => {
+  const { sessionId, crmType } = req.body;
+
+  if (!sessionId) {
+    return res.status(400).json({
+      success: false,
+      error: 'Missing sessionId'
+    });
+  }
+
+  const session = sessions.get(sessionId);
+  if (!session) {
+    console.warn(`⚠️ Keep-alive for invalid/expired session: ${sessionId}`);
+    return res.status(401).json({
+      success: false,
+      error: 'Session expired or invalid'
+    });
+  }
+
+  // Update session timestamp to prevent timeout
+  session.lastActivity = Date.now();
+  sessions.set(sessionId, session);
+
+  console.log(`💓 Keep-alive heartbeat for session ${sessionId} (${crmType || session.crmType})`);
+
+  res.json({
+    success: true,
+    message: 'Session refreshed',
+    sessionId,
+    crmType: session.crmType
+  });
+});
+
 // AI Copilot chat
 router.post('/copilot/chat', async (req, res) => {
   console.log('📩 MCP Chat request received:', { sessionId: req.body.sessionId, message: req.body.message?.substring(0, 50) });

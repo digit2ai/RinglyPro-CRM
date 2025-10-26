@@ -5,6 +5,11 @@ let adhocCallModal = null;
 
 // Open ad-hoc call modal
 function openAdHocCall() {
+    // Refresh connection to prevent timeout during call setup
+    if (typeof refreshConnectionOnFormOpen === 'function') {
+        refreshConnectionOnFormOpen();
+    }
+
     if (!adhocCallModal) {
         createAdHocCallModal();
     }

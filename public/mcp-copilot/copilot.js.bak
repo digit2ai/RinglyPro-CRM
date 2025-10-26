@@ -1,9 +1,7 @@
 let sessionId = null;
 let crmType = null;
-// API_BASE is defined globally in index.html
+const API_BASE = window.location.origin + '/api/mcp';
 let currentClientId = null;
-let keepAliveInterval = null;
-let lastActivityTime = Date.now();
 
 // Mobile detection
 function isMobile() {
@@ -123,8 +121,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Open Social Media Marketing Tool
 function openSocialMedia() {
-    refreshConnectionOnFormOpen(); // Keep connection alive
-
     // Build URL with optional params
     let params = [];
     if (currentClientId) params.push(`client_id=${currentClientId}`);
@@ -142,8 +138,6 @@ function openSocialMedia() {
 
 // Open Email Marketing Tool
 function openEmailMarketing() {
-    refreshConnectionOnFormOpen(); // Keep connection alive
-
     // Build URL with optional client_id
     const emailUrl = currentClientId
         ? `${window.location.origin}/mcp-copilot/email-marketing.html?client_id=${currentClientId}`
@@ -159,8 +153,6 @@ function openEmailMarketing() {
 
 // Open Prospect Manager
 function openProspectManager() {
-    refreshConnectionOnFormOpen(); // Keep connection alive
-
     // Build URL with optional client_id
     const prospectUrl = currentClientId
         ? `${window.location.origin}/mcp-copilot/prospect-manager.html?client_id=${currentClientId}`
@@ -175,13 +167,85 @@ function openProspectManager() {
 }
 
 // Connect to Business Collector
-function connectBusinessCollector() {
-    console.log('🔍 Opening Business Collector...');
-    if (typeof openBusinessCollectorForm === 'function') {
-        openBusinessCollectorForm();
-    } else {
-        console.error('❌ Business Collector form not loaded');
-        alert('Business Collector form not available. Please refresh the page.');
+async function connectBusinessCollector() {
+    try {
+        const btn = document.getElementById('businessCollectorBtn');
+        const statusDiv = document.getElementById('businessCollectorStatus');
+
+        // If not connected yet, establish connection first
+        if (!sessionId || crmType !== 'business-collector') {
+            // Update button state
+            btn.disabled = true;
+            btn.innerHTML = '🔄 Connecting...';
+            statusDiv.style.display = 'block';
+            statusDiv.textContent = 'Connecting to Business Collector...';
+            statusDiv.style.background = '#fef3c7';
+            statusDiv.style.color = '#92400e';
+
+            const response = await fetch(`${API_BASE}/business-collector/connect`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                sessionId = data.sessionId;
+                crmType = 'business-collector';
+
+                // Update UI
+                btn.innerHTML = '✅ Connected';
+                btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                statusDiv.textContent = `Connected (v${data.version})`;
+                statusDiv.style.background = '#d1fae5';
+                statusDiv.style.color = '#065f46';
+
+                // Update header
+                const headerStatus = document.getElementById('crmStatus');
+                if (headerStatus) {
+                    headerStatus.textContent = 'Business Collector Connected';
+                    headerStatus.style.background = '#10b981';
+                }
+
+                // Silent connection - no chat message
+
+                // Re-enable button
+                btn.disabled = false;
+            } else {
+                throw new Error(data.error || 'Connection failed');
+            }
+        }
+
+        // Open the Business Collector form modal
+        if (typeof openBusinessCollectorForm === 'function') {
+            openBusinessCollectorForm();
+        } else {
+            console.error('Business Collector form not loaded');
+            addMessage('error', 'Business Collector form not available. Please refresh the page.');
+        }
+
+    } catch (error) {
+        console.error('Connection error:', error);
+
+        const btn = document.getElementById('businessCollectorBtn');
+        const statusDiv = document.getElementById('businessCollectorStatus');
+
+        btn.disabled = false;
+        btn.innerHTML = '❌ Connection Failed';
+        btn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+
+        statusDiv.textContent = `Error: ${error.message}`;
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#991b1b';
+
+        addMessage('system', `❌ Failed to connect: ${error.message}`);
+
+        // Reset after 3 seconds
+        setTimeout(() => {
+            btn.innerHTML = '🔍 Business Collector';
+            btn.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+        }, 3000);
     }
 }
 
@@ -284,109 +348,11 @@ async function connectGoHighLevel() {
             crmType = 'gohighlevel';
             updateConnectionStatus('Connected to GoHighLevel', 'success');
             // Silent connection - no chat message
-            startKeepAlive(); // Start keep-alive after successful connection
         } else {
             alert('Failed to connect: ' + data.error);
         }
     } catch (error) {
         alert('Connection error: ' + error.message);
-    }
-}
-
-// Keep-Alive System to prevent API timeouts (critical for multi-tenant)
-function startKeepAlive() {
-    console.log('🔄 Starting keep-alive heartbeat...');
-
-    // Clear any existing interval
-    if (keepAliveInterval) {
-        clearInterval(keepAliveInterval);
-    }
-
-    // Send heartbeat every 30 seconds (configurable)
-    keepAliveInterval = setInterval(async () => {
-        if (!sessionId) {
-            console.log('⏸️ No session, stopping keep-alive');
-            stopKeepAlive();
-            return;
-        }
-
-        // Only send heartbeat if there's been recent activity (within 5 minutes)
-        const timeSinceActivity = Date.now() - lastActivityTime;
-        const fiveMinutes = 5 * 60 * 1000;
-
-        if (timeSinceActivity < fiveMinutes) {
-            await sendKeepAlive();
-        } else {
-            console.log('⏸️ No recent activity, pausing keep-alive');
-        }
-    }, 30000); // 30 seconds
-
-    // Track user activity to optimize keep-alive
-    trackUserActivity();
-}
-
-function stopKeepAlive() {
-    console.log('⏹️ Stopping keep-alive heartbeat');
-    if (keepAliveInterval) {
-        clearInterval(keepAliveInterval);
-        keepAliveInterval = null;
-    }
-}
-
-async function sendKeepAlive() {
-    try {
-        console.log('💓 Sending keep-alive heartbeat...');
-        const response = await fetch(`${API_BASE}/copilot/keep-alive`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId, crmType })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            console.log('✅ Keep-alive successful');
-        } else {
-            console.warn('⚠️ Keep-alive failed:', data.error);
-            // Try to reconnect if session expired
-            if (data.error?.includes('expired') || data.error?.includes('invalid')) {
-                console.log('🔄 Session expired, attempting reconnect...');
-                await reconnectCRM();
-            }
-        }
-    } catch (error) {
-        console.error('❌ Keep-alive error:', error);
-    }
-}
-
-async function reconnectCRM() {
-    console.log('🔄 Auto-reconnecting to CRM...');
-    updateConnectionStatus('Reconnecting...', 'loading');
-
-    if (crmType === 'gohighlevel' && window.ghlCredentials) {
-        await connectGoHighLevel();
-    } else {
-        updateConnectionStatus('Connection lost - please refresh', 'error');
-    }
-}
-
-function trackUserActivity() {
-    // Update last activity time on any user interaction
-    const activityEvents = ['click', 'keypress', 'scroll', 'mousemove', 'touchstart'];
-
-    activityEvents.forEach(event => {
-        document.addEventListener(event, () => {
-            lastActivityTime = Date.now();
-        }, { passive: true });
-    });
-}
-
-// Refresh connection when forms are opened (prevents timeout during long form fills)
-function refreshConnectionOnFormOpen() {
-    console.log('🔄 Refreshing connection for form...');
-    lastActivityTime = Date.now();
-
-    if (sessionId) {
-        sendKeepAlive(); // Immediate heartbeat when form opens
     }
 }
 
