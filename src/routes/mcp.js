@@ -146,7 +146,8 @@ function extractIdentifiers(message) {
 
 // Conversational Question Templates
 const QUESTIONS = {
-  // Contact identification
+  // Contact identification - give users options
+  identify_contact: "What's the contact's email address or name?\n\n💡 Tip: Email is most reliable, but you can also use phone number or name.",
   identify_contact_email: "What's the contact's email address?",
   identify_contact_phone: "What's the contact's phone number?",
   identify_contact_name: "What's the contact's name?",
@@ -294,16 +295,16 @@ async function handleIntentDetection(sessionId, message, session) {
   }
 
   // For other intents, need to identify contact first
-  if (!identifiers.email && !identifiers.phone) {
+  if (!identifiers.email && !identifiers.phone && !identifiers.name) {
     updateConversationState(sessionId, { step: 'identify_contact' });
     return {
       success: true,
-      response: QUESTIONS.identify_contact_email
+      response: QUESTIONS.identify_contact
     };
   }
 
   // We have an identifier, try to find the contact
-  return await handleContactIdentification(sessionId, identifiers.email || identifiers.phone, session);
+  return await handleContactIdentification(sessionId, identifiers.email || identifiers.phone || identifiers.name, session);
 }
 
 // Step 2: Contact Identification
