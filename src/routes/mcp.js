@@ -1622,13 +1622,13 @@ router.post('/copilot/chat', async (req, res) => {
     ) {
       console.log('📋 Listing all contacts');
       try {
-        // Get all contacts without search filter (increased limit to 50)
-        const allContacts = await session.proxy.searchContacts('', 50);
+        // Get all contacts without search filter (increased limit to 1000)
+        const allContacts = await session.proxy.searchContacts('', 1000);
         const totalCount = allContacts?.length || 0;
 
         if (allContacts && allContacts.length > 0) {
           response = `📋 Found ${totalCount} contacts in your CRM:\n\n`;
-          response += formatContactsList(allContacts, 20);
+          response += formatContactsList(allContacts, 1000); // Show all contacts
           response += `💡 Tip: Search for specific contacts with "search John" or "find john@example.com"`;
         } else {
           response = `No contacts found in your CRM.\n\n💡 Create your first contact with:\n"create contact John Doe email john@example.com phone 5551234567"`;
@@ -1655,7 +1655,7 @@ router.post('/copilot/chat', async (req, res) => {
 
           if (data && data.length > 0) {
             response = `🔍 Found ${data.length} contact${data.length > 1 ? 's' : ''} matching "${query}":\n\n`;
-            response += formatContactsList(data, 10);
+            response += formatContactsList(data, 1000); // Show all matching contacts
           } else {
             response = `No contacts found matching "${query}".\n\n💡 Try:\n• Using a different search term\n• Searching by email or phone number\n• Using "list contacts" to see all contacts`;
           }
