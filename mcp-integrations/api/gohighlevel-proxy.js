@@ -175,10 +175,11 @@ class GoHighLevelMCPProxy {
     const maxPages = Math.ceil(limit / 100);
 
     try {
-      // Build initial endpoint
-      let endpoint = `/contacts/?limit=100`; // GHL max per page
+      // Build initial endpoint - use query params object for proper encoding
+      let endpoint = `/contacts/`;
+      let queryParams = { limit: 100 };
       if (query) {
-        endpoint += `&query=${encodeURIComponent(query)}`;
+        queryParams.query = query;
       }
 
       do {
@@ -200,8 +201,10 @@ class GoHighLevelMCPProxy {
           });
           response = urlResponse.data;
         } else {
-          // First page
-          response = await this.callAPI(endpoint);
+          // First page - use callAPI which handles params properly
+          const fullEndpoint = `/contacts/?${new URLSearchParams(queryParams).toString()}`;
+          console.log(`📡 Calling: ${fullEndpoint}`);
+          response = await this.callAPI(fullEndpoint);
         }
 
         const contacts = response.contacts || [];

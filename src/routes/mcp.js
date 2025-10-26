@@ -1679,15 +1679,19 @@ router.post('/copilot/chat', async (req, res) => {
     }
     // UPDATE CONTACT
     else if (lowerMessage.includes('update contact') || lowerMessage.includes('update') && lowerMessage.includes('contact')) {
-      // Parse: "update contact john@example.com with phone 5551234567" or "update contact john@example.com set email to new@email.com"
+      // Parse multiple formats:
+      // 1. "update contact john@example.com with phone 5551234567"
+      // 2. "update phone of contact Ray to 8131111111"
       const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
       const phoneIdentMatch = message.match(/contact\s+(\d{10})/i);
 
-      // Improved name matching - stop BEFORE field keywords (phone, email, firstname, lastname)
-      // This prevents capturing "leonardo phone" as the name
-      const nameMatch = message.match(/contact\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)(?=\s+(?:phone|mobile|email|firstname|lastname|first\s*name|last\s*name)\s*:?\s*|$)/i);
+      // Improved name matching - handles both formats:
+      // Format 1: "contact NAME field" - stop BEFORE field keywords
+      // Format 2: "field of contact NAME" - capture NAME after "contact"
+      const nameMatch1 = message.match(/contact\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)(?=\s+(?:phone|mobile|email|firstname|lastname|first\s*name|last\s*name)\s*:?\s*|$)/i);
+      const nameMatch2 = message.match(/of\s+contact\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)/i);
 
-      const identifier = emailMatch?.[1] || phoneIdentMatch?.[1] || nameMatch?.[1];
+      const identifier = emailMatch?.[1] || phoneIdentMatch?.[1] || nameMatch1?.[1] || nameMatch2?.[1];
 
       if (identifier) {
         console.log('🔄 Updating contact:', identifier);
@@ -2138,13 +2142,18 @@ router.post('/copilot/chat', async (req, res) => {
       // Parse: "add note to john@example.com: Customer interested in premium plan"
 
       const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
-      const nameMatch = message.match(/(?:to|for)\s+([A-Za-z\s]+?)(?:\s*:)/i);
+      const nameMatch = message.match(/(?:to|for)\s+(?:contact\s+)?([A-Za-z\s]+?)(?:\s*:)/i);
 
       // Extract note text - everything after the colon
       const colonMatch = message.match(/:\s*(.+)/i);
       const noteBody = colonMatch?.[1];
 
-      const identifier = emailMatch?.[1] || nameMatch?.[1];
+      let identifier = emailMatch?.[1] || nameMatch?.[1];
+
+      // Clean up identifier - remove common filler words
+      if (identifier) {
+        identifier = identifier.replace(/^(contact|contacts|for|the|a|an)\s+/i, '').trim();
+      }
 
       if (identifier && noteBody) {
         try {
