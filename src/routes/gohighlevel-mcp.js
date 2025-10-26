@@ -154,7 +154,25 @@ router.post('/contacts/search', ghlAuth, async (req, res) => {
       pageCount++;
       console.log(`📄 Fetching page ${pageCount}...`);
 
-      const result = await callGHL(req.ghlConfig, 'GET', nextPageUrl || endpoint);
+      // Use nextPageUrl if available, otherwise use the initial endpoint
+      let result;
+      if (nextPageUrl) {
+        // nextPageUrl is a full URL, call it directly
+        try {
+          const response = await axios({
+            method: 'GET',
+            url: nextPageUrl,
+            headers: req.ghlConfig.headers
+          });
+          result = { success: true, data: response.data };
+        } catch (error) {
+          console.error('GHL pagination error:', error.response?.data || error.message);
+          result = { success: false, error: error.message };
+        }
+      } else {
+        // First page, use callGHL helper
+        result = await callGHL(req.ghlConfig, 'GET', endpoint);
+      }
 
       if (result.success && result.data?.contacts) {
         allContacts = allContacts.concat(result.data.contacts);
@@ -162,6 +180,7 @@ router.post('/contacts/search', ghlAuth, async (req, res) => {
 
         // Check for next page
         nextPageUrl = result.data.nextPageUrl || result.data.meta?.nextPageUrl || null;
+        console.log(`🔗 Next page URL: ${nextPageUrl ? 'exists' : 'none'}`);
 
         // Stop if we have enough contacts or no more pages
         if (allContacts.length >= limit || !nextPageUrl || pageCount >= maxPages) {
