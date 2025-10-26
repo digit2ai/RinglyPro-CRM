@@ -17,24 +17,52 @@ const COMMAND_TEMPLATES = {
         description: 'Learn how to use the conversational agent for contacts',
         fields: [],
         isHelpOnly: true, // Flag to indicate this is informational only
-        buildCommand: () => `💡 **How to Use the Conversational Agent**
+        buildCommand: () => `💡 **How to Use Contact Commands**
 
-Instead of filling forms, just TYPE what you want to do in the chat box below!
+Just TYPE what you want to do in the chat box below - no forms needed!
 
-**Examples:**
-• Type: "create contact" → I'll ask for details
-• Type: "update contact" → I'll ask which one
-• Type: "add tag" → I'll guide you
-• Type: "send sms" → I'll help you
-• Type: "search contacts John" → I'll find them
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Tips:**
-✓ Just type naturally - no forms needed!
-✓ I'll ask questions to get what I need
-✓ Type "cancel" anytime to stop
-✓ I'll confirm before making changes
+**✅ Available Commands:**
 
-**Try it now:** Type "create contact" in the chat box below! ⬇️`
+**✅ Create Contact** - Fully working!
+   Type: "create contact"
+   → I'll ask for: name, phone, email
+   → You confirm, I create it!
+
+**✅ Search Contacts** - No more duplicates!
+   Type: "find John" or "search contacts john@example.com"
+   → I'll show matching contacts
+
+**✅ Update Contact** - Ready to use!
+   Type: "update contact"
+   → I'll ask: which contact? what field? new value?
+   → You confirm, I update it!
+
+**✅ Send SMS** - Ready to use!
+   Type: "send sms"
+   → I'll ask: which contact? what message?
+   → You confirm, I send it!
+
+**✅ Send Email** - Ready to use!
+   Type: "send email"
+   → I'll ask: which contact? subject? message?
+   → You confirm, I send it!
+
+**✅ Add/Remove Tags** - Ready to use!
+   Type: "add tag" or "remove tag"
+   → I'll ask: which contact? which tag?
+   → You confirm, I do it!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**💡 Quick Tips:**
+• Just type naturally - I'll guide you!
+• I'll ask questions to get what I need
+• Type "cancel" anytime to stop
+• I always confirm before making changes
+
+**👉 Try it now:** Type "create contact" below! ⬇️`
       }
     ]
   }
