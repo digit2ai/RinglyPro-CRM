@@ -248,8 +248,8 @@ class OutboundCallerService {
     // Compliant with telemarketing regulations (informational message only)
     logger.info('Call answered - playing Rachel Premium Voice informational message');
 
-    // RinglyPro informational voicemail message
-    const voicemailMessage = "Hi, this is Lina from RinglyPro.com. I just wanted to share a quick informational update — RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send follow-up messages automatically, so you never miss a lead even after hours. This call is purely informational — there's no signup or payment required. If you'd like to learn more, you can visit RinglyPro.com anytime. Thanks for listening, and have a great day!";
+    // RinglyPro TCPA-compliant informational voicemail message
+    const voicemailMessage = "Hi, this is Lina from RinglyPro.com, calling with a quick business update. RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send automatic follow-ups — so you never miss a lead, even after hours. This message is for informational purposes only, and there's no obligation or payment required. If you'd like to learn more, you can visit RinglyPro.com or call us back at 813-212-4888. If you'd prefer not to receive future informational updates, you can reply stop or call the same number and we'll remove you. Thanks for your time, and have a great day.";
 
     // Check if ElevenLabs voice URL is configured (pre-generated audio file)
     const elevenLabsVoiceUrl = process.env.ELEVENLABS_VOICEMAIL_URL;

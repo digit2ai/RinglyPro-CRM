@@ -167,20 +167,14 @@ function openProspectManager() {
 }
 
 // Connect to Business Collector
-async function connectBusinessCollector() {
-    try {
-        // Directly open the Business Collector form modal
-        if (typeof openBusinessCollectorForm === 'function') {
-            openBusinessCollectorForm();
-        } else {
-            console.error('Business Collector form not loaded');
-            alert('Business Collector form not available. Please refresh the page.');
-        }
-    } catch (error) {
-        console.error('Business Collector open failed:', error);
-        alert(`Failed to open Business Collector: ${error.message}`);
+function connectBusinessCollector() {
+    console.log('🔍 Opening Business Collector...');
+    if (typeof openBusinessCollectorForm === 'function') {
+        openBusinessCollectorForm();
+    } else {
+        console.error('❌ Business Collector form not loaded');
+        alert('Business Collector form not available. Please refresh the page.');
     }
-}
 }
 
 // Disconnect from Business Collector

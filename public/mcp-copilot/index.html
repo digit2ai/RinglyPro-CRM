@@ -307,6 +307,60 @@
             transform: scale(0.95);
         }
 
+        /* Mobile Popup Modal */
+        .mobile-popup-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 1000;
+            flex-direction: column;
+        }
+
+        .mobile-popup-modal.active {
+            display: flex;
+        }
+
+        .mobile-popup-header {
+            background: linear-gradient(135deg, #4F46E5 0%, #3b82f6 100%);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .mobile-popup-header h3 {
+            margin: 0;
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .mobile-popup-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .mobile-popup-content {
+            flex: 1;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
         /* Mobile Responsive */
         @media (max-width: 640px) {
             .header-top h1 {
@@ -374,7 +428,7 @@
                 <div>Email Marketing</div>
             </button>
 
-            <button class="action-btn btn-business" onclick="connectBusinessCollector()">
+            <button class="action-btn btn-business" onclick="openBusinessCollectorForm()">
                 <div class="action-icon">🔍</div>
                 <div>Business Collector</div>
             </button>
@@ -411,12 +465,21 @@
         </div>
     </div>
 
+    <!-- Mobile Popup Modal -->
+    <div id="mobilePopupModal" class="mobile-popup-modal">
+        <div class="mobile-popup-header">
+            <h3 id="mobilePopupTitle">Tool</h3>
+            <button class="mobile-popup-close" onclick="closeMobilePopup()">&times;</button>
+        </div>
+        <div id="mobilePopupContent" class="mobile-popup-content"></div>
+    </div>
+
     <!-- Scripts -->
-    <script src="command-templates.js"></script>
-    <script src="command-form.js"></script>
-    <script src="business-collector-form.js"></script>
-    <script src="adhoc-call.js"></script>
-    <script src="copilot.js"></script>
+    <script src="command-templates.js?v=3"></script>
+    <script src="command-form.js?v=3"></script>
+    <script src="business-collector-form.js?v=3"></script>
+    <script src="adhoc-call.js?v=3"></script>
+    <script src="copilot.js?v=3"></script>
 
     <script>
         // Open copilot chat (scroll to chat section)

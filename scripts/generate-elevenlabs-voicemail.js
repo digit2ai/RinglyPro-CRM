@@ -24,8 +24,8 @@ const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 // - Rachel (Premium): 21m00Tcm4TlvDq8ikWAM
 const RACHEL_VOICE_ID = process.env.ELEVENLABS_RACHEL_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
 
-// The voicemail message
-const VOICEMAIL_MESSAGE = "Hi, this is Lina from RinglyPro.com. I just wanted to share a quick informational update — RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send follow-up messages automatically, so you never miss a lead even after hours. This call is purely informational — there's no signup or payment required. If you'd like to learn more, you can visit RinglyPro.com anytime. Thanks for listening, and have a great day!";
+// The voicemail message (TCPA-compliant)
+const VOICEMAIL_MESSAGE = "Hi, this is Lina from RinglyPro.com, calling with a quick business update. RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send automatic follow-ups — so you never miss a lead, even after hours. This message is for informational purposes only, and there's no obligation or payment required. If you'd like to learn more, you can visit RinglyPro.com or call us back at 813-212-4888. If you'd prefer not to receive future informational updates, you can reply stop or call the same number and we'll remove you. Thanks for your time, and have a great day.";
 
 async function generateVoicemail() {
   console.log('🎙️  Generating ElevenLabs Rachel Premium Voice voicemail...\n');

@@ -1,6 +1,9 @@
 // Business Collector Form Modal for MCP Copilot
 // Integrated form that uses existing sessionId for authentication
 
+console.log('✅ business-collector-form.js loaded');
+
+const API_BASE = window.location.origin + '/api/mcp';
 let businessCollectorModal = null;
 let currentLeads = null;
 
@@ -20,12 +23,20 @@ const US_CITIES_BY_STATE = {
 
 // Open Business Collector Form Modal
 function openBusinessCollectorForm() {
+    console.log('📋 openBusinessCollectorForm called');
     // Create modal if doesn't exist
     if (!businessCollectorModal) {
+        console.log('📋 Creating Business Collector modal...');
         createBusinessCollectorModal();
     }
 
-    businessCollectorModal.style.display = 'flex';
+    console.log('📋 Business Collector modal:', businessCollectorModal);
+    if (businessCollectorModal) {
+        businessCollectorModal.style.display = 'flex';
+        console.log('✅ Business Collector modal displayed');
+    } else {
+        console.error('❌ Business Collector modal is null!');
+    }
 }
 
 // Create the modal HTML
@@ -201,14 +212,24 @@ function createBusinessCollectorModal() {
         </div>
     `;
 
+    console.log('📋 Inserting Business Collector modal HTML...');
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     businessCollectorModal = document.getElementById('businessCollectorModal');
+    console.log('📋 Retrieved modal element:', businessCollectorModal);
 
     // Add form submit handler
-    document.getElementById('bcForm').addEventListener('submit', handleBusinessCollectorSubmit);
+    const bcForm = document.getElementById('bcForm');
+    if (bcForm) {
+        bcForm.addEventListener('submit', handleBusinessCollectorSubmit);
+        console.log('✅ Form submit handler attached');
+    }
 
     // Add state change listener to populate cities
-    document.getElementById('bcState').addEventListener('change', populateCitiesForState);
+    const bcState = document.getElementById('bcState');
+    if (bcState) {
+        bcState.addEventListener('change', populateCitiesForState);
+        console.log('✅ State change listener attached');
+    }
 }
 
 // Populate cities dropdown based on selected state
