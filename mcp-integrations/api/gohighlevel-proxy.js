@@ -89,6 +89,13 @@ class GoHighLevelMCPProxy {
 
             if (actualData.data && actualData.data.contacts) {
               console.log('✅ Found', actualData.data.contacts.length, 'contacts');
+
+              // Log meta information for pagination debugging
+              if (actualData.data.meta) {
+                console.log('📋 Meta keys:', Object.keys(actualData.data.meta).join(','));
+                console.log('📋 Meta content:', JSON.stringify(actualData.data.meta));
+              }
+
               return actualData.data;
             }
 
@@ -166,7 +173,7 @@ class GoHighLevelMCPProxy {
       // Implement pagination to get ALL contacts
       let allContacts = [];
       let currentLimit = 100; // GHL max per request
-      let skip = 0;
+      let startAfterId = null; // Cursor-based pagination
       let hasMore = true;
       let pageCount = 0;
       const maxPages = Math.ceil(limit / currentLimit);
@@ -176,14 +183,21 @@ class GoHighLevelMCPProxy {
       // Keep fetching until we have enough contacts or no more pages
       while (hasMore && allContacts.length < limit && pageCount < maxPages) {
         pageCount++;
-        console.log(`📄 Fetching page ${pageCount} (skip: ${skip}, limit: ${currentLimit})...`);
+        console.log(`📄 Fetching page ${pageCount} (startAfterId: ${startAfterId || 'null'}, limit: ${currentLimit})...`);
+
+        // Build arguments for MCP call
+        const mcpArgs = {
+          query: query || '', // Ensure query is never undefined
+          limit: currentLimit
+        };
+
+        // Add startAfterId if we have it (cursor-based pagination)
+        if (startAfterId) {
+          mcpArgs.startAfterId = startAfterId;
+        }
 
         // Try official MCP protocol first
-        const response = await this.callMCP('contacts_get-contacts', {
-          query: query || '', // Ensure query is never undefined
-          limit: currentLimit,
-          skip
-        });
+        const response = await this.callMCP('contacts_get-contacts', mcpArgs);
 
         console.log(`📡 MCP response type:`, typeof response);
         console.log(`📡 MCP response keys:`, response ? Object.keys(response).join(',') : 'null');
@@ -201,14 +215,31 @@ class GoHighLevelMCPProxy {
         // Add to our collection
         allContacts = allContacts.concat(contacts);
 
-        // Check if we should continue
-        if (contacts.length < currentLimit) {
-          // Got fewer contacts than requested, no more pages
+        // Check meta for pagination info
+        if (response.meta) {
+          console.log(`📋 Checking meta for pagination: ${JSON.stringify(response.meta)}`);
+
+          // GHL uses startAfterId for cursor-based pagination
+          if (response.meta.startAfterId) {
+            startAfterId = response.meta.startAfterId;
+            console.log(`🔗 Next page cursor: ${startAfterId}`);
+            hasMore = true;
+          } else if (response.meta.nextStartAfterId) {
+            startAfterId = response.meta.nextStartAfterId;
+            console.log(`🔗 Next page cursor: ${startAfterId}`);
+            hasMore = true;
+          } else {
+            console.log(`✅ No pagination cursor in meta, this is the last page`);
+            hasMore = false;
+          }
+        } else if (contacts.length < currentLimit) {
+          // Fallback: If no meta and got fewer contacts than requested, assume last page
           console.log(`✅ Received ${contacts.length} < ${currentLimit}, no more pages`);
           hasMore = false;
         } else {
-          // Move to next page
-          skip += currentLimit;
+          // No meta and got full page - might be more but we can't paginate
+          console.log(`⚠️ No meta object, cannot determine if more pages exist`);
+          hasMore = false;
         }
       }
 
