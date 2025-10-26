@@ -346,6 +346,7 @@ git push origin main
 | **PASSWORD_RESET_GUIDE.md** | Password reset details |
 | **PROTECTED_ROUTES_GUIDE.md** | Auth.js usage guide |
 | **PASSWORD_RESET_CHECKLIST.md** | Testing checklist |
+| **[docs/AI_COPILOT_BUTTON_FIX.md](docs/AI_COPILOT_BUTTON_FIX.md)** | AI Copilot debugging & architecture |
 
 ---
 
