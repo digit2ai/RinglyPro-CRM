@@ -121,18 +121,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Open Social Media Marketing Tool
 function openSocialMedia() {
-    if (!currentClientId) {
-        alert('Client ID not found. Please open MCP Copilot from the dashboard.');
-        return;
-    }
+    // Build URL with optional params
+    let params = [];
+    if (currentClientId) params.push(`client_id=${currentClientId}`);
+    if (sessionId) params.push(`session_id=${sessionId}`);
 
-    if (!sessionId) {
-        alert('Please connect to GoHighLevel first.');
-        return;
-    }
-
-    // Pass sessionId and clientId to social media page
-    const socialUrl = `${window.location.origin}/mcp-copilot/social-media.html?client_id=${currentClientId}&session_id=${sessionId}`;
+    const socialUrl = `${window.location.origin}/mcp-copilot/social-media.html${params.length ? '?' + params.join('&') : ''}`;
 
     // Use popup on mobile, new tab on desktop
     if (isMobile()) {
@@ -144,13 +138,10 @@ function openSocialMedia() {
 
 // Open Email Marketing Tool
 function openEmailMarketing() {
-    if (!currentClientId) {
-        alert('Client ID not found. Please open MCP Copilot from the dashboard.');
-        return;
-    }
-
-    // Email marketing doesn't require GHL session
-    const emailUrl = `${window.location.origin}/mcp-copilot/email-marketing.html?client_id=${currentClientId}`;
+    // Build URL with optional client_id
+    const emailUrl = currentClientId
+        ? `${window.location.origin}/mcp-copilot/email-marketing.html?client_id=${currentClientId}`
+        : `${window.location.origin}/mcp-copilot/email-marketing.html`;
 
     // Use popup on mobile, new tab on desktop
     if (isMobile()) {
@@ -162,13 +153,10 @@ function openEmailMarketing() {
 
 // Open Prospect Manager
 function openProspectManager() {
-    if (!currentClientId) {
-        alert('Client ID not found. Please open MCP Copilot from the dashboard.');
-        return;
-    }
-
-    // Pass client ID to Prospect Manager
-    const prospectUrl = `${window.location.origin}/mcp-copilot/prospect-manager.html?client_id=${currentClientId}`;
+    // Build URL with optional client_id
+    const prospectUrl = currentClientId
+        ? `${window.location.origin}/mcp-copilot/prospect-manager.html?client_id=${currentClientId}`
+        : `${window.location.origin}/mcp-copilot/prospect-manager.html`;
 
     // Use popup on mobile, new tab on desktop
     if (isMobile()) {
