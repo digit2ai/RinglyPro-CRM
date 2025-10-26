@@ -273,248 +273,44 @@ class GoHighLevelMCPProxy {
   }
 
   // MCP Protocol Methods (using official GHL MCP server)
-  async searchContacts(query, limit = 1000) {
+  async searchContacts(query, limit = 20) {
     console.log(`🔍 searchContacts called with query: "${query}", limit: ${limit}`);
 
-    // Use REST API only for listing ALL contacts (no query)
-    // For searches with a query, always use MCP as REST API query parameter doesn't work with PIT tokens
-    if (!query && limit > 100) {
-      console.log(`🔄 Using REST API for listing all contacts (limit: ${limit})`);
-      try {
-        return await this.searchContactsViaREST(query, limit);
-      } catch (restError) {
-        console.error('❌ REST API search failed:', restError.message);
-        console.error('❌ Returning empty array');
-        return [];
-      }
-    }
-
     try {
-      console.log(`🔍 Using MCP for search`);
+      console.log(`🔍 Using MCP for search (single page only - GHL pagination is broken)`);
 
-      // Implement pagination to get ALL contacts
-      let allContacts = [];
-      let currentLimit = 100; // GHL max per request
-      let startAfterId = null; // Cursor-based pagination
-      let hasMore = true;
-      let pageCount = 0;
-      const maxPages = Math.ceil(limit / currentLimit);
+      // IMPORTANT: Only fetch first page (20 results max)
+      // GHL pagination returns the same cursor every time, causing infinite loops
+      // and showing duplicate contacts. Limit to single page to avoid this.
+      const currentLimit = Math.min(limit, 20); // Max 20 results
 
-      console.log(`📊 Will fetch up to ${maxPages} pages to get ${limit} contacts`);
+      // Build arguments for MCP call - NO PAGINATION
+      const mcpArgs = {
+        query: query || '',
+        limit: currentLimit
+      };
 
-      // Keep fetching until we have enough contacts or no more pages
-      while (hasMore && allContacts.length < limit && pageCount < maxPages) {
-        pageCount++;
-        console.log(`📄 Fetching page ${pageCount} (startAfterId: ${startAfterId || 'null'}, limit: ${currentLimit})...`);
+      // Try official MCP protocol - single page only
+      const response = await this.callMCP('contacts_get-contacts', mcpArgs);
 
-        // Build arguments for MCP call
-        const mcpArgs = {
-          query: query || '', // Ensure query is never undefined
-          limit: currentLimit
-        };
+      console.log(`📡 MCP response type:`, typeof response);
+      console.log(`📡 MCP response keys:`, response ? Object.keys(response).join(',') : 'null');
 
-        // Add startAfterId if we have it (cursor-based pagination)
-        if (startAfterId) {
-          mcpArgs.startAfterId = startAfterId;
-        }
+      // Extract contacts from response
+      let contacts = response.contacts || response || [];
 
-        // Try official MCP protocol first
-        const response = await this.callMCP('contacts_get-contacts', mcpArgs);
-
-        console.log(`📡 MCP response type:`, typeof response);
-        console.log(`📡 MCP response keys:`, response ? Object.keys(response).join(',') : 'null');
-
-        // Extract contacts from response
-        let contacts = response.contacts || response || []; // Handle different response formats
-
-        if (!Array.isArray(contacts)) {
-          console.log(`⚠️ Response is not an array, breaking pagination`);
-          break;
-        }
-
-        console.log(`✅ Page ${pageCount}: Retrieved ${contacts.length} contacts (total so far: ${allContacts.length + contacts.length})`);
-
-        // Add to our collection
-        allContacts = allContacts.concat(contacts);
-
-        // Check meta for pagination info
-        if (response.meta) {
-          console.log(`📋 Checking meta for pagination: ${JSON.stringify(response.meta)}`);
-
-          // GHL uses startAfterId for cursor-based pagination
-          if (response.meta.startAfterId) {
-            startAfterId = response.meta.startAfterId;
-            console.log(`🔗 Next page cursor: ${startAfterId}`);
-            hasMore = true;
-          } else if (response.meta.nextStartAfterId) {
-            startAfterId = response.meta.nextStartAfterId;
-            console.log(`🔗 Next page cursor: ${startAfterId}`);
-            hasMore = true;
-          } else {
-            console.log(`✅ No pagination cursor in meta, this is the last page`);
-            hasMore = false;
-          }
-        } else if (contacts.length < currentLimit) {
-          // Fallback: If no meta and got fewer contacts than requested, assume last page
-          console.log(`✅ Received ${contacts.length} < ${currentLimit}, no more pages`);
-          hasMore = false;
-        } else {
-          // No meta and got full page - might be more but we can't paginate
-          console.log(`⚠️ No meta object, cannot determine if more pages exist`);
-          hasMore = false;
-        }
-      }
-
-      console.log(`📊 Total contacts retrieved from API: ${allContacts.length} (from ${pageCount} pages)`);
-
-      // Debug: Log contact structure
-      if (allContacts.length > 0) {
-        console.log('🔍 First contact keys:', Object.keys(allContacts[0]).join(','));
-        console.log('🔍 First contact sample:', JSON.stringify(allContacts[0]).substring(0, 300));
-      }
-
-      // If we have results, FILTER and sort them
-      if (allContacts.length > 0 && query) {
-        const lowerQuery = query.toLowerCase();
-
-        console.log(`🔍 Filtering ${allContacts.length} contacts for query: "${query}"`);
-
-        // FIRST: Filter to only include contacts that actually match the query
-        allContacts = allContacts.filter(c => {
-          const name = (c.contactName || c.name || `${c.firstName || ''} ${c.lastName || ''}`).toLowerCase();
-          const email = (c.email || '').toLowerCase();
-          const phone = (c.phone || '').toLowerCase();
-          const company = (c.companyName || '').toLowerCase();
-
-          // Contact must match query in name, email, phone, or company
-          const matches = name.includes(lowerQuery) ||
-                         email.includes(lowerQuery) ||
-                         phone.includes(lowerQuery) ||
-                         company.includes(lowerQuery);
-
-          return matches;
-        });
-
-        console.log(`✅ Filtered down to ${allContacts.length} matching contacts`);
-
-        // SECOND: Sort the filtered results: exact matches first, then starts with, then contains
-        allContacts.sort((a, b) => {
-          const aName = (a.contactName || a.name || `${a.firstName || ''} ${a.lastName || ''}`).toLowerCase();
-          const bName = (b.contactName || b.name || `${b.firstName || ''} ${b.lastName || ''}`).toLowerCase();
-          const aEmail = (a.email || '').toLowerCase();
-          const bEmail = (b.email || '').toLowerCase();
-
-          // Check if exact match
-          const aExact = aName === lowerQuery || aEmail === lowerQuery;
-          const bExact = bName === lowerQuery || bEmail === lowerQuery;
-          if (aExact && !bExact) return -1;
-          if (!aExact && bExact) return 1;
-
-          // Check if starts with
-          const aStarts = aName.startsWith(lowerQuery) || aEmail.startsWith(lowerQuery);
-          const bStarts = bName.startsWith(lowerQuery) || bEmail.startsWith(lowerQuery);
-          if (aStarts && !bStarts) return -1;
-          if (!aStarts && bStarts) return 1;
-
-          return 0;
-        });
-      }
-
-      // Enforce limit strictly
-      console.log(`✅ Returning ${Math.min(allContacts.length, limit)} contacts (limit: ${limit})`);
-      return allContacts.slice(0, limit);
-    } catch (error) {
-      // Fallback to REST API with pagination
-      console.log('⚠️ MCP failed, falling back to REST API with pagination');
-
-      let allContacts = [];
-      let nextPageUrl = null;
-      let pageCount = 0;
-      const maxPages = Math.ceil(limit / 100);
-
-      try {
-        let endpoint = `/contacts/?locationId=${this.locationId}&query=${encodeURIComponent(query)}&limit=100`;
-
-        do {
-          pageCount++;
-          console.log(`📄 REST API: Fetching page ${pageCount}...`);
-
-          let response;
-          if (nextPageUrl) {
-            // Use full nextPageUrl
-            const urlResponse = await axios({
-              method: 'GET',
-              url: nextPageUrl,
-              headers: {
-                'Authorization': `Bearer ${this.apiKey}`,
-                'Content-Type': 'application/json',
-                'Version': '2021-07-28'
-              }
-            });
-            response = urlResponse.data;
-          } else {
-            // First page
-            response = await this.callAPI(endpoint);
-          }
-
-          const contacts = response.contacts || [];
-          allContacts = allContacts.concat(contacts);
-          console.log(`✅ REST API Page ${pageCount}: ${contacts.length} contacts (total: ${allContacts.length})`);
-
-          nextPageUrl = response.nextPageUrl || response.meta?.nextPageUrl || null;
-
-          if (allContacts.length >= limit || !nextPageUrl || pageCount >= maxPages) {
-            break;
-          }
-        } while (nextPageUrl);
-
-        console.log(`📊 REST API: Retrieved ${allContacts.length} contacts from ${pageCount} pages`);
-
-      } catch (apiError) {
-        console.error('❌ REST API pagination failed:', apiError.message);
-        console.error('❌ Returning empty array as final fallback');
+      if (!Array.isArray(contacts)) {
+        console.log(`⚠️ Response is not an array, returning empty`);
         return [];
       }
 
-      // Apply same filtering/sorting to REST API results
-      if (allContacts.length > 0 && query) {
-        const lowerQuery = query.toLowerCase();
+      console.log(`✅ Retrieved ${contacts.length} contacts (limited to ${currentLimit}, no pagination)`);
 
-        // FIRST: Filter to only include contacts that actually match
-        allContacts = allContacts.filter(c => {
-          const name = (c.contactName || c.name || `${c.firstName || ''} ${c.lastName || ''}`).toLowerCase();
-          const email = (c.email || '').toLowerCase();
-          const phone = (c.phone || '').toLowerCase();
-          const company = (c.companyName || '').toLowerCase();
-
-          return name.includes(lowerQuery) ||
-                 email.includes(lowerQuery) ||
-                 phone.includes(lowerQuery) ||
-                 company.includes(lowerQuery);
-        });
-
-        // SECOND: Sort filtered results
-        allContacts.sort((a, b) => {
-          const aName = (a.contactName || a.name || `${a.firstName || ''} ${a.lastName || ''}`).toLowerCase();
-          const bName = (b.contactName || b.name || `${b.firstName || ''} ${b.lastName || ''}`).toLowerCase();
-          const aEmail = (a.email || '').toLowerCase();
-          const bEmail = (b.email || '').toLowerCase();
-
-          const aExact = aName === lowerQuery || aEmail === lowerQuery;
-          const bExact = bName === lowerQuery || bEmail === lowerQuery;
-          if (aExact && !bExact) return -1;
-          if (!aExact && bExact) return 1;
-
-          const aStarts = aName.startsWith(lowerQuery) || aEmail.startsWith(lowerQuery);
-          const bStarts = bName.startsWith(lowerQuery) || bEmail.startsWith(lowerQuery);
-          if (aStarts && !bStarts) return -1;
-          if (!aStarts && bStarts) return 1;
-
-          return 0;
-        });
-      }
-
-      return allContacts.slice(0, limit);
+      // Return ONLY the first page - no pagination to avoid duplicates
+      return contacts.slice(0, currentLimit);
+    } catch (error) {
+      console.error('❌ MCP search error:', error);
+      return [];
     }
   }
 
