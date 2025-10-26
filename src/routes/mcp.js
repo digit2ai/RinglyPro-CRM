@@ -423,11 +423,16 @@ async function gatherCreateContactInfo(sessionId, message, session) {
   const state = getConversationState(sessionId);
   const msg = message.trim();
 
-  // Check what fields we still need
+  // Step 1: Get name
   if (!state.pendingFields.firstName && !state.pendingFields.fullName) {
     if (msg) {
       // Store the name
       state.pendingFields.firstName = msg;
+      // Ask for phone next
+      return {
+        success: true,
+        response: QUESTIONS.create_contact_phone
+      };
     } else {
       return {
         success: true,
@@ -436,9 +441,15 @@ async function gatherCreateContactInfo(sessionId, message, session) {
     }
   }
 
+  // Step 2: Get phone
   if (!state.pendingFields.phone) {
     if (msg && /\d{10}/.test(msg.replace(/\D/g, ''))) {
       state.pendingFields.phone = msg.replace(/\D/g, '');
+      // Ask for email next
+      return {
+        success: true,
+        response: QUESTIONS.create_contact_email + "\n\nOr reply 'skip' to create without email."
+      };
     } else if (msg) {
       return {
         success: true,
@@ -452,13 +463,28 @@ async function gatherCreateContactInfo(sessionId, message, session) {
     }
   }
 
+  // Step 3: Get email (or skip)
   if (!state.pendingFields.email) {
-    if (msg && /@/.test(msg)) {
+    if (msg && msg.toLowerCase() === 'skip') {
+      // User wants to skip email
+      // Move to confirmation
+      updateConversationState(sessionId, { step: 'confirm' });
+      return {
+        success: true,
+        response: QUESTIONS.confirm_create(state.pendingFields)
+      };
+    } else if (msg && /@/.test(msg)) {
       state.pendingFields.email = msg;
+      // Move to confirmation
+      updateConversationState(sessionId, { step: 'confirm' });
+      return {
+        success: true,
+        response: QUESTIONS.confirm_create(state.pendingFields)
+      };
     } else if (msg) {
       return {
         success: true,
-        response: "That doesn't look like a valid email. " + QUESTIONS.create_contact_email
+        response: "That doesn't look like a valid email. " + QUESTIONS.create_contact_email + "\n\nOr reply 'skip' to create without email."
       };
     } else {
       return {
