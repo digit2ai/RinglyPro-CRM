@@ -16,39 +16,25 @@ const COMMAND_TEMPLATES = {
         icon: '💡',
         description: 'Learn how to use the conversational agent for contacts',
         fields: [],
-        buildCommand: () => `💡 **How to Manage Contacts**
+        isHelpOnly: true, // Flag to indicate this is informational only
+        buildCommand: () => `💡 **How to Use the Conversational Agent**
 
-Just type what you want to do in plain language, and I'll guide you through the steps:
+Instead of filling forms, just TYPE what you want to do in the chat box below!
 
-**Create a Contact:**
-Type: "create contact"
-→ I'll ask for name, phone, and email
+**Examples:**
+• Type: "create contact" → I'll ask for details
+• Type: "update contact" → I'll ask which one
+• Type: "add tag" → I'll guide you
+• Type: "send sms" → I'll help you
+• Type: "search contacts John" → I'll find them
 
-**Update a Contact:**
-Type: "update contact"
-→ I'll ask which contact and what to update
+**Tips:**
+✓ Just type naturally - no forms needed!
+✓ I'll ask questions to get what I need
+✓ Type "cancel" anytime to stop
+✓ I'll confirm before making changes
 
-**Add/Remove Tags:**
-Type: "add tag" or "remove tag"
-→ I'll ask which contact and tag name
-
-**Send SMS/Email:**
-Type: "send sms" or "send email"
-→ I'll ask which contact and message
-
-**Search Contacts:**
-Type: "search contacts John" or "find john@example.com"
-→ I'll show matching contacts
-
-**Cancel Anytime:**
-Type "cancel" at any step to stop
-
-Examples:
-• "create contact"
-• "update contact"
-• "add tag to contact"
-• "send sms"
-• "search contacts john@example.com"`
+**Try it now:** Type "create contact" in the chat box below! ⬇️`
       }
     ]
   },

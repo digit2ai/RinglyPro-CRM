@@ -142,6 +142,22 @@ class CommandFormManager {
     // Close form
     this.closeForm();
 
+    // If this is a help-only command, just display it in chat as info
+    // Don't send it to the server for processing
+    if (this.currentForm.isHelpOnly) {
+      console.log('ℹ️ Displaying help message (not sending to server)');
+
+      // Add help message to chat as an assistant message
+      const chatMessages = document.getElementById('chatMessages');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message assistant';
+      messageDiv.innerHTML = commandString.replace(/\n/g, '<br>').replace(/\*\*/g, '<strong>').replace(/\*\*/g, '</strong>');
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      return; // Don't send to server
+    }
+
     // Execute command by setting it in the input and triggering send
     document.getElementById('messageInput').value = commandString;
     sendMessage();
