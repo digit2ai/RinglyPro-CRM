@@ -1,10 +1,12 @@
 // Service Worker for RinglyPro AI Copilot PWA
-const CACHE_NAME = 'ringlypro-copilot-v1';
+const CACHE_NAME = 'ringlypro-copilot-v2'; // Updated to v2 to force cache refresh
 const urlsToCache = [
   '/mcp-copilot/',
   '/mcp-copilot/index.html',
   '/mcp-copilot/styles.css',
   '/mcp-copilot/copilot.js',
+  '/mcp-copilot/command-templates.js',
+  '/mcp-copilot/command-form.js',
   'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png'
 ];
 
