@@ -165,8 +165,117 @@ class GoHighLevelMCPProxy {
     }
   }
 
+  // REST API method with proper pagination (using nextPageUrl)
+  async searchContactsViaREST(query, limit = 1000) {
+    console.log(`🌐 searchContactsViaREST called with query: "${query}", limit: ${limit}`);
+
+    let allContacts = [];
+    let nextPageUrl = null;
+    let pageCount = 0;
+    const maxPages = Math.ceil(limit / 100);
+
+    try {
+      // Build initial endpoint
+      let endpoint = `/contacts/?limit=100`; // GHL max per page
+      if (query) {
+        endpoint += `&query=${encodeURIComponent(query)}`;
+      }
+
+      do {
+        pageCount++;
+        console.log(`📄 REST API: Fetching page ${pageCount}...`);
+
+        let response;
+        if (nextPageUrl) {
+          // Use full nextPageUrl
+          console.log(`🔗 Using nextPageUrl: ${nextPageUrl.substring(0, 100)}...`);
+          const urlResponse = await axios({
+            method: 'GET',
+            url: nextPageUrl,
+            headers: {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+              'Version': '2021-07-28'
+            }
+          });
+          response = urlResponse.data;
+        } else {
+          // First page
+          response = await this.callAPI(endpoint);
+        }
+
+        const contacts = response.contacts || [];
+        allContacts = allContacts.concat(contacts);
+        console.log(`✅ REST API Page ${pageCount}: ${contacts.length} contacts (total: ${allContacts.length})`);
+
+        // Check for next page URL
+        nextPageUrl = response.meta?.nextPageUrl || null;
+        console.log(`🔗 Next page URL: ${nextPageUrl ? 'Found' : 'None'}`);
+
+        if (allContacts.length >= limit || !nextPageUrl || pageCount >= maxPages) {
+          break;
+        }
+      } while (nextPageUrl);
+
+      console.log(`📊 REST API: Retrieved ${allContacts.length} contacts from ${pageCount} pages`);
+
+      // Apply filtering and sorting if query is provided
+      if (query && allContacts.length > 0) {
+        const lowerQuery = query.toLowerCase();
+
+        // Filter
+        allContacts = allContacts.filter(c => {
+          const name = (c.contactName || c.name || `${c.firstName || ''} ${c.lastName || ''}`).toLowerCase();
+          const email = (c.email || '').toLowerCase();
+          const phone = (c.phone || '').toLowerCase();
+          const company = (c.companyName || '').toLowerCase();
+
+          return name.includes(lowerQuery) ||
+                 email.includes(lowerQuery) ||
+                 phone.includes(lowerQuery) ||
+                 company.includes(lowerQuery);
+        });
+
+        // Sort: exact matches first, then starts with, then contains
+        allContacts.sort((a, b) => {
+          const aName = (a.contactName || a.name || `${a.firstName || ''} ${a.lastName || ''}`).toLowerCase();
+          const bName = (b.contactName || b.name || `${b.firstName || ''} ${b.lastName || ''}`).toLowerCase();
+          const aEmail = (a.email || '').toLowerCase();
+          const bEmail = (b.email || '').toLowerCase();
+
+          const aExact = aName === lowerQuery || aEmail === lowerQuery;
+          const bExact = bName === lowerQuery || bEmail === lowerQuery;
+          if (aExact && !bExact) return -1;
+          if (!aExact && bExact) return 1;
+
+          const aStarts = aName.startsWith(lowerQuery) || aEmail.startsWith(lowerQuery);
+          const bStarts = bName.startsWith(lowerQuery) || bEmail.startsWith(lowerQuery);
+          if (aStarts && !bStarts) return -1;
+          if (!aStarts && bStarts) return 1;
+
+          return 0;
+        });
+
+        console.log(`✅ Filtered and sorted to ${allContacts.length} matching contacts`);
+      }
+
+      return allContacts.slice(0, limit);
+
+    } catch (error) {
+      console.error('❌ REST API searchContacts failed:', error.message);
+      throw error;
+    }
+  }
+
   // MCP Protocol Methods (using official GHL MCP server)
   async searchContacts(query, limit = 1000) {
+    // TEMPORARY: Skip MCP for large queries and use REST API with proper pagination
+    // MCP doesn't seem to support pagination properly
+    if (limit > 100 || !query) {
+      console.log(`🔄 Using REST API for large query (limit: ${limit}, query: "${query}")`);
+      return await this.searchContactsViaREST(query, limit);
+    }
+
     try {
       console.log(`🔍 searchContacts called with query: "${query}", limit: ${limit}`);
 
