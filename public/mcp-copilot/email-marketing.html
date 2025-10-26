@@ -800,8 +800,9 @@
         console.log('📋 Search params:', window.location.search);
 
         if (!clientId) {
-            console.error('❌ No client_id provided in URL');
-            showAlert('error', 'Client ID missing. Please access from MCP Copilot.');
+            // Use default client_id if not provided
+            clientId = '15'; // Default client ID
+            console.log('⚠️ No client_id provided, using default:', clientId);
         } else {
             console.log('✅ Client ID loaded:', clientId);
         }
