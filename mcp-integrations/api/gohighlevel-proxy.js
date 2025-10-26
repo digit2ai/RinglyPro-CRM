@@ -263,21 +263,31 @@ class GoHighLevelMCPProxy {
 
     } catch (error) {
       console.error('❌ REST API searchContacts failed:', error.message);
-      throw error;
+      console.error('❌ Full error:', error.stack);
+      console.error('❌ Returning empty array');
+      return [];
     }
   }
 
   // MCP Protocol Methods (using official GHL MCP server)
   async searchContacts(query, limit = 1000) {
+    console.log(`🔍 searchContacts called with query: "${query}", limit: ${limit}`);
+
     // TEMPORARY: Skip MCP for large queries and use REST API with proper pagination
     // MCP doesn't seem to support pagination properly
     if (limit > 100 || !query) {
       console.log(`🔄 Using REST API for large query (limit: ${limit}, query: "${query}")`);
-      return await this.searchContactsViaREST(query, limit);
+      try {
+        return await this.searchContactsViaREST(query, limit);
+      } catch (restError) {
+        console.error('❌ REST API search failed:', restError.message);
+        console.error('❌ Returning empty array');
+        return [];
+      }
     }
 
     try {
-      console.log(`🔍 searchContacts called with query: "${query}", limit: ${limit}`);
+      console.log(`🔍 Using MCP for search`);
 
       // Implement pagination to get ALL contacts
       let allContacts = [];
@@ -459,7 +469,8 @@ class GoHighLevelMCPProxy {
 
       } catch (apiError) {
         console.error('❌ REST API pagination failed:', apiError.message);
-        throw apiError;
+        console.error('❌ Returning empty array as final fallback');
+        return [];
       }
 
       // Apply same filtering/sorting to REST API results

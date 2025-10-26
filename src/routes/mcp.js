@@ -1650,8 +1650,11 @@ router.post('/copilot/chat', async (req, res) => {
 
       if (query) {
         console.log('🔍 Searching contacts with query:', query);
+        console.log('🔍 Session ID:', req.body.sessionId);
         try {
           data = await session.proxy.searchContacts(query);
+
+          console.log(`📊 Search returned ${data?.length || 0} contacts`);
 
           if (data && data.length > 0) {
             response = `🔍 Found ${data.length} contact${data.length > 1 ? 's' : ''} matching "${query}":\n\n`;
@@ -1660,8 +1663,15 @@ router.post('/copilot/chat', async (req, res) => {
             response = `No contacts found matching "${query}".\n\n💡 Try:\n• Using a different search term\n• Searching by email or phone number\n• Using "list contacts" to see all contacts`;
           }
         } catch (searchError) {
-          console.error('❌ Search error:', searchError.message);
-          response = `Sorry, I encountered an error searching for "${query}". Please check your connection and try again.`;
+          console.error('❌ Search error for query "' + query + '":', searchError.message);
+          console.error('❌ Full error stack:', searchError.stack);
+          console.error('❌ Error details:', JSON.stringify({
+            name: searchError.name,
+            message: searchError.message,
+            query: query,
+            sessionId: req.body.sessionId
+          }));
+          response = `Sorry, I encountered an error searching for "${query}". Error: ${searchError.message}\n\nPlease try again or contact support if this persists.`;
         }
       } else {
         response = "Please provide a search term. Example: 'search Manuel' or 'find john@example.com'";
