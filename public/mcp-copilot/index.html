@@ -68,16 +68,11 @@
                 <button onclick="openProspectManager()" style="margin-top: 0.75rem; width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: transform 0.2s, box-shadow 0.2s;">
                     📊 Prospect Manager
                 </button>
-            </div>
 
-            <div class="examples-section">
-                <h3>📋 Quick Commands</h3>
-                <p style="font-size: 0.875rem; color: #bdc3c7; margin-bottom: 1rem; line-height: 1.5;">
-                    Click any command below to open a form and fill in the details.
-                </p>
-                <div id="commandCategories">
-                    <!-- Command buttons will be dynamically generated here -->
-                </div>
+                <!-- CRM Conversational AI Agent Button -->
+                <button onclick="showConversationalAgentHelp()" style="margin-top: 0.75rem; width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: transform 0.2s, box-shadow 0.2s;">
+                    🤖 CRM Conversational AI Agent
+                </button>
             </div>
         </div>
 
@@ -116,14 +111,71 @@
 
     <!-- Initialize Command Form Manager -->
     <script>
+        // Function to show conversational AI agent help in chat
+        function showConversationalAgentHelp() {
+            const chatMessages = document.getElementById('chatMessages');
+            const helpMessage = document.createElement('div');
+            helpMessage.className = 'message assistant';
+            helpMessage.innerHTML = `
+                <strong>🤖 CRM Conversational AI Agent</strong><br><br>
+
+                Welcome! I'm your AI assistant for managing contacts in GoHighLevel.<br>
+                Just type what you want to do, and I'll guide you step-by-step!<br><br>
+
+                <strong>━━━━━━━━━━━━━━━━━━━━━━━━━━━━</strong><br><br>
+
+                <strong>✅ What I Can Do:</strong><br><br>
+
+                <strong>✅ Create Contact</strong> - Fully working!<br>
+                &nbsp;&nbsp;&nbsp;Type: <em>"create contact"</em><br>
+                &nbsp;&nbsp;&nbsp;→ I'll ask for: name, phone, email<br>
+                &nbsp;&nbsp;&nbsp;→ You confirm, I create it!<br><br>
+
+                <strong>✅ Search Contacts</strong> - No more duplicates!<br>
+                &nbsp;&nbsp;&nbsp;Type: <em>"find John"</em> or <em>"search marcial@digit2ai.com"</em><br>
+                &nbsp;&nbsp;&nbsp;→ I'll show matching contacts<br><br>
+
+                <strong>✅ Update Contact</strong> - Ready to use!<br>
+                &nbsp;&nbsp;&nbsp;Type: <em>"update contact"</em><br>
+                &nbsp;&nbsp;&nbsp;→ I'll ask: which contact? what field? new value?<br>
+                &nbsp;&nbsp;&nbsp;→ You confirm, I update it!<br><br>
+
+                <strong>✅ Send SMS</strong> - Ready to use!<br>
+                &nbsp;&nbsp;&nbsp;Type: <em>"send sms"</em><br>
+                &nbsp;&nbsp;&nbsp;→ I'll ask: which contact? what message?<br>
+                &nbsp;&nbsp;&nbsp;→ You confirm, I send it!<br><br>
+
+                <strong>✅ Send Email</strong> - Ready to use!<br>
+                &nbsp;&nbsp;&nbsp;Type: <em>"send email"</em><br>
+                &nbsp;&nbsp;&nbsp;→ I'll ask: which contact? subject? message?<br>
+                &nbsp;&nbsp;&nbsp;→ You confirm, I send it!<br><br>
+
+                <strong>✅ Add/Remove Tags</strong> - Ready to use!<br>
+                &nbsp;&nbsp;&nbsp;Type: <em>"add tag"</em> or <em>"remove tag"</em><br>
+                &nbsp;&nbsp;&nbsp;→ I'll ask: which contact? which tag?<br>
+                &nbsp;&nbsp;&nbsp;→ You confirm, I do it!<br><br>
+
+                <strong>━━━━━━━━━━━━━━━━━━━━━━━━━━━━</strong><br><br>
+
+                <strong>💡 Quick Tips:</strong><br>
+                • Just type naturally - I'll guide you!<br>
+                • I'll ask questions to get what I need<br>
+                • Type "cancel" anytime to stop<br>
+                • I always confirm before making changes<br><br>
+
+                <strong>👉 Ready? Try: "create contact"</strong>
+            `;
+            chatMessages.appendChild(helpMessage);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Focus the input box
+            document.getElementById('messageInput').focus();
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            // Wait for commandFormManager to be initialized
-            setTimeout(() => {
-                if (typeof commandFormManager !== 'undefined') {
-                    commandFormManager.renderCategories('commandCategories');
-                    console.log('✅ Command form system initialized');
-                }
-            }, 100);
+            // Don't render command categories anymore since we removed Quick Commands section
+            // The command-templates.js is still loaded for potential future use
+            console.log('✅ Conversational AI Agent ready');
         });
     </script>
 
