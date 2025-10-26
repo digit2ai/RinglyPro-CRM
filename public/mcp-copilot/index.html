@@ -2,329 +2,435 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="description" content="AI-powered CRM assistant for HubSpot and GoHighLevel">
-    <meta name="theme-color" content="#34495e">
-
-    <!-- PWA Meta Tags -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="description" content="RinglyPro AI Copilot - CRM Assistant">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="AI Copilot">
 
-    <!-- Icons -->
+    <title>RinglyPro AI Copilot</title>
+
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png">
     <link rel="apple-touch-icon" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png">
 
-    <title>RinglyPro AI Copilot</title>
-    <link rel="stylesheet" href="styles.css">
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
     <link rel="stylesheet" href="business-collector-form.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f3f4f6;
+            color: #111827;
+            line-height: 1.5;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-content {
+            padding: 1rem;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-top h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-logo {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 0.5rem;
+        }
+
+        .back-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: #dc2626;
+        }
+
+        /* Connection Status Card */
+        .connection-card {
+            background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+            border: 2px solid #3b82f6;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .connection-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .status-dot {
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-dot.active {
+            background: #10b981;
+        }
+
+        .status-dot.inactive {
+            background: #ef4444;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .connection-text h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.125rem;
+        }
+
+        .connection-text p {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            padding: 1rem;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .quick-actions h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            color: white;
+            text-align: center;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-copilot {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            grid-column: span 2;
+        }
+
+        .btn-social {
+            background: linear-gradient(135deg, #f857a6 0%, #ff5858 100%);
+        }
+
+        .btn-email {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn-business {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .btn-call {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-prospects {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            grid-column: span 2;
+        }
+
+        /* Chat Container */
+        .chat-section {
+            padding: 1rem;
+            background: white;
+        }
+
+        .chat-section h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+
+        .chat-messages {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .message.user {
+            background: #3b82f6;
+            color: white;
+            margin-left: 20%;
+            text-align: right;
+        }
+
+        .message.assistant {
+            background: white;
+            border: 1px solid #e5e7eb;
+            color: #111827;
+            margin-right: 20%;
+        }
+
+        .message.system {
+            background: #fffbeb;
+            border: 1px solid #fbbf24;
+            color: #92400e;
+            font-size: 0.875rem;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input-container input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input-container input:focus {
+            border-color: #3b82f6;
+        }
+
+        .chat-input-container button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .chat-input-container button:hover {
+            background: #2563eb;
+        }
+
+        .chat-input-container button:active {
+            transform: scale(0.95);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 640px) {
+            .header-top h1 {
+                font-size: 1rem;
+            }
+
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-copilot,
+            .btn-prospects {
+                grid-column: span 1;
+            }
+
+            .action-btn {
+                padding: 0.875rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="copilot-container">
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro AI Copilot" class="bot-icon">
-                <div class="sidebar-title">
-                    <h2>AI Copilot</h2>
-                    <a href="/" class="back-link">← Back to CRM</a>
-                </div>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-top">
+                <h1>
+                    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" class="header-logo">
+                    AI Copilot
+                </h1>
+                <a href="/" class="back-btn">← Back to CRM</a>
             </div>
 
-            <div class="connection-panel">
-                <h3>GoHighLevel Status</h3>
-                <div id="connectionStatus" style="margin-top: 1rem; padding: 0.75rem; border-radius: 0.5rem; background: #f3f4f6; color: #6b7280; font-size: 0.875rem;">
-                    Not connected
+            <!-- Connection Status -->
+            <div class="connection-card">
+                <div class="connection-status">
+                    <div class="connection-info">
+                        <div id="statusDot" class="status-dot inactive"></div>
+                        <div class="connection-text">
+                            <h3>GoHighLevel</h3>
+                            <p id="connectionStatus">Not connected</p>
+                        </div>
+                    </div>
                 </div>
-                <p style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.75rem; line-height: 1.5;">
-                    💡 Configure your API credentials in Settings to auto-connect
-                </p>
-
-                <!-- CRM Conversational AI Agent Button - PRIMARY FEATURE -->
-                <button onclick="showConversationalAgentHelp()" style="margin-top: 1rem; width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: transform 0.2s, box-shadow 0.2s;">
-                    🤖 CRM Conversational AI Agent
-                </button>
-
-                <!-- Social Media Marketing Button -->
-                <button onclick="openSocialMedia()" style="margin-top: 0.75rem; width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #f857a6 0%, #ff5858 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: transform 0.2s, box-shadow 0.2s;">
-                    📱 Social Media Marketing
-                </button>
-
-                <!-- Email Marketing Button -->
-                <button onclick="openEmailMarketing()" style="margin-top: 0.75rem; width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: transform 0.2s, box-shadow 0.2s;">
-                    📧 Email Marketing
-                </button>
-
-                <!-- Business Collector Button -->
-                <button id="businessCollectorBtn" onclick="connectBusinessCollector()" style="margin-top: 0.75rem; width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: transform 0.2s, box-shadow 0.2s;">
-                    🔍 Business Collector
-                </button>
-                <div id="businessCollectorStatus" style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 0.375rem; background: #f3f4f6; color: #6b7280; font-size: 0.75rem; text-align: center; display: none;">
-                    Not connected
-                </div>
-
-                <!-- Ad-Hoc Outbound Call Button -->
-                <button id="adhocCallBtn" onclick="openAdHocCall()" style="margin-top: 0.75rem; width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: transform 0.2s, box-shadow 0.2s;">
-                    📞 Make Outbound Call
-                </button>
-
-                <!-- Prospect Manager Button -->
-                <button onclick="openProspectManager()" style="margin-top: 0.75rem; width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: transform 0.2s, box-shadow 0.2s;">
-                    📊 Prospect Manager
-                </button>
-            </div>
-        </div>
-
-        <div class="chat-container">
-            <div id="chatMessages" class="chat-messages"></div>
-
-            <div class="chat-input">
-                <input
-                    type="text"
-                    id="messageInput"
-                    placeholder="Ask me anything about your CRM..."
-                    onkeypress="handleKeyPress(event)"
-                >
-                <button onclick="sendMessage()">Send</button>
             </div>
         </div>
     </div>
 
-    <!-- Mobile Popup Modal for Tools -->
-    <div class="mobile-popup-modal" id="mobilePopupModal">
-        <div class="mobile-popup-header">
-            <h2 id="mobilePopupTitle">Tool</h2>
-            <button class="mobile-popup-close" onclick="closeMobilePopup()">×</button>
-        </div>
-        <div class="mobile-popup-content" id="mobilePopupContent">
-            <!-- Tool content will be loaded here -->
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <h2>🚀 Quick Actions</h2>
+        <div class="action-grid">
+            <button class="action-btn btn-copilot" onclick="openCopilotChat()">
+                <div class="action-icon">🤖</div>
+                <div>CRM AI Agent</div>
+            </button>
+
+            <button class="action-btn btn-social" onclick="openSocialMedia()">
+                <div class="action-icon">📱</div>
+                <div>Social Media</div>
+            </button>
+
+            <button class="action-btn btn-email" onclick="openEmailMarketing()">
+                <div class="action-icon">📧</div>
+                <div>Email Marketing</div>
+            </button>
+
+            <button class="action-btn btn-business" onclick="connectBusinessCollector()">
+                <div class="action-icon">🔍</div>
+                <div>Business Collector</div>
+            </button>
+
+            <button class="action-btn btn-call" onclick="openAdHocCall()">
+                <div class="action-icon">📞</div>
+                <div>Make Call</div>
+            </button>
+
+            <button class="action-btn btn-prospects" onclick="openProspectManager()">
+                <div class="action-icon">📊</div>
+                <div>Prospect Manager</div>
+            </button>
         </div>
     </div>
 
-    <!-- Command Form System -->
-    <script src="command-templates.js?v=2.0"></script>
-    <script src="command-form.js?v=2.0"></script>
+    <!-- Chat Section -->
+    <div class="chat-section">
+        <h2>💬 Chat with AI Assistant</h2>
+        <div id="chatMessages" class="chat-messages">
+            <div class="message assistant">
+                👋 Welcome! I'm your AI assistant for managing GoHighLevel contacts.<br><br>
+                Try: <em>"create contact"</em>, <em>"find John"</em>, <em>"update contact"</em>, <em>"send sms"</em>
+            </div>
+        </div>
+        <div class="chat-input-container">
+            <input
+                type="text"
+                id="messageInput"
+                placeholder="Type your message here..."
+                onkeypress="handleKeyPress(event)"
+            />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="command-templates.js"></script>
+    <script src="command-form.js"></script>
     <script src="business-collector-form.js"></script>
     <script src="adhoc-call.js"></script>
     <script src="copilot.js"></script>
 
-    <!-- Initialize Command Form Manager -->
     <script>
-        // Function to show conversational AI agent
-        function showConversationalAgentHelp() {
-            // Check if mobile (screen width <= 768px)
-            const isMobile = window.innerWidth <= 768;
-
-            if (isMobile) {
-                // Mobile: Open full-screen modal with chat interface
-                openConversationalAgentModal();
-            } else {
-                // Desktop: Show help message in existing chat panel
-                showHelpInChat();
-            }
-        }
-
-        // Desktop: Show help in chat panel
-        function showHelpInChat() {
-            const chatMessages = document.getElementById('chatMessages');
-            const helpMessage = document.createElement('div');
-            helpMessage.className = 'message assistant';
-            helpMessage.innerHTML = `
-                <strong>🤖 CRM Conversational AI Agent</strong><br><br>
-
-                Welcome! I'm your AI assistant for managing contacts in GoHighLevel.<br>
-                Just type what you want to do, and I'll guide you step-by-step!<br><br>
-
-                <strong>━━━━━━━━━━━━━━━━━━━━━━━━━━━━</strong><br><br>
-
-                <strong>✅ What I Can Do:</strong><br><br>
-
-                <strong>✅ Create Contact</strong> - Fully working!<br>
-                &nbsp;&nbsp;&nbsp;Type: <em>"create contact"</em><br>
-                &nbsp;&nbsp;&nbsp;→ I'll ask for: name, phone, email<br>
-                &nbsp;&nbsp;&nbsp;→ You confirm, I create it!<br><br>
-
-                <strong>✅ Search Contacts</strong> - No more duplicates!<br>
-                &nbsp;&nbsp;&nbsp;Type: <em>"find John"</em> or <em>"search marcial@digit2ai.com"</em><br>
-                &nbsp;&nbsp;&nbsp;→ I'll show matching contacts<br><br>
-
-                <strong>✅ Update Contact</strong> - Ready to use!<br>
-                &nbsp;&nbsp;&nbsp;Type: <em>"update contact"</em><br>
-                &nbsp;&nbsp;&nbsp;→ I'll ask: which contact? what field? new value?<br>
-                &nbsp;&nbsp;&nbsp;→ You confirm, I update it!<br><br>
-
-                <strong>✅ Send SMS</strong> - Ready to use!<br>
-                &nbsp;&nbsp;&nbsp;Type: <em>"send sms"</em><br>
-                &nbsp;&nbsp;&nbsp;→ I'll ask: which contact? what message?<br>
-                &nbsp;&nbsp;&nbsp;→ You confirm, I send it!<br><br>
-
-                <strong>✅ Send Email</strong> - Ready to use!<br>
-                &nbsp;&nbsp;&nbsp;Type: <em>"send email"</em><br>
-                &nbsp;&nbsp;&nbsp;→ I'll ask: which contact? subject? message?<br>
-                &nbsp;&nbsp;&nbsp;→ You confirm, I send it!<br><br>
-
-                <strong>✅ Add/Remove Tags</strong> - Ready to use!<br>
-                &nbsp;&nbsp;&nbsp;Type: <em>"add tag"</em> or <em>"remove tag"</em><br>
-                &nbsp;&nbsp;&nbsp;→ I'll ask: which contact? which tag?<br>
-                &nbsp;&nbsp;&nbsp;→ You confirm, I do it!<br><br>
-
-                <strong>━━━━━━━━━━━━━━━━━━━━━━━━━━━━</strong><br><br>
-
-                <strong>💡 Quick Tips:</strong><br>
-                • Just type naturally - I'll guide you!<br>
-                • I'll ask questions to get what I need<br>
-                • Type "cancel" anytime to stop<br>
-                • I always confirm before making changes<br><br>
-
-                <strong>👉 Ready? Try: "create contact"</strong>
-            `;
-            chatMessages.appendChild(helpMessage);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-
-            // Focus the input box
+        // Open copilot chat (scroll to chat section)
+        function openCopilotChat() {
+            document.querySelector('.chat-section').scrollIntoView({ behavior: 'smooth' });
             document.getElementById('messageInput').focus();
         }
 
-        // Mobile: Open full-screen modal with chat interface
-        function openConversationalAgentModal() {
-            const modal = document.getElementById('mobilePopupModal');
-            const title = document.getElementById('mobilePopupTitle');
-            const content = document.getElementById('mobilePopupContent');
-
-            title.textContent = '🤖 CRM AI Agent';
-
-            // Create full chat interface in modal
-            content.innerHTML = `
-                <div style="display: flex; flex-direction: column; width: 100%; height: 100%; background: #f8f9fa; position: relative;">
-                    <!-- Welcome Message (collapsible) -->
-                    <div id="welcomePanel" style="padding: 1rem; background: white; border-bottom: 2px solid #e5e7eb; overflow-y: auto; max-height: 35vh;">
-                        <div style="font-size: 0.875rem; line-height: 1.5; color: #374151;">
-                            <strong style="font-size: 1rem; color: #10b981;">🤖 Welcome!</strong><br>
-                            I'm your AI assistant for managing contacts.<br><br>
-
-                            <strong style="color: #059669;">✅ Commands:</strong><br>
-                            • <em>"create contact"</em><br>
-                            • <em>"find John"</em><br>
-                            • <em>"update contact"</em><br>
-                            • <em>"send sms"</em> or <em>"send email"</em><br>
-                            • <em>"add tag"</em> or <em>"remove tag"</em><br><br>
-
-                            <strong style="color: #10b981;">👉 Try: "create contact"</strong>
-                        </div>
-                    </div>
-
-                    <!-- Chat Messages Area -->
-                    <div id="modalChatMessages" style="flex: 1; overflow-y: auto; padding: 1rem; background: #f8f9fa; min-height: 0;">
-                        <!-- Messages will appear here -->
-                    </div>
-
-                    <!-- Chat Input (fixed at bottom) -->
-                    <div style="padding: 1rem; background: white; border-top: 2px solid #e5e7eb; flex-shrink: 0;">
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <input
-                                type="text"
-                                id="modalMessageInput"
-                                placeholder="Type your command..."
-                                style="flex: 1; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-size: 16px; max-width: 100%;"
-                                onkeypress="handleModalKeyPress(event)"
-                            />
-                            <button
-                                onclick="sendModalMessage()"
-                                style="padding: 0.75rem 1.25rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem; white-space: nowrap;"
-                            >
-                                Send
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            modal.classList.add('active');
-
-            // Focus the modal input
-            setTimeout(() => {
-                const input = document.getElementById('modalMessageInput');
-                if (input) {
-                    input.focus();
-                }
-            }, 300);
-        }
-
-        // Handle Enter key in modal
-        function handleModalKeyPress(event) {
+        // Handle enter key in chat input
+        function handleKeyPress(event) {
             if (event.key === 'Enter') {
-                sendModalMessage();
+                sendMessage();
             }
         }
-
-        // Send message from modal (reuses existing sendMessage logic)
-        function sendModalMessage() {
-            const input = document.getElementById('modalMessageInput');
-            const message = input.value.trim();
-
-            if (!message) return;
-
-            // Add user message to modal chat
-            const modalMessages = document.getElementById('modalChatMessages');
-            const userMsg = document.createElement('div');
-            userMsg.className = 'message user';
-            userMsg.textContent = message;
-            userMsg.style.cssText = 'background: #3b82f6; color: white; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 0.5rem; max-width: 80%; margin-left: auto; text-align: right;';
-            modalMessages.appendChild(userMsg);
-            modalMessages.scrollTop = modalMessages.scrollHeight;
-
-            input.value = '';
-
-            // Send to backend using existing chat logic
-            // We'll use the main sendMessage function but capture the response
-            const originalInput = document.getElementById('messageInput');
-            const originalValue = originalInput.value;
-            originalInput.value = message;
-
-            // Trigger send and capture response
-            fetch('/api/mcp/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`
-                },
-                body: JSON.stringify({
-                    message: message,
-                    sessionId: sessionStorage.getItem('sessionId') || 'mobile-session-' + Date.now()
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Add assistant response to modal chat
-                const assistantMsg = document.createElement('div');
-                assistantMsg.className = 'message assistant';
-                assistantMsg.innerHTML = data.response.replace(/\n/g, '<br>');
-                assistantMsg.style.cssText = 'background: #f3f4f6; color: #1f2937; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 0.5rem; max-width: 80%;';
-                modalMessages.appendChild(assistantMsg);
-                modalMessages.scrollTop = modalMessages.scrollHeight;
-
-                // Restore original input
-                originalInput.value = originalValue;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                const errorMsg = document.createElement('div');
-                errorMsg.className = 'message error';
-                errorMsg.textContent = 'Error: ' + error.message;
-                errorMsg.style.cssText = 'background: #ef4444; color: white; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 0.5rem;';
-                modalMessages.appendChild(errorMsg);
-                modalMessages.scrollTop = modalMessages.scrollHeight;
-
-                originalInput.value = originalValue;
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            // Don't render command categories anymore since we removed Quick Commands section
-            // The command-templates.js is still loaded for potential future use
-            console.log('✅ Conversational AI Agent ready');
-        });
     </script>
 
     <!-- PWA Service Worker Registration -->
@@ -334,78 +440,11 @@
                 navigator.serviceWorker.register('/mcp-copilot/sw.js')
                     .then((registration) => {
                         console.log('✅ Service Worker registered successfully:', registration.scope);
-
-                        // Check for updates
-                        registration.addEventListener('updatefound', () => {
-                            const newWorker = registration.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    // New version available, prompt user to refresh
-                                    if (confirm('New version available! Reload to update?')) {
-                                        newWorker.postMessage({ action: 'skipWaiting' });
-                                        window.location.reload();
-                                    }
-                                }
-                            });
-                        });
                     })
                     .catch((error) => {
                         console.log('❌ Service Worker registration failed:', error);
                     });
-
-                // Listen for controller change (new SW activated)
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    window.location.reload();
-                });
             });
-        }
-
-        // Install prompt
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-
-            // Show install banner
-            const installBanner = document.createElement('div');
-            installBanner.innerHTML = `
-                <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-                            background: #2c3e50; color: white; padding: 15px 25px;
-                            border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-                            z-index: 1000; max-width: 90%; text-align: center;">
-                    <p style="margin: 0 0 10px 0;">Install AI Copilot app?</p>
-                    <button onclick="installPWA()" style="background: #3498db; color: white; border: none;
-                                                          padding: 10px 20px; border-radius: 5px; cursor: pointer;
-                                                          margin-right: 10px;">Install</button>
-                    <button onclick="this.parentElement.parentElement.remove()"
-                            style="background: #95a5a6; color: white; border: none;
-                                   padding: 10px 20px; border-radius: 5px; cursor: pointer;">Later</button>
-                </div>
-            `;
-            document.body.appendChild(installBanner);
-        });
-
-        window.installPWA = async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                console.log(`User ${outcome} the install prompt`);
-                deferredPrompt = null;
-
-                // Remove banner
-                const banners = document.querySelectorAll('[style*="position: fixed"]');
-                banners.forEach(banner => banner.remove());
-            }
-        };
-
-        // Detect iOS standalone mode
-        if (window.navigator.standalone === true) {
-            console.log('🍎 Running as iOS PWA');
-        }
-
-        // Detect Android standalone mode
-        if (window.matchMedia('(display-mode: standalone)').matches) {
-            console.log('🤖 Running as Android PWA');
         }
     </script>
 </body>
