@@ -1,5 +1,5 @@
 // Service Worker for RinglyPro AI Copilot PWA
-const CACHE_NAME = 'ringlypro-copilot-v8'; // Updated to v3 for help button fix
+const CACHE_NAME = 'ringlypro-copilot-v9'; // Updated for mobile modal chat interface fix
 const urlsToCache = [
   '/mcp-copilot/',
   '/mcp-copilot/index.html',

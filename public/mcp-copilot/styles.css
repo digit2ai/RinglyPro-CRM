@@ -770,8 +770,10 @@ button:hover {
         padding: 0;
         width: 100%;
         height: calc(100vh - 60px);
-        overflow-y: auto;
+        overflow: hidden;
         background: white;
+        display: flex;
+        flex-direction: column;
     }
 
     .mobile-popup-content iframe {

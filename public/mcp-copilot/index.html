@@ -196,59 +196,42 @@
 
             // Create full chat interface in modal
             content.innerHTML = `
-                <div style="display: flex; flex-direction: column; height: 100%; background: #f8f9fa;">
-                    <!-- Welcome Message -->
-                    <div style="padding: 1rem; background: white; border-bottom: 2px solid #e5e7eb; overflow-y: auto; max-height: 40vh;">
-                        <div style="font-size: 0.95rem; line-height: 1.6; color: #374151;">
-                            <strong style="font-size: 1.1rem; color: #10b981;">🤖 Welcome!</strong><br><br>
+                <div style="display: flex; flex-direction: column; width: 100%; height: 100%; background: #f8f9fa; position: relative;">
+                    <!-- Welcome Message (collapsible) -->
+                    <div id="welcomePanel" style="padding: 1rem; background: white; border-bottom: 2px solid #e5e7eb; overflow-y: auto; max-height: 35vh;">
+                        <div style="font-size: 0.875rem; line-height: 1.5; color: #374151;">
+                            <strong style="font-size: 1rem; color: #10b981;">🤖 Welcome!</strong><br>
+                            I'm your AI assistant for managing contacts.<br><br>
 
-                            I'm your AI assistant for managing contacts.<br>
-                            Just type what you want to do below!<br><br>
-
-                            <strong style="color: #059669;">✅ What I Can Do:</strong><br><br>
-
-                            <strong>✅ Create Contact</strong><br>
-                            Type: <em>"create contact"</em><br><br>
-
-                            <strong>✅ Search Contacts</strong><br>
-                            Type: <em>"find John"</em><br><br>
-
-                            <strong>✅ Update Contact</strong><br>
-                            Type: <em>"update contact"</em><br><br>
-
-                            <strong>✅ Send SMS/Email</strong><br>
-                            Type: <em>"send sms"</em> or <em>"send email"</em><br><br>
-
-                            <strong>✅ Add/Remove Tags</strong><br>
-                            Type: <em>"add tag"</em> or <em>"remove tag"</em><br><br>
-
-                            <strong style="color: #059669;">💡 Tips:</strong><br>
-                            • I'll guide you step-by-step<br>
-                            • Type "cancel" anytime to stop<br>
-                            • I confirm before making changes<br><br>
+                            <strong style="color: #059669;">✅ Commands:</strong><br>
+                            • <em>"create contact"</em><br>
+                            • <em>"find John"</em><br>
+                            • <em>"update contact"</em><br>
+                            • <em>"send sms"</em> or <em>"send email"</em><br>
+                            • <em>"add tag"</em> or <em>"remove tag"</em><br><br>
 
                             <strong style="color: #10b981;">👉 Try: "create contact"</strong>
                         </div>
                     </div>
 
                     <!-- Chat Messages Area -->
-                    <div id="modalChatMessages" style="flex: 1; overflow-y: auto; padding: 1rem; background: #f8f9fa;">
+                    <div id="modalChatMessages" style="flex: 1; overflow-y: auto; padding: 1rem; background: #f8f9fa; min-height: 0;">
                         <!-- Messages will appear here -->
                     </div>
 
-                    <!-- Chat Input -->
-                    <div style="padding: 1rem; background: white; border-top: 2px solid #e5e7eb;">
-                        <div style="display: flex; gap: 0.5rem;">
+                    <!-- Chat Input (fixed at bottom) -->
+                    <div style="padding: 1rem; background: white; border-top: 2px solid #e5e7eb; flex-shrink: 0;">
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
                             <input
                                 type="text"
                                 id="modalMessageInput"
-                                placeholder="Type your command here..."
-                                style="flex: 1; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-size: 16px;"
+                                placeholder="Type your command..."
+                                style="flex: 1; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-size: 16px; max-width: 100%;"
                                 onkeypress="handleModalKeyPress(event)"
                             />
                             <button
                                 onclick="sendModalMessage()"
-                                style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem;"
+                                style="padding: 0.75rem 1.25rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem; white-space: nowrap;"
                             >
                                 Send
                             </button>
@@ -261,7 +244,10 @@
 
             // Focus the modal input
             setTimeout(() => {
-                document.getElementById('modalMessageInput').focus();
+                const input = document.getElementById('modalMessageInput');
+                if (input) {
+                    input.focus();
+                }
             }, 300);
         }
 
