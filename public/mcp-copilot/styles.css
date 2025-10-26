@@ -276,18 +276,20 @@ button:hover {
 
     .sidebar {
         width: 100%;
-        height: 100vh; /* Full screen height */
-        max-height: 100vh;
+        height: auto; /* Allow sidebar to size naturally */
+        max-height: 50vh; /* Sidebar takes top half */
         border-right: none;
-        border-bottom: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         font-size: 0.9rem;
         padding-bottom: 20px;
         overflow-y: auto;
     }
 
-    /* Hide the entire chat container on mobile */
+    /* Show chat container on mobile - bottom half of screen */
     .chat-container {
-        display: none !important;
+        display: flex !important;
+        height: 50vh; /* Chat takes bottom half */
+        max-height: 50vh;
     }
 
     .sidebar-header {
@@ -321,10 +323,15 @@ button:hover {
 @media (max-width: 480px) {
     .sidebar {
         width: 100%;
-        height: 100vh; /* Full screen height */
-        max-height: 100vh;
+        height: auto; /* Allow sidebar to size naturally */
+        max-height: 45vh; /* Sidebar takes less space on small phones */
         padding: 12px;
         font-size: 0.85rem;
+    }
+
+    .chat-container {
+        height: 55vh; /* Chat gets more space on small phones */
+        max-height: 55vh;
     }
 
     .sidebar-header {
