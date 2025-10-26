@@ -2,8 +2,6 @@ let sessionId = null;
 let crmType = null;
 // API_BASE is defined globally in index.html
 let currentClientId = null;
-let keepAliveInterval = null;
-let lastActivityTime = Date.now();
 
 // Mobile detection
 function isMobile() {
@@ -123,8 +121,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Open Social Media Marketing Tool
 function openSocialMedia() {
-    refreshConnectionOnFormOpen(); // Keep connection alive
-
     // Build URL with optional params
     let params = [];
     if (currentClientId) params.push(`client_id=${currentClientId}`);
@@ -142,8 +138,6 @@ function openSocialMedia() {
 
 // Open Email Marketing Tool
 function openEmailMarketing() {
-    refreshConnectionOnFormOpen(); // Keep connection alive
-
     // Build URL with optional client_id
     const emailUrl = currentClientId
         ? `${window.location.origin}/mcp-copilot/email-marketing.html?client_id=${currentClientId}`
@@ -159,8 +153,6 @@ function openEmailMarketing() {
 
 // Open Prospect Manager
 function openProspectManager() {
-    refreshConnectionOnFormOpen(); // Keep connection alive
-
     // Build URL with optional client_id
     const prospectUrl = currentClientId
         ? `${window.location.origin}/mcp-copilot/prospect-manager.html?client_id=${currentClientId}`
@@ -284,109 +276,11 @@ async function connectGoHighLevel() {
             crmType = 'gohighlevel';
             updateConnectionStatus('Connected to GoHighLevel', 'success');
             // Silent connection - no chat message
-            startKeepAlive(); // Start keep-alive after successful connection
         } else {
             alert('Failed to connect: ' + data.error);
         }
     } catch (error) {
         alert('Connection error: ' + error.message);
-    }
-}
-
-// Keep-Alive System to prevent API timeouts (critical for multi-tenant)
-function startKeepAlive() {
-    console.log('🔄 Starting keep-alive heartbeat...');
-
-    // Clear any existing interval
-    if (keepAliveInterval) {
-        clearInterval(keepAliveInterval);
-    }
-
-    // Send heartbeat every 30 seconds (configurable)
-    keepAliveInterval = setInterval(async () => {
-        if (!sessionId) {
-            console.log('⏸️ No session, stopping keep-alive');
-            stopKeepAlive();
-            return;
-        }
-
-        // Only send heartbeat if there's been recent activity (within 5 minutes)
-        const timeSinceActivity = Date.now() - lastActivityTime;
-        const fiveMinutes = 5 * 60 * 1000;
-
-        if (timeSinceActivity < fiveMinutes) {
-            await sendKeepAlive();
-        } else {
-            console.log('⏸️ No recent activity, pausing keep-alive');
-        }
-    }, 30000); // 30 seconds
-
-    // Track user activity to optimize keep-alive
-    trackUserActivity();
-}
-
-function stopKeepAlive() {
-    console.log('⏹️ Stopping keep-alive heartbeat');
-    if (keepAliveInterval) {
-        clearInterval(keepAliveInterval);
-        keepAliveInterval = null;
-    }
-}
-
-async function sendKeepAlive() {
-    try {
-        console.log('💓 Sending keep-alive heartbeat...');
-        const response = await fetch(`${API_BASE}/copilot/keep-alive`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId, crmType })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            console.log('✅ Keep-alive successful');
-        } else {
-            console.warn('⚠️ Keep-alive failed:', data.error);
-            // Try to reconnect if session expired
-            if (data.error?.includes('expired') || data.error?.includes('invalid')) {
-                console.log('🔄 Session expired, attempting reconnect...');
-                await reconnectCRM();
-            }
-        }
-    } catch (error) {
-        console.error('❌ Keep-alive error:', error);
-    }
-}
-
-async function reconnectCRM() {
-    console.log('🔄 Auto-reconnecting to CRM...');
-    updateConnectionStatus('Reconnecting...', 'loading');
-
-    if (crmType === 'gohighlevel' && window.ghlCredentials) {
-        await connectGoHighLevel();
-    } else {
-        updateConnectionStatus('Connection lost - please refresh', 'error');
-    }
-}
-
-function trackUserActivity() {
-    // Update last activity time on any user interaction
-    const activityEvents = ['click', 'keypress', 'scroll', 'mousemove', 'touchstart'];
-
-    activityEvents.forEach(event => {
-        document.addEventListener(event, () => {
-            lastActivityTime = Date.now();
-        }, { passive: true });
-    });
-}
-
-// Refresh connection when forms are opened (prevents timeout during long form fills)
-function refreshConnectionOnFormOpen() {
-    console.log('🔄 Refreshing connection for form...');
-    lastActivityTime = Date.now();
-
-    if (sessionId) {
-        sendKeepAlive(); // Immediate heartbeat when form opens
     }
 }
 
