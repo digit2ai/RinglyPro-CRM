@@ -159,38 +159,75 @@ class GoHighLevelMCPProxy {
   }
 
   // MCP Protocol Methods (using official GHL MCP server)
-  async searchContacts(query, limit = 5) {
+  async searchContacts(query, limit = 1000) {
     try {
       console.log(`🔍 searchContacts called with query: "${query}", limit: ${limit}`);
 
-      // Try official MCP protocol first
-      const response = await this.callMCP('contacts_get-contacts', {
-        query: query || '', // Ensure query is never undefined
-        limit
-      });
+      // Implement pagination to get ALL contacts
+      let allContacts = [];
+      let currentLimit = 100; // GHL max per request
+      let skip = 0;
+      let hasMore = true;
+      let pageCount = 0;
+      const maxPages = Math.ceil(limit / currentLimit);
 
-      console.log(`📡 MCP response type:`, typeof response);
-      console.log(`📡 MCP response keys:`, response ? Object.keys(response).join(',') : 'null');
+      console.log(`📊 Will fetch up to ${maxPages} pages to get ${limit} contacts`);
 
-      // Filter results client-side to ensure exact matches appear first
-      let contacts = response.contacts || response || []; // Handle different response formats
+      // Keep fetching until we have enough contacts or no more pages
+      while (hasMore && allContacts.length < limit && pageCount < maxPages) {
+        pageCount++;
+        console.log(`📄 Fetching page ${pageCount} (skip: ${skip}, limit: ${currentLimit})...`);
 
-      console.log(`📊 Total contacts from API: ${Array.isArray(contacts) ? contacts.length : 'not an array'}`);
+        // Try official MCP protocol first
+        const response = await this.callMCP('contacts_get-contacts', {
+          query: query || '', // Ensure query is never undefined
+          limit: currentLimit,
+          skip
+        });
+
+        console.log(`📡 MCP response type:`, typeof response);
+        console.log(`📡 MCP response keys:`, response ? Object.keys(response).join(',') : 'null');
+
+        // Extract contacts from response
+        let contacts = response.contacts || response || []; // Handle different response formats
+
+        if (!Array.isArray(contacts)) {
+          console.log(`⚠️ Response is not an array, breaking pagination`);
+          break;
+        }
+
+        console.log(`✅ Page ${pageCount}: Retrieved ${contacts.length} contacts (total so far: ${allContacts.length + contacts.length})`);
+
+        // Add to our collection
+        allContacts = allContacts.concat(contacts);
+
+        // Check if we should continue
+        if (contacts.length < currentLimit) {
+          // Got fewer contacts than requested, no more pages
+          console.log(`✅ Received ${contacts.length} < ${currentLimit}, no more pages`);
+          hasMore = false;
+        } else {
+          // Move to next page
+          skip += currentLimit;
+        }
+      }
+
+      console.log(`📊 Total contacts retrieved from API: ${allContacts.length} (from ${pageCount} pages)`);
 
       // Debug: Log contact structure
-      if (contacts.length > 0) {
-        console.log('🔍 First contact keys:', Object.keys(contacts[0]).join(','));
-        console.log('🔍 First contact sample:', JSON.stringify(contacts[0]).substring(0, 300));
+      if (allContacts.length > 0) {
+        console.log('🔍 First contact keys:', Object.keys(allContacts[0]).join(','));
+        console.log('🔍 First contact sample:', JSON.stringify(allContacts[0]).substring(0, 300));
       }
 
       // If we have results, FILTER and sort them
-      if (contacts.length > 0 && query) {
+      if (allContacts.length > 0 && query) {
         const lowerQuery = query.toLowerCase();
 
-        console.log(`🔍 Filtering ${contacts.length} contacts for query: "${query}"`);
+        console.log(`🔍 Filtering ${allContacts.length} contacts for query: "${query}"`);
 
         // FIRST: Filter to only include contacts that actually match the query
-        contacts = contacts.filter(c => {
+        allContacts = allContacts.filter(c => {
           const name = (c.contactName || c.name || `${c.firstName || ''} ${c.lastName || ''}`).toLowerCase();
           const email = (c.email || '').toLowerCase();
           const phone = (c.phone || '').toLowerCase();
@@ -205,10 +242,10 @@ class GoHighLevelMCPProxy {
           return matches;
         });
 
-        console.log(`✅ Filtered down to ${contacts.length} matching contacts`);
+        console.log(`✅ Filtered down to ${allContacts.length} matching contacts`);
 
         // SECOND: Sort the filtered results: exact matches first, then starts with, then contains
-        contacts.sort((a, b) => {
+        allContacts.sort((a, b) => {
           const aName = (a.contactName || a.name || `${a.firstName || ''} ${a.lastName || ''}`).toLowerCase();
           const bName = (b.contactName || b.name || `${b.firstName || ''} ${b.lastName || ''}`).toLowerCase();
           const aEmail = (a.email || '').toLowerCase();
@@ -231,21 +268,66 @@ class GoHighLevelMCPProxy {
       }
 
       // Enforce limit strictly
-      return contacts.slice(0, limit);
+      console.log(`✅ Returning ${Math.min(allContacts.length, limit)} contacts (limit: ${limit})`);
+      return allContacts.slice(0, limit);
     } catch (error) {
-      // Fallback to REST API
-      console.log('⚠️ MCP failed, falling back to REST API');
-      const response = await this.callAPI(
-        `/contacts/?locationId=${this.locationId}&query=${encodeURIComponent(query)}&limit=${limit}`
-      );
+      // Fallback to REST API with pagination
+      console.log('⚠️ MCP failed, falling back to REST API with pagination');
+
+      let allContacts = [];
+      let nextPageUrl = null;
+      let pageCount = 0;
+      const maxPages = Math.ceil(limit / 100);
+
+      try {
+        let endpoint = `/contacts/?locationId=${this.locationId}&query=${encodeURIComponent(query)}&limit=100`;
+
+        do {
+          pageCount++;
+          console.log(`📄 REST API: Fetching page ${pageCount}...`);
+
+          let response;
+          if (nextPageUrl) {
+            // Use full nextPageUrl
+            const urlResponse = await axios({
+              method: 'GET',
+              url: nextPageUrl,
+              headers: {
+                'Authorization': `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json',
+                'Version': '2021-07-28'
+              }
+            });
+            response = urlResponse.data;
+          } else {
+            // First page
+            response = await this.callAPI(endpoint);
+          }
+
+          const contacts = response.contacts || [];
+          allContacts = allContacts.concat(contacts);
+          console.log(`✅ REST API Page ${pageCount}: ${contacts.length} contacts (total: ${allContacts.length})`);
+
+          nextPageUrl = response.nextPageUrl || response.meta?.nextPageUrl || null;
+
+          if (allContacts.length >= limit || !nextPageUrl || pageCount >= maxPages) {
+            break;
+          }
+        } while (nextPageUrl);
+
+        console.log(`📊 REST API: Retrieved ${allContacts.length} contacts from ${pageCount} pages`);
+
+      } catch (apiError) {
+        console.error('❌ REST API pagination failed:', apiError.message);
+        throw apiError;
+      }
 
       // Apply same filtering/sorting to REST API results
-      let contacts = response.contacts || [];
-      if (contacts.length > 0 && query) {
+      if (allContacts.length > 0 && query) {
         const lowerQuery = query.toLowerCase();
 
         // FIRST: Filter to only include contacts that actually match
-        contacts = contacts.filter(c => {
+        allContacts = allContacts.filter(c => {
           const name = (c.contactName || c.name || `${c.firstName || ''} ${c.lastName || ''}`).toLowerCase();
           const email = (c.email || '').toLowerCase();
           const phone = (c.phone || '').toLowerCase();
@@ -258,7 +340,7 @@ class GoHighLevelMCPProxy {
         });
 
         // SECOND: Sort filtered results
-        contacts.sort((a, b) => {
+        allContacts.sort((a, b) => {
           const aName = (a.contactName || a.name || `${a.firstName || ''} ${a.lastName || ''}`).toLowerCase();
           const bName = (b.contactName || b.name || `${b.firstName || ''} ${b.lastName || ''}`).toLowerCase();
           const aEmail = (a.email || '').toLowerCase();
@@ -278,7 +360,7 @@ class GoHighLevelMCPProxy {
         });
       }
 
-      return contacts.slice(0, limit);
+      return allContacts.slice(0, limit);
     }
   }
 
