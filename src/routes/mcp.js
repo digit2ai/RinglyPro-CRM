@@ -17,8 +17,752 @@ const { parseNaturalDate, parseDuration, formatFriendlyDate } = require('../util
 
 // Initialize services
 const sessions = new Map();
+const conversationStates = new Map(); // sessionId -> conversation state
 const webhookManager = new WebhookManager();
 const workflowEngine = new WorkflowEngine();
+
+// Conversation State Structure
+// {
+//   intent: null,              // 'create_contact', 'update_contact', 'send_sms', 'send_email', 'add_tag', 'remove_tag', 'search_contacts'
+//   contactIdentifier: null,   // Email/phone/name user provided
+//   candidates: [],            // Multiple matching contacts when search returns multiple
+//   selectedContact: null,     // Contact object after user selects from candidates
+//   pendingFields: {},         // Fields to update/create { firstName: 'John', phone: '555-1234' }
+//   step: 'intent',            // 'intent' → 'identify_contact' → 'gather_info' → 'confirm' → 'execute'
+//   messageBody: null,         // For SMS/Email commands
+//   tags: []                   // For tag operations
+// }
+
+// Helper functions for conversation state management
+function getConversationState(sessionId) {
+  if (!conversationStates.has(sessionId)) {
+    conversationStates.set(sessionId, {
+      intent: null,
+      contactIdentifier: null,
+      candidates: [],
+      selectedContact: null,
+      pendingFields: {},
+      step: 'intent',
+      messageBody: null,
+      tags: []
+    });
+  }
+  return conversationStates.get(sessionId);
+}
+
+function updateConversationState(sessionId, updates) {
+  const state = getConversationState(sessionId);
+  Object.assign(state, updates);
+  conversationStates.set(sessionId, state);
+  console.log('💬 Conversation state updated:', { sessionId, step: state.step, intent: state.intent });
+  return state;
+}
+
+function clearConversationState(sessionId) {
+  conversationStates.delete(sessionId);
+  console.log('🧹 Conversation state cleared:', sessionId);
+}
+
+function isInConversation(sessionId) {
+  const state = conversationStates.get(sessionId);
+  return state && state.step !== 'intent';
+}
+
+// Intent detection - simplified to core actions only
+function detectIntent(message) {
+  const lower = message.toLowerCase().trim();
+
+  // Check for cancel/exit commands
+  if (/^(cancel|exit|quit|stop|nevermind|never mind)$/i.test(lower)) {
+    return { intent: 'cancel', confidence: 'high' };
+  }
+
+  // Create contact - must have explicit "create" keyword
+  if (/(create|add|new)\s+(a\s+)?contact/i.test(lower)) {
+    return { intent: 'create_contact', confidence: 'high' };
+  }
+
+  // Update contact - must have "update" keyword + field indication
+  if (/update/i.test(lower) && /(contact|phone|email|name|address)/i.test(lower)) {
+    return { intent: 'update_contact', confidence: 'high' };
+  }
+
+  // Send SMS - must have "send" + "sms|text|message"
+  if (/send/i.test(lower) && /(sms|text|message)/i.test(lower)) {
+    return { intent: 'send_sms', confidence: 'high' };
+  }
+
+  // Send Email - must have "send" + "email"
+  if (/send/i.test(lower) && /email/i.test(lower)) {
+    return { intent: 'send_email', confidence: 'high' };
+  }
+
+  // Add tag - must have "add" + "tag"
+  if (/add/i.test(lower) && /tag/i.test(lower)) {
+    return { intent: 'add_tag', confidence: 'high' };
+  }
+
+  // Remove tag - must have "remove" + "tag"
+  if (/remove/i.test(lower) && /tag/i.test(lower)) {
+    return { intent: 'remove_tag', confidence: 'high' };
+  }
+
+  // Search contacts - "search" or "find" + contact-related words
+  if (/(search|find)/i.test(lower) && /(contact|person|client|customer)/i.test(lower)) {
+    return { intent: 'search_contacts', confidence: 'high' };
+  }
+
+  return { intent: null, confidence: 'none' };
+}
+
+// Extract common identifiers from message (email, phone, name)
+function extractIdentifiers(message) {
+  const identifiers = {};
+
+  // Email - highest priority (most reliable)
+  const emailMatch = message.match(/([\w.-]+@[\w.-]+\.\w+)/i);
+  if (emailMatch) {
+    identifiers.email = emailMatch[1];
+    identifiers.type = 'email';
+  }
+
+  // Phone number - second priority
+  const phoneMatch = message.match(/(\+?1?\s*\(?[\d]{3}\)?[\s.-]?[\d]{3}[\s.-]?[\d]{4})/);
+  if (phoneMatch) {
+    identifiers.phone = phoneMatch[1].replace(/\D/g, ''); // Clean to digits only
+    if (!identifiers.type) identifiers.type = 'phone';
+  }
+
+  // Name - lowest priority (least reliable)
+  // Look for capitalized words after "contact" or "for"
+  const nameMatch = message.match(/(?:contact|for|to)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/);
+  if (nameMatch && !identifiers.type) {
+    identifiers.name = nameMatch[1];
+    identifiers.type = 'name';
+  }
+
+  return identifiers;
+}
+
+// Conversational Question Templates
+const QUESTIONS = {
+  // Contact identification
+  identify_contact_email: "What's the contact's email address?",
+  identify_contact_phone: "What's the contact's phone number?",
+  identify_contact_name: "What's the contact's name?",
+
+  // Create contact fields
+  create_contact_name: "What's the contact's full name or business name?",
+  create_contact_phone: "What's their phone number?",
+  create_contact_email: "What's their email address?",
+
+  // Update contact fields
+  update_field_name: "What field do you want to update? (phone, email, firstName, lastName, address, etc.)",
+  update_field_value: (field) => `What should the new ${field} be?`,
+
+  // SMS/Email
+  message_body: "What message would you like to send?",
+  email_subject: "What should the email subject be?",
+
+  // Tags
+  tag_name: "What tag would you like to add/remove?",
+
+  // Contact selection
+  select_contact: (contacts) => {
+    let msg = "I found multiple contacts. Which one?\n\n";
+    contacts.forEach((c, idx) => {
+      const name = c.contactName || c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim() || 'Unnamed';
+      const phone = c.phone ? ` | ${c.phone}` : '';
+      const email = c.email ? ` | ${c.email}` : '';
+      msg += `${idx + 1}. ${name}${phone}${email}\n`;
+    });
+    msg += "\nReply with the number (1, 2, 3, etc.) or 'cancel' to stop.";
+    return msg;
+  },
+
+  // Confirmation
+  confirm_create: (fields) => {
+    let msg = "Create this contact?\n\n";
+    Object.keys(fields).forEach(key => {
+      msg += `• ${key}: ${fields[key]}\n`;
+    });
+    msg += "\nReply 'yes' to confirm or 'cancel' to abort.";
+    return msg;
+  },
+
+  confirm_update: (contact, field, value) => {
+    const name = contact.contactName || contact.name || 'this contact';
+    return `Update ${name}'s ${field} to "${value}"?\n\nReply 'yes' to confirm or 'cancel' to abort.`;
+  },
+
+  confirm_send_sms: (contact, message) => {
+    const name = contact.contactName || contact.name || 'this contact';
+    const phone = contact.phone || 'their number';
+    return `Send SMS to ${name} (${phone})?\n\nMessage: "${message}"\n\nReply 'yes' to confirm or 'cancel' to abort.`;
+  },
+
+  confirm_tag: (action, contact, tag) => {
+    const name = contact.contactName || contact.name || 'this contact';
+    return `${action === 'add' ? 'Add' : 'Remove'} tag "${tag}" ${action === 'add' ? 'to' : 'from'} ${name}?\n\nReply 'yes' to confirm or 'cancel' to abort.`;
+  }
+};
+
+// Conversation flow handler - routes to appropriate handler based on state
+async function handleConversation(sessionId, message, session) {
+  const state = getConversationState(sessionId);
+
+  console.log('💬 Handling conversation:', {
+    sessionId,
+    step: state.step,
+    intent: state.intent,
+    message: message.substring(0, 50)
+  });
+
+  // Check for cancel at any step
+  if (/^(cancel|exit|quit|stop|nevermind|never mind)$/i.test(message.trim())) {
+    clearConversationState(sessionId);
+    return {
+      success: true,
+      response: "❌ Cancelled. What else can I help you with?"
+    };
+  }
+
+  // Route based on current step
+  switch (state.step) {
+    case 'intent':
+      return await handleIntentDetection(sessionId, message, session);
+
+    case 'identify_contact':
+      return await handleContactIdentification(sessionId, message, session);
+
+    case 'select_contact':
+      return await handleContactSelection(sessionId, message, session);
+
+    case 'gather_info':
+      return await handleInfoGathering(sessionId, message, session);
+
+    case 'confirm':
+      return await handleConfirmation(sessionId, message, session);
+
+    default:
+      clearConversationState(sessionId);
+      return {
+        success: true,
+        response: "Something went wrong. Let's start over. What would you like to do?"
+      };
+  }
+}
+
+// Step 1: Intent Detection
+async function handleIntentDetection(sessionId, message, session) {
+  const detected = detectIntent(message);
+
+  if (detected.intent === null) {
+    // No clear intent detected
+    return {
+      success: true,
+      response: "I'm not sure what you want to do. Try:\n• Create contact\n• Update contact\n• Search contacts\n• Send SMS\n• Add tag to contact\n• Remove tag from contact"
+    };
+  }
+
+  // Intent detected - initialize conversation
+  const identifiers = extractIdentifiers(message);
+
+  updateConversationState(sessionId, {
+    intent: detected.intent,
+    contactIdentifier: identifiers.email || identifiers.phone || identifiers.name || null
+  });
+
+  // For create_contact, go straight to gathering info
+  if (detected.intent === 'create_contact') {
+    updateConversationState(sessionId, { step: 'gather_info' });
+
+    // If we have some info already, store it
+    if (identifiers.email) {
+      const state = getConversationState(sessionId);
+      state.pendingFields.email = identifiers.email;
+    }
+    if (identifiers.phone) {
+      const state = getConversationState(sessionId);
+      state.pendingFields.phone = identifiers.phone;
+    }
+
+    return {
+      success: true,
+      response: QUESTIONS.create_contact_name
+    };
+  }
+
+  // For other intents, need to identify contact first
+  if (!identifiers.email && !identifiers.phone) {
+    updateConversationState(sessionId, { step: 'identify_contact' });
+    return {
+      success: true,
+      response: QUESTIONS.identify_contact_email
+    };
+  }
+
+  // We have an identifier, try to find the contact
+  return await handleContactIdentification(sessionId, identifiers.email || identifiers.phone, session);
+}
+
+// Step 2: Contact Identification
+async function handleContactIdentification(sessionId, message, session) {
+  const state = getConversationState(sessionId);
+
+  // Extract identifier from message if not already provided
+  const identifiers = typeof message === 'string' ? extractIdentifiers(message) : { email: message, type: 'email' };
+  const query = identifiers.email || identifiers.phone || identifiers.name || message.trim();
+
+  if (!query) {
+    return {
+      success: true,
+      response: "I need an email, phone number, or name to find the contact. What is it?"
+    };
+  }
+
+  // Search for contact (limit to 20 to avoid pagination issues)
+  try {
+    const contacts = await session.proxy.searchContacts(query, 20);
+
+    if (!contacts || contacts.length === 0) {
+      return {
+        success: true,
+        response: `No contact found with "${query}". Would you like to create a new contact instead?\n\nReply 'yes' to create or 'cancel' to stop.`
+      };
+    }
+
+    if (contacts.length === 1) {
+      // Exactly one match - use it
+      updateConversationState(sessionId, {
+        selectedContact: contacts[0],
+        step: 'gather_info'
+      });
+
+      // Route to appropriate next question based on intent
+      return await handleInfoGathering(sessionId, '', session);
+    }
+
+    // Multiple matches - ask user to select
+    updateConversationState(sessionId, {
+      candidates: contacts.slice(0, 20), // Max 20 to display
+      step: 'select_contact'
+    });
+
+    return {
+      success: true,
+      response: QUESTIONS.select_contact(contacts.slice(0, 20))
+    };
+
+  } catch (error) {
+    console.error('❌ Contact search error:', error);
+    clearConversationState(sessionId);
+    return {
+      success: false,
+      response: `Error searching for contact: ${error.message}\n\nPlease try again.`
+    };
+  }
+}
+
+// Step 3: Contact Selection (from multiple candidates)
+async function handleContactSelection(sessionId, message, session) {
+  const state = getConversationState(sessionId);
+  const selection = parseInt(message.trim());
+
+  if (isNaN(selection) || selection < 1 || selection > state.candidates.length) {
+    return {
+      success: true,
+      response: `Please reply with a number between 1 and ${state.candidates.length}, or 'cancel' to stop.`
+    };
+  }
+
+  const selectedContact = state.candidates[selection - 1];
+  updateConversationState(sessionId, {
+    selectedContact,
+    step: 'gather_info'
+  });
+
+  // Route to appropriate next question
+  return await handleInfoGathering(sessionId, '', session);
+}
+
+// Step 4: Info Gathering (collect required fields)
+async function handleInfoGathering(sessionId, message, session) {
+  const state = getConversationState(sessionId);
+
+  // Route based on intent
+  switch (state.intent) {
+    case 'create_contact':
+      return await gatherCreateContactInfo(sessionId, message, session);
+
+    case 'update_contact':
+      return await gatherUpdateContactInfo(sessionId, message, session);
+
+    case 'send_sms':
+      return await gatherSMSInfo(sessionId, message, session);
+
+    case 'send_email':
+      return await gatherEmailInfo(sessionId, message, session);
+
+    case 'add_tag':
+    case 'remove_tag':
+      return await gatherTagInfo(sessionId, message, session);
+
+    default:
+      clearConversationState(sessionId);
+      return {
+        success: true,
+        response: "I'm not sure what to do. Please start over."
+      };
+  }
+}
+
+// Info gathering helpers for each intent type
+async function gatherCreateContactInfo(sessionId, message, session) {
+  const state = getConversationState(sessionId);
+  const msg = message.trim();
+
+  // Check what fields we still need
+  if (!state.pendingFields.firstName && !state.pendingFields.fullName) {
+    if (msg) {
+      // Store the name
+      state.pendingFields.firstName = msg;
+    } else {
+      return {
+        success: true,
+        response: QUESTIONS.create_contact_name
+      };
+    }
+  }
+
+  if (!state.pendingFields.phone) {
+    if (msg && /\d{10}/.test(msg.replace(/\D/g, ''))) {
+      state.pendingFields.phone = msg.replace(/\D/g, '');
+    } else if (msg) {
+      return {
+        success: true,
+        response: "That doesn't look like a valid phone number. " + QUESTIONS.create_contact_phone
+      };
+    } else {
+      return {
+        success: true,
+        response: QUESTIONS.create_contact_phone
+      };
+    }
+  }
+
+  if (!state.pendingFields.email) {
+    if (msg && /@/.test(msg)) {
+      state.pendingFields.email = msg;
+    } else if (msg) {
+      return {
+        success: true,
+        response: "That doesn't look like a valid email. " + QUESTIONS.create_contact_email
+      };
+    } else {
+      return {
+        success: true,
+        response: QUESTIONS.create_contact_email + "\n\nOr reply 'skip' to create without email."
+      };
+    }
+  }
+
+  // All required fields collected - move to confirmation
+  updateConversationState(sessionId, { step: 'confirm' });
+  return {
+    success: true,
+    response: QUESTIONS.confirm_create(state.pendingFields)
+  };
+}
+
+async function gatherUpdateContactInfo(sessionId, message, session) {
+  const state = getConversationState(sessionId);
+  const msg = message.trim();
+
+  // Need to know what field to update
+  if (!state.pendingFields.fieldName) {
+    if (msg) {
+      state.pendingFields.fieldName = msg;
+      return {
+        success: true,
+        response: QUESTIONS.update_field_value(msg)
+      };
+    } else {
+      return {
+        success: true,
+        response: QUESTIONS.update_field_name
+      };
+    }
+  }
+
+  // Need the new value
+  if (!state.pendingFields.fieldValue) {
+    if (msg) {
+      state.pendingFields.fieldValue = msg;
+      // Move to confirmation
+      updateConversationState(sessionId, { step: 'confirm' });
+      return {
+        success: true,
+        response: QUESTIONS.confirm_update(state.selectedContact, state.pendingFields.fieldName, state.pendingFields.fieldValue)
+      };
+    } else {
+      return {
+        success: true,
+        response: QUESTIONS.update_field_value(state.pendingFields.fieldName)
+      };
+    }
+  }
+
+  // Shouldn't reach here
+  updateConversationState(sessionId, { step: 'confirm' });
+  return {
+    success: true,
+    response: QUESTIONS.confirm_update(state.selectedContact, state.pendingFields.fieldName, state.pendingFields.fieldValue)
+  };
+}
+
+async function gatherSMSInfo(sessionId, message, session) {
+  const state = getConversationState(sessionId);
+  const msg = message.trim();
+
+  if (!state.messageBody) {
+    if (msg) {
+      state.messageBody = msg;
+      updateConversationState(sessionId, { step: 'confirm' });
+      return {
+        success: true,
+        response: QUESTIONS.confirm_send_sms(state.selectedContact, state.messageBody)
+      };
+    } else {
+      return {
+        success: true,
+        response: QUESTIONS.message_body
+      };
+    }
+  }
+
+  // Shouldn't reach here
+  updateConversationState(sessionId, { step: 'confirm' });
+  return {
+    success: true,
+    response: QUESTIONS.confirm_send_sms(state.selectedContact, state.messageBody)
+  };
+}
+
+async function gatherEmailInfo(sessionId, message, session) {
+  const state = getConversationState(sessionId);
+  const msg = message.trim();
+
+  // Need subject first
+  if (!state.pendingFields.subject) {
+    if (msg) {
+      state.pendingFields.subject = msg;
+      return {
+        success: true,
+        response: QUESTIONS.message_body
+      };
+    } else {
+      return {
+        success: true,
+        response: QUESTIONS.email_subject
+      };
+    }
+  }
+
+  // Then need body
+  if (!state.messageBody) {
+    if (msg) {
+      state.messageBody = msg;
+      updateConversationState(sessionId, { step: 'confirm' });
+      return {
+        success: true,
+        response: `Send email to ${state.selectedContact.contactName || state.selectedContact.email}?\n\nSubject: "${state.pendingFields.subject}"\nBody: "${state.messageBody}"\n\nReply 'yes' to confirm or 'cancel' to abort.`
+      };
+    } else {
+      return {
+        success: true,
+        response: QUESTIONS.message_body
+      };
+    }
+  }
+
+  // Shouldn't reach here
+  updateConversationState(sessionId, { step: 'confirm' });
+  return {
+    success: true,
+    response: `Send email?\n\nSubject: "${state.pendingFields.subject}"\nBody: "${state.messageBody}"\n\nReply 'yes' to send.`
+  };
+}
+
+async function gatherTagInfo(sessionId, message, session) {
+  const state = getConversationState(sessionId);
+  const msg = message.trim();
+
+  if (state.tags.length === 0) {
+    if (msg) {
+      state.tags.push(msg);
+      updateConversationState(sessionId, { step: 'confirm' });
+      const action = state.intent === 'add_tag' ? 'add' : 'remove';
+      return {
+        success: true,
+        response: QUESTIONS.confirm_tag(action, state.selectedContact, msg)
+      };
+    } else {
+      return {
+        success: true,
+        response: QUESTIONS.tag_name
+      };
+    }
+  }
+
+  // Shouldn't reach here
+  const action = state.intent === 'add_tag' ? 'add' : 'remove';
+  updateConversationState(sessionId, { step: 'confirm' });
+  return {
+    success: true,
+    response: QUESTIONS.confirm_tag(action, state.selectedContact, state.tags[0])
+  };
+}
+
+// Step 5: Confirmation and Execution
+async function handleConfirmation(sessionId, message, session) {
+  const state = getConversationState(sessionId);
+  const msg = message.trim().toLowerCase();
+
+  if (msg !== 'yes' && msg !== 'y' && msg !== 'confirm') {
+    return {
+      success: true,
+      response: "Please reply 'yes' to confirm or 'cancel' to abort."
+    };
+  }
+
+  // User confirmed - execute the action
+  try {
+    let result;
+
+    switch (state.intent) {
+      case 'create_contact':
+        result = await executeCreateContact(session, state);
+        break;
+
+      case 'update_contact':
+        result = await executeUpdateContact(session, state);
+        break;
+
+      case 'send_sms':
+        result = await executeSendSMS(session, state);
+        break;
+
+      case 'send_email':
+        result = await executeSendEmail(session, state);
+        break;
+
+      case 'add_tag':
+        result = await executeAddTag(session, state);
+        break;
+
+      case 'remove_tag':
+        result = await executeRemoveTag(session, state);
+        break;
+
+      default:
+        throw new Error('Unknown intent: ' + state.intent);
+    }
+
+    // Clear conversation state on success
+    clearConversationState(sessionId);
+
+    return {
+      success: true,
+      response: result.response
+    };
+
+  } catch (error) {
+    console.error('❌ Execution error:', error);
+    clearConversationState(sessionId);
+    return {
+      success: false,
+      response: `Error: ${error.message}\n\nPlease try again.`
+    };
+  }
+}
+
+// Execution functions for each intent
+async function executeCreateContact(session, state) {
+  const contactData = {
+    locationId: session.proxy.locationId,
+    ...state.pendingFields
+  };
+
+  const result = await session.proxy.createContact(contactData);
+
+  return {
+    response: `✅ Contact created successfully!\n\nName: ${state.pendingFields.firstName || state.pendingFields.fullName}\nPhone: ${state.pendingFields.phone || 'N/A'}\nEmail: ${state.pendingFields.email || 'N/A'}`
+  };
+}
+
+async function executeUpdateContact(session, state) {
+  const contactId = state.selectedContact.id;
+  const fieldName = state.pendingFields.fieldName;
+  const fieldValue = state.pendingFields.fieldValue;
+
+  const updateData = {
+    [fieldName]: fieldValue
+  };
+
+  await session.proxy.updateContact(contactId, updateData);
+
+  return {
+    response: `✅ Contact updated successfully!\n\nUpdated ${fieldName} to: ${fieldValue}`
+  };
+}
+
+async function executeSendSMS(session, state) {
+  const contactId = state.selectedContact.id;
+  const message = state.messageBody;
+
+  // Call GHL SMS API
+  await session.proxy.sendSMS(contactId, message);
+
+  return {
+    response: `✅ SMS sent to ${state.selectedContact.contactName || state.selectedContact.phone}!\n\nMessage: "${message}"`
+  };
+}
+
+async function executeSendEmail(session, state) {
+  const contactId = state.selectedContact.id;
+  const subject = state.pendingFields.subject;
+  const body = state.messageBody;
+
+  // Call GHL Email API
+  await session.proxy.sendEmail(contactId, subject, body);
+
+  return {
+    response: `✅ Email sent to ${state.selectedContact.contactName || state.selectedContact.email}!\n\nSubject: "${subject}"`
+  };
+}
+
+async function executeAddTag(session, state) {
+  const contactId = state.selectedContact.id;
+  const tag = state.tags[0];
+
+  await session.proxy.addTagToContact(contactId, tag);
+
+  return {
+    response: `✅ Tag "${tag}" added to ${state.selectedContact.contactName || 'contact'}!`
+  };
+}
+
+async function executeRemoveTag(session, state) {
+  const contactId = state.selectedContact.id;
+  const tag = state.tags[0];
+
+  await session.proxy.removeTagFromContact(contactId, tag);
+
+  return {
+    response: `✅ Tag "${tag}" removed from ${state.selectedContact.contactName || 'contact'}!`
+  };
+}
 
 // Health check
 router.get('/health', (req, res) => {
@@ -1002,6 +1746,37 @@ router.post('/copilot/chat', async (req, res) => {
 
     // IMPORTANT: Check SPECIFIC commands FIRST before generic keywords
     // This prevents "book appointment" from matching generic "appointment" handler
+
+    // CONVERSATIONAL AGENT - For GoHighLevel contact operations
+    // This new conversational system asks clarifying questions instead of trying to parse complex natural language
+    if (session.type === 'gohighlevel') {
+      // Check if we're already in a conversation OR if this message matches a contact-related intent
+      const inConversation = isInConversation(sessionId);
+      const detected = detectIntent(message);
+      const isContactIntent = detected.intent && [
+        'create_contact',
+        'update_contact',
+        'send_sms',
+        'send_email',
+        'add_tag',
+        'remove_tag',
+        'search_contacts'
+      ].includes(detected.intent);
+
+      if (inConversation || isContactIntent) {
+        console.log('🎯 Routing to conversational agent:', { inConversation, intent: detected.intent });
+        const result = await handleConversation(sessionId, message, session);
+
+        return res.json({
+          success: result.success !== false,
+          response: result.response,
+          data: result.data || null
+        });
+      }
+
+      // If not a contact intent, fall through to legacy handlers for other GHL features
+      // (appointments, calendars, locations, etc.)
+    }
 
     // BUSINESS COLLECTOR - Handle business collection intents
     if (session.type === 'business-collector') {
