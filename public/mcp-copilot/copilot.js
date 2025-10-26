@@ -408,7 +408,18 @@ function downloadCSV(csvData, filename) {
 
 function updateConnectionStatus(message, status) {
     const statusDiv = document.getElementById('connectionStatus');
+    const statusDot = document.getElementById('statusDot');
+
     statusDiv.textContent = message;
+
+    // Update status dot (red/green indicator)
+    if (status === 'success') {
+        statusDot.classList.remove('inactive');
+        statusDot.classList.add('active');
+    } else {
+        statusDot.classList.remove('active');
+        statusDot.classList.add('inactive');
+    }
 
     // Update styling based on status
     if (status === 'success') {
