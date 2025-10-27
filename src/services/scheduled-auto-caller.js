@@ -38,29 +38,43 @@ class ScheduledAutoCallerService {
    * Check if current time is within business hours (9am-5pm EST, Mon-Fri)
    */
   isBusinessHours() {
-    const now = new Date();
-    const options = { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', weekday: 'short', hour12: false };
-    const estTime = now.toLocaleString('en-US', options);
+    try {
+      const now = new Date();
 
-    // Parse EST time
-    const [weekday, time] = estTime.split(', ');
-    const [hour] = time.split(':').map(Number);
+      // Get EST/EDT time using Intl.DateTimeFormat (more reliable)
+      const estFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        hour: 'numeric',
+        hour12: false,
+        weekday: 'short'
+      });
 
-    // Check if Monday-Friday
-    const validDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-    if (!validDays.includes(weekday)) {
-      logger.debug(`❌ Outside business days: ${weekday}`);
+      const parts = estFormatter.formatToParts(now);
+      const weekday = parts.find(p => p.type === 'weekday')?.value;
+      const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0');
+
+      logger.debug(`🕐 Current time check: ${weekday} ${hour}:00 EST`);
+
+      // Check if Monday-Friday
+      const validDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+      if (!validDays.includes(weekday)) {
+        logger.debug(`❌ Outside business days: ${weekday}`);
+        return false;
+      }
+
+      // Check if 9am-5pm EST (9-16, stops before 5pm)
+      if (hour < 9 || hour >= 17) {
+        logger.debug(`❌ Outside business hours: ${hour}:00 EST`);
+        return false;
+      }
+
+      logger.debug(`✅ Within business hours: ${weekday} ${hour}:00 EST`);
+      return true;
+    } catch (error) {
+      logger.error('❌ Error checking business hours:', error.message);
+      // Default to false if there's an error
       return false;
     }
-
-    // Check if 9am-5pm EST
-    if (hour < 9 || hour >= 17) {
-      logger.debug(`❌ Outside business hours: ${hour}:00 EST`);
-      return false;
-    }
-
-    logger.debug(`✅ Within business hours: ${weekday} ${hour}:00 EST`);
-    return true;
   }
 
   /**

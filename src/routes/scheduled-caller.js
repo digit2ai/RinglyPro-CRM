@@ -16,6 +16,12 @@ router.post('/start', async (req, res) => {
 
     logger.info(`🚀 Starting scheduled auto-caller (clientId: ${clientId || 'all'})`);
 
+    // If already running, stop it first
+    if (scheduledAutoCallerService.isRunning) {
+      logger.info('⏹️ Stopping existing scheduler before starting new one');
+      scheduledAutoCallerService.stop();
+    }
+
     const result = await scheduledAutoCallerService.start(clientId, {
       location,
       category
