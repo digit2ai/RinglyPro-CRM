@@ -220,6 +220,10 @@
         .chat-section {
             padding: 1rem;
             background: white;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 450px);
+            min-height: 400px;
         }
 
         .chat-section h2 {
@@ -227,6 +231,7 @@
             font-weight: 600;
             margin-bottom: 1rem;
             color: #1f2937;
+            flex-shrink: 0;
         }
 
         .chat-messages {
@@ -234,10 +239,10 @@
             border: 1px solid #e5e7eb;
             border-radius: 0.75rem;
             padding: 1rem;
-            min-height: 300px;
-            max-height: 500px;
+            flex: 1;
             overflow-y: auto;
             margin-bottom: 1rem;
+            min-height: 300px;
         }
 
         .message {
@@ -271,20 +276,35 @@
         .chat-input-container {
             display: flex;
             gap: 0.5rem;
+            flex-shrink: 0;
+            background: white;
+            padding: 0.5rem;
+            border-top: 2px solid #e5e7eb;
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
         }
 
         .chat-input-container input {
             flex: 1;
             padding: 0.75rem 1rem;
-            border: 2px solid #e5e7eb;
+            border: 2px solid #3b82f6;
             border-radius: 0.75rem;
             font-size: 1rem;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
         }
 
         .chat-input-container input:focus {
-            border-color: #3b82f6;
+            border-color: #2563eb;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+            transform: scale(1.01);
+        }
+
+        .chat-input-container input::placeholder {
+            color: #9ca3af;
+            font-weight: 500;
         }
 
         .chat-input-container button {
@@ -296,11 +316,14 @@
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
         }
 
         .chat-input-container button:hover {
             background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
         }
 
         .chat-input-container button:active {
@@ -481,11 +504,11 @@
     </script>
 
     <!-- Scripts -->
-    <script src="command-templates.js?v=104"></script>
-    <script src="command-form.js?v=104"></script>
-    <script src="business-collector-form.js?v=104"></script>
-    <script src="adhoc-call.js?v=104"></script>
-    <script src="copilot.js?v=104"></script>
+    <script src="command-templates.js?v=105"></script>
+    <script src="command-form.js?v=105"></script>
+    <script src="business-collector-form.js?v=105"></script>
+    <script src="adhoc-call.js?v=105"></script>
+    <script src="copilot.js?v=105"></script>
 
     <script>
         // Open copilot chat (scroll to chat section)
