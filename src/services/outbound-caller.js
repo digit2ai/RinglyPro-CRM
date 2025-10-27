@@ -335,10 +335,11 @@ class OutboundCallerService {
     // Update database when call is completed
     if (status === 'completed' && log && log.phone) {
       try {
-        // Remove + symbol but keep the full number (including country code if present)
-        // Database stores: "18134776636" (with leading 1)
-        // Twilio sends: "+18134776636"
-        const phoneNumber = log.phone.replace(/^\+/, '');
+        // Twilio webhook sends: "+18134776636"
+        // Database can store EITHER: "8134776636" (10 digits) OR "18134776636" (11 digits)
+        // Try both formats to ensure we find the row
+        const phoneWith1 = log.phone.replace(/^\+/, '');        // "18134776636" (11 digits)
+        const phoneWithout1 = log.phone.replace(/^\+1/, '');    // "8134776636" (10 digits)
 
         // Determine call result based on answeredBy and status
         let callResult = 'completed';
@@ -354,9 +355,9 @@ class OutboundCallerService {
           callResult = 'failed';
         }
 
-        logger.info(`📊 Updating database for phone ${phoneNumber}: status=CALLED, result=${callResult}`);
+        logger.info(`📊 Updating database for phone ${phoneWith1} or ${phoneWithout1}: status=CALLED, result=${callResult}`);
 
-        // Update business_directory table
+        // Update business_directory table - try both phone formats
         const [results, metadata] = await sequelize.query(
           `UPDATE business_directory
            SET call_status = 'CALLED',
@@ -364,17 +365,18 @@ class OutboundCallerService {
                last_called_at = CURRENT_TIMESTAMP,
                call_result = :callResult,
                updated_at = CURRENT_TIMESTAMP
-           WHERE phone_number = :phoneNumber`,
+           WHERE phone_number IN (:phoneWith1, :phoneWithout1)`,
           {
             replacements: {
-              phoneNumber: phoneNumber,
+              phoneWith1: phoneWith1,
+              phoneWithout1: phoneWithout1,
               callResult: callResult
             },
             type: QueryTypes.UPDATE
           }
         );
 
-        logger.info(`✅ Database updated successfully for ${phoneNumber} (${metadata.rowCount} rows affected)`);
+        logger.info(`✅ Database updated successfully for ${phoneWith1}/${phoneWithout1} (${metadata.rowCount} rows affected)`);
 
       } catch (dbError) {
         logger.error(`❌ Failed to update database for call ${callSid}:`, dbError.message);
