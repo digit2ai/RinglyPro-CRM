@@ -269,6 +269,16 @@ async function handleBusinessCollectorSubmit(e) {
 
     const location = city ? `${city}, ${state}` : state;
 
+    // Check if sessionId exists (from copilot.js global scope)
+    const currentSessionId = typeof sessionId !== 'undefined' ? sessionId : null;
+
+    console.log('🔍 Business Collector submit - sessionId:', currentSessionId);
+
+    if (!currentSessionId) {
+        alert('Not connected to CRM. Please ensure you are connected to GoHighLevel first.');
+        return;
+    }
+
     // Show loading
     document.getElementById('bcForm').style.display = 'none';
     document.getElementById('bcLoading').style.display = 'block';
@@ -278,7 +288,7 @@ async function handleBusinessCollectorSubmit(e) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                sessionId,
+                sessionId: currentSessionId,
                 category,
                 geography: location,
                 maxResults

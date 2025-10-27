@@ -1064,8 +1064,16 @@ router.post('/business-collector/collect', async (req, res) => {
   }
 
   const session = sessions.get(sessionId);
-  if (!session || session.type !== 'business-collector') {
-    return res.status(401).json({ success: false, error: 'Invalid session' });
+  if (!session) {
+    console.error(`❌ No session found for sessionId: ${sessionId}`);
+    return res.status(401).json({ success: false, error: 'Invalid session - please reconnect to GoHighLevel' });
+  }
+
+  // Business Collector now works with any valid session (GoHighLevel, HubSpot, etc.)
+  // Create Business Collector proxy on the fly if needed
+  if (!session.businessCollectorProxy) {
+    console.log('📊 Creating Business Collector proxy for session');
+    session.businessCollectorProxy = new BusinessCollectorMCPProxy();
   }
 
   if (!category || !geography) {
@@ -1076,7 +1084,7 @@ router.post('/business-collector/collect', async (req, res) => {
   }
 
   try {
-    const result = await session.proxy.collectBusinesses({
+    const result = await session.businessCollectorProxy.collectBusinesses({
       category,
       geography,
       maxResults: maxResults || 100
@@ -1093,7 +1101,7 @@ router.post('/business-collector/collect', async (req, res) => {
       });
     }
 
-    const displayText = session.proxy.formatForDisplay(result.businesses);
+    const displayText = session.businessCollectorProxy.formatForDisplay(result.businesses);
 
     res.json({
       success: true,
