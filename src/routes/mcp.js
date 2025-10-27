@@ -717,8 +717,10 @@ async function handleConfirmation(sessionId, message, session) {
 // Execution functions for each intent
 async function executeCreateContact(session, state) {
   try {
+    // Don't include locationId - the proxy handles it based on token type
+    // JWT tokens: locationId embedded in token (shouldn't be in body)
+    // PIT tokens: proxy adds locationId to body
     const contactData = {
-      locationId: session.proxy.locationId,
       ...state.pendingFields
     };
 
