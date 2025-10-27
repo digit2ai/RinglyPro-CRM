@@ -716,16 +716,27 @@ async function handleConfirmation(sessionId, message, session) {
 
 // Execution functions for each intent
 async function executeCreateContact(session, state) {
-  const contactData = {
-    locationId: session.proxy.locationId,
-    ...state.pendingFields
-  };
+  try {
+    const contactData = {
+      locationId: session.proxy.locationId,
+      ...state.pendingFields
+    };
 
-  const result = await session.proxy.createContact(contactData);
+    console.log('📝 Creating contact with data:', JSON.stringify(contactData));
 
-  return {
-    response: `✅ Contact created successfully!\n\nName: ${state.pendingFields.firstName || state.pendingFields.fullName}\nPhone: ${state.pendingFields.phone || 'N/A'}\nEmail: ${state.pendingFields.email || 'N/A'}`
-  };
+    const result = await session.proxy.createContact(contactData);
+
+    console.log('✅ Contact created:', result?.contact?.id || 'unknown ID');
+
+    return {
+      response: `✅ Contact created successfully!\n\nName: ${state.pendingFields.firstName || state.pendingFields.fullName}\nPhone: ${state.pendingFields.phone || 'N/A'}\nEmail: ${state.pendingFields.email || 'N/A'}`
+    };
+  } catch (error) {
+    console.error('❌ Create contact error:', error.response?.data || error.message);
+    return {
+      response: `❌ Failed to create contact: ${error.response?.data?.message || error.message}\n\nPlease check the contact information and try again.`
+    };
+  }
 }
 
 async function executeUpdateContact(session, state) {
