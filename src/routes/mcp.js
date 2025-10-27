@@ -444,7 +444,14 @@ async function gatherCreateContactInfo(sessionId, message, session) {
   // Step 2: Get phone
   if (!state.pendingFields.phone) {
     if (msg && /\d{10}/.test(msg.replace(/\D/g, ''))) {
-      state.pendingFields.phone = msg.replace(/\D/g, '');
+      // Normalize phone to E.164 format (+1XXXXXXXXXX) for GoHighLevel API
+      let phone = msg.replace(/\D/g, '');
+      if (phone.length === 10) {
+        phone = `+1${phone}`; // Add US country code
+      } else if (phone.length === 11 && phone.startsWith('1')) {
+        phone = `+${phone}`;
+      }
+      state.pendingFields.phone = phone;
       // Ask for email next
       return {
         success: true,
