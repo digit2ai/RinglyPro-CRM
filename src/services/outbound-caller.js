@@ -335,8 +335,10 @@ class OutboundCallerService {
     // Update database when call is completed
     if (status === 'completed' && log && log.phone) {
       try {
-        // Remove + and country code to match database phone format
-        const phoneNumber = log.phone.replace(/^\+1/, '');
+        // Remove + symbol but keep the full number (including country code if present)
+        // Database stores: "18134776636" (with leading 1)
+        // Twilio sends: "+18134776636"
+        const phoneNumber = log.phone.replace(/^\+/, '');
 
         // Determine call result based on answeredBy and status
         let callResult = 'completed';
@@ -355,7 +357,7 @@ class OutboundCallerService {
         logger.info(`📊 Updating database for phone ${phoneNumber}: status=CALLED, result=${callResult}`);
 
         // Update business_directory table
-        await sequelize.query(
+        const [results, metadata] = await sequelize.query(
           `UPDATE business_directory
            SET call_status = 'CALLED',
                call_attempts = call_attempts + 1,
@@ -372,7 +374,7 @@ class OutboundCallerService {
           }
         );
 
-        logger.info(`✅ Database updated successfully for ${phoneNumber}`);
+        logger.info(`✅ Database updated successfully for ${phoneNumber} (${metadata.rowCount} rows affected)`);
 
       } catch (dbError) {
         logger.error(`❌ Failed to update database for call ${callSid}:`, dbError.message);
