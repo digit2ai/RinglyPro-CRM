@@ -294,8 +294,12 @@ async function sendMessage() {
         return;
     }
 
-    // On mobile, show popup with results
-    if (isMobile()) {
+    // Check if this is a conversational command that needs back-and-forth
+    const isConversational = /(create|add|new|update|send|sms|email|tag).*contact/i.test(message) ||
+                            /create.*contact|send.*sms|send.*email|add.*tag|remove.*tag/i.test(message);
+
+    // On mobile, show popup with results (but NOT for conversational commands)
+    if (isMobile() && !isConversational) {
         showMobileResultsPopup(message);
         input.value = '';
         return;
