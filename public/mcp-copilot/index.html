@@ -511,26 +511,6 @@
         </div>
     </div>
 
-    <!-- Chat Section -->
-    <div class="chat-section">
-        <h2>💬 Chat with AI Assistant</h2>
-        <div id="chatMessages" class="chat-messages">
-            <div class="message assistant">
-                👋 Welcome! I'm your AI assistant for managing GoHighLevel contacts.<br><br>
-                Try: <em>"create contact"</em>, <em>"find John"</em>, <em>"update contact"</em>, <em>"send sms"</em>
-            </div>
-        </div>
-        <div class="chat-input-container">
-            <input
-                type="text"
-                id="messageInput"
-                placeholder="Type your message here..."
-                onkeypress="handleKeyPress(event)"
-            />
-            <button onclick="sendMessage()">Send</button>
-        </div>
-    </div>
-
     <!-- Mobile Popup Modal -->
     <div id="mobilePopupModal" class="mobile-popup-modal">
         <div class="mobile-popup-header">
@@ -547,17 +527,16 @@
     </script>
 
     <!-- Scripts -->
-    <script src="command-templates.js?v=109"></script>
-    <script src="command-form.js?v=109"></script>
-    <script src="business-collector-form.js?v=109"></script>
-    <script src="adhoc-call.js?v=109"></script>
-    <script src="copilot.js?v=109"></script>
+    <script src="command-templates.js?v=110"></script>
+    <script src="command-form.js?v=110"></script>
+    <script src="business-collector-form.js?v=110"></script>
+    <script src="adhoc-call.js?v=110"></script>
+    <script src="copilot.js?v=110"></script>
 
     <script>
-        // Open copilot chat (scroll to chat section)
+        // Open copilot chat in full-screen page
         function openCopilotChat() {
-            document.querySelector('.chat-section').scrollIntoView({ behavior: 'smooth' });
-            document.getElementById('messageInput').focus();
+            window.location.href = '/mcp-copilot/chat.html';
         }
 
         // Handle enter key in chat input
