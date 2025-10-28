@@ -1678,6 +1678,85 @@ router.post('/copilot/chat', async (req, res) => {
   try {
     console.log('🤖 Processing message for session:', sessionId);
 
+    // Check if Claude AI is enabled
+    const useClaudeAI = process.env.ENABLE_CLAUDE_AI === 'true';
+
+    if (useClaudeAI) {
+      console.log('🧠 Using Claude AI for intelligent conversation');
+      try {
+        const claudeConversation = require('../services/claude-conversation');
+
+        // Get pending action from conversation state if exists
+        const conversationState = conversationStates.get(sessionId);
+        const context = conversationState ? { pendingAction: conversationState } : {};
+
+        // Process message with Claude AI
+        const claudeResponse = await claudeConversation.processMessage(sessionId, message, context);
+
+        console.log('🎯 Claude AI response:', claudeResponse);
+
+        // Route to appropriate handler based on Claude's action
+        if (claudeResponse.action === 'create_contact' && claudeResponse.needsConfirmation) {
+          // Store pending action and ask for confirmation
+          updateConversationState(sessionId, {
+            intent: 'create_contact',
+            step: 'confirm',
+            pendingFields: claudeResponse.data
+          });
+
+          return res.json({
+            success: true,
+            response: claudeResponse.message
+          });
+        } else if (claudeResponse.action === 'create_contact' && !claudeResponse.needsConfirmation) {
+          // Execute immediately (user confirmed)
+          const result = await executeCreateContact(session, { pendingFields: claudeResponse.data });
+          clearConversationState(sessionId);
+
+          return res.json({
+            success: true,
+            response: result.response
+          });
+        } else if (claudeResponse.action === 'search_contact') {
+          // Execute search
+          const contacts = await session.proxy.searchContacts(claudeResponse.data.query, 20);
+
+          if (!contacts || contacts.length === 0) {
+            return res.json({
+              success: true,
+              response: `No contacts found matching "${claudeResponse.data.query}".`
+            });
+          }
+
+          // Format contacts for display
+          let response = `Found ${contacts.length} contact(s):\n\n`;
+          contacts.slice(0, 10).forEach((c, idx) => {
+            const name = c.contactName || c.firstName || 'Unknown';
+            const phone = c.phone ? ` | ${c.phone}` : '';
+            const email = c.email ? ` | ${c.email}` : '';
+            response += `${idx + 1}. ${name}${phone}${email}\n`;
+          });
+
+          return res.json({
+            success: true,
+            response
+          });
+        } else {
+          // Default: just show Claude's message
+          return res.json({
+            success: true,
+            response: claudeResponse.message
+          });
+        }
+
+      } catch (claudeError) {
+        console.error('❌ Claude AI error:', claudeError);
+        // Fall back to regex matching if Claude fails
+        console.log('⚠️ Falling back to regex matching');
+      }
+    }
+
+    // Original regex-based logic continues below...
     // Helper function to convert businesses to CSV for outbound caller app
     // Format: Name,phone,Website (3 columns)
     function convertToCSV(businesses) {
