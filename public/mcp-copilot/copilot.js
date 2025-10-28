@@ -230,6 +230,10 @@ async function autoLoadCredentials(clientId) {
                     locationId: data.credentials.gohighlevel.location_id
                 };
 
+                // Save to localStorage for chat page auto-connect
+                localStorage.setItem('ghl_apiKey', data.credentials.gohighlevel.api_key);
+                localStorage.setItem('ghl_locationId', data.credentials.gohighlevel.location_id);
+
                 console.log('💾 Stored credentials:', window.ghlCredentials);
 
                 // Auto-connect silently (no chat message)
