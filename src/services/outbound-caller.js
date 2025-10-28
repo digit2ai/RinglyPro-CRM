@@ -332,8 +332,10 @@ class OutboundCallerService {
       logger.info(`Call ${callSid} status updated: ${status}${answeredBy ? ` (${answeredBy})` : ''}`);
     }
 
-    // Update database when call is completed
-    if (status === 'completed' && log && log.phone) {
+    // Update database when call reaches ANY final status (not just completed)
+    // This prevents infinite loops on busy/failed numbers
+    const finalStatuses = ['completed', 'busy', 'failed', 'no-answer', 'canceled'];
+    if (finalStatuses.includes(status) && log && log.phone) {
       try {
         // Twilio webhook sends: "+18134776636"
         // Database can store EITHER: "8134776636" (10 digits) OR "18134776636" (11 digits)
