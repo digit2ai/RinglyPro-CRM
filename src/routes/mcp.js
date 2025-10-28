@@ -1711,8 +1711,16 @@ router.post('/copilot/chat', async (req, res) => {
 
     // Check if Claude AI is enabled
     const useClaudeAI = process.env.ENABLE_CLAUDE_AI === 'true';
+    const hasAnthropicKey = !!process.env.ANTHROPIC_API_KEY;
 
-    if (useClaudeAI) {
+    console.log('🔍 Claude AI Check:', {
+      ENABLE_CLAUDE_AI: process.env.ENABLE_CLAUDE_AI,
+      useClaudeAI,
+      hasAnthropicKey,
+      apiKeyPreview: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.substring(0, 20) + '...' : 'NOT SET'
+    });
+
+    if (useClaudeAI && hasAnthropicKey) {
       console.log('🧠 Using Claude AI for intelligent conversation');
       try {
         const claudeConversation = require('../services/claude-conversation');
@@ -2197,9 +2205,25 @@ router.post('/copilot/chat', async (req, res) => {
 
       } catch (claudeError) {
         console.error('❌ Claude AI error:', claudeError);
-        // Fall back to regex matching if Claude fails
-        console.log('⚠️ Falling back to regex matching');
+        console.error('Error details:', {
+          message: claudeError.message,
+          stack: claudeError.stack,
+          name: claudeError.name
+        });
+
+        // Return error message to user instead of falling back to regex
+        return res.json({
+          success: false,
+          response: `Sorry, I encountered an error processing your request. Please try again.\n\nError: ${claudeError.message}`
+        });
       }
+    } else {
+      // Claude AI is disabled - show message
+      console.log('⚠️  Claude AI is disabled. Set ENABLE_CLAUDE_AI=true and ANTHROPIC_API_KEY in environment.');
+      return res.json({
+        success: true,
+        response: "Claude AI is not enabled. Please enable it in your environment settings to use intelligent conversation features."
+      });
     }
 
     // Original regex-based logic continues below...
