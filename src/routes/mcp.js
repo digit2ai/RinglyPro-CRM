@@ -800,50 +800,100 @@ async function executeUpdateContact(session, state) {
 }
 
 async function executeSendSMS(session, state) {
-  const contactId = state.selectedContact.id;
-  const message = state.messageBody;
+  try {
+    const contactId = state.selectedContact.id;
+    const message = state.messageBody;
 
-  // Call GHL SMS API
-  await session.proxy.sendSMS(contactId, message);
+    // Call GHL SMS API
+    await session.proxy.sendSMS(contactId, message);
 
-  return {
-    response: `✅ SMS sent to ${state.selectedContact.contactName || state.selectedContact.phone}!\n\nMessage: "${message}"`
-  };
+    return {
+      response: `✅ SMS sent to ${state.selectedContact.contactName || state.selectedContact.phone}!\n\nMessage: "${message}"`
+    };
+  } catch (error) {
+    console.error('❌ Send SMS error:', error.response?.data || error.message);
+    console.error('❌ Full error object:', JSON.stringify(error.response?.data || error, null, 2));
+
+    // Extract detailed error message
+    let errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+
+    // If there's additional error details, include them
+    if (error.response?.data?.errors) {
+      errorMsg += '\nDetails: ' + JSON.stringify(error.response.data.errors);
+    }
+
+    return {
+      response: `❌ Failed to send SMS: ${errorMsg}\n\nPlease check that the contact has a valid phone number.`
+    };
+  }
 }
 
 async function executeSendEmail(session, state) {
-  const contactId = state.selectedContact.id;
-  const subject = state.pendingFields.subject;
-  const body = state.messageBody;
+  try {
+    const contactId = state.selectedContact.id;
+    const subject = state.pendingFields.subject;
+    const body = state.messageBody;
 
-  // Call GHL Email API
-  await session.proxy.sendEmail(contactId, subject, body);
+    // Call GHL Email API
+    await session.proxy.sendEmail(contactId, subject, body);
 
-  return {
-    response: `✅ Email sent to ${state.selectedContact.contactName || state.selectedContact.email}!\n\nSubject: "${subject}"`
-  };
+    return {
+      response: `✅ Email sent to ${state.selectedContact.contactName || state.selectedContact.email}!\n\nSubject: "${subject}"`
+    };
+  } catch (error) {
+    console.error('❌ Send email error:', error.response?.data || error.message);
+    console.error('❌ Full error object:', JSON.stringify(error.response?.data || error, null, 2));
+
+    // Extract detailed error message
+    let errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+
+    // If there's additional error details, include them
+    if (error.response?.data?.errors) {
+      errorMsg += '\nDetails: ' + JSON.stringify(error.response.data.errors);
+    }
+
+    return {
+      response: `❌ Failed to send email: ${errorMsg}\n\nPlease check that the contact has a valid email address.`
+    };
+  }
 }
 
 async function executeAddTag(session, state) {
-  const contactId = state.selectedContact.id;
-  const tag = state.tags[0];
+  try {
+    const contactId = state.selectedContact.id;
+    const tag = state.tags[0];
 
-  await session.proxy.addTagToContact(contactId, tag);
+    await session.proxy.addTagToContact(contactId, tag);
 
-  return {
-    response: `✅ Tag "${tag}" added to ${state.selectedContact.contactName || 'contact'}!`
-  };
+    return {
+      response: `✅ Tag "${tag}" added to ${state.selectedContact.contactName || 'contact'}!`
+    };
+  } catch (error) {
+    console.error('❌ Add tag error:', error.response?.data || error.message);
+    let errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+    return {
+      response: `❌ Failed to add tag: ${errorMsg}`
+    };
+  }
 }
 
 async function executeRemoveTag(session, state) {
-  const contactId = state.selectedContact.id;
-  const tag = state.tags[0];
+  try {
+    const contactId = state.selectedContact.id;
+    const tag = state.tags[0];
 
-  await session.proxy.removeTagFromContact(contactId, tag);
+    await session.proxy.removeTagFromContact(contactId, tag);
 
-  return {
-    response: `✅ Tag "${tag}" removed from ${state.selectedContact.contactName || 'contact'}!`
-  };
+    return {
+      response: `✅ Tag "${tag}" removed from ${state.selectedContact.contactName || 'contact'}!`
+    };
+  } catch (error) {
+    console.error('❌ Remove tag error:', error.response?.data || error.message);
+    let errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+    return {
+      response: `❌ Failed to remove tag: ${errorMsg}`
+    };
+  }
 }
 
 // Health check
