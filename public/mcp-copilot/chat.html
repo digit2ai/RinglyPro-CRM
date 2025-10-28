@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Copilot Chat - RinglyPro CRM</title>
+    <title>AI Copilot - RinglyPro CRM</title>
     <link rel="icon" type="image/png" href="/ringlypro-logo.png">
     <style>
         * {
@@ -16,7 +16,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             height: 100vh;
             overflow: hidden;
-            background: #f3f4f6;
+            background: #f9fafb;
         }
 
         /* Full-screen chat container */
@@ -24,57 +24,7 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            background: white;
-        }
-
-        /* Header */
-        .chat-header {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            color: white;
-            padding: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .chat-header h1 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .back-button {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .back-button:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        /* Connection status */
-        .connection-banner {
-            background: #fef3c7;
-            border-bottom: 1px solid #fbbf24;
-            padding: 0.75rem 1rem;
-            text-align: center;
-            flex-shrink: 0;
-        }
-
-        .connection-banner.connected {
-            background: #d1fae5;
-            border-bottom: 1px solid #10b981;
+            background: #f9fafb;
         }
 
         /* Messages area */
@@ -82,7 +32,6 @@
             flex: 1;
             overflow-y: auto;
             padding: 1rem;
-            background: #f9fafb;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -92,7 +41,8 @@
             border-radius: 1rem;
             max-width: 85%;
             word-wrap: break-word;
-            line-height: 1.5;
+            line-height: 1.6;
+            white-space: pre-wrap;
         }
 
         .message.user {
@@ -108,7 +58,7 @@
             color: #111827;
             margin-right: auto;
             border-bottom-left-radius: 0.25rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         .message.system {
@@ -172,51 +122,6 @@
             cursor: not-allowed;
         }
 
-        /* Welcome message */
-        .welcome-message {
-            background: linear-gradient(135deg, #eff6ff 0%, #f3e8ff 100%);
-            border: 2px solid #3b82f6;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin: 2rem auto;
-            max-width: 600px;
-            text-align: center;
-        }
-
-        .welcome-message h2 {
-            color: #1f2937;
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .welcome-message p {
-            color: #6b7280;
-            font-size: 0.875rem;
-            margin-bottom: 1rem;
-        }
-
-        .example-queries {
-            display: grid;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-
-        .example-query {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            padding: 0.75rem;
-            font-size: 0.875rem;
-            color: #3b82f6;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .example-query:hover {
-            background: #eff6ff;
-            border-color: #3b82f6;
-        }
-
         /* Loading indicator */
         .typing-indicator {
             display: none;
@@ -251,58 +156,55 @@
             40% { transform: scale(1); }
         }
 
+        /* Back button - floating */
+        .back-button {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #e5e7eb;
+            color: #4f46e5;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+
+        .back-button:hover {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
         /* Mobile optimizations */
         @media (max-width: 768px) {
-            .chat-header h1 {
-                font-size: 1rem;
-            }
-
             .message {
                 max-width: 90%;
             }
 
-            .welcome-message {
-                margin: 1rem;
-                padding: 1rem;
-            }
-
-            .welcome-message h2 {
-                font-size: 1.25rem;
+            .back-button {
+                top: 0.5rem;
+                left: 0.5rem;
+                font-size: 0.75rem;
+                padding: 0.4rem 0.8rem;
             }
         }
     </style>
 </head>
 <body>
     <div class="chat-container">
-        <!-- Header -->
-        <div class="chat-header">
-            <h1>🤖 AI Copilot</h1>
-            <a href="/mcp-copilot/" class="back-button">← Back</a>
-        </div>
-
-        <!-- Connection status -->
-        <div id="connectionBanner" class="connection-banner">
-            Connecting to CRM...
-        </div>
+        <!-- Back button -->
+        <a href="/mcp-copilot/" class="back-button">← Back</a>
 
         <!-- Messages -->
         <div id="chatMessages" class="chat-messages">
-            <div class="welcome-message">
-                <h2>👋 Welcome to AI Copilot</h2>
-                <p>Your intelligent CRM assistant powered by Claude AI</p>
-                <div class="example-queries">
-                    <div class="example-query" onclick="sendExampleQuery('search john')">
-                        🔍 Search for a contact
-                    </div>
-                    <div class="example-query" onclick="sendExampleQuery('create contact')">
-                        ➕ Create a new contact
-                    </div>
-                    <div class="example-query" onclick="sendExampleQuery('list all contacts')">
-                        📋 List all contacts
-                    </div>
-                </div>
-            </div>
-
             <!-- Typing indicator -->
             <div id="typingIndicator" class="typing-indicator">
                 <span></span><span></span><span></span>
@@ -343,17 +245,13 @@
         });
 
         async function connectToCRM() {
-            const banner = document.getElementById('connectionBanner');
-
             try {
                 // Get saved credentials from localStorage
                 const apiKey = localStorage.getItem('ghl_apiKey');
                 const locationId = localStorage.getItem('ghl_locationId');
 
                 if (!apiKey || !locationId) {
-                    banner.textContent = '⚠️ No CRM credentials found. Please connect from the main page.';
-                    banner.style.background = '#fee2e2';
-                    banner.style.borderColor = '#ef4444';
+                    addMessage('system', '⚠️ Please connect to GoHighLevel from the main page first.');
                     return;
                 }
 
@@ -367,21 +265,13 @@
 
                 if (data.success) {
                     sessionId = data.sessionId;
-                    banner.textContent = '✅ Connected to GoHighLevel CRM';
-                    banner.classList.add('connected');
+                    addMessage('assistant', '👋 Hi! I\'m your AI assistant. I can help you create contacts, search contacts, send SMS, and more.\n\nWhat would you like to do?');
                 } else {
                     throw new Error(data.error || 'Connection failed');
                 }
             } catch (error) {
-                banner.textContent = `❌ Connection failed: ${error.message}`;
-                banner.style.background = '#fee2e2';
-                banner.style.borderColor = '#ef4444';
+                addMessage('system', `❌ Connection failed: ${error.message}\n\nPlease go back and reconnect.`);
             }
-        }
-
-        function sendExampleQuery(query) {
-            document.getElementById('messageInput').value = query;
-            sendMessage();
         }
 
         async function sendMessage() {
@@ -392,7 +282,7 @@
             if (!message) return;
 
             if (!sessionId) {
-                addMessage('system', 'Please wait for CRM connection or reconnect from the main page.');
+                addMessage('system', 'Please wait for connection or reconnect from the main page.');
                 return;
             }
 
