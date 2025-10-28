@@ -1741,6 +1741,421 @@ router.post('/copilot/chat', async (req, res) => {
             success: true,
             response
           });
+        } else if (claudeResponse.action === 'update_contact') {
+          // Update contact
+          const contacts = await session.proxy.searchContacts(claudeResponse.data.contactQuery, 5);
+
+          if (!contacts || contacts.length === 0) {
+            return res.json({
+              success: true,
+              response: `❌ No contact found matching "${claudeResponse.data.contactQuery}".`
+            });
+          }
+
+          const contact = contacts[0];
+
+          if (claudeResponse.needsConfirmation) {
+            // Store pending action
+            updateConversationState(sessionId, {
+              intent: 'update_contact',
+              step: 'confirm',
+              selectedContact: contact,
+              pendingFields: {
+                field: claudeResponse.data.field,
+                value: claudeResponse.data.value
+              }
+            });
+
+            return res.json({
+              success: true,
+              response: claudeResponse.message
+            });
+          } else {
+            // Execute immediately (user confirmed)
+            const result = await executeUpdateContact(session, {
+              selectedContact: contact,
+              pendingFields: {
+                fieldName: claudeResponse.data.field,
+                fieldValue: claudeResponse.data.value
+              }
+            });
+            clearConversationState(sessionId);
+
+            return res.json({
+              success: true,
+              response: result.response
+            });
+          }
+
+        } else if (claudeResponse.action === 'delete_contact') {
+          // Delete contact
+          const contacts = await session.proxy.searchContacts(claudeResponse.data.contactQuery, 5);
+
+          if (!contacts || contacts.length === 0) {
+            return res.json({
+              success: true,
+              response: `❌ No contact found matching "${claudeResponse.data.contactQuery}".`
+            });
+          }
+
+          const contact = contacts[0];
+
+          if (claudeResponse.needsConfirmation) {
+            // Ask for confirmation
+            updateConversationState(sessionId, {
+              intent: 'delete_contact',
+              step: 'confirm',
+              selectedContact: contact
+            });
+
+            return res.json({
+              success: true,
+              response: `⚠️ Are you sure you want to delete ${contact.contactName || contact.firstName || 'this contact'}? Reply 'yes' to confirm or 'cancel' to abort.`
+            });
+          } else {
+            // Execute delete
+            await session.proxy.deleteContact(contact.id);
+            clearConversationState(sessionId);
+
+            return res.json({
+              success: true,
+              response: `✅ Deleted ${contact.contactName || contact.firstName || 'contact'} successfully.`
+            });
+          }
+
+        } else if (claudeResponse.action === 'send_sms') {
+          // Send SMS
+          const contacts = await session.proxy.searchContacts(claudeResponse.data.contactQuery, 5);
+
+          if (!contacts || contacts.length === 0) {
+            return res.json({
+              success: true,
+              response: `❌ No contact found matching "${claudeResponse.data.contactQuery}".`
+            });
+          }
+
+          const contact = contacts[0];
+
+          if (claudeResponse.needsConfirmation) {
+            // Store pending action
+            updateConversationState(sessionId, {
+              intent: 'send_sms',
+              step: 'confirm',
+              selectedContact: contact,
+              messageBody: claudeResponse.data.message
+            });
+
+            return res.json({
+              success: true,
+              response: claudeResponse.message
+            });
+          } else {
+            // Execute send
+            const result = await executeSendSMS(session, {
+              selectedContact: contact,
+              messageBody: claudeResponse.data.message
+            });
+            clearConversationState(sessionId);
+
+            return res.json({
+              success: true,
+              response: result.response
+            });
+          }
+
+        } else if (claudeResponse.action === 'send_email') {
+          // Send Email
+          const contacts = await session.proxy.searchContacts(claudeResponse.data.contactQuery, 5);
+
+          if (!contacts || contacts.length === 0) {
+            return res.json({
+              success: true,
+              response: `❌ No contact found matching "${claudeResponse.data.contactQuery}".`
+            });
+          }
+
+          const contact = contacts[0];
+
+          if (claudeResponse.needsConfirmation) {
+            // Store pending action
+            updateConversationState(sessionId, {
+              intent: 'send_email',
+              step: 'confirm',
+              selectedContact: contact,
+              pendingFields: { subject: claudeResponse.data.subject },
+              messageBody: claudeResponse.data.body
+            });
+
+            return res.json({
+              success: true,
+              response: claudeResponse.message
+            });
+          } else {
+            // Execute send
+            const result = await executeSendEmail(session, {
+              selectedContact: contact,
+              pendingFields: { subject: claudeResponse.data.subject },
+              messageBody: claudeResponse.data.body
+            });
+            clearConversationState(sessionId);
+
+            return res.json({
+              success: true,
+              response: result.response
+            });
+          }
+
+        } else if (claudeResponse.action === 'add_tag') {
+          // Add tag
+          const contacts = await session.proxy.searchContacts(claudeResponse.data.contactQuery, 5);
+
+          if (!contacts || contacts.length === 0) {
+            return res.json({
+              success: true,
+              response: `❌ No contact found matching "${claudeResponse.data.contactQuery}".`
+            });
+          }
+
+          const contact = contacts[0];
+
+          if (claudeResponse.needsConfirmation) {
+            // Store pending action
+            updateConversationState(sessionId, {
+              intent: 'add_tag',
+              step: 'confirm',
+              selectedContact: contact,
+              tags: claudeResponse.data.tags
+            });
+
+            return res.json({
+              success: true,
+              response: claudeResponse.message
+            });
+          } else {
+            // Execute add tag
+            const result = await executeAddTag(session, {
+              selectedContact: contact,
+              tags: claudeResponse.data.tags
+            });
+            clearConversationState(sessionId);
+
+            return res.json({
+              success: true,
+              response: result.response
+            });
+          }
+
+        } else if (claudeResponse.action === 'remove_tag') {
+          // Remove tag
+          const contacts = await session.proxy.searchContacts(claudeResponse.data.contactQuery, 5);
+
+          if (!contacts || contacts.length === 0) {
+            return res.json({
+              success: true,
+              response: `❌ No contact found matching "${claudeResponse.data.contactQuery}".`
+            });
+          }
+
+          const contact = contacts[0];
+
+          if (claudeResponse.needsConfirmation) {
+            // Store pending action
+            updateConversationState(sessionId, {
+              intent: 'remove_tag',
+              step: 'confirm',
+              selectedContact: contact,
+              tags: claudeResponse.data.tags
+            });
+
+            return res.json({
+              success: true,
+              response: claudeResponse.message
+            });
+          } else {
+            // Execute remove tag
+            const result = await executeRemoveTag(session, {
+              selectedContact: contact,
+              tags: claudeResponse.data.tags
+            });
+            clearConversationState(sessionId);
+
+            return res.json({
+              success: true,
+              response: result.response
+            });
+          }
+
+        } else if (claudeResponse.action === 'get_pipelines') {
+          // Get pipelines
+          const pipelines = await session.proxy.getPipelines();
+
+          if (!pipelines || !pipelines.pipelines || pipelines.pipelines.length === 0) {
+            return res.json({
+              success: true,
+              response: '❌ No pipelines found.'
+            });
+          }
+
+          let response = `Found ${pipelines.pipelines.length} pipeline(s):\n\n`;
+          pipelines.pipelines.forEach((p, idx) => {
+            response += `${idx + 1}. **${p.name}**\n`;
+            if (p.stages && p.stages.length > 0) {
+              response += `   Stages: ${p.stages.map(s => s.name).join(' → ')}\n`;
+            }
+            response += '\n';
+          });
+
+          return res.json({
+            success: true,
+            response
+          });
+
+        } else if (claudeResponse.action === 'create_opportunity') {
+          // Create opportunity - need to get pipeline ID first
+          const pipelines = await session.proxy.getPipelines();
+
+          // Find pipeline by name (case-insensitive)
+          const pipelineName = (claudeResponse.data.pipelineName || '').toLowerCase();
+          const pipeline = pipelines?.pipelines?.find(p =>
+            p.name.toLowerCase().includes(pipelineName)
+          );
+
+          if (!pipeline) {
+            return res.json({
+              success: true,
+              response: `❌ Pipeline "${claudeResponse.data.pipelineName}" not found. Available pipelines:\n${pipelines?.pipelines?.map(p => `• ${p.name}`).join('\n')}`
+            });
+          }
+
+          // Find contact
+          const contacts = await session.proxy.searchContacts(claudeResponse.data.contactQuery, 5);
+
+          if (!contacts || contacts.length === 0) {
+            return res.json({
+              success: true,
+              response: `❌ No contact found matching "${claudeResponse.data.contactQuery}".`
+            });
+          }
+
+          const contact = contacts[0];
+
+          if (claudeResponse.needsConfirmation) {
+            // Store pending action
+            updateConversationState(sessionId, {
+              intent: 'create_opportunity',
+              step: 'confirm',
+              selectedContact: contact,
+              pendingFields: {
+                pipelineId: pipeline.id,
+                pipelineName: pipeline.name,
+                stageId: pipeline.stages[0]?.id, // First stage
+                name: claudeResponse.data.name || `${contact.firstName || 'Contact'} Opportunity`,
+                monetaryValue: claudeResponse.data.monetaryValue || 0
+              }
+            });
+
+            return res.json({
+              success: true,
+              response: claudeResponse.message
+            });
+          } else {
+            // Execute create
+            const oppData = {
+              pipelineId: pipeline.id,
+              pipelineStageId: pipeline.stages[0]?.id,
+              name: claudeResponse.data.name || `${contact.firstName || 'Contact'} Opportunity`,
+              status: 'open',
+              monetaryValue: claudeResponse.data.monetaryValue || 0,
+              contactId: contact.id
+            };
+
+            const result = await session.proxy.createOpportunity(oppData);
+            clearConversationState(sessionId);
+
+            return res.json({
+              success: true,
+              response: `✅ Created opportunity "${oppData.name}" for $${oppData.monetaryValue} in ${pipeline.name} pipeline!`
+            });
+          }
+
+        } else if (claudeResponse.action === 'get_opportunities') {
+          // Get opportunities
+          const opportunities = await session.proxy.getOpportunities();
+
+          if (!opportunities || opportunities.length === 0) {
+            return res.json({
+              success: true,
+              response: '❌ No opportunities found.'
+            });
+          }
+
+          let response = `Found ${opportunities.length} opportunit${opportunities.length === 1 ? 'y' : 'ies'}:\n\n`;
+          opportunities.slice(0, 10).forEach((o, idx) => {
+            response += `${idx + 1}. ${o.name || 'Untitled'} - $${o.monetaryValue || 0} (${o.status || 'open'})\n`;
+          });
+
+          return res.json({
+            success: true,
+            response
+          });
+
+        } else if (claudeResponse.action === 'get_calendars') {
+          // Get calendars
+          const calendars = await session.proxy.getCalendars();
+
+          if (!calendars || !calendars.calendars || calendars.calendars.length === 0) {
+            return res.json({
+              success: true,
+              response: '❌ No calendars found.'
+            });
+          }
+
+          let response = `Found ${calendars.calendars.length} calendar(s):\n\n`;
+          calendars.calendars.forEach((cal, idx) => {
+            response += `${idx + 1}. ${cal.name}\n`;
+          });
+
+          return res.json({
+            success: true,
+            response
+          });
+
+        } else if (claudeResponse.action === 'get_location') {
+          // Get location info
+          const location = await session.proxy.getLocation();
+
+          let response = `**Location Information:**\n\n`;
+          response += `Name: ${location.name || 'Unknown'}\n`;
+          if (location.address) response += `Address: ${location.address}\n`;
+          if (location.phone) response += `Phone: ${location.phone}\n`;
+          if (location.email) response += `Email: ${location.email}\n`;
+
+          return res.json({
+            success: true,
+            response
+          });
+
+        } else if (claudeResponse.action === 'get_custom_fields') {
+          // Get custom fields
+          const fields = await session.proxy.getCustomFields();
+
+          if (!fields || !fields.customFields || fields.customFields.length === 0) {
+            return res.json({
+              success: true,
+              response: '❌ No custom fields found.'
+            });
+          }
+
+          let response = `Found ${fields.customFields.length} custom field(s):\n\n`;
+          fields.customFields.slice(0, 10).forEach((f, idx) => {
+            response += `${idx + 1}. ${f.name} (${f.dataType})\n`;
+          });
+
+          return res.json({
+            success: true,
+            response
+          });
+
         } else {
           // Default: just show Claude's message
           return res.json({
