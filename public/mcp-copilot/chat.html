@@ -15,8 +15,11 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             height: 100vh;
+            height: 100dvh; /* Dynamic viewport height for mobile */
             overflow: hidden;
             background: #f9fafb;
+            position: fixed;
+            width: 100%;
         }
 
         /* Full-screen chat container */
@@ -24,7 +27,9 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            height: 100dvh; /* Dynamic viewport height for mobile */
             background: #f9fafb;
+            position: relative;
         }
 
         /* Messages area */
@@ -228,13 +233,42 @@
         const API_BASE = window.location.origin + '/api/mcp';
         let sessionId = null;
 
+        // Handle iOS viewport resize when keyboard appears
+        if (window.visualViewport) {
+            const viewport = window.visualViewport;
+            const chatContainer = document.querySelector('.chat-container');
+
+            function resizeHandler() {
+                // Resize container to fit visible viewport (excluding keyboard)
+                if (chatContainer) {
+                    chatContainer.style.height = `${viewport.height}px`;
+                }
+            }
+
+            viewport.addEventListener('resize', resizeHandler);
+            viewport.addEventListener('scroll', resizeHandler);
+
+            // Initial resize
+            resizeHandler();
+        }
+
         // Auto-connect on page load
         window.addEventListener('DOMContentLoaded', async () => {
             await connectToCRM();
+
+            const messageInput = document.getElementById('messageInput');
+
             // Focus input after connection
             setTimeout(() => {
-                document.getElementById('messageInput').focus();
+                messageInput.focus();
             }, 500);
+
+            // Scroll input into view when focused (iOS fix)
+            messageInput.addEventListener('focus', () => {
+                setTimeout(() => {
+                    messageInput.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                }, 300);
+            });
         });
 
         // Enter key to send
