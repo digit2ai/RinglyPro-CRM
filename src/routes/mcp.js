@@ -33,6 +33,31 @@ const workflowEngine = new WorkflowEngine();
 //   tags: []                   // For tag operations
 // }
 
+/**
+ * Normalize phone number to E.164 format (+1XXXXXXXXXX)
+ * This ensures consistent phone storage across all database operations
+ * @param {string} phone - Phone number in any format
+ * @returns {string|null} - E.164 formatted phone (+1XXXXXXXXXX) or null if invalid
+ */
+function normalizePhoneE164(phone) {
+  if (!phone) return null;
+
+  // Remove all non-digit characters
+  const digits = phone.replace(/\D/g, '');
+
+  // Must be 10 or 11 digits
+  if (digits.length !== 10 && digits.length !== 11) {
+    console.warn(`⚠️ Invalid phone number length: ${phone} (${digits.length} digits)`);
+    return null; // Invalid phone
+  }
+
+  // Normalize to 11 digits (add country code 1 if needed)
+  const normalized = digits.length === 10 ? '1' + digits : digits;
+
+  // Return E.164 format with + prefix
+  return '+' + normalized;
+}
+
 // Helper functions for conversation state management
 function getConversationState(sessionId) {
   if (!conversationStates.has(sessionId)) {
@@ -1207,8 +1232,14 @@ router.post('/business-collector/save', async (req, res) => {
 
     for (const business of businesses) {
       try {
+        // Normalize phone number to E.164 format before processing
+        const normalizedPhone = normalizePhoneE164(business.phone);
+        if (business.phone && normalizedPhone !== business.phone) {
+          console.log(`📱 Normalized phone: ${business.phone} → ${normalizedPhone}`);
+        }
+
         // Check if business already exists (duplicate detection by phone number)
-        if (business.phone) {
+        if (normalizedPhone) {
           const existing = await sequelize.query(
             `SELECT id FROM business_directory
              WHERE client_id = :clientId AND phone_number = :phone
@@ -1216,14 +1247,14 @@ router.post('/business-collector/save', async (req, res) => {
             {
               replacements: {
                 clientId: parseInt(clientId),
-                phone: business.phone
+                phone: normalizedPhone
               },
               type: QueryTypes.SELECT
             }
           );
 
           if (existing && existing.length > 0) {
-            console.log(`⚠️ Duplicate found: ${business.business_name} (${business.phone})`);
+            console.log(`⚠️ Duplicate found: ${business.business_name} (${normalizedPhone})`);
             duplicates.push(business.business_name);
             continue;
           }
@@ -1252,7 +1283,7 @@ router.post('/business-collector/save', async (req, res) => {
           {
             replacements: {
               businessName: business.business_name || 'Unknown',
-              phone: business.phone || null,
+              phone: normalizedPhone || null, // Use normalized E.164 format
               website: business.website || null,
               email: business.email || null,
               street: business.street || null,

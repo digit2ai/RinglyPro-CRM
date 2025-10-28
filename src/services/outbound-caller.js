@@ -338,10 +338,16 @@ class OutboundCallerService {
     if (finalStatuses.includes(status) && log && log.phone) {
       try {
         // Twilio webhook sends: "+18134776636"
-        // Database can store EITHER: "8134776636" (10 digits) OR "18134776636" (11 digits)
-        // Try both formats to ensure we find the row
-        const phoneWith1 = log.phone.replace(/^\+/, '');        // "18134776636" (11 digits)
-        const phoneWithout1 = log.phone.replace(/^\+1/, '');    // "8134776636" (10 digits)
+        // Database can store in multiple formats due to historical inconsistency:
+        // - "+18134776636" (E.164 with +1 - STANDARD)
+        // - "+8134776636" (E.164 with + only)
+        // - "18134776636" (11 digits no +)
+        // - "8134776636" (10 digits no +)
+        // Try ALL 4 formats to ensure we find the row
+        const phoneWithPlus = log.phone;                         // "+18134776636"
+        const phoneWith1 = log.phone.replace(/^\+/, '');         // "18134776636" (11 digits)
+        const phoneWithout1 = log.phone.replace(/^\+1/, '');     // "8134776636" (10 digits)
+        const phoneWithPlusNoOne = '+' + phoneWithout1;          // "+8134776636"
 
         // Determine call result based on answeredBy and status
         let callResult = 'completed';
@@ -357,9 +363,9 @@ class OutboundCallerService {
           callResult = 'failed';
         }
 
-        logger.info(`📊 Updating database for phone ${phoneWith1} or ${phoneWithout1}: status=CALLED, result=${callResult}`);
+        logger.info(`📊 Updating database for phone ${log.phone}: status=CALLED, result=${callResult}`);
 
-        // Update business_directory table - try both phone formats
+        // Update business_directory table - try ALL 4 phone format variations
         const [results, metadata] = await sequelize.query(
           `UPDATE business_directory
            SET call_status = 'CALLED',
@@ -367,18 +373,20 @@ class OutboundCallerService {
                last_called_at = CURRENT_TIMESTAMP,
                call_result = :callResult,
                updated_at = CURRENT_TIMESTAMP
-           WHERE phone_number IN (:phoneWith1, :phoneWithout1)`,
+           WHERE phone_number IN (:phoneWithPlus, :phoneWith1, :phoneWithout1, :phoneWithPlusNoOne)`,
           {
             replacements: {
+              phoneWithPlus: phoneWithPlus,
               phoneWith1: phoneWith1,
               phoneWithout1: phoneWithout1,
+              phoneWithPlusNoOne: phoneWithPlusNoOne,
               callResult: callResult
             },
             type: QueryTypes.UPDATE
           }
         );
 
-        logger.info(`✅ Database updated successfully for ${phoneWith1}/${phoneWithout1} (${metadata.rowCount} rows affected)`);
+        logger.info(`✅ Database updated successfully for ${log.phone} (${metadata.rowCount} rows affected)`);
 
       } catch (dbError) {
         logger.error(`❌ Failed to update database for call ${callSid}:`, dbError.message);
