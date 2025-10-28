@@ -742,8 +742,18 @@ async function executeCreateContact(session, state) {
     };
   } catch (error) {
     console.error('❌ Create contact error:', error.response?.data || error.message);
+    console.error('❌ Full error object:', JSON.stringify(error.response?.data || error, null, 2));
+
+    // Extract detailed error message
+    let errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+
+    // If there's additional error details, include them
+    if (error.response?.data?.errors) {
+      errorMsg += '\nDetails: ' + JSON.stringify(error.response.data.errors);
+    }
+
     return {
-      response: `❌ Failed to create contact: ${error.response?.data?.message || error.message}\n\nPlease check the contact information and try again.`
+      response: `❌ Failed to create contact: ${errorMsg}\n\nPlease check the contact information and try again.`
     };
   }
 }
