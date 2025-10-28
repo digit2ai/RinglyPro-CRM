@@ -366,10 +366,14 @@ class OutboundCallerService {
         logger.info(`📊 Updating database for phone ${log.phone}: status=CALLED, result=${callResult}`);
 
         // Update business_directory table - try ALL 4 phone format variations
+        // Only increment call_attempts if this is the first call (call_status = 'TO_BE_CALLED')
         const [results, metadata] = await sequelize.query(
           `UPDATE business_directory
            SET call_status = 'CALLED',
-               call_attempts = call_attempts + 1,
+               call_attempts = CASE
+                 WHEN call_status = 'TO_BE_CALLED' THEN call_attempts + 1
+                 ELSE call_attempts
+               END,
                last_called_at = CURRENT_TIMESTAMP,
                call_result = :callResult,
                updated_at = CURRENT_TIMESTAMP
