@@ -3636,15 +3636,8 @@
         }
 
         function sendSMS(phone, name) {
-            const message = prompt(`Message to ${name}:`, '');
-
-            if (!message || message.trim() === '') {
-                return;
-            }
-
-            // Open device SMS app with pre-filled message (same as makeCall)
-            const smsURL = `sms:${phone}?body=${encodeURIComponent(message)}`;
-            window.location.href = smsURL;
+            // Open device SMS app immediately (same as makeCall opens phone dialer)
+            window.location.href = `sms:${phone}`;
         }
 
         function makeCall(phone, name) {
