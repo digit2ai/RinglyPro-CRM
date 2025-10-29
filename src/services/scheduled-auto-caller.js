@@ -24,7 +24,7 @@ class ScheduledAutoCallerService {
       lastCallAt: null
     };
     this.config = {
-      schedule: '*/2 9-17 * * 1-5', // Every 2 minutes, 9am-5pm EST, Mon-Fri
+      schedule: '*/2 8-18 * * 1-5', // Every 2 minutes, 8am-6pm EST, Mon-Fri
       timezone: 'America/New_York',
       minInterval: 2, // minutes between calls
       maxCallsPerHour: 30,
@@ -35,7 +35,7 @@ class ScheduledAutoCallerService {
   }
 
   /**
-   * Check if current time is within business hours (9am-5pm EST, Mon-Fri)
+   * Check if current time is within business hours (8am-6pm EST, Mon-Fri)
    */
   isBusinessHours() {
     try {
@@ -62,8 +62,8 @@ class ScheduledAutoCallerService {
         return false;
       }
 
-      // Check if 9am-5pm EST (9-16, stops before 5pm)
-      if (hour < 9 || hour >= 17) {
+      // Check if 8am-6pm EST (8-17, stops before 6pm)
+      if (hour < 8 || hour >= 18) {
         logger.debug(`❌ Outside business hours: ${hour}:00 EST`);
         return false;
       }
