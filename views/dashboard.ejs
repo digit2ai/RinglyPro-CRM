@@ -3133,30 +3133,39 @@
                 return;
             }
 
-            container.innerHTML = appointments.map(apt => `
+            container.innerHTML = appointments.map(apt => {
+                // Map API fields to display fields
+                const name = apt.customerName || apt.name || 'Unknown';
+                const phone = apt.customerPhone || apt.phone || '';
+                const date = apt.appointmentDate || apt.date || '';
+                const time = apt.appointmentTime?.substring(0, 5) || apt.time || ''; // HH:MM from HH:MM:SS
+                const notes = apt.purpose || apt.notes || 'No notes';
+                const status = apt.status || 'confirmed';
+
+                return `
                 <div class="appointment-card">
                     <div class="appointment-main">
                         <div class="appointment-info">
                             <h3>
-                                ${apt.name}
-                                ${apt.status === 'confirmed' ? '<svg style="width: 1rem; height: 1rem; color: #10b981;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' : ''}
+                                ${name}
+                                ${status === 'confirmed' ? '<svg style="width: 1rem; height: 1rem; color: #10b981;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' : ''}
                             </h3>
-                            <p style="font-weight: 600; color: #3b82f6; font-size: 0.875rem;">${apt.date} at ${apt.time}</p>
-                            <p>${apt.notes || 'No notes'}</p>
-                            <p style="font-size: 0.75rem;">${apt.phone}</p>
+                            <p style="font-weight: 600; color: #3b82f6; font-size: 0.875rem;">${date} at ${time}</p>
+                            <p>${notes}</p>
+                            <p style="font-size: 0.75rem;">${phone}</p>
                         </div>
                         <div class="appointment-time">
-                            <span class="status-badge status-${apt.status}">${apt.status}</span>
+                            <span class="status-badge status-${status}">${status}</span>
                         </div>
                     </div>
                     <div class="appointment-actions">
-                        <button class="btn-text" onclick="sendSMS('${apt.phone}', '${apt.name}')">
+                        <button class="btn-text" onclick="sendSMS('${phone}', '${name.replace(/'/g, "\\'")}')">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
                             </svg>
                             Text
                         </button>
-                        <button class="btn-call-apt" onclick="makeCall('${apt.phone}', '${apt.name}')">
+                        <button class="btn-call-apt" onclick="makeCall('${phone}', '${name.replace(/'/g, "\\'")}')">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                             </svg>
@@ -3164,7 +3173,8 @@
                         </button>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         // Render Communications (DEPRECATED - section removed)
@@ -3653,8 +3663,11 @@
         }
 
         function sendSMS(phone, name) {
-            // Open device SMS app immediately (same as makeCall opens phone dialer)
-            window.location.href = `sms:${phone}`;
+            // Open device SMS app with phone number pre-filled
+            // Format: sms:+1234567890 (iOS/Android)
+            const cleanPhone = phone.replace(/\D/g, ''); // Remove non-digits
+            const formattedPhone = cleanPhone.startsWith('1') ? `+${cleanPhone}` : `+1${cleanPhone}`;
+            window.location.href = `sms:${formattedPhone}`;
         }
 
         function makeCall(phone, name) {
