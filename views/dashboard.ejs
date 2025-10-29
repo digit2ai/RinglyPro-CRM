@@ -3066,7 +3066,7 @@
                 // Use appointmentDate (raw date) instead of date (formatted string)
                 const aptDate = new Date(apt.appointmentDate);
                 aptDate.setHours(0, 0, 0, 0);
-                return aptDate >= today && aptDate < endDate;
+                return aptDate >= today && aptDate <= endDate;
             });
 
             console.log(`Filtering ${allAppointments.length} appointments for ${days} days:`, filtered.length, 'found');
@@ -3618,15 +3618,46 @@
             }
         }
 
-        function sendSMS(phone, name) {
+        async function sendSMS(phone, name) {
             const message = prompt(`Message to ${name}:`, '');
-            
+
             if (!message || message.trim() === '') {
                 return;
             }
-            
-            const smsURL = `sms:${phone}?body=${encodeURIComponent(message)}`;
-            window.location.href = smsURL;
+
+            try {
+                // Show loading indicator
+                const originalBody = document.body.style.cursor;
+                document.body.style.cursor = 'wait';
+
+                const response = await fetch('/api/messages/sms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        to: phone,
+                        message: message,
+                        clientId: CLIENT_ID
+                    })
+                });
+
+                document.body.style.cursor = originalBody;
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(`✅ SMS sent successfully to ${name}!`);
+                    // Refresh messages to show the sent SMS
+                    loadRecentMessages();
+                } else {
+                    alert(`❌ Failed to send SMS: ${result.error}`);
+                }
+            } catch (error) {
+                document.body.style.cursor = 'auto';
+                console.error('Error sending SMS:', error);
+                alert(`❌ Failed to send SMS: ${error.message}`);
+            }
         }
 
         function makeCall(phone, name) {
