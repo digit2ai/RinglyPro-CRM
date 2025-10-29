@@ -127,6 +127,48 @@
             cursor: not-allowed;
         }
 
+        /* Voice button */
+        .voice-button {
+            background: white;
+            border: 2px solid #3b82f6;
+            color: #3b82f6;
+            padding: 0.875rem;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .voice-button:hover {
+            background: #eff6ff;
+        }
+
+        .voice-button:active {
+            transform: scale(0.95);
+        }
+
+        .voice-button.recording {
+            background: #ef4444;
+            border-color: #ef4444;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .voice-button svg {
+            width: 20px;
+            height: 20px;
+        }
+
         /* Loading indicator */
         .typing-indicator {
             display: none;
@@ -218,10 +260,15 @@
 
         <!-- Input -->
         <div class="chat-input-container">
+            <button id="voiceButton" class="voice-button" onclick="toggleVoiceInput()" title="Voice input">
+                <svg id="micIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                </svg>
+            </button>
             <input
                 type="text"
                 id="messageInput"
-                placeholder="Type your message..."
+                placeholder="Type or speak your message..."
                 autocomplete="off"
                 autocapitalize="sentences"
             >
@@ -383,6 +430,89 @@
             // Scroll to bottom
             const messagesDiv = document.getElementById('chatMessages');
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Voice Input using Web Speech API
+        let recognition = null;
+        let isRecording = false;
+
+        // Check if browser supports speech recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                isRecording = true;
+                const voiceButton = document.getElementById('voiceButton');
+                voiceButton.classList.add('recording');
+                console.log('Voice recognition started');
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                const messageInput = document.getElementById('messageInput');
+
+                // Append to existing text or replace
+                if (messageInput.value.trim()) {
+                    messageInput.value += ' ' + transcript;
+                } else {
+                    messageInput.value = transcript;
+                }
+
+                console.log('Transcript:', transcript);
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+
+                if (event.error === 'not-allowed') {
+                    addMessage('system', '🎤 Microphone access denied. Please enable microphone permissions in your browser settings.');
+                } else if (event.error === 'no-speech') {
+                    addMessage('system', '🎤 No speech detected. Please try again.');
+                } else if (event.error !== 'aborted') {
+                    addMessage('system', `🎤 Voice recognition error: ${event.error}`);
+                }
+            };
+
+            recognition.onend = () => {
+                isRecording = false;
+                const voiceButton = document.getElementById('voiceButton');
+                voiceButton.classList.remove('recording');
+                console.log('Voice recognition ended');
+            };
+        } else {
+            // Hide voice button if not supported
+            console.warn('Speech recognition not supported in this browser');
+            setTimeout(() => {
+                const voiceButton = document.getElementById('voiceButton');
+                if (voiceButton) {
+                    voiceButton.style.display = 'none';
+                }
+            }, 100);
+        }
+
+        function toggleVoiceInput() {
+            if (!recognition) {
+                addMessage('system', '🎤 Voice input is not supported in your browser. Please use Chrome, Safari, or Edge.');
+                return;
+            }
+
+            if (isRecording) {
+                // Stop recording
+                recognition.stop();
+            } else {
+                // Start recording
+                try {
+                    recognition.start();
+                } catch (error) {
+                    console.error('Failed to start recognition:', error);
+                    addMessage('system', '🎤 Failed to start voice input. Please try again.');
+                }
+            }
         }
     </script>
 </body>
