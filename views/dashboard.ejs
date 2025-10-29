@@ -3635,44 +3635,16 @@
             }
         }
 
-        async function sendSMS(phone, name) {
+        function sendSMS(phone, name) {
             const message = prompt(`Message to ${name}:`, '');
 
             if (!message || message.trim() === '') {
                 return;
             }
 
-            try {
-                // Show loading indicator
-                const originalBody = document.body.style.cursor;
-                document.body.style.cursor = 'wait';
-
-                const response = await fetch('/api/messages/sms', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        to: phone,
-                        message: message,
-                        clientId: CLIENT_ID
-                    })
-                });
-
-                document.body.style.cursor = originalBody;
-
-                const result = await response.json();
-
-                if (result.success) {
-                    alert(`✅ SMS sent successfully to ${name}!`);
-                } else {
-                    alert(`❌ Failed to send SMS: ${result.error}`);
-                }
-            } catch (error) {
-                document.body.style.cursor = 'auto';
-                console.error('Error sending SMS:', error);
-                alert(`❌ Failed to send SMS: ${error.message}`);
-            }
+            // Open device SMS app with pre-filled message (same as makeCall)
+            const smsURL = `sms:${phone}?body=${encodeURIComponent(message)}`;
+            window.location.href = smsURL;
         }
 
         function makeCall(phone, name) {
