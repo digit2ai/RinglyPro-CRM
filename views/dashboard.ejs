@@ -3062,14 +3062,31 @@
             const endDate = new Date(today);
             endDate.setDate(today.getDate() + days);
 
+            console.log(`🔍 Filtering for ${days} days:`, {
+                today: today.toISOString().split('T')[0],
+                endDate: endDate.toISOString().split('T')[0],
+                totalAppointments: allAppointments.length
+            });
+
             const filtered = allAppointments.filter(apt => {
                 // Use appointmentDate (raw date) instead of date (formatted string)
                 const aptDate = new Date(apt.appointmentDate);
                 aptDate.setHours(0, 0, 0, 0);
-                return aptDate >= today && aptDate <= endDate;
+                const matches = aptDate >= today && aptDate <= endDate;
+
+                // Debug log each appointment
+                if (days === 30) {
+                    console.log(`  Appointment: ${apt.customerName} on ${apt.appointmentDate}`, {
+                        aptDate: aptDate.toISOString().split('T')[0],
+                        daysFromToday: Math.floor((aptDate - today) / (1000 * 60 * 60 * 24)),
+                        matches: matches
+                    });
+                }
+
+                return matches;
             });
 
-            console.log(`Filtering ${allAppointments.length} appointments for ${days} days:`, filtered.length, 'found');
+            console.log(`✅ Found ${filtered.length} appointments in ${days}-day range`);
 
             renderFilteredAppointments(filtered);
         }
@@ -3648,8 +3665,6 @@
 
                 if (result.success) {
                     alert(`✅ SMS sent successfully to ${name}!`);
-                    // Refresh messages to show the sent SMS
-                    loadRecentMessages();
                 } else {
                     alert(`❌ Failed to send SMS: ${result.error}`);
                 }
