@@ -1,18 +1,31 @@
 // RinglyPro Service Worker
-const CACHE_NAME = 'ringlypro-v2';
+const CACHE_NAME = 'ringlypro-v3';
 const urlsToCache = [
-  '/',
-  '/dashboard',
   '/manifest.json'
 ];
 
-// Install event - cache resources
+// Install event - cache static resources only
 self.addEventListener('install', (event) => {
+  console.log('Service Worker: Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
+        console.log('Service Worker: Caching files');
+        // Use Promise.allSettled to handle failures gracefully
+        return Promise.allSettled(
+          urlsToCache.map(url =>
+            cache.add(url).catch(err => {
+              console.warn(`Failed to cache ${url}:`, err);
+              return null;
+            })
+          )
+        );
+      })
+      .then(() => {
+        console.log('Service Worker: Install complete');
+      })
+      .catch((error) => {
+        console.error('Service Worker: Install failed', error);
       })
   );
   self.skipWaiting();
@@ -35,17 +48,44 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - network-first strategy for authenticated routes
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Skip caching for authenticated routes
+  if (url.pathname.startsWith('/api') ||
+      url.pathname.startsWith('/dashboard') ||
+      url.pathname === '/') {
+    // Network-only for dynamic content
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Cache-first for static assets
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
-        // Cache hit - return response
         if (response) {
           return response;
         }
-        return fetch(event.request);
-      }
-    )
+        // Fetch from network and cache for next time
+        return fetch(event.request).then((response) => {
+          // Only cache valid responses
+          if (!response || response.status !== 200 || response.type !== 'basic') {
+            return response;
+          }
+
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+
+          return response;
+        });
+      })
+      .catch(() => {
+        // Network failed, try to serve from cache anyway
+        return caches.match(event.request);
+      })
   );
 });
