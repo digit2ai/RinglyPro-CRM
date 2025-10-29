@@ -276,6 +276,13 @@ class GoHighLevelMCPProxy {
   async searchContacts(query, limit = 20) {
     console.log(`🔍 searchContacts called with query: "${query}", limit: ${limit}`);
 
+    // For large limits (>100), use REST API which supports pagination
+    // MCP pagination is broken and only returns first 100 results
+    if (limit > 100) {
+      console.log(`🔍 Large limit (${limit}) detected - using REST API instead of MCP`);
+      return await this.searchContactsViaREST(query, limit);
+    }
+
     try {
       console.log(`🔍 Using MCP for search (single page only - GHL pagination is broken)`);
 
