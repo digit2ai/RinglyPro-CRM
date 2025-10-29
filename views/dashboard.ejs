@@ -147,6 +147,23 @@
             box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
         }
 
+        .install-app-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: none; /* Hidden by default, shown when installable */
+        }
+
+        .install-app-btn:hover {
+            background: #059669;
+        }
+
         .logout-btn {
             background: #ef4444;
             color: white;
@@ -1802,6 +1819,12 @@
                         </svg>
                         <span id="headerCreditAmount">Loading...</span>
                     </button>
+                    <button id="installAppBtn" class="install-app-btn" onclick="installPWA()">
+                        <svg style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Install App
+                    </button>
                     <button class="logout-btn" onclick="logout()">
                         <svg style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -2583,6 +2606,63 @@
             // Start auto-refresh for messages
             startMessagesAutoRefresh();
         });
+
+        // PWA Install functionality
+        let deferredPrompt;
+        const installBtn = document.getElementById('installAppBtn');
+
+        // Listen for beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent the mini-infobar from appearing on mobile
+            e.preventDefault();
+            // Stash the event so it can be triggered later
+            deferredPrompt = e;
+            // Show the install button
+            if (installBtn) {
+                installBtn.style.display = 'block';
+            }
+        });
+
+        // Install PWA function
+        function installPWA() {
+            if (!deferredPrompt) {
+                // If no prompt available, show instructions
+                alert('To install RinglyPro:\n\niOS: Tap Share → Add to Home Screen\nAndroid: Tap Menu → Install App\nDesktop: Look for install icon in address bar');
+                return;
+            }
+
+            // Show the install prompt
+            deferredPrompt.prompt();
+
+            // Wait for the user to respond to the prompt
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                    // Hide the install button after installation
+                    if (installBtn) {
+                        installBtn.style.display = 'none';
+                    }
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                deferredPrompt = null;
+            });
+        }
+
+        // Check if app is already installed
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA was installed');
+            if (installBtn) {
+                installBtn.style.display = 'none';
+            }
+        });
+
+        // Hide button if already running as installed app
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            if (installBtn) {
+                installBtn.style.display = 'none';
+            }
+        }
 
         // Logout function
         function logout() {
