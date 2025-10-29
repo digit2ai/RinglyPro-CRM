@@ -83,17 +83,22 @@ class OutboundCallerService {
       const weekday = parts.find(p => p.type === 'weekday')?.value;
       const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0');
 
+      logger.info(`📅 Business hours check: ${weekday} ${hour}:00 EST`);
+
       // Check if Monday-Friday
       const validDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
       if (!validDays.includes(weekday)) {
+        logger.info(`❌ Outside business days: ${weekday}`);
         return false;
       }
 
       // Check if 8am-6pm EST (8-17, stops before 6pm)
       if (hour < 8 || hour >= 18) {
+        logger.info(`❌ Outside business hours: ${hour}:00 EST (allowed 8-17)`);
         return false;
       }
 
+      logger.info(`✅ Within business hours: ${weekday} ${hour}:00 EST`);
       return true;
     } catch (error) {
       logger.error('Error checking business hours:', error.message);
