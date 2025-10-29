@@ -65,11 +65,53 @@ class OutboundCallerService {
   }
 
   /**
+   * Check if current time is within business hours (8am-6pm EST, Mon-Fri)
+   */
+  isBusinessHours() {
+    try {
+      const now = new Date();
+
+      // Get EST/EDT time using Intl.DateTimeFormat
+      const estFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        hour: 'numeric',
+        hour12: false,
+        weekday: 'short'
+      });
+
+      const parts = estFormatter.formatToParts(now);
+      const weekday = parts.find(p => p.type === 'weekday')?.value;
+      const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0');
+
+      // Check if Monday-Friday
+      const validDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+      if (!validDays.includes(weekday)) {
+        return false;
+      }
+
+      // Check if 8am-6pm EST (8-17, stops before 6pm)
+      if (hour < 8 || hour >= 18) {
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      logger.error('Error checking business hours:', error.message);
+      return false; // Fail safe - don't call if error
+    }
+  }
+
+  /**
    * Make a single outbound call
    */
   async makeCall(phoneNumber, leadData = {}) {
     if (!this.twilioClient) {
       throw new Error('Twilio not configured');
+    }
+
+    // Check business hours - TCPA compliance
+    if (!this.isBusinessHours()) {
+      throw new Error('Call cannot be made After Hours - TCPA Compliant');
     }
 
     const validation = this.validatePhone(phoneNumber);
