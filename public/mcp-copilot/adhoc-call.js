@@ -93,15 +93,15 @@ async function handleAdHocCallSubmit(e) {
 
     try {
         // Step 1: Save to database
-        addMessage('system', `💾 Saving contact to database...`);
+        console.log('💾 Saving contact to database...');
         await saveAdHocContactToDatabase(phone, name);
 
         // Step 2: Export to GHL CRM
-        addMessage('system', `📤 Exporting to GHL CRM...`);
+        console.log('📤 Exporting to GHL CRM...');
         await exportAdHocContactToGHL(phone, name);
 
         // Step 3: Make the call
-        addMessage('system', `📞 Initiating call to ${phone}...`);
+        console.log('📞 Initiating call to', phone);
 
         const response = await fetch('/api/outbound-caller/call', {
             method: 'POST',
@@ -119,21 +119,19 @@ async function handleAdHocCallSubmit(e) {
         const data = await response.json();
 
         if (data.success) {
-            addMessage('system', `✅ Call initiated successfully!`);
-            addMessage('system', `📞 Calling ${name || phone}... Status: ${data.status}`);
-            addMessage('system', `🆔 Call SID: ${data.callSid}`);
+            console.log('✅ Call initiated successfully! Status:', data.status, 'SID:', data.callSid);
+            alert(`✅ Call initiated successfully!\n\nCalling ${name || phone}...\nStatus: ${data.status}\nCall SID: ${data.callSid}`);
 
             // Reset form and close
             document.getElementById('adhocCallForm').reset();
             closeAdHocCall();
         } else {
             alert('Error making call: ' + (data.error || 'Unknown error'));
-            addMessage('system', `❌ Call failed: ${data.error}`);
+            console.error('❌ Call failed:', data.error);
         }
     } catch (error) {
         console.error('Error making ad-hoc call:', error);
         alert('Failed to initiate call. Check server logs.');
-        addMessage('system', `❌ Call failed: ${error.message}`);
     }
 }
 
@@ -164,7 +162,7 @@ async function saveAdHocContactToDatabase(phone, name) {
 
         const data = await response.json();
         if (data.success && data.saved > 0) {
-            addMessage('system', `✅ Contact saved to database`);
+            console.log('✅ Contact saved to database');
         }
     } catch (error) {
         console.error('Error saving ad-hoc contact:', error);
@@ -198,9 +196,9 @@ async function exportAdHocContactToGHL(phone, name) {
 
         const data = await response.json();
         if (data.success && data.exported > 0) {
-            addMessage('system', `✅ Contact exported to GHL CRM with "NEW LEAD" tag`);
+            console.log('✅ Contact exported to GHL CRM with "NEW LEAD" tag');
         } else if (data.skipped > 0) {
-            addMessage('system', `ℹ️ Contact already exists in GHL CRM`);
+            console.log('ℹ️ Contact already exists in GHL CRM');
         }
     } catch (error) {
         console.error('Error exporting ad-hoc contact to GHL:', error);
