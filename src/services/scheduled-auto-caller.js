@@ -21,17 +21,102 @@ class ScheduledAutoCallerService {
       remainingToday: 0,
       successRate: 0,
       startedAt: null,
-      lastCallAt: null
+      lastCallAt: null,
+      failedCalls: 0,
+      duplicateDetections: 0
     };
     this.config = {
       schedule: '*/2 8-18 * * 1-5', // Every 2 minutes, 8am-6pm EST, Mon-Fri
       timezone: 'America/New_York',
       minInterval: 2, // minutes between calls
       maxCallsPerHour: 30,
-      maxCallsPerDay: 200
+      maxCallsPerDay: 200,
+      maxConsecutiveFailures: 3, // EMERGENCY: Stop after 3 consecutive failures
+      maxDuplicateDetections: 2 // EMERGENCY: Stop if same number called twice
     };
+    this.recentCalls = []; // Track recent calls to detect duplicates
+    this.consecutiveFailures = 0;
+    this.emergencyStop = false;
+    this.emergencyReason = null;
 
-    logger.info('📞 Scheduled Auto-Caller Service initialized');
+    logger.info('📞 Scheduled Auto-Caller Service initialized with EMERGENCY SAFETY CONTROLS');
+  }
+
+  /**
+   * EMERGENCY STOP: Send email and stop all calling
+   */
+  async emergencyStopAndNotify(reason) {
+    this.emergencyStop = true;
+    this.emergencyReason = reason;
+
+    logger.error(`🚨 EMERGENCY STOP TRIGGERED: ${reason}`);
+
+    // Send email notification
+    try {
+      const sgMail = require('@sendgrid/mail');
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+      const msg = {
+        to: 'mstagg@digit2ai.com',
+        from: process.env.SENDGRID_FROM_EMAIL || 'noreply@ringlypro.com',
+        subject: '🚨 EMERGENCY: Outbound Caller STOPPED',
+        text: `Technical Issue Detected\n\nThe Outbound Caller system has been automatically stopped due to:\n\n${reason}\n\nTimestamp: ${new Date().toISOString()}\n\nStats:\n- Calls made today: ${this.stats.calledToday}\n- Failed calls: ${this.stats.failedCalls}\n- Duplicate detections: ${this.stats.duplicateDetections}\n- Consecutive failures: ${this.consecutiveFailures}\n\nPlease investigate immediately to prevent TCPA violations.\n\n- RinglyPro Auto-Caller System`,
+        html: `
+          <h2>🚨 EMERGENCY: Outbound Caller STOPPED</h2>
+          <p><strong>Technical Issue Detected</strong></p>
+          <p>The Outbound Caller system has been automatically stopped due to:</p>
+          <div style="background-color: #fee; border-left: 4px solid #c00; padding: 15px; margin: 20px 0;">
+            <strong>${reason}</strong>
+          </div>
+          <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+          <h3>Statistics</h3>
+          <ul>
+            <li>Calls made today: ${this.stats.calledToday}</li>
+            <li>Failed calls: ${this.stats.failedCalls}</li>
+            <li>Duplicate detections: ${this.stats.duplicateDetections}</li>
+            <li>Consecutive failures: ${this.consecutiveFailures}</li>
+          </ul>
+          <p><strong>⚠️ Please investigate immediately to prevent TCPA violations.</strong></p>
+          <p><em>- RinglyPro Auto-Caller System</em></p>
+        `
+      };
+
+      await sgMail.send(msg);
+      logger.info('✅ Emergency notification email sent to mstagg@digit2ai.com');
+    } catch (emailError) {
+      logger.error('❌ Failed to send emergency email:', emailError.message);
+    }
+
+    // Stop the scheduler
+    if (this.isRunning) {
+      this.stop();
+    }
+  }
+
+  /**
+   * Check for duplicate calls (same number called multiple times)
+   */
+  checkForDuplicates(phoneNumber) {
+    // Keep only last 10 calls in memory
+    if (this.recentCalls.length > 10) {
+      this.recentCalls.shift();
+    }
+
+    // Check if this number was already called recently
+    const duplicate = this.recentCalls.find(call => call.phone === phoneNumber);
+    if (duplicate) {
+      this.stats.duplicateDetections++;
+      logger.error(`🚨 DUPLICATE CALL DETECTED: ${phoneNumber} was already called at ${duplicate.timestamp}`);
+      return true;
+    }
+
+    // Add to recent calls
+    this.recentCalls.push({
+      phone: phoneNumber,
+      timestamp: new Date().toISOString()
+    });
+
+    return false;
   }
 
   /**
@@ -82,8 +167,12 @@ class ScheduledAutoCallerService {
    */
   async getNextProspect() {
     try {
-      let whereClause = 'WHERE call_status = :status';
-      const replacements = { status: 'TO_BE_CALLED' };
+      // SAFETY: Exclude BAD_NUMBER entries - these should NEVER be called
+      let whereClause = 'WHERE call_status = :status AND call_status != :badStatus';
+      const replacements = {
+        status: 'TO_BE_CALLED',
+        badStatus: 'BAD_NUMBER'
+      };
 
       // Add client filter if specified
       if (this.currentClientId) {
@@ -174,6 +263,12 @@ class ScheduledAutoCallerService {
    * Make next scheduled call
    */
   async makeScheduledCall() {
+    // SAFETY: Check for emergency stop
+    if (this.emergencyStop) {
+      logger.error('🚨 Emergency stop active, cannot make calls');
+      return;
+    }
+
     // Skip if paused
     if (this.isPaused) {
       logger.info('⏸️  Scheduler paused, skipping call');
@@ -193,6 +288,14 @@ class ScheduledAutoCallerService {
       return;
     }
 
+    // SAFETY: Check consecutive failures
+    if (this.consecutiveFailures >= this.config.maxConsecutiveFailures) {
+      await this.emergencyStopAndNotify(
+        `Too many consecutive failures (${this.consecutiveFailures}). Possible webhook failure or system issue.`
+      );
+      return;
+    }
+
     try {
       // Get next prospect
       const prospect = await this.getNextProspect();
@@ -203,7 +306,30 @@ class ScheduledAutoCallerService {
         return;
       }
 
+      // SAFETY: Check for duplicate calls
+      if (this.checkForDuplicates(prospect.phone_number)) {
+        await this.emergencyStopAndNotify(
+          `DUPLICATE CALL DETECTED: Attempted to call ${prospect.phone_number} (${prospect.business_name}) multiple times. Database update may have failed.`
+        );
+        return;
+      }
+
       logger.info(`📞 Calling prospect: ${prospect.business_name} (${prospect.phone_number})`);
+
+      // SAFETY: Mark as calling IMMEDIATELY (before Twilio call)
+      // This prevents retries if webhook fails
+      await sequelize.query(
+        `UPDATE business_directory
+         SET call_status = 'CALLING',
+             last_called_at = CURRENT_TIMESTAMP,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = :prospectId`,
+        {
+          replacements: { prospectId: prospect.id },
+          type: QueryTypes.UPDATE
+        }
+      );
+      logger.info(`📊 Database updated: Status changed to CALLING for ${prospect.phone_number}`);
 
       // Make the call using existing outbound caller service
       const result = await outboundCallerService.makeCall(prospect.phone_number, {
@@ -216,13 +342,55 @@ class ScheduledAutoCallerService {
       if (result.success) {
         this.stats.calledToday++;
         this.stats.lastCallAt = new Date();
+        this.consecutiveFailures = 0; // Reset on success
         logger.info(`✅ Call initiated: ${result.callSid}`);
+
+        // Update to CALLED status (webhook will also update, but this ensures it)
+        await sequelize.query(
+          `UPDATE business_directory
+           SET call_status = 'CALLED',
+               call_attempts = call_attempts + 1
+           WHERE id = :prospectId`,
+          {
+            replacements: { prospectId: prospect.id },
+            type: QueryTypes.UPDATE
+          }
+        );
       } else {
+        this.stats.failedCalls++;
+        this.consecutiveFailures++;
         logger.error(`❌ Call failed: ${result.error}`);
+
+        // Mark as FAILED or BAD_NUMBER if validation failed
+        const isBadNumber = result.error?.includes('Invalid') || result.error?.includes('Test number');
+        await sequelize.query(
+          `UPDATE business_directory
+           SET call_status = :status,
+               call_notes = :notes,
+               call_attempts = call_attempts + 1
+           WHERE id = :prospectId`,
+          {
+            replacements: {
+              prospectId: prospect.id,
+              status: isBadNumber ? 'BAD_NUMBER' : 'FAILED',
+              notes: `Call failed: ${result.error}`
+            },
+            type: QueryTypes.UPDATE
+          }
+        );
       }
 
     } catch (error) {
+      this.stats.failedCalls++;
+      this.consecutiveFailures++;
       logger.error('❌ Error in makeScheduledCall:', error.message);
+
+      // SAFETY: If too many errors, emergency stop
+      if (this.consecutiveFailures >= this.config.maxConsecutiveFailures) {
+        await this.emergencyStopAndNotify(
+          `System error: ${error.message}. Consecutive failures: ${this.consecutiveFailures}`
+        );
+      }
     }
   }
 
@@ -233,6 +401,12 @@ class ScheduledAutoCallerService {
     if (this.isRunning) {
       throw new Error('Scheduler is already running');
     }
+
+    // SAFETY: Reset emergency stop flags
+    this.emergencyStop = false;
+    this.emergencyReason = null;
+    this.consecutiveFailures = 0;
+    this.recentCalls = [];
 
     this.currentClientId = clientId;
     this.filters = {
@@ -252,7 +426,9 @@ class ScheduledAutoCallerService {
       remainingToday: queueCount,
       successRate: 0,
       startedAt: new Date(),
-      lastCallAt: null
+      lastCallAt: null,
+      failedCalls: 0,
+      duplicateDetections: 0
     };
 
     // Create cron job
