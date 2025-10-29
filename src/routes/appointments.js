@@ -55,7 +55,7 @@ router.get('/', async (req, res) => {
       where: {
         clientId: req.clientId
       },
-      order: [['appointmentDate', 'DESC'], ['appointmentTime', 'ASC']]
+      order: [['appointmentDate', 'ASC'], ['appointmentTime', 'ASC']]
     });
     
     console.log(`📋 Client ${req.clientId}: Found ${appointments.length} total appointments`);
