@@ -3019,19 +3019,33 @@
         // Load Dashboard Data
         async function loadDashboard() {
             try {
-                const response = await authenticatedFetch(`/api/mobile/dashboard/today/${CLIENT_ID}`);
-                if (!response) {
-                    throw new Error('No response from server');
+                // Load ALL appointments (not just today) for 30-day filter
+                const appointmentsResponse = await authenticatedFetch(`/api/appointments`);
+                if (!appointmentsResponse) {
+                    throw new Error('No response from appointments API');
                 }
 
-                const data = await response.json();
+                const appointmentsData = await appointmentsResponse.json();
 
-                if (data.success) {
-                    dashboardData = data.data;
-                    renderAppointments(data.data.appointments);
-                    renderCommunications(data.data.communications);
+                if (appointmentsData.success) {
+                    renderAppointments(appointmentsData.appointments);
                 } else {
-                    throw new Error(data.message || 'Failed to load dashboard');
+                    throw new Error(appointmentsData.message || 'Failed to load appointments');
+                }
+
+                // Load communications data separately
+                try {
+                    const dashboardResponse = await authenticatedFetch(`/api/mobile/dashboard/today/${CLIENT_ID}`);
+                    if (dashboardResponse) {
+                        const data = await dashboardResponse.json();
+                        if (data.success) {
+                            dashboardData = data.data;
+                            renderCommunications(data.data.communications);
+                        }
+                    }
+                } catch (commError) {
+                    console.warn('Error loading communications:', commError);
+                    // Continue without communications - appointments still loaded
                 }
             } catch (error) {
                 console.error('Error loading dashboard:', error);
@@ -3069,14 +3083,17 @@
             });
 
             const filtered = allAppointments.filter(apt => {
-                // Use appointmentDate (raw date) instead of date (formatted string)
-                const aptDate = new Date(apt.appointmentDate);
+                // Parse date in local timezone (avoid UTC conversion)
+                const dateString = apt.appointmentDate; // "2025-10-28"
+                const [year, month, day] = dateString.split('-').map(Number);
+                const aptDate = new Date(year, month - 1, day); // month is 0-indexed
                 aptDate.setHours(0, 0, 0, 0);
+
                 const matches = aptDate >= today && aptDate <= endDate;
 
                 // Debug log each appointment
                 if (days === 30) {
-                    console.log(`  Appointment: ${apt.customerName} on ${apt.appointmentDate}`, {
+                    console.log(`  Appointment: ${apt.customerName} on ${dateString}`, {
                         aptDate: aptDate.toISOString().split('T')[0],
                         daysFromToday: Math.floor((aptDate - today) / (1000 * 60 * 60 * 24)),
                         matches: matches
