@@ -110,8 +110,22 @@ class OutboundCallerService {
     }
 
     // Check business hours - TCPA compliance
-    if (!this.isBusinessHours()) {
-      throw new Error('Call cannot be made After Hours - TCPA Compliant');
+    // Allow bypass for testing with bypassBusinessHours flag
+    const bypassHours = leadData?.bypassBusinessHours === true;
+
+    if (!bypassHours && !this.isBusinessHours()) {
+      // Get current time for better error message
+      const now = new Date();
+      const estFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true,
+        weekday: 'short'
+      });
+      const currentTime = estFormatter.format(now);
+
+      throw new Error(`Call cannot be made After Hours - TCPA Compliant. Current time: ${currentTime}. Business hours: Mon-Fri 8AM-6PM EST.`);
     }
 
     const validation = this.validatePhone(phoneNumber);
