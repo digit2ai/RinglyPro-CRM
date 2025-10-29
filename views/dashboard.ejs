@@ -2626,28 +2626,67 @@
         function installPWA() {
             const installBtn = document.getElementById('installAppBtn');
 
-            if (!deferredPrompt) {
-                // If no prompt available, show instructions
-                alert('To install RinglyPro:\n\niOS: Tap Share → Add to Home Screen\nAndroid: Tap Menu → Install App\nDesktop: Look for install icon in address bar');
+            // Check if we have the install prompt (Android Chrome, Desktop Chrome/Edge)
+            if (deferredPrompt) {
+                console.log('✅ Triggering AUTOMATIC install prompt');
+                // Show the native browser install prompt - THIS DOES THE AUTOMATIC INSTALL
+                deferredPrompt.prompt();
+
+                // Wait for the user to respond to the prompt
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('✅ User accepted! App installing automatically...');
+                        // Hide the install button after installation
+                        if (installBtn) {
+                            installBtn.classList.add('hidden');
+                        }
+                    } else {
+                        console.log('❌ User dismissed the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
                 return;
             }
 
-            // Show the install prompt
-            deferredPrompt.prompt();
+            // Check if iOS (doesn't support automatic prompt)
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
-            // Wait for the user to respond to the prompt
-            deferredPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('User accepted the install prompt');
-                    // Hide the install button after installation
-                    if (installBtn) {
-                        installBtn.classList.add('hidden');
-                    }
-                } else {
-                    console.log('User dismissed the install prompt');
-                }
-                deferredPrompt = null;
-            });
+            if (isIOS && !isInStandaloneMode) {
+                // Show iOS-specific instructions
+                showIOSInstallInstructions();
+                return;
+            }
+
+            // For other browsers that don't support the prompt
+            alert('To install RinglyPro:\n\n' +
+                  '📱 Android: Tap Menu (⋮) → Install App\n' +
+                  '💻 Desktop: Look for install icon (⊕) in address bar\n' +
+                  '🍎 iOS: Tap Share (⎙) → Add to Home Screen');
+        }
+
+        // Show iOS install instructions in a better modal
+        function showIOSInstallInstructions() {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;padding:1rem;';
+            modal.innerHTML = `
+                <div style="background:white;border-radius:1rem;padding:2rem;max-width:400px;text-align:center;">
+                    <h2 style="margin:0 0 1rem 0;color:#1f2937;font-size:1.5rem;">Install RinglyPro</h2>
+                    <p style="color:#6b7280;margin-bottom:1.5rem;">To add this app to your iPhone home screen:</p>
+                    <div style="text-align:left;color:#374151;line-height:2;font-size:0.95rem;">
+                        <p style="margin:0.5rem 0;"><strong>1.</strong> Tap the <strong>Share button</strong> <svg style="width:1.2rem;height:1.2rem;display:inline-block;vertical-align:middle;" fill="currentColor" viewBox="0 0 20 20"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z"/></svg> at the bottom</p>
+                        <p style="margin:0.5rem 0;"><strong>2.</strong> Scroll down and tap <strong>"Add to Home Screen"</strong></p>
+                        <p style="margin:0.5rem 0;"><strong>3.</strong> Tap <strong>"Add"</strong> in the top right corner</p>
+                        <p style="margin:0.5rem 0;"><strong>4.</strong> Done! RinglyPro icon will appear on your home screen</p>
+                    </div>
+                    <button onclick="this.closest('div').parentElement.remove()"
+                            style="margin-top:1.5rem;background:#10b981;color:white;border:none;padding:0.75rem 2rem;border-radius:0.5rem;font-size:1rem;font-weight:600;cursor:pointer;">
+                        Got it!
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
         }
 
         // Check if app is already installed
