@@ -157,11 +157,14 @@
             font-weight: 500;
             cursor: pointer;
             transition: background 0.2s;
-            display: none; /* Hidden by default, shown when installable */
         }
 
         .install-app-btn:hover {
             background: #059669;
+        }
+
+        .install-app-btn.hidden {
+            display: none;
         }
 
         .logout-btn {
@@ -2609,22 +2612,21 @@
 
         // PWA Install functionality
         let deferredPrompt;
-        const installBtn = document.getElementById('installAppBtn');
 
         // Listen for beforeinstallprompt event
         window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('beforeinstallprompt event fired');
             // Prevent the mini-infobar from appearing on mobile
             e.preventDefault();
             // Stash the event so it can be triggered later
             deferredPrompt = e;
-            // Show the install button
-            if (installBtn) {
-                installBtn.style.display = 'block';
-            }
+            // Button is visible by default, no need to show
         });
 
         // Install PWA function
         function installPWA() {
+            const installBtn = document.getElementById('installAppBtn');
+
             if (!deferredPrompt) {
                 // If no prompt available, show instructions
                 alert('To install RinglyPro:\n\niOS: Tap Share → Add to Home Screen\nAndroid: Tap Menu → Install App\nDesktop: Look for install icon in address bar');
@@ -2640,7 +2642,7 @@
                     console.log('User accepted the install prompt');
                     // Hide the install button after installation
                     if (installBtn) {
-                        installBtn.style.display = 'none';
+                        installBtn.classList.add('hidden');
                     }
                 } else {
                     console.log('User dismissed the install prompt');
@@ -2652,17 +2654,22 @@
         // Check if app is already installed
         window.addEventListener('appinstalled', () => {
             console.log('PWA was installed');
+            const installBtn = document.getElementById('installAppBtn');
             if (installBtn) {
-                installBtn.style.display = 'none';
+                installBtn.classList.add('hidden');
             }
         });
 
         // Hide button if already running as installed app
-        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-            if (installBtn) {
-                installBtn.style.display = 'none';
+        window.addEventListener('DOMContentLoaded', () => {
+            const installBtn = document.getElementById('installAppBtn');
+            if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+                console.log('App is already installed, hiding install button');
+                if (installBtn) {
+                    installBtn.classList.add('hidden');
+                }
             }
-        }
+        });
 
         // Logout function
         function logout() {
