@@ -2271,21 +2271,29 @@ router.post('/copilot/chat', async (req, res) => {
               });
             }
 
-            // Build post data
-            const postData = {
-              message: postMessage,
-              scheduleTime: scheduleTime || new Date().toISOString(),
-              platforms: platforms || ['facebook', 'instagram'],
-              accounts: []
-            };
-
-            // Add available accounts
+            // Get account IDs from connected accounts
+            const accountIds = [];
             if (platforms.includes('facebook') && fbAccounts?.accounts?.length > 0) {
-              postData.accounts.push(...fbAccounts.accounts.map(acc => acc.id));
+              accountIds.push(...fbAccounts.accounts.map(acc => acc.id));
             }
             if (platforms.includes('instagram') && igAccounts?.accounts?.length > 0) {
-              postData.accounts.push(...igAccounts.accounts.map(acc => acc.id));
+              accountIds.push(...igAccounts.accounts.map(acc => acc.id));
             }
+
+            if (accountIds.length === 0) {
+              return res.json({
+                success: false,
+                response: `⚠️ No ${platforms.join('/')} accounts found. Please connect your accounts in GoHighLevel first.`
+              });
+            }
+
+            // GoHighLevel Social Media API format
+            // https://highlevel.stoplight.io/docs/integrations/9e6c88f07a4e3-create-social-media-posting
+            const postData = {
+              socialMediaAccountIds: accountIds,
+              text: postMessage,
+              scheduleAt: scheduleTime ? new Date(scheduleTime).toISOString() : undefined
+            };
 
             console.log('📱 Creating social post with data:', JSON.stringify(postData, null, 2));
             const result = await session.proxy.createSocialPost(postData);
@@ -2316,7 +2324,11 @@ router.post('/copilot/chat', async (req, res) => {
           // List social media posts
           try {
             console.log('📋 Fetching social posts list...');
-            const posts = await session.proxy.listSocialPosts({ limit: 20 });
+            // GoHighLevel API format for listing posts
+            const posts = await session.proxy.listSocialPosts({
+              limit: 20,
+              skip: 0
+            });
             console.log('📋 Posts response:', JSON.stringify(posts, null, 2));
 
             if (posts && posts.posts && posts.posts.length > 0) {
