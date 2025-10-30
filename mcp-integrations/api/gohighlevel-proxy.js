@@ -124,6 +124,9 @@ class GoHighLevelMCPProxy {
 
   // Legacy REST API call (fallback)
   async callAPI(endpoint, method = 'GET', data = null) {
+    // Declare params outside try block so it's accessible in catch
+    let params = undefined;
+
     try {
       // Both JWT and PIT tokens require the Version header
       const headers = {
@@ -141,7 +144,6 @@ class GoHighLevelMCPProxy {
       // JWT tokens have locationId embedded - don't add it anywhere
       // PIT tokens need locationId as query parameter for GET only
       let url = `${this.baseURL}${endpoint}`;
-      let params = undefined;
 
       if (!isJWT && method === 'GET' && !endpoint.includes('?')) {
         // Only add locationId query param for PIT tokens on GET requests
