@@ -150,14 +150,20 @@ class GoHighLevelMCPProxy {
         params = { locationId: this.locationId };
       }
 
-      // Don't modify data - methods should handle locationId themselves if needed
-      const response = await axios({
+      // Don't send data for GET requests (causes JSON parsing errors in GoHighLevel)
+      const axiosConfig = {
         method,
         url,
         headers,
-        data,
         params
-      });
+      };
+
+      // Only add data for non-GET requests
+      if (method !== 'GET' && data !== null) {
+        axiosConfig.data = data;
+      }
+
+      const response = await axios(axiosConfig);
       return response.data;
     } catch (error) {
       console.error('❌ GoHighLevel API Error:', {
