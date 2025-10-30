@@ -158,9 +158,15 @@ class GoHighLevelMCPProxy {
       });
       return response.data;
     } catch (error) {
-      console.error('GoHighLevel API Error:', error.response?.status, error.response?.data || error.message);
-      console.error('Request URL:', `${method} ${this.baseURL}${endpoint}`);
-      console.error('Request data:', data);
+      console.error('❌ GoHighLevel API Error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+        url: `${method} ${this.baseURL}${endpoint}`,
+        requestData: data,
+        requestParams: params
+      });
       throw error;
     }
   }
@@ -703,9 +709,13 @@ class GoHighLevelMCPProxy {
   // Social Media Posting (REST API v2)
   async createSocialPost(postData) {
     console.log('📱 Creating social media post via REST API v2');
-    return await this.callAPI(`/social-media-posting/${this.locationId}/posts`, 'POST', {
-      ...postData
-    });
+    console.log('📍 Using locationId:', this.locationId);
+    console.log('📝 Post data:', JSON.stringify(postData, null, 2));
+
+    const endpoint = `/social-media-posting/${this.locationId}/posts`;
+    console.log('🌐 POST endpoint:', endpoint);
+
+    return await this.callAPI(endpoint, 'POST', postData);
   }
 
   async getSocialPost(postId) {
@@ -715,12 +725,20 @@ class GoHighLevelMCPProxy {
 
   async listSocialPosts(filters = {}) {
     console.log('📱 Listing social media posts via REST API v2');
+    console.log('📍 Using locationId:', this.locationId);
+
     // GoHighLevel uses GET with query params for listing posts
-    const queryParams = new URLSearchParams({
+    // Build query params but let callAPI handle locationId for PIT tokens
+    const queryParams = {
       limit: filters.limit || 20,
       skip: filters.skip || 0
-    }).toString();
-    return await this.callAPI(`/social-media-posting/${this.locationId}/posts?${queryParams}`, 'GET');
+    };
+
+    const queryString = new URLSearchParams(queryParams).toString();
+    const endpoint = `/social-media-posting/${this.locationId}/posts${queryString ? '?' + queryString : ''}`;
+
+    console.log('🌐 Full endpoint:', endpoint);
+    return await this.callAPI(endpoint, 'GET');
   }
 
   async updateSocialPost(postId, updates) {
