@@ -715,7 +715,12 @@ class GoHighLevelMCPProxy {
 
   async listSocialPosts(filters = {}) {
     console.log('📱 Listing social media posts via REST API v2');
-    return await this.callAPI(`/social-media-posting/${this.locationId}/posts/list`, 'POST', filters);
+    // GoHighLevel uses GET with query params for listing posts
+    const queryParams = new URLSearchParams({
+      limit: filters.limit || 20,
+      skip: filters.skip || 0
+    }).toString();
+    return await this.callAPI(`/social-media-posting/${this.locationId}/posts?${queryParams}`, 'GET');
   }
 
   async updateSocialPost(postId, updates) {
