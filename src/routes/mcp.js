@@ -2255,6 +2255,101 @@ router.post('/copilot/chat', async (req, res) => {
             response
           });
 
+        } else if (claudeResponse.action === 'schedule_social_post') {
+          // Schedule social media post
+          const { platforms, message: postMessage, scheduleTime } = claudeResponse.data;
+
+          try {
+            // Get social media accounts
+            const fbAccounts = await session.proxy.getSocialAccounts('facebook').catch(() => ({ accounts: [] }));
+            const igAccounts = await session.proxy.getSocialAccounts('instagram').catch(() => ({ accounts: [] }));
+
+            if (!fbAccounts?.accounts?.length && !igAccounts?.accounts?.length) {
+              return res.json({
+                success: false,
+                response: "⚠️ No social media accounts connected. Please connect your Facebook or Instagram accounts in GoHighLevel first."
+              });
+            }
+
+            // Build post data
+            const postData = {
+              message: postMessage,
+              scheduleTime: scheduleTime || new Date().toISOString(),
+              platforms: platforms || ['facebook', 'instagram'],
+              accounts: []
+            };
+
+            // Add available accounts
+            if (platforms.includes('facebook') && fbAccounts?.accounts?.length > 0) {
+              postData.accounts.push(...fbAccounts.accounts.map(acc => acc.id));
+            }
+            if (platforms.includes('instagram') && igAccounts?.accounts?.length > 0) {
+              postData.accounts.push(...igAccounts.accounts.map(acc => acc.id));
+            }
+
+            console.log('📱 Creating social post with data:', JSON.stringify(postData, null, 2));
+            const result = await session.proxy.createSocialPost(postData);
+            console.log('✅ Social post created successfully:', JSON.stringify(result, null, 2));
+
+            let response = `✅ Social media post scheduled!\n\n`;
+            response += `📱 Platforms: ${platforms.join(', ')}\n`;
+            response += `📝 Content: ${postMessage.substring(0, 100)}${postMessage.length > 100 ? '...' : ''}\n`;
+            response += `\nPost ID: ${result?.id || 'N/A'}\n`;
+            response += `Status: ${result?.status || 'Scheduled'}\n`;
+            response += `\n✅ Check your GoHighLevel Social Planner to confirm!`;
+
+            return res.json({
+              success: true,
+              response,
+              data: result
+            });
+
+          } catch (error) {
+            console.error('❌ Social post error:', error);
+            return res.json({
+              success: false,
+              response: `❌ Error scheduling social post: ${error.message}\n\nPlease check:\n1. Facebook/Instagram accounts are connected in GoHighLevel\n2. Your GoHighLevel API key has social media permissions\n3. Your account has active social media features enabled`
+            });
+          }
+
+        } else if (claudeResponse.action === 'list_social_posts') {
+          // List social media posts
+          try {
+            console.log('📋 Fetching social posts list...');
+            const posts = await session.proxy.listSocialPosts({ limit: 20 });
+            console.log('📋 Posts response:', JSON.stringify(posts, null, 2));
+
+            if (posts && posts.posts && posts.posts.length > 0) {
+              let response = `📱 Recent Social Media Posts (${posts.posts.length}):\n\n`;
+              posts.posts.forEach((post, idx) => {
+                response += `${idx + 1}. ${post.message ? post.message.substring(0, 50) + '...' : 'No content'}\n`;
+                response += `   Status: ${post.status || 'unknown'}\n`;
+                if (post.scheduleTime) {
+                  response += `   Scheduled: ${new Date(post.scheduleTime).toLocaleString()}\n`;
+                }
+                response += `\n`;
+              });
+
+              return res.json({
+                success: true,
+                response,
+                data: posts
+              });
+            } else {
+              console.log('⚠️ No posts found in response:', posts);
+              return res.json({
+                success: true,
+                response: "No social media posts found.\n\nThis could mean:\n1. No posts have been created yet\n2. Social media feature not enabled in GoHighLevel\n3. Check GoHighLevel Social Planner directly"
+              });
+            }
+          } catch (error) {
+            console.error('❌ List social posts error:', error);
+            return res.json({
+              success: false,
+              response: `Error listing social posts: ${error.message}`
+            });
+          }
+
         } else {
           // Default: just show Claude's message
           return res.json({
