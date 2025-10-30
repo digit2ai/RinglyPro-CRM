@@ -735,18 +735,17 @@ class GoHighLevelMCPProxy {
     console.log('📱 Listing social media posts via REST API v2');
     console.log('📍 Using locationId:', this.locationId);
 
-    // GoHighLevel uses GET with query params for listing posts
-    // Build query params but let callAPI handle locationId for PIT tokens
-    const queryParams = {
+    // GoHighLevel uses POST /posts/list (not GET /posts) for filtering
+    const filterData = {
       limit: filters.limit || 20,
       skip: filters.skip || 0
     };
 
-    const queryString = new URLSearchParams(queryParams).toString();
-    const endpoint = `/social-media-posting/${this.locationId}/posts${queryString ? '?' + queryString : ''}`;
+    const endpoint = `/social-media-posting/${this.locationId}/posts/list`;
 
     console.log('🌐 Full endpoint:', endpoint);
-    return await this.callAPI(endpoint, 'GET');
+    console.log('📝 Filter data:', JSON.stringify(filterData, null, 2));
+    return await this.callAPI(endpoint, 'POST', filterData);
   }
 
   async updateSocialPost(postId, updates) {
