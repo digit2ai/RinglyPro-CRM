@@ -137,6 +137,16 @@ function detectIntent(message) {
     return { intent: 'search_contacts', confidence: 'high' };
   }
 
+  // Schedule social media post
+  if (/(social post|schedule social|post to facebook|post to instagram)/i.test(lower)) {
+    return { intent: 'schedule_social_post', confidence: 'high' };
+  }
+
+  // List social posts
+  if (/(list social posts|show social posts|get social posts|view social posts)/i.test(lower)) {
+    return { intent: 'list_social_posts', confidence: 'high' };
+  }
+
   return { intent: null, confidence: 'none' };
 }
 
@@ -2427,7 +2437,13 @@ router.post('/copilot/chat', async (req, res) => {
         'search_contacts'
       ].includes(detected.intent);
 
-      if (inConversation || isContactIntent) {
+      // IMPORTANT: Social media intents bypass conversational routing
+      const isSocialIntent = detected.intent && [
+        'schedule_social_post',
+        'list_social_posts'
+      ].includes(detected.intent);
+
+      if ((inConversation || isContactIntent) && !isSocialIntent) {
         console.log('🎯 Routing to conversational agent:', { inConversation, intent: detected.intent });
         const result = await handleConversation(sessionId, message, session);
 
@@ -2439,7 +2455,7 @@ router.post('/copilot/chat', async (req, res) => {
       }
 
       // If not a contact intent, fall through to legacy handlers for other GHL features
-      // (appointments, calendars, locations, etc.)
+      // (appointments, calendars, locations, social media, etc.)
     }
 
     // BUSINESS COLLECTOR - Handle business collection intents
