@@ -2261,8 +2261,20 @@ router.post('/copilot/chat', async (req, res) => {
 
           try {
             // Get social media accounts
-            const fbAccounts = await session.proxy.getSocialAccounts('facebook').catch(() => ({ accounts: [] }));
-            const igAccounts = await session.proxy.getSocialAccounts('instagram').catch(() => ({ accounts: [] }));
+            console.log('🔍 Fetching social media accounts...');
+            const fbAccounts = await session.proxy.getSocialAccounts('facebook').catch(err => {
+              console.error('❌ Error fetching Facebook accounts:', err.message);
+              return { accounts: [] };
+            });
+            const igAccounts = await session.proxy.getSocialAccounts('instagram').catch(err => {
+              console.error('❌ Error fetching Instagram accounts:', err.message);
+              return { accounts: [] };
+            });
+
+            console.log('📱 Facebook accounts found:', fbAccounts?.accounts?.length || 0);
+            console.log('📱 Instagram accounts found:', igAccounts?.accounts?.length || 0);
+            console.log('📋 FB Account details:', JSON.stringify(fbAccounts, null, 2));
+            console.log('📋 IG Account details:', JSON.stringify(igAccounts, null, 2));
 
             if (!fbAccounts?.accounts?.length && !igAccounts?.accounts?.length) {
               return res.json({

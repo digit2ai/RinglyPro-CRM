@@ -766,11 +766,21 @@ class GoHighLevelMCPProxy {
     // Get all accounts, then filter by platform if needed
     const result = await this.callAPI(`/social-media-posting/${this.locationId}/accounts`, 'GET');
 
+    console.log('📋 Raw accounts response:', JSON.stringify(result, null, 2));
+
     // Filter accounts by platform type if result contains accounts array
     if (result?.accounts) {
-      const filteredAccounts = result.accounts.filter(acc =>
-        acc.platformType?.toLowerCase() === platform.toLowerCase()
-      );
+      console.log(`🔍 Filtering for platform: ${platform}`);
+      console.log(`📊 Total accounts before filter: ${result.accounts.length}`);
+
+      const filteredAccounts = result.accounts.filter(acc => {
+        const accPlatform = acc.platformType?.toLowerCase();
+        const targetPlatform = platform.toLowerCase();
+        console.log(`  Account: ${acc.name || acc.id} - platformType: ${acc.platformType} - matches: ${accPlatform === targetPlatform}`);
+        return accPlatform === targetPlatform;
+      });
+
+      console.log(`✅ Filtered accounts count: ${filteredAccounts.length}`);
       return { ...result, accounts: filteredAccounts };
     }
 
