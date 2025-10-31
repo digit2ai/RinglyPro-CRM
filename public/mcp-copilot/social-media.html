@@ -876,6 +876,7 @@
                 });
 
                 const data = await response.json();
+                console.log('📤 Create post response:', data);
 
                 if (data.success) {
                     showAlert('success', '✅ Post scheduled successfully!');
@@ -885,7 +886,8 @@
                     document.querySelectorAll('.platform-btn').forEach(btn => btn.classList.remove('active'));
                     await loadPosts();
                 } else {
-                    throw new Error(data.error || 'Failed to schedule post');
+                    console.error('❌ Post creation failed:', data);
+                    throw new Error(data.error || data.response || 'Failed to schedule post');
                 }
             } catch (error) {
                 console.error('Create post error:', error);

@@ -2314,9 +2314,16 @@ router.post('/copilot/chat', async (req, res) => {
 
           } catch (error) {
             console.error('❌ Social post error:', error);
+            console.error('❌ Error details:', {
+              message: error.message,
+              response: error.response?.data,
+              status: error.response?.status
+            });
             return res.json({
               success: false,
-              response: `❌ Error scheduling social post: ${error.message}\n\nPlease check:\n1. Facebook/Instagram accounts are connected in GoHighLevel\n2. Your GoHighLevel API key has social media permissions\n3. Your account has active social media features enabled`
+              error: error.message,
+              response: `❌ Error scheduling social post: ${error.message}\n\nPlease check:\n1. Facebook/Instagram accounts are connected in GoHighLevel\n2. Your GoHighLevel API key has social media permissions\n3. Your account has active social media features enabled`,
+              details: error.response?.data
             });
           }
 
