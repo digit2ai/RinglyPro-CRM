@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f857a6">
+    <title>🔧 DEV - Social Media Marketing - RinglyPro</title>
+    <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png">
+    <style>
+        .dev-banner {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            color: white;
+            padding: 12px 20px;
+            text-align: center;
+            font-weight: 600;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+    </style>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.5rem;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+        }
+
+        .back-btn {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #4b5563;
+        }
+
+        .status-bar {
+            background: white;
+            border-radius: 15px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ef4444;
+        }
+
+        .status-indicator.connected {
+            background: #10b981;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            color: #1f2937;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #f857a6;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .platform-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .platform-btn {
+            padding: 10px 20px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .platform-btn.active {
+            border-color: #f857a6;
+            background: #fce7f3;
+            color: #f857a6;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f857a6 0%, #ff5858 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(248, 87, 166, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .post-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .post-item {
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+
+        .post-item:hover {
+            background: #f9fafb;
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .post-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .post-status.scheduled {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .post-status.published {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .post-status.failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .post-content {
+            font-size: 0.875rem;
+            color: #4b5563;
+            margin-bottom: 8px;
+        }
+
+        .post-meta {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.875rem;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #f59e0b;
+        }
+
+        .char-counter {
+            text-align: right;
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        .char-counter.warning {
+            color: #f59e0b;
+        }
+
+        .char-counter.error {
+            color: #ef4444;
+        }
+
+        .image-preview-container {
+            margin-top: 10px;
+            position: relative;
+            display: none;
+        }
+
+        .image-preview-container.active {
+            display: block;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .remove-image-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .remove-image-btn:hover {
+            background: #dc2626;
+        }
+
+        .upload-btn {
+            display: inline-block;
+            padding: 10px 16px;
+            background: #6366f1;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .upload-btn:hover {
+            background: #4f46e5;
+        }
+
+        .hashtag-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .hashtag-tag {
+            padding: 6px 12px;
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #3b82f6;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .hashtag-tag:hover {
+            background: #dbeafe;
+            transform: translateY(-2px);
+        }
+
+        .hashtag-tag.added {
+            background: #d1fae5;
+            border-color: #10b981;
+            color: #065f46;
+        }
+
+        .preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .preview-modal.active {
+            display: flex;
+        }
+
+        .preview-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .preview-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #1f2937;
+        }
+
+        .preview-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .preview-close:hover {
+            background: #f3f4f6;
+        }
+
+        .preview-body {
+            padding: 20px;
+        }
+
+        .preview-image {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .preview-text {
+            font-size: 0.875rem;
+            color: #1f2937;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            margin-bottom: 15px;
+        }
+
+        .preview-meta {
+            font-size: 0.75rem;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 15px;
+        }
+
+        .preview-actions {
+            padding: 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- DEV ENVIRONMENT BANNER -->
+        <div class="dev-banner">
+            🔧 DEVELOPMENT ENVIRONMENT - Testing Only - Not for Production Use
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68689aafe4eb736da9ffe16c.png" alt="RinglyPro" class="logo">
+                <h1>
+                    <span>📱</span>
+                    Social Media Marketing
+                </h1>
+            </div>
+            <a href="index.html" class="back-btn">← Back to Copilot</a>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-indicator" id="statusIndicator"></div>
+            <span id="statusText">Connecting to GoHighLevel...</span>
+        </div>
+
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Create Post Card -->
+            <div class="card">
+                <h2>
+                    <span>✍️</span>
+                    Create Social Media Post
+                </h2>
+
+                <form id="postForm">
+                    <div class="form-group">
+                        <label>Target Audience</label>
+                        <select id="marketCategory">
+                            <option value="">Select target audience (optional)</option>
+                            <option value="chamberleaders">🏛️ Chamber of Commerce Leaders</option>
+                            <option value="chambermembers">🤝 Chamber Members - All Businesses</option>
+                            <option value="solopreneur">👔 Solopreneurs & Solo Business Owners</option>
+                            <option value="homeservices">🔧 Home Services (Plumbing, HVAC, Electrical)</option>
+                            <option value="realestate">🏡 Real Estate Agents & Brokers</option>
+                            <option value="lawfirms">⚖️ Law Firms & Legal Services</option>
+                            <option value="contractors">👷 Contractors & Construction</option>
+                            <option value="propertymanagement">🏢 Property Management</option>
+                            <option value="salons">💇 Salons, Spas & Beauty Services</option>
+                            <option value="automotive">🚗 Automotive Services & Repair</option>
+                            <option value="consulting">💼 Business Consultants & Coaches</option>
+                            <option value="accountants">📊 Accountants & Financial Services</option>
+                            <option value="insurance">🛡️ Insurance Agencies</option>
+                            <option value="retail">🛍️ Retail & Small Shops</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Post Content *</label>
+                        <textarea id="postContent" placeholder="Write your social media post here..." required></textarea>
+                        <div class="char-counter" id="charCounter">0 / 2,200</div>
+
+                        <!-- Hashtag Suggestions -->
+                        <div id="hashtagSuggestionsContainer" style="display: none;">
+                            <label style="margin-top: 10px; display: block;">Suggested Hashtags (click to add)</label>
+                            <div class="hashtag-suggestions" id="hashtagSuggestions"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Image/Media</label>
+                        <label for="imageUpload" class="upload-btn">
+                            📷 Upload Image
+                        </label>
+                        <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+
+                        <!-- Image Preview -->
+                        <div class="image-preview-container" id="imagePreviewContainer">
+                            <img id="imagePreview" class="image-preview" alt="Preview">
+                            <button type="button" class="remove-image-btn" id="removeImageBtn">×</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Platforms *</label>
+                        <div class="platform-selector">
+                            <button type="button" class="platform-btn" data-platform="facebook">
+                                Facebook
+                            </button>
+                            <button type="button" class="platform-btn" data-platform="instagram">
+                                Instagram
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Schedule For</label>
+                        <input type="datetime-local" id="scheduleTime">
+                        <small style="display: block; margin-top: 4px; font-size: 0.75rem; color: #6b7280;">
+                            Leave empty to post immediately
+                        </small>
+                    </div>
+
+                    <button type="button" class="btn-primary" id="previewBtn" style="margin-bottom: 10px;">
+                        👁️ Preview Post
+                    </button>
+
+                    <button type="submit" class="btn-primary" id="submitBtn">
+                        📤 Schedule Post
+                    </button>
+                </form>
+            </div>
+
+            <!-- Recent Posts Card -->
+            <div class="card">
+                <h2>
+                    <span>📊</span>
+                    Recent Posts
+                </h2>
+                <div id="postsList" class="post-list">
+                    <div class="loading">
+                        Loading posts...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div class="preview-modal" id="previewModal">
+        <div class="preview-content">
+            <div class="preview-header">
+                <h3>📱 Post Preview</h3>
+                <button class="preview-close" id="closePreviewBtn">×</button>
+            </div>
+            <div class="preview-body">
+                <img id="previewModalImage" class="preview-image" style="display: none;" alt="Post image">
+                <div class="preview-text" id="previewModalText"></div>
+                <div class="preview-meta">
+                    <div id="previewModalPlatforms" style="margin-bottom: 8px;"></div>
+                    <div id="previewModalSchedule"></div>
+                </div>
+            </div>
+            <div class="preview-actions">
+                <button class="btn-secondary" id="closePreviewBtn2">Close</button>
+                <button class="btn-primary" id="scheduleFromPreviewBtn" style="flex: 1;">
+                    📤 Schedule Post
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let clientId = null;
+        let sessionId = null;
+        let selectedPlatforms = [];
+        let uploadedImageData = null;
+
+        // Extract client_id and session_id from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        clientId = urlParams.get('client_id');
+        sessionId = urlParams.get('session_id');
+
+        if (!clientId) {
+            showAlert('error', 'No client ID provided. Please open this page from MCP Copilot.');
+        }
+
+        if (!sessionId) {
+            showAlert('error', 'No session ID provided. Please open this page from MCP Copilot.');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (sessionId) {
+                // Already connected via MCP Copilot
+                updateStatus('connected', 'Connected via MCP Copilot');
+                await loadPosts();
+            } else {
+                // Fallback: try to connect
+                await connectToGHL();
+                await loadPosts();
+            }
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Platform selector
+            document.querySelectorAll('.platform-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    btn.classList.toggle('active');
+                    const platform = btn.dataset.platform;
+                    if (selectedPlatforms.includes(platform)) {
+                        selectedPlatforms = selectedPlatforms.filter(p => p !== platform);
+                    } else {
+                        selectedPlatforms.push(platform);
+                    }
+                });
+            });
+
+            // Character counter (Instagram limit: 2,200 characters)
+            document.getElementById('postContent').addEventListener('input', (e) => {
+                const length = e.target.value.length;
+                const counter = document.getElementById('charCounter');
+                counter.textContent = `${length} / 2,200`;
+
+                counter.classList.remove('warning', 'error');
+                if (length > 2200) {
+                    counter.classList.add('error');
+                } else if (length > 2000) {
+                    counter.classList.add('warning');
+                }
+            });
+
+            // Market category change - generate hashtags
+            document.getElementById('marketCategory').addEventListener('change', async (e) => {
+                const category = e.target.value;
+                if (category) {
+                    await generateHashtags(category);
+                } else {
+                    document.getElementById('hashtagSuggestionsContainer').style.display = 'none';
+                }
+            });
+
+            // Image upload
+            document.getElementById('imageUpload').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        uploadedImageData = event.target.result;
+                        document.getElementById('imagePreview').src = uploadedImageData;
+                        document.getElementById('imagePreviewContainer').classList.add('active');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Remove image
+            document.getElementById('removeImageBtn').addEventListener('click', () => {
+                uploadedImageData = null;
+                document.getElementById('imageUpload').value = '';
+                document.getElementById('imagePreviewContainer').classList.remove('active');
+            });
+
+            // Preview button
+            document.getElementById('previewBtn').addEventListener('click', () => {
+                showPreview();
+            });
+
+            // Close preview buttons
+            document.getElementById('closePreviewBtn').addEventListener('click', closePreview);
+            document.getElementById('closePreviewBtn2').addEventListener('click', closePreview);
+
+            // Schedule from preview
+            document.getElementById('scheduleFromPreviewBtn').addEventListener('click', async () => {
+                closePreview();
+                await createPost();
+            });
+
+            // Form submission
+            document.getElementById('postForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await createPost();
+            });
+        }
+
+        async function connectToGHL() {
+            try {
+                updateStatus('loading', 'Connecting to GoHighLevel...');
+
+                // Get credentials
+                const response = await fetch(`${window.location.origin}/api/client/crm-credentials/${clientId}`);
+                const data = await response.json();
+
+                if (data.success && data.credentials?.gohighlevel?.configured) {
+                    const { api_key, location_id } = data.credentials.gohighlevel;
+
+                    // Connect to MCP
+                    const connectResponse = await fetch(`${window.location.origin}/api/mcp/gohighlevel/connect`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ apiKey: api_key, locationId: location_id })
+                    });
+
+                    const connectData = await connectResponse.json();
+
+                    if (connectData.success) {
+                        sessionId = connectData.sessionId;
+                        updateStatus('connected', 'Connected to GoHighLevel');
+                    } else {
+                        throw new Error(connectData.error || 'Failed to connect');
+                    }
+                } else {
+                    throw new Error('GoHighLevel credentials not configured');
+                }
+            } catch (error) {
+                console.error('Connection error:', error);
+                updateStatus('error', 'Failed to connect to GoHighLevel');
+                showAlert('error', 'Please configure your GoHighLevel credentials in Settings first.');
+            }
+        }
+
+        async function createPost() {
+            if (!sessionId) {
+                showAlert('error', 'Not connected to GoHighLevel');
+                return;
+            }
+
+            if (selectedPlatforms.length === 0) {
+                showAlert('error', 'Please select at least one platform');
+                return;
+            }
+
+            const content = document.getElementById('postContent').value.trim();
+            if (!content) {
+                showAlert('error', 'Please enter post content');
+                return;
+            }
+
+            if (content.length > 2200) {
+                showAlert('error', 'Post content is too long (max 2,200 characters)');
+                return;
+            }
+
+            const scheduleTime = document.getElementById('scheduleTime').value;
+            let message = `schedule social post for ${selectedPlatforms.join(' and ')}`;
+
+            if (scheduleTime) {
+                const date = new Date(scheduleTime);
+                message += ` at ${date.toLocaleString()}`;
+            } else {
+                message += ' now';
+            }
+
+            message += `: ${content}`;
+
+            try {
+                document.getElementById('submitBtn').disabled = true;
+                document.getElementById('submitBtn').textContent = '⏳ Scheduling...';
+
+                const response = await fetch(`${window.location.origin}/api/mcp/copilot/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, message })
+                });
+
+                const data = await response.json();
+                console.log('📤 Create post response:', data);
+
+                if (data.success) {
+                    showAlert('success', '✅ Post scheduled successfully!');
+                    document.getElementById('postForm').reset();
+                    document.getElementById('charCounter').textContent = '0 / 2,200';
+                    selectedPlatforms = [];
+                    document.querySelectorAll('.platform-btn').forEach(btn => btn.classList.remove('active'));
+                    await loadPosts();
+                } else {
+                    console.error('❌ Post creation failed:', data);
+                    throw new Error(data.error || data.response || 'Failed to schedule post');
+                }
+            } catch (error) {
+                console.error('Create post error:', error);
+                showAlert('error', 'Failed to schedule post: ' + error.message);
+            } finally {
+                document.getElementById('submitBtn').disabled = false;
+                document.getElementById('submitBtn').textContent = '📤 Schedule Post';
+            }
+        }
+
+        async function loadPosts() {
+            if (!sessionId) return;
+
+            try {
+                console.log('🔄 Loading social posts...');
+                const response = await fetch(`${window.location.origin}/api/mcp/copilot/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, message: 'list social posts' })
+                });
+
+                const data = await response.json();
+                console.log('📋 Load posts response:', data);
+                console.log('📋 Response structure - success:', data.success, 'data:', data.data, 'posts:', data.data?.posts);
+
+                // Check multiple possible response structures
+                let posts = null;
+                if (data.data?.posts && data.data.posts.length > 0) {
+                    posts = data.data.posts;
+                } else if (data.posts && data.posts.length > 0) {
+                    posts = data.posts;
+                } else if (data.data?.data?.posts && data.data.data.posts.length > 0) {
+                    posts = data.data.data.posts;
+                }
+
+                if (posts && posts.length > 0) {
+                    console.log(`✅ Loaded ${posts.length} posts`);
+                    renderPosts(posts);
+                } else {
+                    console.log('⚠️ No posts found. Full response:', JSON.stringify(data, null, 2));
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('❌ Load posts error:', error);
+                document.getElementById('postsList').innerHTML = `
+                    <div class="empty-state">
+                        <p style="color: #ef4444;">Failed to load posts</p>
+                        <p style="font-size: 0.875rem; color: #6b7280; margin-top: 8px;">
+                            Check browser console for details
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderPosts(posts) {
+            const container = document.getElementById('postsList');
+
+            container.innerHTML = posts.map(post => `
+                <div class="post-item">
+                    <div class="post-header">
+                        <span class="post-status ${(post.status || 'scheduled').toLowerCase()}">
+                            ${post.status || 'Scheduled'}
+                        </span>
+                    </div>
+                    <div class="post-content">
+                        ${post.message || 'No content'}
+                    </div>
+                    <div class="post-meta">
+                        ${post.platform ? `Platform: ${post.platform}` : ''} •
+                        ${post.scheduleTime ? new Date(post.scheduleTime).toLocaleString() : 'No date'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showEmptyState() {
+            document.getElementById('postsList').innerHTML = `
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                    </svg>
+                    <p>No posts yet</p>
+                    <p style="font-size: 0.75rem;">Create your first social media post!</p>
+                </div>
+            `;
+        }
+
+        function updateStatus(status, text) {
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+
+            statusText.textContent = text;
+
+            indicator.classList.remove('connected');
+            if (status === 'connected') {
+                indicator.classList.add('connected');
+            }
+        }
+
+        function showAlert(type, message) {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+
+            container.appendChild(alert);
+
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Generate AI-powered hashtag suggestions
+        async function generateHashtags(category) {
+            try {
+                const container = document.getElementById('hashtagSuggestionsContainer');
+                const suggestionsDiv = document.getElementById('hashtagSuggestions');
+
+                // Show loading state
+                container.style.display = 'block';
+                suggestionsDiv.innerHTML = '<span style="color: #6b7280; font-size: 0.875rem;">Generating hashtags...</span>';
+
+                const response = await fetch(`${window.location.origin}/api/mcp/generate-hashtags`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category, clientId })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.hashtags && data.hashtags.length > 0) {
+                    suggestionsDiv.innerHTML = data.hashtags.map(tag => `
+                        <span class="hashtag-tag" onclick="addHashtag('${tag}', this)">${tag}</span>
+                    `).join('');
+                } else {
+                    suggestionsDiv.innerHTML = '<span style="color: #6b7280; font-size: 0.875rem;">No suggestions available</span>';
+                }
+            } catch (error) {
+                console.error('Error generating hashtags:', error);
+                document.getElementById('hashtagSuggestions').innerHTML =
+                    '<span style="color: #ef4444; font-size: 0.875rem;">Failed to generate hashtags</span>';
+            }
+        }
+
+        // Add hashtag to post content
+        function addHashtag(hashtag, clickedElement) {
+            const textarea = document.getElementById('postContent');
+            const currentText = textarea.value;
+
+            // Check if hashtag already exists
+            if (currentText.includes(hashtag)) {
+                showAlert('warning', 'Hashtag already added!');
+                return;
+            }
+
+            // Add hashtag with space if needed
+            const separator = currentText && !currentText.endsWith(' ') ? ' ' : '';
+            textarea.value = currentText + separator + hashtag + ' ';
+
+            // Update character counter
+            textarea.dispatchEvent(new Event('input'));
+
+            // Visual feedback - if clicked element provided
+            if (clickedElement) {
+                clickedElement.classList.add('added');
+                setTimeout(() => clickedElement.classList.remove('added'), 1000);
+            }
+        }
+
+        // Show preview modal
+        function showPreview() {
+            const content = document.getElementById('postContent').value.trim();
+            const scheduleTime = document.getElementById('scheduleTime').value;
+
+            if (!content) {
+                showAlert('error', 'Please enter post content');
+                return;
+            }
+
+            if (selectedPlatforms.length === 0) {
+                showAlert('error', 'Please select at least one platform');
+                return;
+            }
+
+            // Update preview modal
+            document.getElementById('previewModalText').textContent = content;
+
+            // Show/hide image
+            const imageEl = document.getElementById('previewModalImage');
+            if (uploadedImageData) {
+                imageEl.src = uploadedImageData;
+                imageEl.style.display = 'block';
+            } else {
+                imageEl.style.display = 'none';
+            }
+
+            // Update platforms
+            const platformIcons = {
+                facebook: '📘',
+                instagram: '📷'
+            };
+            document.getElementById('previewModalPlatforms').innerHTML =
+                `<strong>Platforms:</strong> ${selectedPlatforms.map(p => `${platformIcons[p]} ${p.charAt(0).toUpperCase() + p.slice(1)}`).join(', ')}`;
+
+            // Update schedule
+            const scheduleText = scheduleTime
+                ? `Scheduled for: ${new Date(scheduleTime).toLocaleString()}`
+                : 'Posting immediately';
+            document.getElementById('previewModalSchedule').innerHTML = `<strong>${scheduleText}</strong>`;
+
+            // Show modal
+            document.getElementById('previewModal').classList.add('active');
+        }
+
+        // Close preview modal
+        function closePreview() {
+            document.getElementById('previewModal').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
