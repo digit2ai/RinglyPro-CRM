@@ -768,23 +768,27 @@ class GoHighLevelMCPProxy {
 
     console.log('📋 Raw accounts response:', JSON.stringify(result, null, 2));
 
-    // Filter accounts by platform type if result contains accounts array
-    if (result?.accounts) {
-      console.log(`🔍 Filtering for platform: ${platform}`);
-      console.log(`📊 Total accounts before filter: ${result.accounts.length}`);
+    // GoHighLevel wraps accounts in results.accounts
+    const accounts = result?.results?.accounts || result?.accounts || [];
 
-      const filteredAccounts = result.accounts.filter(acc => {
-        const accPlatform = acc.platformType?.toLowerCase();
+    if (accounts.length > 0) {
+      console.log(`🔍 Filtering for platform: ${platform}`);
+      console.log(`📊 Total accounts before filter: ${accounts.length}`);
+
+      const filteredAccounts = accounts.filter(acc => {
+        // GoHighLevel uses "platform" field (not "platformType")
+        const accPlatform = acc.platform?.toLowerCase();
         const targetPlatform = platform.toLowerCase();
-        console.log(`  Account: ${acc.name || acc.id} - platformType: ${acc.platformType} - matches: ${accPlatform === targetPlatform}`);
+        console.log(`  Account: ${acc.name || acc.id} - platform: ${acc.platform} - matches: ${accPlatform === targetPlatform}`);
         return accPlatform === targetPlatform;
       });
 
       console.log(`✅ Filtered accounts count: ${filteredAccounts.length}`);
-      return { ...result, accounts: filteredAccounts };
+      return { accounts: filteredAccounts };
     }
 
-    return result;
+    console.log('⚠️ No accounts found in response');
+    return { accounts: [] };
   }
 
   // Inbound Webhook Trigger (for workflows)
