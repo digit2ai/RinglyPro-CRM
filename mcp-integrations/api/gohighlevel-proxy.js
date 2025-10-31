@@ -760,7 +760,18 @@ class GoHighLevelMCPProxy {
 
   async getSocialAccounts(platform = 'facebook') {
     console.log(`📱 Getting ${platform} accounts via REST API v2`);
-    return await this.callAPI(`/social-media-posting/oauth/${this.locationId}/${platform}/accounts`, 'GET');
+    // Get all accounts, then filter by platform if needed
+    const result = await this.callAPI(`/social-media-posting/${this.locationId}/accounts`, 'GET');
+
+    // Filter accounts by platform type if result contains accounts array
+    if (result?.accounts) {
+      const filteredAccounts = result.accounts.filter(acc =>
+        acc.platformType?.toLowerCase() === platform.toLowerCase()
+      );
+      return { ...result, accounts: filteredAccounts };
+    }
+
+    return result;
   }
 
   // Inbound Webhook Trigger (for workflows)
