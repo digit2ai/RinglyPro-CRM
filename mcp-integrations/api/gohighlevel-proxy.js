@@ -143,10 +143,12 @@ class GoHighLevelMCPProxy {
 
       // JWT tokens have locationId embedded - don't add it anywhere
       // PIT tokens need locationId as query parameter for GET only
+      // BUT: Social media endpoints already have locationId in path, so skip those
       let url = `${this.baseURL}${endpoint}`;
 
-      if (!isJWT && method === 'GET' && !endpoint.includes('?')) {
+      if (!isJWT && method === 'GET' && !endpoint.includes('?') && !endpoint.includes('/social-media-posting/')) {
         // Only add locationId query param for PIT tokens on GET requests
+        // Exclude social-media-posting endpoints as they have locationId in path
         params = { locationId: this.locationId };
       }
 
@@ -736,9 +738,10 @@ class GoHighLevelMCPProxy {
     console.log('📍 Using locationId:', this.locationId);
 
     // GoHighLevel uses POST /posts/list (not GET /posts) for filtering
+    // API expects string values for limit and skip
     const filterData = {
-      limit: filters.limit || 20,
-      skip: filters.skip || 0
+      limit: String(filters.limit || 20),
+      skip: String(filters.skip || 0)
     };
 
     const endpoint = `/social-media-posting/${this.locationId}/posts/list`;
