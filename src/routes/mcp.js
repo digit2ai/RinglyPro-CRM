@@ -2299,13 +2299,34 @@ router.post('/copilot/chat', async (req, res) => {
               });
             }
 
+            // Upload images if provided
+            const mediaArray = [];
+            if (req.body.images && req.body.images.length > 0) {
+              console.log(`📸 Uploading ${req.body.images.length} image(s)...`);
+              for (const img of req.body.images) {
+                try {
+                  const uploadResult = await session.proxy.uploadMedia(img.data, img.name, img.type);
+                  if (uploadResult && uploadResult.url) {
+                    mediaArray.push({
+                      url: uploadResult.url,
+                      type: 'image'
+                    });
+                    console.log(`✅ Image uploaded: ${uploadResult.url}`);
+                  }
+                } catch (uploadError) {
+                  console.error('❌ Image upload failed:', uploadError.message);
+                  // Continue with other images
+                }
+              }
+            }
+
             // GoHighLevel Social Media API format (correct field names from actual API response)
             // Based on successful posts structure from listSocialPosts
             const postData = {
               accountIds: accountIds,                    // Array of account IDs
               summary: postMessage,                      // Post text content (NOT "message" or "text")
               type: 'post',                              // Required: post, story, or reel
-              media: [],                                 // Required: array of media objects (empty for text-only)
+              media: mediaArray,                         // Array of media objects with URLs
               status: scheduleTime ? 'scheduled' : 'published',  // "status" not "state"
               userId: session.clientId || '15'           // User ID from session
             };

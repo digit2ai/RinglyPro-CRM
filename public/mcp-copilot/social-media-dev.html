@@ -648,6 +648,28 @@
                     </div>
 
                     <div class="form-group">
+                        <label>Add Images (Optional)</label>
+                        <input type="file" id="postImages" accept="image/*" multiple style="
+                            width: 100%;
+                            padding: 12px;
+                            border: 2px dashed #d1d5db;
+                            border-radius: 8px;
+                            background: #f9fafb;
+                            cursor: pointer;
+                            font-size: 0.875rem;
+                        ">
+                        <small style="display: block; margin-top: 4px; font-size: 0.75rem; color: #6b7280;">
+                            Select one or more images (JPG, PNG, GIF)
+                        </small>
+                        <div id="imagePreview" style="
+                            display: flex;
+                            gap: 8px;
+                            margin-top: 8px;
+                            flex-wrap: wrap;
+                        "></div>
+                    </div>
+
+                    <div class="form-group">
                         <label>Schedule For</label>
                         <input type="datetime-local" id="scheduleTime" min="">
                         <small style="display: block; margin-top: 4px; font-size: 0.75rem; color: #6b7280;">
@@ -801,18 +823,42 @@
                 }
             });
 
-            // Image upload
-            document.getElementById('imageUpload').addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        uploadedImageData = event.target.result;
-                        document.getElementById('imagePreview').src = uploadedImageData;
-                        document.getElementById('imagePreviewContainer').classList.add('active');
-                    };
-                    reader.readAsDataURL(file);
-                }
+            // Image upload - handle multiple images
+            document.getElementById('postImages').addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                const previewContainer = document.getElementById('imagePreview');
+                previewContainer.innerHTML = '';
+
+                files.forEach((file, index) => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            const imgWrapper = document.createElement('div');
+                            imgWrapper.style.cssText = 'position: relative; width: 80px; height: 80px;';
+
+                            const img = document.createElement('img');
+                            img.src = event.target.result;
+                            img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 2px solid #e5e7eb;';
+
+                            const removeBtn = document.createElement('button');
+                            removeBtn.textContent = '×';
+                            removeBtn.type = 'button';
+                            removeBtn.style.cssText = 'position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: #ef4444; color: white; border: none; cursor: pointer; font-size: 16px; line-height: 1;';
+                            removeBtn.onclick = () => {
+                                imgWrapper.remove();
+                                // Reset file input if no images left
+                                if (previewContainer.children.length === 0) {
+                                    document.getElementById('postImages').value = '';
+                                }
+                            };
+
+                            imgWrapper.appendChild(img);
+                            imgWrapper.appendChild(removeBtn);
+                            previewContainer.appendChild(imgWrapper);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
             });
 
             // Remove image
@@ -926,6 +972,26 @@
                 }
             }
 
+            // Get images if any
+            const imageFiles = document.getElementById('postImages').files;
+            const imageData = [];
+
+            if (imageFiles.length > 0) {
+                // Convert images to base64
+                for (const file of imageFiles) {
+                    const base64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.readAsDataURL(file);
+                    });
+                    imageData.push({
+                        data: base64,
+                        name: file.name,
+                        type: file.type
+                    });
+                }
+            }
+
             let message = `schedule social post for ${selectedPlatforms.join(' and ')}`;
 
             if (scheduleTime) {
@@ -933,6 +999,10 @@
                 message += ` at ${date.toLocaleString()}`;
             } else {
                 message += ' now';
+            }
+
+            if (imageData.length > 0) {
+                message += ` with ${imageData.length} image${imageData.length > 1 ? 's' : ''}`;
             }
 
             message += `: ${content}`;
@@ -944,7 +1014,11 @@
                 const response = await fetch(`${window.location.origin}/api/mcp/copilot/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sessionId, message })
+                    body: JSON.stringify({
+                        sessionId,
+                        message,
+                        images: imageData
+                    })
                 });
 
                 const data = await response.json();
@@ -953,6 +1027,7 @@
                 if (data.success) {
                     showAlert('success', '✅ Post scheduled successfully!');
                     document.getElementById('postForm').reset();
+                    document.getElementById('imagePreview').innerHTML = '';
                     document.getElementById('charCounter').textContent = '0 / 2,200';
                     selectedPlatforms = [];
                     document.querySelectorAll('.platform-btn').forEach(btn => btn.classList.remove('active'));

@@ -761,6 +761,49 @@ class GoHighLevelMCPProxy {
     return await this.callAPI(`/social-media-posting/${this.locationId}/posts/${postId}`, 'DELETE');
   }
 
+  async uploadMedia(fileData, fileName, fileType) {
+    console.log('📤 Uploading media file to GoHighLevel');
+
+    const FormData = require('form-data');
+    const form = new FormData();
+
+    // Convert base64 to buffer if needed
+    let buffer;
+    if (fileData.startsWith('data:')) {
+      const base64Data = fileData.split(',')[1];
+      buffer = Buffer.from(base64Data, 'base64');
+    } else {
+      buffer = Buffer.from(fileData, 'base64');
+    }
+
+    form.append('file', buffer, {
+      filename: fileName,
+      contentType: fileType
+    });
+    form.append('hosted', 'true'); // Request GoHighLevel to host the file
+
+    const endpoint = `/medias/upload-file`;
+
+    try {
+      const response = await this.axios({
+        method: 'POST',
+        url: `${this.baseURL}${endpoint}`,
+        headers: {
+          ...form.getHeaders(),
+          'Authorization': `Bearer ${this.token}`,
+          'Version': this.apiVersion
+        },
+        data: form
+      });
+
+      console.log('✅ Media uploaded:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Media upload error:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
   async getSocialAccounts(platform = 'facebook') {
     console.log(`📱 Getting ${platform} accounts via REST API v2`);
     // Get all accounts, then filter by platform if needed
