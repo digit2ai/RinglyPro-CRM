@@ -997,6 +997,7 @@
 
                 if (posts && posts.length > 0) {
                     console.log(`✅ Loaded ${posts.length} posts`);
+                    console.log('📋 First post structure:', JSON.stringify(posts[0], null, 2));
                     renderPosts(posts);
                 } else {
                     console.log('⚠️ No posts found. Full response:', JSON.stringify(data, null, 2));
@@ -1018,22 +1019,41 @@
         function renderPosts(posts) {
             const container = document.getElementById('postsList');
 
-            container.innerHTML = posts.map(post => `
-                <div class="post-item">
-                    <div class="post-header">
-                        <span class="post-status ${(post.status || 'scheduled').toLowerCase()}">
-                            ${post.status || 'Scheduled'}
-                        </span>
+            console.log('📝 Rendering posts:', posts);
+
+            container.innerHTML = posts.map(post => {
+                // GoHighLevel uses: summary (not message), scheduleDate (not scheduleTime), platform is correct
+                const content = post.summary || post.message || post.content || 'No content';
+                const status = post.status || 'unknown';
+                const platform = post.platform || 'unknown';
+
+                // Try multiple date fields
+                const dateField = post.scheduleDate || post.displayDate || post.scheduleTime || post.createdAt;
+                const dateStr = dateField ? new Date(dateField).toLocaleString() : 'No date';
+
+                // Map platform to friendly names and show accounts
+                let platformDisplay = platform;
+                if (post.accounts && post.accounts.length > 0) {
+                    const accountNames = post.accounts.map(acc => acc.name || acc.id).join(', ');
+                    platformDisplay = `${platform} (${accountNames})`;
+                }
+
+                return `
+                    <div class="post-item">
+                        <div class="post-header">
+                            <span class="post-status ${status.toLowerCase()}">
+                                ${status.charAt(0).toUpperCase() + status.slice(1)}
+                            </span>
+                        </div>
+                        <div class="post-content">
+                            ${content}
+                        </div>
+                        <div class="post-meta">
+                            ${platformDisplay} • ${dateStr}
+                        </div>
                     </div>
-                    <div class="post-content">
-                        ${post.message || 'No content'}
-                    </div>
-                    <div class="post-meta">
-                        ${post.platform ? `Platform: ${post.platform}` : ''} •
-                        ${post.scheduleTime ? new Date(post.scheduleTime).toLocaleString() : 'No date'}
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function showEmptyState() {
