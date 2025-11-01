@@ -2299,20 +2299,20 @@ router.post('/copilot/chat', async (req, res) => {
               });
             }
 
-            // GoHighLevel Social Media API format (correct field names based on API spec)
-            // https://highlevel.stoplight.io/docs/integrations/9e6c88f07a4e3-create-social-media-posting
+            // GoHighLevel Social Media API format (correct field names from actual API response)
+            // Based on successful posts structure from listSocialPosts
             const postData = {
               accountIds: accountIds,                    // Array of account IDs
-              message: postMessage,                       // Post text content
+              summary: postMessage,                      // Post text content (NOT "message" or "text")
               type: 'post',                              // Required: post, story, or reel
               media: [],                                 // Required: array of media objects (empty for text-only)
-              state: scheduleTime ? 'scheduled' : 'published',  // scheduled or published
+              status: scheduleTime ? 'scheduled' : 'published',  // "status" not "state"
               userId: session.clientId || '15'           // User ID from session
             };
 
-            // Add schedule date if specified
+            // Add schedule date if specified (use "displayDate" not "postDate")
             if (scheduleTime) {
-              postData.postDate = new Date(scheduleTime).toISOString();
+              postData.displayDate = new Date(scheduleTime).toISOString();
             }
 
             console.log('📱 Creating social post with data:', JSON.stringify(postData, null, 2));
