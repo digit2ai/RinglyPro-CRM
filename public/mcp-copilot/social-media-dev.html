@@ -715,22 +715,28 @@
         clientId = urlParams.get('client_id');
         sessionId = urlParams.get('session_id');
 
+        // If no client ID in URL, default to your client
         if (!clientId) {
-            showAlert('error', 'No client ID provided. Please open this page from MCP Copilot.');
-        }
-
-        if (!sessionId) {
-            showAlert('error', 'No session ID provided. Please open this page from MCP Copilot.');
+            clientId = '15'; // Default to your client for dev testing
         }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
             if (sessionId) {
-                // Already connected via MCP Copilot
-                updateStatus('connected', 'Connected via MCP Copilot');
-                await loadPosts();
+                // Test if session is valid by trying to load posts
+                updateStatus('loading', 'Checking session...');
+                try {
+                    await loadPosts();
+                    updateStatus('connected', 'Connected via MCP Copilot');
+                } catch (error) {
+                    // Session expired or invalid, create new one
+                    console.log('Session invalid, creating new connection...');
+                    sessionId = null;
+                    await connectToGHL();
+                    await loadPosts();
+                }
             } else {
-                // Fallback: try to connect
+                // No session - connect fresh
                 await connectToGHL();
                 await loadPosts();
             }
