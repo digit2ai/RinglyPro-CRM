@@ -2358,13 +2358,20 @@ router.post('/copilot/chat', async (req, res) => {
             });
             console.log('📋 Posts response:', JSON.stringify(posts, null, 2));
 
-            if (posts && posts.posts && posts.posts.length > 0) {
-              let response = `📱 Recent Social Media Posts (${posts.posts.length}):\n\n`;
-              posts.posts.forEach((post, idx) => {
-                response += `${idx + 1}. ${post.message ? post.message.substring(0, 50) + '...' : 'No content'}\n`;
+            // GoHighLevel wraps posts in results.posts
+            const postsArray = posts?.results?.posts || posts?.posts || [];
+
+            if (postsArray.length > 0) {
+              let response = `📱 Recent Social Media Posts (${postsArray.length}):\n\n`;
+              postsArray.forEach((post, idx) => {
+                // GoHighLevel uses "summary" not "message"
+                const content = post.summary || post.message || 'No content';
+                response += `${idx + 1}. ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}\n`;
                 response += `   Status: ${post.status || 'unknown'}\n`;
-                if (post.scheduleTime) {
-                  response += `   Scheduled: ${new Date(post.scheduleTime).toLocaleString()}\n`;
+                // GoHighLevel uses "scheduleDate" not "scheduleTime"
+                if (post.scheduleDate || post.displayDate) {
+                  const scheduleDate = post.scheduleDate || post.displayDate;
+                  response += `   Scheduled: ${new Date(scheduleDate).toLocaleString()}\n`;
                 }
                 response += `\n`;
               });
@@ -2372,13 +2379,17 @@ router.post('/copilot/chat', async (req, res) => {
               return res.json({
                 success: true,
                 response,
-                data: posts
+                data: {
+                  posts: postsArray,
+                  count: postsArray.length
+                }
               });
             } else {
               console.log('⚠️ No posts found in response:', posts);
               return res.json({
                 success: true,
-                response: "No social media posts found.\n\nThis could mean:\n1. No posts have been created yet\n2. Social media feature not enabled in GoHighLevel\n3. Check GoHighLevel Social Planner directly"
+                response: "No social media posts found.\n\nThis could mean:\n1. No posts have been created yet\n2. Social media feature not enabled in GoHighLevel\n3. Check GoHighLevel Social Planner directly",
+                data: { posts: [], count: 0 }
               });
             }
           } catch (error) {
