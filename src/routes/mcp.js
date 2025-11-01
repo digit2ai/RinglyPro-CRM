@@ -2310,9 +2310,9 @@ router.post('/copilot/chat', async (req, res) => {
               userId: session.clientId || '15'           // User ID from session
             };
 
-            // Add schedule date if specified (use "displayDate" not "postDate")
+            // Add schedule date if specified (use "scheduleDate" when status is "scheduled")
             if (scheduleTime) {
-              postData.displayDate = new Date(scheduleTime).toISOString();
+              postData.scheduleDate = new Date(scheduleTime).toISOString();
             }
 
             console.log('📱 Creating social post with data:', JSON.stringify(postData, null, 2));
