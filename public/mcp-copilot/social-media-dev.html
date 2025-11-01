@@ -722,12 +722,21 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
-            // Set minimum datetime to 5 minutes from now
+            // Set minimum datetime to 5 minutes from now (in local timezone)
             const setMinDateTime = () => {
                 const now = new Date();
                 const minTime = new Date(now.getTime() + 5 * 60000); // 5 minutes from now
-                const minDateStr = minTime.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
+
+                // Format for datetime-local input (YYYY-MM-DDTHH:mm) in LOCAL timezone
+                const year = minTime.getFullYear();
+                const month = String(minTime.getMonth() + 1).padStart(2, '0');
+                const day = String(minTime.getDate()).padStart(2, '0');
+                const hours = String(minTime.getHours()).padStart(2, '0');
+                const minutes = String(minTime.getMinutes()).padStart(2, '0');
+                const minDateStr = `${year}-${month}-${day}T${hours}:${minutes}`;
+
                 document.getElementById('scheduleTime').min = minDateStr;
+                console.log('⏰ Min time set to:', minDateStr, '(', minTime.toLocaleString(), ')');
             };
             setMinDateTime();
             // Update min time every minute
@@ -901,8 +910,18 @@
                 const now = new Date();
                 const minFutureTime = new Date(now.getTime() + 5 * 60000); // 5 minutes from now
 
+                console.log('⏰ Time validation:', {
+                    selectedLocal: selectedDate.toLocaleString(),
+                    selectedUTC: selectedDate.toISOString(),
+                    nowLocal: now.toLocaleString(),
+                    nowUTC: now.toISOString(),
+                    minFutureLocal: minFutureTime.toLocaleString(),
+                    minFutureUTC: minFutureTime.toISOString(),
+                    isValid: selectedDate > minFutureTime
+                });
+
                 if (selectedDate <= minFutureTime) {
-                    showAlert('error', 'Schedule time must be at least 5 minutes in the future');
+                    showAlert('error', `Schedule time must be at least 5 minutes in the future. Current time: ${now.toLocaleTimeString()}`);
                     return;
                 }
             }
