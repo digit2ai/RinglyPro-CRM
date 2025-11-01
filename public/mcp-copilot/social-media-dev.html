@@ -649,9 +649,9 @@
 
                     <div class="form-group">
                         <label>Schedule For</label>
-                        <input type="datetime-local" id="scheduleTime">
+                        <input type="datetime-local" id="scheduleTime" min="">
                         <small style="display: block; margin-top: 4px; font-size: 0.75rem; color: #6b7280;">
-                            Leave empty to post immediately
+                            Leave empty to post immediately (must be at least 5 minutes in the future)
                         </small>
                     </div>
 
@@ -722,6 +722,17 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
+            // Set minimum datetime to 5 minutes from now
+            const setMinDateTime = () => {
+                const now = new Date();
+                const minTime = new Date(now.getTime() + 5 * 60000); // 5 minutes from now
+                const minDateStr = minTime.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
+                document.getElementById('scheduleTime').min = minDateStr;
+            };
+            setMinDateTime();
+            // Update min time every minute
+            setInterval(setMinDateTime, 60000);
+
             if (sessionId) {
                 // Test if session is valid by trying to load posts
                 updateStatus('loading', 'Checking session...');
@@ -883,6 +894,19 @@
             }
 
             const scheduleTime = document.getElementById('scheduleTime').value;
+
+            // Validate schedule time if provided
+            if (scheduleTime) {
+                const selectedDate = new Date(scheduleTime);
+                const now = new Date();
+                const minFutureTime = new Date(now.getTime() + 5 * 60000); // 5 minutes from now
+
+                if (selectedDate <= minFutureTime) {
+                    showAlert('error', 'Schedule time must be at least 5 minutes in the future');
+                    return;
+                }
+            }
+
             let message = `schedule social post for ${selectedPlatforms.join(' and ')}`;
 
             if (scheduleTime) {
