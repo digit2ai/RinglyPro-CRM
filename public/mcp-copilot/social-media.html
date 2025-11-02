@@ -1306,18 +1306,20 @@
             document.getElementById('previewModal').classList.remove('active');
         }
 
-        // AI Content Generation Modal
-        document.getElementById('aiGenerateBtn').addEventListener('click', () => {
-            document.getElementById('aiContentModal').style.display = 'flex';
-        });
+        // Setup AI Generator Event Listeners (called after DOM loaded)
+        function setupAIGenerators() {
+            // AI Content Generation Modal
+            document.getElementById('aiGenerateBtn').addEventListener('click', () => {
+                document.getElementById('aiContentModal').style.display = 'flex';
+            });
 
-        // AI Image Generation Modal
-        document.getElementById('aiImageBtn').addEventListener('click', () => {
-            document.getElementById('aiImageModal').style.display = 'flex';
-        });
+            // AI Image Generation Modal
+            document.getElementById('aiImageBtn').addEventListener('click', () => {
+                document.getElementById('aiImageModal').style.display = 'flex';
+            });
 
-        // Generate AI Content
-        document.getElementById('generateContentBtn').addEventListener('click', async () => {
+            // Generate AI Content
+            document.getElementById('generateContentBtn').addEventListener('click', async () => {
             console.log('🎨 AI Content Generator clicked');
 
             const topic = document.getElementById('aiTopicInput').value.trim();
@@ -1531,35 +1533,44 @@
             }
         });
 
-        // Use AI Generated Image
-        window.useAIImage = async (imageUrl) => {
-            try {
-                // Download image as blob
-                const response = await fetch(imageUrl);
-                const blob = await response.blob();
+            // Use AI Generated Image
+            window.useAIImage = async (imageUrl) => {
+                try {
+                    // Download image as blob
+                    const response = await fetch(imageUrl);
+                    const blob = await response.blob();
 
-                // Create File object
-                const file = new File([blob], 'ai-generated.png', { type: 'image/png' });
+                    // Create File object
+                    const file = new File([blob], 'ai-generated.png', { type: 'image/png' });
 
-                // Create DataTransfer to simulate file selection
-                const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(file);
+                    // Create DataTransfer to simulate file selection
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
 
-                // Set to file input
-                const fileInput = document.getElementById('postImages');
-                fileInput.files = dataTransfer.files;
+                    // Set to file input
+                    const fileInput = document.getElementById('postImages');
+                    fileInput.files = dataTransfer.files;
 
-                // Trigger change event to show preview
-                fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    // Trigger change event to show preview
+                    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
 
-                // Close modal
-                document.getElementById('aiImageModal').style.display = 'none';
-                showAlert('success', 'AI-generated image added!');
-            } catch (error) {
-                console.error('Error adding AI image:', error);
-                showAlert('error', 'Failed to add image: ' + error.message);
-            }
-        };
+                    // Close modal
+                    document.getElementById('aiImageModal').style.display = 'none';
+                    showAlert('success', 'AI-generated image added!');
+                } catch (error) {
+                    console.error('Error adding AI image:', error);
+                    showAlert('error', 'Failed to add image: ' + error.message);
+                }
+            };
+        }
+
+        // Call setupAIGenerators when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupAIGenerators);
+        } else {
+            // DOM already loaded
+            setupAIGenerators();
+        }
     </script>
 
     <!-- AI Content Generation Modal -->
