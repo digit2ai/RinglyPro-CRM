@@ -1274,9 +1274,29 @@
             // Update preview modal
             document.getElementById('previewModalText').textContent = content;
 
-            // Show/hide image
+            // Show/hide images (use new multi-image system)
             const imageEl = document.getElementById('previewModalImage');
-            if (uploadedImageData) {
+            const imageFiles = document.getElementById('postImages').files;
+
+            if (imageFiles && imageFiles.length > 0) {
+                // Show first image in preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imageEl.src = e.target.result;
+                    imageEl.style.display = 'block';
+                };
+                reader.readAsDataURL(imageFiles[0]);
+
+                // Show image count if multiple
+                if (imageFiles.length > 1) {
+                    const countBadge = document.createElement('div');
+                    countBadge.textContent = `+${imageFiles.length - 1} more`;
+                    countBadge.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;';
+                    imageEl.parentElement.style.position = 'relative';
+                    imageEl.parentElement.appendChild(countBadge);
+                }
+            } else if (uploadedImageData) {
+                // Fallback to old single image system
                 imageEl.src = uploadedImageData;
                 imageEl.style.display = 'block';
             } else {
@@ -1491,11 +1511,17 @@
                 console.log('✅ AI Image Response:', data);
 
                 if (data.success && data.imageUrl) {
+                    // Use full URL for image
+                    const fullImageUrl = data.imageUrl.startsWith('http') ? data.imageUrl : window.location.origin + data.imageUrl;
+
                     // Display image with use button
                     const container = document.getElementById('aiImageContainer');
                     container.innerHTML = `
-                        <img src="${data.imageUrl}" style="width: 100%; border-radius: 8px; border: 2px solid #e5e7eb;">
-                        <button onclick="useAIImage('${data.imageUrl}')" style="
+                        <img src="${fullImageUrl}" style="width: 100%; border-radius: 8px; border: 2px solid #e5e7eb;">
+                        <div style="margin-top: 8px; padding: 8px; background: #f3f4f6; border-radius: 6px; font-size: 0.75rem; color: #6b7280;">
+                            💾 Image saved permanently to: ${data.filename}
+                        </div>
+                        <button onclick="useAIImage('${fullImageUrl}')" style="
                             width: 100%;
                             padding: 12px;
                             background: #10b981;
