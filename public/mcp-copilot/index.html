@@ -484,12 +484,10 @@
                 <div>CRM AI Agent</div>
             </button>
 
-            <!-- TEMPORARILY REMOVED - Social Media feature in development
             <button class="action-btn btn-social" onclick="openSocialMedia()">
                 <div class="action-icon">📱</div>
                 <div>Social Media</div>
             </button>
-            -->
 
             <button class="action-btn btn-email" onclick="openEmailMarketing()">
                 <div class="action-icon">📧</div>
@@ -539,6 +537,11 @@
         // Open copilot chat in full-screen page
         function openCopilotChat() {
             window.location.href = '/mcp-copilot/chat.html';
+        }
+
+        // Open social media manager
+        function openSocialMedia() {
+            window.location.href = '/mcp-copilot/social-media.html';
         }
 
         // Handle enter key in chat input

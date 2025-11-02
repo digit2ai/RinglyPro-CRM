@@ -4,8 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#f857a6">
-    <title>Social Media Marketing - RinglyPro</title>
+    <title>🔧 DEV - Social Media Marketing - RinglyPro</title>
     <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png">
+    <style>
+        .dev-banner {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            color: white;
+            padding: 12px 20px;
+            text-align: center;
+            font-weight: 600;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+    </style>
     <style>
         * {
             margin: 0;
@@ -625,10 +643,32 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Schedule For</label>
-                        <input type="datetime-local" id="scheduleTime">
+                        <label>Add Images (Optional)</label>
+                        <input type="file" id="postImages" accept="image/*" multiple style="
+                            width: 100%;
+                            padding: 12px;
+                            border: 2px dashed #d1d5db;
+                            border-radius: 8px;
+                            background: #f9fafb;
+                            cursor: pointer;
+                            font-size: 0.875rem;
+                        ">
                         <small style="display: block; margin-top: 4px; font-size: 0.75rem; color: #6b7280;">
-                            Leave empty to post immediately
+                            Select one or more images (JPG, PNG, GIF)
+                        </small>
+                        <div id="imagePreview" style="
+                            display: flex;
+                            gap: 8px;
+                            margin-top: 8px;
+                            flex-wrap: wrap;
+                        "></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Schedule For</label>
+                        <input type="datetime-local" id="scheduleTime" min="">
+                        <small style="display: block; margin-top: 4px; font-size: 0.75rem; color: #6b7280;">
+                            Leave empty to post immediately (must be at least 5 minutes in the future)
                         </small>
                     </div>
 
@@ -692,22 +732,48 @@
         clientId = urlParams.get('client_id');
         sessionId = urlParams.get('session_id');
 
+        // Client ID should come from URL params (set by dashboard redirect)
         if (!clientId) {
-            showAlert('error', 'No client ID provided. Please open this page from MCP Copilot.');
-        }
-
-        if (!sessionId) {
-            showAlert('error', 'No session ID provided. Please open this page from MCP Copilot.');
+            console.warn('No client_id provided - user needs to access via dashboard');
         }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
+            // Set minimum datetime to 5 minutes from now (in local timezone)
+            const setMinDateTime = () => {
+                const now = new Date();
+                const minTime = new Date(now.getTime() + 5 * 60000); // 5 minutes from now
+
+                // Format for datetime-local input (YYYY-MM-DDTHH:mm) in LOCAL timezone
+                const year = minTime.getFullYear();
+                const month = String(minTime.getMonth() + 1).padStart(2, '0');
+                const day = String(minTime.getDate()).padStart(2, '0');
+                const hours = String(minTime.getHours()).padStart(2, '0');
+                const minutes = String(minTime.getMinutes()).padStart(2, '0');
+                const minDateStr = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+                document.getElementById('scheduleTime').min = minDateStr;
+                console.log('⏰ Min time set to:', minDateStr, '(', minTime.toLocaleString(), ')');
+            };
+            setMinDateTime();
+            // Update min time every minute
+            setInterval(setMinDateTime, 60000);
+
             if (sessionId) {
-                // Already connected via MCP Copilot
-                updateStatus('connected', 'Connected via MCP Copilot');
-                await loadPosts();
+                // Test if session is valid by trying to load posts
+                updateStatus('loading', 'Checking session...');
+                try {
+                    await loadPosts();
+                    updateStatus('connected', 'Connected via MCP Copilot');
+                } catch (error) {
+                    // Session expired or invalid, create new one
+                    console.log('Session invalid, creating new connection...');
+                    sessionId = null;
+                    await connectToGHL();
+                    await loadPosts();
+                }
             } else {
-                // Fallback: try to connect
+                // No session - connect fresh
                 await connectToGHL();
                 await loadPosts();
             }
@@ -752,18 +818,42 @@
                 }
             });
 
-            // Image upload
-            document.getElementById('imageUpload').addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        uploadedImageData = event.target.result;
-                        document.getElementById('imagePreview').src = uploadedImageData;
-                        document.getElementById('imagePreviewContainer').classList.add('active');
-                    };
-                    reader.readAsDataURL(file);
-                }
+            // Image upload - handle multiple images
+            document.getElementById('postImages').addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                const previewContainer = document.getElementById('imagePreview');
+                previewContainer.innerHTML = '';
+
+                files.forEach((file, index) => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            const imgWrapper = document.createElement('div');
+                            imgWrapper.style.cssText = 'position: relative; width: 80px; height: 80px;';
+
+                            const img = document.createElement('img');
+                            img.src = event.target.result;
+                            img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 2px solid #e5e7eb;';
+
+                            const removeBtn = document.createElement('button');
+                            removeBtn.textContent = '×';
+                            removeBtn.type = 'button';
+                            removeBtn.style.cssText = 'position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: #ef4444; color: white; border: none; cursor: pointer; font-size: 16px; line-height: 1;';
+                            removeBtn.onclick = () => {
+                                imgWrapper.remove();
+                                // Reset file input if no images left
+                                if (previewContainer.children.length === 0) {
+                                    document.getElementById('postImages').value = '';
+                                }
+                            };
+
+                            imgWrapper.appendChild(img);
+                            imgWrapper.appendChild(removeBtn);
+                            previewContainer.appendChild(imgWrapper);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
             });
 
             // Remove image
@@ -854,6 +944,49 @@
             }
 
             const scheduleTime = document.getElementById('scheduleTime').value;
+
+            // Validate schedule time if provided
+            if (scheduleTime) {
+                const selectedDate = new Date(scheduleTime);
+                const now = new Date();
+                const minFutureTime = new Date(now.getTime() + 5 * 60000); // 5 minutes from now
+
+                console.log('⏰ Time validation:', {
+                    selectedLocal: selectedDate.toLocaleString(),
+                    selectedUTC: selectedDate.toISOString(),
+                    nowLocal: now.toLocaleString(),
+                    nowUTC: now.toISOString(),
+                    minFutureLocal: minFutureTime.toLocaleString(),
+                    minFutureUTC: minFutureTime.toISOString(),
+                    isValid: selectedDate > minFutureTime
+                });
+
+                if (selectedDate <= minFutureTime) {
+                    showAlert('error', `Schedule time must be at least 5 minutes in the future. Current time: ${now.toLocaleTimeString()}`);
+                    return;
+                }
+            }
+
+            // Get images if any
+            const imageFiles = document.getElementById('postImages').files;
+            const imageData = [];
+
+            if (imageFiles.length > 0) {
+                // Convert images to base64
+                for (const file of imageFiles) {
+                    const base64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.readAsDataURL(file);
+                    });
+                    imageData.push({
+                        data: base64,
+                        name: file.name,
+                        type: file.type
+                    });
+                }
+            }
+
             let message = `schedule social post for ${selectedPlatforms.join(' and ')}`;
 
             if (scheduleTime) {
@@ -861,6 +994,10 @@
                 message += ` at ${date.toLocaleString()}`;
             } else {
                 message += ' now';
+            }
+
+            if (imageData.length > 0) {
+                message += ` with ${imageData.length} image${imageData.length > 1 ? 's' : ''}`;
             }
 
             message += `: ${content}`;
@@ -872,7 +1009,11 @@
                 const response = await fetch(`${window.location.origin}/api/mcp/copilot/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sessionId, message })
+                    body: JSON.stringify({
+                        sessionId,
+                        message,
+                        images: imageData
+                    })
                 });
 
                 const data = await response.json();
@@ -881,6 +1022,7 @@
                 if (data.success) {
                     showAlert('success', '✅ Post scheduled successfully!');
                     document.getElementById('postForm').reset();
+                    document.getElementById('imagePreview').innerHTML = '';
                     document.getElementById('charCounter').textContent = '0 / 2,200';
                     selectedPlatforms = [];
                     document.querySelectorAll('.platform-btn').forEach(btn => btn.classList.remove('active'));
@@ -925,6 +1067,7 @@
 
                 if (posts && posts.length > 0) {
                     console.log(`✅ Loaded ${posts.length} posts`);
+                    console.log('📋 First post structure:', JSON.stringify(posts[0], null, 2));
                     renderPosts(posts);
                 } else {
                     console.log('⚠️ No posts found. Full response:', JSON.stringify(data, null, 2));
@@ -946,22 +1089,41 @@
         function renderPosts(posts) {
             const container = document.getElementById('postsList');
 
-            container.innerHTML = posts.map(post => `
-                <div class="post-item">
-                    <div class="post-header">
-                        <span class="post-status ${(post.status || 'scheduled').toLowerCase()}">
-                            ${post.status || 'Scheduled'}
-                        </span>
+            console.log('📝 Rendering posts:', posts);
+
+            container.innerHTML = posts.map(post => {
+                // GoHighLevel uses: summary (not message), scheduleDate (not scheduleTime), platform is correct
+                const content = post.summary || post.message || post.content || 'No content';
+                const status = post.status || 'unknown';
+                const platform = post.platform || 'unknown';
+
+                // Try multiple date fields
+                const dateField = post.scheduleDate || post.displayDate || post.scheduleTime || post.createdAt;
+                const dateStr = dateField ? new Date(dateField).toLocaleString() : 'No date';
+
+                // Map platform to friendly names and show accounts
+                let platformDisplay = platform;
+                if (post.accounts && post.accounts.length > 0) {
+                    const accountNames = post.accounts.map(acc => acc.name || acc.id).join(', ');
+                    platformDisplay = `${platform} (${accountNames})`;
+                }
+
+                return `
+                    <div class="post-item">
+                        <div class="post-header">
+                            <span class="post-status ${status.toLowerCase()}">
+                                ${status.charAt(0).toUpperCase() + status.slice(1)}
+                            </span>
+                        </div>
+                        <div class="post-content">
+                            ${content}
+                        </div>
+                        <div class="post-meta">
+                            ${platformDisplay} • ${dateStr}
+                        </div>
                     </div>
-                    <div class="post-content">
-                        ${post.message || 'No content'}
-                    </div>
-                    <div class="post-meta">
-                        ${post.platform ? `Platform: ${post.platform}` : ''} •
-                        ${post.scheduleTime ? new Date(post.scheduleTime).toLocaleString() : 'No date'}
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function showEmptyState() {
