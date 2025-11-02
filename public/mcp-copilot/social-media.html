@@ -605,7 +605,25 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Post Content *</label>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label style="margin: 0;">Post Content *</label>
+                            <button type="button" id="aiGenerateBtn" style="
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                                border: none;
+                                padding: 6px 12px;
+                                border-radius: 6px;
+                                font-size: 0.75rem;
+                                font-weight: 600;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                gap: 4px;
+                                transition: transform 0.2s, box-shadow 0.2s;
+                            " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.4)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                                ✨ AI Generate
+                            </button>
+                        </div>
                         <textarea id="postContent" placeholder="Write your social media post here..." required></textarea>
                         <div class="char-counter" id="charCounter">0 / 2,200</div>
 
@@ -643,7 +661,25 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Add Images (Optional)</label>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label style="margin: 0;">Add Images (Optional)</label>
+                            <button type="button" id="aiImageBtn" style="
+                                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                                color: white;
+                                border: none;
+                                padding: 6px 12px;
+                                border-radius: 6px;
+                                font-size: 0.75rem;
+                                font-weight: 600;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                gap: 4px;
+                                transition: transform 0.2s, box-shadow 0.2s;
+                            " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(245, 87, 108, 0.4)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                                🎨 AI Generate Image
+                            </button>
+                        </div>
                         <input type="file" id="postImages" accept="image/*" multiple style="
                             width: 100%;
                             padding: 12px;
@@ -654,7 +690,7 @@
                             font-size: 0.875rem;
                         ">
                         <small style="display: block; margin-top: 4px; font-size: 0.75rem; color: #6b7280;">
-                            Select one or more images (JPG, PNG, GIF)
+                            Select one or more images (JPG, PNG, GIF) or generate with AI
                         </small>
                         <div id="imagePreview" style="
                             display: flex;
@@ -1269,6 +1305,195 @@
         function closePreview() {
             document.getElementById('previewModal').classList.remove('active');
         }
+
+        // AI Content Generation Modal
+        document.getElementById('aiGenerateBtn').addEventListener('click', () => {
+            document.getElementById('aiContentModal').style.display = 'flex';
+        });
+
+        // AI Image Generation Modal
+        document.getElementById('aiImageBtn').addEventListener('click', () => {
+            document.getElementById('aiImageModal').style.display = 'flex';
+        });
     </script>
+
+    <!-- AI Content Generation Modal -->
+    <div id="aiContentModal" style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    ">
+        <div style="
+            background: white;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 100%;
+            padding: 24px;
+            max-height: 90vh;
+            overflow-y: auto;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 1.25rem;">✨ AI Content Generator</h3>
+                <button onclick="document.getElementById('aiContentModal').style.display='none'" style="
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    cursor: pointer;
+                    color: #6b7280;
+                ">×</button>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.875rem;">What's this post about?</label>
+                <input type="text" id="aiTopicInput" placeholder="e.g., Summer sale announcement, haircut tips, new menu item" style="
+                    width: 100%;
+                    padding: 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    font-size: 0.875rem;
+                ">
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.875rem;">Tone</label>
+                <select id="aiToneSelect" style="
+                    width: 100%;
+                    padding: 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    font-size: 0.875rem;
+                ">
+                    <option value="professional">Professional</option>
+                    <option value="casual">Casual & Friendly</option>
+                    <option value="enthusiastic">Enthusiastic & Energetic</option>
+                    <option value="promotional">Promotional & Sales-y</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="font-weight: 600; font-size: 0.875rem; margin-bottom: 8px; display: block;">Include:</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 0.875rem;">
+                        <input type="checkbox" id="aiIncludeHashtags" checked>
+                        Hashtags
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 0.875rem;">
+                        <input type="checkbox" id="aiIncludeCTA" checked>
+                        Call-to-action
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 0.875rem;">
+                        <input type="checkbox" id="aiIncludeEmojis">
+                        Emojis
+                    </label>
+                </div>
+            </div>
+
+            <button id="generateContentBtn" style="
+                width: 100%;
+                padding: 14px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                font-size: 1rem;
+            ">Generate 3 Variations</button>
+
+            <div id="aiContentResults" style="margin-top: 20px; display: none;">
+                <label style="font-weight: 600; font-size: 0.875rem; margin-bottom: 12px; display: block;">Choose one:</label>
+                <div id="aiContentVariations"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Image Generation Modal -->
+    <div id="aiImageModal" style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    ">
+        <div style="
+            background: white;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 100%;
+            padding: 24px;
+            max-height: 90vh;
+            overflow-y: auto;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 1.25rem;">🎨 AI Image Generator</h3>
+                <button onclick="document.getElementById('aiImageModal').style.display='none'" style="
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    cursor: pointer;
+                    color: #6b7280;
+                ">×</button>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.875rem;">Describe the image you want</label>
+                <textarea id="aiImagePrompt" placeholder="e.g., a modern barber shop interior with leather chairs and vintage decor" style="
+                    width: 100%;
+                    padding: 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    font-size: 0.875rem;
+                    min-height: 80px;
+                    resize: vertical;
+                "></textarea>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.875rem;">Style</label>
+                <select id="aiImageStyle" style="
+                    width: 100%;
+                    padding: 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    font-size: 0.875rem;
+                ">
+                    <option value="natural">Photorealistic</option>
+                    <option value="vivid">Vibrant & Colorful</option>
+                    <option value="illustration">Illustration</option>
+                </select>
+            </div>
+
+            <button id="generateImageBtn" style="
+                width: 100%;
+                padding: 14px;
+                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                font-size: 1rem;
+            ">Generate Image ($0.04)</button>
+
+            <div id="aiImageResults" style="margin-top: 20px; display: none;">
+                <label style="font-weight: 600; font-size: 0.875rem; margin-bottom: 12px; display: block;">Generated Image:</label>
+                <div id="aiImageContainer" style="display: flex; flex-direction: column; gap: 12px;"></div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
