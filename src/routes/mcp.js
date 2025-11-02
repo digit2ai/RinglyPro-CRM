@@ -2299,6 +2299,19 @@ router.post('/copilot/chat', async (req, res) => {
               });
             }
 
+            // Check if AI image generation is requested
+            const aiImageEnabled = process.env.ENABLE_AI_IMAGES === 'true';
+            const userMessage = req.body.message || '';
+            const needsAIImage = aiImageEnabled && (
+              userMessage.toLowerCase().includes('with image') ||
+              userMessage.toLowerCase().includes('with photo') ||
+              userMessage.toLowerCase().includes('with picture') ||
+              userMessage.toLowerCase().includes('generate image') ||
+              userMessage.toLowerCase().includes('create image')
+            );
+
+            console.log('🎨 AI Image Check:', { aiImageEnabled, needsAIImage, userMessage: userMessage.substring(0, 100) });
+
             // Upload images if provided
             const mediaArray = [];
             if (req.body.images && req.body.images.length > 0) {
@@ -2317,6 +2330,51 @@ router.post('/copilot/chat', async (req, res) => {
                   console.error('❌ Image upload failed:', uploadError.message);
                   // Continue with other images
                 }
+              }
+            }
+
+            // Generate AI image if requested and no manual images provided
+            if (needsAIImage && mediaArray.length === 0) {
+              console.log('🎨 Generating AI image for social post...');
+              try {
+                const OpenAI = require('openai');
+                const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+                // Create image prompt based on post content
+                const imagePrompt = `Create a professional, eye-catching social media image for: ${postMessage}.
+Style: Clean, modern, suitable for ${platforms.join('/')}.
+No text in image.`;
+
+                console.log('🎨 DALL-E prompt:', imagePrompt);
+
+                const imageResponse = await openai.images.generate({
+                  model: "dall-e-3",
+                  prompt: imagePrompt,
+                  size: "1024x1024",
+                  quality: "standard",
+                  style: "natural",
+                  n: 1
+                });
+
+                const imageUrl = imageResponse.data[0].url;
+                console.log('✅ AI image generated:', imageUrl);
+
+                // Download and upload to GHL
+                const axios = require('axios');
+                const imageData = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+                const base64Image = `data:image/png;base64,${Buffer.from(imageData.data).toString('base64')}`;
+
+                const uploadResult = await session.proxy.uploadMedia(base64Image, 'ai-generated.png', 'image/png');
+                if (uploadResult && uploadResult.url) {
+                  mediaArray.push({
+                    url: uploadResult.url,
+                    type: 'image'
+                  });
+                  console.log('✅ AI image uploaded to GHL:', uploadResult.url);
+                }
+              } catch (aiError) {
+                console.error('❌ AI image generation failed (continuing without image):', aiError.message);
+                // Continue without image - post still works!
               }
             }
 
@@ -2343,6 +2401,11 @@ router.post('/copilot/chat', async (req, res) => {
             let response = `✅ Social media post scheduled!\n\n`;
             response += `📱 Platforms: ${platforms.join(', ')}\n`;
             response += `📝 Content: ${postMessage.substring(0, 100)}${postMessage.length > 100 ? '...' : ''}\n`;
+            if (needsAIImage && mediaArray.length > 0) {
+              response += `🎨 AI-generated image included!\n`;
+            } else if (mediaArray.length > 0) {
+              response += `📸 ${mediaArray.length} image(s) included\n`;
+            }
             response += `\nPost ID: ${result?.id || 'N/A'}\n`;
             response += `Status: ${result?.status || 'Scheduled'}\n`;
             response += `\n✅ Check your GoHighLevel Social Planner to confirm!`;
