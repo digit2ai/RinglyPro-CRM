@@ -166,6 +166,11 @@ if (mcpRoutes) {
     console.log('⚠️ MCP routes not available - skipping mount');
 }
 
+// AI Generation routes (DALL-E, content generation)
+const aiRoutes = require('./routes/ai');
+app.use('/api/ai', aiRoutes);
+console.log('✨ AI Generation routes mounted at /api/ai');
+
 // GHL API Test Route (for debugging)
 const testGHLRoutes = require('./routes/test-ghl');
 app.use('/api/test-ghl', testGHLRoutes);

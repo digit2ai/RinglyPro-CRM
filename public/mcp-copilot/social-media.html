@@ -1315,6 +1315,221 @@
         document.getElementById('aiImageBtn').addEventListener('click', () => {
             document.getElementById('aiImageModal').style.display = 'flex';
         });
+
+        // Generate AI Content
+        document.getElementById('generateContentBtn').addEventListener('click', async () => {
+            const topic = document.getElementById('aiTopicInput').value.trim();
+            if (!topic) {
+                showAlert('error', 'Please describe what the post is about');
+                return;
+            }
+
+            const tone = document.getElementById('aiToneSelect').value;
+            const includeHashtags = document.getElementById('aiIncludeHashtags').checked;
+            const includeCTA = document.getElementById('aiIncludeCTA').checked;
+            const includeEmojis = document.getElementById('aiIncludeEmojis').checked;
+            const category = document.getElementById('marketCategory').value;
+
+            const btn = document.getElementById('generateContentBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Generating...';
+
+            try {
+                const response = await fetch(`${window.location.origin}/api/mcp/copilot/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId,
+                        message: `Generate 3 social media post variations about: ${topic}.
+                        Tone: ${tone}.
+                        ${includeHashtags ? 'Include relevant hashtags.' : 'No hashtags.'}
+                        ${includeCTA ? 'Include a call-to-action.' : 'No call-to-action.'}
+                        ${includeEmojis ? 'Use emojis.' : 'No emojis.'}
+                        Business category: ${category}.
+                        Format as: VARIATION 1:\\n[content]\\n\\nVARIATION 2:\\n[content]\\n\\nVARIATION 3:\\n[content]`
+                    })
+                });
+
+                const data = await response.json();
+                console.log('AI Content Response:', data);
+
+                if (data.success && data.response) {
+                    // Parse variations
+                    const text = data.response;
+                    const variations = [];
+
+                    // Try to split by "VARIATION" keyword
+                    const parts = text.split(/VARIATION \d+:/i);
+                    for (let i = 1; i < parts.length && i <= 3; i++) {
+                        const variation = parts[i].trim();
+                        if (variation) variations.push(variation);
+                    }
+
+                    // Fallback: if no variations found, create 3 similar ones
+                    if (variations.length === 0) {
+                        variations.push(text);
+                    }
+
+                    // Display variations
+                    const container = document.getElementById('aiContentVariations');
+                    container.innerHTML = '';
+
+                    variations.slice(0, 3).forEach((variation, idx) => {
+                        const card = document.createElement('div');
+                        card.style.cssText = `
+                            padding: 16px;
+                            border: 2px solid #e5e7eb;
+                            border-radius: 8px;
+                            margin-bottom: 12px;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        `;
+                        card.onmouseover = () => card.style.borderColor = '#667eea';
+                        card.onmouseout = () => card.style.borderColor = '#e5e7eb';
+
+                        card.innerHTML = `
+                            <div style="font-weight: 600; margin-bottom: 8px; color: #667eea;">Option ${idx + 1}</div>
+                            <div style="white-space: pre-wrap; font-size: 0.875rem; color: #374151;">${variation}</div>
+                            <button onclick="selectAIContent(${idx})" style="
+                                margin-top: 12px;
+                                padding: 8px 16px;
+                                background: #667eea;
+                                color: white;
+                                border: none;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                font-size: 0.875rem;
+                                font-weight: 600;
+                            ">Use This</button>
+                        `;
+                        container.appendChild(card);
+                    });
+
+                    // Store variations globally
+                    window.aiContentVariations = variations;
+
+                    document.getElementById('aiContentResults').style.display = 'block';
+                } else {
+                    throw new Error(data.error || 'Failed to generate content');
+                }
+            } catch (error) {
+                console.error('AI Content Error:', error);
+                showAlert('error', 'Failed to generate content: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Generate 3 Variations';
+            }
+        });
+
+        // Select AI Content variation
+        window.selectAIContent = (index) => {
+            const variation = window.aiContentVariations[index];
+            document.getElementById('postContent').value = variation;
+            document.getElementById('postContent').dispatchEvent(new Event('input')); // Update char counter
+            document.getElementById('aiContentModal').style.display = 'none';
+            showAlert('success', 'Content added! You can edit before posting.');
+        };
+
+        // Generate AI Image
+        document.getElementById('generateImageBtn').addEventListener('click', async () => {
+            const prompt = document.getElementById('aiImagePrompt').value.trim();
+            if (!prompt) {
+                showAlert('error', 'Please describe the image you want');
+                return;
+            }
+
+            const style = document.getElementById('aiImageStyle').value;
+
+            const btn = document.getElementById('generateImageBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Generating ($0.04)...';
+
+            try {
+                const response = await fetch(`${window.location.origin}/api/ai/generate-image`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt,
+                        style,
+                        sessionId
+                    })
+                });
+
+                const data = await response.json();
+                console.log('AI Image Response:', data);
+
+                if (data.success && data.imageUrl) {
+                    // Display image with use button
+                    const container = document.getElementById('aiImageContainer');
+                    container.innerHTML = `
+                        <img src="${data.imageUrl}" style="width: 100%; border-radius: 8px; border: 2px solid #e5e7eb;">
+                        <button onclick="useAIImage('${data.imageUrl}')" style="
+                            width: 100%;
+                            padding: 12px;
+                            background: #10b981;
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            font-size: 1rem;
+                        ">✓ Use This Image</button>
+                        <button onclick="document.getElementById('generateImageBtn').click()" style="
+                            width: 100%;
+                            padding: 12px;
+                            background: #6b7280;
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            font-size: 0.875rem;
+                            margin-top: 8px;
+                        ">↻ Generate Another ($0.04)</button>
+                    `;
+
+                    document.getElementById('aiImageResults').style.display = 'block';
+                } else {
+                    throw new Error(data.error || 'Failed to generate image');
+                }
+            } catch (error) {
+                console.error('AI Image Error:', error);
+                showAlert('error', 'Failed to generate image: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Generate Image ($0.04)';
+            }
+        });
+
+        // Use AI Generated Image
+        window.useAIImage = async (imageUrl) => {
+            try {
+                // Download image as blob
+                const response = await fetch(imageUrl);
+                const blob = await response.blob();
+
+                // Create File object
+                const file = new File([blob], 'ai-generated.png', { type: 'image/png' });
+
+                // Create DataTransfer to simulate file selection
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+
+                // Set to file input
+                const fileInput = document.getElementById('postImages');
+                fileInput.files = dataTransfer.files;
+
+                // Trigger change event to show preview
+                fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+                // Close modal
+                document.getElementById('aiImageModal').style.display = 'none';
+                showAlert('success', 'AI-generated image added!');
+            } catch (error) {
+                console.error('Error adding AI image:', error);
+                showAlert('error', 'Failed to add image: ' + error.message);
+            }
+        };
     </script>
 
     <!-- AI Content Generation Modal -->
