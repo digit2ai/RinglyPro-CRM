@@ -2329,48 +2329,43 @@
     <div id="creditsModal" class="credits-modal">
         <div class="credits-modal-content">
             <div class="credits-modal-header">
-                <h2>Add Minutes</h2>
+                <h2>Add Tokens</h2>
                 <button class="credits-modal-close" onclick="closeCreditsModal()">&times;</button>
             </div>
-            
+
             <div class="credits-modal-body">
                 <!-- Current Balance -->
                 <div class="current-balance-display">
-                    <h3>Available Minutes</h3>
-                    <p class="balance-amount" id="modalBalance">0 min</p>
+                    <h3>Token Balance</h3>
+                    <p class="balance-amount" id="modalBalance">0 tokens</p>
                     <div class="balance-stats">
                         <div class="balance-stat">
-                            <strong id="modalFreeMinutes">0</strong> free minutes used
+                            <strong id="modalFreeMinutes">0</strong> free tokens used
                         </div>
                         <div class="balance-stat">
-                            <strong id="modalPaidMinutes">0</strong> paid minutes
+                            <strong id="modalPaidMinutes">0</strong> purchased tokens
                         </div>
                     </div>
                 </div>
 
                 <!-- Package Selection -->
                 <div class="package-selection">
-                    <h3>Select Package</h3>
+                    <h3>Select Token Package</h3>
                     <div class="package-grid">
-                        <div class="package-option" onclick="selectPackage(10)" data-amount="10">
-                            <div class="package-amount">$10</div>
-                            <div class="package-minutes">50 minutes</div>
-                            <div class="package-rate">$0.20/min</div>
+                        <div class="package-option" onclick="selectPackage(29)" data-amount="29">
+                            <div class="package-amount">$29</div>
+                            <div class="package-minutes">500 tokens</div>
+                            <div class="package-rate">Starter Pack</div>
                         </div>
-                        <div class="package-option" onclick="selectPackage(20)" data-amount="20">
-                            <div class="package-amount">$20</div>
-                            <div class="package-minutes">100 minutes</div>
-                            <div class="package-rate">$0.20/min</div>
+                        <div class="package-option" onclick="selectPackage(99)" data-amount="99">
+                            <div class="package-amount">$99</div>
+                            <div class="package-minutes">2,000 tokens</div>
+                            <div class="package-rate">Growth Pack</div>
                         </div>
-                        <div class="package-option" onclick="selectPackage(50)" data-amount="50">
-                            <div class="package-amount">$50</div>
-                            <div class="package-minutes">250 minutes</div>
-                            <div class="package-rate">$0.20/min</div>
-                        </div>
-                        <div class="package-option" onclick="selectPackage(100)" data-amount="100">
-                            <div class="package-amount">$100</div>
-                            <div class="package-minutes">500 minutes</div>
-                            <div class="package-rate">$0.20/min</div>
+                        <div class="package-option" onclick="selectPackage(299)" data-amount="299">
+                            <div class="package-amount">$299</div>
+                            <div class="package-minutes">7,500 tokens</div>
+                            <div class="package-rate">Professional Pack</div>
                         </div>
                     </div>
                 </div>
@@ -2392,7 +2387,7 @@
 
                 <!-- Success Message -->
                 <div id="successMessage" class="success-message">
-                    Payment successful! Your minutes have been added.
+                    Payment successful! Your tokens have been added.
                 </div>
 
                 <!-- Actions -->
@@ -4786,25 +4781,23 @@
         async function loadModalBalance() {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/credits/balance', {
+                const response = await fetch('/api/tokens/balance', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
-                
+
                 if (response.ok) {
                     const result = await response.json();
-                    const data = result.data;
-                    
-                    const freeMinutesRemaining = data.freeMinutesRemaining || 0;
-                    const freeMinutesUsed = data.freeMinutesUsed || 0;
-                    const paidBalance = parseFloat(data.balance) || 0;
-                    const paidMinutes = Math.floor(paidBalance / 0.20);
-                    const totalMinutes = freeMinutesRemaining + paidMinutes;
-                    
-                    document.getElementById('modalBalance').textContent = `${totalMinutes} min`;
-                    document.getElementById('modalFreeMinutes').textContent = freeMinutesUsed;
-                    document.getElementById('modalPaidMinutes').textContent = paidMinutes;
+
+                    const tokensBalance = result.balance || 0;
+                    const tokensUsed = result.usedThisMonth || 0;
+                    const packageType = result.package || 'free';
+
+                    // Display total balance
+                    document.getElementById('modalBalance').textContent = `${tokensBalance.toLocaleString()} tokens`;
+                    document.getElementById('modalFreeMinutes').textContent = tokensUsed.toLocaleString();
+                    document.getElementById('modalPaidMinutes').textContent = tokensBalance.toLocaleString();
                 }
             } catch (error) {
                 console.error('Error loading balance:', error);
@@ -4833,65 +4826,78 @@
                 alert('Please select a package');
                 return;
             }
-            
+
             const payButton = document.getElementById('payButton');
             const originalText = payButton.textContent;
-            
+
             try {
                 // Disable button and show loading
                 payButton.disabled = true;
                 payButton.innerHTML = '<span class="loading-spinner"></span>Processing...';
-                
-                // Step 1: Create payment intent
+
+                // Map amount to package name
+                const packageMap = {
+                    29: 'starter',
+                    99: 'growth',
+                    299: 'professional'
+                };
+                const packageName = packageMap[selectedAmount];
+
+                if (!packageName) {
+                    throw new Error('Invalid package selected');
+                }
+
+                // Step 1: Create payment method
+                const { error: methodError, paymentMethod } = await stripe.createPaymentMethod({
+                    type: 'card',
+                    card: cardElement
+                });
+
+                if (methodError) {
+                    throw new Error(methodError.message);
+                }
+
+                // Step 2: Purchase tokens via API
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/credits/reload', {
+                const response = await fetch('/api/tokens/purchase', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ amount: selectedAmount })
+                    body: JSON.stringify({
+                        package_name: packageName,
+                        payment_method_id: paymentMethod.id
+                    })
                 });
-                
+
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(error.error || 'Failed to create payment intent');
+                    throw new Error(error.error || 'Failed to process payment');
                 }
-                
-                const { clientSecret, transactionId } = await response.json();
-                
-                // Step 2: Confirm payment with Stripe
-                const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-                    payment_method: {
-                        card: cardElement
-                    }
-                });
-                
-                if (error) {
-                    throw new Error(error.message);
-                }
-                
+
+                const result = await response.json();
+
                 // Step 3: Payment successful
-                if (paymentIntent.status === 'succeeded') {
+                if (result.success) {
                     // Show success message
                     document.getElementById('successMessage').classList.add('show');
-                    
-                    // Wait for webhook to process (give it 2 seconds)
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    
+
                     // Refresh balance
                     await loadCreditsBalance();
                     await loadModalBalance();
-                    
+
                     // Clear card
                     cardElement.clear();
-                    
+
                     // Reset UI after 2 seconds
                     setTimeout(() => {
                         closeCreditsModal();
                     }, 2000);
+                } else {
+                    throw new Error(result.error || 'Payment failed');
                 }
-                
+
             } catch (error) {
                 console.error('Payment error:', error);
                 document.getElementById('card-errors').textContent = error.message;
