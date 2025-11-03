@@ -1800,7 +1800,7 @@
         </svg>
         <div class="low-balance-alert-content">
             <h3>Low Balance Warning</h3>
-            <p id="lowBalanceMessage">Only X minutes remaining. Recharge now to avoid service interruption.</p>
+            <p id="lowBalanceMessage">Only X tokens remaining. Recharge now to avoid service interruption.</p>
         </div>
         <button onclick="showCreditsInfo()">Recharge</button>
     </div>
@@ -2729,44 +2729,35 @@
             return response;
         }
 
-        // Calculate total minutes from balance and free minutes
-        function calculateTotalMinutes(balance, freeMinutesUsed, monthlyFreeMinutes = 100) {
-            const freeMinutesRemaining = Math.max(0, monthlyFreeMinutes - freeMinutesUsed);
-            const paidMinutes = Math.floor(balance / 0.20); // $0.20 per minute
-            return freeMinutesRemaining + paidMinutes;
-        }
-
-        // Load Credits Balance
+        // Load Token Balance
         async function loadCreditsBalance() {
             try {
-                const response = await authenticatedFetch(`/api/credits/balance`);
+                const response = await authenticatedFetch(`/api/tokens/balance`);
                 if (!response) return;
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
-                    creditsData = data.data;
-                    const freeMinutesRemaining = data.data.freeMinutesRemaining || 0;
-                    const freeMinutesUsed = data.data.freeMinutesUsed || 0;
-                    const paidBalance = parseFloat(data.data.balance) || 0;
-                    const paidMinutes = Math.floor(paidBalance / 0.20);
-                    const totalMinutes = freeMinutesRemaining + paidMinutes;
+                    const tokensBalance = data.balance || 0;
+                    const tokensUsed = data.usedThisMonth || 0;
+                    const packageType = data.package || 'free';
+                    const monthlyAllocation = data.monthlyAllocation || 100;
 
-                    // Display total minutes in header
-                    document.getElementById('headerCreditAmount').textContent = `${totalMinutes} min`;
+                    // Display total tokens in header
+                    document.getElementById('headerCreditAmount').textContent = `${tokensBalance.toLocaleString()} tokens`;
 
-                    // Check for low balance (< 10 minutes)
-                    if (totalMinutes < 10) {
+                    // Check for low balance (< 50 tokens)
+                    if (tokensBalance < 50) {
                         const alert = document.getElementById('lowBalanceAlert');
                         const message = document.getElementById('lowBalanceMessage');
-                        message.textContent = `Only ${totalMinutes} minutes remaining. Recharge now to avoid service interruption.`;
+                        message.textContent = `Only ${tokensBalance} tokens remaining. Recharge now to avoid service interruption.`;
                         alert.classList.add('show');
                     } else {
                         document.getElementById('lowBalanceAlert').classList.remove('show');
                     }
                 }
             } catch (error) {
-                console.error('Error loading credits:', error);
+                console.error('Error loading token balance:', error);
                 document.getElementById('headerCreditAmount').textContent = 'N/A';
             }
         }
@@ -4786,23 +4777,37 @@
         async function loadModalBalance() {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/tokens/balance', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+
+                // Fetch token balance
+                const balanceResponse = await fetch('/api/tokens/balance', {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (response.ok) {
-                    const result = await response.json();
+                // Fetch referral stats
+                const referralResponse = await fetch('/api/referrals/stats', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
 
-                    const tokensBalance = result.balance || 0;
-                    const tokensUsed = result.usedThisMonth || 0;
-                    const packageType = result.package || 'free';
+                if (balanceResponse.ok) {
+                    const balanceData = await balanceResponse.json();
+                    const tokensBalance = balanceData.balance || 0;
+                    const tokensUsed = balanceData.usedThisMonth || 0;
+                    const monthlyAllocation = balanceData.monthlyAllocation || 100;
 
-                    // Display total balance
+                    // Calculate referral tokens if available
+                    let referralTokens = 0;
+                    if (referralResponse.ok) {
+                        const referralData = await referralResponse.json();
+                        referralTokens = referralData.stats?.tokensEarned || 0;
+                    }
+
+                    // Calculate purchased tokens (balance - monthly free - referral)
+                    const purchasedTokens = Math.max(0, tokensBalance - monthlyAllocation - referralTokens);
+
+                    // Display breakdown
                     document.getElementById('modalBalance').textContent = `${tokensBalance.toLocaleString()} tokens`;
-                    document.getElementById('modalFreeMinutes').textContent = tokensUsed.toLocaleString();
-                    document.getElementById('modalPaidMinutes').textContent = tokensBalance.toLocaleString();
+                    document.getElementById('modalFreeMinutes').textContent = `${referralTokens.toLocaleString()} referral tokens`;
+                    document.getElementById('modalPaidMinutes').textContent = `${purchasedTokens.toLocaleString()} purchased`;
                 }
             } catch (error) {
                 console.error('Error loading balance:', error);

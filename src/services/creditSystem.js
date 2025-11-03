@@ -384,38 +384,70 @@ class CreditSystem {
             'SELECT * FROM payment_transactions WHERE id = $1',
             [transactionId]
         );
-        
+
         if (transaction.rows.length === 0) {
             throw new Error('Transaction not found');
         }
-        
+
         const transactionData = transaction.rows[0];
         const creditAccount = await this.getCreditAccount(transactionData.client_id);
-        
-        // Update credit balance
+
+        // Calculate tokens based on amount ($0.05 per token)
+        const tokensToAdd = Math.floor(amount / 0.05);
+
+        // Get user_id from client_id
+        const clientResult = await this.pool.query(
+            'SELECT user_id FROM clients WHERE id = $1',
+            [transactionData.client_id]
+        );
+
+        // Update credit balance (legacy)
         await this.pool.query(`
-            UPDATE credit_accounts SET 
+            UPDATE credit_accounts SET
                 balance = balance + $1,
                 low_balance_notified = false,
                 zero_balance_notified = false,
                 updated_at = NOW()
             WHERE client_id = $2
         `, [amount, transactionData.client_id]);
-        
+
+        // Update token balance (new system)
+        if (clientResult.rows.length > 0 && clientResult.rows[0].user_id) {
+            const userId = clientResult.rows[0].user_id;
+
+            await this.pool.query(`
+                UPDATE users SET
+                    tokens_balance = tokens_balance + $1,
+                    updated_at = NOW()
+                WHERE id = $2
+            `, [tokensToAdd, userId]);
+
+            // Record token transaction
+            await this.pool.query(`
+                INSERT INTO token_transactions
+                (user_id, service_type, tokens_used, tokens_balance_after, metadata)
+                SELECT $1, 'token_purchase', $2, tokens_balance,
+                    jsonb_build_object('amount_paid', $3, 'transaction_id', $4)
+                FROM users WHERE id = $1
+            `, [userId, -tokensToAdd, amount, transactionId]);
+
+            console.log(`Added ${tokensToAdd} tokens to user ${userId} from $${amount} payment`);
+        }
+
         // Update transaction
         await this.pool.query(`
-            UPDATE payment_transactions SET 
+            UPDATE payment_transactions SET
                 status = 'completed',
                 completed_at = NOW(),
                 balance_after = $1
             WHERE id = $2
         `, [parseFloat(creditAccount.balance) + amount, transactionId]);
-        
+
         // Clear low balance notifications
         await this.pool.query(`
-            UPDATE credit_notifications SET 
-                sent = true, 
-                sent_at = NOW() 
+            UPDATE credit_notifications SET
+                sent = true,
+                sent_at = NOW()
             WHERE client_id = $1 AND sent = false
         `, [transactionData.client_id]);
         
