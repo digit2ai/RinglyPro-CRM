@@ -20,8 +20,9 @@ const logger = require('../utils/logger');
  */
 router.get('/balance', authenticateToken, async (req, res) => {
   try {
-    const balance = await tokenService.getBalance(req.user.id);
-    const warning = await tokenService.checkLowBalanceWarning(req.user.id);
+    const userId = req.user.userId || req.user.id;
+    const balance = await tokenService.getBalance(userId);
+    const warning = await tokenService.checkLowBalanceWarning(userId);
 
     res.json({
       success: true,
@@ -43,9 +44,10 @@ router.get('/balance', authenticateToken, async (req, res) => {
  */
 router.get('/usage', authenticateToken, async (req, res) => {
   try {
+    const userId = req.user.userId || req.user.id;
     const { limit, offset, startDate, endDate } = req.query;
 
-    const result = await tokenService.getUsageHistory(req.user.id, {
+    const result = await tokenService.getUsageHistory(userId, {
       limit: parseInt(limit) || 50,
       offset: parseInt(offset) || 0,
       startDate,
@@ -71,9 +73,10 @@ router.get('/usage', authenticateToken, async (req, res) => {
  */
 router.get('/analytics', authenticateToken, async (req, res) => {
   try {
+    const userId = req.user.userId || req.user.id;
     const { days } = req.query;
     const analytics = await tokenService.getUsageAnalytics(
-      req.user.id,
+      userId,
       parseInt(days) || 30
     );
 
@@ -147,6 +150,7 @@ router.get('/pricing', async (req, res) => {
  */
 router.post('/purchase', authenticateToken, async (req, res) => {
   try {
+    const userId = req.user.userId || req.user.id;
     const { package_name, payment_method_id } = req.body;
 
     // Validate package
@@ -181,7 +185,7 @@ router.post('/purchase', authenticateToken, async (req, res) => {
       payment_method: payment_method_id,
       confirm: true,
       metadata: {
-        user_id: req.user.id,
+        user_id: userId,
         package_name,
         tokens: selectedPackage.tokens
       }
@@ -190,7 +194,7 @@ router.post('/purchase', authenticateToken, async (req, res) => {
     if (paymentIntent.status === 'succeeded') {
       // Add tokens to user account
       await tokenService.addTokens(
-        req.user.id,
+        userId,
         selectedPackage.tokens,
         'purchase',
         {
@@ -210,7 +214,7 @@ router.post('/purchase', authenticateToken, async (req, res) => {
         `,
         {
           bind: [
-            req.user.id,
+            userId,
             package_name,
             selectedPackage.tokens,
             selectedPackage.price,
@@ -224,11 +228,11 @@ router.post('/purchase', authenticateToken, async (req, res) => {
       try {
         const referralService = require('../services/referralService');
         await referralService.recordReferralConversion(
-          req.user.id,
+          userId,
           selectedPackage.price,
           package_name
         );
-        console.log('✅ Referral conversion tracked for user:', req.user.id);
+        console.log('✅ Referral conversion tracked for user:', userId);
       } catch (referralError) {
         console.error('⚠️ Referral conversion tracking error (non-critical):', referralError.message);
         // Don't fail purchase if referral tracking fails
@@ -262,6 +266,7 @@ router.post('/purchase', authenticateToken, async (req, res) => {
  */
 router.get('/purchases', authenticateToken, async (req, res) => {
   try {
+    const userId = req.user.userId || req.user.id;
     const { limit, offset } = req.query;
     const { sequelize } = require('../models');
 
@@ -277,7 +282,7 @@ router.get('/purchases', authenticateToken, async (req, res) => {
       `,
       {
         bind: [
-          req.user.id,
+          userId,
           parseInt(limit) || 20,
           parseInt(offset) || 0
         ]
@@ -290,7 +295,7 @@ router.get('/purchases', authenticateToken, async (req, res) => {
       FROM token_purchases
       WHERE user_id = $1
       `,
-      { bind: [req.user.id] }
+      { bind: [userId] }
     );
 
     res.json({
