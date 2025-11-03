@@ -441,4 +441,95 @@ router.get('/test', async (req, res) => {
   }
 });
 
+// =====================================================
+// BACKWARD COMPATIBILITY - Old frontend uses clientId
+// =====================================================
+
+/**
+ * GET /api/referral/:clientId
+ * Old endpoint - Get referral info by clientId
+ * Maps clientId → userId → referral code
+ */
+router.get('/:clientId', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+
+    // Get userId from clientId
+    const { sequelize } = require('../models');
+    const [client] = await sequelize.query(
+      `SELECT user_id FROM clients WHERE id = $1`,
+      { bind: [clientId], type: sequelize.QueryTypes.SELECT }
+    );
+
+    if (!client || !client.user_id) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    const userId = client.user_id;
+    const referralCode = await referralService.getReferralCode(userId);
+    const referralLink = await referralService.getReferralLink(userId);
+
+    res.json({
+      success: true,
+      referralCode,
+      referralLink,
+      clientId: parseInt(clientId),
+      userId
+    });
+
+  } catch (error) {
+    console.error('Error getting referral by clientId:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get referral code',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/referral/:clientId/link
+ * Old endpoint - Get just the referral link by clientId
+ */
+router.get('/:clientId/link', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+
+    // Get userId from clientId
+    const { sequelize } = require('../models');
+    const [client] = await sequelize.query(
+      `SELECT user_id FROM clients WHERE id = $1`,
+      { bind: [clientId], type: sequelize.QueryTypes.SELECT }
+    );
+
+    if (!client || !client.user_id) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    const userId = client.user_id;
+    const referralLink = await referralService.getReferralLink(userId);
+
+    res.json({
+      success: true,
+      link: referralLink,
+      clientId: parseInt(clientId),
+      userId
+    });
+
+  } catch (error) {
+    console.error('Error getting referral link by clientId:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get referral link',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;

@@ -146,8 +146,9 @@ if (tokenRoutes) {
 
 // Viral referral system routes
 if (referralRoutes) {
-    app.use('/api/referrals', referralRoutes); // Viral referral program
-    console.log('🎁 Referral routes mounted at /api/referrals');
+    app.use('/api/referrals', referralRoutes); // Viral referral program (new)
+    app.use('/api/referral', referralRoutes); // Backward compatibility (old frontend)
+    console.log('🎁 Referral routes mounted at /api/referrals and /api/referral (backward compatible)');
 } else {
     console.error('⚠️ Referral routes not available - skipping mount');
 }
