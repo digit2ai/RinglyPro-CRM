@@ -233,10 +233,23 @@ class TokenService {
         throw new Error('User not found');
       }
 
+      // Calculate monthly allocation based on package
+      const packageAllocations = {
+        free: 100,
+        starter: 500,
+        growth: 2000,
+        professional: 7500
+      };
+      const monthlyAllocation = packageAllocations[user.token_package] || 100;
+
       return {
-        tokens_balance: user.tokens_balance,
+        balance: user.tokens_balance,                    // Frontend expects 'balance'
+        tokens_balance: user.tokens_balance,             // Keep for backward compatibility
+        usedThisMonth: user.tokens_used_this_month,      // Frontend expects camelCase
         tokens_used_this_month: user.tokens_used_this_month,
+        package: user.token_package,                     // Frontend expects 'package'
         token_package: user.token_package,
+        monthlyAllocation: monthlyAllocation,            // Add monthly allocation
         tokens_rollover: user.tokens_rollover,
         billing_cycle_start: user.billing_cycle_start,
         last_token_reset: user.last_token_reset
