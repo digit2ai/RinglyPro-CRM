@@ -233,6 +233,12 @@ class TokenService {
         throw new Error('User not found');
       }
 
+      // Handle NULL values - default to free tier with 100 tokens
+      const tokenBalance = user.tokens_balance ?? 100;
+      const tokensUsed = user.tokens_used_this_month ?? 0;
+      const tokenPackage = user.token_package || 'free';
+      const tokensRollover = user.tokens_rollover ?? 0;
+
       // Calculate monthly allocation based on package
       const packageAllocations = {
         free: 100,
@@ -240,17 +246,17 @@ class TokenService {
         growth: 2000,
         professional: 7500
       };
-      const monthlyAllocation = packageAllocations[user.token_package] || 100;
+      const monthlyAllocation = packageAllocations[tokenPackage] || 100;
 
       return {
-        balance: user.tokens_balance,                    // Frontend expects 'balance'
-        tokens_balance: user.tokens_balance,             // Keep for backward compatibility
-        usedThisMonth: user.tokens_used_this_month,      // Frontend expects camelCase
-        tokens_used_this_month: user.tokens_used_this_month,
-        package: user.token_package,                     // Frontend expects 'package'
-        token_package: user.token_package,
+        balance: tokenBalance,                           // Frontend expects 'balance'
+        tokens_balance: tokenBalance,                    // Keep for backward compatibility
+        usedThisMonth: tokensUsed,                       // Frontend expects camelCase
+        tokens_used_this_month: tokensUsed,
+        package: tokenPackage,                           // Frontend expects 'package'
+        token_package: tokenPackage,
         monthlyAllocation: monthlyAllocation,            // Add monthly allocation
-        tokens_rollover: user.tokens_rollover,
+        tokens_rollover: tokensRollover,
         billing_cycle_start: user.billing_cycle_start,
         last_token_reset: user.last_token_reset
       };
