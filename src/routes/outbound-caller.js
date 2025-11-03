@@ -2,15 +2,17 @@
 const express = require('express');
 const router = express.Router();
 const outboundCallerService = require('../services/outbound-caller');
+const { authenticateToken } = require('../middleware/auth');
 const logger = require('../utils/logger');
 
 /**
  * POST /api/outbound-caller/call
- * Make a single outbound call
+ * Make a single outbound call (authenticated)
  */
-router.post('/call', async (req, res) => {
+router.post('/call', authenticateToken, async (req, res) => {
   try {
     const { phone, leadData } = req.body;
+    const userId = req.user.userId || req.user.id;
 
     if (!phone) {
       return res.status(400).json({
@@ -19,7 +21,7 @@ router.post('/call', async (req, res) => {
       });
     }
 
-    const result = await outboundCallerService.makeCall(phone, leadData);
+    const result = await outboundCallerService.makeCall(phone, leadData, userId);
 
     res.json(result);
 
@@ -34,11 +36,12 @@ router.post('/call', async (req, res) => {
 
 /**
  * POST /api/outbound-caller/start
- * Start auto-calling from lead list
+ * Start auto-calling from lead list (authenticated)
  */
-router.post('/start', async (req, res) => {
+router.post('/start', authenticateToken, async (req, res) => {
   try {
     const { leads, intervalMinutes } = req.body;
+    const userId = req.user.userId || req.user.id;
 
     if (!leads || !Array.isArray(leads) || leads.length === 0) {
       return res.status(400).json({
@@ -49,7 +52,8 @@ router.post('/start', async (req, res) => {
 
     const result = await outboundCallerService.startAutoCalling(
       leads,
-      intervalMinutes || 2
+      intervalMinutes || 2,
+      userId
     );
 
     res.json(result);

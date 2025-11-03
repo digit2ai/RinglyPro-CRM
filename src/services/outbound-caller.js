@@ -3,6 +3,7 @@ const twilio = require('twilio');
 const logger = require('../utils/logger');
 const sequelize = require('../config/database');
 const { QueryTypes } = require('sequelize');
+const tokenService = require('./tokenService');
 
 class OutboundCallerService {
   constructor() {
@@ -15,6 +16,7 @@ class OutboundCallerService {
     this.isRunning = false;
     this.callLogs = [];
     this.intervalDelay = 120000; // 2 minutes default
+    this.currentUserId = null; // Track userId for token deduction
 
     this.initializeTwilio();
   }
@@ -109,9 +111,28 @@ class OutboundCallerService {
   /**
    * Make a single outbound call
    */
-  async makeCall(phoneNumber, leadData = {}) {
+  async makeCall(phoneNumber, leadData = {}, userId = null) {
     if (!this.twilioClient) {
       throw new Error('Twilio not configured');
+    }
+
+    // Check token balance and deduct 1 token if userId provided
+    if (userId) {
+      try {
+        await tokenService.deductTokens(
+          userId,
+          'outbound_call_single',
+          {
+            phone: phoneNumber,
+            lead_name: leadData.name,
+            lead_category: leadData.category
+          }
+        );
+        logger.info(`✅ Deducted 1 token from user ${userId} for outbound call`);
+      } catch (error) {
+        logger.error(`❌ Token deduction failed for user ${userId}:`, error.message);
+        throw new Error(`Insufficient tokens: ${error.message}`);
+      }
     }
 
     // Check business hours - TCPA compliance
@@ -200,7 +221,7 @@ class OutboundCallerService {
   /**
    * Start auto-calling from lead list
    */
-  async startAutoCalling(leads, intervalMinutes = 2) {
+  async startAutoCalling(leads, intervalMinutes = 2, userId = null) {
     if (this.isRunning) {
       throw new Error('Auto-calling already in progress');
     }
@@ -213,8 +234,9 @@ class OutboundCallerService {
     this.currentIndex = 0;
     this.isRunning = true;
     this.intervalDelay = intervalMinutes * 60 * 1000;
+    this.currentUserId = userId; // Store userId for token deduction
 
-    logger.info(`Starting auto-calling: ${leads.length} leads, ${intervalMinutes} min intervals`);
+    logger.info(`Starting auto-calling: ${leads.length} leads, ${intervalMinutes} min intervals${userId ? ` (userId: ${userId})` : ''}`);
 
     // Make first call immediately
     await this.makeNextCall();
@@ -255,7 +277,7 @@ class OutboundCallerService {
       category: lead.category,
       index: this.currentIndex + 1,
       total: this.currentLeads.length
-    });
+    }, this.currentUserId); // Pass stored userId for token deduction
 
     this.currentIndex++;
   }

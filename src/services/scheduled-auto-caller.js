@@ -331,13 +331,29 @@ class ScheduledAutoCallerService {
       );
       logger.info(`📊 Database updated: Status changed to CALLING for ${prospect.phone_number}`);
 
+      // Get userId from clientId for token deduction
+      let userId = null;
+      if (this.currentClientId) {
+        const clientResult = await sequelize.query(
+          'SELECT user_id FROM clients WHERE id = :clientId',
+          {
+            replacements: { clientId: this.currentClientId },
+            type: QueryTypes.SELECT
+          }
+        );
+
+        if (clientResult.length > 0 && clientResult[0].user_id) {
+          userId = clientResult[0].user_id;
+        }
+      }
+
       // Make the call using existing outbound caller service
       const result = await outboundCallerService.makeCall(prospect.phone_number, {
         name: prospect.business_name,
         category: prospect.category,
         location: prospect.location,
         prospectId: prospect.id
-      });
+      }, userId);
 
       if (result.success) {
         this.stats.calledToday++;

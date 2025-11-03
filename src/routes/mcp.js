@@ -2742,9 +2742,27 @@ No text in image.`;
         const outboundCallerService = require('../services/outbound-caller');
 
         try {
+          // Get userId from clientId for token deduction
+          let userId = null;
+          if (session.clientId) {
+            const clientResult = await sequelize.query(
+              'SELECT user_id FROM clients WHERE id = :clientId',
+              {
+                replacements: { clientId: parseInt(session.clientId) },
+                type: QueryTypes.SELECT
+              }
+            );
+
+            if (clientResult.length > 0 && clientResult[0].user_id) {
+              userId = clientResult[0].user_id;
+              console.log(`✅ Found userId ${userId} for clientId ${session.clientId}`);
+            }
+          }
+
           const result = await outboundCallerService.startAutoCalling(
             session.outboundLeads,
-            2 // 2 minutes interval
+            2, // 2 minutes interval
+            userId // Pass userId for token deduction
           );
 
           response = `🚀 Auto-Calling Started!\n\n📊 Status:\n• Total leads: ${result.totalLeads}\n• Interval: ${result.intervalMinutes} minutes\n• Currently calling lead #1\n\n🎯 Calls will continue automatically every ${result.intervalMinutes} minutes.\n\nYou can stop calling at any time.`;
@@ -2761,7 +2779,13 @@ No text in image.`;
           });
         } catch (error) {
           console.error('Error starting outbound calling:', error);
-          response = `❌ Failed to start calling: ${error.message}\n\n⚠️ Please check:\n• Twilio credentials configured\n• TWILIO_ACCOUNT_SID set\n• TWILIO_AUTH_TOKEN set\n• TWILIO_PHONE_NUMBER set`;
+
+          // Check if it's a token insufficiency error
+          if (error.message && error.message.includes('Insufficient tokens')) {
+            response = `❌ Insufficient Tokens!\n\n${error.message}\n\n💡 Solutions:\n• Purchase more tokens\n• Refer friends to earn bonus tokens\n• Upgrade to a higher tier package`;
+          } else {
+            response = `❌ Failed to start calling: ${error.message}\n\n⚠️ Please check:\n• Twilio credentials configured\n• TWILIO_ACCOUNT_SID set\n• TWILIO_AUTH_TOKEN set\n• TWILIO_PHONE_NUMBER set`;
+          }
 
           return res.json({
             success: false,
