@@ -26,7 +26,7 @@
 ### Tag Management
 7. **Add tags**: "add vip and hot-lead tags to sarah"
 8. **Remove tags**: "remove cold-lead tag from mike"
-
+ran the bulk outbo
 ### Opportunities & Pipelines
 9. **View pipelines**: "show me all pipelines" / "what pipelines do we have?"
 10. **Create opportunity**: "create a $5000 deal for john in sales pipeline"

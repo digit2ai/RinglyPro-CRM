@@ -220,6 +220,20 @@ router.post('/purchase', authenticateToken, async (req, res) => {
         }
       );
 
+      // Record referral conversion (non-blocking)
+      try {
+        const referralService = require('../services/referralService');
+        await referralService.recordReferralConversion(
+          req.user.id,
+          selectedPackage.price,
+          package_name
+        );
+        console.log('✅ Referral conversion tracked for user:', req.user.id);
+      } catch (referralError) {
+        console.error('⚠️ Referral conversion tracking error (non-critical):', referralError.message);
+        // Don't fail purchase if referral tracking fails
+      }
+
       res.json({
         success: true,
         tokens_added: selectedPackage.tokens,

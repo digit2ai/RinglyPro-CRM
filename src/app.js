@@ -97,10 +97,20 @@ const emailRoutes = require('./routes/email'); // Email marketing with SendGrid
 const outboundCallerRoutes = require('./routes/outbound-caller'); // Twilio outbound calling integration
 const scheduledCallerRoutes = require('./routes/scheduled-caller'); // Scheduled auto-caller for prospects
 
+// Import token routes (optional - won't crash app if fails)
+let tokenRoutes = null;
+try {
+    tokenRoutes = require('./routes/tokens'); // Token billing system
+    console.log('✅ Token routes loaded successfully');
+} catch (error) {
+    console.error('⚠️ Token routes not loaded (optional feature):', error.message);
+    tokenRoutes = null;
+}
+
 // Import referral routes (optional - won't crash app if fails)
 let referralRoutes = null;
 try {
-    referralRoutes = require('./routes/referral'); // Referral system
+    referralRoutes = require('./routes/referrals'); // Viral referral system
     console.log('✅ Referral routes loaded successfully');
 } catch (error) {
     console.error('⚠️ Referral routes not loaded (optional feature):', error.message);
@@ -126,17 +136,25 @@ app.use('/api/calls', callsRoutes);
 app.use('/api/call-log', callLogRoutes);
 app.use('/api/credits', creditRoutes);
 
-// Client management routes
-app.use('/api/client', clientRoutes); // Rachel toggle and client settings
-app.use('/api/clients', clientProvisioningRoutes); // Automatic client provisioning with Twilio numbers
+// Token billing system routes
+if (tokenRoutes) {
+    app.use('/api/tokens', tokenRoutes); // Token billing and purchases
+    console.log('💰 Token routes mounted at /api/tokens');
+} else {
+    console.error('⚠️ Token routes not available - skipping mount');
+}
 
-// Referral system routes
+// Viral referral system routes
 if (referralRoutes) {
-    app.use('/api/referral', referralRoutes); // Referral link sharing and statistics
-    console.log('✅ Referral routes mounted at /api/referral');
+    app.use('/api/referrals', referralRoutes); // Viral referral program
+    console.log('🎁 Referral routes mounted at /api/referrals');
 } else {
     console.error('⚠️ Referral routes not available - skipping mount');
 }
+
+// Client management routes
+app.use('/api/client', clientRoutes); // Rachel toggle and client settings
+app.use('/api/clients', clientProvisioningRoutes); // Automatic client provisioning with Twilio numbers
 
 // Add Mobile CRM API routes
 app.use('/api/mobile', mobileRoutes);

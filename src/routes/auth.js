@@ -319,6 +319,30 @@ router.post('/register', async (req, res) => {
         await transaction.commit();
         console.log('✅ Transaction committed successfully');
 
+        // Process referral if referral code provided (non-blocking)
+        if (referralCode) {
+            try {
+                const referralService = require('../services/referralService');
+                const referralResult = await referralService.recordReferralSignup(
+                    user.id,
+                    referralCode,
+                    {
+                        signupIp: req.ip,
+                        source: 'registration_form'
+                    }
+                );
+
+                if (referralResult.success) {
+                    console.log(`✅ Referral recorded: ${referralResult.tokensEarned} tokens credited to referrer`);
+                } else {
+                    console.log(`⚠️ Referral tracking skipped: ${referralResult.message}`);
+                }
+            } catch (referralError) {
+                console.error('⚠️ Referral tracking error (non-critical):', referralError.message);
+                // Don't fail registration if referral tracking fails
+            }
+        }
+
         // Send welcome SMS with Rachel activation instructions (non-blocking)
         try {
             const smsResult = await sendWelcomeSMS({
