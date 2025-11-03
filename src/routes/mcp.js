@@ -1199,6 +1199,49 @@ router.post('/business-collector/collect', async (req, res) => {
   }
 
   try {
+    // Get userId from clientId for token deduction
+    let userId = null;
+    if (session.clientId) {
+      const clientResult = await sequelize.query(
+        'SELECT user_id FROM clients WHERE id = :clientId',
+        {
+          replacements: { clientId: parseInt(session.clientId) },
+          type: QueryTypes.SELECT
+        }
+      );
+
+      if (clientResult.length > 0 && clientResult[0].user_id) {
+        userId = clientResult[0].user_id;
+      }
+    }
+
+    // Deduct tokens before collecting businesses
+    if (userId) {
+      const tokenService = require('../services/tokenService');
+      const requestedResults = maxResults || 100;
+
+      try {
+        await tokenService.deductTokens(
+          userId,
+          'business_collector_100',
+          {
+            category,
+            geography,
+            maxResults: requestedResults
+          }
+        );
+        console.log(`✅ Deducted 20 tokens from user ${userId} for business collection`);
+      } catch (tokenError) {
+        console.error(`❌ Token deduction failed:`, tokenError.message);
+        return res.status(402).json({
+          success: false,
+          error: 'Insufficient tokens',
+          message: tokenError.message,
+          suggestion: 'Purchase more tokens or refer friends to continue using business collector'
+        });
+      }
+    }
+
     const result = await session.businessCollectorProxy.collectBusinesses({
       category,
       geography,
@@ -1768,6 +1811,47 @@ router.post('/copilot/chat', async (req, res) => {
 
   try {
     console.log('🤖 Processing message for session:', sessionId);
+
+    // Get userId from clientId for token deduction
+    let userId = null;
+    if (session.clientId) {
+      const clientResult = await sequelize.query(
+        'SELECT user_id FROM clients WHERE id = :clientId',
+        {
+          replacements: { clientId: parseInt(session.clientId) },
+          type: QueryTypes.SELECT
+        }
+      );
+
+      if (clientResult.length > 0 && clientResult[0].user_id) {
+        userId = clientResult[0].user_id;
+      }
+    }
+
+    // Deduct tokens for AI chat message (1 token per message)
+    if (userId) {
+      const tokenService = require('../services/tokenService');
+
+      try {
+        await tokenService.deductTokens(
+          userId,
+          'ai_chat_message',
+          {
+            message: message.substring(0, 100), // First 100 chars for logging
+            sessionType: session.type
+          }
+        );
+        console.log(`✅ Deducted 1 token from user ${userId} for AI chat message`);
+      } catch (tokenError) {
+        console.error(`❌ Token deduction failed:`, tokenError.message);
+        return res.status(402).json({
+          success: false,
+          error: 'Insufficient tokens',
+          message: tokenError.message,
+          response: '❌ Insufficient Tokens!\n\nYou need tokens to use the AI Copilot.\n\n💡 Solutions:\n• Purchase more tokens\n• Refer friends to earn bonus tokens\n• Upgrade to a higher tier package'
+        });
+      }
+    }
 
     // Check if Claude AI is enabled
     const useClaudeAI = process.env.ENABLE_CLAUDE_AI === 'true';
@@ -2392,6 +2476,33 @@ No text in image.`;
             // Add schedule date if specified (use "scheduleDate" when status is "scheduled")
             if (scheduleTime) {
               postData.scheduleDate = new Date(scheduleTime).toISOString();
+            }
+
+            // Deduct tokens before creating social post
+            if (userId) {
+              const tokenService = require('../services/tokenService');
+
+              try {
+                await tokenService.deductTokens(
+                  userId,
+                  'social_post',
+                  {
+                    platforms: platforms.join(', '),
+                    message: postMessage.substring(0, 100),
+                    accountIds: accountIds.length,
+                    hasImage: mediaArray.length > 0,
+                    aiImageGenerated: needsAIImage && mediaArray.length > 0
+                  }
+                );
+                console.log(`✅ Deducted 10 tokens from user ${userId} for social post`);
+              } catch (tokenError) {
+                console.error(`❌ Token deduction failed:`, tokenError.message);
+                return res.json({
+                  success: false,
+                  error: 'Insufficient tokens',
+                  response: `❌ Insufficient Tokens!\n\nYou need 10 tokens to schedule a social media post.\n\n💡 Solutions:\n• Purchase more tokens\n• Refer friends to earn bonus tokens\n• Upgrade to a higher tier package`
+                });
+              }
             }
 
             console.log('📱 Creating social post with data:', JSON.stringify(postData, null, 2));
