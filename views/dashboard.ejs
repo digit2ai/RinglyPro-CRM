@@ -3212,9 +3212,30 @@
                     return;
                 }
 
+                // Show token system explanation before sharing
+                const explanation = confirm(
+                    '🎁 EARN TOKENS BY REFERRING FRIENDS!\n\n' +
+                    'How it works:\n' +
+                    '✅ They sign up with your link → You get 200 TOKENS ($10 value)\n' +
+                    '✅ They make first purchase → You get 1,000 TOKENS ($50 value)\n\n' +
+                    'Your friend gets:\n' +
+                    '• 150 FREE tokens (100 base + 50 referral bonus)\n' +
+                    '• Access to all AI features\n\n' +
+                    'Bonus Tiers:\n' +
+                    '🥈 5 referrals → Silver tier (300/1,500 tokens + 200/month)\n' +
+                    '🥇 25 referrals → Gold tier (500/2,000 tokens + 500/month + 15% CASH!)\n\n' +
+                    'Your Referral Code: ' + window.REFERRAL_CODE + '\n\n' +
+                    'Click OK to share your link now!'
+                );
+
+                if (!explanation) {
+                    console.log('User canceled share');
+                    return;
+                }
+
                 const shareData = {
-                    title: 'RinglyPro is your FREE AI Office Pal',
-                    text: `Join me on RinglyPro! Get your own FREE AI assistant to handle calls 24/7. Sign up with my link and we both benefit!`,
+                    title: 'RinglyPro - Get 150 FREE Tokens!',
+                    text: `Join RinglyPro with my referral link and get 150 FREE tokens! Use AI to handle calls, emails, and marketing 24/7. We both earn tokens when you sign up!`,
                     url: window.REFERRAL_LINK
                 };
 
@@ -3237,7 +3258,7 @@
                     await navigator.clipboard.writeText(window.REFERRAL_LINK);
 
                     // Show custom alert with the link
-                    alert(`✅ Referral link copied to clipboard!\n\n${window.REFERRAL_LINK}\n\nYour referral code: ${window.REFERRAL_CODE}\n\nShare this link with colleagues and contacts to earn commissions!`);
+                    alert(`✅ Referral link copied to clipboard!\n\n${window.REFERRAL_LINK}\n\nYour referral code: ${window.REFERRAL_CODE}\n\n💰 You earn 200 tokens ($10) when they sign up!\n💰 You earn 1,000 tokens ($50) when they purchase!\n\nPaste and share this link anywhere!`);
                 }
             } catch (error) {
                 console.error('Error sharing referral link:', error);
