@@ -472,10 +472,16 @@ router.get('/:clientId', async (req, res) => {
     const referralCode = await referralService.getReferralCode(userId);
     const referralLink = await referralService.getReferralLink(userId);
 
+    // Return in format expected by old frontend
     res.json({
       success: true,
-      referralCode,
-      referralLink,
+      client: {
+        referralCode,
+        referralLink
+      },
+      stats: {
+        totalReferrals: 0  // Will be populated from analytics later
+      },
       clientId: parseInt(clientId),
       userId
     });
@@ -514,10 +520,14 @@ router.get('/:clientId/link', async (req, res) => {
 
     const userId = client.user_id;
     const referralLink = await referralService.getReferralLink(userId);
+    const referralCode = await referralService.getReferralCode(userId);
 
+    // Return in format expected by old frontend
     res.json({
       success: true,
-      link: referralLink,
+      referralLink,  // Frontend checks this
+      referralCode,
+      link: referralLink,  // Alternate key
       clientId: parseInt(clientId),
       userId
     });
