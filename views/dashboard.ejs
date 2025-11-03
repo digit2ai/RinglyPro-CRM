@@ -2352,20 +2352,25 @@
                 <div class="package-selection">
                     <h3>Select Token Package</h3>
                     <div class="package-grid">
-                        <div class="package-option" onclick="selectPackage(29)" data-amount="29">
-                            <div class="package-amount">$29</div>
-                            <div class="package-minutes">500 tokens</div>
-                            <div class="package-rate">Starter Pack</div>
+                        <div class="package-option" onclick="selectPackage(10)" data-amount="10">
+                            <div class="package-amount">$10</div>
+                            <div class="package-minutes">200 tokens</div>
+                            <div class="package-rate">$0.05/token</div>
                         </div>
-                        <div class="package-option" onclick="selectPackage(99)" data-amount="99">
-                            <div class="package-amount">$99</div>
+                        <div class="package-option" onclick="selectPackage(20)" data-amount="20">
+                            <div class="package-amount">$20</div>
+                            <div class="package-minutes">400 tokens</div>
+                            <div class="package-rate">$0.05/token</div>
+                        </div>
+                        <div class="package-option" onclick="selectPackage(50)" data-amount="50">
+                            <div class="package-amount">$50</div>
+                            <div class="package-minutes">1,000 tokens</div>
+                            <div class="package-rate">$0.05/token</div>
+                        </div>
+                        <div class="package-option" onclick="selectPackage(100)" data-amount="100">
+                            <div class="package-amount">$100</div>
                             <div class="package-minutes">2,000 tokens</div>
-                            <div class="package-rate">Growth Pack</div>
-                        </div>
-                        <div class="package-option" onclick="selectPackage(299)" data-amount="299">
-                            <div class="package-amount">$299</div>
-                            <div class="package-minutes">7,500 tokens</div>
-                            <div class="package-rate">Professional Pack</div>
+                            <div class="package-rate">$0.05/token</div>
                         </div>
                     </div>
                 </div>
@@ -4835,53 +4840,42 @@
                 payButton.disabled = true;
                 payButton.innerHTML = '<span class="loading-spinner"></span>Processing...';
 
-                // Map amount to package name
-                const packageMap = {
-                    29: 'starter',
-                    99: 'growth',
-                    299: 'professional'
-                };
-                const packageName = packageMap[selectedAmount];
-
-                if (!packageName) {
-                    throw new Error('Invalid package selected');
-                }
-
-                // Step 1: Create payment method
-                const { error: methodError, paymentMethod } = await stripe.createPaymentMethod({
-                    type: 'card',
-                    card: cardElement
-                });
-
-                if (methodError) {
-                    throw new Error(methodError.message);
-                }
-
-                // Step 2: Purchase tokens via API
+                // Step 1: Create payment intent
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/tokens/purchase', {
+                const response = await fetch('/api/credits/reload', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({
-                        package_name: packageName,
-                        payment_method_id: paymentMethod.id
-                    })
+                    body: JSON.stringify({ amount: selectedAmount })
                 });
 
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(error.error || 'Failed to process payment');
+                    throw new Error(error.error || 'Failed to create payment intent');
                 }
 
-                const result = await response.json();
+                const { clientSecret, transactionId } = await response.json();
+
+                // Step 2: Confirm payment with Stripe
+                const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+                    payment_method: {
+                        card: cardElement
+                    }
+                });
+
+                if (error) {
+                    throw new Error(error.message);
+                }
 
                 // Step 3: Payment successful
-                if (result.success) {
+                if (paymentIntent.status === 'succeeded') {
                     // Show success message
                     document.getElementById('successMessage').classList.add('show');
+
+                    // Wait for webhook to process (give it 2 seconds)
+                    await new Promise(resolve => setTimeout(resolve, 2000));
 
                     // Refresh balance
                     await loadCreditsBalance();
@@ -4894,8 +4888,6 @@
                     setTimeout(() => {
                         closeCreditsModal();
                     }, 2000);
-                } else {
-                    throw new Error(result.error || 'Payment failed');
                 }
 
             } catch (error) {
