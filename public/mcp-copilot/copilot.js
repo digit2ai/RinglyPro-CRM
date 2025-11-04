@@ -261,13 +261,23 @@ async function connectGoHighLevel() {
     const apiKey = window.ghlCredentials?.apiKey;
     const locationId = window.ghlCredentials?.locationId;
 
+    console.log('🔗 connectGoHighLevel called');
+    console.log('📋 currentClientId:', currentClientId);
+
     if (!apiKey || !locationId) {
         updateConnectionStatus('Not configured', 'error');
         addMessage('error', '❌ GoHighLevel credentials not configured. Please go to Settings in the dashboard.');
         return;
     }
 
+    if (!currentClientId) {
+        updateConnectionStatus('Configuration error', 'error');
+        addMessage('error', '❌ Client ID not found. Please open the copilot from the dashboard.');
+        return;
+    }
+
     try {
+        console.log('📤 Sending connection request with clientId:', currentClientId);
         const response = await fetch(`${API_BASE}/gohighlevel/connect`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
