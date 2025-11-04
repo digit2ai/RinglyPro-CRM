@@ -905,7 +905,7 @@
                     const connectResponse = await fetch(`${window.location.origin}/api/mcp/gohighlevel/connect`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ apiKey: api_key, locationId: location_id })
+                        body: JSON.stringify({ apiKey: api_key, locationId: location_id, clientId: clientId })
                     });
 
                     const connectData = await connectResponse.json();

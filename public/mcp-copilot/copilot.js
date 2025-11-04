@@ -271,7 +271,7 @@ async function connectGoHighLevel() {
         const response = await fetch(`${API_BASE}/gohighlevel/connect`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ apiKey, locationId })
+            body: JSON.stringify({ apiKey, locationId, clientId: currentClientId })
         });
 
         const data = await response.json();

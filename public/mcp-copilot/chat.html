@@ -312,6 +312,7 @@
     <script>
         const API_BASE = window.location.origin + '/api/mcp';
         let sessionId = null;
+        let currentClientId = null;
 
         // Handle iOS viewport resize when keyboard appears
         if (window.visualViewport) {
@@ -334,6 +335,14 @@
 
         // Auto-connect on page load
         window.addEventListener('DOMContentLoaded', async () => {
+            // Extract client_id from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const clientId = urlParams.get('client_id');
+            if (clientId) {
+                currentClientId = clientId;
+                console.log('📋 Client ID detected:', clientId);
+            }
+
             await connectToCRM();
 
             const messageInput = document.getElementById('messageInput');
@@ -372,7 +381,7 @@
                 const response = await fetch(`${API_BASE}/gohighlevel/connect`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ apiKey, locationId })
+                    body: JSON.stringify({ apiKey, locationId, clientId: currentClientId })
                 });
 
                 const data = await response.json();

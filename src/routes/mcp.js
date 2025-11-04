@@ -1089,11 +1089,12 @@ router.post('/hubspot/connect', async (req, res) => {
 // GoHighLevel connection
 router.post('/gohighlevel/connect', async (req, res) => {
   console.log('🔗 GoHighLevel connection request received');
-  const { apiKey, locationId } = req.body;
+  const { apiKey, locationId, clientId } = req.body;
 
   // DEBUG: Log what we received
   console.log('🔍 DEBUG - API Key received:', apiKey ? `${apiKey.substring(0, 20)}...${apiKey.substring(apiKey.length - 10)}` : 'MISSING');
   console.log('🔍 DEBUG - Location ID received:', locationId || 'MISSING');
+  console.log('🔍 DEBUG - Client ID received:', clientId || 'MISSING');
   console.log('🔍 DEBUG - API Key starts with pit-?', apiKey?.startsWith('pit-') ? 'YES (PIT)' : 'NO (JWT or other)');
 
   if (!apiKey || !locationId) {
@@ -1104,6 +1105,14 @@ router.post('/gohighlevel/connect', async (req, res) => {
     });
   }
 
+  if (!clientId) {
+    console.error('❌ Missing Client ID - token billing will not work!');
+    return res.status(400).json({
+      success: false,
+      error: 'Client ID is required for token billing'
+    });
+  }
+
   try {
     const proxy = new GoHighLevelMCPProxy(apiKey, locationId);
     const sessionId = `ghl_${Date.now()}`;
@@ -1111,10 +1120,12 @@ router.post('/gohighlevel/connect', async (req, res) => {
     sessions.set(sessionId, {
       type: 'gohighlevel',
       proxy,
+      clientId: parseInt(clientId),
       createdAt: new Date()
     });
 
     console.log('✅ GoHighLevel connected, session:', sessionId);
+    console.log('✅ Client ID stored in session:', clientId);
     console.log('✅ Proxy initialized with token type:', apiKey.startsWith('pit-') ? 'PIT' : 'JWT');
 
     res.json({
@@ -1202,6 +1213,7 @@ router.post('/business-collector/collect', async (req, res) => {
     // Get userId from clientId for token deduction
     let userId = null;
     if (session.clientId) {
+      console.log(`🔍 Looking up userId for clientId: ${session.clientId}`);
       const clientResult = await sequelize.query(
         'SELECT user_id FROM clients WHERE id = :clientId',
         {
@@ -1212,7 +1224,12 @@ router.post('/business-collector/collect', async (req, res) => {
 
       if (clientResult.length > 0 && clientResult[0].user_id) {
         userId = clientResult[0].user_id;
+        console.log(`✅ Found userId ${userId} for clientId ${session.clientId}`);
+      } else {
+        console.error(`❌ CRITICAL: Client ${session.clientId} has NO user_id! Token deduction will be skipped.`);
       }
+    } else {
+      console.error(`❌ CRITICAL: Session has NO clientId! Token deduction will be skipped. Session type: ${session.type}`);
     }
 
     // Deduct tokens before collecting businesses
@@ -1815,6 +1832,7 @@ router.post('/copilot/chat', async (req, res) => {
     // Get userId from clientId for token deduction
     let userId = null;
     if (session.clientId) {
+      console.log(`🔍 Looking up userId for clientId: ${session.clientId}`);
       const clientResult = await sequelize.query(
         'SELECT user_id FROM clients WHERE id = :clientId',
         {
@@ -1825,7 +1843,12 @@ router.post('/copilot/chat', async (req, res) => {
 
       if (clientResult.length > 0 && clientResult[0].user_id) {
         userId = clientResult[0].user_id;
+        console.log(`✅ Found userId ${userId} for clientId ${session.clientId}`);
+      } else {
+        console.error(`❌ CRITICAL: Client ${session.clientId} has NO user_id! Token deduction will be skipped.`);
       }
+    } else {
+      console.error(`❌ CRITICAL: Session has NO clientId! Token deduction will be skipped. Session type: ${session.type}`);
     }
 
     // Deduct tokens for AI chat message (1 token per message)
