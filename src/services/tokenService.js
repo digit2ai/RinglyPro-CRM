@@ -100,6 +100,16 @@ class TokenService {
           throw new Error('User not found');
         }
 
+        // Handle NULL token balance (set to 100 default)
+        if (user.tokens_balance === null || user.tokens_balance === undefined) {
+          user.tokens_balance = 100;
+          console.log(`⚠️ User ${userId} had NULL token balance, set to 100`);
+        }
+
+        if (user.tokens_used_this_month === null || user.tokens_used_this_month === undefined) {
+          user.tokens_used_this_month = 0;
+        }
+
         // Check balance
         if (user.tokens_balance < cost) {
           throw new Error(
