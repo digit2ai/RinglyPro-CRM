@@ -376,4 +376,90 @@ router.post('/deduct', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/tokens/diagnostic/:clientId
+ * Diagnostic endpoint to check token system configuration
+ */
+router.get('/diagnostic/:clientId', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const { Client, User } = require('../models');
+
+    console.log(`🔍 Token diagnostic for clientId: ${clientId}`);
+
+    // Check if client exists
+    const client = await Client.findByPk(clientId);
+    if (!client) {
+      return res.json({
+        success: false,
+        error: 'Client not found',
+        clientId: parseInt(clientId),
+        exists: false
+      });
+    }
+
+    // Check if client has user_id
+    if (!client.user_id) {
+      return res.json({
+        success: false,
+        error: 'Client has NO user_id - token deduction will fail',
+        clientId: parseInt(clientId),
+        client: {
+          id: client.id,
+          business_name: client.business_name,
+          owner_email: client.owner_email,
+          user_id: null
+        },
+        issue: 'CLIENT_MISSING_USER_ID',
+        solution: 'Run migration: migrations/link-clients-to-users.sql'
+      });
+    }
+
+    // Check if user exists
+    const user = await User.findByPk(client.user_id);
+    if (!user) {
+      return res.json({
+        success: false,
+        error: 'User not found for client.user_id',
+        clientId: parseInt(clientId),
+        client: {
+          id: client.id,
+          business_name: client.business_name,
+          user_id: client.user_id
+        },
+        issue: 'USER_NOT_FOUND',
+        solution: 'Check users table or run migration'
+      });
+    }
+
+    // All checks passed
+    return res.json({
+      success: true,
+      message: 'Token system configured correctly',
+      clientId: parseInt(clientId),
+      client: {
+        id: client.id,
+        business_name: client.business_name,
+        owner_email: client.owner_email,
+        user_id: client.user_id
+      },
+      user: {
+        id: user.id,
+        email: user.email,
+        tokens_balance: user.tokens_balance,
+        token_package: user.token_package,
+        referral_code: user.referral_code
+      },
+      status: 'READY_FOR_TOKEN_DEDUCTION'
+    });
+
+  } catch (error) {
+    logger.error('[TOKENS API] Diagnostic error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
