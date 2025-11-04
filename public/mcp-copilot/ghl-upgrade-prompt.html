@@ -1,0 +1,317 @@
+<!-- =====================================================
+     GHL Upgrade Prompt Component
+     Shown when user tries to use features without GHL configured
+     ===================================================== -->
+
+<style>
+.ghl-upgrade-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(8px);
+}
+
+.ghl-upgrade-modal {
+    background: white;
+    border-radius: 20px;
+    padding: 3rem 2.5rem;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.ghl-upgrade-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+}
+
+.ghl-upgrade-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.ghl-upgrade-message {
+    font-size: 1.1rem;
+    color: #6b7280;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.ghl-upgrade-benefits {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.ghl-upgrade-benefits h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.ghl-upgrade-benefits ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ghl-upgrade-benefits li {
+    padding: 0.5rem 0;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.ghl-upgrade-benefits li::before {
+    content: "✓";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: #10b981;
+    color: white;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.ghl-upgrade-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ghl-upgrade-btn {
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.ghl-upgrade-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.ghl-upgrade-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.ghl-upgrade-btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.ghl-upgrade-btn-secondary:hover {
+    background: #e5e7eb;
+}
+
+.ghl-upgrade-btn-signup {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.ghl-upgrade-btn-signup:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+}
+
+.ghl-upgrade-note {
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
+.ghl-upgrade-note a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.ghl-upgrade-note a:hover {
+    text-decoration: underline;
+}
+</style>
+
+<div id="ghlUpgradePrompt" class="ghl-upgrade-overlay" style="display: none;">
+    <div class="ghl-upgrade-modal">
+        <div class="ghl-upgrade-icon">
+            🚀
+        </div>
+
+        <h2 class="ghl-upgrade-title">
+            GoHighLevel Integration Required
+        </h2>
+
+        <p class="ghl-upgrade-message">
+            You must configure your GoHighLevel API credentials to use these powerful features.
+        </p>
+
+        <div class="ghl-upgrade-benefits">
+            <h4>Features You'll Unlock:</h4>
+            <ul>
+                <li>AI-Powered Contact Management</li>
+                <li>Automated Social Media Posts</li>
+                <li>Business Lead Collector</li>
+                <li>Smart Outbound Calling</li>
+                <li>Advanced Prospect Manager</li>
+            </ul>
+        </div>
+
+        <div class="ghl-upgrade-buttons">
+            <button class="ghl-upgrade-btn ghl-upgrade-btn-primary" onclick="goToSettings()">
+                Configure in Settings
+            </button>
+
+            <button class="ghl-upgrade-btn ghl-upgrade-btn-signup" onclick="signUpForGHL()">
+                Don't have GoHighLevel? Get Started ($40/month)
+            </button>
+
+            <button class="ghl-upgrade-btn ghl-upgrade-btn-secondary" onclick="closeUpgradePrompt()">
+                Maybe Later
+            </button>
+        </div>
+
+        <p class="ghl-upgrade-note">
+            Already have GoHighLevel? Just enter your API key and Location ID in
+            <a href="#" onclick="goToSettings(); return false;">Settings</a>.
+        </p>
+    </div>
+</div>
+
+<script>
+function showUpgradePrompt() {
+    document.getElementById('ghlUpgradePrompt').style.display = 'flex';
+}
+
+function closeUpgradePrompt() {
+    document.getElementById('ghlUpgradePrompt').style.display = 'none';
+}
+
+function goToSettings() {
+    // Get client_id from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientId = urlParams.get('client_id');
+
+    if (clientId) {
+        // Redirect to dashboard settings tab
+        window.location.href = `/dashboard?client_id=${clientId}#settings`;
+    } else {
+        window.location.href = '/dashboard#settings';
+    }
+}
+
+async function signUpForGHL() {
+    // Get client_id from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientId = urlParams.get('client_id');
+
+    if (!clientId) {
+        alert('Session error. Please return to dashboard and try again.');
+        return;
+    }
+
+    try {
+        // Create Stripe checkout session for GHL subscription
+        const response = await fetch('/api/payment/create-ghl-subscription', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                clientId: clientId,
+                plan: 'ghl_access',
+                amount: 40.00
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.checkoutUrl) {
+            // Redirect to Stripe checkout
+            window.location.href = data.checkoutUrl;
+        } else {
+            alert('Failed to create payment session: ' + (data.error || 'Unknown error'));
+        }
+
+    } catch (error) {
+        console.error('Error creating payment session:', error);
+        alert('Failed to start payment process. Please try again or contact support.');
+    }
+}
+
+// Check GHL status on page load
+async function checkGHLStatus() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientId = urlParams.get('client_id');
+
+    if (!clientId) {
+        console.log('No client ID found');
+        return { configured: false };
+    }
+
+    try {
+        const response = await fetch(`/api/copilot/check-access/${clientId}`);
+        const data = await response.json();
+
+        return {
+            configured: data.ghl_configured || false,
+            features: data.features_available || []
+        };
+    } catch (error) {
+        console.error('Error checking GHL status:', error);
+        return { configured: false };
+    }
+}
+
+// Export for use in other scripts
+window.ghlUpgrade = {
+    show: showUpgradePrompt,
+    close: closeUpgradePrompt,
+    checkStatus: checkGHLStatus
+};
+</script>

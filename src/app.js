@@ -122,10 +122,26 @@ console.log('📄 About to require auth routes...');
 const authRoutes = require('./routes/auth'); // User authentication routes
 console.log('✅ Auth routes required successfully, type:', typeof authRoutes);
 
+// Import copilot access control routes
+const copilotAccessRoutes = require('./routes/copilot-access'); // Copilot authentication
+console.log('✅ Copilot access routes loaded successfully');
+
+// Import GHL payment routes
+const ghlPaymentRoutes = require('./routes/ghl-payment'); // GHL subscription payments
+console.log('✅ GHL payment routes loaded successfully');
+
 // API Routes - Organized by functionality
 console.log('📄 About to mount auth routes...');
 app.use('/api/auth', authRoutes); // Mount user authentication routes
 console.log('✅ Auth routes mounted successfully');
+
+// Mount copilot access control routes
+app.use('/api/copilot', copilotAccessRoutes); // Copilot authentication and GHL checks
+console.log('✅ Copilot access routes mounted at /api/copilot');
+
+// Mount GHL payment routes
+app.use('/api/payment', ghlPaymentRoutes); // GHL subscription payments via Stripe
+console.log('✅ GHL payment routes mounted at /api/payment');
 
 // Core CRM API routes
 app.use('/api/contacts', contactsRoutes);

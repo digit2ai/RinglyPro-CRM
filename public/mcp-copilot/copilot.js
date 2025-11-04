@@ -2,6 +2,8 @@ let sessionId = null;
 let crmType = null;
 // API_BASE is defined globally in index.html
 let currentClientId = null;
+let ghlConfigured = false; // Track if GHL is configured
+let ghlCheckComplete = false; // Track if we've checked GHL status
 
 // Mobile detection
 function isMobile() {
@@ -107,6 +109,50 @@ function downloadCSVFromPopup(csvData, filename) {
     URL.revokeObjectURL(url);
 }
 
+// Check GHL configuration status
+async function checkGHLConfiguration() {
+    if (!currentClientId) {
+        console.log('⚠️ No client ID - cannot check GHL status');
+        return false;
+    }
+
+    try {
+        const response = await fetch(`${window.location.origin}/api/copilot/check-access/${currentClientId}`);
+        const data = await response.json();
+
+        ghlConfigured = data.ghl_configured || false;
+        ghlCheckComplete = true;
+
+        console.log(`🔍 GHL Configuration Status:`, ghlConfigured ? '✅ Configured' : '❌ Not Configured');
+
+        return ghlConfigured;
+    } catch (error) {
+        console.error('Error checking GHL configuration:', error);
+        ghlCheckComplete = true;
+        return false;
+    }
+}
+
+// Check if feature requires GHL and show upgrade prompt if not configured
+function requireGHL(featureName) {
+    if (!ghlCheckComplete) {
+        console.log('⏳ GHL check not complete yet');
+        return false;
+    }
+
+    if (!ghlConfigured) {
+        console.log(`⚠️ ${featureName} requires GHL configuration`);
+        if (window.ghlUpgrade && window.ghlUpgrade.show) {
+            window.ghlUpgrade.show();
+        } else {
+            alert('You must configure GoHighLevel in Settings to use this feature.');
+        }
+        return false;
+    }
+
+    return true;
+}
+
 // Check for client_id in URL and auto-load credentials
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -115,12 +161,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (clientId) {
         currentClientId = clientId;
         console.log('📋 Client ID detected:', clientId);
+
+        // Check GHL configuration first
+        await checkGHLConfiguration();
+
+        // Then load credentials
         await autoLoadCredentials(clientId);
     }
 });
 
 // Open Social Media Marketing Tool
 function openSocialMedia() {
+    // Check GHL requirement
+    if (!requireGHL('Social Media Marketing')) {
+        return;
+    }
+
     // Build URL with optional params
     let params = [];
     if (currentClientId) params.push(`client_id=${currentClientId}`);
@@ -153,6 +209,11 @@ function openEmailMarketing() {
 
 // Open Prospect Manager
 function openProspectManager() {
+    // Check GHL requirement
+    if (!requireGHL('Prospect Manager')) {
+        return;
+    }
+
     // Build URL with optional client_id
     const prospectUrl = currentClientId
         ? `${window.location.origin}/mcp-copilot/prospect-manager.html?client_id=${currentClientId}`
@@ -168,6 +229,11 @@ function openProspectManager() {
 
 // Connect to Business Collector
 function connectBusinessCollector() {
+    // Check GHL requirement
+    if (!requireGHL('Business Collector')) {
+        return;
+    }
+
     console.log('🔍 Opening Business Collector...');
     if (typeof openBusinessCollectorForm === 'function') {
         openBusinessCollectorForm();
@@ -303,6 +369,12 @@ async function sendMessage() {
     const message = input.value.trim();
 
     if (!message) return;
+
+    // Check GHL requirement for CRM AI Agent chat
+    if (!requireGHL('CRM AI Agent')) {
+        return;
+    }
+
     if (!sessionId) {
         alert('Please connect to a CRM first');
         return;
