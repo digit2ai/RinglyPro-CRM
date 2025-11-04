@@ -109,10 +109,61 @@ function downloadCSVFromPopup(csvData, filename) {
     URL.revokeObjectURL(url);
 }
 
+// Disable all feature buttons
+function disableAllButtons() {
+    const buttons = document.querySelectorAll('.action-btn');
+    buttons.forEach(button => {
+        button.disabled = true;
+        button.classList.add('disabled');
+        button.style.opacity = '0.4';
+        button.style.cursor = 'not-allowed';
+    });
+
+    // Also disable chat input
+    const messageInput = document.getElementById('messageInput');
+    if (messageInput) {
+        messageInput.disabled = true;
+        messageInput.placeholder = 'Configure GoHighLevel in Settings to use features';
+    }
+
+    const sendButton = document.querySelector('button[onclick="sendMessage()"]');
+    if (sendButton) {
+        sendButton.disabled = true;
+    }
+
+    console.log('🔒 All buttons disabled - GHL not configured');
+}
+
+// Enable all feature buttons
+function enableAllButtons() {
+    const buttons = document.querySelectorAll('.action-btn');
+    buttons.forEach(button => {
+        button.disabled = false;
+        button.classList.remove('disabled');
+        button.style.opacity = '';
+        button.style.cursor = '';
+    });
+
+    // Enable chat input
+    const messageInput = document.getElementById('messageInput');
+    if (messageInput) {
+        messageInput.disabled = false;
+        messageInput.placeholder = 'Ask about contacts, appointments, or send commands...';
+    }
+
+    const sendButton = document.querySelector('button[onclick="sendMessage()"]');
+    if (sendButton) {
+        sendButton.disabled = false;
+    }
+
+    console.log('✅ All buttons enabled - GHL configured');
+}
+
 // Check GHL configuration status
 async function checkGHLConfiguration() {
     if (!currentClientId) {
         console.log('⚠️ No client ID - cannot check GHL status');
+        disableAllButtons();
         return false;
     }
 
@@ -125,10 +176,18 @@ async function checkGHLConfiguration() {
 
         console.log(`🔍 GHL Configuration Status:`, ghlConfigured ? '✅ Configured' : '❌ Not Configured');
 
+        // Enable or disable buttons based on GHL configuration
+        if (ghlConfigured) {
+            enableAllButtons();
+        } else {
+            disableAllButtons();
+        }
+
         return ghlConfigured;
     } catch (error) {
         console.error('Error checking GHL configuration:', error);
         ghlCheckComplete = true;
+        disableAllButtons();
         return false;
     }
 }

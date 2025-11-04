@@ -219,6 +219,21 @@
             grid-column: span 2;
         }
 
+        /* Disabled button state */
+        .action-btn:disabled,
+        .action-btn.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: #9ca3af !important;
+            pointer-events: none;
+        }
+
+        .action-btn:disabled:hover,
+        .action-btn.disabled:hover {
+            transform: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
         /* Chat Container */
         .chat-section {
             padding: 1rem;
