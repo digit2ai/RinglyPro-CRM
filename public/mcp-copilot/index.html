@@ -539,7 +539,11 @@
     <script>
         // Open copilot chat in full-screen page
         function openCopilotChat() {
-            window.location.href = '/mcp-copilot/chat.html';
+            // Pass client_id to chat page
+            let params = [];
+            if (currentClientId) params.push(`client_id=${currentClientId}`);
+            const chatUrl = `/mcp-copilot/chat.html${params.length ? '?' + params.join('&') : ''}`;
+            window.location.href = chatUrl;
         }
 
         // openSocialMedia() is defined in copilot.js - it passes client_id and session_id
