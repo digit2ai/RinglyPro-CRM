@@ -26,6 +26,76 @@ router.get('/debug/all-clients', async (req, res) => {
     }
 });
 
+// DEBUG: Check GHL credentials configuration
+router.get('/debug/ghl-credentials', async (req, res) => {
+    try {
+        const { sequelize } = require('../models');
+
+        const clients = await sequelize.query(`
+            SELECT
+                id,
+                business_name,
+                owner_email,
+                CASE
+                    WHEN ghl_api_key IS NOT NULL AND ghl_api_key != ''
+                    THEN LEFT(ghl_api_key, 20) || '...'
+                    ELSE NULL
+                END as api_key_preview,
+                ghl_location_id,
+                CASE
+                    WHEN ghl_api_key IS NOT NULL AND ghl_api_key != ''
+                        AND ghl_location_id IS NOT NULL AND ghl_location_id != ''
+                    THEN 'configured'
+                    ELSE 'not_configured'
+                END as status
+            FROM clients
+            ORDER BY id
+        `, { type: sequelize.QueryTypes.SELECT });
+
+        // Check for duplicate credentials
+        const duplicates = await sequelize.query(`
+            SELECT
+                LEFT(ghl_api_key, 20) as api_key_prefix,
+                ghl_location_id,
+                COUNT(*) as client_count,
+                STRING_AGG(id::text, ', ') as client_ids,
+                STRING_AGG(business_name, ', ') as business_names
+            FROM clients
+            WHERE ghl_api_key IS NOT NULL AND ghl_api_key != ''
+            GROUP BY ghl_api_key, ghl_location_id
+            HAVING COUNT(*) > 1
+        `, { type: sequelize.QueryTypes.SELECT });
+
+        const configured = clients.filter(c => c.status === 'configured').length;
+        const notConfigured = clients.filter(c => c.status === 'not_configured').length;
+
+        res.json({
+            success: true,
+            summary: {
+                total: clients.length,
+                configured,
+                notConfigured
+            },
+            clients,
+            duplicates: duplicates.length > 0 ? {
+                found: true,
+                count: duplicates.length,
+                details: duplicates
+            } : {
+                found: false,
+                message: 'No duplicate GHL credentials found'
+            }
+        });
+
+    } catch (error) {
+        console.error('Debug GHL credentials error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // DEBUG: Get appointments for a client
 router.get('/debug/appointments/:client_id', async (req, res) => {
     try {
