@@ -35,6 +35,64 @@ router.post('/call', authenticateToken, async (req, res) => {
 });
 
 /**
+ * POST /api/outbound-caller/call-from-copilot
+ * Make a single outbound call from copilot (uses clientId instead of JWT)
+ */
+router.post('/call-from-copilot', async (req, res) => {
+  try {
+    const { phone, leadData, clientId } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        error: 'Phone number is required'
+      });
+    }
+
+    if (!clientId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client ID is required'
+      });
+    }
+
+    // Get userId from clientId
+    const { sequelize } = require('../models');
+    const { QueryTypes } = require('sequelize');
+
+    const result = await sequelize.query(
+      'SELECT user_id FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: parseInt(clientId) },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!result || result.length === 0 || !result[0].user_id) {
+      logger.error(`Client ${clientId} has no user_id`);
+      return res.status(400).json({
+        success: false,
+        error: 'Client not properly configured. Please contact support.'
+      });
+    }
+
+    const userId = result[0].user_id;
+    logger.info(`Making call for client ${clientId}, user ${userId}`);
+
+    const callResult = await outboundCallerService.makeCall(phone, leadData, userId);
+
+    res.json(callResult);
+
+  } catch (error) {
+    logger.error('Error making call from copilot:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * POST /api/outbound-caller/start
  * Start auto-calling from lead list (authenticated)
  */

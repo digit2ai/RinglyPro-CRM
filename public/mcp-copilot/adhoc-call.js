@@ -103,11 +103,17 @@ async function handleAdHocCallSubmit(e) {
         // Step 3: Make the call
         console.log('📞 Initiating call to', phone);
 
-        const response = await fetch('/api/outbound-caller/call', {
+        if (!currentClientId) {
+            alert('Error: Client ID not found. Please open the copilot from the dashboard.');
+            return;
+        }
+
+        const response = await fetch('/api/outbound-caller/call-from-copilot', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 phone: phone,
+                clientId: currentClientId,
                 leadData: {
                     name: name || 'Unknown',
                     source: 'adhoc',
