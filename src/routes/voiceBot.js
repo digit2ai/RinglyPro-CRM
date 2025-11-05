@@ -10,13 +10,14 @@ const appointmentService = require('../services/appointmentService');
 const elevenLabsService = require('../services/elevenLabsService');
 
 // Import models safely
-let Call, Message, Contact, Appointment;
+let Call, Message, Contact, Appointment, sequelize;
 try {
     const models = require('../models');
     Call = models.Call;
-    Message = models.Message;  
+    Message = models.Message;
     Contact = models.Contact;
     Appointment = models.Appointment;
+    sequelize = models.sequelize;
     console.log('✅ Models imported for voice bot');
 } catch (error) {
     console.log('⚠️ Models not available for voice bot:', error.message);
