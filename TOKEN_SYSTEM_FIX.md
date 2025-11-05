@@ -10,16 +10,26 @@
 
 After 58 successful outbound calls, token balance still showed 100 tokens instead of 42 tokens (100 - 58 = 42).
 
+**UPDATE**: After 37 MORE calls (95 total), balance STILL shows 100 tokens with 0 used.
+
 ### Root Cause Analysis:
 
 **The balance was NULL in the database, not zero.**
 
-1. ❌ **NULL Persistence Issue**:
+**CRITICAL DISCOVERY**: The User model didn't define token fields!
+
+1. ❌ **Missing Model Fields**:
+   - [User.js](src/models/User.js) didn't define `tokens_balance`, `tokens_used_this_month`, `token_package`
+   - Sequelize **silently ignores** fields not in model definition
+   - `user.save()` appeared to succeed but didn't actually update database
+   - This is why NULL persistence fix didn't work initially
+
+2. ❌ **NULL Persistence Issue**:
    - Code reads `users.tokens_balance` → gets NULL
    - Code sets temporary value: NULL → 100
    - Code deducts token: 100 → 99
-   - Code saves: 99 → database
-   - **BUT**: On next read, database still returns NULL (save failed silently)
+   - Code tries to save: `user.save()` → **SILENTLY FAILS** (field not in model)
+   - **Result**: On next read, database still returns NULL
    - Process repeats for every operation
 
 2. ❌ **No Zero-Balance Enforcement**:
@@ -36,13 +46,77 @@ After 58 successful outbound calls, token balance still showed 100 tokens instea
 [INFO] [TOKENS] Deducted 1 tokens from user 7 (outbound_call_single). Balance: 100 → 99
 ```
 
-This repeated **58 times** = **58 tokens lost** = **$2.90 in revenue** (at $0.05/token)
+This repeated **95 times** = **95 tokens lost** = **$4.75 in revenue** (at $0.05/token)
+
+### Evidence from Database:
+
+Export from `users` table:
+```csv
+"id","email","tokens_balance","tokens_used_this_month","token_package"
+7,"mstagg@digit2ai.com",100,0,"free"
+```
+
+After 95 outbound calls:
+- ❌ `tokens_balance` should be: 5 (100 - 95)
+- ❌ `tokens_used_this_month` should be: 95
+- ✅ Database still shows: 100 balance, 0 used (proof of NULL persistence bug)
 
 ---
 
 ## ✅ The Solution
 
-Implemented a **two-part fix**:
+Implemented a **three-part fix**:
+
+### Part 0: Add Token Fields to User Model (CRITICAL!)
+
+**Changed**: [User.js:117-163](src/models/User.js#L117-L163)
+
+**The Real Problem**: Sequelize model didn't define token fields, so `user.save()` silently ignored them!
+
+**Added to User model**:
+```javascript
+// TOKEN BILLING FIELDS
+tokens_balance: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: 100,
+    validate: { min: 0 },
+    comment: 'Current token balance for the user'
+},
+tokens_used_this_month: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: 0,
+    validate: { min: 0 },
+    comment: 'Tokens used in current billing cycle'
+},
+token_package: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    defaultValue: 'free',
+    validate: { isIn: [['free', 'starter', 'growth', 'professional']] },
+    comment: 'Current token package subscription'
+},
+tokens_rollover: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: 0,
+    validate: { min: 0 },
+    comment: 'Rollover tokens from previous month'
+},
+billing_cycle_start: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Start date of current billing cycle'
+},
+last_token_reset: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Last time tokens were reset/renewed'
+}
+```
+
+**Result**: Now Sequelize knows about these fields and will actually save them!
 
 ### Part 1: Fix NULL Balance Persistence
 
@@ -530,9 +604,30 @@ Render will auto-deploy from GitHub.
 
 ---
 
-**Files Changed**: 2 files
-**Lines Added**: ~150 lines (code + comments)
-**Revenue Impact**: Prevents future token loss (saved $2.90 for User 7 alone)
-**Deployment**: Ready - push to GitHub, Render auto-deploys
+---
 
-🎉 **Token System Fully Fixed!** 🎉
+## 🚀 Deployment Summary
+
+**Files Changed**: 4 files
+1. **[src/models/User.js](src/models/User.js)** - ⚠️ CRITICAL: Added token field definitions
+2. [src/services/tokenService.js](src/services/tokenService.js) - NULL persistence + zero balance enforcement
+3. [public/mcp-copilot/copilot.js](public/mcp-copilot/copilot.js) - Frontend token balance checking
+4. [TOKEN_SYSTEM_FIX.md](TOKEN_SYSTEM_FIX.md) - Complete documentation
+
+**Lines Added**: ~700 lines (code + documentation)
+
+**Commits**:
+- ✅ `7c948ba` - Initial token fixes (didn't work - model was missing fields)
+- ✅ `35c4e80` - **CRITICAL FIX**: Added token fields to User model
+
+**Revenue Impact**:
+- Lost: $4.75 (95 tokens × $0.05)
+- Prevents: Future token loss for all users
+
+**Status**: ✅ Deployed to GitHub, Render will auto-deploy
+
+---
+
+🎉 **Token System NOW ACTUALLY Fixed!** 🎉
+
+**Key Lesson**: Always check if Sequelize model defines the fields you're trying to save!
