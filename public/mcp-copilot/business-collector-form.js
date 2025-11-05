@@ -549,54 +549,100 @@ function showOutboundCallerProgress() {
 
     progressModal.style.display = 'flex';
 
-    // Start polling for status updates every 10 seconds
-    refreshCallingStatus();
-    progressInterval = setInterval(refreshCallingStatus, 10000);
+    // Start making calls - poll every 2 minutes (120 seconds) to trigger next call
+    // This replaces backend setInterval() which doesn't work on serverless platforms
+    makeNextCallAndSchedule();
 }
 
-// Refresh calling status
+// Make next call and schedule the next one (frontend-driven calling for serverless)
+async function makeNextCallAndSchedule() {
+    try {
+        // Refresh status first
+        await refreshCallingStatus();
+
+        // Get clientId
+        const clientId = window.currentClientId || new URLSearchParams(window.location.search).get('client_id');
+        if (!clientId) {
+            console.error('No client ID found');
+            return;
+        }
+
+        // Trigger next call
+        const response = await fetch('/api/outbound-caller/next-call-from-copilot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clientId })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Update UI with new status
+            updateCallingUI(data);
+
+            // If not done, schedule next call in 2 minutes (120000ms)
+            if (!data.done && data.isRunning) {
+                progressInterval = setTimeout(makeNextCallAndSchedule, 120000);
+            } else {
+                // All calls completed
+                if (progressInterval) {
+                    clearTimeout(progressInterval);
+                    progressInterval = null;
+                }
+                console.log('✅ All outbound calls completed');
+            }
+        }
+    } catch (error) {
+        console.error('Error making next call:', error);
+        // Retry in 2 minutes if there was an error
+        if (progressInterval !== null) {
+            progressInterval = setTimeout(makeNextCallAndSchedule, 120000);
+        }
+    }
+}
+
+// Update calling UI with status data
+function updateCallingUI(data) {
+    const { isRunning, callsMade, totalLeads, remaining, recentLogs } = data;
+
+    // Update status text
+    if (isRunning) {
+        document.getElementById('callingStatusText').textContent =
+            `Calling ${callsMade}/${totalLeads} leads`;
+    } else {
+        document.getElementById('callingStatusText').textContent =
+            `Completed - ${callsMade}/${totalLeads} calls made`;
+    }
+
+    // Update progress bar
+    const percentage = totalLeads > 0 ? (callsMade / totalLeads * 100) : 0;
+    document.getElementById('callingProgressBar').style.width = percentage + '%';
+
+    // Update stats
+    document.getElementById('callingStats').textContent =
+        `${remaining} leads remaining • Next call in ~${data.intervalMinutes || 2} minutes`;
+
+    // Update recent calls list
+    const callsList = document.getElementById('recentCallsList');
+    if (recentLogs && recentLogs.length > 0) {
+        callsList.innerHTML = recentLogs.reverse().map(log => `
+            <div class="call-log-entry">
+                <span class="call-phone">${log.phone || 'Unknown'}</span>
+                <span class="call-status status-${log.status}">${log.status || 'unknown'}</span>
+                <span class="call-time">${log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : ''}</span>
+            </div>
+        `).join('');
+    }
+}
+
+// Refresh calling status (just fetch and update UI)
 async function refreshCallingStatus() {
     try {
         const response = await fetch('/api/outbound-caller/status');
         const data = await response.json();
 
         if (data.success) {
-            const { isRunning, callsMade, totalLeads, remaining, recentLogs } = data;
-
-            // Update status text
-            if (isRunning) {
-                document.getElementById('callingStatusText').textContent =
-                    `Calling ${callsMade}/${totalLeads} leads`;
-            } else {
-                document.getElementById('callingStatusText').textContent =
-                    `Completed - ${callsMade}/${totalLeads} calls made`;
-            }
-
-            // Update progress bar
-            const percentage = totalLeads > 0 ? (callsMade / totalLeads * 100) : 0;
-            document.getElementById('callingProgressBar').style.width = percentage + '%';
-
-            // Update stats
-            document.getElementById('callingStats').textContent =
-                `${remaining} leads remaining • Next call in ~${data.intervalMinutes || 2} minutes`;
-
-            // Update recent calls list
-            const callsList = document.getElementById('recentCallsList');
-            if (recentLogs && recentLogs.length > 0) {
-                callsList.innerHTML = recentLogs.reverse().map(log => `
-                    <div class="call-log-entry">
-                        <span class="call-phone">${log.phone || 'Unknown'}</span>
-                        <span class="call-status status-${log.status}">${log.status || 'unknown'}</span>
-                        <span class="call-time">${log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : ''}</span>
-                    </div>
-                `).join('');
-            }
-
-            // Stop polling if not running
-            if (!isRunning && progressInterval) {
-                clearInterval(progressInterval);
-                progressInterval = null;
-            }
+            updateCallingUI(data);
         }
     } catch (error) {
         console.error('Error fetching calling status:', error);

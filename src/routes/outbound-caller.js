@@ -155,6 +155,73 @@ router.post('/start-from-copilot', async (req, res) => {
 });
 
 /**
+ * POST /api/outbound-caller/next-call-from-copilot
+ * Make next call in queue (frontend-driven for serverless compatibility)
+ */
+router.post('/next-call-from-copilot', async (req, res) => {
+  try {
+    const { clientId } = req.body;
+
+    if (!clientId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client ID is required'
+      });
+    }
+
+    // Get userId from clientId
+    const { sequelize } = require('../models');
+    const { QueryTypes } = require('sequelize');
+
+    const result = await sequelize.query(
+      'SELECT user_id FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: parseInt(clientId) },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!result || result.length === 0 || !result[0].user_id) {
+      logger.error(`Client ${clientId} has no user_id`);
+      return res.status(400).json({
+        success: false,
+        error: 'Client not properly configured. Please contact support.'
+      });
+    }
+
+    const userId = result[0].user_id;
+
+    // Check if calling is still running
+    const status = outboundCallerService.getStatus();
+    if (!status.isRunning) {
+      return res.json({
+        success: true,
+        done: true,
+        message: 'All calls completed'
+      });
+    }
+
+    // Make next call (this will auto-increment the index)
+    await outboundCallerService.makeNextCall();
+
+    // Return updated status
+    const newStatus = outboundCallerService.getStatus();
+    res.json({
+      success: true,
+      done: !newStatus.isRunning,
+      ...newStatus
+    });
+
+  } catch (error) {
+    logger.error('Error making next call from copilot:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * POST /api/outbound-caller/start
  * Start auto-calling from lead list (authenticated)
  */
