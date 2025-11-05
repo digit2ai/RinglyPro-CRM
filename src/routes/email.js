@@ -49,6 +49,31 @@ router.post('/send', async (req, res) => {
             html
         });
 
+        // Deduct tokens for email sent
+        try {
+            const tokenService = require('../services/tokenService');
+
+            // Get userId from clientId
+            const userResult = await pool.query(
+                'SELECT user_id FROM clients WHERE id = $1',
+                [client_id]
+            );
+
+            if (userResult.rows.length > 0 && userResult.rows[0].user_id) {
+                await tokenService.deductTokens(userResult.rows[0].user_id, 'email_sent', {
+                    to,
+                    template,
+                    category: category || 'transactional',
+                    message_id: result[0].headers['x-message-id']
+                });
+
+                console.log(`✅ Deducted 2 tokens for email sent to ${to}`);
+            }
+        } catch (tokenError) {
+            console.error('⚠️ Token deduction failed for email:', tokenError.message);
+            // Don't fail the email if token deduction fails
+        }
+
         res.json({
             success: true,
             message: 'Email sent successfully',
@@ -87,6 +112,35 @@ router.post('/send-bulk', async (req, res) => {
         }
 
         const result = await sendBulkEmails(client_id, emails);
+
+        // Deduct tokens for bulk emails
+        try {
+            const tokenService = require('../services/tokenService');
+
+            // Get userId from clientId
+            const userResult = await pool.query(
+                'SELECT user_id FROM clients WHERE id = $1',
+                [client_id]
+            );
+
+            if (userResult.rows.length > 0 && userResult.rows[0].user_id) {
+                // Deduct tokens for each email (2 tokens per email)
+                for (let i = 0; i < emails.length; i++) {
+                    await tokenService.deductTokens(userResult.rows[0].user_id, 'email_sent', {
+                        bulk: true,
+                        email_index: i + 1,
+                        total_emails: emails.length,
+                        to: emails[i].to
+                    });
+                }
+
+                const totalCost = emails.length * 2; // 2 tokens per email
+                console.log(`✅ Deducted ${totalCost} tokens for ${emails.length} bulk emails`);
+            }
+        } catch (tokenError) {
+            console.error('⚠️ Token deduction failed for bulk emails:', tokenError.message);
+            // Don't fail the bulk send if token deduction fails
+        }
 
         res.json({
             success: true,

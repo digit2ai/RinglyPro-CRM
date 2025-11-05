@@ -467,11 +467,20 @@ async function startOutboundCalling() {
     }
 
     try {
-        // Start auto-calling
-        const response = await fetch('/api/outbound-caller/start', {
+        // Get clientId from copilot global variable
+        const clientId = window.currentClientId || new URLSearchParams(window.location.search).get('client_id');
+
+        if (!clientId) {
+            alert('Error: Client ID not found. Please open Business Collector from the copilot.');
+            return;
+        }
+
+        // Start auto-calling with clientId (no JWT required)
+        const response = await fetch('/api/outbound-caller/start-from-copilot', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                clientId: clientId,
                 leads: leadsWithPhones,
                 intervalMinutes: 2
             })

@@ -112,6 +112,40 @@ async function storeCallRecord(callSid, fromNumber, toNumber, status, direction,
         const call = await Call.create(callData);
         console.log(`✅ Call record stored: ${call.id} for client ${clientId}`);
 
+        // Deduct tokens for inbound call (per minute)
+        try {
+            const tokenService = require('../services/tokenService');
+            const { QueryTypes } = require('sequelize');
+
+            // Get userId from clientId
+            const [result] = await sequelize.query(
+                'SELECT user_id FROM clients WHERE id = :clientId',
+                { replacements: { clientId }, type: QueryTypes.SELECT }
+            );
+
+            if (result && result.user_id) {
+                const durationMinutes = Math.ceil(parseInt(duration) / 60) || 1;
+
+                // Deduct tokens per minute (tokenService has voice_inbound_minute at 5 tokens/min)
+                for (let i = 0; i < durationMinutes; i++) {
+                    await tokenService.deductTokens(result.user_id, 'voice_inbound_minute', {
+                        call_sid: callSid,
+                        from: sanitizedFromNumber,
+                        to: sanitizedToNumber,
+                        duration_seconds: duration,
+                        minute: i + 1,
+                        total_minutes: durationMinutes
+                    });
+                }
+
+                const totalCost = durationMinutes * 5; // 5 tokens per minute
+                console.log(`✅ Deducted ${totalCost} tokens for ${durationMinutes}-minute inbound call`);
+            }
+        } catch (tokenError) {
+            console.error('⚠️ Token deduction failed for inbound call:', tokenError.message);
+            // Don't fail the entire operation if token deduction fails
+        }
+
     } catch (error) {
         console.error('❌ Error storing call record:', error.message);
     }
