@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const twilio = require('twilio');
 const axios = require('axios');
+const chrono = require('chrono-node');
 
 // Import new services
 const availabilityService = require('../services/availabilityService');
@@ -376,6 +377,13 @@ async function handleMainMenu(session, twiml, digits, speech) {
             // Appointment booking
             session.step = 'collect_name';
             console.log('✅ User selected option 3: Appointment booking');
+
+            // Store the full speech text for date parsing later
+            if (speech && speech.length > 5) {
+                session.lastSpeech = speech;
+                console.log(`💬 Stored speech for date parsing: "${speech}"`);
+            }
+
             return await handleCollectName(session, twiml);
             
         case '0':
@@ -480,6 +488,32 @@ async function handleCollectPhone(session, twiml, digits) {
     return twiml;
 }
 
+// Helper function to parse requested date from speech or session data
+function parseRequestedDate(session) {
+    // Check if user provided a date in speech (stored in session.data.requestedDate or session.lastSpeech)
+    const speechText = session.data?.requestedDate || session.lastSpeech || '';
+
+    if (speechText) {
+        console.log(`🗣️ Attempting to parse date from speech: "${speechText}"`);
+
+        // Use chrono-node to parse natural language dates
+        const parsed = chrono.parseDate(speechText);
+
+        if (parsed && parsed > new Date()) {
+            console.log(`✅ Parsed date from speech: ${parsed.toISOString().split('T')[0]}`);
+            return parsed.toISOString().split('T')[0];
+        }
+    }
+
+    // Fallback to tomorrow if no valid date parsed
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const fallbackDate = tomorrow.toISOString().split('T')[0];
+    console.log(`📅 Using fallback date (tomorrow): ${fallbackDate}`);
+
+    return fallbackDate;
+}
+
 // Show available appointment slots - UPDATED WITH ELEVENLABS
 async function handleShowAvailability(session, twiml) {
     try {
@@ -490,10 +524,8 @@ async function handleShowAvailability(session, twiml) {
             return twiml;
         }
 
-        // Get next available date (tomorrow)
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const targetDate = tomorrow.toISOString().split('T')[0];
+        // Parse requested date intelligently (supports natural language like "November 28th")
+        const targetDate = parseRequestedDate(session);
 
         console.log(`📅 Checking availability for client ${session.clientId} on ${targetDate}`);
 
