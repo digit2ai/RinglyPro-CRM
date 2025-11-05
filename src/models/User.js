@@ -112,6 +112,54 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING(20),
             allowNull: true,
             field: 'admin_phone'  // Explicitly map to database column
+        },
+
+        // TOKEN BILLING FIELDS
+        tokens_balance: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            defaultValue: 100,
+            validate: {
+                min: 0
+            },
+            comment: 'Current token balance for the user'
+        },
+        tokens_used_this_month: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            defaultValue: 0,
+            validate: {
+                min: 0
+            },
+            comment: 'Tokens used in current billing cycle'
+        },
+        token_package: {
+            type: DataTypes.STRING(50),
+            allowNull: true,
+            defaultValue: 'free',
+            validate: {
+                isIn: [['free', 'starter', 'growth', 'professional']]
+            },
+            comment: 'Current token package subscription'
+        },
+        tokens_rollover: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            defaultValue: 0,
+            validate: {
+                min: 0
+            },
+            comment: 'Rollover tokens from previous month'
+        },
+        billing_cycle_start: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            comment: 'Start date of current billing cycle'
+        },
+        last_token_reset: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            comment: 'Last time tokens were reset/renewed'
         }
     }, {
         tableName: 'users',
