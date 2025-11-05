@@ -4,6 +4,8 @@ let crmType = null;
 let currentClientId = null;
 let ghlConfigured = false; // Track if GHL is configured
 let ghlCheckComplete = false; // Track if we've checked GHL status
+let tokenBalance = 100; // Track current token balance
+let featuresDisabled = false; // Track if features are disabled due to zero balance
 
 // Mobile detection
 function isMobile() {
@@ -159,6 +161,31 @@ function enableAllButtons() {
     console.log('✅ All buttons enabled - GHL configured');
 }
 
+// Check token balance
+async function checkTokenBalance() {
+    try {
+        const response = await fetch(`${window.location.origin}/api/tokens/balance`, {
+            credentials: 'include' // Include session cookies
+        });
+        const data = await response.json();
+
+        if (data.success !== false) {
+            tokenBalance = data.balance || data.tokens_balance || 0;
+            featuresDisabled = data.features_disabled || tokenBalance <= 0;
+
+            console.log(`💰 Token Balance: ${tokenBalance}`, featuresDisabled ? '(❌ Features Disabled)' : '(✅ Features Available)');
+
+            return !featuresDisabled;
+        } else {
+            console.warn('⚠️ Could not fetch token balance');
+            return true; // Don't block if we can't check
+        }
+    } catch (error) {
+        console.error('Error checking token balance:', error);
+        return true; // Don't block on error
+    }
+}
+
 // Check GHL configuration status
 async function checkGHLConfiguration() {
     if (!currentClientId) {
@@ -176,14 +203,17 @@ async function checkGHLConfiguration() {
 
         console.log(`🔍 GHL Configuration Status:`, ghlConfigured ? '✅ Configured' : '❌ Not Configured');
 
-        // Enable or disable buttons based on GHL configuration
-        if (ghlConfigured) {
+        // Also check token balance
+        const hasTokens = await checkTokenBalance();
+
+        // Enable or disable buttons based on BOTH GHL configuration AND token balance
+        if (ghlConfigured && hasTokens) {
             enableAllButtons();
         } else {
             disableAllButtons();
         }
 
-        return ghlConfigured;
+        return ghlConfigured && hasTokens;
     } catch (error) {
         console.error('Error checking GHL configuration:', error);
         ghlCheckComplete = true;
@@ -192,13 +222,21 @@ async function checkGHLConfiguration() {
     }
 }
 
-// Check if feature requires GHL and show upgrade prompt if not configured
+// Check if feature requires GHL and tokens
 function requireGHL(featureName) {
     if (!ghlCheckComplete) {
         console.log('⏳ GHL check not complete yet');
         return false;
     }
 
+    // Check token balance first (more critical)
+    if (featuresDisabled || tokenBalance <= 0) {
+        console.log(`⚠️ ${featureName} blocked: Insufficient tokens (balance: ${tokenBalance})`);
+        alert(`Insufficient Tokens\n\nYour token balance is ${tokenBalance}.\n\nPlease purchase more tokens to continue using services.\n\nOnly the payment system is available when balance is zero.`);
+        return false;
+    }
+
+    // Then check GHL configuration
     if (!ghlConfigured) {
         console.log(`⚠️ ${featureName} requires GHL configuration`);
         if (window.ghlUpgrade && window.ghlUpgrade.show) {

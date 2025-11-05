@@ -60,10 +60,19 @@ class TokenService {
         return false;
       }
 
-      const cost = this.serviceCosts[serviceType] || 0;
-      const hasTokens = user.tokens_balance >= cost;
+      // Handle NULL balance (should be initialized on first deduction, but check here too)
+      const balance = user.tokens_balance ?? 100;
 
-      logger.info(`[TOKENS] User ${userId} check: ${user.tokens_balance} >= ${cost} = ${hasTokens}`);
+      // Zero or negative balance means no access (must purchase tokens)
+      if (balance <= 0) {
+        logger.warn(`[TOKENS] User ${userId} has zero balance (${balance}). Must purchase tokens.`);
+        return false;
+      }
+
+      const cost = this.serviceCosts[serviceType] || 0;
+      const hasTokens = balance >= cost;
+
+      logger.info(`[TOKENS] User ${userId} check: ${balance} >= ${cost} = ${hasTokens}`);
 
       return hasTokens;
     } catch (error) {
@@ -100,20 +109,40 @@ class TokenService {
           throw new Error('User not found');
         }
 
-        // Handle NULL token balance (set to 100 default)
+        // Handle NULL token balance (set to 100 default AND SAVE IT)
+        let needsInitialization = false;
         if (user.tokens_balance === null || user.tokens_balance === undefined) {
           user.tokens_balance = 100;
-          console.log(`⚠️ User ${userId} had NULL token balance, set to 100`);
+          needsInitialization = true;
+          console.log(`⚠️ User ${userId} had NULL token balance, initializing to 100`);
         }
 
         if (user.tokens_used_this_month === null || user.tokens_used_this_month === undefined) {
           user.tokens_used_this_month = 0;
+          needsInitialization = true;
         }
 
-        // Check balance
+        if (user.token_package === null || user.token_package === undefined) {
+          user.token_package = 'free';
+          needsInitialization = true;
+        }
+
+        // Save initialization if needed (fixes NULL persistence issue)
+        if (needsInitialization) {
+          await user.save({ transaction: t });
+          console.log(`✅ Initialized token fields for user ${userId}: balance=100, package=free`);
+        }
+
+        // Check balance (must have tokens to use service)
+        if (user.tokens_balance <= 0) {
+          throw new Error(
+            `Insufficient tokens. Your balance is ${user.tokens_balance}. Please purchase more tokens to continue using services.`
+          );
+        }
+
         if (user.tokens_balance < cost) {
           throw new Error(
-            `Insufficient tokens. Need ${cost}, have ${user.tokens_balance}`
+            `Insufficient tokens. Need ${cost}, have ${user.tokens_balance}. Please purchase more tokens.`
           );
         }
 
@@ -268,7 +297,8 @@ class TokenService {
         monthlyAllocation: monthlyAllocation,            // Add monthly allocation
         tokens_rollover: tokensRollover,
         billing_cycle_start: user.billing_cycle_start,
-        last_token_reset: user.last_token_reset
+        last_token_reset: user.last_token_reset,
+        features_disabled: tokenBalance <= 0             // Disable features if balance is zero or negative
       };
     } catch (error) {
       logger.error(`[TOKENS] Get balance failed:`, error);
