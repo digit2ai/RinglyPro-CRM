@@ -130,7 +130,12 @@ function disableAllButtons() {
             if (featuresDisabled || tokenBalance <= 0) {
                 showTokenPurchasePopup();
             } else if (!ghlConfigured) {
-                alert('You must configure GoHighLevel in Settings to use this feature.');
+                // Show GHL upgrade prompt popup
+                if (window.ghlUpgrade && window.ghlUpgrade.show) {
+                    window.ghlUpgrade.show();
+                } else {
+                    alert('You must configure GoHighLevel in Settings to use this feature.');
+                }
             }
             return false;
         };
@@ -357,6 +362,20 @@ async function checkGHLConfiguration() {
             enableAllButtons();
         } else {
             disableAllButtons();
+
+            // Show appropriate popup if features are locked
+            if (!hasTokens) {
+                // Token balance is zero - will show popup on button click
+                console.log('⚠️ Token balance is zero - popup will show on button click');
+            } else if (!ghlConfigured) {
+                // GHL not configured - show upgrade prompt automatically
+                console.log('⚠️ GHL not configured - showing upgrade prompt');
+                setTimeout(() => {
+                    if (window.ghlUpgrade && window.ghlUpgrade.show) {
+                        window.ghlUpgrade.show();
+                    }
+                }, 500); // Small delay to ensure DOM is ready
+            }
         }
 
         return ghlConfigured && hasTokens;
