@@ -119,21 +119,44 @@ function disableAllButtons() {
         button.classList.add('disabled');
         button.style.opacity = '0.4';
         button.style.cursor = 'not-allowed';
+        button.style.textDecoration = 'line-through';
+
+        // Add click handler to show appropriate message
+        button.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Check reason for lock
+            if (featuresDisabled || tokenBalance <= 0) {
+                showTokenPurchasePopup();
+            } else if (!ghlConfigured) {
+                alert('You must configure GoHighLevel in Settings to use this feature.');
+            }
+            return false;
+        };
     });
 
     // Also disable chat input
     const messageInput = document.getElementById('messageInput');
     if (messageInput) {
         messageInput.disabled = true;
-        messageInput.placeholder = 'Configure GoHighLevel in Settings to use features';
+        const reason = (featuresDisabled || tokenBalance <= 0)
+            ? 'Purchase tokens to use AI Copilot features'
+            : 'Configure GoHighLevel in Settings to use features';
+        messageInput.placeholder = reason;
     }
 
     const sendButton = document.querySelector('button[onclick="sendMessage()"]');
     if (sendButton) {
         sendButton.disabled = true;
+        sendButton.style.opacity = '0.4';
+        sendButton.style.cursor = 'not-allowed';
     }
 
-    console.log('🔒 All buttons disabled - GHL not configured');
+    const lockReason = (featuresDisabled || tokenBalance <= 0)
+        ? `Zero token balance (${tokenBalance} tokens)`
+        : 'GHL not configured';
+    console.log(`🔒 All buttons disabled - ${lockReason}`);
 }
 
 // Enable all feature buttons
@@ -144,6 +167,8 @@ function enableAllButtons() {
         button.classList.remove('disabled');
         button.style.opacity = '';
         button.style.cursor = '';
+        button.style.textDecoration = '';
+        button.onclick = null; // Remove the lock popup handler
     });
 
     // Enable chat input
@@ -156,12 +181,14 @@ function enableAllButtons() {
     const sendButton = document.querySelector('button[onclick="sendMessage()"]');
     if (sendButton) {
         sendButton.disabled = false;
+        sendButton.style.opacity = '';
+        sendButton.style.cursor = '';
     }
 
     console.log('✅ All buttons enabled - GHL configured');
 }
 
-// Check token balance and show lock screen if zero
+// Check token balance and disable buttons if zero
 async function checkTokenBalance() {
     try {
         const response = await fetch(`${window.location.origin}/api/tokens/balance`, {
@@ -175,13 +202,6 @@ async function checkTokenBalance() {
 
             console.log(`💰 Token Balance: ${tokenBalance}`, featuresDisabled ? '(❌ Features Disabled)' : '(✅ Features Available)');
 
-            // Show lock screen if tokens are zero
-            if (featuresDisabled) {
-                showTokenLockScreen();
-            } else {
-                hideTokenLockScreen();
-            }
-
             return !featuresDisabled;
         } else {
             console.warn('⚠️ Could not fetch token balance');
@@ -193,123 +213,122 @@ async function checkTokenBalance() {
     }
 }
 
-// Show full-page lock screen for zero tokens (similar to GHL lock)
-function showTokenLockScreen() {
-    // Remove existing lock screen if any
-    hideTokenLockScreen();
+// Show popup to purchase tokens (triggered when clicking disabled buttons)
+function showTokenPurchasePopup() {
+    // Remove existing popup if any
+    const existingPopup = document.getElementById('tokenPurchasePopup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
 
-    const lockScreen = document.createElement('div');
-    lockScreen.id = 'tokenLockScreen';
-    lockScreen.style.cssText = `
+    const popup = document.createElement('div');
+    popup.id = 'tokenPurchasePopup';
+    popup.style.cssText = `
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.95);
+        background: rgba(0, 0, 0, 0.7);
         z-index: 9999;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 20px;
+        animation: fadeIn 0.2s ease-out;
     `;
 
-    lockScreen.innerHTML = `
+    popup.innerHTML = `
         <div style="
             background: white;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 500px;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 450px;
             width: 100%;
             text-align: center;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease-out;
         ">
-            <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
+            <div style="font-size: 56px; margin-bottom: 16px;">⚠️</div>
 
             <h2 style="
-                font-size: 28px;
+                font-size: 24px;
                 font-weight: 700;
                 color: #111827;
-                margin-bottom: 16px;
+                margin-bottom: 12px;
             ">
-                AI Copilot Locked
+                Insufficient Tokens
             </h2>
 
             <p style="
                 font-size: 16px;
                 color: #6b7280;
                 margin-bottom: 24px;
-                line-height: 1.6;
+                line-height: 1.5;
             ">
                 Your token balance is <strong style="color: #ef4444;">${tokenBalance} tokens</strong>.
                 <br><br>
-                Purchase tokens to unlock all AI Copilot features:
+                Purchase tokens to continue using AI Copilot features.
             </p>
 
-            <div style="
-                background: #f9fafb;
-                border-radius: 12px;
-                padding: 20px;
-                margin-bottom: 24px;
-                text-align: left;
-            ">
-                <div style="font-size: 14px; color: #374151; margin-bottom: 12px;">
-                    <strong>🚀 AI Copilot Features:</strong>
-                </div>
-                <ul style="
-                    list-style: none;
-                    padding: 0;
-                    margin: 0;
-                    font-size: 14px;
-                    color: #6b7280;
-                ">
-                    <li style="padding: 6px 0;">✓ Business Collector & Auto-Caller</li>
-                    <li style="padding: 6px 0;">✓ AI Content Generator</li>
-                    <li style="padding: 6px 0;">✓ Email Marketing</li>
-                    <li style="padding: 6px 0;">✓ Social Media Marketing</li>
-                    <li style="padding: 6px 0;">✓ Prospect Manager</li>
-                    <li style="padding: 6px 0;">✓ CRM Data Analysis</li>
-                </ul>
-            </div>
-
-            <a href="/" style="
-                display: inline-block;
-                background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-                color: white;
-                padding: 16px 32px;
-                border-radius: 12px;
-                font-size: 16px;
-                font-weight: 600;
-                text-decoration: none;
-                margin-bottom: 12px;
-                transition: transform 0.2s, box-shadow 0.2s;
-            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 30px rgba(79, 70, 229, 0.3)';"
-               onmouseout="this.style.transform=''; this.style.boxShadow='';">
-                💳 Purchase Tokens
-            </a>
-
-            <div style="margin-top: 16px;">
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                 <a href="/" style="
-                    color: #6b7280;
-                    font-size: 14px;
+                    display: inline-block;
+                    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+                    color: white;
+                    padding: 14px 28px;
+                    border-radius: 10px;
+                    font-size: 15px;
+                    font-weight: 600;
                     text-decoration: none;
-                " onmouseover="this.style.color='#374151';" onmouseout="this.style.color='#6b7280';">
-                    ← Return to Dashboard
+                    transition: transform 0.2s, box-shadow 0.2s;
+                " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(79, 70, 229, 0.3)';"
+                   onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                    💳 Purchase Tokens
                 </a>
+
+                <button onclick="closeTokenPurchasePopup()" style="
+                    background: #f3f4f6;
+                    color: #374151;
+                    padding: 14px 28px;
+                    border-radius: 10px;
+                    font-size: 15px;
+                    font-weight: 600;
+                    border: none;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                " onmouseover="this.style.background='#e5e7eb';"
+                   onmouseout="this.style.background='#f3f4f6';">
+                    Cancel
+                </button>
             </div>
         </div>
     `;
 
-    document.body.appendChild(lockScreen);
-    console.log('🔒 Token lock screen displayed');
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    document.body.appendChild(popup);
+    console.log('⚠️ Token purchase popup displayed');
 }
 
-// Hide token lock screen
-function hideTokenLockScreen() {
-    const lockScreen = document.getElementById('tokenLockScreen');
-    if (lockScreen) {
-        lockScreen.remove();
-        console.log('✅ Token lock screen hidden');
+// Close token purchase popup
+function closeTokenPurchasePopup() {
+    const popup = document.getElementById('tokenPurchasePopup');
+    if (popup) {
+        popup.remove();
+        console.log('✅ Token purchase popup closed');
     }
 }
 
