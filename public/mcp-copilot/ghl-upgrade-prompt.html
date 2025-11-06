@@ -184,31 +184,32 @@
         </div>
 
         <h2 class="ghl-upgrade-title">
-            GoHighLevel Integration Required
+            CRM Copilot Requires GoHighLevel Integration
         </h2>
 
         <p class="ghl-upgrade-message">
-            You must configure your GoHighLevel API credentials to use these powerful features.
+            The AI CRM Copilot works with GoHighLevel integration. Please add your GHL API Key and Location ID in the Settings tab, or sign up for a new GoHighLevel account.
         </p>
 
         <div class="ghl-upgrade-benefits">
-            <h4>Features You'll Unlock:</h4>
+            <h4>Why GoHighLevel + RinglyPro?</h4>
             <ul>
-                <li>AI-Powered Contact Management</li>
-                <li>Automated Social Media Posts</li>
-                <li>Business Lead Collector</li>
-                <li>Smart Outbound Calling</li>
-                <li>Advanced Prospect Manager</li>
+                <li>AI-Powered Contact & Lead Management</li>
+                <li>Automated Social Media Content</li>
+                <li>Business Lead Collector & Auto-Caller</li>
+                <li>Smart Outbound Calling Campaigns</li>
+                <li>Advanced Prospect Manager with AI</li>
+                <li>All-in-One CRM Platform</li>
             </ul>
         </div>
 
         <div class="ghl-upgrade-buttons">
             <button class="ghl-upgrade-btn ghl-upgrade-btn-primary" onclick="goToSettings()">
-                Configure in Settings
+                ⚙️ Add GHL API in Settings
             </button>
 
-            <button class="ghl-upgrade-btn ghl-upgrade-btn-signup" onclick="signUpForGHL()">
-                Don't have GoHighLevel? Get Started ($40/month)
+            <button class="ghl-upgrade-btn ghl-upgrade-btn-signup" onclick="openGHLSignup()">
+                🚀 Sign Up for GoHighLevel (Get Started)
             </button>
 
             <button class="ghl-upgrade-btn ghl-upgrade-btn-secondary" onclick="closeUpgradePrompt()">
@@ -217,7 +218,7 @@
         </div>
 
         <p class="ghl-upgrade-note">
-            Already have GoHighLevel? Just enter your API key and Location ID in
+            Already have GoHighLevel? Just enter your API Key and Location ID in
             <a href="#" onclick="goToSettings(); return false;">Settings</a>.
         </p>
     </div>
@@ -245,43 +246,21 @@ function goToSettings() {
     }
 }
 
-async function signUpForGHL() {
+function openGHLSignup() {
     // Get client_id from URL
     const urlParams = new URLSearchParams(window.location.search);
     const clientId = urlParams.get('client_id');
 
-    if (!clientId) {
-        alert('Session error. Please return to dashboard and try again.');
-        return;
-    }
+    // Open GHL signup page with RinglyPro referral
+    const ghlSignupUrl = clientId
+        ? `/ghl-signup?client_id=${clientId}`
+        : `/ghl-signup`;
 
-    try {
-        // Create Stripe checkout session for GHL subscription
-        const response = await fetch('/api/payment/create-ghl-subscription', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                clientId: clientId,
-                plan: 'ghl_access',
-                amount: 40.00
-            })
-        });
+    // Open in new tab
+    window.open(ghlSignupUrl, '_blank');
 
-        const data = await response.json();
-
-        if (data.success && data.checkoutUrl) {
-            // Redirect to Stripe checkout
-            window.location.href = data.checkoutUrl;
-        } else {
-            alert('Failed to create payment session: ' + (data.error || 'Unknown error'));
-        }
-
-    } catch (error) {
-        console.error('Error creating payment session:', error);
-        alert('Failed to start payment process. Please try again or contact support.');
-    }
+    // Optionally close the prompt
+    // closeUpgradePrompt();
 }
 
 // Check GHL status on page load

@@ -291,6 +291,19 @@ app.get('/admin', async (req, res) => {
 // PUBLIC ROUTES - No authentication required
 // =====================================================
 
+// GHL Signup page - for users without GoHighLevel account
+app.get('/ghl-signup', async (req, res) => {
+  try {
+    const clientId = req.query.client_id;
+    res.render('ghl-signup', {
+      clientId: clientId || null
+    });
+  } catch (error) {
+    console.error('Error loading GHL signup:', error);
+    res.status(500).send('Error loading page');
+  }
+});
+
 // User Guide - serve markdown file
 app.get('/USER_GUIDE.md', (req, res) => {
   res.sendFile(path.join(__dirname, '../USER_GUIDE.md'));
