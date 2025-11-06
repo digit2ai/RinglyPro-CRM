@@ -161,7 +161,7 @@ function enableAllButtons() {
     console.log('✅ All buttons enabled - GHL configured');
 }
 
-// Check token balance
+// Check token balance and show lock screen if zero
 async function checkTokenBalance() {
     try {
         const response = await fetch(`${window.location.origin}/api/tokens/balance`, {
@@ -175,6 +175,13 @@ async function checkTokenBalance() {
 
             console.log(`💰 Token Balance: ${tokenBalance}`, featuresDisabled ? '(❌ Features Disabled)' : '(✅ Features Available)');
 
+            // Show lock screen if tokens are zero
+            if (featuresDisabled) {
+                showTokenLockScreen();
+            } else {
+                hideTokenLockScreen();
+            }
+
             return !featuresDisabled;
         } else {
             console.warn('⚠️ Could not fetch token balance');
@@ -183,6 +190,126 @@ async function checkTokenBalance() {
     } catch (error) {
         console.error('Error checking token balance:', error);
         return true; // Don't block on error
+    }
+}
+
+// Show full-page lock screen for zero tokens (similar to GHL lock)
+function showTokenLockScreen() {
+    // Remove existing lock screen if any
+    hideTokenLockScreen();
+
+    const lockScreen = document.createElement('div');
+    lockScreen.id = 'tokenLockScreen';
+    lockScreen.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.95);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    `;
+
+    lockScreen.innerHTML = `
+        <div style="
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        ">
+            <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
+
+            <h2 style="
+                font-size: 28px;
+                font-weight: 700;
+                color: #111827;
+                margin-bottom: 16px;
+            ">
+                AI Copilot Locked
+            </h2>
+
+            <p style="
+                font-size: 16px;
+                color: #6b7280;
+                margin-bottom: 24px;
+                line-height: 1.6;
+            ">
+                Your token balance is <strong style="color: #ef4444;">${tokenBalance} tokens</strong>.
+                <br><br>
+                Purchase tokens to unlock all AI Copilot features:
+            </p>
+
+            <div style="
+                background: #f9fafb;
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 24px;
+                text-align: left;
+            ">
+                <div style="font-size: 14px; color: #374151; margin-bottom: 12px;">
+                    <strong>🚀 AI Copilot Features:</strong>
+                </div>
+                <ul style="
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                    font-size: 14px;
+                    color: #6b7280;
+                ">
+                    <li style="padding: 6px 0;">✓ Business Collector & Auto-Caller</li>
+                    <li style="padding: 6px 0;">✓ AI Content Generator</li>
+                    <li style="padding: 6px 0;">✓ Email Marketing</li>
+                    <li style="padding: 6px 0;">✓ Social Media Marketing</li>
+                    <li style="padding: 6px 0;">✓ Prospect Manager</li>
+                    <li style="padding: 6px 0;">✓ CRM Data Analysis</li>
+                </ul>
+            </div>
+
+            <a href="/" style="
+                display: inline-block;
+                background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+                color: white;
+                padding: 16px 32px;
+                border-radius: 12px;
+                font-size: 16px;
+                font-weight: 600;
+                text-decoration: none;
+                margin-bottom: 12px;
+                transition: transform 0.2s, box-shadow 0.2s;
+            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 30px rgba(79, 70, 229, 0.3)';"
+               onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                💳 Purchase Tokens
+            </a>
+
+            <div style="margin-top: 16px;">
+                <a href="/" style="
+                    color: #6b7280;
+                    font-size: 14px;
+                    text-decoration: none;
+                " onmouseover="this.style.color='#374151';" onmouseout="this.style.color='#6b7280';">
+                    ← Return to Dashboard
+                </a>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(lockScreen);
+    console.log('🔒 Token lock screen displayed');
+}
+
+// Hide token lock screen
+function hideTokenLockScreen() {
+    const lockScreen = document.getElementById('tokenLockScreen');
+    if (lockScreen) {
+        lockScreen.remove();
+        console.log('✅ Token lock screen hidden');
     }
 }
 
@@ -230,9 +357,9 @@ function requireGHL(featureName) {
     }
 
     // Check token balance first (more critical)
+    // Lock screen already displayed, just log and return false
     if (featuresDisabled || tokenBalance <= 0) {
         console.log(`⚠️ ${featureName} blocked: Insufficient tokens (balance: ${tokenBalance})`);
-        alert(`Insufficient Tokens\n\nYour token balance is ${tokenBalance}.\n\nPlease purchase more tokens to continue using services.\n\nOnly the payment system is available when balance is zero.`);
         return false;
     }
 
