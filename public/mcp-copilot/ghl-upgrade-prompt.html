@@ -251,16 +251,13 @@ function openGHLSignup() {
     const urlParams = new URLSearchParams(window.location.search);
     const clientId = urlParams.get('client_id');
 
-    // Open GHL signup page with RinglyPro referral
+    // Redirect to GHL signup page (full window)
     const ghlSignupUrl = clientId
-        ? `/ghl-signup?client_id=${clientId}`
-        : `/ghl-signup`;
+        ? `https://aiagent.ringlypro.com/ghl-signup?client_id=${clientId}`
+        : `https://aiagent.ringlypro.com/ghl-signup`;
 
-    // Open in new tab
-    window.open(ghlSignupUrl, '_blank');
-
-    // Optionally close the prompt
-    // closeUpgradePrompt();
+    // Navigate to signup page
+    window.location.href = ghlSignupUrl;
 }
 
 // Check GHL status on page load
