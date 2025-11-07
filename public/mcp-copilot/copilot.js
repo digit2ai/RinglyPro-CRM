@@ -1,4 +1,4 @@
-const COPILOT_VERSION = 'v118';
+const COPILOT_VERSION = 'v119';
 console.log(`🚀 MCP Copilot ${COPILOT_VERSION} loaded`);
 
 let sessionId = null;
@@ -204,24 +204,33 @@ async function checkTokenBalance() {
             ? `${window.location.origin}/api/tokens/balance-from-copilot?client_id=${currentClientId}`
             : `${window.location.origin}/api/tokens/balance`;
 
+        console.log(`💰 Fetching token balance from: ${url}`);
+
         const response = await fetch(url, {
             credentials: 'include' // Include session cookies (for authenticated endpoint fallback)
         });
+
+        console.log(`💰 Token API response status: ${response.status}`);
+
         const data = await response.json();
+        console.log(`💰 Token API response data:`, data);
 
         if (data.success !== false) {
             tokenBalance = data.balance || data.tokens_balance || 0;
             featuresDisabled = data.features_disabled || tokenBalance <= 0;
 
             console.log(`💰 Token Balance: ${tokenBalance}`, featuresDisabled ? '(❌ Features Disabled)' : '(✅ Features Available)');
+            console.log(`💰 Returning: ${!featuresDisabled}`);
 
             return !featuresDisabled;
         } else {
-            console.warn('⚠️ Could not fetch token balance');
+            console.warn('⚠️ Could not fetch token balance - API returned success: false');
+            console.warn('⚠️ Defaulting to ALLOW (return true)');
             return true; // Don't block if we can't check
         }
     } catch (error) {
-        console.error('Error checking token balance:', error);
+        console.error('❌ Error checking token balance:', error);
+        console.error('❌ Defaulting to ALLOW (return true)');
         return true; // Don't block on error
     }
 }
