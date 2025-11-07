@@ -467,13 +467,15 @@ async function startOutboundCalling() {
     }
 
     try {
-        // Get clientId from copilot global variable
-        const clientId = window.currentClientId || new URLSearchParams(window.location.search).get('client_id');
+        // Get clientId from copilot global variable (defined in copilot.js)
+        const clientId = typeof currentClientId !== 'undefined' ? currentClientId : new URLSearchParams(window.location.search).get('client_id');
 
         if (!clientId) {
-            alert('Error: Client ID not found. Please open Business Collector from the copilot.');
+            alert('Error: Client ID not found. Please ensure you are logged in and try again.');
             return;
         }
+
+        console.log('📞 Starting outbound calls with clientId:', clientId);
 
         // Start auto-calling with clientId (no JWT required)
         const response = await fetch('/api/outbound-caller/start-from-copilot', {
@@ -560,8 +562,8 @@ async function makeNextCallAndSchedule() {
         // Refresh status first
         await refreshCallingStatus();
 
-        // Get clientId
-        const clientId = window.currentClientId || new URLSearchParams(window.location.search).get('client_id');
+        // Get clientId from copilot global variable
+        const clientId = typeof currentClientId !== 'undefined' ? currentClientId : new URLSearchParams(window.location.search).get('client_id');
         if (!clientId) {
             console.error('No client ID found');
             return;
