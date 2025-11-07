@@ -1,3 +1,6 @@
+const COPILOT_VERSION = 'v118';
+console.log(`🚀 MCP Copilot ${COPILOT_VERSION} loaded`);
+
 let sessionId = null;
 let crmType = null;
 // API_BASE is defined globally in index.html
@@ -344,6 +347,8 @@ function closeTokenPurchasePopup() {
 
 // Check GHL configuration status
 async function checkGHLConfiguration() {
+    console.log(`🔍 checkGHLConfiguration() called for client: ${currentClientId}`);
+
     if (!currentClientId) {
         console.log('⚠️ No client ID - cannot check GHL status');
         disableAllButtons();
@@ -351,8 +356,13 @@ async function checkGHLConfiguration() {
     }
 
     try {
-        const response = await fetch(`${window.location.origin}/api/copilot/check-access/${currentClientId}`);
+        const apiUrl = `${window.location.origin}/api/copilot/check-access/${currentClientId}`;
+        console.log(`📡 Calling GHL check API: ${apiUrl}`);
+
+        const response = await fetch(apiUrl);
         const data = await response.json();
+
+        console.log(`📦 GHL check response:`, data);
 
         ghlConfigured = data.ghl_configured || false;
         ghlCheckComplete = true;
@@ -360,12 +370,17 @@ async function checkGHLConfiguration() {
         console.log(`🔍 GHL Configuration Status:`, ghlConfigured ? '✅ Configured' : '❌ Not Configured');
 
         // Also check token balance
+        console.log(`💰 Checking token balance...`);
         const hasTokens = await checkTokenBalance();
+        console.log(`💰 Token check result: ${hasTokens ? '✅ Has tokens' : '❌ No tokens'}`);
 
         // Enable or disable buttons based on BOTH GHL configuration AND token balance
+        console.log(`🎯 Final decision: ghlConfigured=${ghlConfigured}, hasTokens=${hasTokens}`);
         if (ghlConfigured && hasTokens) {
+            console.log('✅ ENABLING all buttons');
             enableAllButtons();
         } else {
+            console.log(`❌ DISABLING all buttons (GHL: ${ghlConfigured}, Tokens: ${hasTokens})`);
             disableAllButtons();
 
             // Show appropriate popup if features are locked
