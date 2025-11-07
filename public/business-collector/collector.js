@@ -1,6 +1,12 @@
 // Business Collector Form Handler
 let currentResults = null;
 
+// Get clientId from URL parameter
+const urlParams = new URLSearchParams(window.location.search);
+const clientId = urlParams.get('client_id') || localStorage.getItem('clientId') || '15';  // Default to 15 for backwards compatibility
+
+console.log('📋 Business Collector loaded for client:', clientId);
+
 document.getElementById('collectorForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -156,7 +162,7 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 });
 
 // Outbound Caller
-document.getElementById('outboundBtn').addEventListener('click', () => {
+document.getElementById('outboundBtn').addEventListener('click', async () => {
     if (!currentResults || !currentResults.businesses) {
         alert('No results to call');
         return;
@@ -169,8 +175,46 @@ document.getElementById('outboundBtn').addEventListener('click', () => {
         return;
     }
 
-    if (confirm(`Start calling ${leadsWithPhones.length} leads?\n\n⚠️ This will make REAL calls during business hours.\n\nCalls will be made every 2 minutes.`)) {
-        window.location.href = `/outbound-caller?leads=${leadsWithPhones.length}`;
+    if (!confirm(`Start calling ${leadsWithPhones.length} leads?\n\n⚠️ This will make REAL calls during business hours.\n\nCalls will be made every 2 minutes.`)) {
+        return;
+    }
+
+    try {
+        // Normalize lead data
+        const normalizedLeads = leadsWithPhones.map(business => ({
+            phone: business.phone || business.phone_e164,
+            name: business.business_name || 'Unknown Business',
+            website: business.website || '',
+            address: business.street || ''
+        }));
+
+        console.log(`📞 Starting outbound calls for ${normalizedLeads.length} leads`);
+        console.log(`📍 Client ID: ${clientId}`);
+
+        // Call the start-from-copilot endpoint (no auth required)
+        const response = await fetch('/api/outbound-caller/start-from-copilot', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                clientId: clientId,
+                leads: normalizedLeads,
+                intervalMinutes: 2
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert(`✅ Started calling ${normalizedLeads.length} leads!\n\nCalls will be made every 2 minutes during business hours.\n\nYou can close this page - calls will continue automatically.`);
+        } else {
+            throw new Error(data.error || 'Failed to start calling');
+        }
+
+    } catch (error) {
+        console.error('Error starting calls:', error);
+        alert(`❌ Error starting calls: ${error.message}\n\nPlease make sure you are logged in and try again.`);
     }
 });
 
