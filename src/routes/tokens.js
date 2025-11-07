@@ -462,4 +462,92 @@ router.get('/diagnostic/:clientId', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/tokens/manual-recharge/:clientId
+ * Manually add tokens when payment succeeded but webhook failed
+ * ADMIN USE ONLY - should be protected in production
+ */
+router.post('/manual-recharge/:clientId', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const { amountPaid } = req.body;
+
+    if (!amountPaid || amountPaid <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'amountPaid is required and must be positive'
+      });
+    }
+
+    const { Client, User } = require('../models');
+
+    // Get client and user
+    const client = await Client.findByPk(clientId);
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        error: `Client ${clientId} not found`
+      });
+    }
+
+    if (!client.user_id) {
+      return res.status(400).json({
+        success: false,
+        error: `Client ${clientId} has no user_id - cannot add tokens`,
+        solution: 'Run migration: migrations/link-clients-to-users.sql'
+      });
+    }
+
+    const user = await User.findByPk(client.user_id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: `User ${client.user_id} not found`
+      });
+    }
+
+    // Calculate tokens to add ($0.05 per token)
+    const tokensToAdd = Math.floor(amountPaid / 0.05);
+    const previousBalance = user.tokens_balance;
+
+    logger.info(`[MANUAL RECHARGE] Client ${clientId}, User ${user.id}, Adding ${tokensToAdd} tokens ($${amountPaid})`);
+
+    // Add tokens
+    await tokenService.addTokens(
+      user.id,
+      tokensToAdd,
+      'manual_recharge',
+      {
+        client_id: clientId,
+        amount_paid: amountPaid,
+        reason: 'Manual recharge - payment succeeded but webhook failed',
+        admin_action: true
+      }
+    );
+
+    // Get updated balance
+    const updatedUser = await User.findByPk(user.id);
+
+    logger.info(`[MANUAL RECHARGE] Success! User ${user.id} balance: ${previousBalance} → ${updatedUser.tokens_balance}`);
+
+    res.json({
+      success: true,
+      message: 'Tokens added successfully',
+      userId: user.id,
+      email: user.email,
+      tokensAdded: tokensToAdd,
+      previousBalance,
+      newBalance: updatedUser.tokens_balance,
+      amountPaid
+    });
+
+  } catch (error) {
+    logger.error('[TOKENS API] Manual recharge error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
