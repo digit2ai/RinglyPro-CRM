@@ -2491,14 +2491,30 @@ No text in image.`;
               accountIds: accountIds,                    // Array of account IDs
               summary: postMessage,                      // Post text content (NOT "message" or "text")
               type: 'post',                              // Required: post, story, or reel
-              media: mediaArray,                         // Array of media objects with URLs
+              media: mediaArray.length > 0 ? mediaArray : undefined,  // Array of media objects with URLs (omit if empty)
               status: scheduleTime ? 'scheduled' : 'published',  // "status" not "state"
-              userId: session.clientId || '15'           // User ID from session
+              createdBy: String(session.clientId || userId || '15'),  // User ID as STRING (not number)
+              source: 'composer'                         // Source of the post
             };
 
             // Add schedule date if specified (use "scheduleDate" when status is "scheduled")
             if (scheduleTime) {
               postData.scheduleDate = new Date(scheduleTime).toISOString();
+            }
+
+            // Add platform-specific details objects (required by GHL API)
+            if (platforms.includes('facebook')) {
+              postData.facebookPostDetails = {
+                type: 'post',
+                shortenedLinks: []
+              };
+            }
+            if (platforms.includes('instagram')) {
+              postData.instagramPostDetails = {
+                type: 'post',
+                shortenedLinks: [],
+                collaborators: {}
+              };
             }
 
             // Deduct tokens before creating social post

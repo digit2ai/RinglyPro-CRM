@@ -725,7 +725,24 @@ class GoHighLevelMCPProxy {
     const endpoint = `/social-media-posting/${this.locationId}/posts`;
     console.log('🌐 POST endpoint:', endpoint);
 
-    return await this.callAPI(endpoint, 'POST', postData);
+    try {
+      const result = await this.callAPI(endpoint, 'POST', postData);
+      return result;
+    } catch (error) {
+      // Enhanced error logging for 422 validation errors
+      console.error('❌ createSocialPost failed with status:', error.response?.status);
+      console.error('❌ GHL Error Response:', JSON.stringify(error.response?.data, null, 2));
+      console.error('❌ Request payload that failed:', JSON.stringify(postData, null, 2));
+
+      // Re-throw with enhanced message
+      if (error.response?.status === 422) {
+        const ghlError = error.response?.data;
+        const errorMessage = ghlError?.message || ghlError?.error || 'Validation failed';
+        const validationDetails = ghlError?.details || ghlError?.errors || '';
+        throw new Error(`GHL Validation Error (422): ${errorMessage}${validationDetails ? ' - ' + JSON.stringify(validationDetails) : ''}`);
+      }
+      throw error;
+    }
   }
 
   async getSocialPost(postId) {
