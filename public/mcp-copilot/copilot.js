@@ -429,11 +429,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentClientId = clientId;
         console.log('📋 Client ID detected:', clientId);
 
-        // Check GHL configuration first
-        const hasGHL = await checkGHLConfiguration();
+        // Check GHL configuration first (this also checks tokens and enables/disables buttons)
+        await checkGHLConfiguration();
 
         // If GHL is not configured, redirect to signup page immediately
-        if (!hasGHL) {
+        // Note: ghlConfigured is set by checkGHLConfiguration()
+        if (!ghlConfigured) {
             console.log('🚫 GHL not configured - redirecting to signup page');
             const ghlSignupUrl = `https://aiagent.ringlypro.com/ghl-signup?client_id=${clientId}`;
             window.location.href = ghlSignupUrl;
