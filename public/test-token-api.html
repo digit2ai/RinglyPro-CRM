@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Token API Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        pre {
+            background: #000;
+            padding: 15px;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+        }
+        .error { color: #ff0000; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Token Balance API Test</h1>
+    <p><strong>Testing URL:</strong> <span id="url"></span></p>
+    <h2>Response:</h2>
+    <pre id="result">Loading...</pre>
+
+    <script>
+        const clientId = new URLSearchParams(window.location.search).get('client_id') || '15';
+        const url = `${window.location.origin}/api/tokens/balance-from-copilot?client_id=${clientId}`;
+
+        document.getElementById('url').textContent = url;
+
+        console.log('Fetching:', url);
+
+        fetch(url)
+            .then(response => {
+                console.log('Status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Data:', data);
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                document.getElementById('result').className = 'error';
+                document.getElementById('result').textContent = 'ERROR: ' + err.message;
+            });
+    </script>
+</body>
+</html>
