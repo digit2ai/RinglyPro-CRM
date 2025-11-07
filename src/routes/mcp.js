@@ -2491,9 +2491,10 @@ No text in image.`;
               accountIds: accountIds,                    // Array of account IDs
               summary: postMessage,                      // Post text content (NOT "message" or "text")
               type: 'post',                              // Required: post, story, or reel
-              media: mediaArray.length > 0 ? mediaArray : undefined,  // Array of media objects with URLs (omit if empty)
+              media: mediaArray.length > 0 ? mediaArray : [],  // MUST be empty array, not undefined
               status: scheduleTime ? 'scheduled' : 'published',  // "status" not "state"
               createdBy: String(session.clientId || userId || '15'),  // User ID as STRING (not number)
+              userId: String(session.clientId || userId || '15'),  // ALSO need userId field (GHL requires both!)
               source: 'composer'                         // Source of the post
             };
 
