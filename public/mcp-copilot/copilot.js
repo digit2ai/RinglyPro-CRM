@@ -196,8 +196,13 @@ function enableAllButtons() {
 // Check token balance and disable buttons if zero
 async function checkTokenBalance() {
     try {
-        const response = await fetch(`${window.location.origin}/api/tokens/balance`, {
-            credentials: 'include' // Include session cookies
+        // Use client_id parameter for copilot access (no JWT required)
+        const url = currentClientId
+            ? `${window.location.origin}/api/tokens/balance-from-copilot?client_id=${currentClientId}`
+            : `${window.location.origin}/api/tokens/balance`;
+
+        const response = await fetch(url, {
+            credentials: 'include' // Include session cookies (for authenticated endpoint fallback)
         });
         const data = await response.json();
 

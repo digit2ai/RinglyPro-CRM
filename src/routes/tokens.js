@@ -15,6 +15,59 @@ const logger = require('../utils/logger');
 // =====================================================
 
 /**
+ * GET /api/tokens/balance-from-copilot
+ * Get token balance from copilot using clientId (no auth required)
+ */
+router.get('/balance-from-copilot', async (req, res) => {
+  try {
+    const clientId = req.query.client_id;
+
+    if (!clientId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client ID is required'
+      });
+    }
+
+    // Get userId from clientId
+    const { sequelize } = require('../models');
+    const { QueryTypes } = require('sequelize');
+
+    const result = await sequelize.query(
+      'SELECT user_id FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: parseInt(clientId) },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!result || result.length === 0 || !result[0].user_id) {
+      logger.error(`Client ${clientId} has no user_id`);
+      return res.status(400).json({
+        success: false,
+        error: 'Client not properly configured. Please contact support.'
+      });
+    }
+
+    const userId = result[0].user_id;
+    const balance = await tokenService.getBalance(userId);
+    const warning = await tokenService.checkLowBalanceWarning(userId);
+
+    res.json({
+      success: true,
+      ...balance,
+      ...warning
+    });
+  } catch (error) {
+    logger.error('[TOKENS API] Balance from copilot error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get token balance'
+    });
+  }
+});
+
+/**
  * GET /api/tokens/balance
  * Get user's current token balance and package info
  */
