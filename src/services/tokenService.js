@@ -474,32 +474,26 @@ class TokenService {
   }
 
   /**
-   * Reset tokens for monthly billing cycle
+   * Add 100 free tokens monthly (does NOT reset balance)
    * Called by cron job on the 1st of each month
-   * @param {number} userId - User ID (optional, if not provided resets all users)
-   * @returns {Promise<object>} Reset results
+   * Purchased and referral tokens are NEVER removed - just adds 100 tokens
+   * @param {number} userId - User ID (optional, if not provided adds to all users)
+   * @returns {Promise<object>} Results
    */
   async resetMonthlyTokens(userId = null) {
     try {
       const { User, sequelize } = require('../models');
 
-      const packageAllocations = {
-        free: 100,
-        starter: 500,
-        growth: 2000,
-        professional: 7500
-      };
-
       let users;
       if (userId) {
-        // Reset specific user
+        // Add tokens to specific user
         const user = await User.findByPk(userId);
         if (!user) {
           throw new Error(`User ${userId} not found`);
         }
         users = [user];
       } else {
-        // Reset all users
+        // Add tokens to all users
         users = await User.findAll();
       }
 
@@ -511,41 +505,27 @@ class TokenService {
 
       for (const user of users) {
         try {
-          const tokenPackage = user.token_package || 'free';
-          const monthlyAllocation = packageAllocations[tokenPackage] || 100;
           const currentBalance = user.tokens_balance || 0;
+          const tokensToAdd = 100; // Always add 100 free tokens per month
 
-          // Calculate rollover based on package
-          const rolloverLimits = {
-            free: 0,              // No rollover for free
-            starter: 1000,        // Max 1000 rollover
-            growth: 5000,         // Max 5000 rollover
-            professional: Infinity // Unlimited rollover
-          };
-          const rolloverLimit = rolloverLimits[tokenPackage] || 0;
-
-          // Calculate tokens to rollover (unused tokens from this month)
-          const unusedTokens = Math.max(0, currentBalance);
-          const rolloverTokens = Math.min(unusedTokens, rolloverLimit);
-
-          // New balance = monthly allocation + rollover
-          const newBalance = monthlyAllocation + rolloverTokens;
+          // Simply add 100 tokens to existing balance
+          // This keeps ALL purchased and referral tokens
+          const newBalance = currentBalance + tokensToAdd;
 
           // Update user
           await user.update({
             tokens_balance: newBalance,
-            tokens_used_this_month: 0,
-            tokens_rollover: rolloverTokens,
+            tokens_used_this_month: 0, // Reset usage counter
             last_token_reset: new Date(),
             billing_cycle_start: new Date()
           });
 
-          logger.info(`[MONTHLY RESET] User ${user.id} (${user.email}): ${currentBalance} → ${newBalance} (allocation: ${monthlyAllocation}, rollover: ${rolloverTokens})`);
+          logger.info(`[MONTHLY RESET] User ${user.id} (${user.email}): ${currentBalance} → ${newBalance} (+100 free tokens)`);
 
           results.resetCount++;
 
         } catch (error) {
-          logger.error(`[MONTHLY RESET] Error resetting user ${user.id}:`, error);
+          logger.error(`[MONTHLY RESET] Error for user ${user.id}:`, error);
           results.errors.push({
             userId: user.id,
             email: user.email,
@@ -554,7 +534,7 @@ class TokenService {
         }
       }
 
-      logger.info(`[MONTHLY RESET] Completed: ${results.resetCount}/${results.totalUsers} users reset successfully`);
+      logger.info(`[MONTHLY RESET] Completed: ${results.resetCount}/${results.totalUsers} users received 100 free tokens`);
 
       return results;
 

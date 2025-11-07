@@ -2,40 +2,46 @@
 
 ## Overview
 
-Every RinglyPro user gets a monthly token allocation based on their package:
-- **Free**: 100 tokens/month
-- **Starter**: 500 tokens/month
-- **Growth**: 2,000 tokens/month
-- **Professional**: 7,500 tokens/month
+Every RinglyPro user receives **100 FREE tokens** on the 1st of each month.
 
-Tokens reset on the 1st of each month with rollover rules based on package tier.
+**IMPORTANT**: This does NOT reset the balance - it ADDS 100 tokens to existing balance.
 
-## Rollover Rules
-
-| Package | Rollover Limit |
-|---------|----------------|
-| Free | No rollover (0 tokens) |
-| Starter | Up to 1,000 tokens |
-| Growth | Up to 5,000 tokens |
-| Professional | Unlimited rollover |
+- ✅ Purchased tokens are NEVER removed
+- ✅ Referral tokens are NEVER removed
+- ✅ All existing tokens are kept
+- ➕ 100 free tokens added on top
 
 ## How It Works
 
 ### Monthly Reset Process
 
-1. **Calculate Unused Tokens**: `unusedTokens = currentBalance`
-2. **Apply Rollover Limit**: `rolloverTokens = min(unusedTokens, rolloverLimit)`
-3. **Set New Balance**: `newBalance = monthlyAllocation + rolloverTokens`
-4. **Reset Usage Counter**: `tokens_used_this_month = 0`
-5. **Update Timestamps**: Set `last_token_reset` and `billing_cycle_start`
+1. **Keep Current Balance**: All purchased and referral tokens remain
+2. **Add Free Tokens**: Add 100 tokens to current balance
+3. **Reset Usage Counter**: `tokens_used_this_month = 0`
+4. **Update Timestamps**: Set `last_token_reset` and `billing_cycle_start`
 
-### Example
+### Formula
 
-User on **Growth** plan (2,000 tokens/month, 5,000 rollover limit):
-- Current balance: 1,200 tokens
-- Unused tokens: 1,200
-- Rollover allowed: 1,200 (under 5,000 limit)
-- New balance after reset: 2,000 + 1,200 = **3,200 tokens**
+```
+newBalance = currentBalance + 100
+```
+
+### Examples
+
+**Example 1: Free user with purchased tokens**
+- Current balance: 250 tokens (150 purchased + 100 from last month)
+- Monthly reset adds: +100 tokens
+- New balance: **350 tokens**
+
+**Example 2: User with referral tokens**
+- Current balance: 450 tokens (200 referral + 250 purchased)
+- Monthly reset adds: +100 tokens
+- New balance: **550 tokens**
+
+**Example 3: User who spent all tokens**
+- Current balance: 0 tokens
+- Monthly reset adds: +100 tokens
+- New balance: **100 tokens**
 
 ## Setup Instructions
 
