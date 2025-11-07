@@ -780,6 +780,8 @@ class GoHighLevelMCPProxy {
 
   async uploadMedia(fileData, fileName, fileType) {
     console.log('📤 Uploading media file to GoHighLevel');
+    console.log('📝 File name:', fileName);
+    console.log('📝 File type:', fileType);
 
     const FormData = require('form-data');
     const form = new FormData();
@@ -793,6 +795,8 @@ class GoHighLevelMCPProxy {
       buffer = Buffer.from(fileData, 'base64');
     }
 
+    console.log('📦 Buffer size:', buffer.length, 'bytes');
+
     form.append('file', buffer, {
       filename: fileName,
       contentType: fileType
@@ -802,21 +806,29 @@ class GoHighLevelMCPProxy {
     const endpoint = `/medias/upload-file`;
 
     try {
-      const response = await this.axios({
+      const response = await axios({
         method: 'POST',
         url: `${this.baseURL}${endpoint}`,
         headers: {
           ...form.getHeaders(),
-          'Authorization': `Bearer ${this.token}`,
-          'Version': this.apiVersion
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Version': '2021-07-28'
         },
         data: form
       });
 
-      console.log('✅ Media uploaded:', response.data);
+      console.log('✅ Media uploaded successfully');
+      console.log('📍 Media URL:', response.data?.url || response.data?.fileUrl);
+      console.log('📋 Full response:', JSON.stringify(response.data, null, 2));
+
       return response.data;
     } catch (error) {
-      console.error('❌ Media upload error:', error.response?.data || error.message);
+      console.error('❌ Media upload error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
       throw error;
     }
   }

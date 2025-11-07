@@ -2426,15 +2426,23 @@ router.post('/copilot/chat', async (req, res) => {
               for (const img of req.body.images) {
                 try {
                   const uploadResult = await session.proxy.uploadMedia(img.data, img.name, img.type);
-                  if (uploadResult && uploadResult.url) {
+                  console.log('📦 Upload result:', JSON.stringify(uploadResult, null, 2));
+
+                  // GHL returns different field names - check for url, fileUrl, or uploadUrl
+                  const imageUrl = uploadResult?.url || uploadResult?.fileUrl || uploadResult?.uploadUrl;
+
+                  if (imageUrl) {
                     mediaArray.push({
-                      url: uploadResult.url,
-                      type: 'image'
+                      url: imageUrl,
+                      type: img.type || 'image/png'  // Use full MIME type, not just "image"
                     });
-                    console.log(`✅ Image uploaded: ${uploadResult.url}`);
+                    console.log(`✅ Image uploaded and added to media array: ${imageUrl}`);
+                  } else {
+                    console.error('❌ Upload succeeded but no URL in response:', uploadResult);
                   }
                 } catch (uploadError) {
                   console.error('❌ Image upload failed:', uploadError.message);
+                  console.error('❌ Upload error stack:', uploadError.stack);
                   // Continue with other images
                 }
               }
