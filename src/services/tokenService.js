@@ -472,6 +472,126 @@ class TokenService {
   getAllServiceCosts() {
     return { ...this.serviceCosts };
   }
+
+  /**
+   * Reset tokens for monthly billing cycle
+   * Called by cron job on the 1st of each month
+   * @param {number} userId - User ID (optional, if not provided resets all users)
+   * @returns {Promise<object>} Reset results
+   */
+  async resetMonthlyTokens(userId = null) {
+    try {
+      const { User, sequelize } = require('../models');
+
+      const packageAllocations = {
+        free: 100,
+        starter: 500,
+        growth: 2000,
+        professional: 7500
+      };
+
+      let users;
+      if (userId) {
+        // Reset specific user
+        const user = await User.findByPk(userId);
+        if (!user) {
+          throw new Error(`User ${userId} not found`);
+        }
+        users = [user];
+      } else {
+        // Reset all users
+        users = await User.findAll();
+      }
+
+      const results = {
+        totalUsers: users.length,
+        resetCount: 0,
+        errors: []
+      };
+
+      for (const user of users) {
+        try {
+          const tokenPackage = user.token_package || 'free';
+          const monthlyAllocation = packageAllocations[tokenPackage] || 100;
+          const currentBalance = user.tokens_balance || 0;
+
+          // Calculate rollover based on package
+          const rolloverLimits = {
+            free: 0,              // No rollover for free
+            starter: 1000,        // Max 1000 rollover
+            growth: 5000,         // Max 5000 rollover
+            professional: Infinity // Unlimited rollover
+          };
+          const rolloverLimit = rolloverLimits[tokenPackage] || 0;
+
+          // Calculate tokens to rollover (unused tokens from this month)
+          const unusedTokens = Math.max(0, currentBalance);
+          const rolloverTokens = Math.min(unusedTokens, rolloverLimit);
+
+          // New balance = monthly allocation + rollover
+          const newBalance = monthlyAllocation + rolloverTokens;
+
+          // Update user
+          await user.update({
+            tokens_balance: newBalance,
+            tokens_used_this_month: 0,
+            tokens_rollover: rolloverTokens,
+            last_token_reset: new Date(),
+            billing_cycle_start: new Date()
+          });
+
+          logger.info(`[MONTHLY RESET] User ${user.id} (${user.email}): ${currentBalance} → ${newBalance} (allocation: ${monthlyAllocation}, rollover: ${rolloverTokens})`);
+
+          results.resetCount++;
+
+        } catch (error) {
+          logger.error(`[MONTHLY RESET] Error resetting user ${user.id}:`, error);
+          results.errors.push({
+            userId: user.id,
+            email: user.email,
+            error: error.message
+          });
+        }
+      }
+
+      logger.info(`[MONTHLY RESET] Completed: ${results.resetCount}/${results.totalUsers} users reset successfully`);
+
+      return results;
+
+    } catch (error) {
+      logger.error(`[MONTHLY RESET] Fatal error:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if user needs monthly reset
+   * @param {number} userId - User ID
+   * @returns {Promise<boolean>} True if reset needed
+   */
+  async needsMonthlyReset(userId) {
+    try {
+      const { User } = require('../models');
+      const user = await User.findByPk(userId);
+
+      if (!user) {
+        return false;
+      }
+
+      // If never reset, needs reset
+      if (!user.last_token_reset) {
+        return true;
+      }
+
+      // Check if last reset was more than 30 days ago
+      const daysSinceReset = (new Date() - new Date(user.last_token_reset)) / (1000 * 60 * 60 * 24);
+      return daysSinceReset >= 30;
+
+    } catch (error) {
+      logger.error(`[TOKENS] Error checking reset status:`, error);
+      return false;
+    }
+  }
 }
 
 // Singleton instance

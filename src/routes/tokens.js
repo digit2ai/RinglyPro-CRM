@@ -550,4 +550,74 @@ router.post('/manual-recharge/:clientId', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/tokens/monthly-reset
+ * Trigger monthly token reset for all users or specific user
+ * ADMIN USE ONLY
+ */
+router.post('/monthly-reset', async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    logger.info(`[MONTHLY RESET API] Triggered${userId ? ` for user ${userId}` : ' for all users'}`);
+
+    const results = await tokenService.resetMonthlyTokens(userId);
+
+    res.json({
+      success: true,
+      message: 'Monthly token reset completed',
+      ...results
+    });
+
+  } catch (error) {
+    logger.error('[TOKENS API] Monthly reset error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/tokens/reset-status/:userId
+ * Check if user needs monthly reset
+ */
+router.get('/reset-status/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { User } = require('../models');
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    const needsReset = await tokenService.needsMonthlyReset(userId);
+    const daysSinceReset = user.last_token_reset
+      ? Math.floor((new Date() - new Date(user.last_token_reset)) / (1000 * 60 * 60 * 24))
+      : null;
+
+    res.json({
+      success: true,
+      userId: parseInt(userId),
+      email: user.email,
+      needsReset,
+      lastReset: user.last_token_reset,
+      daysSinceReset,
+      currentBalance: user.tokens_balance,
+      package: user.token_package
+    });
+
+  } catch (error) {
+    logger.error('[TOKENS API] Reset status error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
