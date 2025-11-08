@@ -1,4 +1,4 @@
-const COPILOT_VERSION = 'v119';
+const COPILOT_VERSION = 'v120';
 console.log(`🚀 MCP Copilot ${COPILOT_VERSION} loaded`);
 
 let sessionId = null;
@@ -123,25 +123,11 @@ function disableAllButtons() {
         button.style.opacity = '0.4';
         button.style.cursor = 'not-allowed';
         button.style.textDecoration = 'line-through';
+        button.style.pointerEvents = 'none'; // Prevent all clicks
 
-        // Add click handler to show appropriate message
-        button.onclick = function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            // Check reason for lock
-            if (featuresDisabled || tokenBalance <= 0) {
-                showTokenPurchasePopup();
-            } else if (!ghlConfigured) {
-                // Show GHL upgrade prompt popup
-                if (window.ghlUpgrade && window.ghlUpgrade.show) {
-                    window.ghlUpgrade.show();
-                } else {
-                    alert('You must configure GoHighLevel in Settings to use this feature.');
-                }
-            }
-            return false;
-        };
+        // DO NOT override button.onclick! The HTML has onclick attributes we need to preserve.
+        // The CSS pointer-events:none will prevent clicks from reaching the handler.
+        // When we enable buttons, we'll remove pointer-events and the original handlers will work.
     });
 
     // Also disable chat input
@@ -176,7 +162,9 @@ function enableAllButtons() {
         button.style.opacity = '';
         button.style.cursor = '';
         button.style.textDecoration = '';
-        button.onclick = null; // Remove the lock popup handler
+        button.style.pointerEvents = ''; // Re-enable pointer events
+        // DO NOT set onclick = null! That removes the HTML onclick handlers!
+        // The HTML buttons have onclick="functionName()" which we need to keep
     });
 
     // Enable chat input
