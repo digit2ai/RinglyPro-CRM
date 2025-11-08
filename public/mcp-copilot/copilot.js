@@ -1,4 +1,4 @@
-const COPILOT_VERSION = 'v120';
+const COPILOT_VERSION = 'v121';
 console.log(`🚀 MCP Copilot ${COPILOT_VERSION} loaded`);
 
 let sessionId = null;
@@ -376,15 +376,19 @@ async function checkGHLConfiguration() {
         if (ghlConfigured && hasTokens) {
             console.log('✅ ENABLING all buttons');
             enableAllButtons();
+            // Update connection status to show success
+            updateConnectionStatus('Connected to GoHighLevel', 'success');
         } else {
             console.log(`❌ DISABLING all buttons (GHL: ${ghlConfigured}, Tokens: ${hasTokens})`);
             disableAllButtons();
 
-            // Show appropriate popup if features are locked
+            // Update connection status based on what's missing
             if (!hasTokens) {
+                updateConnectionStatus('Insufficient tokens', 'error');
                 // Token balance is zero - will show popup on button click
                 console.log('⚠️ Token balance is zero - popup will show on button click');
             } else if (!ghlConfigured) {
+                updateConnectionStatus('Not configured', 'error');
                 // GHL not configured - show upgrade prompt automatically
                 console.log('⚠️ GHL not configured - showing upgrade prompt');
                 setTimeout(() => {
@@ -400,6 +404,7 @@ async function checkGHLConfiguration() {
         console.error('Error checking GHL configuration:', error);
         ghlCheckComplete = true;
         disableAllButtons();
+        updateConnectionStatus('Connection check failed', 'error');
         return false;
     }
 }
@@ -440,6 +445,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (clientId) {
         currentClientId = clientId;
         console.log('📋 Client ID detected:', clientId);
+
+        // Show loading state immediately to prevent "Not connected" flash
+        updateConnectionStatus('Checking connection...', 'loading');
 
         // Check GHL configuration first (this also checks tokens and enables/disables buttons)
         await checkGHLConfiguration();
