@@ -591,10 +591,42 @@
     <!-- PWA Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/mcp-copilot/sw.js')
+            window.addEventListener('load', async () => {
+                // FORCE UNREGISTER ALL OLD SERVICE WORKERS
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                console.log(`🔄 Found ${registrations.length} service worker(s)`);
+
+                for (let registration of registrations) {
+                    console.log('🗑️ Unregistering old service worker:', registration.scope);
+                    await registration.unregister();
+                }
+
+                // CLEAR ALL CACHES
+                const cacheNames = await caches.keys();
+                console.log(`🗑️ Found ${cacheNames.length} cache(s):`, cacheNames);
+
+                for (let cacheName of cacheNames) {
+                    console.log('🗑️ Deleting cache:', cacheName);
+                    await caches.delete(cacheName);
+                }
+
+                console.log('✅ All old service workers and caches cleared!');
+
+                // NOW register the NEW service worker
+                navigator.serviceWorker.register('/mcp-copilot/sw.js?v=120')
                     .then((registration) => {
-                        console.log('✅ Service Worker registered successfully:', registration.scope);
+                        console.log('✅ NEW Service Worker v120 registered successfully:', registration.scope);
+
+                        // Force activation
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('🔄 New service worker installed - reloading page...');
+                                    window.location.reload();
+                                }
+                            });
+                        });
                     })
                     .catch((error) => {
                         console.log('❌ Service Worker registration failed:', error);
