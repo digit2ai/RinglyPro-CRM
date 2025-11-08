@@ -1,4 +1,4 @@
-const COPILOT_VERSION = 'v121';
+const COPILOT_VERSION = 'v122';
 console.log(`🚀 MCP Copilot ${COPILOT_VERSION} loaded`);
 
 let sessionId = null;
@@ -795,6 +795,11 @@ function downloadCSV(csvData, filename) {
 function updateConnectionStatus(message, status) {
     const statusDiv = document.getElementById('connectionStatus');
     const statusDot = document.getElementById('statusDot');
+
+    if (!statusDiv || !statusDot) {
+        console.warn('⚠️ Connection status elements not found');
+        return;
+    }
 
     statusDiv.textContent = message;
 
