@@ -1,5 +1,5 @@
 // Service Worker for RinglyPro AI Copilot PWA
-const CACHE_NAME = 'ringlypro-copilot-v122'; // Fix GHL connection status flashing on page load
+const CACHE_NAME = 'ringlypro-copilot-v123'; // Fix GHL connection status flashing on page load
 const urlsToCache = [
   '/mcp-copilot/',
   '/mcp-copilot/index.html',

@@ -1,4 +1,4 @@
-const COPILOT_VERSION = 'v122';
+const COPILOT_VERSION = 'v123';
 console.log(`🚀 MCP Copilot ${COPILOT_VERSION} loaded`);
 
 let sessionId = null;
@@ -357,8 +357,13 @@ async function checkGHLConfiguration() {
         console.log(`📡 Calling GHL check API: ${apiUrl}`);
 
         const response = await fetch(apiUrl);
-        const data = await response.json();
+        console.log(`📡 GHL check response status: ${response.status} ${response.statusText}`);
 
+        if (!response.ok) {
+            throw new Error(`API returned ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
         console.log(`📦 GHL check response:`, data);
 
         ghlConfigured = data.ghl_configured || false;
@@ -401,10 +406,14 @@ async function checkGHLConfiguration() {
 
         return ghlConfigured && hasTokens;
     } catch (error) {
-        console.error('Error checking GHL configuration:', error);
+        console.error('❌ Error checking GHL configuration:', error);
+        console.error('❌ Error details:', {
+            message: error.message,
+            stack: error.stack
+        });
         ghlCheckComplete = true;
         disableAllButtons();
-        updateConnectionStatus('Connection check failed', 'error');
+        updateConnectionStatus(`Check failed: ${error.message}`, 'error');
         return false;
     }
 }

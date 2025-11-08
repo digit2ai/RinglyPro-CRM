@@ -566,7 +566,7 @@
     <script src="command-form.js?v=112"></script>
     <script src="business-collector-form.js?v=114"></script>
     <script src="adhoc-call.js?v=112"></script>
-    <script src="copilot.js?v=122"></script>
+    <script src="copilot.js?v=123"></script>
 
     <script>
         // Open copilot chat in full-screen page
@@ -613,9 +613,9 @@
                 console.log('✅ All old service workers and caches cleared!');
 
                 // NOW register the NEW service worker
-                navigator.serviceWorker.register('/mcp-copilot/sw.js?v=122')
+                navigator.serviceWorker.register('/mcp-copilot/sw.js?v=123')
                     .then((registration) => {
-                        console.log('✅ NEW Service Worker v122 registered successfully:', registration.scope);
+                        console.log('✅ NEW Service Worker v123 registered successfully:', registration.scope);
 
                         // Force activation
                         registration.addEventListener('updatefound', () => {
