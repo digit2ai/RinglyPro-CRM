@@ -1,12 +1,13 @@
 // Service Worker for RinglyPro AI Copilot PWA
-const CACHE_NAME = 'ringlypro-copilot-v9'; // Updated for mobile modal chat interface fix
+const CACHE_NAME = 'ringlypro-copilot-v120'; // CRITICAL FIX: Force cache invalidation for button fix
 const urlsToCache = [
   '/mcp-copilot/',
   '/mcp-copilot/index.html',
   '/mcp-copilot/styles.css',
-  '/mcp-copilot/copilot.js',
-  '/mcp-copilot/command-templates.js',
-  '/mcp-copilot/command-form.js',
+  // DO NOT cache JS files - let version query params handle caching
+  // '/mcp-copilot/copilot.js',
+  // '/mcp-copilot/command-templates.js',
+  // '/mcp-copilot/command-form.js',
   'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png'
 ];
 
@@ -53,6 +54,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // CRITICAL FIX: Always fetch fresh JS files with version parameters
+  // This allows ?v=XXX to work properly and bypass service worker cache
+  const url = new URL(event.request.url);
+  if (url.pathname.endsWith('.js') && url.searchParams.has('v')) {
+    console.log('Service Worker: Bypassing cache for versioned JS:', url.pathname);
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -61,6 +71,11 @@ self.addEventListener('fetch', (event) => {
           .then((fetchResponse) => {
             // Don't cache API calls
             if (event.request.url.includes('/api/')) {
+              return fetchResponse;
+            }
+
+            // Don't cache JavaScript files at all (use version params instead)
+            if (event.request.url.endsWith('.js')) {
               return fetchResponse;
             }
 
