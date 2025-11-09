@@ -617,13 +617,15 @@
                     .then((registration) => {
                         console.log('✅ NEW Service Worker v125 registered successfully:', registration.scope);
 
-                        // Force activation
+                        // DON'T auto-reload - causes blinking on Safari
+                        // Users can manually refresh if needed
                         registration.addEventListener('updatefound', () => {
                             const newWorker = registration.installing;
                             newWorker.addEventListener('statechange', () => {
                                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    console.log('🔄 New service worker installed - reloading page...');
-                                    window.location.reload();
+                                    console.log('✅ New service worker installed (refresh page to use new version)');
+                                    // DON'T reload automatically - causes Safari blinking
+                                    // window.location.reload();
                                 }
                             });
                         });
