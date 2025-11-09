@@ -1,4 +1,4 @@
-const COPILOT_VERSION = 'v124';
+const COPILOT_VERSION = 'v125';
 console.log(`🚀 MCP Copilot ${COPILOT_VERSION} loaded`);
 
 let sessionId = null;
@@ -9,6 +9,7 @@ let ghlConfigured = false; // Track if GHL is configured
 let ghlCheckComplete = false; // Track if we've checked GHL status
 let tokenBalance = 100; // Track current token balance
 let featuresDisabled = false; // Track if features are disabled due to zero balance
+let connectionStatusLocked = false; // Prevent status updates after initial check (Safari fix)
 
 // Mobile detection
 function isMobile() {
@@ -805,7 +806,13 @@ function downloadCSV(csvData, filename) {
     addMessage('system', `📥 CSV file "${filename}" downloaded successfully!`);
 }
 
-function updateConnectionStatus(message, status) {
+function updateConnectionStatus(message, status, force = false) {
+    // Safari fix: Once status is set to success, lock it to prevent blinking
+    if (connectionStatusLocked && !force) {
+        console.log('🔒 Status locked, ignoring update:', message);
+        return;
+    }
+
     const statusDiv = document.getElementById('connectionStatus');
     const statusDot = document.getElementById('statusDot');
 
@@ -814,6 +821,7 @@ function updateConnectionStatus(message, status) {
         return;
     }
 
+    console.log(`📊 Updating connection status: ${message} (${status})`);
     statusDiv.textContent = message;
 
     // Update status dot (red/green indicator)
@@ -829,6 +837,9 @@ function updateConnectionStatus(message, status) {
     if (status === 'success') {
         statusDiv.style.background = '#d1fae5';
         statusDiv.style.color = '#065f46';
+        // Lock status after successful connection to prevent Safari blinking
+        connectionStatusLocked = true;
+        console.log('🔒 Connection status locked after success');
     } else if (status === 'error') {
         statusDiv.style.background = '#fee2e2';
         statusDiv.style.color = '#991b1b';
