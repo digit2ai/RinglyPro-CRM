@@ -1,4 +1,4 @@
-const COPILOT_VERSION = 'v123';
+const COPILOT_VERSION = 'v124';
 console.log(`🚀 MCP Copilot ${COPILOT_VERSION} loaded`);
 
 let sessionId = null;
@@ -577,7 +577,8 @@ function disconnectBusinessCollector() {
 async function autoLoadCredentials(clientId) {
     try {
         console.log('🔄 Auto-loading credentials for client:', clientId);
-        updateConnectionStatus('Loading...', 'loading');
+        // DON'T update status here - checkGHLConfiguration() already set it
+        // updateConnectionStatus('Loading...', 'loading');
 
         const url = `${window.location.origin}/api/client/crm-credentials/${clientId}`;
         console.log('📡 Fetching from:', url);
@@ -615,14 +616,16 @@ async function autoLoadCredentials(clientId) {
             }
 
             // If no CRM configured
-            updateConnectionStatus('Not configured', 'error');
+            // DON'T update status - checkGHLConfiguration() already handled this
+            // updateConnectionStatus('Not configured', 'error');
             addMessage('system', '⚠️ No GoHighLevel credentials found. Please configure in Settings.');
         } else {
             console.log('❌ Invalid response:', data);
         }
     } catch (error) {
         console.error('❌ Failed to load CRM credentials:', error);
-        updateConnectionStatus('Connection failed', 'error');
+        // DON'T update status - checkGHLConfiguration() already handled this
+        // updateConnectionStatus('Connection failed', 'error');
         addMessage('system', '⚠️ Could not load saved credentials. Please configure in Settings.');
     }
 }
@@ -659,7 +662,8 @@ async function connectGoHighLevel() {
         if (data.success) {
             sessionId = data.sessionId;
             crmType = 'gohighlevel';
-            updateConnectionStatus('Connected to GoHighLevel', 'success');
+            // DON'T update status - checkGHLConfiguration() already set it to avoid Safari blinking
+            // updateConnectionStatus('Connected to GoHighLevel', 'success');
             // Silent connection - no chat message
         } else {
             alert('Failed to connect: ' + data.error);
