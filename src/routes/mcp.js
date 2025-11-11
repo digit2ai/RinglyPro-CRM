@@ -1089,12 +1089,11 @@ router.post('/hubspot/connect', async (req, res) => {
 // GoHighLevel connection
 router.post('/gohighlevel/connect', async (req, res) => {
   console.log('🔗 GoHighLevel connection request received');
-  const { apiKey, locationId, clientId } = req.body;
+  const { apiKey, locationId } = req.body;
 
   // DEBUG: Log what we received
   console.log('🔍 DEBUG - API Key received:', apiKey ? `${apiKey.substring(0, 20)}...${apiKey.substring(apiKey.length - 10)}` : 'MISSING');
   console.log('🔍 DEBUG - Location ID received:', locationId || 'MISSING');
-  console.log('🔍 DEBUG - Client ID received:', clientId || 'MISSING');
   console.log('🔍 DEBUG - API Key starts with pit-?', apiKey?.startsWith('pit-') ? 'YES (PIT)' : 'NO (JWT or other)');
 
   if (!apiKey || !locationId) {
@@ -1105,14 +1104,6 @@ router.post('/gohighlevel/connect', async (req, res) => {
     });
   }
 
-  if (!clientId) {
-    console.error('❌ Missing Client ID - token billing will not work!');
-    return res.status(400).json({
-      success: false,
-      error: 'Client ID is required for token billing'
-    });
-  }
-
   try {
     const proxy = new GoHighLevelMCPProxy(apiKey, locationId);
     const sessionId = `ghl_${Date.now()}`;
@@ -1120,12 +1111,10 @@ router.post('/gohighlevel/connect', async (req, res) => {
     sessions.set(sessionId, {
       type: 'gohighlevel',
       proxy,
-      clientId: parseInt(clientId),
       createdAt: new Date()
     });
 
     console.log('✅ GoHighLevel connected, session:', sessionId);
-    console.log('✅ Client ID stored in session:', clientId);
     console.log('✅ Proxy initialized with token type:', apiKey.startsWith('pit-') ? 'PIT' : 'JWT');
 
     res.json({
@@ -1210,55 +1199,6 @@ router.post('/business-collector/collect', async (req, res) => {
   }
 
   try {
-    // Get userId from clientId for token deduction
-    let userId = null;
-    if (session.clientId) {
-      console.log(`🔍 Looking up userId for clientId: ${session.clientId}`);
-      const clientResult = await sequelize.query(
-        'SELECT user_id FROM clients WHERE id = :clientId',
-        {
-          replacements: { clientId: parseInt(session.clientId) },
-          type: QueryTypes.SELECT
-        }
-      );
-
-      if (clientResult.length > 0 && clientResult[0].user_id) {
-        userId = clientResult[0].user_id;
-        console.log(`✅ Found userId ${userId} for clientId ${session.clientId}`);
-      } else {
-        console.error(`❌ CRITICAL: Client ${session.clientId} has NO user_id! Token deduction will be skipped.`);
-      }
-    } else {
-      console.error(`❌ CRITICAL: Session has NO clientId! Token deduction will be skipped. Session type: ${session.type}`);
-    }
-
-    // Deduct tokens before collecting businesses
-    if (userId) {
-      const tokenService = require('../services/tokenService');
-      const requestedResults = maxResults || 100;
-
-      try {
-        await tokenService.deductTokens(
-          userId,
-          'business_collector_100',
-          {
-            category,
-            geography,
-            maxResults: requestedResults
-          }
-        );
-        console.log(`✅ Deducted 20 tokens from user ${userId} for business collection`);
-      } catch (tokenError) {
-        console.error(`❌ Token deduction failed:`, tokenError.message);
-        return res.status(402).json({
-          success: false,
-          error: 'Insufficient tokens',
-          message: tokenError.message,
-          suggestion: 'Purchase more tokens or refer friends to continue using business collector'
-        });
-      }
-    }
-
     const result = await session.businessCollectorProxy.collectBusinesses({
       category,
       geography,
@@ -1829,53 +1769,6 @@ router.post('/copilot/chat', async (req, res) => {
   try {
     console.log('🤖 Processing message for session:', sessionId);
 
-    // Get userId from clientId for token deduction
-    let userId = null;
-    if (session.clientId) {
-      console.log(`🔍 Looking up userId for clientId: ${session.clientId}`);
-      const clientResult = await sequelize.query(
-        'SELECT user_id FROM clients WHERE id = :clientId',
-        {
-          replacements: { clientId: parseInt(session.clientId) },
-          type: QueryTypes.SELECT
-        }
-      );
-
-      if (clientResult.length > 0 && clientResult[0].user_id) {
-        userId = clientResult[0].user_id;
-        console.log(`✅ Found userId ${userId} for clientId ${session.clientId}`);
-      } else {
-        console.error(`❌ CRITICAL: Client ${session.clientId} has NO user_id! Token deduction will be skipped.`);
-      }
-    } else {
-      console.error(`❌ CRITICAL: Session has NO clientId! Token deduction will be skipped. Session type: ${session.type}`);
-    }
-
-    // Deduct tokens for AI chat message (1 token per message)
-    if (userId) {
-      const tokenService = require('../services/tokenService');
-
-      try {
-        await tokenService.deductTokens(
-          userId,
-          'ai_chat_message',
-          {
-            message: message.substring(0, 100), // First 100 chars for logging
-            sessionType: session.type
-          }
-        );
-        console.log(`✅ Deducted 1 token from user ${userId} for AI chat message`);
-      } catch (tokenError) {
-        console.error(`❌ Token deduction failed:`, tokenError.message);
-        return res.status(402).json({
-          success: false,
-          error: 'Insufficient tokens',
-          message: tokenError.message,
-          response: '❌ Insufficient Tokens!\n\nYou need tokens to use the AI Copilot.\n\n💡 Solutions:\n• Purchase more tokens\n• Refer friends to earn bonus tokens\n• Upgrade to a higher tier package'
-        });
-      }
-    }
-
     // Check if Claude AI is enabled
     const useClaudeAI = process.env.ENABLE_CLAUDE_AI === 'true';
     const hasAnthropicKey = !!process.env.ANTHROPIC_API_KEY;
@@ -2366,6 +2259,17 @@ router.post('/copilot/chat', async (req, res) => {
           // Schedule social media post
           const { platforms, message: postMessage, scheduleTime } = claudeResponse.data;
 
+          console.log('🐛 DEBUG schedule_social_post received:', {
+            platforms,
+            postMessage: postMessage?.substring(0, 100),
+            scheduleTime,
+            scheduleTimeType: typeof scheduleTime,
+            isNull: scheduleTime === null,
+            isUndefined: scheduleTime === undefined,
+            isEmpty: scheduleTime === '',
+            hasImages: req.body.images?.length || 0
+          });
+
           try {
             // Get social media accounts
             console.log('🔍 Fetching social media accounts...');
@@ -2423,29 +2327,50 @@ router.post('/copilot/chat', async (req, res) => {
             const mediaArray = [];
             if (req.body.images && req.body.images.length > 0) {
               console.log(`📸 Uploading ${req.body.images.length} image(s)...`);
-              for (const img of req.body.images) {
+              console.log('📸 Image details:', req.body.images.map((img, idx) => ({
+                index: idx,
+                name: img.name,
+                type: img.type,
+                dataLength: img.data?.length || 0,
+                dataPreview: img.data?.substring(0, 50)
+              })));
+
+              for (let i = 0; i < req.body.images.length; i++) {
+                const img = req.body.images[i];
+                console.log(`📸 Processing image ${i + 1}/${req.body.images.length}: ${img.name}`);
+
                 try {
+                  console.log(`⏳ Uploading to GHL media library...`);
                   const uploadResult = await session.proxy.uploadMedia(img.data, img.name, img.type);
-                  console.log('📦 Upload result:', JSON.stringify(uploadResult, null, 2));
 
-                  // GHL returns different field names - check for url, fileUrl, or uploadUrl
-                  const imageUrl = uploadResult?.url || uploadResult?.fileUrl || uploadResult?.uploadUrl;
+                  console.log(`📤 Upload result for ${img.name}:`, {
+                    success: !!uploadResult,
+                    url: uploadResult?.url,
+                    fullResult: JSON.stringify(uploadResult, null, 2)
+                  });
 
-                  if (imageUrl) {
+                  if (uploadResult && uploadResult.url) {
                     mediaArray.push({
-                      url: imageUrl,
-                      type: img.type || 'image/png'  // Use full MIME type, not just "image"
+                      url: uploadResult.url,
+                      type: 'image'
                     });
-                    console.log(`✅ Image uploaded and added to media array: ${imageUrl}`);
+                    console.log(`✅ Image ${i + 1} uploaded successfully: ${uploadResult.url}`);
                   } else {
-                    console.error('❌ Upload succeeded but no URL in response:', uploadResult);
+                    console.error(`❌ Image ${i + 1} upload returned no URL:`, uploadResult);
                   }
                 } catch (uploadError) {
-                  console.error('❌ Image upload failed:', uploadError.message);
-                  console.error('❌ Upload error stack:', uploadError.stack);
+                  console.error(`❌ Image ${i + 1} upload failed:`, {
+                    error: uploadError.message,
+                    stack: uploadError.stack,
+                    response: uploadError.response?.data
+                  });
                   // Continue with other images
                 }
               }
+
+              console.log(`📊 Final media array (${mediaArray.length} images):`, JSON.stringify(mediaArray, null, 2));
+            } else {
+              console.log('📸 No images provided in request body');
             }
 
             // Generate AI image if requested and no manual images provided
@@ -2493,64 +2418,43 @@ No text in image.`;
               }
             }
 
+            // Determine if this is an immediate post or scheduled
+            // scheduleTime should be null/undefined/empty for immediate posts
+            // or a valid future date for scheduled posts
+            let isImmediate = !scheduleTime || scheduleTime === '' || scheduleTime === null;
+
+            // If scheduleTime is provided but is within 5 minutes of now, treat as immediate
+            if (scheduleTime && !isImmediate) {
+              const scheduledDate = new Date(scheduleTime);
+              const now = new Date();
+              const diffMinutes = (scheduledDate - now) / (1000 * 60);
+
+              if (diffMinutes < 5) {
+                console.log(`⏰ Schedule time is ${diffMinutes.toFixed(1)} minutes away, posting immediately instead`);
+                isImmediate = true;
+              }
+            }
+
+            console.log('🐛 Post timing:', {
+              isImmediate,
+              scheduleTime,
+              willUseStatus: isImmediate ? 'published' : 'scheduled'
+            });
+
             // GoHighLevel Social Media API format (correct field names from actual API response)
             // Based on successful posts structure from listSocialPosts
             const postData = {
               accountIds: accountIds,                    // Array of account IDs
               summary: postMessage,                      // Post text content (NOT "message" or "text")
               type: 'post',                              // Required: post, story, or reel
-              media: mediaArray.length > 0 ? mediaArray : [],  // MUST be empty array, not undefined
-              status: scheduleTime ? 'scheduled' : 'published',  // "status" not "state"
-              createdBy: String(session.clientId || userId || '15'),  // User ID as STRING (not number)
-              userId: String(session.clientId || userId || '15'),  // ALSO need userId field (GHL requires both!)
-              source: 'composer'                         // Source of the post
+              media: mediaArray,                         // Array of media objects with URLs
+              status: isImmediate ? 'published' : 'scheduled',  // "status" not "state"
+              userId: session.clientId || '15'           // User ID from session
             };
 
             // Add schedule date if specified (use "scheduleDate" when status is "scheduled")
-            if (scheduleTime) {
+            if (!isImmediate && scheduleTime) {
               postData.scheduleDate = new Date(scheduleTime).toISOString();
-            }
-
-            // Add platform-specific details objects (required by GHL API)
-            if (platforms.includes('facebook')) {
-              postData.facebookPostDetails = {
-                type: 'post',
-                shortenedLinks: []
-              };
-            }
-            if (platforms.includes('instagram')) {
-              postData.instagramPostDetails = {
-                type: 'post',
-                shortenedLinks: [],
-                collaborators: {}
-              };
-            }
-
-            // Deduct tokens before creating social post
-            if (userId) {
-              const tokenService = require('../services/tokenService');
-
-              try {
-                await tokenService.deductTokens(
-                  userId,
-                  'social_post',
-                  {
-                    platforms: platforms.join(', '),
-                    message: postMessage.substring(0, 100),
-                    accountIds: accountIds.length,
-                    hasImage: mediaArray.length > 0,
-                    aiImageGenerated: needsAIImage && mediaArray.length > 0
-                  }
-                );
-                console.log(`✅ Deducted 10 tokens from user ${userId} for social post`);
-              } catch (tokenError) {
-                console.error(`❌ Token deduction failed:`, tokenError.message);
-                return res.json({
-                  success: false,
-                  error: 'Insufficient tokens',
-                  response: `❌ Insufficient Tokens!\n\nYou need 10 tokens to schedule a social media post.\n\n💡 Solutions:\n• Purchase more tokens\n• Refer friends to earn bonus tokens\n• Upgrade to a higher tier package`
-                });
-              }
             }
 
             console.log('📱 Creating social post with data:', JSON.stringify(postData, null, 2));
@@ -2901,27 +2805,9 @@ No text in image.`;
         const outboundCallerService = require('../services/outbound-caller');
 
         try {
-          // Get userId from clientId for token deduction
-          let userId = null;
-          if (session.clientId) {
-            const clientResult = await sequelize.query(
-              'SELECT user_id FROM clients WHERE id = :clientId',
-              {
-                replacements: { clientId: parseInt(session.clientId) },
-                type: QueryTypes.SELECT
-              }
-            );
-
-            if (clientResult.length > 0 && clientResult[0].user_id) {
-              userId = clientResult[0].user_id;
-              console.log(`✅ Found userId ${userId} for clientId ${session.clientId}`);
-            }
-          }
-
           const result = await outboundCallerService.startAutoCalling(
             session.outboundLeads,
-            2, // 2 minutes interval
-            userId // Pass userId for token deduction
+            2 // 2 minutes interval
           );
 
           response = `🚀 Auto-Calling Started!\n\n📊 Status:\n• Total leads: ${result.totalLeads}\n• Interval: ${result.intervalMinutes} minutes\n• Currently calling lead #1\n\n🎯 Calls will continue automatically every ${result.intervalMinutes} minutes.\n\nYou can stop calling at any time.`;
@@ -2938,13 +2824,7 @@ No text in image.`;
           });
         } catch (error) {
           console.error('Error starting outbound calling:', error);
-
-          // Check if it's a token insufficiency error
-          if (error.message && error.message.includes('Insufficient tokens')) {
-            response = `❌ Insufficient Tokens!\n\n${error.message}\n\n💡 Solutions:\n• Purchase more tokens\n• Refer friends to earn bonus tokens\n• Upgrade to a higher tier package`;
-          } else {
-            response = `❌ Failed to start calling: ${error.message}\n\n⚠️ Please check:\n• Twilio credentials configured\n• TWILIO_ACCOUNT_SID set\n• TWILIO_AUTH_TOKEN set\n• TWILIO_PHONE_NUMBER set`;
-          }
+          response = `❌ Failed to start calling: ${error.message}\n\n⚠️ Please check:\n• Twilio credentials configured\n• TWILIO_ACCOUNT_SID set\n• TWILIO_AUTH_TOKEN set\n• TWILIO_PHONE_NUMBER set`;
 
           return res.json({
             success: false,

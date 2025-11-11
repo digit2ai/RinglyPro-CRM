@@ -982,11 +982,26 @@
                 return;
             }
 
-            const scheduleTime = document.getElementById('scheduleTime').value;
+            const scheduleTime = document.getElementById('scheduleTime').value.trim();
+
+            console.log('🐛 Debug scheduleTime:', {
+                raw: document.getElementById('scheduleTime').value,
+                trimmed: scheduleTime,
+                type: typeof scheduleTime,
+                isEmpty: scheduleTime === '',
+                length: scheduleTime.length
+            });
 
             // Validate schedule time if provided
-            if (scheduleTime) {
+            if (scheduleTime && scheduleTime !== '') {
                 const selectedDate = new Date(scheduleTime);
+
+                // Check if date is valid
+                if (isNaN(selectedDate.getTime())) {
+                    showAlert('error', 'Invalid date/time format. Please select a valid schedule time.');
+                    return;
+                }
+
                 const now = new Date();
                 const minFutureTime = new Date(now.getTime() + 5 * 60000); // 5 minutes from now
 
@@ -1010,9 +1025,15 @@
             const imageFiles = document.getElementById('postImages').files;
             const imageData = [];
 
+            console.log('🖼️ Image files from input:', {
+                count: imageFiles.length,
+                files: Array.from(imageFiles).map(f => ({ name: f.name, type: f.type, size: f.size }))
+            });
+
             if (imageFiles.length > 0) {
                 // Convert images to base64
                 for (const file of imageFiles) {
+                    console.log(`📸 Converting ${file.name} to base64...`);
                     const base64 = await new Promise((resolve) => {
                         const reader = new FileReader();
                         reader.onload = (e) => resolve(e.target.result);
@@ -1023,14 +1044,31 @@
                         name: file.name,
                         type: file.type
                     });
+                    console.log(`✅ ${file.name} converted (${base64.length} chars)`);
                 }
             }
 
+            console.log('📤 Prepared image data:', {
+                count: imageData.length,
+                images: imageData.map(img => ({
+                    name: img.name,
+                    type: img.type,
+                    dataLength: img.data.length,
+                    dataPreview: img.data.substring(0, 50)
+                }))
+            });
+
             let message = `schedule social post for ${selectedPlatforms.join(' and ')}`;
 
-            if (scheduleTime) {
+            if (scheduleTime && scheduleTime !== '') {
                 const date = new Date(scheduleTime);
-                message += ` at ${date.toLocaleString()}`;
+                // Double-check date validity before using
+                if (!isNaN(date.getTime())) {
+                    message += ` at ${date.toLocaleString()}`;
+                } else {
+                    console.error('Invalid date at message building:', scheduleTime);
+                    message += ' now';
+                }
             } else {
                 message += ' now';
             }
@@ -1041,18 +1079,39 @@
 
             message += `: ${content}`;
 
+            console.log('🚀 About to send post request:', {
+                sessionId,
+                message,
+                imageCount: imageData.length,
+                hasImages: imageData.length > 0
+            });
+
             try {
                 document.getElementById('submitBtn').disabled = true;
                 document.getElementById('submitBtn').textContent = '⏳ Scheduling...';
 
+                const requestBody = {
+                    sessionId,
+                    message,
+                    images: imageData
+                };
+
+                console.log('📦 Request body structure:', {
+                    sessionId: requestBody.sessionId,
+                    message: requestBody.message.substring(0, 100),
+                    imageCount: requestBody.images.length,
+                    imagesIncluded: requestBody.images.length > 0,
+                    firstImagePreview: requestBody.images[0] ? {
+                        name: requestBody.images[0].name,
+                        type: requestBody.images[0].type,
+                        dataLength: requestBody.images[0].data?.length
+                    } : 'no images'
+                });
+
                 const response = await fetch(`${window.location.origin}/api/mcp/copilot/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        sessionId,
-                        message,
-                        images: imageData
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 const data = await response.json();
@@ -1564,30 +1623,46 @@
 
             // Use AI Generated Image
             window.useAIImage = async (imageUrl) => {
+                console.log('🎨 useAIImage called with URL:', imageUrl);
                 try {
                     // Download image as blob
+                    console.log('⏳ Fetching image from:', imageUrl);
                     const response = await fetch(imageUrl);
                     const blob = await response.blob();
+                    console.log('✅ Image fetched, blob size:', blob.size, 'type:', blob.type);
 
                     // Create File object
                     const file = new File([blob], 'ai-generated.png', { type: 'image/png' });
+                    console.log('📁 File created:', file.name, file.size, 'bytes');
 
                     // Create DataTransfer to simulate file selection
                     const dataTransfer = new DataTransfer();
                     dataTransfer.items.add(file);
+                    console.log('📋 DataTransfer created with', dataTransfer.files.length, 'file(s)');
 
                     // Set to file input
                     const fileInput = document.getElementById('postImages');
                     fileInput.files = dataTransfer.files;
+                    console.log('✅ File input updated, now has', fileInput.files.length, 'file(s)');
+
+                    // Log the file details
+                    if (fileInput.files.length > 0) {
+                        console.log('📸 File in input:', {
+                            name: fileInput.files[0].name,
+                            size: fileInput.files[0].size,
+                            type: fileInput.files[0].type
+                        });
+                    }
 
                     // Trigger change event to show preview
                     fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    console.log('🔔 Change event dispatched');
 
                     // Close modal
                     document.getElementById('aiImageModal').style.display = 'none';
                     showAlert('success', 'AI-generated image added!');
                 } catch (error) {
-                    console.error('Error adding AI image:', error);
+                    console.error('❌ Error adding AI image:', error);
                     showAlert('error', 'Failed to add image: ' + error.message);
                 }
             };
