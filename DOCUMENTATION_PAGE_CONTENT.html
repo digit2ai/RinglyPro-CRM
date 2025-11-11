@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation - RinglyPro CRM</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f7;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4F46E5;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #4F46E5;
+            font-size: 1.8em;
+            margin-top: 40px;
+            border-bottom: 2px solid #4F46E5;
+            padding-bottom: 10px;
+        }
+        h3 {
+            color: #333;
+            font-size: 1.3em;
+            margin-top: 25px;
+        }
+        h4 {
+            color: #4F46E5;
+            font-size: 1.1em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .doc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .doc-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            border-left: 4px solid #4F46E5;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .doc-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .doc-card h3 {
+            margin-top: 0;
+            color: #4F46E5;
+        }
+        .doc-card p {
+            margin: 10px 0;
+            color: #666;
+        }
+        .doc-card ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .doc-card li {
+            margin: 5px 0;
+            color: #666;
+        }
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .step-box {
+            background: #E0F2FE;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid #3B82F6;
+        }
+        .step-number {
+            display: inline-block;
+            background: #4F46E5;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .warning-box {
+            background: #FEF3C7;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            border-left: 4px solid #F59E0B;
+        }
+        .tip-box {
+            background: #D1FAE5;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            border-left: 4px solid #10B981;
+        }
+        .cta-button {
+            display: inline-block;
+            background: #4F46E5;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 10px 10px 10px 0;
+            transition: background 0.3s;
+        }
+        .cta-button:hover {
+            background: #3730A3;
+        }
+        .toc {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .toc li {
+            margin: 8px 0;
+        }
+        .toc a {
+            color: #4F46E5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4F46E5;
+            color: white;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 RinglyPro CRM Documentation</h1>
+        <p style="font-size: 1.2em; color: #666;">Complete guide to using RinglyPro CRM for your business.</p>
+
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h3>📋 Table of Contents</h3>
+            <ul>
+                <li><a href="#getting-started">Getting Started</a></li>
+                <li><a href="#account-setup">Account Setup</a></li>
+                <li><a href="#dashboard">Dashboard Overview</a></li>
+                <li><a href="#ai-voice">AI Voice Assistants (Rachel & Lina)</a></li>
+                <li><a href="#appointments">Appointment Management</a></li>
+                <li><a href="#contacts">Contact Management</a></li>
+                <li><a href="#social-media">Social Media & AI Content</a></li>
+                <li><a href="#integrations">Integrations</a></li>
+                <li><a href="#ios-app">iOS Mobile App</a></li>
+                <li><a href="#tokens">Tokens & Billing</a></li>
+                <li><a href="#api">API Documentation</a></li>
+            </ul>
+        </div>
+
+        <!-- Getting Started -->
+        <h2 id="getting-started">🚀 Getting Started</h2>
+
+        <div class="step-box">
+            <h4><span class="step-number">1</span>Create Your Account</h4>
+            <p>Visit <a href="https://aiagent.ringlypro.com">https://aiagent.ringlypro.com</a> and click "Sign Up"</p>
+            <ul>
+                <li>Enter your email address</li>
+                <li>Create a secure password</li>
+                <li>Verify your email address</li>
+                <li>Complete your business profile</li>
+            </ul>
+        </div>
+
+        <div class="step-box">
+            <h4><span class="step-number">2</span>Set Up Your Profile</h4>
+            <p>Navigate to Settings and configure:</p>
+            <ul>
+                <li>Business name and details</li>
+                <li>Contact information</li>
+                <li>Business hours</li>
+                <li>Timezone preferences</li>
+            </ul>
+        </div>
+
+        <div class="step-box">
+            <h4><span class="step-number">3</span>Download the iOS App (Optional)</h4>
+            <p>Search for "RinglyPro CRM" in the Apple App Store or visit:</p>
+            <ul>
+                <li>iPhone/iPad: App Store → Search "RinglyPro CRM"</li>
+                <li>Log in with your web credentials</li>
+                <li>Enable push notifications for real-time updates</li>
+            </ul>
+        </div>
+
+        <div class="tip-box">
+            <strong>💡 Pro Tip:</strong> Start with 100 free tokens to test all AI features including voice assistants and content generation!
+        </div>
+
+        <!-- Account Setup -->
+        <h2 id="account-setup">⚙️ Account Setup</h2>
+
+        <h3>Profile Configuration</h3>
+        <p>Navigate to <strong>Settings → Profile</strong> to configure:</p>
+        <ul>
+            <li><strong>Business Information:</strong> Company name, industry, website</li>
+            <li><strong>Contact Details:</strong> Phone, email, address</li>
+            <li><strong>Working Hours:</strong> Set your availability for AI voice assistants</li>
+            <li><strong>Notifications:</strong> Email and push notification preferences</li>
+        </ul>
+
+        <h3>User Management</h3>
+        <p>For team accounts, manage users in <strong>Settings → Team</strong>:</p>
+        <ul>
+            <li>Invite team members via email</li>
+            <li>Assign roles and permissions</li>
+            <li>Monitor team activity</li>
+        </ul>
+
+        <!-- Dashboard -->
+        <h2 id="dashboard">📊 Dashboard Overview</h2>
+
+        <p>Your RinglyPro dashboard provides a comprehensive view of your business:</p>
+
+        <div class="doc-grid">
+            <div class="doc-card">
+                <h3>📈 Analytics</h3>
+                <ul>
+                    <li>Call volume and duration</li>
+                    <li>Appointment statistics</li>
+                    <li>Lead conversion rates</li>
+                    <li>Token usage tracking</li>
+                </ul>
+            </div>
+
+            <div class="doc-card">
+                <h3>📞 Recent Calls</h3>
+                <ul>
+                    <li>View all incoming calls</li>
+                    <li>Listen to call recordings</li>
+                    <li>Read AI transcriptions</li>
+                    <li>Follow-up actions</li>
+                </ul>
+            </div>
+
+            <div class="doc-card">
+                <h3>📅 Upcoming Appointments</h3>
+                <ul>
+                    <li>Today's schedule</li>
+                    <li>Calendar integration</li>
+                    <li>Appointment reminders</li>
+                    <li>Quick reschedule options</li>
+                </ul>
+            </div>
+
+            <div class="doc-card">
+                <h3>👥 Recent Contacts</h3>
+                <ul>
+                    <li>New leads</li>
+                    <li>Contact history</li>
+                    <li>Quick actions</li>
+                    <li>Notes and tags</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- AI Voice Assistants -->
+        <h2 id="ai-voice">🤖 AI Voice Assistants (Rachel & Lina)</h2>
+
+        <p>RinglyPro includes two AI voice assistants to handle your calls 24/7:</p>
+
+        <h3>Inbound Lina - Receptionist</h3>
+        <p>Lina answers incoming calls and handles:</p>
+        <ul>
+            <li>Greeting callers professionally</li>
+            <li>Answering common questions</li>
+            <li>Scheduling appointments</li>
+            <li>Taking messages</li>
+            <li>Routing urgent calls</li>
+        </ul>
+
+        <div class="step-box">
+            <h4>Setting Up Inbound Lina</h4>
+            <p><strong>Navigate to: Settings → Inbound Lina</strong></p>
+            <ol>
+                <li><strong>Phone Number:</strong> Connect your business phone number</li>
+                <li><strong>Greeting Message:</strong> Customize Lina's greeting
+                    <div class="code-block">Example: "Thank you for calling [Business Name]. This is Lina, how may I help you today?"</div>
+                </li>
+                <li><strong>Business Hours:</strong> Set when Lina should answer calls</li>
+                <li><strong>Appointment Settings:</strong> Configure calendar integration</li>
+                <li><strong>FAQ Training:</strong> Add common questions and answers</li>
+                <li><strong>Fallback Actions:</strong> What to do for complex requests</li>
+            </ol>
+        </div>
+
+        <h3>Outbound Rachel - Sales Agent</h3>
+        <p>Rachel makes outbound calls to:</p>
+        <ul>
+            <li>Follow up with leads</li>
+            <li>Confirm appointments</li>
+            <li>Send reminders</li>
+            <li>Conduct surveys</li>
+            <li>Re-engage cold leads</li>
+        </ul>
+
+        <div class="step-box">
+            <h4>Setting Up Outbound Rachel</h4>
+            <p><strong>Navigate to: Settings → Outbound Rachel</strong></p>
+            <ol>
+                <li><strong>Campaign Setup:</strong> Create call campaigns</li>
+                <li><strong>Script Template:</strong> Customize Rachel's conversation flow</li>
+                <li><strong>Call Schedule:</strong> Set optimal calling times</li>
+                <li><strong>Success Criteria:</strong> Define successful call outcomes</li>
+                <li><strong>Follow-up Rules:</strong> Automated actions after calls</li>
+            </ol>
+        </div>
+
+        <div class="warning-box">
+            <strong>⚠️ Note:</strong> AI voice calls consume tokens. Each minute of AI conversation uses approximately 1 token.
+        </div>
+
+        <!-- Appointments -->
+        <h2 id="appointments">📅 Appointment Management</h2>
+
+        <h3>Calendar Integration</h3>
+        <p>Connect your calendar to enable automatic scheduling:</p>
+        <ul>
+            <li><strong>Google Calendar:</strong> Settings → Integrations → Google Calendar</li>
+            <li><strong>Outlook Calendar:</strong> Settings → Integrations → Microsoft Outlook</li>
+            <li><strong>Apple Calendar:</strong> Via iCal/CalDAV connection</li>
+        </ul>
+
+        <h3>Appointment Booking</h3>
+        <p>Customers can book appointments through:</p>
+        <ul>
+            <li>AI voice assistant (Lina)</li>
+            <li>Online booking widget</li>
+            <li>Direct link scheduling page</li>
+            <li>iOS mobile app</li>
+        </ul>
+
+        <h3>Appointment Types</h3>
+        <p>Configure different appointment types in <strong>Settings → Appointments</strong>:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Setting</th>
+                    <th>Description</th>
+                    <th>Example</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Duration</td>
+                    <td>Length of appointment</td>
+                    <td>15, 30, 60 minutes</td>
+                </tr>
+                <tr>
+                    <td>Buffer Time</td>
+                    <td>Time between appointments</td>
+                    <td>5, 10 minutes</td>
+                </tr>
+                <tr>
+                    <td>Availability</td>
+                    <td>When slots are available</td>
+                    <td>Mon-Fri 9AM-5PM</td>
+                </tr>
+                <tr>
+                    <td>Reminders</td>
+                    <td>Automated notifications</td>
+                    <td>24h, 1h before</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Contacts -->
+        <h2 id="contacts">👥 Contact Management</h2>
+
+        <h3>Adding Contacts</h3>
+        <p>Add contacts manually or automatically:</p>
+        <ul>
+            <li><strong>Manual Entry:</strong> Contacts → Add New Contact</li>
+            <li><strong>Import CSV:</strong> Contacts → Import → Upload CSV file</li>
+            <li><strong>Automatic:</strong> From incoming calls or form submissions</li>
+            <li><strong>Integration Sync:</strong> From GoHighLevel or other CRM systems</li>
+        </ul>
+
+        <h3>Contact Fields</h3>
+        <ul>
+            <li>Name (First, Last)</li>
+            <li>Phone number(s)</li>
+            <li>Email address(es)</li>
+            <li>Company/Business</li>
+            <li>Tags and labels</li>
+            <li>Custom fields</li>
+            <li>Notes and history</li>
+        </ul>
+
+        <h3>Contact Actions</h3>
+        <p>For each contact, you can:</p>
+        <ul>
+            <li>View call history and recordings</li>
+            <li>Schedule appointments</li>
+            <li>Send emails or SMS</li>
+            <li>Add notes and tasks</li>
+            <li>Assign to team members</li>
+            <li>Export contact data</li>
+        </ul>
+
+        <!-- Social Media -->
+        <h2 id="social-media">📱 Social Media & AI Content</h2>
+
+        <h3>AI Content Generator</h3>
+        <p>Create professional social media content with AI assistance:</p>
+
+        <div class="step-box">
+            <h4>Generating AI Content</h4>
+            <p><strong>Navigate to: MCP Copilot → Social Media</strong></p>
+            <ol>
+                <li>Enter your topic or message</li>
+                <li>Select platform (Facebook, Instagram, LinkedIn, Twitter)</li>
+                <li>Choose tone (Professional, Casual, Friendly, Promotional)</li>
+                <li>Click "Generate Content"</li>
+                <li>Review and edit the AI-generated post</li>
+                <li>Save or post directly</li>
+            </ol>
+        </div>
+
+        <h3>AI Image Generator</h3>
+        <p>Create custom images for your posts:</p>
+        <ol>
+            <li>Click "Generate AI Image" in the social media editor</li>
+            <li>Describe the image you want</li>
+            <li>Select style (Realistic, Artistic, Abstract, etc.)</li>
+            <li>Generate and preview</li>
+            <li>Download or attach to post</li>
+        </ol>
+
+        <div class="warning-box">
+            <strong>⚠️ Token Usage:</strong> AI content generation uses 2 tokens per post, AI image generation uses 5 tokens per image.
+        </div>
+
+        <h3>Post Scheduling</h3>
+        <ul>
+            <li>Schedule posts for optimal times</li>
+            <li>Queue multiple posts</li>
+            <li>Recurring post templates</li>
+            <li>Multi-platform publishing</li>
+        </ul>
+
+        <!-- Integrations -->
+        <h2 id="integrations">🔗 Integrations</h2>
+
+        <h3>GoHighLevel Integration</h3>
+        <p>Connect RinglyPro with GoHighLevel CRM:</p>
+
+        <div class="step-box">
+            <h4>Setting Up GoHighLevel</h4>
+            <ol>
+                <li>Navigate to <strong>Settings → Integrations → GoHighLevel</strong></li>
+                <li>Click "Connect GoHighLevel"</li>
+                <li>Enter your GoHighLevel API key</li>
+                <li>Select sync options:
+                    <ul>
+                        <li>Sync contacts bidirectionally</li>
+                        <li>Sync appointments</li>
+                        <li>Sync call logs</li>
+                    </ul>
+                </li>
+                <li>Click "Save & Sync"</li>
+            </ol>
+        </div>
+
+        <h3>Available Integrations</h3>
+        <div class="doc-grid">
+            <div class="doc-card">
+                <h3>📧 Email</h3>
+                <ul>
+                    <li>Gmail</li>
+                    <li>Outlook</li>
+                    <li>SMTP/IMAP</li>
+                </ul>
+            </div>
+
+            <div class="doc-card">
+                <h3>📅 Calendar</h3>
+                <ul>
+                    <li>Google Calendar</li>
+                    <li>Microsoft Outlook</li>
+                    <li>Apple iCal</li>
+                </ul>
+            </div>
+
+            <div class="doc-card">
+                <h3>💳 Payment</h3>
+                <ul>
+                    <li>Stripe</li>
+                    <li>PayPal</li>
+                    <li>Square</li>
+                </ul>
+            </div>
+
+            <div class="doc-card">
+                <h3>📊 CRM</h3>
+                <ul>
+                    <li>GoHighLevel</li>
+                    <li>Salesforce</li>
+                    <li>HubSpot</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- iOS App -->
+        <h2 id="ios-app">📱 iOS Mobile App</h2>
+
+        <h3>Download & Installation</h3>
+        <ol>
+            <li>Open the App Store on your iPhone or iPad</li>
+            <li>Search for "RinglyPro CRM"</li>
+            <li>Tap "Get" to download (free)</li>
+            <li>Open the app and log in with your credentials</li>
+        </ol>
+
+        <h3>iOS App Features</h3>
+        <ul>
+            <li><strong>Dashboard:</strong> Full access to your CRM dashboard</li>
+            <li><strong>Calls:</strong> View call history and listen to recordings</li>
+            <li><strong>Contacts:</strong> Manage contacts on the go</li>
+            <li><strong>Appointments:</strong> View and manage your calendar</li>
+            <li><strong>Push Notifications:</strong> Real-time alerts for calls and appointments</li>
+            <li><strong>Face ID/Touch ID:</strong> Secure biometric authentication</li>
+            <li><strong>Offline Mode:</strong> Access key information without internet</li>
+        </ul>
+
+        <div class="tip-box">
+            <strong>💡 Pro Tip:</strong> Enable push notifications to get instant alerts when Lina answers a call or books an appointment!
+        </div>
+
+        <h3>iOS App Settings</h3>
+        <p>Configure app-specific settings in the iOS app:</p>
+        <ul>
+            <li><strong>Notifications:</strong> Customize alert types and sounds</li>
+            <li><strong>Security:</strong> Enable Face ID/Touch ID</li>
+            <li><strong>Sync:</strong> Choose sync frequency</li>
+            <li><strong>Display:</strong> Dark mode, text size</li>
+        </ul>
+
+        <!-- Tokens & Billing -->
+        <h2 id="tokens">💰 Tokens & Billing</h2>
+
+        <h3>How Tokens Work</h3>
+        <p>Tokens are the currency for AI features in RinglyPro:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Token Cost</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>AI Voice Call</td>
+                    <td>~1 per minute</td>
+                    <td>Inbound/Outbound calls</td>
+                </tr>
+                <tr>
+                    <td>AI Content Generation</td>
+                    <td>2 per post</td>
+                    <td>Social media posts</td>
+                </tr>
+                <tr>
+                    <td>AI Image Generation</td>
+                    <td>5 per image</td>
+                    <td>Custom AI images</td>
+                </tr>
+                <tr>
+                    <td>Call Transcription</td>
+                    <td>0.5 per call</td>
+                    <td>Automatic transcription</td>
+                </tr>
+                <tr>
+                    <td>AI Analysis</td>
+                    <td>1 per report</td>
+                    <td>Call analytics and insights</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Token Packages</h3>
+        <p>View and purchase tokens in <strong>Settings → Billing → Tokens</strong></p>
+
+        <div class="tip-box">
+            <strong>💡 Free Trial:</strong> Every new account receives 100 free tokens to get started!
+        </div>
+
+        <h3>Billing Management</h3>
+        <p>Navigate to <strong>Settings → Billing</strong> to:</p>
+        <ul>
+            <li>View current token balance</li>
+            <li>Purchase additional tokens</li>
+            <li>View billing history and invoices</li>
+            <li>Update payment methods</li>
+            <li>Manage subscriptions</li>
+            <li>Download receipts</li>
+        </ul>
+
+        <h3>Auto-Recharge</h3>
+        <p>Set up automatic token purchases:</p>
+        <ol>
+            <li>Go to Settings → Billing → Auto-Recharge</li>
+            <li>Set minimum token threshold (e.g., 10 tokens)</li>
+            <li>Choose recharge amount (e.g., 100 tokens)</li>
+            <li>Add payment method</li>
+            <li>Enable auto-recharge</li>
+        </ol>
+
+        <!-- API Documentation -->
+        <h2 id="api">🔧 API Documentation</h2>
+
+        <h3>API Overview</h3>
+        <p>RinglyPro provides a RESTful API for custom integrations:</p>
+
+        <div class="step-box">
+            <h4>Getting Your API Key</h4>
+            <ol>
+                <li>Navigate to <strong>Settings → API</strong></li>
+                <li>Click "Generate API Key"</li>
+                <li>Copy and securely store your key</li>
+                <li>Use this key in your API requests</li>
+            </ol>
+        </div>
+
+        <h3>API Endpoints</h3>
+
+        <h4>Authentication</h4>
+        <p>Include your API key in the request header:</p>
+        <div class="code-block">Authorization: Bearer YOUR_API_KEY</div>
+
+        <h4>Base URL</h4>
+        <div class="code-block">https://aiagent.ringlypro.com/api/v1</div>
+
+        <h4>Common Endpoints</h4>
+
+        <p><strong>GET /contacts</strong> - List all contacts</p>
+        <div class="code-block">curl -H "Authorization: Bearer YOUR_API_KEY" \
+     https://aiagent.ringlypro.com/api/v1/contacts</div>
+
+        <p><strong>POST /contacts</strong> - Create a new contact</p>
+        <div class="code-block">curl -X POST \
+     -H "Authorization: Bearer YOUR_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"firstName":"John","lastName":"Doe","phone":"555-1234"}' \
+     https://aiagent.ringlypro.com/api/v1/contacts</div>
+
+        <p><strong>GET /appointments</strong> - List appointments</p>
+        <div class="code-block">curl -H "Authorization: Bearer YOUR_API_KEY" \
+     https://aiagent.ringlypro.com/api/v1/appointments</div>
+
+        <p><strong>GET /calls</strong> - List call history</p>
+        <div class="code-block">curl -H "Authorization: Bearer YOUR_API_KEY" \
+     https://aiagent.ringlypro.com/api/v1/calls</div>
+
+        <h3>Webhooks</h3>
+        <p>Configure webhooks to receive real-time notifications:</p>
+        <ul>
+            <li><strong>call.completed</strong> - When a call ends</li>
+            <li><strong>appointment.booked</strong> - When an appointment is scheduled</li>
+            <li><strong>contact.created</strong> - When a new contact is added</li>
+            <li><strong>token.low</strong> - When tokens are running low</li>
+        </ul>
+
+        <div class="step-box">
+            <h4>Setting Up Webhooks</h4>
+            <ol>
+                <li>Navigate to <strong>Settings → API → Webhooks</strong></li>
+                <li>Click "Add Webhook"</li>
+                <li>Enter your endpoint URL</li>
+                <li>Select events to listen for</li>
+                <li>Save and test the webhook</li>
+            </ol>
+        </div>
+
+        <h3>Rate Limits</h3>
+        <ul>
+            <li><strong>Free accounts:</strong> 100 requests per hour</li>
+            <li><strong>Paid accounts:</strong> 1,000 requests per hour</li>
+            <li><strong>Enterprise:</strong> Custom limits available</li>
+        </ul>
+
+        <div class="warning-box">
+            <strong>⚠️ Security:</strong> Never share your API key publicly. Rotate keys regularly and use environment variables in production.
+        </div>
+
+        <!-- Footer -->
+        <hr style="margin: 40px 0; border: none; border-top: 1px solid #ddd;">
+
+        <h2>Need Help?</h2>
+        <p style="font-size: 1.1em;">Can't find what you're looking for? Our support team is here to help.</p>
+        <a href="mailto:info@digit2ai.com" class="cta-button">Contact Support</a>
+        <a href="https://aiagent.ringlypro.com" class="cta-button">Back to Dashboard</a>
+
+        <p style="margin-top: 40px; color: #666; font-size: 0.9em;">
+            <strong>RinglyPro CRM Documentation</strong><br>
+            Last Updated: January 2025<br>
+            Version: 1.0.0<br>
+            Email: info@digit2ai.com<br>
+            Website: <a href="https://ringlypro.com">https://ringlypro.com</a>
+        </p>
+    </div>
+</body>
+</html>
