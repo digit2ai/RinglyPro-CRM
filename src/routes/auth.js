@@ -7,7 +7,7 @@ const twilioClient = twilio(
   process.env.TWILIO_AUTH_TOKEN
 );
 const { User, sequelize } = require('../models');
-const { sendPasswordResetEmail } = require('../services/emailService');
+const { sendPasswordResetEmail, sendWelcomeEmail } = require('../services/emailService');
 const { sendWelcomeSMS } = require('../services/appointmentNotification');
 const { normalizePhoneFromSpeech } = require('../utils/phoneNormalizer');
 
@@ -361,6 +361,27 @@ router.post('/register', async (req, res) => {
         } catch (smsError) {
             console.error('⚠️ Welcome SMS error (non-critical):', smsError.message);
             // Don't fail registration if SMS fails
+        }
+
+        // Send welcome email with instructions and CC to admin (non-blocking)
+        try {
+            const emailResult = await sendWelcomeEmail({
+                email: email,
+                firstName: firstName,
+                lastName: lastName,
+                businessName: businessName,
+                ringlyproNumber: twilioNumber,
+                ccEmail: 'mstagg@digit2ai.com'
+            });
+
+            if (emailResult.success) {
+                console.log(`✅ Welcome email sent to ${email} (CC: mstagg@digit2ai.com)`);
+            } else {
+                console.log(`⚠️ Welcome email failed (non-critical): ${emailResult.error || emailResult.reason}`);
+            }
+        } catch (emailError) {
+            console.error('⚠️ Welcome email error (non-critical):', emailError.message);
+            // Don't fail registration if email fails
         }
 
         // Generate JWT token
