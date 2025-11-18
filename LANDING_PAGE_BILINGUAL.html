@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RinglyPro - The First Free AI Sales Force</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 60px;
+            padding: 40px 20px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            font-weight: 800;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header .subtitle {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            opacity: 0.95;
+        }
+
+        .header .tags {
+            font-size: 1.1em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        /* Two Column Layout */
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .column {
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .column.english {
+            border-top: 8px solid #4F46E5;
+        }
+
+        .column.spanish {
+            border-top: 8px solid #DC2626;
+        }
+
+        .language-label {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9em;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .english .language-label {
+            background: #EEF2FF;
+            color: #4F46E5;
+        }
+
+        .spanish .language-label {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        h2 {
+            font-size: 2em;
+            color: #1f2937;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .intro {
+            font-size: 1.2em;
+            color: #4b5563;
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+
+        h3 {
+            font-size: 1.6em;
+            color: #1f2937;
+            margin-top: 35px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: 25px 0;
+        }
+
+        .feature-list li {
+            padding: 15px 0;
+            padding-left: 40px;
+            position: relative;
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #374151;
+        }
+
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            top: 15px;
+            background: #10B981;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .results-list {
+            list-style: none;
+            margin: 25px 0;
+            background: #F0FDF4;
+            padding: 30px;
+            border-radius: 12px;
+            border-left: 5px solid #10B981;
+        }
+
+        .results-list li {
+            padding: 12px 0;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #166534;
+        }
+
+        .cta-section {
+            margin-top: 40px;
+            padding: 35px;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .cta-section h3 {
+            color: white;
+            font-size: 1.8em;
+            margin: 0 0 15px 0;
+        }
+
+        .cta-section p {
+            color: white;
+            font-size: 1.1em;
+            margin-bottom: 25px;
+            opacity: 0.95;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: #4F46E5;
+            padding: 18px 50px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.3em;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .free-badge {
+            display: inline-block;
+            background: #FEF3C7;
+            color: #92400E;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 700;
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+            margin-top: 60px;
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .footer a:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .header h1 {
+                font-size: 2.2em;
+            }
+
+            .header .subtitle {
+                font-size: 1.2em;
+            }
+
+            .column {
+                padding: 35px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .header .subtitle {
+                font-size: 1em;
+            }
+
+            .column {
+                padding: 25px;
+            }
+
+            h2 {
+                font-size: 1.6em;
+            }
+
+            h3 {
+                font-size: 1.3em;
+            }
+
+            .intro {
+                font-size: 1.05em;
+            }
+
+            .feature-list li {
+                font-size: 1em;
+            }
+
+            .cta-button {
+                padding: 15px 35px;
+                font-size: 1.1em;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .column {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .column.spanish {
+            animation-delay: 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>RinglyPro.com</h1>
+            <div class="subtitle">The First Free AI Sales Force</div>
+            <div class="tags">B2B Collector | Outbound Dialer | Lead Generator</div>
+        </div>
+
+        <!-- Two Column Content -->
+        <div class="content-wrapper">
+            <!-- English Column -->
+            <div class="column english">
+                <div class="language-label">🇺🇸 English</div>
+
+                <h2>Booking, SMS & Mobile CRM</h2>
+
+                <p class="intro">
+                    <strong>RinglyPro</strong> is the all-in-one AI system that does the work of an entire sales team — <strong>for free</strong>.
+                </p>
+
+                <p class="intro">
+                    It finds businesses, calls them automatically, collects leads, and books appointments — while managing texts, emails, and CRM updates for you.<br>
+                    <strong>You focus on growing your business — RinglyPro keeps your pipeline full.</strong>
+                </p>
+
+                <h3>Why It Works</h3>
+                <ul class="feature-list">
+                    <li><strong>100% Automated Outreach</strong> – AI dials and engages qualified leads.</li>
+                    <li><strong>Built-in CRM</strong> – Capture, track, and manage every interaction in one place.</li>
+                    <li><strong>Instant Booking & SMS Follow-ups</strong> – Turn every call into an opportunity.</li>
+                    <li><strong>Bilingual AI (English & Spanish)</strong> – Communicate effortlessly with any client.</li>
+                    <li><strong>Free Forever</strong> – No credit card. No hidden fees. Just results.</li>
+                </ul>
+
+                <h3>Results You Can Expect</h3>
+                <ul class="results-list">
+                    <li>✅ More calls → more leads</li>
+                    <li>✅ More leads → more appointments</li>
+                    <li>✅ More appointments → more revenue</li>
+                </ul>
+
+                <div class="cta-section">
+                    <h3>Start Free Today</h3>
+                    <p>Absolutely free — no credit card, no hidden fees.</p>
+                    <a href="https://aiagent.ringlypro.com/register" class="cta-button">Get Started Free</a>
+                    <div class="free-badge">🎉 100% FREE FOREVER</div>
+                </div>
+            </div>
+
+            <!-- Spanish Column -->
+            <div class="column spanish">
+                <div class="language-label">🇪🇸 Español</div>
+
+                <h2>Reservas, SMS y CRM Móvil</h2>
+
+                <p class="intro">
+                    <strong>RinglyPro</strong> es el sistema todo-en-uno con inteligencia artificial que hace el trabajo de un equipo de ventas completo — <strong>totalmente gratis</strong>.
+                </p>
+
+                <p class="intro">
+                    Encuentra negocios, los llama automáticamente, captura clientes potenciales y agenda citas, mientras maneja mensajes, correos y actualizaciones en tu CRM.<br>
+                    <strong>Tú te enfocas en crecer tu negocio — RinglyPro mantiene lleno tu embudo de ventas.</strong>
+                </p>
+
+                <h3>Por qué funciona</h3>
+                <ul class="feature-list">
+                    <li><strong>Alcance 100% automatizado</strong> – La IA llama y conecta con clientes calificados.</li>
+                    <li><strong>CRM integrado</strong> – Registra, gestiona y da seguimiento a cada contacto.</li>
+                    <li><strong>Reservas instantáneas y seguimiento por SMS</strong> – Convierte cada llamada en una oportunidad.</li>
+                    <li><strong>Asistente bilingüe (inglés y español)</strong> – Comunícate sin barreras.</li>
+                    <li><strong>Gratis para siempre</strong> – Sin tarjeta de crédito. Sin costos ocultos. Solo resultados.</li>
+                </ul>
+
+                <h3>Resultados que puedes esperar</h3>
+                <ul class="results-list">
+                    <li>✅ Más llamadas → más clientes potenciales</li>
+                    <li>✅ Más clientes potenciales → más citas</li>
+                    <li>✅ Más citas → más ingresos</li>
+                </ul>
+
+                <div class="cta-section">
+                    <h3>Comienza Gratis Hoy</h3>
+                    <p>Completamente gratis — sin tarjeta, sin costos ocultos.</p>
+                    <a href="https://aiagent.ringlypro.com/register" class="cta-button">Comenzar Gratis</a>
+                    <div class="free-badge">🎉 100% GRATIS PARA SIEMPRE</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p style="font-size: 1.2em; margin-bottom: 20px;">
+                <strong>RinglyPro.com</strong> — Your AI-Powered Sales Team
+            </p>
+            <div>
+                <a href="https://ringlypro.com/privacy">Privacy Policy</a>
+                <a href="https://ringlypro.com/terms">Terms of Service</a>
+                <a href="https://ringlypro.com/support">Support</a>
+                <a href="https://ringlypro.com/docs">Documentation</a>
+            </div>
+            <p style="margin-top: 30px; opacity: 0.8;">
+                © 2025 RinglyPro CRM. All rights reserved.<br>
+                A service of Digit2ai LLC.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

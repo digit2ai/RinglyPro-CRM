@@ -41,7 +41,6 @@ public class MainActivity extends Activity {
 
         // Set cache mode
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        webSettings.setAppCacheEnabled(true);
 
         // Set WebViewClient to handle navigation
         webView.setWebViewClient(new WebViewClient() {

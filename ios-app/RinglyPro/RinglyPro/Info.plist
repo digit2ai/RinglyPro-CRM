@@ -14,6 +14,9 @@
 		</dict>
 	</array>
 	<key>UIApplicationSceneManifest</key>
-	<dict/>
+	<dict>
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
+	</dict>
 </dict>
 </plist>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RinglyPro Features Showcase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --navy: #0b1e3e;
+            --sky: #87ceeb;
+            --orange: #FF914D;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .feature-card {
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(11, 30, 62, 0.15);
+        }
+
+        .feature-icon {
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e3f2fd 100%);
+        }
+
+        .features-section {
+            margin: 40px 20px;
+            border-radius: 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        @media (max-width: 768px) {
+            .features-section {
+                margin: 20px 10px;
+                border-radius: 24px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <!-- Features Showcase Section -->
+    <section class="features-section py-20 px-4 gradient-bg">
+        <div class="max-w-7xl mx-auto">
+            <!-- Section Header -->
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-extrabold mb-4" style="color: var(--navy)">
+                    Powerful Features, All-in-One Platform
+                </h2>
+                <p class="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto">
+                    From AI-powered calls to smart automation — everything you need to run your business like a pro
+                </p>
+            </div>
+
+            <!-- Features Grid -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <!-- Feature 1: Transfer Calls -->
+                <div class="feature-card bg-white rounded-2xl p-6 shadow-md border border-slate-200">
+                    <div class="feature-icon w-14 h-14 rounded-xl mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, var(--orange), #ff6b35)">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2" style="color: var(--navy)">Transfer Calls</h3>
+                    <p class="text-slate-600 leading-relaxed">Seamlessly connect callers to the right person with intelligent routing</p>
+                </div>
+
+                <!-- Feature 2: Send Texts -->
+                <div class="feature-card bg-white rounded-2xl p-6 shadow-md border border-slate-200">
+                    <div class="feature-icon w-14 h-14 rounded-xl mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, var(--sky), #6eb5d6)">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2" style="color: var(--navy)">Send Texts</h3>
+                    <p class="text-slate-600 leading-relaxed">Instantly follow up with SMS messages to keep conversations flowing</p>
+                </div>
+
+                <!-- Feature 3: Notify -->
+                <div class="feature-card bg-white rounded-2xl p-6 shadow-md border border-slate-200">
+                    <div class="feature-icon w-14 h-14 rounded-xl mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, #FFD700, #FFA500)">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2" style="color: var(--navy)">Notify</h3>
+                    <p class="text-slate-600 leading-relaxed">Get real-time updates on calls and messages so you never miss a thing</p>
+                </div>
+
+                <!-- Feature 4: Record Messages -->
+                <div class="feature-card bg-white rounded-2xl p-6 shadow-md border border-slate-200">
+                    <div class="feature-icon w-14 h-14 rounded-xl mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, #9333ea, #c084fc)">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2" style="color: var(--navy)">Record Messages</h3>
+                    <p class="text-slate-600 leading-relaxed">Capture voicemails and important notes automatically</p>
+                </div>
+
+                <!-- Feature 5: Generate Reminders -->
+                <div class="feature-card bg-white rounded-2xl p-6 shadow-md border border-slate-200">
+                    <div class="feature-icon w-14 h-14 rounded-xl mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, #10b981, #34d399)">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2" style="color: var(--navy)">Generate Reminders</h3>
+                    <p class="text-slate-600 leading-relaxed">Never miss a task or appointment with smart automated reminders</p>
+                </div>
+
+                <!-- Feature 6: Summaries -->
+                <div class="feature-card bg-white rounded-2xl p-6 shadow-md border border-slate-200">
+                    <div class="feature-icon w-14 h-14 rounded-xl mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, var(--navy), #1a3a5c)">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2" style="color: var(--navy)">Summaries</h3>
+                    <p class="text-slate-600 leading-relaxed">Receive clear call and message recaps to stay informed</p>
+                </div>
+
+                <!-- Feature 7: Schedule Appointments -->
+                <div class="feature-card bg-white rounded-2xl p-6 shadow-md border border-slate-200">
+                    <div class="feature-icon w-14 h-14 rounded-xl mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, #ec4899, #f472b6)">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2" style="color: var(--navy)">Schedule Appointments</h3>
+                    <p class="text-slate-600 leading-relaxed">Book meetings automatically with intelligent calendar integration</p>
+                </div>
+
+                <!-- Feature 8: Answer Inquiries -->
+                <div class="feature-card bg-white rounded-2xl p-6 shadow-md border border-slate-200">
+                    <div class="feature-icon w-14 h-14 rounded-xl mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, var(--orange), #ff6b35)">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2" style="color: var(--navy)">Answer Inquiries</h3>
+                    <p class="text-slate-600 leading-relaxed">Provide instant, human-like responses to customer questions 24/7</p>
+                </div>
+
+                <!-- Feature 9: CRM Copilot -->
+                <div class="feature-card bg-white rounded-2xl p-6 shadow-md border border-slate-200">
+                    <div class="feature-icon w-14 h-14 rounded-xl mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, #0ea5e9, #38bdf8)">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2" style="color: var(--navy)">CRM Copilot</h3>
+                    <p class="text-slate-600 leading-relaxed">Automate CRM updates, notes, tags, and lead creation effortlessly</p>
+                </div>
+
+                <!-- Feature 10: Social Media -->
+                <div class="feature-card bg-white rounded-2xl p-6 shadow-md border border-slate-200">
+                    <div class="feature-icon w-14 h-14 rounded-xl mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, #f59e0b, #fbbf24)">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2" style="color: var(--navy)">Social Media</h3>
+                    <p class="text-slate-600 leading-relaxed">Auto-post, respond, and manage social conversations seamlessly</p>
+                </div>
+
+                <!-- Feature 11: Email Marketing -->
+                <div class="feature-card bg-white rounded-2xl p-6 shadow-md border border-slate-200">
+                    <div class="feature-icon w-14 h-14 rounded-xl mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, #ef4444, #f87171)">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2" style="color: var(--navy)">Email Marketing</h3>
+                    <p class="text-slate-600 leading-relaxed">Send automated campaigns, nurture sequences, and follow-ups</p>
+                </div>
+
+                <!-- Feature 12: Business Collector -->
+                <div class="feature-card bg-white rounded-2xl p-6 shadow-md border border-slate-200">
+                    <div class="feature-icon w-14 h-14 rounded-xl mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, var(--sky), #6eb5d6)">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2" style="color: var(--navy)">Business Collector</h3>
+                    <p class="text-slate-600 leading-relaxed">Capture business details automatically through outbound calls</p>
+                </div>
+
+                <!-- Feature 13: Make Calls -->
+                <div class="feature-card bg-white rounded-2xl p-6 shadow-md border border-slate-200">
+                    <div class="feature-icon w-14 h-14 rounded-xl mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa)">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2" style="color: var(--navy)">Make Calls</h3>
+                    <p class="text-slate-600 leading-relaxed">Place outbound calls using AI to qualify, collect info, and book</p>
+                </div>
+
+                <!-- Feature 14: Prospect Manager -->
+                <div class="feature-card bg-white rounded-2xl p-6 shadow-md border border-slate-200">
+                    <div class="feature-icon w-14 h-14 rounded-xl mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, var(--orange), #ff6b35)">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2" style="color: var(--navy)">Prospect Manager</h3>
+                    <p class="text-slate-600 leading-relaxed">Track leads, status, outcomes, and next actions in one place</p>
+                </div>
+
+            </div>
+
+            <!-- CTA Section -->
+            <div class="mt-16 text-center">
+                <div class="bg-white rounded-3xl shadow-xl p-8 md:p-12 max-w-3xl mx-auto border-2" style="border-color: var(--orange)">
+                    <h3 class="text-3xl md:text-4xl font-extrabold mb-4" style="color: var(--navy)">
+                        Ready to Transform Your Business?
+                    </h3>
+                    <p class="text-lg text-slate-600 mb-6">
+                        Join thousands of businesses using RinglyPro to automate, grow, and scale
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a href="https://aiagent.ringlypro.com/register"
+                           class="inline-block px-8 py-4 text-lg font-bold text-white rounded-2xl shadow-lg hover:shadow-xl transition-all"
+                           style="background: linear-gradient(135deg, var(--orange), #ff6b35)">
+                            Start Free Today
+                        </a>
+                        <a href="#learn-more"
+                           class="inline-block px-8 py-4 text-lg font-bold rounded-2xl border-2 transition-all hover:bg-slate-50"
+                           style="border-color: var(--navy); color: var(--navy)">
+                            View Demo
+                        </a>
+                    </div>
+                    <p class="mt-4 text-sm text-slate-500">No credit card required • Free forever plan available</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

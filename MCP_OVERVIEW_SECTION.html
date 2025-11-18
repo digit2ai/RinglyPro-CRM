@@ -1,0 +1,160 @@
+<section id="mcp-server" class="tech-section">
+  <div class="tech-container">
+    <h2 class="tech-title">RinglyPro's MCP Server: The Core Intelligence Layer</h2>
+
+    <p>
+      RinglyPro's <strong>MCP Server (Model Context Protocol Server)</strong> serves as the central
+      orchestration engine that powers the entire platform. It is the foundation of RinglyPro's
+      <strong>AI-agnostic architecture</strong>, enabling the system to operate independently from
+      any single AI vendor.
+    </p>
+
+    <p>
+      At its core, the MCP Server functions as a <strong>dynamic routing and coordination layer</strong>
+      that communicates seamlessly with multiple AI models — including
+      <strong>OpenAI GPT, Anthropic Claude, Google Gemini</strong>, and proprietary NLU/NLP engines —
+      all through standardized connectors.
+    </p>
+
+    <p>Rather than relying on one model, the MCP Server makes real-time decisions on:</p>
+    <ul>
+      <li>Which AI engine to use</li>
+      <li>How to process a request</li>
+      <li>How to minimize latency and cost</li>
+      <li>How to maintain accuracy and reliability</li>
+    </ul>
+
+    <p>This allows RinglyPro to intelligently distribute workloads based on the nature of the task:</p>
+    <ul>
+      <li>Conversation understanding</li>
+      <li>Voice synthesis or transcription</li>
+      <li>CRM actions</li>
+      <li>Lead qualification</li>
+      <li>Outbound call logic</li>
+      <li>Email/SMS generation</li>
+    </ul>
+
+    <p class="tech-highlight">
+      The result: <strong>faster response times, higher accuracy, and reduced operating costs.</strong>
+    </p>
+
+    <p>
+      Because the MCP Server is built with a <strong>modular, adapter-based design</strong>, new AI
+      models can be added instantly without rewriting the system. This makes the architecture:
+    </p>
+    <ul>
+      <li><strong>Plug-and-play extensible</strong></li>
+      <li><strong>Future-proof</strong></li>
+      <li><strong>Highly maintainable</strong></li>
+    </ul>
+
+    <p>
+      It also enables <strong>multi-agent collaboration</strong>, where specialized agents
+      (voice agent, CRM agent, social media agent, outbound calling agent, etc.) work together
+      through the MCP Server to execute complex workflows.
+    </p>
+
+    <p>
+      All communication channels — <strong>voice, SMS, email, RCS, web chat, CRM APIs, and outbound
+      dialing systems</strong> — connect into the MCP Server's real-time messaging layer, allowing
+      data to flow smoothly between agents, models, and external systems.
+    </p>
+
+    <p>In short, the MCP Server is what gives RinglyPro its:</p>
+    <ul>
+      <li>Speed</li>
+      <li>Scalability</li>
+      <li>AI-model freedom</li>
+      <li>Vendor independence</li>
+      <li>Automation reliability</li>
+    </ul>
+
+    <p class="tech-summary">
+      It is the <strong>brain of the platform</strong> — coordinating AI, handling multi-channel
+      communication, and powering everything from call handling to CRM automation.
+    </p>
+  </div>
+</section>
+
+<style>
+  .tech-section {
+    background: #050b19;
+    color: #f4f7ff;
+    padding: 60px 20px;
+    margin: 40px 20px;
+    border-radius: 32px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tech-section::before {
+    content: "";
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: rgba(135, 206, 235, 0.08);
+    border-radius: 50%;
+    top: -150px;
+    right: -100px;
+    filter: blur(120px);
+    z-index: 0;
+  }
+
+  .tech-container {
+    max-width: 960px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .tech-title {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    text-align: left;
+    color: #ffffff;
+  }
+
+  .tech-container p {
+    line-height: 1.7;
+    font-size: 0.98rem;
+    color: #d4dbf0;
+    margin-bottom: 14px;
+  }
+
+  .tech-container ul {
+    margin: 0 0 16px 22px;
+    padding: 0;
+    color: #c2c8dd;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .tech-container ul li + li {
+    margin-top: 4px;
+  }
+
+  .tech-highlight {
+    color: #ffeaaf;
+    font-weight: 500;
+  }
+
+  .tech-summary {
+    margin-top: 10px;
+    font-weight: 500;
+    color: #ffffff;
+  }
+
+  @media (max-width: 768px) {
+    .tech-section {
+      padding: 40px 16px;
+      margin: 20px 10px;
+      border-radius: 24px;
+    }
+
+    .tech-title {
+      font-size: 1.6rem;
+    }
+  }
+</style>

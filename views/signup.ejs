@@ -55,14 +55,29 @@
             <p class="text-gray-400">Create your AI-powered business phone system</p>
         </div>
 
-        <!-- Step Indicator -->
-        <div class="flex justify-center mb-8">
-            <div class="flex space-x-2">
-                <div id="step1-indicator" class="step-indicator step-active w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium">1</div>
-                <div class="w-8 h-1 bg-white bg-opacity-30 self-center"></div>
-                <div id="step2-indicator" class="step-indicator w-8 h-8 rounded-full bg-white bg-opacity-30 flex items-center justify-center text-sm font-medium text-white">2</div>
-                <div class="w-8 h-1 bg-white bg-opacity-30 self-center"></div>
-                <div id="step3-indicator" class="step-indicator w-8 h-8 rounded-full bg-white bg-opacity-30 flex items-center justify-center text-sm font-medium text-white">3</div>
+        <!-- Step Indicator with Labels -->
+        <div class="mb-8">
+            <!-- Step Labels -->
+            <div class="flex justify-between mb-3 px-2">
+                <div class="text-center flex-1">
+                    <p id="step1-label" class="text-xs font-medium text-blue-400">Account</p>
+                </div>
+                <div class="text-center flex-1">
+                    <p id="step2-label" class="text-xs font-medium text-gray-500">Business</p>
+                </div>
+                <div class="text-center flex-1">
+                    <p id="step3-label" class="text-xs font-medium text-gray-500">Customize</p>
+                </div>
+            </div>
+            <!-- Step Circles -->
+            <div class="flex justify-center">
+                <div class="flex items-center">
+                    <div id="step1-indicator" class="step-indicator step-active w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shadow-lg">1</div>
+                    <div class="w-12 h-1 bg-white bg-opacity-30"></div>
+                    <div id="step2-indicator" class="step-indicator w-10 h-10 rounded-full bg-white bg-opacity-30 flex items-center justify-center text-sm font-bold text-white">2</div>
+                    <div class="w-12 h-1 bg-white bg-opacity-30"></div>
+                    <div id="step3-indicator" class="step-indicator w-10 h-10 rounded-full bg-white bg-opacity-30 flex items-center justify-center text-sm font-bold text-white">3</div>
+                </div>
             </div>
         </div>
 
@@ -313,14 +328,18 @@
         function updateStepIndicators() {
             for (let i = 1; i <= 3; i++) {
                 const indicator = document.getElementById(`step${i}-indicator`);
-                indicator.className = 'step-indicator w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium';
-                
+                const label = document.getElementById(`step${i}-label`);
+                indicator.className = 'step-indicator w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold';
+
                 if (i < currentStep) {
-                    indicator.className += ' step-completed';
+                    indicator.className += ' step-completed shadow-lg';
+                    label.className = 'text-xs font-medium text-green-400';
                 } else if (i === currentStep) {
-                    indicator.className += ' step-active';
+                    indicator.className += ' step-active shadow-lg';
+                    label.className = 'text-xs font-medium text-blue-400';
                 } else {
                     indicator.className += ' bg-white bg-opacity-30 text-white';
+                    label.className = 'text-xs font-medium text-gray-500';
                 }
             }
         }

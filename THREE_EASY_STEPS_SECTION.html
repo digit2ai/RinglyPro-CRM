@@ -1,0 +1,78 @@
+<!-- 3 Easy Steps Section - Add this to your web page -->
+<!-- IMPORTANT: Make sure Tailwind CSS is loaded on your page! -->
+<!-- If not already included, add this to your <head>: -->
+<!-- <script src="https://cdn.tailwindcss.com"></script> -->
+
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    :root {
+        --navy: #0b1e3e;
+        --sky: #87ceeb;
+        --orange: #FF914D;
+    }
+
+    .steps-section {
+        margin: 40px 20px;
+        border-radius: 32px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    @media (max-width: 768px) {
+        .steps-section {
+            margin: 20px 10px;
+            border-radius: 24px;
+        }
+    }
+</style>
+
+<!-- 3 Easy Steps Section -->
+<section class="steps-section bg-gradient-to-br from-slate-50 to-slate-100 py-16 md:py-20">
+    <div class="mx-auto max-w-6xl px-4">
+        <h2 class="text-3xl md:text-4xl font-extrabold text-center mb-4" style="color: var(--navy)">Get Started in 3 Easy Steps</h2>
+        <p class="text-center text-slate-600 mb-12 text-lg">Start managing your business like never before</p>
+
+        <div class="grid md:grid-cols-3 gap-8 md:gap-12">
+            <!-- Step 1 -->
+            <div class="bg-white rounded-3xl shadow-lg p-6 md:p-8 text-center border-t-4 hover:shadow-xl transition" style="border-top-color: var(--orange)">
+                <div class="mb-6">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full text-white text-2xl font-bold mb-4" style="background: var(--orange)">1</div>
+                </div>
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69135f284dedcf5759a1a47d.png" alt="Download RinglyPro App" class="w-full h-auto rounded-xl mb-2 shadow-md">
+                <a href="https://apps.apple.com/app/ringlypro" class="inline-block mb-4 text-sm font-semibold hover:underline" style="color: var(--orange)">Download for iOS →</a>
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69189671608ee79cc867ea82.png" alt="Get it on Google Play" class="w-full h-auto rounded-xl mb-2 shadow-md">
+                <a href="https://play.google.com/store/apps/details?id=com.ringlypro" class="inline-block mb-6 text-sm font-semibold hover:underline" style="color: var(--orange)">Download for Android →</a>
+                <h3 class="text-xl md:text-2xl font-bold mb-3" style="color: var(--navy)">Download RinglyPro App</h3>
+                <p class="text-slate-600 leading-relaxed">Get the RinglyPro mobile app from the Apple App Store or Google Play Store and install it on your device.</p>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="bg-white rounded-3xl shadow-lg p-6 md:p-8 text-center border-t-4 hover:shadow-xl transition" style="border-top-color: var(--orange)">
+                <div class="mb-6">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full text-white text-2xl font-bold mb-4" style="background: var(--orange)">2</div>
+                </div>
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/691641661547ed899cd4863b.png" alt="Sign Up for Free" class="w-full h-auto rounded-xl mb-6 shadow-md">
+                <h3 class="text-xl md:text-2xl font-bold mb-3" style="color: var(--navy)">Sign Up for Free</h3>
+                <p class="text-slate-600 leading-relaxed">Create your free account in minutes. No credit card required. Start with 100 free tokens included.</p>
+                <a href="https://aiagent.ringlypro.com/register" class="inline-block mt-4 text-sm font-semibold hover:underline" style="color: var(--orange)">Create Account →</a>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="bg-white rounded-3xl shadow-lg p-6 md:p-8 text-center border-t-4 hover:shadow-xl transition" style="border-top-color: var(--orange)">
+                <div class="mb-6">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full text-white text-2xl font-bold mb-4" style="background: var(--orange)">3</div>
+                </div>
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/691645be01e5bc84c1f3b4de.png" alt="CRM Copilot Dashboard" class="w-full h-auto rounded-xl mb-6 shadow-md">
+                <h3 class="text-xl md:text-2xl font-bold mb-3" style="color: var(--navy)">CRM Copilot Dashboard</h3>
+                <p class="text-slate-600 leading-relaxed">Access your AI-powered dashboard and start managing calls, appointments, and leads effortlessly.</p>
+                <a href="https://aiagent.ringlypro.com" class="inline-block mt-4 text-sm font-semibold hover:underline" style="color: var(--orange)">Launch Dashboard →</a>
+            </div>
+        </div>
+
+        <!-- CTA Button -->
+        <div class="text-center mt-12">
+            <a href="https://aiagent.ringlypro.com/register" class="inline-block rounded-2xl px-8 py-4 text-lg font-semibold text-white shadow-lg hover:shadow-xl transition" style="background: linear-gradient(135deg, var(--orange) 0%, #ff6b35 100%)">Get Started Now</a>
+            <p class="mt-4 text-sm text-slate-600">No credit card required. Start free today.</p>
+        </div>
+    </div>
+</section>
+<!-- End of 3 Easy Steps Section -->
