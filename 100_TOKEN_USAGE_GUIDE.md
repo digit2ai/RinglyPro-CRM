@@ -249,7 +249,7 @@ At this point, you've:
 
 ## Questions?
 
-- 📧 Email: support@ringlypro.com
+- 📧 Email: info@ringlypro.com
 - 📖 Documentation: [RinglyPro Docs](https://docs.ringlypro.com)
 - 💬 Live Chat: Available in dashboard
 

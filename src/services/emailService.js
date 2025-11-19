@@ -31,7 +31,7 @@ async function sendWelcomeEmail({ email, firstName, lastName, businessName, ring
     }
 
     const dashboardUrl = APP_URL + '/dashboard';
-    const supportEmail = 'support@ringlypro.com';
+    const supportEmail = 'info@ringlypro.com';
 
     const msg = {
         to: email,

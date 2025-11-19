@@ -1113,7 +1113,7 @@ class TokenService {
             </a>
 
             <p style="color: #6b7280; font-size: 14px; margin-top: 40px;">
-              Questions? Contact us at support@ringlypro.com
+              Questions? Contact us at info@ringlypro.com
             </p>
           </div>
         `
@@ -2006,7 +2006,7 @@ At $0.10 per token retail:
 - [SendGrid Email API](https://docs.sendgrid.com/api-reference)
 
 ### Support Contacts
-- **Technical Issues**: support@ringlypro.com
+- **Technical Issues**: info@ringlypro.com
 - **Billing Questions**: billing@ringlypro.com
 - **Stripe Support**: https://support.stripe.com
 

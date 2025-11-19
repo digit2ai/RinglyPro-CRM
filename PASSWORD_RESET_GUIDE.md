@@ -403,7 +403,7 @@ if (!/[A-Z]/.test(password)) {
 For issues or questions:
 - Check server logs for detailed error messages
 - Review this documentation
-- Contact: support@ringlypro.com
+- Contact: info@ringlypro.com
 
 ---
 

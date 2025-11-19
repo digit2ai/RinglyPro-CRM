@@ -230,7 +230,7 @@ Complete the content rating questionnaire to get an appropriate rating.
 ## Support
 
 For issues or questions:
-- Email: support@ringlypro.com
+- Email: info@ringlypro.com
 - Website: https://ringlypro.com
 - Documentation: https://docs.ringlypro.com
 

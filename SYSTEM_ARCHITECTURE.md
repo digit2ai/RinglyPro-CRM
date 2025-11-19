@@ -1737,6 +1737,6 @@ app.use(session({
 ---
 
 **Document Author:** RinglyPro Team
-**Contact:** support@ringlypro.com
+**Contact:** info@ringlypro.com
 **License:** Proprietary
 **Last Review:** October 2025

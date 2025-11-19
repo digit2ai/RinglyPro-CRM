@@ -694,7 +694,7 @@ We look forward to speaking with you!
 
 Best regards,
 The RinglyPro Team
-Email: support@ringlypro.com
+Email: info@ringlypro.com
 Phone: (888) 610-3810
 Website: https://ringlypro.com
             """.strip()

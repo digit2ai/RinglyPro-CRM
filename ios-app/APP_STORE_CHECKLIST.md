@@ -149,7 +149,7 @@ Premium Plans:
 PERFECT FOR:
 Small businesses, consultants, real estate agents, service providers, sales teams, and entrepreneurs who want to automate their customer communications.
 
-Support: support@ringlypro.com
+Support: info@ringlypro.com
 Privacy: https://aiagent.ringlypro.com/privacy
 ```
 
@@ -187,7 +187,7 @@ https://aiagent.ringlypro.com/privacy
 First Name: Manuel
 Last Name: Stagg
 Phone: [Your phone]
-Email: support@ringlypro.com
+Email: info@ringlypro.com
 
 Demo Account (Required):
 Username: demo@ringlypro.com
@@ -312,7 +312,7 @@ Version 1.0.1
 - https://developer.apple.com/app-store/review/guidelines/
 
 **RinglyPro Support:**
-- support@ringlypro.com
+- info@ringlypro.com
 
 ---
 

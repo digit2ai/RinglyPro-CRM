@@ -215,7 +215,7 @@ See the detailed description in README.md
 
 **Tags**: CRM, Business, AI, Sales, Automation
 
-**Contact email**: support@ringlypro.com
+**Contact email**: info@ringlypro.com
 
 **Privacy policy URL**: https://ringlypro.com/privacy
 
@@ -381,6 +381,6 @@ To release an update:
 ## Support
 
 For issues with the RinglyPro Android app:
-- Email: support@ringlypro.com
+- Email: info@ringlypro.com
 - Documentation: https://docs.ringlypro.com
 - Website: https://ringlypro.com

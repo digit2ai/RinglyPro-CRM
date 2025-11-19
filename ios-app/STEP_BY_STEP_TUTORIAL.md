@@ -1542,7 +1542,7 @@ FEATURES AT A GLANCE:
 
 Get started today and revolutionize how you manage customer communications!
 
-Support: support@ringlypro.com
+Support: info@ringlypro.com
 Website: https://aiagent.ringlypro.com
 ```
 
@@ -1584,7 +1584,7 @@ AI-Powered Business CRM
 First Name: Manuel
 Last Name: Stagg
 Phone Number: [Your phone with country code]
-Email: support@ringlypro.com
+Email: info@ringlypro.com
 ```
 
 ### 15.2 Demo Account (IMPORTANT!)
@@ -1682,7 +1682,7 @@ This is the initial release of our iOS app, bringing the full power of RinglyPro
 
 We're excited to bring RinglyPro to iOS and help you manage your business on the go!
 
-Have feedback? Email us at support@ringlypro.com
+Have feedback? Email us at info@ringlypro.com
 ```
 
 ---

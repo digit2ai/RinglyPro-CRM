@@ -4,22 +4,32 @@ plugins {
 
 android {
     namespace 'com.ringlypro.app'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.ringlypro.app"
         minSdk 24
-        targetSdk 34
+        targetSdk 35
         versionCode 1
         versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        release {
+            storeFile file('../ringlypro-release.jks')
+            storePassword 'ringlypro2024'
+            keyAlias 'ringlypro'
+            keyPassword 'ringlypro2024'
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 
