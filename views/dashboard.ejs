@@ -4701,9 +4701,7 @@
         });
     </script>
 
-    <!-- Stripe Library - loaded async to prevent WebView redirect issues -->
-    <script src="https://js.stripe.com/v3/" async></script>
-
+    <!-- Stripe Library - loaded dynamically when needed to prevent WebView redirect issues -->
     <!-- Credits Modal JavaScript -->
     <script>
         // Stripe Configuration - PRODUCTION LIVE KEY
@@ -4714,6 +4712,26 @@
         let elements = null;
         let cardElement = null;
         let stripeInitialized = false;
+        let stripeScriptLoaded = false;
+
+        // Load Stripe script dynamically
+        function loadStripeScript() {
+            return new Promise((resolve, reject) => {
+                if (stripeScriptLoaded) {
+                    resolve();
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = 'https://js.stripe.com/v3/';
+                script.onload = () => {
+                    stripeScriptLoaded = true;
+                    resolve();
+                };
+                script.onerror = () => reject(new Error('Failed to load Stripe'));
+                document.head.appendChild(script);
+            });
+        }
 
         function initializeStripe() {
             if (stripeInitialized || typeof Stripe === 'undefined') return false;
@@ -4746,11 +4764,21 @@
         let cardMounted = false;
 
         // Mount card element when modal opens
-        function mountCardElement() {
+        async function mountCardElement() {
+            // Load Stripe script first if not loaded
+            if (!stripeScriptLoaded) {
+                try {
+                    await loadStripeScript();
+                } catch (error) {
+                    console.error('Failed to load Stripe:', error);
+                    return;
+                }
+            }
+
             // Initialize Stripe on first use
             if (!stripeInitialized) {
                 if (!initializeStripe()) {
-                    console.error('Stripe not loaded yet');
+                    console.error('Stripe not initialized');
                     return;
                 }
             }
