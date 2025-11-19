@@ -3927,7 +3927,8 @@
         // Open MCP Copilot with auto-loaded credentials
         function openMCPCopilot() {
             const mcpUrl = `${window.location.origin}/mcp-copilot/?client_id=${CLIENT_ID}`;
-            window.open(mcpUrl, '_blank');
+            // Use location.href for WebView compatibility (window.open doesn't work well in iOS WebViews)
+            window.location.href = mcpUrl;
         }
 
         // =====================================================
@@ -4700,31 +4701,45 @@
         });
     </script>
 
-    <!-- Stripe Library -->
-    <script src="https://js.stripe.com/v3/"></script>
+    <!-- Stripe Library - loaded async to prevent WebView redirect issues -->
+    <script src="https://js.stripe.com/v3/" async></script>
 
     <!-- Credits Modal JavaScript -->
     <script>
         // Stripe Configuration - PRODUCTION LIVE KEY
         const STRIPE_PUBLISHABLE_KEY = 'pk_live_51RHs2aF3QBlDrgxx4L6FasMQjDPEPWh4WL3MYFQQAleDBeFdQxb52gCoGrSdSEuMEE6Ls3Em02xqfxNErg05Dk9100MR9XAlHI';
-        const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
-        const elements = stripe.elements();
 
-        // Create card element
-        const cardElement = elements.create('card', {
-            style: {
-                base: {
-                    fontSize: '16px',
-                    color: '#1f2937',
-                    '::placeholder': {
-                        color: '#9ca3af'
+        // Defer Stripe initialization until needed
+        let stripe = null;
+        let elements = null;
+        let cardElement = null;
+        let stripeInitialized = false;
+
+        function initializeStripe() {
+            if (stripeInitialized || typeof Stripe === 'undefined') return false;
+
+            stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+            elements = stripe.elements();
+
+            // Create card element
+            cardElement = elements.create('card', {
+                style: {
+                    base: {
+                        fontSize: '16px',
+                        color: '#1f2937',
+                        '::placeholder': {
+                            color: '#9ca3af'
+                        }
+                    },
+                    invalid: {
+                        color: '#ef4444'
                     }
-                },
-                invalid: {
-                    color: '#ef4444'
                 }
-            }
-        });
+            });
+
+            stripeInitialized = true;
+            return true;
+        }
 
         // State
         let selectedAmount = null;
@@ -4732,10 +4747,18 @@
 
         // Mount card element when modal opens
         function mountCardElement() {
-            if (!cardMounted) {
+            // Initialize Stripe on first use
+            if (!stripeInitialized) {
+                if (!initializeStripe()) {
+                    console.error('Stripe not loaded yet');
+                    return;
+                }
+            }
+
+            if (!cardMounted && cardElement) {
                 cardElement.mount('#card-element');
                 cardMounted = true;
-                
+
                 // Handle card errors
                 cardElement.on('change', function(event) {
                     const displayError = document.getElementById('card-errors');
