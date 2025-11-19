@@ -357,6 +357,11 @@ app.get('/terms', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/terms.html'));
 });
 
+// Delete Account page route (required for Google Play)
+app.get('/delete-account', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/delete-account.html'));
+});
+
 // Redirect root to dashboard if authenticated, otherwise to login
 app.get('/auth-check', (req, res) => {
   // This would check JWT token when we add middleware later
