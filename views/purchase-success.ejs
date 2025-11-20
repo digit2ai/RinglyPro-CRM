@@ -154,7 +154,7 @@
 
                     // Auto-redirect after 2 seconds
                     setTimeout(() => {
-                        window.location.href = '/dashboard';
+                        window.location.href = '/';
                     }, 2000);
                 } else {
                     showError(data.error || 'Failed to verify payment');
@@ -173,7 +173,7 @@
         }
 
         function goToDashboard() {
-            window.location.href = '/dashboard';
+            window.location.href = '/';
         }
 
         // Start verification when page loads
