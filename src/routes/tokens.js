@@ -680,8 +680,18 @@ router.get('/reset-status/:userId', async (req, res) => {
  */
 router.post('/create-checkout-session', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId || req.user.id;
     const { amount, tokens } = req.body;
+
+    logger.info(`[TOKENS] Creating checkout session - User object:`, req.user);
+    logger.info(`[TOKENS] Creating checkout session for user ${userId}, amount: $${amount}, tokens: ${tokens}`);
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'User ID not found in token'
+      });
+    }
 
     if (!amount || !tokens) {
       return res.status(400).json({
