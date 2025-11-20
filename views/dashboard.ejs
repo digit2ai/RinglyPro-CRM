@@ -4799,23 +4799,11 @@
             }
         }
 
-        // Open credits modal
+        // Redirect to dedicated purchase page instead of modal
         function showCreditsInfo() {
-            const modal = document.getElementById('creditsModal');
-            modal.classList.add('active');
-            
-            // Load current balance into modal
-            loadModalBalance();
-            
-            // Mount Stripe card element
-            mountCardElement();
-            
-            // Reset selection
-            selectedAmount = null;
-            document.querySelectorAll('.package-option').forEach(el => el.classList.remove('selected'));
-            document.getElementById('payButton').disabled = true;
-            document.getElementById('payButton').textContent = 'Select a package to continue';
-            document.getElementById('successMessage').classList.remove('show');
+            // Navigate to dedicated token purchase page
+            // This avoids all Stripe loading issues in iOS WebView
+            window.location.href = '/purchase-tokens';
         }
 
         // Close credits modal

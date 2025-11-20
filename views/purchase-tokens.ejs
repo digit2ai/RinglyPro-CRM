@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Tokens - RinglyPro</title>
+
+    <!-- Stripe.js loaded in head - controlled environment -->
+    <script src="https://js.stripe.com/v3/"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #1f2937;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: 1rem;
+        }
+
+        .balance-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .balance-card h3 {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .balance-card .amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        .packages {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .package {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .package:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .package.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .package .tokens {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .package .price {
+            font-size: 1.2rem;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .card-element {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        #card-errors {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 10px;
+            min-height: 20px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #6b7280;
+            margin-top: 15px;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+            color: #065f46;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Purchase Tokens</h1>
+            <p>Select a package to add tokens to your account</p>
+        </div>
+
+        <div class="balance-card">
+            <h3>Current Balance</h3>
+            <div class="amount" id="currentBalance">Loading...</div>
+        </div>
+
+        <div id="successMessage" class="success-message">
+            Payment successful! Tokens added to your account.
+        </div>
+
+        <div class="packages">
+            <div class="package" onclick="selectPackage(10, 100)" data-amount="10">
+                <div class="tokens">100</div>
+                <div class="price">$10</div>
+            </div>
+            <div class="package" onclick="selectPackage(50, 600)" data-amount="50">
+                <div class="tokens">600</div>
+                <div class="price">$50</div>
+            </div>
+            <div class="package" onclick="selectPackage(100, 1300)" data-amount="100">
+                <div class="tokens">1,300</div>
+                <div class="price">$100</div>
+            </div>
+        </div>
+
+        <div id="card-element" class="card-element"></div>
+        <div id="card-errors"></div>
+
+        <button id="payButton" class="btn btn-primary" disabled onclick="processPayment()">
+            Select a package to continue
+        </button>
+
+        <button class="btn btn-secondary" onclick="goBack()">
+            Cancel
+        </button>
+    </div>
+
+    <script>
+        const STRIPE_PUBLISHABLE_KEY = 'pk_live_51RHs2aF3QBlDrgxx4L6FasMQjDPEPWh4WL3MYFQQAleDBeFdQxb52gCoGrSdSEuMEE6Ls3Em02xqfxNErg05Dk9100MR9XAlHI';
+
+        let stripe, elements, cardElement;
+        let selectedAmount = null;
+        let selectedTokens = null;
+
+        // Initialize Stripe
+        document.addEventListener('DOMContentLoaded', function() {
+            stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+            elements = stripe.elements();
+
+            cardElement = elements.create('card', {
+                style: {
+                    base: {
+                        fontSize: '16px',
+                        color: '#1f2937',
+                        '::placeholder': { color: '#9ca3af' }
+                    }
+                }
+            });
+
+            cardElement.mount('#card-element');
+
+            cardElement.on('change', function(event) {
+                document.getElementById('card-errors').textContent = event.error ? event.error.message : '';
+            });
+
+            loadBalance();
+        });
+
+        async function loadBalance() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/tokens/balance', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('currentBalance').textContent = `${data.balance.toLocaleString()} tokens`;
+                }
+            } catch (error) {
+                console.error('Error loading balance:', error);
+            }
+        }
+
+        function selectPackage(amount, tokens) {
+            selectedAmount = amount;
+            selectedTokens = tokens;
+
+            document.querySelectorAll('.package').forEach(el => el.classList.remove('selected'));
+            document.querySelector(`[data-amount="${amount}"]`).classList.add('selected');
+
+            const btn = document.getElementById('payButton');
+            btn.disabled = false;
+            btn.textContent = `Pay $${amount}`;
+        }
+
+        async function processPayment() {
+            if (!selectedAmount) return;
+
+            const btn = document.getElementById('payButton');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Processing...';
+
+            try {
+                const token = localStorage.getItem('token');
+
+                // Create payment intent
+                const response = await fetch('/api/credits/reload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ amount: selectedAmount })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create payment intent');
+                }
+
+                const { clientSecret } = await response.json();
+
+                // Confirm payment
+                const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+                    payment_method: { card: cardElement }
+                });
+
+                if (error) {
+                    throw new Error(error.message);
+                }
+
+                if (paymentIntent.status === 'succeeded') {
+                    document.getElementById('successMessage').classList.add('show');
+
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    await loadBalance();
+
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1000);
+                }
+            } catch (error) {
+                alert('Payment failed: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        function goBack() {
+            window.location.href = '/dashboard';
+        }
+    </script>
+</body>
+</html>

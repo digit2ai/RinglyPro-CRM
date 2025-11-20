@@ -799,4 +799,9 @@ router.post('/reset-password', async (req, res) => {
     }
 });
 
+// GET /purchase-tokens - Token purchase page
+router.get('/purchase-tokens', (req, res) => {
+    res.render('purchase-tokens');
+});
+
 module.exports = router;
