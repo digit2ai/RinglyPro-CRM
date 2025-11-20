@@ -18,6 +18,9 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
 
+    <!-- Stripe.js - Load early to prevent navigation issues in iOS WebView -->
+    <script src="https://js.stripe.com/v3/"></script>
+
     <style>
         * {
             margin: 0;
@@ -4714,22 +4717,28 @@
         let stripeInitialized = false;
         let stripeScriptLoaded = false;
 
-        // Load Stripe script dynamically
+        // Check if Stripe script is loaded (now preloaded in <head>)
         function loadStripeScript() {
             return new Promise((resolve, reject) => {
-                if (stripeScriptLoaded) {
+                // Stripe is now preloaded in head, check if available
+                if (typeof Stripe !== 'undefined') {
+                    stripeScriptLoaded = true;
                     resolve();
                     return;
                 }
 
-                const script = document.createElement('script');
-                script.src = 'https://js.stripe.com/v3/';
-                script.onload = () => {
-                    stripeScriptLoaded = true;
-                    resolve();
-                };
-                script.onerror = () => reject(new Error('Failed to load Stripe'));
-                document.head.appendChild(script);
+                // Fallback: wait for script to load
+                let attempts = 0;
+                const checkStripe = setInterval(() => {
+                    if (typeof Stripe !== 'undefined') {
+                        stripeScriptLoaded = true;
+                        clearInterval(checkStripe);
+                        resolve();
+                    } else if (attempts++ > 50) { // 5 seconds timeout
+                        clearInterval(checkStripe);
+                        reject(new Error('Stripe failed to load'));
+                    }
+                }, 100);
             });
         }
 

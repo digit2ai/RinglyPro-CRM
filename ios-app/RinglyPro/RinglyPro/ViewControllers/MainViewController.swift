@@ -263,12 +263,27 @@ extension MainViewController: WKNavigationDelegate {
 
         print("🔵 MainVC: Navigation to: \(url.absoluteString)")
 
-        // Handle external links
-        if let host = url.host, !host.contains("ringlypro.com") {
-            if UIApplication.shared.canOpenURL(url) {
-                UIApplication.shared.open(url)
-                decisionHandler(.cancel)
-                return
+        // Whitelist domains that should load within WebView
+        let allowedDomains = [
+            "ringlypro.com",
+            "js.stripe.com",           // Stripe payment library
+            "checkout.stripe.com",     // Stripe checkout pages
+            "api.stripe.com",          // Stripe API
+            "m.stripe.network",        // Stripe CDN
+            "m.stripe.com"             // Stripe mobile
+        ]
+
+        // Handle external links - only open in Safari if NOT in whitelist
+        if let host = url.host {
+            let isAllowed = allowedDomains.contains { host.contains($0) }
+
+            if !isAllowed {
+                // Open in Safari for non-whitelisted domains
+                if UIApplication.shared.canOpenURL(url) {
+                    UIApplication.shared.open(url)
+                    decisionHandler(.cancel)
+                    return
+                }
             }
         }
 
