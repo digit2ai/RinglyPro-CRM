@@ -4806,23 +4806,48 @@
             }
         }
 
-        // Open credits modal
-        function showCreditsInfo() {
-            const modal = document.getElementById('creditsModal');
-            modal.classList.add('active');
-            
-            // Load current balance into modal
-            loadModalBalance();
-            
-            // Mount Stripe card element
-            mountCardElement();
-            
-            // Reset selection
-            selectedAmount = null;
-            document.querySelectorAll('.package-option').forEach(el => el.classList.remove('selected'));
-            document.getElementById('payButton').disabled = true;
-            document.getElementById('payButton').textContent = 'Select a package to continue';
-            document.getElementById('successMessage').classList.remove('show');
+        // Open credits modal (async to wait for Stripe loading)
+        async function showCreditsInfo() {
+            // IMPORTANT: Load Stripe FIRST, THEN show modal
+            // This prevents navigation issues in iOS WebView
+
+            // Show loading indicator
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);z-index:10000;';
+            loadingIndicator.innerHTML = '<div style="text-align:center;"><div style="border:3px solid #f3f3f3;border-top:3px solid #667eea;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto 10px;"></div><p>Loading payment system...</p></div>';
+            document.body.appendChild(loadingIndicator);
+
+            try {
+                // Mount Stripe card element (this loads Stripe if not loaded)
+                await mountCardElement();
+
+                // Wait a bit to ensure Stripe is fully initialized
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Remove loading indicator
+                document.body.removeChild(loadingIndicator);
+
+                // NOW show the modal after Stripe is ready
+                const modal = document.getElementById('creditsModal');
+                modal.classList.add('active');
+
+                // Load current balance into modal
+                loadModalBalance();
+
+                // Reset selection
+                selectedAmount = null;
+                document.querySelectorAll('.package-option').forEach(el => el.classList.remove('selected'));
+                document.getElementById('payButton').disabled = true;
+                document.getElementById('payButton').textContent = 'Select a package to continue';
+                document.getElementById('successMessage').classList.remove('show');
+            } catch (error) {
+                // Remove loading indicator
+                if (document.body.contains(loadingIndicator)) {
+                    document.body.removeChild(loadingIndicator);
+                }
+                console.error('Failed to load payment system:', error);
+                alert('Failed to load payment system. Please try again.');
+            }
         }
 
         // Close credits modal
