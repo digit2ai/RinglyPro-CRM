@@ -252,10 +252,12 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    document.getElementById('currentBalance').textContent = `${data.balance.toLocaleString()} tokens`;
+                    const balance = data.balance || 0;
+                    document.getElementById('currentBalance').textContent = `${balance.toLocaleString()} tokens`;
                 }
             } catch (error) {
                 console.error('Error loading balance:', error);
+                document.getElementById('currentBalance').textContent = '0 tokens';
             }
         }
 
@@ -282,6 +284,10 @@
             try {
                 const token = localStorage.getItem('token');
 
+                if (!token) {
+                    throw new Error('Please log in to purchase tokens');
+                }
+
                 // Create Stripe Checkout Session (hosted page - no Stripe.js needed!)
                 const response = await fetch('/api/tokens/create-checkout-session', {
                     method: 'POST',
@@ -296,16 +302,23 @@
                 });
 
                 if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Failed to create checkout session');
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    console.error('Checkout session error:', errorData);
+                    throw new Error(errorData.error || 'Failed to create checkout session');
                 }
 
-                const { url } = await response.json();
+                const data = await response.json();
+                console.log('Checkout session response:', data);
+
+                if (!data.url) {
+                    throw new Error('No checkout URL received from server');
+                }
 
                 // Redirect to Stripe Checkout - this is a proper navigation that iOS handles well
-                window.location.href = url;
+                window.location.href = data.url;
 
             } catch (error) {
+                console.error('Payment error:', error);
                 alert('Payment failed: ' + error.message);
                 btn.disabled = false;
                 btn.textContent = originalText;
