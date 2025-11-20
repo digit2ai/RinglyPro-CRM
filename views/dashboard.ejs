@@ -4714,24 +4714,23 @@
         let stripeInitialized = false;
         let stripeScriptLoaded = false;
 
-        // Check if Stripe is loaded (preloaded at page load)
-        async function loadStripeScript() {
-            // Stripe is preloaded, just check if it's available
-            if (stripeScriptLoaded || typeof Stripe !== 'undefined') {
-                stripeScriptLoaded = true;
-                return Promise.resolve();
-            }
-
-            // Wait for Stripe to load (max 10 seconds)
-            for (let i = 0; i < 100; i++) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                if (typeof Stripe !== 'undefined') {
-                    stripeScriptLoaded = true;
-                    return Promise.resolve();
+        // Load Stripe script dynamically
+        function loadStripeScript() {
+            return new Promise((resolve, reject) => {
+                if (stripeScriptLoaded) {
+                    resolve();
+                    return;
                 }
-            }
 
-            return Promise.reject(new Error('Stripe failed to load'));
+                const script = document.createElement('script');
+                script.src = 'https://js.stripe.com/v3/';
+                script.onload = () => {
+                    stripeScriptLoaded = true;
+                    resolve();
+                };
+                script.onerror = () => reject(new Error('Failed to load Stripe'));
+                document.head.appendChild(script);
+            });
         }
 
         function initializeStripe() {
@@ -4801,17 +4800,16 @@
         }
 
         // Open credits modal
-        async function showCreditsInfo() {
-            // Open modal immediately - Stripe is already preloaded
+        function showCreditsInfo() {
             const modal = document.getElementById('creditsModal');
             modal.classList.add('active');
-
+            
             // Load current balance into modal
             loadModalBalance();
-
+            
             // Mount Stripe card element
             mountCardElement();
-
+            
             // Reset selection
             selectedAmount = null;
             document.querySelectorAll('.package-option').forEach(el => el.classList.remove('selected'));
@@ -4971,21 +4969,6 @@
             if (e.key === 'Escape') {
                 closeCreditsModal();
             }
-        });
-
-        // Load Stripe at the very end, after everything else
-        // This prevents navigation issues
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                const stripeScript = document.createElement('script');
-                stripeScript.src = 'https://js.stripe.com/v3/';
-                stripeScript.async = true;
-                stripeScript.onload = function() {
-                    console.log('Stripe loaded successfully');
-                    stripeScriptLoaded = true;
-                };
-                document.body.appendChild(stripeScript);
-            }, 1000); // Wait 1 second after page load
         });
     </script>
 </body>
