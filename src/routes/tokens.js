@@ -753,8 +753,17 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
  */
 router.get('/verify-payment', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId || req.user.id;
     const { session_id } = req.query;
+
+    logger.info(`[TOKENS] Verifying payment for user ${userId}, session: ${session_id}`);
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'User ID not found in token'
+      });
+    }
 
     if (!session_id) {
       return res.status(400).json({
@@ -789,15 +798,17 @@ router.get('/verify-payment', authenticateToken, async (req, res) => {
     const tokens = parseInt(session.metadata.tokens);
     const amount = parseFloat(session.metadata.amount);
 
+    logger.info(`[TOKENS] Payment verified - adding ${tokens} tokens to user ${userId}, transaction: ${session.payment_intent}`);
+
     // Add tokens to user account
-    const result = await tokenService.addTokens(userId, tokens, {
-      source: 'purchase',
+    const result = await tokenService.addTokens(userId, tokens, 'purchase', {
       transactionId: session.payment_intent,
+      stripeSessionId: session_id,
       amount: amount,
       currency: 'usd'
     });
 
-    logger.info(`[TOKENS] Payment verified and ${tokens} tokens added to user ${userId}`);
+    logger.info(`[TOKENS] Successfully added ${tokens} tokens to user ${userId}, new balance: ${result.balance}`);
 
     res.json({
       success: true,
