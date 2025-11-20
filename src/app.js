@@ -347,6 +347,15 @@ app.get('/reset-password', (req, res) => {
   });
 });
 
+// Purchase tokens page route
+app.get('/purchase-tokens', (req, res) => {
+  res.render('purchase-tokens', {
+    title: `${CLIENT_NAME} - Purchase Tokens`,
+    clientName: CLIENT_NAME,
+    clientId: CLIENT_ID
+  });
+});
+
 // Privacy Policy page route (required for App Store)
 app.get('/privacy', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/privacy.html'));
