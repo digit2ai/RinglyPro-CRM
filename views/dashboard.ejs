@@ -4714,30 +4714,24 @@
         let stripeInitialized = false;
         let stripeScriptLoaded = false;
 
-        // Load Stripe script dynamically using fetch to avoid iOS WebView navigation
+        // Check if Stripe is loaded (preloaded at page load)
         async function loadStripeScript() {
-            // Check if already loaded
+            // Stripe is preloaded, just check if it's available
             if (stripeScriptLoaded || typeof Stripe !== 'undefined') {
                 stripeScriptLoaded = true;
                 return Promise.resolve();
             }
 
-            try {
-                // Fetch Stripe script as text to avoid navigation
-                const response = await fetch('https://js.stripe.com/v3/');
-                const scriptText = await response.text();
-
-                // Create script element with inline code
-                const script = document.createElement('script');
-                script.textContent = scriptText;
-                document.body.appendChild(script);
-
-                stripeScriptLoaded = true;
-                return Promise.resolve();
-            } catch (error) {
-                console.error('Failed to load Stripe:', error);
-                return Promise.reject(new Error('Failed to load Stripe'));
+            // Wait for Stripe to load (max 10 seconds)
+            for (let i = 0; i < 100; i++) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                if (typeof Stripe !== 'undefined') {
+                    stripeScriptLoaded = true;
+                    return Promise.resolve();
+                }
             }
+
+            return Promise.reject(new Error('Stripe failed to load'));
         }
 
         function initializeStripe() {
@@ -4806,48 +4800,24 @@
             }
         }
 
-        // Open credits modal (async to wait for Stripe loading)
+        // Open credits modal
         async function showCreditsInfo() {
-            // IMPORTANT: Load Stripe FIRST, THEN show modal
-            // This prevents navigation issues in iOS WebView
+            // Open modal immediately - Stripe is already preloaded
+            const modal = document.getElementById('creditsModal');
+            modal.classList.add('active');
 
-            // Show loading indicator
-            const loadingIndicator = document.createElement('div');
-            loadingIndicator.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);z-index:10000;';
-            loadingIndicator.innerHTML = '<div style="text-align:center;"><div style="border:3px solid #f3f3f3;border-top:3px solid #667eea;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto 10px;"></div><p>Loading payment system...</p></div>';
-            document.body.appendChild(loadingIndicator);
+            // Load current balance into modal
+            loadModalBalance();
 
-            try {
-                // Mount Stripe card element (this loads Stripe if not loaded)
-                await mountCardElement();
+            // Mount Stripe card element
+            mountCardElement();
 
-                // Wait a bit to ensure Stripe is fully initialized
-                await new Promise(resolve => setTimeout(resolve, 500));
-
-                // Remove loading indicator
-                document.body.removeChild(loadingIndicator);
-
-                // NOW show the modal after Stripe is ready
-                const modal = document.getElementById('creditsModal');
-                modal.classList.add('active');
-
-                // Load current balance into modal
-                loadModalBalance();
-
-                // Reset selection
-                selectedAmount = null;
-                document.querySelectorAll('.package-option').forEach(el => el.classList.remove('selected'));
-                document.getElementById('payButton').disabled = true;
-                document.getElementById('payButton').textContent = 'Select a package to continue';
-                document.getElementById('successMessage').classList.remove('show');
-            } catch (error) {
-                // Remove loading indicator
-                if (document.body.contains(loadingIndicator)) {
-                    document.body.removeChild(loadingIndicator);
-                }
-                console.error('Failed to load payment system:', error);
-                alert('Failed to load payment system. Please try again.');
-            }
+            // Reset selection
+            selectedAmount = null;
+            document.querySelectorAll('.package-option').forEach(el => el.classList.remove('selected'));
+            document.getElementById('payButton').disabled = true;
+            document.getElementById('payButton').textContent = 'Select a package to continue';
+            document.getElementById('successMessage').classList.remove('show');
         }
 
         // Close credits modal
@@ -5001,6 +4971,21 @@
             if (e.key === 'Escape') {
                 closeCreditsModal();
             }
+        });
+
+        // Load Stripe at the very end, after everything else
+        // This prevents navigation issues
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const stripeScript = document.createElement('script');
+                stripeScript.src = 'https://js.stripe.com/v3/';
+                stripeScript.async = true;
+                stripeScript.onload = function() {
+                    console.log('Stripe loaded successfully');
+                    stripeScriptLoaded = true;
+                };
+                document.body.appendChild(stripeScript);
+            }, 1000); // Wait 1 second after page load
         });
     </script>
 </body>
