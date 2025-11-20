@@ -262,6 +262,14 @@ extension MainViewController: WKNavigationDelegate {
         }
 
         print("🔵 MainVC: Navigation to: \(url.absoluteString)")
+        print("🔵 MainVC: Navigation type: \(navigationAction.navigationType.rawValue)")
+
+        // Allow script/resource loading (navigationType == .other means scripts, images, etc.)
+        // This prevents js.stripe.com from causing visible navigation
+        if navigationAction.navigationType == .other {
+            decisionHandler(.allow)
+            return
+        }
 
         // Whitelist domains that should load within WebView
         let allowedDomains = [
