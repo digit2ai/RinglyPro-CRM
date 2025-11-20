@@ -673,4 +673,135 @@ router.get('/reset-status/:userId', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/tokens/create-checkout-session
+ * Create Stripe Checkout Session for token purchase
+ * This avoids Stripe.js loading issues in iOS WebView
+ */
+router.post('/create-checkout-session', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { amount, tokens } = req.body;
+
+    if (!amount || !tokens) {
+      return res.status(400).json({
+        success: false,
+        error: 'Amount and tokens are required'
+      });
+    }
+
+    // Initialize Stripe
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+    // Create Checkout Session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `${tokens} RinglyPro Tokens`,
+              description: `Add ${tokens} tokens to your account`,
+            },
+            unit_amount: amount * 100, // Stripe expects cents
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'}/purchase-tokens?canceled=true`,
+      client_reference_id: userId.toString(),
+      metadata: {
+        userId: userId.toString(),
+        tokens: tokens.toString(),
+        amount: amount.toString()
+      }
+    });
+
+    logger.info(`[TOKENS] Created checkout session for user ${userId}: ${session.id}`);
+
+    res.json({
+      success: true,
+      url: session.url,
+      sessionId: session.id
+    });
+
+  } catch (error) {
+    logger.error('[TOKENS API] Create checkout session error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to create checkout session'
+    });
+  }
+});
+
+/**
+ * GET /api/tokens/verify-payment
+ * Verify Stripe Checkout Session and add tokens to user account
+ */
+router.get('/verify-payment', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { session_id } = req.query;
+
+    if (!session_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Session ID is required'
+      });
+    }
+
+    // Initialize Stripe
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+    // Retrieve the session
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+
+    // Verify the session belongs to this user
+    if (session.client_reference_id !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: 'Unauthorized'
+      });
+    }
+
+    // Check if payment was successful
+    if (session.payment_status !== 'paid') {
+      return res.status(400).json({
+        success: false,
+        error: 'Payment not completed'
+      });
+    }
+
+    // Get tokens and amount from metadata
+    const tokens = parseInt(session.metadata.tokens);
+    const amount = parseFloat(session.metadata.amount);
+
+    // Add tokens to user account
+    const result = await tokenService.addTokens(userId, tokens, {
+      source: 'purchase',
+      transactionId: session.payment_intent,
+      amount: amount,
+      currency: 'usd'
+    });
+
+    logger.info(`[TOKENS] Payment verified and ${tokens} tokens added to user ${userId}`);
+
+    res.json({
+      success: true,
+      tokensAdded: tokens,
+      newBalance: result.balance
+    });
+
+  } catch (error) {
+    logger.error('[TOKENS API] Verify payment error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to verify payment'
+    });
+  }
+});
+
 module.exports = router;

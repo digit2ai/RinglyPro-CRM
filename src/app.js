@@ -356,6 +356,16 @@ app.get('/purchase-tokens', (req, res) => {
   });
 });
 
+// Purchase success page route
+app.get('/purchase-success', (req, res) => {
+  res.render('purchase-success', {
+    title: `${CLIENT_NAME} - Purchase Successful`,
+    clientName: CLIENT_NAME,
+    clientId: CLIENT_ID,
+    sessionId: req.query.session_id || ''
+  });
+});
+
 // Privacy Policy page route (required for App Store)
 app.get('/privacy', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/privacy.html'));

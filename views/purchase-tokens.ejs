@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purchase Tokens - RinglyPro</title>
 
-    <!-- Stripe.js loaded in head - controlled environment -->
-    <script src="https://js.stripe.com/v3/"></script>
-
     <style>
         * {
             margin: 0;
@@ -220,8 +217,9 @@
             </div>
         </div>
 
-        <div id="card-element" class="card-element"></div>
-        <div id="card-errors"></div>
+        <div style="text-align: center; color: #6b7280; margin: 20px 0; font-size: 0.9rem;">
+            You'll be redirected to secure Stripe checkout
+        </div>
 
         <button id="payButton" class="btn btn-primary" disabled onclick="processPayment()">
             Select a package to continue
@@ -233,33 +231,11 @@
     </div>
 
     <script>
-        const STRIPE_PUBLISHABLE_KEY = 'pk_live_51RHs2aF3QBlDrgxx4L6FasMQjDPEPWh4WL3MYFQQAleDBeFdQxb52gCoGrSdSEuMEE6Ls3Em02xqfxNErg05Dk9100MR9XAlHI';
-
-        let stripe, elements, cardElement;
         let selectedAmount = null;
         let selectedTokens = null;
 
-        // Initialize Stripe
+        // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
-            stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
-            elements = stripe.elements();
-
-            cardElement = elements.create('card', {
-                style: {
-                    base: {
-                        fontSize: '16px',
-                        color: '#1f2937',
-                        '::placeholder': { color: '#9ca3af' }
-                    }
-                }
-            });
-
-            cardElement.mount('#card-element');
-
-            cardElement.on('change', function(event) {
-                document.getElementById('card-errors').textContent = event.error ? event.error.message : '';
-            });
-
             loadBalance();
         });
 
@@ -297,46 +273,34 @@
             const btn = document.getElementById('payButton');
             const originalText = btn.textContent;
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span>Processing...';
+            btn.innerHTML = '<span class="spinner"></span>Creating checkout...';
 
             try {
                 const token = localStorage.getItem('token');
 
-                // Create payment intent
-                const response = await fetch('/api/credits/reload', {
+                // Create Stripe Checkout Session (hosted page - no Stripe.js needed!)
+                const response = await fetch('/api/tokens/create-checkout-session', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ amount: selectedAmount })
+                    body: JSON.stringify({
+                        amount: selectedAmount,
+                        tokens: selectedTokens
+                    })
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to create payment intent');
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to create checkout session');
                 }
 
-                const { clientSecret } = await response.json();
+                const { url } = await response.json();
 
-                // Confirm payment
-                const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-                    payment_method: { card: cardElement }
-                });
+                // Redirect to Stripe Checkout - this is a proper navigation that iOS handles well
+                window.location.href = url;
 
-                if (error) {
-                    throw new Error(error.message);
-                }
-
-                if (paymentIntent.status === 'succeeded') {
-                    document.getElementById('successMessage').classList.add('show');
-
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    await loadBalance();
-
-                    setTimeout(() => {
-                        window.location.href = '/dashboard';
-                    }, 1000);
-                }
             } catch (error) {
                 alert('Payment failed: ' + error.message);
                 btn.disabled = false;
