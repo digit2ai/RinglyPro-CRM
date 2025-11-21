@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RinglyPro - Partnership Agreement</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --navy: #0b1e3e;
+            --sky: #87ceeb;
+            --orange: #FF914D;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .main-container {
+            margin: 40px 20px;
+            border-radius: 32px;
+            box-shadow: 0 20px 60px rgba(11, 30, 62, 0.2);
+        }
+
+        .contract-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .signature-pad {
+            border: 2px solid var(--orange);
+            border-radius: 12px;
+            background: white;
+            cursor: crosshair;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--orange);
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--orange) 0%, #ff6b35 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 145, 77, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--navy);
+            border: 2px solid var(--navy);
+        }
+
+        .btn-secondary:hover {
+            background: var(--navy);
+            color: white;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            cursor: pointer;
+            accent-color: var(--orange);
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 20px 10px;
+                border-radius: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+        <div class="max-w-4xl mx-auto px-4 py-12">
+
+            <!-- Logo -->
+            <div class="text-center mb-6">
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69175f336c431e834ac954b8.png"
+                     alt="RinglyPro Logo"
+                     class="mx-auto"
+                     style="max-width: 250px; width: 100%; height: auto;">
+            </div>
+
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-extrabold mb-3" style="color: var(--navy)">
+                    Revenue Partnership Agreement
+                </h1>
+                <p class="text-lg text-gray-600">RinglyPro Referral Partnership Program</p>
+                <a href="https://aiagent.ringlypro.com/partnership-roadmap" target="_blank" class="inline-block mt-3 text-sm font-semibold hover:underline" style="color: var(--orange)">
+                    View Partnership Roadmap →
+                </a>
+            </div>
+
+            <!-- Agreement Content -->
+            <div class="contract-section">
+                <h2 class="text-2xl font-bold mb-4" style="color: var(--navy)">Partnership Agreement</h2>
+
+                <div class="space-y-4 text-gray-700 leading-relaxed">
+                    <p><strong>Effective Date:</strong> <span id="currentDate"></span></p>
+
+                    <p>This Revenue Partnership Agreement ("Agreement") is entered into between <strong>Digit2AI LLC</strong>, operating as <strong>RinglyPro</strong> ("Company"), and the Partner identified below ("Partner").</p>
+
+                    <h3 class="text-xl font-bold mt-6 mb-3" style="color: var(--navy)">1. Partnership Terms</h3>
+                    <p><strong>1.1 Revenue Share:</strong> Partner shall receive <strong>50% of net profits</strong> generated from customers referred by Partner to RinglyPro.</p>
+
+                    <p><strong>1.2 Net Profit Definition:</strong> Net profit is defined as gross revenue from Partner-referred customers minus direct costs of service delivery, calculated at approximately 40% profit margin on gross revenue.</p>
+
+                    <p><strong>1.3 Payment Terms:</strong> Commission payments shall be made monthly, within 15 days after the end of each calendar month, for all verified transactions from the previous month.</p>
+
+                    <p><strong>1.4 Lifetime Value:</strong> Partner receives recurring payments for the entire lifetime of each referred customer, as long as the customer remains an active paying subscriber.</p>
+
+                    <h3 class="text-xl font-bold mt-6 mb-3" style="color: var(--navy)">2. Partner Responsibilities</h3>
+                    <p><strong>2.1 Marketing:</strong> Partner agrees to promote RinglyPro services through their unique referral link provided via the RinglyPro dashboard.</p>
+
+                    <p><strong>2.2 Compliance:</strong> Partner shall comply with all applicable laws and RinglyPro branding standards when promoting services.</p>
+
+                    <p><strong>2.3 Prohibited Activities:</strong> Partner shall not engage in spam, false advertising, trademark infringement, or any deceptive marketing practices.</p>
+
+                    <h3 class="text-xl font-bold mt-6 mb-3" style="color: var(--navy)">3. Tracking & Reporting</h3>
+                    <p><strong>3.1 Referral Tracking:</strong> All referrals must be made through Partner's unique referral link to ensure proper tracking and commission attribution.</p>
+
+                    <p><strong>3.2 Dashboard Access:</strong> Partner will have access to a real-time dashboard showing referral statistics, customer conversions, and earnings.</p>
+
+                    <p><strong>3.3 Disputes:</strong> Any disputes regarding referral attribution must be raised within 30 days of the transaction date.</p>
+
+                    <h3 class="text-xl font-bold mt-6 mb-3" style="color: var(--navy)">4. Term & Termination</h3>
+                    <p><strong>4.1 Term:</strong> This Agreement begins on the date of execution and continues indefinitely unless terminated by either party.</p>
+
+                    <p><strong>4.2 Termination:</strong> Either party may terminate this Agreement with 30 days written notice to the other party.</p>
+
+                    <p><strong>4.3 Post-Termination:</strong> Upon termination, Partner shall continue to receive commissions for existing referred customers until those customers cancel their subscriptions.</p>
+
+                    <h3 class="text-xl font-bold mt-6 mb-3" style="color: var(--navy)">5. Confidentiality</h3>
+                    <p>Partner agrees to maintain confidentiality of any proprietary information received from RinglyPro, including but not limited to business strategies, customer data, and commission structures.</p>
+
+                    <h3 class="text-xl font-bold mt-6 mb-3" style="color: var(--navy)">6. Independent Contractor</h3>
+                    <p>Partner is an independent contractor and not an employee, agent, or representative of RinglyPro. Partner is responsible for all taxes related to commission earnings.</p>
+
+                    <h3 class="text-xl font-bold mt-6 mb-3" style="color: var(--navy)">7. Limitation of Liability</h3>
+                    <p>RinglyPro's total liability under this Agreement shall not exceed the total commissions paid to Partner in the 12 months preceding any claim.</p>
+
+                    <h3 class="text-xl font-bold mt-6 mb-3" style="color: var(--navy)">8. Governing Law</h3>
+                    <p>This Agreement shall be governed by the laws of the State of Florida, United States of America.</p>
+
+                    <h3 class="text-xl font-bold mt-6 mb-3" style="color: var(--navy)">9. Entire Agreement</h3>
+                    <p>This Agreement constitutes the entire agreement between the parties and supersedes all prior agreements or understandings, whether written or oral.</p>
+                </div>
+            </div>
+
+            <!-- Partner Information Form -->
+            <div class="contract-section">
+                <h2 class="text-2xl font-bold mb-6" style="color: var(--navy)">Partner Information</h2>
+
+                <form id="partnershipForm">
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--navy)">First Name *</label>
+                            <input type="text" id="firstName" class="form-input" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--navy)">Last Name *</label>
+                            <input type="text" id="lastName" class="form-input" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold mb-2" style="color: var(--navy)">Email Address *</label>
+                        <input type="email" id="email" class="form-input" required>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold mb-2" style="color: var(--navy)">Phone Number *</label>
+                        <input type="tel" id="phone" class="form-input" required>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold mb-2" style="color: var(--navy)">Company Name (Optional)</label>
+                        <input type="text" id="company" class="form-input">
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold mb-2" style="color: var(--navy)">Mailing Address *</label>
+                        <input type="text" id="address" class="form-input" placeholder="Street Address" required>
+                    </div>
+
+                    <div class="grid md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--navy)">City *</label>
+                            <input type="text" id="city" class="form-input" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--navy)">State *</label>
+                            <input type="text" id="state" class="form-input" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--navy)">ZIP Code *</label>
+                            <input type="text" id="zip" class="form-input" required>
+                        </div>
+                    </div>
+
+                    <!-- Tax Information -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold mb-2" style="color: var(--navy)">Tax ID / SSN (Last 4 digits) *</label>
+                        <input type="text" id="taxId" class="form-input" placeholder="For IRS 1099 reporting" required>
+                        <p class="text-xs text-gray-500 mt-1">Required for commission payments over $600/year</p>
+                    </div>
+
+                    <!-- Agreement Checkboxes -->
+                    <div class="bg-orange-50 rounded-xl p-6 mb-6 border-2" style="border-color: var(--orange)">
+                        <h3 class="text-lg font-bold mb-4" style="color: var(--navy)">Agreement Acknowledgment</h3>
+
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="agreeTerms" required>
+                            <label for="agreeTerms" class="text-sm">
+                                I have read and agree to all terms and conditions outlined in this Revenue Partnership Agreement.
+                            </label>
+                        </div>
+
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="agreeIndependent" required>
+                            <label for="agreeIndependent" class="text-sm">
+                                I understand that I am an independent contractor and responsible for my own taxes.
+                            </label>
+                        </div>
+
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="agreeCompliance" required>
+                            <label for="agreeCompliance" class="text-sm">
+                                I agree to comply with all marketing regulations and RinglyPro branding standards.
+                            </label>
+                        </div>
+
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="agreeConfidentiality" required>
+                            <label for="agreeConfidentiality" class="text-sm">
+                                I agree to maintain confidentiality of all proprietary RinglyPro information.
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- E-Signature Section -->
+                    <div class="contract-section bg-white">
+                        <h3 class="text-xl font-bold mb-4" style="color: var(--navy)">Electronic Signature</h3>
+                        <p class="text-sm text-gray-600 mb-4">Please sign below using your mouse or touchscreen:</p>
+
+                        <canvas id="signaturePad" class="signature-pad" width="600" height="200"></canvas>
+
+                        <div class="flex gap-3 mt-4">
+                            <button type="button" onclick="clearSignature()" class="btn btn-secondary">Clear Signature</button>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="text-center mt-8">
+                        <button type="submit" id="submitBtn" class="btn btn-primary" disabled>
+                            Submit Partnership Agreement
+                        </button>
+                        <p class="text-xs text-gray-500 mt-3">By submitting, you agree to electronic signature and contract terms</p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="text-center mt-8 p-6 bg-white rounded-2xl shadow-lg">
+                <p class="text-sm text-gray-600 mb-2">Questions about this agreement?</p>
+                <p class="font-semibold" style="color: var(--navy)">Manuel Stagg - Founder</p>
+                <p class="text-sm">
+                    <a href="tel:6566001400" class="hover:underline" style="color: var(--orange)">(656) 600-1400</a> |
+                    <a href="mailto:mstagg@digit2ai.com" class="hover:underline" style="color: var(--orange)">mstagg@digit2ai.com</a>
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Set current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        // Signature Pad Setup
+        const canvas = document.getElementById('signaturePad');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let hasSignature = false;
+
+        // Adjust canvas for high DPI screens
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * window.devicePixelRatio;
+        canvas.height = rect.height * window.devicePixelRatio;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+            return {
+                x: (clientX - rect.left) * scaleX / window.devicePixelRatio,
+                y: (clientY - rect.top) * scaleY / window.devicePixelRatio
+            };
+        }
+
+        function startDrawing(e) {
+            e.preventDefault();
+            isDrawing = true;
+            const pos = getMousePos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            hasSignature = true;
+            checkFormValidity();
+        }
+
+        function draw(e) {
+            e.preventDefault();
+            if (!isDrawing) return;
+
+            const pos = getMousePos(e);
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#000';
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function stopDrawing(e) {
+            e.preventDefault();
+            isDrawing = false;
+        }
+
+        // Mouse events
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch events
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function clearSignature() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hasSignature = false;
+            checkFormValidity();
+        }
+
+        // Form validation
+        const form = document.getElementById('partnershipForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const checkboxes = ['agreeTerms', 'agreeIndependent', 'agreeCompliance', 'agreeConfidentiality'];
+
+        function checkFormValidity() {
+            const allChecked = checkboxes.every(id => document.getElementById(id).checked);
+            const formValid = form.checkValidity();
+            submitBtn.disabled = !(allChecked && hasSignature && formValid);
+        }
+
+        // Add event listeners to all form inputs and checkboxes
+        form.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', checkFormValidity);
+            input.addEventListener('change', checkFormValidity);
+        });
+
+        // Form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!hasSignature) {
+                alert('Please provide your signature before submitting.');
+                return;
+            }
+
+            // Get signature as data URL
+            const signatureData = canvas.toDataURL('image/png');
+
+            // Collect form data
+            const formData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                company: document.getElementById('company').value,
+                address: document.getElementById('address').value,
+                city: document.getElementById('city').value,
+                state: document.getElementById('state').value,
+                zip: document.getElementById('zip').value,
+                taxId: document.getElementById('taxId').value,
+                signature: signatureData,
+                timestamp: new Date().toISOString(),
+                ipAddress: 'To be collected server-side'
+            };
+
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            try {
+                // Send to server endpoint
+                const response = await fetch('/api/partnership/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    // Success - redirect or show success message
+                    alert('Partnership Agreement submitted successfully! You will receive a confirmation email shortly.');
+                    window.location.href = 'https://aiagent.ringlypro.com/partnership-success';
+                } else {
+                    throw new Error('Submission failed');
+                }
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                alert('There was an error submitting your agreement. Please try again or contact support.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Partnership Agreement';
+            }
+        });
+    </script>
+</body>
+</html>

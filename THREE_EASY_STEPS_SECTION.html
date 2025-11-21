@@ -23,6 +23,58 @@
             border-radius: 24px;
         }
     }
+
+    /* Slideshow Styles */
+    .slideshow-container {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .slideshow-container:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .slide {
+        display: none;
+        width: 100%;
+    }
+
+    .slide.active {
+        display: block;
+    }
+
+    .slide img {
+        width: 100%;
+        height: auto;
+    }
+
+    .slideshow-dots {
+        text-align: center;
+        padding: 10px 0;
+    }
+
+    .dot {
+        height: 10px;
+        width: 10px;
+        margin: 0 4px;
+        background-color: #d1d5db;
+        border-radius: 50%;
+        display: inline-block;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .dot.active {
+        background-color: var(--orange);
+    }
+
+    .dot:hover {
+        background-color: #9ca3af;
+    }
 </style>
 
 <!-- 3 Easy Steps Section -->
@@ -65,9 +117,42 @@
                 </div>
                 <h3 class="text-xl md:text-2xl font-bold mb-3" style="color: var(--navy)">CRM Copilot Dashboard</h3>
                 <p class="text-slate-600 leading-relaxed mb-6">Access your AI-powered dashboard and start managing calls, appointments, and leads effortlessly.</p>
-                <a href="https://aiagent.ringlypro.com" class="block">
-                    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/691645be01e5bc84c1f3b4de.png" alt="CRM Copilot Dashboard" class="w-full h-auto rounded-xl mb-4 shadow-md hover:shadow-lg transition">
-                </a>
+                <div class="slideshow-container" id="step3Slideshow">
+                    <div class="slide active">
+                        <a href="https://aiagent.ringlypro.com"><img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6920948fce816c975f58801a.png" alt="CRM Dashboard 1"></a>
+                    </div>
+                    <div class="slide">
+                        <a href="https://aiagent.ringlypro.com"><img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/692094d447e10396636075da.png" alt="CRM Dashboard 2"></a>
+                    </div>
+                    <div class="slide">
+                        <a href="https://aiagent.ringlypro.com"><img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6920952b2663e83106fd856e.jpeg" alt="CRM Dashboard 3"></a>
+                    </div>
+                    <div class="slide">
+                        <a href="https://aiagent.ringlypro.com"><img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69209563ce816c7cf958ae0b.png" alt="CRM Dashboard 4"></a>
+                    </div>
+                    <div class="slide">
+                        <a href="https://aiagent.ringlypro.com"><img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/692095a0393741a35570535e.png" alt="CRM Dashboard 5"></a>
+                    </div>
+                    <div class="slide">
+                        <a href="https://aiagent.ringlypro.com"><img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/692095c6ce816c221c58be88.png" alt="CRM Dashboard 6"></a>
+                    </div>
+                    <div class="slide">
+                        <a href="https://aiagent.ringlypro.com"><img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/692095eb1f786eb206c42adf.png" alt="CRM Dashboard 7"></a>
+                    </div>
+                    <div class="slide">
+                        <a href="https://aiagent.ringlypro.com"><img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/692096173937415fe87065f2.png" alt="CRM Dashboard 8"></a>
+                    </div>
+                    <div class="slideshow-dots">
+                        <span class="dot active" onclick="goToSlide(0)"></span>
+                        <span class="dot" onclick="goToSlide(1)"></span>
+                        <span class="dot" onclick="goToSlide(2)"></span>
+                        <span class="dot" onclick="goToSlide(3)"></span>
+                        <span class="dot" onclick="goToSlide(4)"></span>
+                        <span class="dot" onclick="goToSlide(5)"></span>
+                        <span class="dot" onclick="goToSlide(6)"></span>
+                        <span class="dot" onclick="goToSlide(7)"></span>
+                    </div>
+                </div>
                 <a href="https://aiagent.ringlypro.com" class="inline-block text-sm font-semibold hover:underline" style="color: var(--orange)">Launch Dashboard →</a>
             </div>
         </div>
@@ -80,3 +165,32 @@
     </div>
 </section>
 <!-- End of 3 Easy Steps Section -->
+
+<script>
+// Slideshow functionality for Step 3
+let currentSlide = 0;
+const slides = document.querySelectorAll('#step3Slideshow .slide');
+const dots = document.querySelectorAll('#step3Slideshow .dot');
+
+function showSlide(index) {
+    slides.forEach((slide, i) => {
+        slide.classList.remove('active');
+        dots[i].classList.remove('active');
+    });
+    slides[index].classList.add('active');
+    dots[index].classList.add('active');
+    currentSlide = index;
+}
+
+function goToSlide(index) {
+    showSlide(index);
+}
+
+function nextSlide() {
+    const next = (currentSlide + 1) % slides.length;
+    showSlide(next);
+}
+
+// Auto-advance every 3 seconds
+setInterval(nextSlide, 3000);
+</script>

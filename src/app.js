@@ -381,6 +381,74 @@ app.get('/delete-account', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/delete-account.html'));
 });
 
+// Partnership roadmap page route
+app.get('/partnership-roadmap', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/partnership-roadmap.html'));
+});
+
+// Partnership contract page route
+app.get('/partnership', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/partnership.html'));
+});
+
+// Partnership success page route
+app.get('/partnership-success', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/partnership-success.html'));
+});
+
+// Partnership agreement submission endpoint
+app.post('/api/partnership/submit', async (req, res) => {
+  try {
+    console.log('Partnership submission received:', req.body);
+
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      company,
+      address,
+      city,
+      state,
+      zip,
+      taxId,
+      signature,
+      timestamp
+    } = req.body;
+
+    // Validate required fields
+    if (!firstName || !lastName || !email || !phone || !address || !city || !state || !zip || !taxId || !signature) {
+      console.log('Validation failed - missing required fields');
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // TODO: Save partnership agreement to database
+    // For now, log the submission
+    console.log('Partnership Agreement Submitted:', {
+      name: `${firstName} ${lastName}`,
+      email,
+      phone,
+      company: company || 'N/A',
+      address: `${address}, ${city}, ${state} ${zip}`,
+      timestamp: timestamp || new Date().toISOString()
+    });
+
+    // TODO: Send confirmation email via SendGrid
+    // TODO: Notify admin via email
+
+    // Return success
+    console.log('Partnership agreement submitted successfully');
+    res.status(200).json({
+      success: true,
+      message: 'Partnership agreement submitted successfully'
+    });
+
+  } catch (error) {
+    console.error('Error submitting partnership agreement:', error);
+    res.status(500).json({ error: 'Failed to submit partnership agreement' });
+  }
+});
+
 // Redirect root to dashboard if authenticated, otherwise to login
 app.get('/auth-check', (req, res) => {
   // This would check JWT token when we add middleware later
