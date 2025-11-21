@@ -232,8 +232,8 @@ async function sendPartnershipConfirmationEmail({ email, firstName, lastName, co
     const msg = {
         to: email,
         from: {
-            email: FROM_EMAIL,
-            name: 'RinglyPro Partnership Team'
+            email: 'mstagg@digit2ai.com',
+            name: 'Manuel Stagg - RinglyPro Partnership'
         },
         subject: `Welcome to the RinglyPro Partnership Program, ${firstName}!`,
         text: `Dear ${firstName},
@@ -401,7 +401,7 @@ async function sendPartnershipAdminNotification(partnerData) {
     const msg = {
         to: adminEmail,
         from: {
-            email: FROM_EMAIL,
+            email: 'mstagg@digit2ai.com',
             name: 'RinglyPro Partnership System'
         },
         subject: `New Partnership Agreement: ${firstName} ${lastName}`,
