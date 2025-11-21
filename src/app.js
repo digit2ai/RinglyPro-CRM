@@ -391,6 +391,11 @@ app.get('/partnership', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/partnership.html'));
 });
 
+// Partnership contract form page route
+app.get('/contract', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/contract.html'));
+});
+
 // Partnership success page route
 app.get('/partnership-success', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/partnership-success.html'));
