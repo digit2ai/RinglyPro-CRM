@@ -4,6 +4,9 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
+// Email service
+const emailService = require('./services/emailService');
+
 const app = express();
 
 // Multi-Client Configuration
@@ -438,8 +441,40 @@ app.post('/api/partnership/submit', async (req, res) => {
       timestamp: timestamp || new Date().toISOString()
     });
 
-    // TODO: Send confirmation email via SendGrid
-    // TODO: Notify admin via email
+    // Send confirmation email to partner
+    try {
+      await emailService.sendPartnershipConfirmationEmail({
+        email,
+        firstName,
+        lastName,
+        company
+      });
+      console.log('✅ Partnership confirmation email sent to partner');
+    } catch (emailError) {
+      console.error('⚠️ Failed to send partnership confirmation email:', emailError);
+      // Don't fail the request if email fails
+    }
+
+    // Send notification email to admin
+    try {
+      await emailService.sendPartnershipAdminNotification({
+        firstName,
+        lastName,
+        email,
+        phone,
+        company,
+        address,
+        city,
+        state,
+        zip,
+        taxId,
+        timestamp: timestamp || new Date().toISOString()
+      });
+      console.log('✅ Partnership admin notification sent');
+    } catch (emailError) {
+      console.error('⚠️ Failed to send admin notification email:', emailError);
+      // Don't fail the request if email fails
+    }
 
     // Return success
     console.log('Partnership agreement submitted successfully');
