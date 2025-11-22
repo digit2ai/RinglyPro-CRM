@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partnership Agreement - RinglyPro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --navy: #0b1e3e;
+            --sky: #87ceeb;
+            --orange: #FF914D;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .main-container {
+            margin: 40px auto;
+            max-width: 900px;
+            padding: 0 20px;
+        }
+
+        .agreement-card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(11, 30, 62, 0.2);
+            overflow: hidden;
+        }
+
+        .header-banner {
+            background: linear-gradient(135deg, var(--navy) 0%, #1e3a5f 100%);
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .content-section {
+            padding: 40px;
+        }
+
+        .section-title {
+            color: var(--navy);
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--orange);
+        }
+
+        .subsection-title {
+            color: var(--navy);
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .agreement-text {
+            line-height: 1.8;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            border-left: 4px solid var(--orange);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .important-notice {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 12px;
+        }
+
+        .signature-section {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 40px;
+        }
+
+        .print-btn {
+            background: white;
+            color: var(--navy);
+            border: 2px solid var(--navy);
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .print-btn:hover {
+            background: var(--navy);
+            color: white;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, var(--orange) 0%, #ff6b35 100%);
+            color: white;
+            border: none;
+            padding: 14px 36px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(255, 145, 77, 0.3);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 145, 77, 0.4);
+        }
+
+        ol, ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            line-height: 1.8;
+        }
+
+        @media print {
+            .no-print {
+                display: none;
+            }
+            .agreement-card {
+                box-shadow: none;
+            }
+            body {
+                background: white;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content-section {
+                padding: 30px 20px;
+            }
+            .section-title {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-blue-50">
+    <div class="main-container">
+
+        <!-- Logo (No Print) -->
+        <div class="text-center mb-6 no-print">
+            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69175f336c431e834ac954b8.png"
+                 alt="RinglyPro Logo"
+                 class="mx-auto"
+                 style="max-width: 250px; width: 100%; height: auto;">
+        </div>
+
+        <div class="agreement-card">
+            <!-- Header -->
+            <div class="header-banner">
+                <h1 class="text-4xl font-extrabold mb-2">Partnership Agreement</h1>
+                <p class="text-lg">RinglyPro Revenue Sharing Partnership Program</p>
+                <p class="text-sm mt-2 opacity-90">Effective Date: January 21, 2025</p>
+            </div>
+
+            <!-- Agreement Content -->
+            <div class="content-section">
+
+                <!-- Action Buttons (No Print) -->
+                <div class="flex flex-wrap gap-3 mb-8 no-print justify-center">
+                    <button onclick="window.print()" class="print-btn">
+                        🖨️ Print Agreement
+                    </button>
+                    <button onclick="downloadPDF()" class="download-btn">
+                        📄 Download PDF
+                    </button>
+                </div>
+
+                <!-- Parties -->
+                <div class="important-notice">
+                    <p class="font-bold text-lg mb-2" style="color: var(--navy)">PARTIES TO THIS AGREEMENT</p>
+                    <p><strong>Provider:</strong> RinglyPro (a division of Digit2AI)</p>
+                    <p><strong>Business Address:</strong> [Company Address]</p>
+                    <p><strong>Contact:</strong> Manuel Stagg, Founder | (656) 600-1400 | mstagg@digit2ai.com</p>
+                    <p class="mt-3"><strong>Partner:</strong> [Partner Name and Company - To be filled upon signature]</p>
+                </div>
+
+                <!-- Introduction -->
+                <h2 class="section-title">1. Introduction and Purpose</h2>
+                <p class="agreement-text">
+                    This Partnership Agreement ("Agreement") is entered into between RinglyPro ("Provider") and the undersigned
+                    individual or entity ("Partner") for the purpose of establishing a mutually beneficial revenue-sharing partnership.
+                    The Partner agrees to promote, market, and refer customers to RinglyPro's AI-powered CRM services in exchange for
+                    a share of the profits generated from those referred customers.
+                </p>
+
+                <!-- Partnership Structure -->
+                <h2 class="section-title">2. Partnership Structure and Revenue Share</h2>
+
+                <h3 class="subsection-title">2.1 Revenue Share Model</h3>
+                <div class="highlight-box">
+                    <p class="font-bold text-xl mb-2" style="color: var(--orange)">50% Profit Share</p>
+                    <p>Partner shall receive fifty percent (50%) of the <strong>net profits</strong> generated from all customers
+                    directly referred by Partner and verified through Partner's unique referral link or code.</p>
+                </div>
+
+                <h3 class="subsection-title">2.2 Definition of Net Profits</h3>
+                <p class="agreement-text">
+                    "Net Profits" are defined as gross revenue received from referred customers minus:
+                </p>
+                <ul>
+                    <li>Direct cost of services (AI API costs, telephony costs, infrastructure)</li>
+                    <li>Payment processing fees (Stripe, PayPal, etc.)</li>
+                    <li>Refunds and chargebacks</li>
+                    <li>Sales tax and applicable regulatory fees</li>
+                </ul>
+
+                <h3 class="subsection-title">2.3 Lifetime Revenue</h3>
+                <p class="agreement-text">
+                    Partner shall continue to receive their revenue share for the <strong>entire lifetime</strong> of each referred
+                    customer's active subscription, including all renewals, upgrades, and add-on services purchased by that customer.
+                </p>
+
+                <!-- Partner Obligations -->
+                <h2 class="section-title">3. Partner Obligations and Responsibilities</h2>
+
+                <h3 class="subsection-title">3.1 Marketing and Promotion</h3>
+                <p class="agreement-text">Partner agrees to:</p>
+                <ul>
+                    <li>Actively promote RinglyPro services through ethical marketing practices</li>
+                    <li>Use only approved marketing materials provided by RinglyPro</li>
+                    <li>Accurately represent RinglyPro's features, pricing, and capabilities</li>
+                    <li>Comply with all applicable advertising laws and regulations (FTC, CAN-SPAM, GDPR, etc.)</li>
+                    <li>Not engage in spam, false advertising, or misleading claims</li>
+                </ul>
+
+                <h3 class="subsection-title">3.2 Brand Compliance</h3>
+                <p class="agreement-text">
+                    Partner shall not modify RinglyPro's branding, logos, or trademarks without written permission.
+                    All promotional materials must be approved by Provider before public use.
+                </p>
+
+                <h3 class="subsection-title">3.3 Prohibited Activities</h3>
+                <p class="agreement-text">Partner shall NOT:</p>
+                <ul>
+                    <li>Engage in cookie stuffing, click fraud, or other fraudulent referral methods</li>
+                    <li>Self-refer or create fake accounts to generate commissions</li>
+                    <li>Bid on RinglyPro's brand name in paid search campaigns</li>
+                    <li>Use deceptive marketing tactics or make false claims</li>
+                    <li>Violate any laws, regulations, or ethical marketing standards</li>
+                </ul>
+
+                <!-- Provider Obligations -->
+                <h2 class="section-title">4. Provider Obligations</h2>
+
+                <h3 class="subsection-title">4.1 Services and Support</h3>
+                <p class="agreement-text">Provider agrees to:</p>
+                <ul>
+                    <li>Provide Partner with a unique referral tracking link/code</li>
+                    <li>Deliver high-quality CRM services to all referred customers</li>
+                    <li>Maintain accurate tracking and reporting of referred customers</li>
+                    <li>Provide Partner with access to a dashboard showing referral performance</li>
+                    <li>Offer marketing materials and resources to support Partner's promotional efforts</li>
+                    <li>Handle all customer service, billing, and technical support</li>
+                </ul>
+
+                <h3 class="subsection-title">4.2 Payment Terms</h3>
+                <div class="highlight-box">
+                    <p class="font-bold text-lg mb-2" style="color: var(--navy)">Monthly Payouts</p>
+                    <ul>
+                        <li><strong>Payment Schedule:</strong> Monthly, within 15 days of month-end</li>
+                        <li><strong>Minimum Payout:</strong> $100 USD (earnings below minimum carry over to next month)</li>
+                        <li><strong>Payment Methods:</strong> Bank transfer (ACH/Wire), PayPal, or Stripe</li>
+                        <li><strong>Reporting:</strong> Detailed commission statement provided with each payment</li>
+                    </ul>
+                </div>
+
+                <!-- Term and Termination -->
+                <h2 class="section-title">5. Term and Termination</h2>
+
+                <h3 class="subsection-title">5.1 Initial Term</h3>
+                <p class="agreement-text">
+                    This Agreement begins upon signature and continues indefinitely until terminated by either party.
+                </p>
+
+                <h3 class="subsection-title">5.2 Termination Rights</h3>
+                <p class="agreement-text">Either party may terminate this Agreement with:</p>
+                <ul>
+                    <li><strong>30 days written notice</strong> for termination without cause</li>
+                    <li><strong>Immediate termination</strong> for material breach of this Agreement</li>
+                    <li><strong>Immediate termination</strong> for fraudulent activity or violation of prohibited activities</li>
+                </ul>
+
+                <h3 class="subsection-title">5.3 Post-Termination</h3>
+                <div class="important-notice">
+                    <p class="font-bold mb-2">Important: Lifetime Commissions Protected</p>
+                    <p>Upon termination, Partner shall continue to receive revenue share from all customers referred
+                    <strong>prior to the termination date</strong> for the lifetime of those customers' subscriptions,
+                    provided the termination was not due to Partner's breach or fraudulent activity.</p>
+                </div>
+
+                <!-- Intellectual Property -->
+                <h2 class="section-title">6. Intellectual Property</h2>
+                <p class="agreement-text">
+                    All RinglyPro trademarks, logos, brand materials, and intellectual property remain the exclusive
+                    property of Provider. Partner is granted a limited, non-exclusive, revocable license to use
+                    RinglyPro's branding solely for the purpose of promoting the partnership during the term of this Agreement.
+                </p>
+
+                <!-- Confidentiality -->
+                <h2 class="section-title">7. Confidentiality</h2>
+                <p class="agreement-text">
+                    Both parties agree to keep confidential all proprietary information, customer data, commission structures,
+                    and business strategies disclosed during this partnership. This obligation survives termination of this Agreement.
+                </p>
+
+                <!-- Representations and Warranties -->
+                <h2 class="section-title">8. Representations and Warranties</h2>
+
+                <h3 class="subsection-title">8.1 Partner Represents:</h3>
+                <ul>
+                    <li>Partner has the legal authority to enter into this Agreement</li>
+                    <li>Partner will comply with all applicable laws and regulations</li>
+                    <li>Partner owns or has rights to use any promotional materials they create</li>
+                    <li>Partner's marketing activities will not infringe on third-party rights</li>
+                </ul>
+
+                <h3 class="subsection-title">8.2 Provider Represents:</h3>
+                <ul>
+                    <li>Provider has the authority to offer this partnership program</li>
+                    <li>RinglyPro services will be provided in a professional manner</li>
+                    <li>Provider will accurately track and report referrals</li>
+                    <li>Provider will pay commissions as specified in this Agreement</li>
+                </ul>
+
+                <!-- Limitation of Liability -->
+                <h2 class="section-title">9. Limitation of Liability</h2>
+                <p class="agreement-text">
+                    Neither party shall be liable for indirect, incidental, special, consequential, or punitive damages.
+                    Provider's total liability under this Agreement shall not exceed the total commissions paid to Partner
+                    in the twelve (12) months preceding the claim.
+                </p>
+
+                <!-- Independent Contractor -->
+                <h2 class="section-title">10. Independent Contractor Relationship</h2>
+                <p class="agreement-text">
+                    Partner is an independent contractor, not an employee, agent, or joint venturer of Provider.
+                    Partner is responsible for all taxes, insurance, and expenses related to their business activities.
+                </p>
+
+                <!-- Dispute Resolution -->
+                <h2 class="section-title">11. Dispute Resolution</h2>
+                <p class="agreement-text">
+                    Any disputes arising from this Agreement shall first be attempted to be resolved through good-faith
+                    negotiation. If unresolved within 30 days, disputes may be submitted to binding arbitration in accordance
+                    with the rules of the American Arbitration Association.
+                </p>
+
+                <!-- General Provisions -->
+                <h2 class="section-title">12. General Provisions</h2>
+
+                <h3 class="subsection-title">12.1 Entire Agreement</h3>
+                <p class="agreement-text">
+                    This Agreement constitutes the entire agreement between the parties and supersedes all prior agreements,
+                    understandings, and communications.
+                </p>
+
+                <h3 class="subsection-title">12.2 Amendments</h3>
+                <p class="agreement-text">
+                    Provider may modify the terms of this Agreement with 30 days written notice. Partner's continued
+                    participation after notice constitutes acceptance of the modified terms. Material changes to commission
+                    structure require Partner's written consent.
+                </p>
+
+                <h3 class="subsection-title">12.3 Assignment</h3>
+                <p class="agreement-text">
+                    Partner may not assign this Agreement without Provider's written consent. Provider may assign this
+                    Agreement in connection with a merger, acquisition, or sale of business.
+                </p>
+
+                <h3 class="subsection-title">12.4 Governing Law</h3>
+                <p class="agreement-text">
+                    This Agreement shall be governed by the laws of the State of [State], without regard to conflict of law principles.
+                </p>
+
+                <h3 class="subsection-title">12.5 Severability</h3>
+                <p class="agreement-text">
+                    If any provision of this Agreement is found to be unenforceable, the remaining provisions shall remain in full effect.
+                </p>
+
+                <!-- Signature Section -->
+                <div class="signature-section">
+                    <h2 class="section-title" style="margin-top: 0;">Acceptance and Signature</h2>
+
+                    <div class="important-notice">
+                        <p class="font-bold text-lg mb-2" style="color: #dc2626;">⚠️ IMPORTANT NOTICE</p>
+                        <p>By completing the partnership agreement form and providing your electronic signature,
+                        you acknowledge that you have read, understood, and agree to be bound by all terms and
+                        conditions of this Partnership Agreement.</p>
+                    </div>
+
+                    <p class="agreement-text mt-6">
+                        To proceed with your partnership application and provide your electronic signature,
+                        please click the button below:
+                    </p>
+
+                    <div class="text-center mt-6 no-print">
+                        <a href="https://aiagent.ringlypro.com/contract"
+                           class="inline-block download-btn"
+                           style="text-decoration: none;">
+                            Continue to Sign Partnership Agreement →
+                        </a>
+                    </div>
+
+                    <p class="text-sm text-gray-600 mt-6 text-center">
+                        Electronic signatures are legally binding under the E-SIGN Act and UETA.
+                    </p>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="mt-8 p-6 bg-blue-50 rounded-xl border-2 border-blue-200">
+                    <h3 class="font-bold text-lg mb-3" style="color: var(--navy)">Questions About This Agreement?</h3>
+                    <p class="mb-2"><strong>Manuel Stagg - Founder</strong></p>
+                    <p class="text-sm">📱 Phone: <a href="tel:6566001400" class="font-semibold" style="color: var(--orange)">(656) 600-1400</a></p>
+                    <p class="text-sm">✉️ Email: <a href="mailto:mstagg@digit2ai.com" class="font-semibold" style="color: var(--orange)">mstagg@digit2ai.com</a></p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 mb-8 text-gray-600 no-print">
+            <p class="text-sm mb-2"><strong>RinglyPro Partnership Program</strong></p>
+            <p class="text-xs">
+                <a href="https://aiagent.ringlypro.com/partnership-roadmap" class="hover:underline" style="color: var(--orange)">Partnership Roadmap</a> |
+                <a href="https://aiagent.ringlypro.com" class="hover:underline" style="color: var(--orange)">Dashboard</a> |
+                <a href="https://ringlypro.com/privacy" class="hover:underline" style="color: var(--orange)">Privacy Policy</a>
+            </p>
+            <p class="text-xs mt-2">&copy; 2025 RinglyPro. All rights reserved.</p>
+        </div>
+
+    </div>
+
+    <script>
+        function downloadPDF() {
+            // For now, use print dialog. In the future, can integrate with PDF generation library
+            alert('To save as PDF:\n\n1. Click "Print Agreement" button\n2. Select "Save as PDF" in the print dialog\n3. Click Save');
+            window.print();
+        }
+    </script>
+</body>
+</html>

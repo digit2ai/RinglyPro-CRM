@@ -409,6 +409,11 @@ app.get('/unsubscribe', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/unsubscribe.html'));
 });
 
+// Partnership agreement (full legal document)
+app.get('/partnership-agreement', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/partnership-agreement.html'));
+});
+
 // Unsubscribe API endpoint
 app.post('/api/unsubscribe', async (req, res) => {
   try {
