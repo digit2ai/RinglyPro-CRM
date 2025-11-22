@@ -35,6 +35,10 @@ class WebViewBridge: NSObject, WKScriptMessageHandler {
             if let phoneNumber = body["phoneNumber"] as? String {
                 sendSMS(phoneNumber: phoneNumber)
             }
+        case "dialCode":
+            if let code = body["code"] as? String {
+                dialCode(code: code)
+            }
         default:
             print("Unknown action: \(action)")
         }
@@ -65,6 +69,9 @@ class WebViewBridge: NSObject, WKScriptMessageHandler {
             },
             sendSMS: function(phoneNumber) {
                 this.postMessage({ action: 'sendSMS', phoneNumber: phoneNumber });
+            },
+            dialCode: function(code) {
+                this.postMessage({ action: 'dialCode', code: code });
             },
             platform: 'ios',
             version: '\(AppConfig.appVersion)'
@@ -140,6 +147,22 @@ class WebViewBridge: NSObject, WKScriptMessageHandler {
                 print("Successfully opened SMS to: \(phoneNumber)")
             } else {
                 print("Failed to open SMS to: \(phoneNumber)")
+            }
+        }
+    }
+
+    private func dialCode(code: String) {
+        // Handle dial codes with special characters like * and #
+        guard let url = URL(string: "tel:\(code)") else {
+            print("Invalid dial code: \(code)")
+            return
+        }
+
+        UIApplication.shared.open(url, options: [:]) { success in
+            if success {
+                print("Successfully initiated dial code: \(code)")
+            } else {
+                print("Failed to initiate dial code: \(code)")
             }
         }
     }

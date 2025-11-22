@@ -2921,16 +2921,22 @@
 
                     <div style="background: ${action === 'activate' ? '#eff6ff' : '#fef2f2'}; border: 2px solid ${action === 'activate' ? '#3b82f6' : '#ef4444'}; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                         <div style="font-size: 13px; font-weight: 600; color: ${action === 'activate' ? '#1e40af' : '#991b1b'}; margin-bottom: 12px;">
-                            📱 Tap code to dial (works on Android):
+                            📱 Tap code to dial:
                         </div>
                         <div onclick="
                             const code = '${forwardCode}';
-                            const link = document.createElement('a');
-                            link.href = 'tel:' + code;
-                            link.style.display = 'none';
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
+                            if (window.nativeApp && window.nativeApp.dialCode) {
+                                // iOS app: use native bridge for dial codes with * and #
+                                window.nativeApp.dialCode(code);
+                            } else {
+                                // Mobile browser: try tel: link (works on Android)
+                                const link = document.createElement('a');
+                                link.href = 'tel:' + code;
+                                link.style.display = 'none';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }
                         " style="
                             display: block;
                             background: ${action === 'activate' ? '#3b82f6' : '#ef4444'};
@@ -2982,8 +2988,8 @@
                             📋 Copy Code to Clipboard (iOS)
                         </button>
                         <div style="font-size: 12px; color: #6b7280; margin-top: 12px; text-align: center; line-height: 1.5;">
-                            <strong>Android:</strong> Tap code above to dial<br>
-                            <strong>iOS:</strong> Tap copy button, open phone dialer, paste & call
+                            <strong>RinglyPro App:</strong> Tap code above to dial automatically<br>
+                            <strong>Web Browser:</strong> Use copy button if tap doesn't work
                         </div>
                     </div>
 
