@@ -414,6 +414,11 @@ app.get('/partnership-agreement', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/partnership-agreement.html'));
 });
 
+// Marketing guidelines and branding standards
+app.get('/marketing-guidelines', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/marketing-guidelines.html'));
+});
+
 // Unsubscribe API endpoint
 app.post('/api/unsubscribe', async (req, res) => {
   try {
