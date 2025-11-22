@@ -404,6 +404,52 @@ app.get('/partnership-success', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/partnership-success.html'));
 });
 
+// Unsubscribe page route
+app.get('/unsubscribe', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/unsubscribe.html'));
+});
+
+// Unsubscribe API endpoint
+app.post('/api/unsubscribe', async (req, res) => {
+  try {
+    const { email, preferences, feedback } = req.body;
+
+    if (!email || !preferences || preferences.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and preferences are required'
+      });
+    }
+
+    // Log unsubscribe request
+    console.log('Unsubscribe request:', {
+      email,
+      preferences,
+      feedback: feedback || 'No feedback provided',
+      timestamp: new Date().toISOString()
+    });
+
+    // TODO: Save unsubscribe preferences to database
+    // TODO: Update user email preferences
+    // TODO: Add to SendGrid suppression list if needed
+
+    // For now, just log and return success
+    console.log(`✅ User ${email} unsubscribed from: ${preferences.join(', ')}`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Unsubscribe preferences updated successfully'
+    });
+
+  } catch (error) {
+    console.error('Error processing unsubscribe request:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process unsubscribe request'
+    });
+  }
+});
+
 // Partnership agreement submission endpoint
 app.post('/api/partnership/submit', async (req, res) => {
   try {

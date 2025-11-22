@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unsubscribe - RinglyPro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --navy: #0b1e3e;
+            --sky: #87ceeb;
+            --orange: #FF914D;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .main-container {
+            margin: 40px 20px;
+            max-width: 600px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(11, 30, 62, 0.15);
+            padding: 40px;
+        }
+
+        .icon-sad {
+            font-size: 64px;
+            margin-bottom: 20px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .checkbox-container:hover {
+            background: #f1f5f9;
+            transform: translateX(5px);
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            cursor: pointer;
+            accent-color: var(--orange);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, var(--orange) 0%, #ff6b35 100%);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 145, 77, 0.3);
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 145, 77, 0.4);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .stay-btn {
+            background: white;
+            color: var(--navy);
+            border: 2px solid var(--navy);
+            padding: 16px 40px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .stay-btn:hover {
+            background: var(--navy);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .success-message {
+            display: none;
+            text-align: center;
+        }
+
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 20px 10px;
+            }
+            .card {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="main-container w-full">
+
+            <!-- Logo -->
+            <div class="text-center mb-6">
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69175f336c431e834ac954b8.png"
+                     alt="RinglyPro Logo"
+                     class="mx-auto"
+                     style="max-width: 250px; width: 100%; height: auto;">
+            </div>
+
+            <!-- Unsubscribe Form -->
+            <div id="unsubscribe-form" class="card">
+                <div class="text-center mb-6">
+                    <div class="icon-sad">😢</div>
+                    <h1 class="text-3xl font-extrabold mb-3" style="color: var(--navy)">
+                        We're Sorry to See You Go
+                    </h1>
+                    <p class="text-lg text-gray-600">
+                        Help us improve by telling us why you're unsubscribing
+                    </p>
+                </div>
+
+                <!-- Email Display -->
+                <div class="mb-6 p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
+                    <p class="text-sm text-gray-600 mb-1">Unsubscribing email:</p>
+                    <p id="email-display" class="text-lg font-bold" style="color: var(--navy)">
+                        <!-- Email will be populated from URL -->
+                    </p>
+                </div>
+
+                <!-- Unsubscribe Options -->
+                <form id="unsubscribe-options" class="mb-6">
+                    <p class="font-semibold mb-4" style="color: var(--navy)">
+                        What would you like to unsubscribe from?
+                    </p>
+
+                    <label class="checkbox-container">
+                        <input type="checkbox" name="marketing" value="marketing">
+                        <div>
+                            <div class="font-semibold" style="color: var(--navy)">Marketing Emails</div>
+                            <div class="text-sm text-gray-600">Promotional offers, product updates, and newsletters</div>
+                        </div>
+                    </label>
+
+                    <label class="checkbox-container">
+                        <input type="checkbox" name="partnership" value="partnership">
+                        <div>
+                            <div class="font-semibold" style="color: var(--navy)">Partnership Updates</div>
+                            <div class="text-sm text-gray-600">Partnership program news and commission reports</div>
+                        </div>
+                    </label>
+
+                    <label class="checkbox-container">
+                        <input type="checkbox" name="product" value="product">
+                        <div>
+                            <div class="font-semibold" style="color: var(--navy)">Product Announcements</div>
+                            <div class="text-sm text-gray-600">New features, updates, and improvements</div>
+                        </div>
+                    </label>
+
+                    <label class="checkbox-container">
+                        <input type="checkbox" name="all" value="all" id="unsubscribe-all">
+                        <div>
+                            <div class="font-semibold text-red-600">Unsubscribe from All Emails</div>
+                            <div class="text-sm text-gray-600">You'll only receive critical account notifications</div>
+                        </div>
+                    </label>
+                </form>
+
+                <!-- Optional Feedback -->
+                <div class="mb-6">
+                    <label class="block font-semibold mb-2" style="color: var(--navy)">
+                        Why are you unsubscribing? (Optional)
+                    </label>
+                    <textarea
+                        id="feedback"
+                        rows="4"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none"
+                        placeholder="Your feedback helps us improve..."></textarea>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col gap-3">
+                    <button type="button" onclick="submitUnsubscribe()" class="submit-btn w-full">
+                        Unsubscribe
+                    </button>
+                    <button type="button" onclick="staySubscribed()" class="stay-btn w-full">
+                        Never Mind, Keep Me Subscribed
+                    </button>
+                </div>
+
+                <!-- Legal Notice -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <p class="text-xs text-gray-500 text-center">
+                        Note: You will continue to receive important transactional emails (receipts, password resets, etc.)
+                        as required for your account. This complies with CAN-SPAM Act and GDPR regulations.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Success Message -->
+            <div id="success-message" class="card success-message">
+                <div class="success-icon">✅</div>
+                <h2 class="text-3xl font-extrabold mb-4" style="color: var(--navy)">
+                    You've Been Unsubscribed
+                </h2>
+                <p class="text-lg text-gray-600 mb-6">
+                    Your email preferences have been updated successfully.
+                </p>
+                <div class="bg-blue-50 rounded-xl p-6 mb-6 border-2 border-blue-200">
+                    <p class="text-sm text-gray-700">
+                        You will no longer receive the selected email types.
+                        Changes may take up to 48 hours to take effect.
+                    </p>
+                </div>
+                <div class="text-center">
+                    <p class="text-gray-600 mb-4">Changed your mind?</p>
+                    <a href="https://aiagent.ringlypro.com/dashboard"
+                       class="inline-block submit-btn">
+                        Update Email Preferences in Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center mt-8 text-gray-600">
+                <p class="text-sm mb-2">
+                    <strong>RinglyPro</strong> - AI-Powered CRM
+                </p>
+                <p class="text-xs">
+                    <a href="https://aiagent.ringlypro.com" class="hover:underline font-semibold" style="color: var(--orange)">
+                        Return to Dashboard
+                    </a> |
+                    <a href="https://ringlypro.com/privacy" class="hover:underline" style="color: var(--orange)">
+                        Privacy Policy
+                    </a>
+                </p>
+                <p class="text-xs mt-2" style="color: #9ca3af;">
+                    &copy; 2025 RinglyPro. All rights reserved.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Get email from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const email = urlParams.get('email') || 'your-email@example.com';
+        document.getElementById('email-display').textContent = email;
+
+        // Handle "Unsubscribe All" checkbox
+        document.getElementById('unsubscribe-all').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(#unsubscribe-all)');
+            if (this.checked) {
+                checkboxes.forEach(cb => {
+                    cb.checked = false;
+                    cb.disabled = true;
+                });
+            } else {
+                checkboxes.forEach(cb => cb.disabled = false);
+            }
+        });
+
+        // Submit unsubscribe preferences
+        async function submitUnsubscribe() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+
+            if (checkboxes.length === 0) {
+                alert('Please select at least one option to unsubscribe from.');
+                return;
+            }
+
+            const preferences = Array.from(checkboxes).map(cb => cb.value);
+            const feedback = document.getElementById('feedback').value;
+
+            // Disable button during submission
+            const submitBtn = event.target;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+
+            try {
+                const response = await fetch('/api/unsubscribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        preferences: preferences,
+                        feedback: feedback
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Show success message
+                    document.getElementById('unsubscribe-form').style.display = 'none';
+                    document.getElementById('success-message').style.display = 'block';
+                } else {
+                    alert('Error processing your request. Please try again or contact support.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Unsubscribe';
+                }
+            } catch (error) {
+                console.error('Unsubscribe error:', error);
+                alert('Error processing your request. Please try again later.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Unsubscribe';
+            }
+        }
+
+        // Stay subscribed - redirect to dashboard
+        function staySubscribed() {
+            window.location.href = 'https://aiagent.ringlypro.com/dashboard';
+        }
+    </script>
+</body>
+</html>
