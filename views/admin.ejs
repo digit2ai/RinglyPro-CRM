@@ -462,6 +462,10 @@
                 <h3>Total Minutes</h3>
                 <div class="value" id="totalMinutes">0</div>
             </div>
+            <div class="stat-card" style="cursor: pointer; border: 2px solid #FF914D;" onclick="openGiftTokensModal()">
+                <h3>🎁 Gift Tokens</h3>
+                <div class="value" style="color: #FF914D; font-size: 20px;">Click to Gift</div>
+            </div>
         </div>
 
         <!-- Main Panel -->
@@ -541,6 +545,63 @@
                         <div class="loading">Loading activity...</div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gift Tokens Modal -->
+    <div class="modal" id="giftTokensModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>🎁 Gift Tokens to User</h2>
+                <button class="close-modal" onclick="closeGiftTokensModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">User Email</label>
+                    <input type="email" id="giftUserEmail" placeholder="user@example.com"
+                           style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 14px;">
+                    <small style="color: #666; display: block; margin-top: 5px;">Enter the email address of the user to gift tokens to</small>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Number of Tokens</label>
+                    <input type="number" id="giftTokenAmount" placeholder="100" min="1"
+                           style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 14px;">
+                    <small style="color: #666; display: block; margin-top: 5px;">Enter the number of tokens to gift</small>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Payment Amount (USD)</label>
+                    <input type="number" id="giftPaymentAmount" placeholder="10.00" min="0" step="0.01"
+                           style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 14px;">
+                    <small style="color: #666; display: block; margin-top: 5px;">Optional: The payment amount associated with this gift (for record keeping)</small>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Reason / Notes</label>
+                    <textarea id="giftReason" placeholder="E.g., Customer appreciation gift, compensation for issue, promotional offer..."
+                              style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 14px; min-height: 80px; resize: vertical; font-family: inherit;"></textarea>
+                    <small style="color: #666; display: block; margin-top: 5px;">Optional: Reason for gifting tokens (recommended for audit trail)</small>
+                </div>
+
+                <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <div style="font-weight: 600; color: #856404; margin-bottom: 5px;">⚠️ Confirmation Required</div>
+                    <div style="font-size: 13px; color: #856404;">This will immediately credit tokens to the user's account. This action cannot be undone.</div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="submitGiftTokens()"
+                            style="flex: 1; padding: 14px; background: linear-gradient(135deg, #FF914D 0%, #ff6b35 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                        🎁 Gift Tokens
+                    </button>
+                    <button onclick="closeGiftTokensModal()"
+                            style="padding: 14px 24px; background: #6c757d; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                        Cancel
+                    </button>
+                </div>
+
+                <div id="giftResultMessage" style="display: none; margin-top: 20px; padding: 15px; border-radius: 8px;"></div>
             </div>
         </div>
     </div>
@@ -1035,6 +1096,128 @@
             window.location.href = '/admin/login';
         }
 
+        // Open Gift Tokens Modal
+        function openGiftTokensModal() {
+            document.getElementById('giftTokensModal').classList.add('active');
+            document.getElementById('giftUserEmail').value = '';
+            document.getElementById('giftTokenAmount').value = '';
+            document.getElementById('giftPaymentAmount').value = '';
+            document.getElementById('giftReason').value = '';
+            document.getElementById('giftResultMessage').style.display = 'none';
+        }
+
+        // Close Gift Tokens Modal
+        function closeGiftTokensModal() {
+            document.getElementById('giftTokensModal').classList.remove('active');
+        }
+
+        // Submit Gift Tokens
+        async function submitGiftTokens() {
+            const email = document.getElementById('giftUserEmail').value.trim();
+            const tokens = parseInt(document.getElementById('giftTokenAmount').value);
+            const amount = parseFloat(document.getElementById('giftPaymentAmount').value) || 0;
+            const reason = document.getElementById('giftReason').value.trim();
+
+            // Validation
+            if (!email) {
+                alert('Please enter a user email address');
+                return;
+            }
+
+            if (!tokens || tokens <= 0) {
+                alert('Please enter a valid number of tokens (must be greater than 0)');
+                return;
+            }
+
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+
+            // Confirmation
+            const confirmMessage = `Are you sure you want to gift ${tokens} tokens to ${email}?${reason ? '\n\nReason: ' + reason : ''}`;
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            // Disable button during submission
+            const submitBtn = event.target;
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '⏳ Processing...';
+
+            try {
+                const response = await authenticatedFetch('/api/admin/gift-tokens', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email,
+                        tokens,
+                        amount,
+                        reason: reason || 'Admin token gift'
+                    })
+                });
+
+                if (!response) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                    return;
+                }
+
+                const result = await response.json();
+
+                const resultMessage = document.getElementById('giftResultMessage');
+                resultMessage.style.display = 'block';
+
+                if (result.success) {
+                    resultMessage.style.background = '#d4edda';
+                    resultMessage.style.border = '2px solid #28a745';
+                    resultMessage.style.color = '#155724';
+                    resultMessage.innerHTML = `
+                        <div style="font-weight: 600; margin-bottom: 5px;">✅ Success!</div>
+                        <div style="font-size: 14px;">
+                            ${tokens} tokens have been gifted to ${email}<br>
+                            Previous balance: ${result.previousBalance} tokens<br>
+                            New balance: ${result.newBalance} tokens
+                        </div>
+                    `;
+
+                    // Clear form
+                    setTimeout(() => {
+                        closeGiftTokensModal();
+                    }, 3000);
+                } else {
+                    resultMessage.style.background = '#f8d7da';
+                    resultMessage.style.border = '2px solid #dc3545';
+                    resultMessage.style.color = '#721c24';
+                    resultMessage.innerHTML = `
+                        <div style="font-weight: 600; margin-bottom: 5px;">❌ Error</div>
+                        <div style="font-size: 14px;">${result.error || 'Failed to gift tokens'}</div>
+                    `;
+                }
+
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            } catch (error) {
+                console.error('Error gifting tokens:', error);
+
+                const resultMessage = document.getElementById('giftResultMessage');
+                resultMessage.style.display = 'block';
+                resultMessage.style.background = '#f8d7da';
+                resultMessage.style.border = '2px solid #dc3545';
+                resultMessage.style.color = '#721c24';
+                resultMessage.innerHTML = `
+                    <div style="font-weight: 600; margin-bottom: 5px;">❌ Error</div>
+                    <div style="font-size: 14px;">Failed to gift tokens. Please try again.</div>
+                `;
+
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {
             if (checkAuth()) {
@@ -1047,6 +1230,13 @@
         document.getElementById('clientModal').addEventListener('click', (e) => {
             if (e.target.id === 'clientModal') {
                 closeClientModal();
+            }
+        });
+
+        // Close gift tokens modal when clicking outside
+        document.getElementById('giftTokensModal').addEventListener('click', (e) => {
+            if (e.target.id === 'giftTokensModal') {
+                closeGiftTokensModal();
             }
         });
     </script>

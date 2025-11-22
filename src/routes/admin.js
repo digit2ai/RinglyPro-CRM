@@ -698,4 +698,84 @@ router.get('/reports/overview', async (req, res) => {
     }
 });
 
+// ============= GIFT TOKENS TO USER =============
+
+router.post('/gift-tokens', async (req, res) => {
+    try {
+        const { email, tokens, amount, reason } = req.body;
+
+        console.log(`🎁 Admin gifting tokens: ${tokens} tokens to ${email}`);
+
+        // Validation
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                error: 'User email is required'
+            });
+        }
+
+        if (!tokens || tokens <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Token amount must be greater than 0'
+            });
+        }
+
+        // Find user by email
+        const user = await User.findOne({ where: { email } });
+
+        if (!user) {
+            console.log(`❌ User not found: ${email}`);
+            return res.status(404).json({
+                success: false,
+                error: `User not found with email: ${email}`
+            });
+        }
+
+        // Get previous balance
+        const previousBalance = user.tokens_balance || 0;
+
+        // Import tokenService
+        const tokenService = require('../services/tokenService');
+
+        // Add tokens to user account
+        const result = await tokenService.addTokens(user.id, tokens, 'admin_gift', {
+            reason: reason || 'Admin token gift',
+            amount: amount || 0,
+            currency: 'usd',
+            gifted_by: req.adminUser.email,
+            admin_user_id: req.adminId,
+            timestamp: new Date().toISOString()
+        });
+
+        console.log(`✅ Admin gifted ${tokens} tokens to ${email}`);
+        console.log(`   Previous balance: ${previousBalance} tokens`);
+        console.log(`   New balance: ${result.balance} tokens`);
+
+        res.json({
+            success: true,
+            message: `Successfully gifted ${tokens} tokens to ${email}`,
+            user: {
+                id: user.id,
+                email: user.email,
+                firstName: user.first_name,
+                lastName: user.last_name
+            },
+            previousBalance,
+            newBalance: result.balance,
+            tokensGifted: tokens,
+            giftedBy: req.adminUser.email,
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        console.error('❌ Admin gift tokens error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to gift tokens',
+            details: error.message
+        });
+    }
+});
+
 module.exports = router;
