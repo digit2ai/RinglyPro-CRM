@@ -3983,18 +3983,12 @@
             const cleanPhone = phone.replace(/\D/g, ''); // Remove non-digits
             const formattedPhone = cleanPhone.startsWith('1') ? `+${cleanPhone}` : `+1${cleanPhone}`;
 
-            console.log('📱 sendSMS called with:', formattedPhone);
-            console.log('📱 window.nativeApp exists:', !!window.nativeApp);
-            console.log('📱 window.nativeApp.sendSMS exists:', !!(window.nativeApp && window.nativeApp.sendSMS));
-
             // Check if running in iOS native app with bridge
             if (window.nativeApp && window.nativeApp.sendSMS) {
                 // iOS app: use native bridge
-                console.log('✅ Using native iOS bridge for SMS');
                 window.nativeApp.sendSMS(formattedPhone);
             } else {
                 // Mobile browser: use standard sms: link
-                console.log('🌐 Using standard SMS link for browser');
                 const link = document.createElement('a');
                 link.href = `sms:${formattedPhone}`;
                 link.style.display = 'none';
@@ -4005,18 +3999,12 @@
         }
 
         function makeCall(phone, name) {
-            console.log('📞 makeCall called with:', phone);
-            console.log('📞 window.nativeApp exists:', !!window.nativeApp);
-            console.log('📞 window.nativeApp.makeCall exists:', !!(window.nativeApp && window.nativeApp.makeCall));
-
             // Check if running in iOS native app with bridge
             if (window.nativeApp && window.nativeApp.makeCall) {
                 // iOS app: use native bridge
-                console.log('✅ Using native iOS bridge for call');
                 window.nativeApp.makeCall(phone);
             } else {
                 // Mobile browser: use standard tel: link
-                console.log('🌐 Using standard tel: link for browser');
                 const link = document.createElement('a');
                 link.href = `tel:${phone}`;
                 link.style.display = 'none';
@@ -4709,23 +4697,6 @@
             const displayHour = hour === 0 ? 12 : (hour > 12 ? hour - 12 : hour);
             return `${displayHour}:${minutes} ${ampm}`;
         }
-
-        // Debug: Check for native app bridge
-        window.addEventListener('nativeAppReady', () => {
-            console.log('🎉 nativeAppReady event fired!');
-            console.log('🎉 window.nativeApp:', window.nativeApp);
-        });
-
-        // Debug: Check bridge on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('📄 DOMContentLoaded - Checking for nativeApp bridge');
-            console.log('📄 window.nativeApp exists:', !!window.nativeApp);
-            if (window.nativeApp) {
-                console.log('📄 window.nativeApp.makeCall exists:', !!window.nativeApp.makeCall);
-                console.log('📄 window.nativeApp.sendSMS exists:', !!window.nativeApp.sendSMS);
-                console.log('📄 window.nativeApp.platform:', window.nativeApp.platform);
-            }
-        });
 
         // Handle appointment form submission
         document.addEventListener('DOMContentLoaded', () => {
