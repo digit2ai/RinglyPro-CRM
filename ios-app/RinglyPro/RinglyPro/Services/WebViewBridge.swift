@@ -27,6 +27,14 @@ class WebViewBridge: NSObject, WKScriptMessageHandler {
             if let messageText = body["message"] as? String {
                 showToast(message: messageText)
             }
+        case "makeCall":
+            if let phoneNumber = body["phoneNumber"] as? String {
+                makeCall(phoneNumber: phoneNumber)
+            }
+        case "sendSMS":
+            if let phoneNumber = body["phoneNumber"] as? String {
+                sendSMS(phoneNumber: phoneNumber)
+            }
         default:
             print("Unknown action: \(action)")
         }
@@ -51,6 +59,12 @@ class WebViewBridge: NSObject, WKScriptMessageHandler {
             },
             showToast: function(message) {
                 this.postMessage({ action: 'showToast', message: message });
+            },
+            makeCall: function(phoneNumber) {
+                this.postMessage({ action: 'makeCall', phoneNumber: phoneNumber });
+            },
+            sendSMS: function(phoneNumber) {
+                this.postMessage({ action: 'sendSMS', phoneNumber: phoneNumber });
             },
             platform: 'ios',
             version: '\(AppConfig.appVersion)'
@@ -97,6 +111,36 @@ class WebViewBridge: NSObject, WKScriptMessageHandler {
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             alert.dismiss(animated: true)
+        }
+    }
+
+    private func makeCall(phoneNumber: String) {
+        guard let url = URL(string: "tel:\(phoneNumber)") else {
+            print("Invalid phone number: \(phoneNumber)")
+            return
+        }
+
+        UIApplication.shared.open(url, options: [:]) { success in
+            if success {
+                print("Successfully initiated call to: \(phoneNumber)")
+            } else {
+                print("Failed to initiate call to: \(phoneNumber)")
+            }
+        }
+    }
+
+    private func sendSMS(phoneNumber: String) {
+        guard let url = URL(string: "sms:\(phoneNumber)") else {
+            print("Invalid phone number: \(phoneNumber)")
+            return
+        }
+
+        UIApplication.shared.open(url, options: [:]) { success in
+            if success {
+                print("Successfully opened SMS to: \(phoneNumber)")
+            } else {
+                print("Failed to open SMS to: \(phoneNumber)")
+            }
         }
     }
 

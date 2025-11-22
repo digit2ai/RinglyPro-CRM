@@ -3983,23 +3983,39 @@
             const cleanPhone = phone.replace(/\D/g, ''); // Remove non-digits
             const formattedPhone = cleanPhone.startsWith('1') ? `+${cleanPhone}` : `+1${cleanPhone}`;
 
-            // Create invisible link and click it (works better in iOS WebViews)
-            const link = document.createElement('a');
-            link.href = `sms:${formattedPhone}`;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Check if running in iOS native app with bridge
+            if (window.nativeApp && window.nativeApp.sendSMS) {
+                // iOS app: use native bridge
+                console.log('Using native iOS bridge for SMS');
+                window.nativeApp.sendSMS(formattedPhone);
+            } else {
+                // Mobile browser: use standard sms: link
+                console.log('Using standard SMS link');
+                const link = document.createElement('a');
+                link.href = `sms:${formattedPhone}`;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
         }
 
         function makeCall(phone, name) {
-            // Create invisible link and click it (works better in iOS WebViews)
-            const link = document.createElement('a');
-            link.href = `tel:${phone}`;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Check if running in iOS native app with bridge
+            if (window.nativeApp && window.nativeApp.makeCall) {
+                // iOS app: use native bridge
+                console.log('Using native iOS bridge for call');
+                window.nativeApp.makeCall(phone);
+            } else {
+                // Mobile browser: use standard tel: link
+                console.log('Using standard tel: link');
+                const link = document.createElement('a');
+                link.href = `tel:${phone}`;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
         }
 
         // Open MCP Copilot with auto-loaded credentials
