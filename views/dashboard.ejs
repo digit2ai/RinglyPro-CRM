@@ -2840,7 +2840,8 @@
                     localStorage.setItem('carrier_preference', carrier);
                 }
 
-                const response = await fetch(`/api/call-forwarding/setup/${carrier}/${CLIENT_ID}`);
+                const response = await authenticatedFetch(`/api/call-forwarding/setup/${carrier}/${CLIENT_ID}`);
+                if (!response) return;
                 const data = await response.json();
 
                 if (data.success && data.setup && data.setup.recommended) {
