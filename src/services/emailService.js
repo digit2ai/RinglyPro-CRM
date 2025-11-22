@@ -233,7 +233,7 @@ async function sendPartnershipConfirmationEmail({ email, firstName, lastName, co
         to: email,
         from: {
             email: 'mstagg@digit2ai.com',
-            name: 'Manuel Stagg - RinglyPro Partnership'
+            name: 'RinglyPro Partnership'
         },
         subject: `Welcome to the RinglyPro Partnership Program, ${firstName}!`,
         text: `Dear ${firstName},
@@ -260,7 +260,8 @@ YOUR PARTNERSHIP BENEFITS:
 - Dedicated partner support
 
 NEXT STEPS:
-Visit your partnership roadmap: ${roadmapUrl}
+1. Visit your partnership roadmap: ${roadmapUrl}
+2. Review marketing guidelines: ${APP_URL}/marketing-guidelines
 
 Questions? Contact us:
 Manuel Stagg - Founder
@@ -327,6 +328,12 @@ The RinglyPro Partnership Team`,
 
             <div class="step">
                 <span class="step-number">3</span>
+                <span class="step-title">Review Marketing Guidelines</span>
+                <p style="margin: 10px 0 0; color: #64748b;">Read our marketing guidelines and branding standards to ensure compliant promotion.</p>
+            </div>
+
+            <div class="step">
+                <span class="step-number">4</span>
                 <span class="step-title">Start Earning</span>
                 <p style="margin: 10px 0 0; color: #64748b;">Begin sharing your referral link and earn 50% of profits from your referred customers!</p>
             </div>
@@ -352,7 +359,9 @@ The RinglyPro Partnership Team`,
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${roadmapUrl}" class="button">View Partnership Roadmap</a>
+                <a href="${roadmapUrl}" class="button" style="text-decoration: none;">View Partnership Roadmap</a>
+                <br>
+                <a href="${APP_URL}/marketing-guidelines" class="button" style="text-decoration: none; background: linear-gradient(135deg, #0b1e3e 0%, #1e3a5f 100%); margin-top: 10px;">Marketing Guidelines & Branding</a>
             </div>
 
             <div class="contact-box">
@@ -368,7 +377,11 @@ The RinglyPro Partnership Team`,
         <div class="footer">
             <p><strong>RinglyPro Partnership Program</strong></p>
             <p style="font-size: 12px; color: #9ca3af; margin-top: 10px;">&copy; ${new Date().getFullYear()} RinglyPro. All rights reserved.</p>
-            <p style="font-size: 12px; margin-top: 10px;"><a href="${APP_URL}" style="color: #FF914D; text-decoration: none;">Visit Dashboard</a> | <a href="${roadmapUrl}" style="color: #FF914D; text-decoration: none;">Partnership Roadmap</a></p>
+            <p style="font-size: 12px; margin-top: 10px;">
+                <a href="${APP_URL}" style="color: #FF914D; text-decoration: none;">Dashboard</a> |
+                <a href="${roadmapUrl}" style="color: #FF914D; text-decoration: none;">Partnership Roadmap</a> |
+                <a href="${APP_URL}/marketing-guidelines" style="color: #FF914D; text-decoration: none;">Marketing Guidelines</a>
+            </p>
         </div>
     </div>
 </body>
