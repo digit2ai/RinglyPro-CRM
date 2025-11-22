@@ -2927,27 +2927,62 @@
 
                     <div style="background: ${action === 'activate' ? '#eff6ff' : '#fef2f2'}; border: 2px solid ${action === 'activate' ? '#3b82f6' : '#ef4444'}; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                         <div style="font-size: 13px; font-weight: 600; color: ${action === 'activate' ? '#1e40af' : '#991b1b'}; margin-bottom: 12px;">
-                            📱 Tap the code below to dial:
+                            📱 Forwarding Code:
                         </div>
-                        <a href="tel:${forwardCode}" style="
+                        <div id="forwardCodeDisplay" style="
                             display: block;
                             background: ${action === 'activate' ? '#3b82f6' : '#ef4444'};
                             color: white;
-                            text-decoration: none;
-                            padding: 16px;
+                            padding: 20px;
                             border-radius: 10px;
                             text-align: center;
-                            font-size: 24px;
+                            font-size: 28px;
                             font-weight: bold;
-                            letter-spacing: 2px;
+                            letter-spacing: 3px;
                             font-family: 'Courier New', monospace;
                             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                            transition: transform 0.2s;
-                        " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                            margin-bottom: 12px;
+                            user-select: all;
+                            -webkit-user-select: all;
+                        ">
                             ${forwardCode}
-                        </a>
-                        <div style="font-size: 12px; color: #6b7280; margin-top: 12px; text-align: center;">
-                            Tap the code above, then press <strong>SEND</strong> on your phone
+                        </div>
+                        <button onclick="
+                            const code = '${forwardCode}';
+                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                                navigator.clipboard.writeText(code).then(() => {
+                                    const btn = event.target;
+                                    const originalText = btn.innerHTML;
+                                    btn.innerHTML = '✓ Copied! Now open your phone dialer and paste';
+                                    btn.style.background = '#22c55e';
+                                    setTimeout(() => {
+                                        btn.innerHTML = originalText;
+                                        btn.style.background = '${action === 'activate' ? '#1e40af' : '#991b1b'}';
+                                    }, 3000);
+                                });
+                            } else {
+                                alert('Code: ' + code + '\\n\\nLong-press the code above to copy it, then paste into your phone dialer.');
+                            }
+                        " style="
+                            width: 100%;
+                            padding: 14px;
+                            background: ${action === 'activate' ? '#1e40af' : '#991b1b'};
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            font-size: 15px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        ">
+                            📋 Copy Code to Clipboard
+                        </button>
+                        <div style="font-size: 12px; color: #6b7280; margin-top: 12px; text-align: center; line-height: 1.5;">
+                            <strong>Instructions:</strong><br>
+                            1. Tap "Copy Code" button above<br>
+                            2. Open your phone's dialer app<br>
+                            3. Tap and hold in the dialer to paste the code<br>
+                            4. Press <strong>SEND/CALL</strong> button
                         </div>
                     </div>
 
@@ -3926,11 +3961,24 @@
             // Format: sms:+1234567890 (iOS/Android)
             const cleanPhone = phone.replace(/\D/g, ''); // Remove non-digits
             const formattedPhone = cleanPhone.startsWith('1') ? `+${cleanPhone}` : `+1${cleanPhone}`;
-            window.location.href = `sms:${formattedPhone}`;
+
+            // Create invisible link and click it (works better in iOS WebViews)
+            const link = document.createElement('a');
+            link.href = `sms:${formattedPhone}`;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function makeCall(phone, name) {
-            window.location.href = `tel:${phone}`;
+            // Create invisible link and click it (works better in iOS WebViews)
+            const link = document.createElement('a');
+            link.href = `tel:${phone}`;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         // Open MCP Copilot with auto-loaded credentials
