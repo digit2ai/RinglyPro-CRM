@@ -2927,25 +2927,13 @@
 
                     <div style="background: ${action === 'activate' ? '#eff6ff' : '#fef2f2'}; border: 2px solid ${action === 'activate' ? '#3b82f6' : '#ef4444'}; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                         <div style="font-size: 13px; font-weight: 600; color: ${action === 'activate' ? '#1e40af' : '#991b1b'}; margin-bottom: 12px;">
-                            📱 Tap the code below to copy:
+                            📱 Tap the code below to dial:
                         </div>
-                        <div id="forwardCodeBtn" onclick="
-                            navigator.clipboard.writeText('${forwardCode}').then(() => {
-                                const btn = document.getElementById('forwardCodeBtn');
-                                const originalHTML = btn.innerHTML;
-                                btn.innerHTML = '✓ Copied to Clipboard!';
-                                btn.style.background = '#22c55e';
-                                setTimeout(() => {
-                                    btn.innerHTML = originalHTML;
-                                    btn.style.background = '${action === 'activate' ? '#3b82f6' : '#ef4444'}';
-                                }, 2000);
-                            }).catch(err => {
-                                alert('Code: ${forwardCode}\\n\\nCopy this code and paste it into your phone dialer.');
-                            });
-                        " style="
+                        <a href="tel:${forwardCode}" style="
                             display: block;
                             background: ${action === 'activate' ? '#3b82f6' : '#ef4444'};
                             color: white;
+                            text-decoration: none;
                             padding: 16px;
                             border-radius: 10px;
                             text-align: center;
@@ -2954,13 +2942,12 @@
                             letter-spacing: 2px;
                             font-family: 'Courier New', monospace;
                             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                            transition: all 0.2s;
-                            cursor: pointer;
+                            transition: transform 0.2s;
                         " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                             ${forwardCode}
-                        </div>
+                        </a>
                         <div style="font-size: 12px; color: #6b7280; margin-top: 12px; text-align: center;">
-                            Tap to copy, then paste into your phone dialer and press <strong>SEND</strong>
+                            Tap the code above, then press <strong>SEND</strong> on your phone
                         </div>
                     </div>
 
