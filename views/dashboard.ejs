@@ -2927,9 +2927,17 @@
 
                     <div style="background: ${action === 'activate' ? '#eff6ff' : '#fef2f2'}; border: 2px solid ${action === 'activate' ? '#3b82f6' : '#ef4444'}; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                         <div style="font-size: 13px; font-weight: 600; color: ${action === 'activate' ? '#1e40af' : '#991b1b'}; margin-bottom: 12px;">
-                            📱 Forwarding Code:
+                            📱 Tap code to dial (works on Android):
                         </div>
-                        <div id="forwardCodeDisplay" style="
+                        <div onclick="
+                            const code = '${forwardCode}';
+                            const link = document.createElement('a');
+                            link.href = 'tel:' + code;
+                            link.style.display = 'none';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        " style="
                             display: block;
                             background: ${action === 'activate' ? '#3b82f6' : '#ef4444'};
                             color: white;
@@ -2942,9 +2950,11 @@
                             font-family: 'Courier New', monospace;
                             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
                             margin-bottom: 12px;
+                            cursor: pointer;
                             user-select: all;
                             -webkit-user-select: all;
-                        ">
+                            transition: transform 0.1s;
+                        " onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                             ${forwardCode}
                         </div>
                         <button onclick="
@@ -2975,14 +2985,11 @@
                             cursor: pointer;
                             transition: all 0.2s;
                         ">
-                            📋 Copy Code to Clipboard
+                            📋 Copy Code to Clipboard (iOS)
                         </button>
                         <div style="font-size: 12px; color: #6b7280; margin-top: 12px; text-align: center; line-height: 1.5;">
-                            <strong>Instructions:</strong><br>
-                            1. Tap "Copy Code" button above<br>
-                            2. Open your phone's dialer app<br>
-                            3. Tap and hold in the dialer to paste the code<br>
-                            4. Press <strong>SEND/CALL</strong> button
+                            <strong>Android:</strong> Tap code above to dial<br>
+                            <strong>iOS:</strong> Tap copy button, open phone dialer, paste & call
                         </div>
                     </div>
 
@@ -3893,19 +3900,29 @@
             const container = document.getElementById('contactResults');
             const html = '<p style="font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">Recent Contacts</p>' +
                 contacts.map(contact => `
-                    <div class="contact-item" onclick="selectContact('${contact.phone}', '${contact.name}')">
-                        <div class="contact-avatar">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
+                    <div class="contact-item" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #e5e7eb; cursor: pointer;">
+                        <div style="display: flex; align-items: center; flex: 1;" onclick="selectContact('${contact.phone}', '${contact.name}')">
+                            <div class="contact-avatar">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                            </div>
+                            <div class="contact-details">
+                                <h4>${contact.name}</h4>
+                                <p>${contact.phone}</p>
+                            </div>
                         </div>
-                        <div class="contact-details">
-                            <h4>${contact.name}</h4>
-                            <p>${contact.phone}</p>
+                        <div style="display: flex; gap: 8px; margin-left: 12px;">
+                            <button onclick="event.stopPropagation(); makeCall('${contact.phone}', '${contact.name}');" style="padding: 8px 12px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                                📞 Call
+                            </button>
+                            <button onclick="event.stopPropagation(); sendSMS('${contact.phone}', '${contact.name}');" style="padding: 8px 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                                💬 SMS
+                            </button>
                         </div>
                     </div>
                 `).join('');
-            
+
             container.innerHTML = html;
         }
 
@@ -3929,15 +3946,25 @@
                     const container = document.getElementById('contactResults');
                     container.innerHTML = '<p style="font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">Search Results</p>' +
                         data.contacts.map(contact => `
-                            <div class="contact-item" onclick="selectContact('${contact.phone}', '${contact.name}')">
-                                <div class="contact-avatar">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                    </svg>
+                            <div class="contact-item" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #e5e7eb; cursor: pointer;">
+                                <div style="display: flex; align-items: center; flex: 1;" onclick="selectContact('${contact.phone}', '${contact.name}')">
+                                    <div class="contact-avatar">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="contact-details">
+                                        <h4>${contact.name}</h4>
+                                        <p>${contact.display_details}</p>
+                                    </div>
                                 </div>
-                                <div class="contact-details">
-                                    <h4>${contact.name}</h4>
-                                    <p>${contact.display_details}</p>
+                                <div style="display: flex; gap: 8px; margin-left: 12px;">
+                                    <button onclick="event.stopPropagation(); makeCall('${contact.phone}', '${contact.name}');" style="padding: 8px 12px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                                        📞 Call
+                                    </button>
+                                    <button onclick="event.stopPropagation(); sendSMS('${contact.phone}', '${contact.name}');" style="padding: 8px 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                                        💬 SMS
+                                    </button>
                                 </div>
                             </div>
                         `).join('');
