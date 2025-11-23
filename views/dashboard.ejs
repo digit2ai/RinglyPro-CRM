@@ -2871,6 +2871,24 @@
             }
         }
 
+        // Helper function to dial a forwarding code
+        function dialForwardingCode(code) {
+            console.log('dialForwardingCode called with:', code);
+
+            if (window.nativeApp && window.nativeApp.dialCode) {
+                console.log('Using native bridge to dial code');
+                window.nativeApp.dialCode(code);
+            } else {
+                console.log('Using tel: link fallback');
+                const link = document.createElement('a');
+                link.href = 'tel:' + code;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
         // Show forwarding instructions in a modal with clickable dial link
         function showForwardingModal(title, subtitle, carrier, businessPhone, forwardCode, action) {
             // Remove any existing modal
@@ -2923,21 +2941,7 @@
                         <div style="font-size: 13px; font-weight: 600; color: ${action === 'activate' ? '#1e40af' : '#991b1b'}; margin-bottom: 12px;">
                             📱 Tap code to dial:
                         </div>
-                        <div onclick="
-                            const code = '${forwardCode}';
-                            if (window.nativeApp && window.nativeApp.dialCode) {
-                                // iOS app: use native bridge for dial codes with * and #
-                                window.nativeApp.dialCode(code);
-                            } else {
-                                // Mobile browser: try tel: link (works on Android)
-                                const link = document.createElement('a');
-                                link.href = 'tel:' + code;
-                                link.style.display = 'none';
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                            }
-                        " style="
+                        <div onclick="dialForwardingCode('${forwardCode}')" style="
                             display: block;
                             background: ${action === 'activate' ? '#3b82f6' : '#ef4444'};
                             color: white;
