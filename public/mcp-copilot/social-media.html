@@ -858,50 +858,50 @@
                 }
             });
 
-            // Image upload - handle multiple images
-            document.getElementById('postImages').addEventListener('change', (e) => {
-                const files = Array.from(e.target.files);
-                const previewContainer = document.getElementById('imagePreview');
-                previewContainer.innerHTML = '';
+            // Image upload - handle multiple images (DISABLED - element removed from HTML)
+            // document.getElementById('postImages').addEventListener('change', (e) => {
+            //     const files = Array.from(e.target.files);
+            //     const previewContainer = document.getElementById('imagePreview');
+            //     previewContainer.innerHTML = '';
+            //
+            //     files.forEach((file, index) => {
+            //         if (file.type.startsWith('image/')) {
+            //             const reader = new FileReader();
+            //             reader.onload = (event) => {
+            //                 const imgWrapper = document.createElement('div');
+            //                 imgWrapper.style.cssText = 'position: relative; width: 80px; height: 80px;';
+            //
+            //                 const img = document.createElement('img');
+            //                 img.src = event.target.result;
+            //                 img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 2px solid #e5e7eb;';
+            //
+            //                 const removeBtn = document.createElement('button');
+            //                 removeBtn.textContent = '×';
+            //                 removeBtn.type = 'button';
+            //                 removeBtn.style.cssText = 'position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: #ef4444; color: white; border: none; cursor: pointer; font-size: 16px; line-height: 1;';
+            //                 removeBtn.onclick = () => {
+            //                     imgWrapper.remove();
+            //                     // Reset file input if no images left
+            //                     if (previewContainer.children.length === 0) {
+            //                         document.getElementById('postImages').value = '';
+            //                     }
+            //                 };
+            //
+            //                 imgWrapper.appendChild(img);
+            //                 imgWrapper.appendChild(removeBtn);
+            //                 previewContainer.appendChild(imgWrapper);
+            //             };
+            //             reader.readAsDataURL(file);
+            //         }
+            //     });
+            // });
 
-                files.forEach((file, index) => {
-                    if (file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            const imgWrapper = document.createElement('div');
-                            imgWrapper.style.cssText = 'position: relative; width: 80px; height: 80px;';
-
-                            const img = document.createElement('img');
-                            img.src = event.target.result;
-                            img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 2px solid #e5e7eb;';
-
-                            const removeBtn = document.createElement('button');
-                            removeBtn.textContent = '×';
-                            removeBtn.type = 'button';
-                            removeBtn.style.cssText = 'position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: #ef4444; color: white; border: none; cursor: pointer; font-size: 16px; line-height: 1;';
-                            removeBtn.onclick = () => {
-                                imgWrapper.remove();
-                                // Reset file input if no images left
-                                if (previewContainer.children.length === 0) {
-                                    document.getElementById('postImages').value = '';
-                                }
-                            };
-
-                            imgWrapper.appendChild(img);
-                            imgWrapper.appendChild(removeBtn);
-                            previewContainer.appendChild(imgWrapper);
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                });
-            });
-
-            // Remove image
-            document.getElementById('removeImageBtn').addEventListener('click', () => {
-                uploadedImageData = null;
-                document.getElementById('imageUpload').value = '';
-                document.getElementById('imagePreviewContainer').classList.remove('active');
-            });
+            // Remove image (DISABLED - element removed from HTML)
+            // document.getElementById('removeImageBtn').addEventListener('click', () => {
+            //     uploadedImageData = null;
+            //     document.getElementById('imageUpload').value = '';
+            //     document.getElementById('imagePreviewContainer').classList.remove('active');
+            // });
 
             // Preview button
             document.getElementById('previewBtn').addEventListener('click', () => {
@@ -1022,8 +1022,8 @@
                 }
             }
 
-            // Get images if any
-            const imageFiles = document.getElementById('postImages').files;
+            // Get images if any (DISABLED - image upload removed)
+            const imageFiles = document.getElementById('postImages')?.files || [];
             const imageData = [];
 
             console.log('🖼️ Image files from input:', {
@@ -1031,7 +1031,7 @@
                 files: Array.from(imageFiles).map(f => ({ name: f.name, type: f.type, size: f.size }))
             });
 
-            if (imageFiles.length > 0) {
+            if (imageFiles && imageFiles.length > 0) {
                 // Convert images to base64
                 for (const file of imageFiles) {
                     console.log(`📸 Converting ${file.name} to base64...`);
@@ -1337,9 +1337,9 @@
             // Update preview modal
             document.getElementById('previewModalText').textContent = content;
 
-            // Show/hide images (use new multi-image system)
+            // Show/hide images (use new multi-image system) - DISABLED: image upload removed
             const imageEl = document.getElementById('previewModalImage');
-            const imageFiles = document.getElementById('postImages').files;
+            const imageFiles = document.getElementById('postImages')?.files || [];
 
             if (imageFiles && imageFiles.length > 0) {
                 // Show first image in preview
@@ -1396,10 +1396,10 @@
                 document.getElementById('aiContentModal').style.display = 'flex';
             });
 
-            // AI Image Generation Modal
-            document.getElementById('aiImageBtn').addEventListener('click', () => {
-                document.getElementById('aiImageModal').style.display = 'flex';
-            });
+            // AI Image Generation Modal (DISABLED - element removed from HTML)
+            // document.getElementById('aiImageBtn').addEventListener('click', () => {
+            //     document.getElementById('aiImageModal').style.display = 'flex';
+            // });
 
             // Generate AI Content
             document.getElementById('generateContentBtn').addEventListener('click', async () => {
@@ -1637,13 +1637,17 @@
                     dataTransfer.items.add(file);
                     console.log('📋 DataTransfer created with', dataTransfer.files.length, 'file(s)');
 
-                    // Set to file input
+                    // Set to file input (DISABLED - image upload removed, this code won't execute)
                     const fileInput = document.getElementById('postImages');
-                    fileInput.files = dataTransfer.files;
-                    console.log('✅ File input updated, now has', fileInput.files.length, 'file(s)');
+                    if (fileInput) {
+                        fileInput.files = dataTransfer.files;
+                        console.log('✅ File input updated, now has', fileInput.files.length, 'file(s)');
+                    } else {
+                        console.warn('⚠️ Image upload disabled - postImages element not found');
+                    }
 
                     // Log the file details
-                    if (fileInput.files.length > 0) {
+                    if (fileInput && fileInput.files.length > 0) {
                         console.log('📸 File in input:', {
                             name: fileInput.files[0].name,
                             size: fileInput.files[0].size,
