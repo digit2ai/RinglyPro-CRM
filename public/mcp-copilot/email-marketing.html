@@ -642,7 +642,25 @@
 
                     <!-- Message -->
                     <div class="form-group">
-                        <label>Email Message *</label>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label style="margin: 0;">Email Message *</label>
+                            <button type="button" id="aiGenerateBtn" style="
+                                background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+                                color: white;
+                                border: none;
+                                padding: 6px 12px;
+                                border-radius: 6px;
+                                font-size: 0.75rem;
+                                font-weight: 600;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                gap: 4px;
+                                transition: transform 0.2s, box-shadow 0.2s;
+                            " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(30, 64, 175, 0.4)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                                ✨ AI Generate
+                            </button>
+                        </div>
 
                         <!-- Rich Text Toolbar -->
                         <div class="rich-text-toolbar" style="background: #f3f4f6; padding: 0.5rem; border-radius: 0.5rem 0.5rem 0 0; border: 1px solid #d1d5db; display: flex; gap: 0.25rem; flex-wrap: wrap; align-items: center;">
@@ -1372,6 +1390,263 @@
                 closePreview();
             }
         });
+
+        // ============= AI CONTENT GENERATION =============
+
+        // Setup AI Generator Event Listeners (called after DOM loaded)
+        function setupAIGenerator() {
+            // AI Content Generation Modal
+            const aiGenerateBtn = document.getElementById('aiGenerateBtn');
+            if (aiGenerateBtn) {
+                aiGenerateBtn.addEventListener('click', () => {
+                    document.getElementById('aiContentModal').style.display = 'flex';
+                });
+            }
+
+            // Generate AI Content
+            const generateContentBtn = document.getElementById('generateEmailContentBtn');
+            if (generateContentBtn) {
+                generateContentBtn.addEventListener('click', async () => {
+                    console.log('🎨 AI Email Content Generator clicked');
+
+                    const topic = document.getElementById('aiEmailTopicInput').value.trim();
+                    if (!topic) {
+                        showAlert('error', 'Please describe what the email is about');
+                        return;
+                    }
+
+                    const tone = document.getElementById('aiEmailToneSelect').value;
+                    const includeHTML = document.getElementById('aiIncludeHTML').checked;
+                    const includeCTA = document.getElementById('aiEmailIncludeCTA').checked;
+
+                    console.log('📝 Generating email content with:', { topic, tone, includeHTML, includeCTA, clientId });
+
+                    const btn = document.getElementById('generateEmailContentBtn');
+                    btn.disabled = true;
+                    btn.textContent = '⏳ Generating...';
+
+                    try {
+                        const requestBody = {
+                            clientId: clientId,
+                            message: `Generate 3 email variations about: ${topic}.
+                            Tone: ${tone}.
+                            ${includeCTA ? 'Include a clear call-to-action.' : 'No call-to-action needed.'}
+                            ${includeHTML ? 'Format with HTML tags for rich text (bold, italic, paragraphs, lists).' : 'Plain text format.'}
+                            Make each variation professional and suitable for email marketing.
+                            Format as: VARIATION 1:\\n[content]\\n\\nVARIATION 2:\\n[content]\\n\\nVARIATION 3:\\n[content]`
+                        };
+
+                        console.log('📤 Sending request to AI endpoint');
+
+                        const response = await fetch(`${window.location.origin}/api/ai/generate-text`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(requestBody)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+                        console.log('✅ AI Content Response:', data);
+
+                        if (data.success && data.text) {
+                            // Parse variations
+                            const text = data.text;
+                            const variations = [];
+
+                            // Try to split by "VARIATION" keyword
+                            const parts = text.split(/VARIATION \d+:/i);
+                            for (let i = 1; i < parts.length && i <= 3; i++) {
+                                const variation = parts[i].trim();
+                                if (variation) variations.push(variation);
+                            }
+
+                            // Fallback: if no variations found, use the whole text
+                            if (variations.length === 0) {
+                                variations.push(text);
+                            }
+
+                            // Display variations
+                            const container = document.getElementById('aiEmailContentVariations');
+                            container.innerHTML = '';
+
+                            variations.slice(0, 3).forEach((variation, idx) => {
+                                const card = document.createElement('div');
+                                card.style.cssText = `
+                                    padding: 16px;
+                                    border: 2px solid #e5e7eb;
+                                    border-radius: 8px;
+                                    margin-bottom: 12px;
+                                    cursor: pointer;
+                                    transition: all 0.2s;
+                                `;
+                                card.onmouseover = () => card.style.borderColor = '#1e40af';
+                                card.onmouseout = () => card.style.borderColor = '#e5e7eb';
+
+                                card.innerHTML = `
+                                    <div style="font-weight: 600; margin-bottom: 8px; color: #1e40af;">Option ${idx + 1}</div>
+                                    <div style="white-space: pre-wrap; font-size: 0.875rem; color: #374151; max-height: 200px; overflow-y: auto;">${variation}</div>
+                                    <button onclick="selectAIEmailContent(${idx})" style="
+                                        margin-top: 12px;
+                                        padding: 8px 16px;
+                                        background: #1e40af;
+                                        color: white;
+                                        border: none;
+                                        border-radius: 6px;
+                                        cursor: pointer;
+                                        font-size: 0.875rem;
+                                        font-weight: 600;
+                                    ">Use This</button>
+                                `;
+                                container.appendChild(card);
+                            });
+
+                            // Store variations globally
+                            window.aiEmailContentVariations = variations;
+
+                            document.getElementById('aiEmailContentResults').style.display = 'block';
+                        } else {
+                            throw new Error(data.error || 'Failed to generate content');
+                        }
+                    } catch (error) {
+                        console.error('AI Content Error:', error);
+                        showAlert('error', 'Failed to generate content: ' + error.message);
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = 'Generate 3 Variations';
+                    }
+                });
+            }
+        }
+
+        // Select AI Email Content variation
+        window.selectAIEmailContent = (index) => {
+            const variation = window.aiEmailContentVariations[index];
+            const emailEditor = document.getElementById('emailMessage');
+
+            // Set the HTML content in the rich text editor
+            emailEditor.innerHTML = variation;
+
+            // Update character counter
+            updateCharCount();
+
+            // Close modal
+            document.getElementById('aiContentModal').style.display = 'none';
+
+            showAlert('success', 'Content added! You can edit before sending.');
+        };
+
+        // Initialize AI Generator when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupAIGenerator);
+        } else {
+            setupAIGenerator();
+        }
+
+        // Close AI modal when clicking outside
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('aiContentModal');
+            if (e.target === modal) {
+                document.getElementById('aiContentModal').style.display = 'none';
+            }
+        });
     </script>
+
+    <!-- AI Content Generation Modal -->
+    <div id="aiContentModal" style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    ">
+        <div style="
+            background: white;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 100%;
+            padding: 24px;
+            max-height: 90vh;
+            overflow-y: auto;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 1.25rem;">✨ AI Email Content Generator</h3>
+                <button onclick="document.getElementById('aiContentModal').style.display='none'" style="
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    cursor: pointer;
+                    color: #6b7280;
+                ">×</button>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.875rem;">What's this email about?</label>
+                <input type="text" id="aiEmailTopicInput" placeholder="e.g., Product launch, Newsletter update, Special offer announcement" style="
+                    width: 100%;
+                    padding: 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    font-size: 0.875rem;
+                ">
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.875rem;">Tone</label>
+                <select id="aiEmailToneSelect" style="
+                    width: 100%;
+                    padding: 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    font-size: 0.875rem;
+                ">
+                    <option value="professional">Professional & Business</option>
+                    <option value="friendly">Friendly & Conversational</option>
+                    <option value="enthusiastic">Enthusiastic & Energetic</option>
+                    <option value="formal">Formal & Corporate</option>
+                    <option value="promotional">Promotional & Sales-focused</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="font-weight: 600; font-size: 0.875rem; margin-bottom: 8px; display: block;">Options:</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 0.875rem;">
+                        <input type="checkbox" id="aiIncludeHTML" checked>
+                        Rich HTML formatting
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 0.875rem;">
+                        <input type="checkbox" id="aiEmailIncludeCTA" checked>
+                        Call-to-action
+                    </label>
+                </div>
+            </div>
+
+            <button id="generateEmailContentBtn" style="
+                width: 100%;
+                padding: 14px;
+                background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                font-size: 1rem;
+            ">Generate 3 Variations</button>
+
+            <div id="aiEmailContentResults" style="margin-top: 20px; display: none;">
+                <label style="font-weight: 600; font-size: 0.875rem; margin-bottom: 12px; display: block;">Choose one:</label>
+                <div id="aiEmailContentVariations"></div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
