@@ -99,6 +99,42 @@ router.post('/contacts/create', ghlAuth, async (req, res) => {
 
   if (result.success) {
     console.log('✅ Contact created:', result.data.contact?.id);
+    return res.json(result);
+  }
+
+  // Enhanced error handling for common GHL errors
+  if (!result.success && result.error) {
+    // Check for duplicate phone number error
+    if (result.error.includes('phone') && result.error.includes('already') ||
+        result.error.includes('duplicate') ||
+        result.details?.message?.includes('phone') ||
+        result.details?.message?.includes('duplicate')) {
+      return res.json({
+        success: false,
+        error: `This phone number (${phone}) is already linked to another contact in your GoHighLevel CRM. Please use a different phone number or update the existing contact.`,
+        errorType: 'DUPLICATE_PHONE',
+        originalError: result.error
+      });
+    }
+
+    // Check for duplicate email error
+    if (result.error.includes('email') && result.error.includes('already') ||
+        result.details?.message?.includes('email')) {
+      return res.json({
+        success: false,
+        error: `This email address (${email}) is already linked to another contact in your GoHighLevel CRM. Please use a different email or update the existing contact.`,
+        errorType: 'DUPLICATE_EMAIL',
+        originalError: result.error
+      });
+    }
+
+    // Generic error with more context
+    return res.json({
+      success: false,
+      error: `Failed to create contact: ${result.error}. Please check the contact information and try again.`,
+      originalError: result.error,
+      details: result.details
+    });
   }
 
   res.json(result);
@@ -127,6 +163,42 @@ router.put('/contacts/:contactId', ghlAuth, async (req, res) => {
   };
 
   const result = await callGHL(req.ghlConfig, 'PUT', `/contacts/${req.params.contactId}`, updateData);
+
+  // Enhanced error handling for common GHL errors
+  if (!result.success && result.error) {
+    // Check for duplicate phone number error
+    if (result.error.includes('phone') && result.error.includes('already') ||
+        result.error.includes('duplicate') ||
+        result.details?.message?.includes('phone') ||
+        result.details?.message?.includes('duplicate')) {
+      return res.json({
+        success: false,
+        error: `This phone number (${phone}) is already linked to another contact in your GoHighLevel CRM. Please use a different phone number or update the existing contact.`,
+        errorType: 'DUPLICATE_PHONE',
+        originalError: result.error
+      });
+    }
+
+    // Check for duplicate email error
+    if (result.error.includes('email') && result.error.includes('already') ||
+        result.details?.message?.includes('email')) {
+      return res.json({
+        success: false,
+        error: `This email address (${email}) is already linked to another contact in your GoHighLevel CRM. Please use a different email or update the existing contact.`,
+        errorType: 'DUPLICATE_EMAIL',
+        originalError: result.error
+      });
+    }
+
+    // Generic error with more context
+    return res.json({
+      success: false,
+      error: `Failed to update contact: ${result.error}. Please check the contact information and try again.`,
+      originalError: result.error,
+      details: result.details
+    });
+  }
+
   res.json(result);
 });
 
