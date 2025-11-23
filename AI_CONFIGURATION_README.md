@@ -3,11 +3,12 @@
 ## Critical Issue Found: OpenAI API Not Configured
 
 ### Current Status
-The following AI features are **NOT working** because the OpenAI API key is not configured:
+AI features status (as of latest update):
 
-1. **Email Marketing - AI Generate** ❌
-2. **Social Media - AI Generate** ❌
-3. **Social Media - AI Generate Image** ❌
+1. **Email Marketing - AI Generate** ✅ WORKING (requires OpenAI API key)
+2. **Social Media - AI Generate** ✅ FIXED (requires OpenAI API key)
+3. **Social Media - AI Generate Image** ⚠️ DISABLED (feature temporarily removed)
+4. **Business Collector** ❌ EXTERNAL SERVICE ISSUE (requires Google Places API on external Render service)
 
 ### Error Details
 
@@ -174,10 +175,52 @@ curl -X POST https://ringlypro-public-business-collector.onrender.com/run \
 3. Generate a new key if needed
 
 ### Issue: Business Collector returns 0 results
-**Possible causes**:
-1. Service is sleeping (wait 60 seconds and try again)
-2. Location is too specific (try broader: "Florida" instead of "St. Petersburg, FL")
-3. Category name is incorrect (try "Lawn Care" instead of "Lawn Care Services")
+**Root Cause**: The Business Collector is an external service hosted on Render that requires Google Places API configuration. This is **NOT** part of the RinglyPro CRM codebase.
+
+**Current Status**:
+- Service URL: https://ringlypro-public-business-collector.onrender.com
+- Service responds but returns: `{"total_found": 0, "rows": []}`
+- Google Places API is either not configured or has quota/billing issues on the external service
+
+**Why This Happens**:
+The Business Collector proxy in RinglyPro (`/mcp-integrations/api/business-collector-proxy.js`) is just a client that calls the external Render service. The actual Google Places API integration happens on that external service, not in the RinglyPro codebase.
+
+**How to Fix** (Requires access to the external Render service):
+
+1. **Access the Business Collector Render Service**:
+   - Log in to Render dashboard
+   - Find the "ringlypro-public-business-collector" service
+
+2. **Configure Google Places API Key**:
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Enable "Places API (New)" or "Places API"
+   - Create an API key
+   - Add the API key to the Business Collector Render service environment:
+     - Key: `GOOGLE_PLACES_API_KEY` (or whatever variable name the service uses)
+     - Value: Your Google API key
+
+3. **Check API Quota and Billing**:
+   - Verify the Google Cloud project has billing enabled
+   - Check API quota hasn't been exceeded
+   - Enable "Places API (New)" if not already enabled
+
+4. **Test the Service**:
+   ```bash
+   curl -X POST https://ringlypro-public-business-collector.onrender.com/run \
+     -H "Content-Type: application/json" \
+     -d '{
+       "category": "Lawn Care",
+       "geography": "Tampa, FL",
+       "maxResults": 10
+     }'
+   ```
+
+**Alternative Solutions**:
+1. **Service is sleeping** (Render free tier): Wait 60 seconds for it to wake up
+2. **Try broader location**: Use "Florida" instead of "Tampa, FL"
+3. **Simplify category**: Use "Lawn Care" instead of "Lawn Care Services"
+
+**Important Note**: This issue cannot be fixed from the RinglyPro CRM codebase. It requires configuration changes on the external Business Collector Render service.
 
 ### Issue: AI Generate button does nothing
 **Check browser console** (F12):
@@ -243,5 +286,12 @@ If you encounter issues:
 4. Test Business Collector health endpoint
 
 **Files Modified**:
-- `/src/routes/ai.js` - Added `/generate-text` endpoint
+- [/src/routes/ai.js](src/routes/ai.js) - Added `/generate-text` endpoint
+- [/public/mcp-copilot/email-marketing.html](public/mcp-copilot/email-marketing.html) - Added AI Generate feature
+- [/public/mcp-copilot/social-media.html](public/mcp-copilot/social-media.html) - Fixed AI Generate to use OpenAI endpoint, removed image upload
 - This README for configuration guidance
+
+**Recent Commits**:
+- `ccbe43b` - Fix Social Media AI content generator to use OpenAI endpoint
+- `3f86d6d` - Remove image upload options and add AI Generate to Email Marketing
+- Previous commits added initial AI endpoints and Business Collector integration
