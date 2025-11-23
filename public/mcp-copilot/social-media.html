@@ -1411,19 +1411,13 @@
                 return;
             }
 
-            // Check if connected
-            if (!sessionId) {
-                showAlert('error', 'Not connected to GoHighLevel. Please connect first.');
-                return;
-            }
-
             const tone = document.getElementById('aiToneSelect').value;
             const includeHashtags = document.getElementById('aiIncludeHashtags').checked;
             const includeCTA = document.getElementById('aiIncludeCTA').checked;
             const includeEmojis = document.getElementById('aiIncludeEmojis').checked;
             const category = document.getElementById('marketCategory').value;
 
-            console.log('📝 Generating content with:', { topic, tone, includeHashtags, includeCTA, includeEmojis, category, sessionId });
+            console.log('📝 Generating social media content with:', { topic, tone, includeHashtags, includeCTA, includeEmojis, category });
 
             const btn = document.getElementById('generateContentBtn');
             btn.disabled = true;
@@ -1431,19 +1425,21 @@
 
             try {
                 const requestBody = {
-                    sessionId,
+                    clientId: clientId || sessionId,
                     message: `Generate 3 social media post variations about: ${topic}.
                     Tone: ${tone}.
-                    ${includeHashtags ? 'Include relevant hashtags.' : 'No hashtags.'}
-                    ${includeCTA ? 'Include a call-to-action.' : 'No call-to-action.'}
-                    ${includeEmojis ? 'Use emojis.' : 'No emojis.'}
+                    ${includeHashtags ? 'Include 3-5 relevant hashtags at the end.' : 'No hashtags.'}
+                    ${includeCTA ? 'Include a clear call-to-action.' : 'No call-to-action.'}
+                    ${includeEmojis ? 'Use appropriate emojis throughout the text.' : 'No emojis.'}
                     Business category: ${category}.
+                    Keep each post under 280 characters for optimal engagement.
+                    Make each variation unique and engaging for social media.
                     Format as: VARIATION 1:\\n[content]\\n\\nVARIATION 2:\\n[content]\\n\\nVARIATION 3:\\n[content]`
                 };
 
-                console.log('📤 Sending request:', requestBody);
+                console.log('📤 Sending request to AI endpoint');
 
-                const response = await fetch(`${window.location.origin}/api/mcp/copilot/chat`, {
+                const response = await fetch(`${window.location.origin}/api/ai/generate-text`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(requestBody)
@@ -1456,9 +1452,9 @@
                 const data = await response.json();
                 console.log('✅ AI Content Response:', data);
 
-                if (data.success && data.response) {
+                if (data.success && data.text) {
                     // Parse variations
-                    const text = data.response;
+                    const text = data.text;
                     const variations = [];
 
                     // Try to split by "VARIATION" keyword
@@ -1468,7 +1464,7 @@
                         if (variation) variations.push(variation);
                     }
 
-                    // Fallback: if no variations found, create 3 similar ones
+                    // Fallback: if no variations found, use the whole text
                     if (variations.length === 0) {
                         variations.push(text);
                     }
