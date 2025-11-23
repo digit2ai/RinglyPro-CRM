@@ -108,4 +108,82 @@ router.post('/generate-image', async (req, res) => {
   }
 });
 
+// Generate text with OpenAI (for email marketing and content generation)
+router.post('/generate-text', async (req, res) => {
+  try {
+    const { message, clientId } = req.body;
+
+    if (!message) {
+      return res.json({
+        success: false,
+        error: 'Message is required'
+      });
+    }
+
+    // Check if OpenAI is configured
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your_openai_api_key_here') {
+      return res.json({
+        success: false,
+        error: 'OpenAI API is not configured. Please contact support to set up AI text generation.'
+      });
+    }
+
+    const OpenAI = require('openai');
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    console.log('✨ Generating AI text content for client:', clientId);
+    console.log('📝 Prompt:', message.substring(0, 100) + '...');
+
+    // Use GPT-4 for high-quality content generation
+    const response = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        {
+          role: "system",
+          content: "You are a professional marketing content writer. Generate engaging, professional content based on user requirements. Always format the content appropriately for the requested medium (email, social media, etc.)."
+        },
+        {
+          role: "user",
+          content: message
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1000
+    });
+
+    const generatedText = response.choices[0].message.content;
+    console.log('✅ AI text generated successfully');
+
+    return res.json({
+      success: true,
+      text: generatedText,
+      model: response.model,
+      usage: {
+        prompt_tokens: response.usage.prompt_tokens,
+        completion_tokens: response.usage.completion_tokens,
+        total_tokens: response.usage.total_tokens
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ AI text generation error:', error);
+
+    // Provide more specific error messages
+    let errorMessage = 'Failed to generate text content';
+
+    if (error.code === 'insufficient_quota') {
+      errorMessage = 'OpenAI API quota exceeded. Please contact support.';
+    } else if (error.code === 'invalid_api_key') {
+      errorMessage = 'OpenAI API key is invalid. Please contact support.';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    return res.json({
+      success: false,
+      error: errorMessage
+    });
+  }
+});
+
 module.exports = router;
