@@ -794,19 +794,51 @@ async function executeCreateContact(session, state) {
 }
 
 async function executeUpdateContact(session, state) {
-  const contactId = state.selectedContact.id;
-  const fieldName = state.pendingFields.fieldName;
-  const fieldValue = state.pendingFields.fieldValue;
+  try {
+    const contactId = state.selectedContact.id;
+    const fieldName = state.pendingFields.fieldName;
+    const fieldValue = state.pendingFields.fieldValue;
 
-  const updateData = {
-    [fieldName]: fieldValue
-  };
+    const updateData = {
+      [fieldName]: fieldValue
+    };
 
-  await session.proxy.updateContact(contactId, updateData);
+    const result = await session.proxy.updateContact(contactId, updateData);
 
-  return {
-    response: `✅ Contact updated successfully!\n\nUpdated ${fieldName} to: ${fieldValue}`
-  };
+    // Check if the update returned an error (even with 200 status)
+    if (result && !result.success && result.error) {
+      console.error('❌ GHL API returned error:', result.error);
+      return {
+        response: `❌ ${result.error}`
+      };
+    }
+
+    return {
+      response: `✅ Contact updated successfully!\n\nUpdated ${fieldName} to: ${fieldValue}`
+    };
+  } catch (error) {
+    console.error('❌ Update contact error:', error.response?.data || error.message);
+    console.error('❌ Full error object:', JSON.stringify(error.response?.data || error, null, 2));
+
+    // Extract detailed error message from response
+    let errorMsg = 'Unknown error';
+
+    if (error.response?.data) {
+      // Check for our custom error message
+      errorMsg = error.response.data.error || error.response.data.message || errorMsg;
+
+      // If there's additional error details, include them
+      if (error.response.data.details) {
+        console.error('❌ Error details:', error.response.data.details);
+      }
+    } else if (error.message) {
+      errorMsg = error.message;
+    }
+
+    return {
+      response: `❌ Failed to update contact: ${errorMsg}`
+    };
+  }
 }
 
 async function executeSendSMS(session, state) {
