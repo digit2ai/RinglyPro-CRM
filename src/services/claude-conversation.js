@@ -79,7 +79,7 @@ When you're ready to execute an action, respond with JSON:
 
 \`\`\`json
 {
-  "action": "create_contact|search_contact|update_contact|delete_contact|send_sms|send_email|add_tag|remove_tag|get_pipelines|create_opportunity|update_opportunity|get_opportunities|get_calendars|create_appointment|get_location|get_custom_fields|schedule_social_post|list_social_posts|get_social_accounts|collect_info|chat",
+  "action": "create_contact|search_contact|update_contact|delete_contact|send_sms|send_email|add_tag|remove_tag|get_pipelines|create_opportunity|update_opportunity|get_opportunities|get_calendars|get_appointments|create_appointment|get_location|get_custom_fields|schedule_social_post|list_social_posts|get_social_accounts|collect_info|chat",
   "data": {
     // Action-specific data
   },

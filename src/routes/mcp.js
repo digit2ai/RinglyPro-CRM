@@ -2251,6 +2251,94 @@ router.post('/copilot/chat', async (req, res) => {
             response
           });
 
+        } else if (claudeResponse.action === 'get_appointments') {
+          // Get appointments with optional date filters
+          const { startDate, endDate, calendarId } = claudeResponse.data || {};
+
+          try {
+            // Calculate date range if not provided
+            let start = startDate;
+            let end = endDate;
+
+            // If user asks for "tomorrow", calculate tomorrow's date
+            if (!start && !end) {
+              const now = new Date();
+              start = new Date(now);
+              start.setHours(0, 0, 0, 0);
+              end = new Date(now);
+              end.setDate(end.getDate() + 7); // Default to next 7 days
+              end.setHours(23, 59, 59, 999);
+            }
+
+            // Format dates for GHL API (ISO format)
+            const formattedStart = start ? new Date(start).toISOString() : null;
+            const formattedEnd = end ? new Date(end).toISOString() : null;
+
+            console.log('📅 Fetching appointments:', { formattedStart, formattedEnd, calendarId });
+
+            // Get appointments from GoHighLevel
+            const appointments = await session.proxy.getCalendarEvents(
+              session.userId,
+              session.groupId,
+              calendarId || null
+            );
+
+            if (!appointments || !appointments.events || appointments.events.length === 0) {
+              return res.json({
+                success: true,
+                response: '📭 No appointments found for the specified date range.'
+              });
+            }
+
+            // Filter appointments by date range if provided
+            let filteredAppointments = appointments.events;
+            if (formattedStart || formattedEnd) {
+              filteredAppointments = appointments.events.filter(apt => {
+                const aptDate = new Date(apt.startTime);
+                if (formattedStart && aptDate < new Date(formattedStart)) return false;
+                if (formattedEnd && aptDate > new Date(formattedEnd)) return false;
+                return true;
+              });
+            }
+
+            if (filteredAppointments.length === 0) {
+              return res.json({
+                success: true,
+                response: '📭 No appointments found for the specified date range.'
+              });
+            }
+
+            // Format response
+            let response = `Found ${filteredAppointments.length} appointment(s):\n\n`;
+            filteredAppointments.slice(0, 20).forEach((apt, idx) => {
+              const startTime = new Date(apt.startTime).toLocaleString();
+              const endTime = apt.endTime ? new Date(apt.endTime).toLocaleString() : 'N/A';
+              response += `${idx + 1}. **${apt.title || 'Untitled'}**\n`;
+              response += `   📅 Start: ${startTime}\n`;
+              if (apt.endTime) response += `   🕐 End: ${endTime}\n`;
+              if (apt.contactName) response += `   👤 Contact: ${apt.contactName}\n`;
+              if (apt.calendarName) response += `   📆 Calendar: ${apt.calendarName}\n`;
+              if (apt.status) response += `   ✅ Status: ${apt.status}\n`;
+              response += `\n`;
+            });
+
+            if (filteredAppointments.length > 20) {
+              response += `... and ${filteredAppointments.length - 20} more appointments.`;
+            }
+
+            return res.json({
+              success: true,
+              response
+            });
+
+          } catch (error) {
+            console.error('❌ Error fetching appointments:', error);
+            return res.json({
+              success: false,
+              response: `❌ Error fetching appointments: ${error.message}`
+            });
+          }
+
         } else if (claudeResponse.action === 'get_location') {
           // Get location info
           const location = await session.proxy.getLocation();
