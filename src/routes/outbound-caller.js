@@ -140,7 +140,8 @@ router.post('/start-from-copilot', async (req, res) => {
     const callResult = await outboundCallerService.startAutoCalling(
       leads,
       intervalMinutes || 2,
-      userId
+      userId,
+      parseInt(clientId) // Pass clientId for custom voicemail message
     );
 
     res.json(callResult);
@@ -297,13 +298,14 @@ router.get('/status', (req, res) => {
  * POST /api/outbound-caller/voice
  * Twilio voice webhook - generates TwiML response
  */
-router.post('/voice', (req, res) => {
+router.post('/voice', async (req, res) => {
   try {
     const { AnsweredBy } = req.body;
+    const clientId = req.query.clientId; // Get clientId from query params
 
-    logger.info(`Voice webhook called, AnsweredBy: ${AnsweredBy || 'unknown'}`);
+    logger.info(`Voice webhook called, AnsweredBy: ${AnsweredBy || 'unknown'}${clientId ? `, clientId: ${clientId}` : ''}`);
 
-    const twiml = outboundCallerService.generateVoiceTwiML(AnsweredBy);
+    const twiml = await outboundCallerService.generateVoiceTwiML(AnsweredBy, clientId);
 
     res.type('text/xml');
     res.send(twiml);

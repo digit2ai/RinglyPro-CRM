@@ -32,6 +32,7 @@
             color: white;
             padding: 30px;
             text-align: center;
+            position: relative;
         }
 
         .header h1 {
@@ -42,6 +43,30 @@
         .header p {
             opacity: 0.9;
             font-size: 14px;
+        }
+
+        .settings-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
         }
 
         .form-container {
@@ -215,6 +240,7 @@
 <body>
     <div class="container">
         <div class="header">
+            <a href="#" class="settings-btn" id="voicemailSettingsBtn">🎙️ Voicemail Settings</a>
             <h1>🎯 Business Collector</h1>
             <p>Collect verified business leads with phone numbers & websites</p>
         </div>

@@ -7,6 +7,12 @@ const clientId = urlParams.get('client_id') || localStorage.getItem('clientId') 
 
 console.log('📋 Business Collector loaded for client:', clientId);
 
+// Voicemail Settings Button Handler
+document.getElementById('voicemailSettingsBtn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.href = `/voicemail-settings.html?clientId=${clientId}`;
+});
+
 document.getElementById('collectorForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 

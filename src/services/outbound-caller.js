@@ -111,7 +111,7 @@ class OutboundCallerService {
   /**
    * Make a single outbound call
    */
-  async makeCall(phoneNumber, leadData = {}, userId = null) {
+  async makeCall(phoneNumber, leadData = {}, userId = null, clientId = null) {
     if (!this.twilioClient) {
       throw new Error('Twilio not configured');
     }
@@ -167,11 +167,16 @@ class OutboundCallerService {
     try {
       logger.info(`Making call to ${validation.normalized}`);
 
+      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+      const voiceUrl = clientId
+        ? `${baseUrl}/api/outbound-caller/voice?clientId=${clientId}`
+        : `${baseUrl}/api/outbound-caller/voice`;
+
       const call = await this.twilioClient.calls.create({
         to: validation.normalized,
         from: this.twilioNumber,
-        url: `${process.env.BASE_URL || 'http://localhost:3000'}/api/outbound-caller/voice`,
-        statusCallback: `${process.env.BASE_URL || 'http://localhost:3000'}/api/outbound-caller/call-status`,
+        url: voiceUrl,
+        statusCallback: `${baseUrl}/api/outbound-caller/call-status`,
         statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
         machineDetection: 'DetectMessageEnd', // Voicemail detection
         machineDetectionTimeout: 5000,
@@ -221,7 +226,7 @@ class OutboundCallerService {
   /**
    * Start auto-calling from lead list
    */
-  async startAutoCalling(leads, intervalMinutes = 2, userId = null) {
+  async startAutoCalling(leads, intervalMinutes = 2, userId = null, clientId = null) {
     if (this.isRunning) {
       throw new Error('Auto-calling already in progress');
     }
@@ -235,8 +240,9 @@ class OutboundCallerService {
     this.isRunning = true;
     this.intervalDelay = intervalMinutes * 60 * 1000;
     this.currentUserId = userId; // Store userId for token deduction
+    this.currentClientId = clientId; // Store clientId for custom voicemail message
 
-    logger.info(`Starting auto-calling: ${leads.length} leads, ${intervalMinutes} min intervals${userId ? ` (userId: ${userId})` : ''}`);
+    logger.info(`Starting auto-calling: ${leads.length} leads, ${intervalMinutes} min intervals${userId ? ` (userId: ${userId})` : ''}${clientId ? ` (clientId: ${clientId})` : ''}`);
 
     // Make first call immediately
     await this.makeNextCall();
@@ -277,7 +283,7 @@ class OutboundCallerService {
       category: lead.category,
       index: this.currentIndex + 1,
       total: this.currentLeads.length
-    }, this.currentUserId); // Pass stored userId for token deduction
+    }, this.currentUserId, this.currentClientId); // Pass stored userId and clientId
 
     this.currentIndex++;
   }
@@ -323,26 +329,58 @@ class OutboundCallerService {
   /**
    * Generate TwiML for voice interaction
    */
-  generateVoiceTwiML(machineDetection = null) {
+  async generateVoiceTwiML(machineDetection = null, clientId = null) {
     const twiml = new twilio.twiml.VoiceResponse();
 
-    // ALWAYS play Rachel Premium Voice message and hang up
+    // ALWAYS play voice message and hang up
     // No transfer to GHL - saves costs and avoids AI-to-AI conversations
     // Compliant with telemarketing regulations (informational message only)
-    logger.info('Call answered - playing Rachel Premium Voice informational message');
+    logger.info('Call answered - playing voicemail informational message');
 
-    // RinglyPro TCPA-compliant informational voicemail message
-    const voicemailMessage = "Hi, this is Lina from RinglyPro.com, calling with a quick business update. RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send automatic follow-ups — so you never miss a lead, even after hours. This message is for informational purposes only, and there's no obligation or payment required. If you'd like to learn more, you can visit RinglyPro.com or call us back at 813-212-4888. If you'd prefer not to receive future informational updates, you can reply stop or call the same number and we'll remove you. Thanks for your time, and have a great day.";
+    // Default RinglyPro TCPA-compliant informational voicemail message
+    let voicemailMessage = "Hi, this is Lina from RinglyPro.com, calling with a quick business update. RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send automatic follow-ups — so you never miss a lead, even after hours. This message is for informational purposes only, and there's no obligation or payment required. If you'd like to learn more, you can visit RinglyPro.com or call us back at 813-212-4888. If you'd prefer not to receive future informational updates, you can reply stop or call the same number and we'll remove you. Thanks for your time, and have a great day.";
+
+    // Fetch client's custom message if clientId provided
+    if (clientId) {
+      try {
+        const [results] = await sequelize.query(
+          'SELECT outbound_voicemail_message FROM clients WHERE id = :clientId',
+          {
+            replacements: { clientId },
+            type: sequelize.QueryTypes.SELECT
+          }
+        );
+
+        if (results && results.outbound_voicemail_message) {
+          voicemailMessage = results.outbound_voicemail_message;
+          logger.info(`Using custom voicemail message for client ${clientId}`);
+        } else {
+          logger.info(`No custom message for client ${clientId}, using default`);
+        }
+      } catch (error) {
+        logger.error(`Error fetching custom message for client ${clientId}:`, error.message);
+        // Fall through to use default message
+      }
+    }
 
     // Check if ElevenLabs voice URL is configured (pre-generated audio file)
     const elevenLabsVoiceUrl = process.env.ELEVENLABS_VOICEMAIL_URL;
 
-    if (elevenLabsVoiceUrl) {
-      // Play pre-generated Rachel ElevenLabs Premium Voice audio
+    // If we have a custom message, use Twilio TTS (Polly voice)
+    // If using default message and ElevenLabs URL exists, use pre-generated audio
+    if (clientId && voicemailMessage !== "Hi, this is Lina from RinglyPro.com, calling with a quick business update. RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send automatic follow-ups — so you never miss a lead, even after hours. This message is for informational purposes only, and there's no obligation or payment required. If you'd like to learn more, you can visit RinglyPro.com or call us back at 813-212-4888. If you'd prefer not to receive future informational updates, you can reply stop or call the same number and we'll remove you. Thanks for your time, and have a great day.") {
+      // Custom message - use Twilio Polly voice
+      logger.info('Using Twilio Polly voice for custom message');
+      twiml.say({
+        voice: 'Polly.Joanna',
+        language: 'en-US'
+      }, voicemailMessage);
+    } else if (elevenLabsVoiceUrl) {
+      // Default message with ElevenLabs - play pre-generated audio
       twiml.play(elevenLabsVoiceUrl);
-      logger.info('Playing ElevenLabs Rachel Premium Voice from: ' + elevenLabsVoiceUrl);
+      logger.info('Playing ElevenLabs voice from: ' + elevenLabsVoiceUrl);
     } else {
-      // Fallback to Twilio Polly voice if ElevenLabs not configured
+      // Fallback to Twilio Polly voice
       logger.warn('ElevenLabs voice URL not configured, falling back to Twilio Polly');
       twiml.say({
         voice: 'Polly.Joanna',

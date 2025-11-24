@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outbound Voicemail Settings - RinglyPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 700px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .status.default {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 2px solid #90caf9;
+        }
+
+        .status.custom {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 2px solid #81c784;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 150px;
+            transition: border 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .char-count {
+            text-align: right;
+            color: #999;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .char-count.warning {
+            color: #f57c00;
+        }
+
+        .char-count.error {
+            color: #d32f2f;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 140px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-save {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-reset {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-preview {
+            background: #4caf50;
+            color: white;
+        }
+
+        .default-message {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .default-message-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 2px solid #81c784;
+            display: block;
+        }
+
+        .alert.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 2px solid #ef9a9a;
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Outbound Voicemail Settings</h1>
+        <p class="subtitle">Customize the message that plays when calling leads from Business Collector</p>
+
+        <div id="statusIndicator" class="status default">
+            <span>📢</span>
+            <span id="statusText">Using default RinglyPro message</span>
+        </div>
+
+        <div id="alert" class="alert"></div>
+
+        <div class="default-message">
+            <div class="default-message-title">Default Message:</div>
+            "Hi, this is Lina from RinglyPro.com, calling with a quick business update. RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send automatic follow-ups — so you never miss a lead, even after hours. This message is for informational purposes only, and there's no obligation or payment required. If you'd like to learn more, you can visit RinglyPro.com or call us back at 813-212-4888. If you'd prefer not to receive future informational updates, you can reply stop or call the same number and we'll remove you. Thanks for your time, and have a great day."
+        </div>
+
+        <div class="form-group">
+            <label for="voicemail">Custom Voicemail Message (optional)</label>
+            <textarea
+                id="voicemail"
+                placeholder="Enter your custom message here... Leave blank to use the default message."
+                maxlength="1000"
+            ></textarea>
+            <div class="char-count" id="charCount">0 / 1000 characters</div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn-save" id="saveBtn" onclick="saveMessage()">💾 Save Message</button>
+            <button class="btn-reset" id="resetBtn" onclick="resetToDefault()">🔄 Reset to Default</button>
+            <button class="btn-preview" id="previewBtn" onclick="previewMessage()">👂 Preview (Text-to-Speech)</button>
+        </div>
+    </div>
+
+    <script>
+        let clientId = null;
+
+        // Get clientId from URL parameter or localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        clientId = urlParams.get('clientId') || localStorage.getItem('clientId');
+
+        if (!clientId) {
+            showAlert('error', 'Client ID not found. Please access this page from your dashboard.');
+        }
+
+        // Load current message
+        async function loadMessage() {
+            if (!clientId) return;
+
+            try {
+                const response = await fetch(`/api/client-settings/${clientId}/voicemail-message`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const textarea = document.getElementById('voicemail');
+                    textarea.value = data.message || '';
+                    updateCharCount();
+                    updateStatus(data.isCustom);
+                }
+            } catch (error) {
+                console.error('Error loading message:', error);
+                showAlert('error', 'Failed to load current message');
+            }
+        }
+
+        // Save message
+        async function saveMessage() {
+            if (!clientId) {
+                showAlert('error', 'Client ID not found');
+                return;
+            }
+
+            const message = document.getElementById('voicemail').value.trim();
+
+            try {
+                document.getElementById('saveBtn').disabled = true;
+                document.getElementById('saveBtn').textContent = '💾 Saving...';
+
+                const response = await fetch(`/api/client-settings/${clientId}/voicemail-message`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message || null })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('success', '✅ Voicemail message saved successfully!');
+                    updateStatus(!!message);
+                } else {
+                    showAlert('error', data.error || 'Failed to save message');
+                }
+            } catch (error) {
+                console.error('Error saving message:', error);
+                showAlert('error', 'Failed to save message');
+            } finally {
+                document.getElementById('saveBtn').disabled = false;
+                document.getElementById('saveBtn').textContent = '💾 Save Message';
+            }
+        }
+
+        // Reset to default
+        async function resetToDefault() {
+            if (!clientId) return;
+
+            if (!confirm('Reset to default RinglyPro message?')) return;
+
+            try {
+                document.getElementById('resetBtn').disabled = true;
+                document.getElementById('resetBtn').textContent = '🔄 Resetting...';
+
+                const response = await fetch(`/api/client-settings/${clientId}/voicemail-message`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('voicemail').value = '';
+                    updateCharCount();
+                    updateStatus(false);
+                    showAlert('success', '✅ Reset to default message successfully!');
+                } else {
+                    showAlert('error', data.error || 'Failed to reset message');
+                }
+            } catch (error) {
+                console.error('Error resetting message:', error);
+                showAlert('error', 'Failed to reset message');
+            } finally {
+                document.getElementById('resetBtn').disabled = false;
+                document.getElementById('resetBtn').textContent = '🔄 Reset to Default';
+            }
+        }
+
+        // Preview message with text-to-speech
+        function previewMessage() {
+            const message = document.getElementById('voicemail').value.trim();
+            const defaultMessage = "Hi, this is Lina from RinglyPro.com, calling with a quick business update. RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send automatic follow-ups — so you never miss a lead, even after hours. This message is for informational purposes only, and there's no obligation or payment required. If you'd like to learn more, you can visit RinglyPro.com or call us back at 813-212-4888. If you'd prefer not to receive future informational updates, you can reply stop or call the same number and we'll remove you. Thanks for your time, and have a great day.";
+
+            const textToRead = message || defaultMessage;
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(textToRead);
+                utterance.rate = 0.9;
+                utterance.pitch = 1.0;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert('Text-to-speech not supported in your browser');
+            }
+        }
+
+        // Update character count
+        function updateCharCount() {
+            const textarea = document.getElementById('voicemail');
+            const charCount = document.getElementById('charCount');
+            const length = textarea.value.length;
+
+            charCount.textContent = `${length} / 1000 characters`;
+
+            if (length > 900) {
+                charCount.className = 'char-count error';
+            } else if (length > 700) {
+                charCount.className = 'char-count warning';
+            } else {
+                charCount.className = 'char-count';
+            }
+        }
+
+        // Update status indicator
+        function updateStatus(isCustom) {
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+
+            if (isCustom) {
+                indicator.className = 'status custom';
+                statusText.textContent = 'Using your custom message';
+            } else {
+                indicator.className = 'status default';
+                statusText.textContent = 'Using default RinglyPro message';
+            }
+        }
+
+        // Show alert
+        function showAlert(type, message) {
+            const alert = document.getElementById('alert');
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        // Event listeners
+        document.getElementById('voicemail').addEventListener('input', updateCharCount);
+
+        // Load message on page load
+        loadMessage();
+    </script>
+</body>
+</html>

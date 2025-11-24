@@ -230,6 +230,11 @@ console.log('📧 Email Marketing routes mounted at /api/email');
 app.use('/api/outbound-caller', outboundCallerRoutes);
 console.log('📞 Outbound Caller routes mounted at /api/outbound-caller');
 
+// Client Settings routes (voicemail messages, etc.)
+const clientSettingsRoutes = require('./routes/client-settings');
+app.use('/api/client-settings', clientSettingsRoutes);
+console.log('⚙️ Client Settings routes mounted at /api/client-settings');
+
 // Scheduled Auto-Caller routes (automated prospect calling)
 app.use('/api/scheduled-caller', scheduledCallerRoutes);
 console.log('⏰ Scheduled Auto-Caller routes mounted at /api/scheduled-caller');

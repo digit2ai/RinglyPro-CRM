@@ -50,6 +50,12 @@ module.exports = (sequelize) => {
             type: DataTypes.TEXT,
             defaultValue: 'Thank you for calling. I\'m Rachel, your virtual assistant.'
         },
+        outbound_voicemail_message: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+            defaultValue: null,
+            comment: 'Custom voicemail message for outbound calls. If null, uses default RinglyPro message.'
+        },
         business_hours_start: {
             type: DataTypes.TIME,
             defaultValue: '09:00:00'
