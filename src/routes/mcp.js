@@ -4252,7 +4252,16 @@ No text in image.`;
             response = `❌ Contact not found: ${identifier}`;
           }
         } catch (error) {
-          response = `Error booking appointment: ${error.message}`;
+          console.error('❌ Appointment creation error:', error.response?.data || error.message);
+          console.error('❌ Full appointment error:', JSON.stringify(error.response?.data || error, null, 2));
+
+          // Extract detailed error message from GHL API response
+          let errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+          if (error.response?.data?.errors) {
+            errorMsg += '\nDetails: ' + JSON.stringify(error.response.data.errors);
+          }
+
+          response = `❌ Failed to book appointment: ${errorMsg}\n\nPlease check:\n• Calendar is properly configured in GoHighLevel\n• Contact exists and has valid information\n• Date/time is in the future\n• You have appointments.write permissions`;
         }
       } else {
         response = "To book an appointment, please provide:\n\n• Contact email or name\n• Date/time (optional, defaults to now)\n\nExamples:\n• 'book appointment for john@test.com tomorrow at 2pm'\n• 'schedule appointment with John Smith next Friday at 3:30pm'";

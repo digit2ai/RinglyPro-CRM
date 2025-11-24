@@ -593,10 +593,24 @@ class GoHighLevelMCPProxy {
   }
 
   async createAppointment(appointmentData) {
-    return await this.callAPI('/calendars/events/appointments', 'POST', {
-      locationId: this.locationId,
-      ...appointmentData
-    });
+    console.log('📅 Creating appointment via REST API');
+
+    // JWT tokens have locationId embedded - don't add it to body
+    // PIT tokens need locationId in body
+    const isJWT = !this.apiKey.startsWith('pit-');
+    const payload = isJWT ? appointmentData : { locationId: this.locationId, ...appointmentData };
+
+    console.log('📅 Appointment data:', JSON.stringify(payload));
+
+    try {
+      const result = await this.callAPI('/calendars/events/appointments', 'POST', payload);
+      console.log('✅ Appointment created via REST API:', result?.id || result?.appointment?.id || 'unknown ID');
+      return result;
+    } catch (error) {
+      console.error('❌ REST API appointment creation failed:', error.response?.data || error.message);
+      console.error('❌ Full appointment error:', JSON.stringify(error.response?.data || error, null, 2));
+      throw error;
+    }
   }
 
   // Location (MCP Protocol)
