@@ -514,7 +514,7 @@ router.get('/crm-settings/:client_id', async (req, res) => {
 
         // Use raw SQL to query CRM fields directly
         const result = await sequelize.query(
-            'SELECT id, business_name, ghl_api_key, ghl_location_id, sendgrid_api_key, sendgrid_from_email, sendgrid_from_name, sendgrid_reply_to FROM clients WHERE id = :client_id',
+            'SELECT id, business_name, ghl_api_key, ghl_location_id, sendgrid_api_key, sendgrid_from_email, sendgrid_from_name, sendgrid_reply_to, outbound_voicemail_message FROM clients WHERE id = :client_id',
             {
                 replacements: { client_id },
                 type: sequelize.QueryTypes.SELECT
@@ -545,7 +545,8 @@ router.get('/crm-settings/:client_id', async (req, res) => {
                 sendgrid_api_key_set: !!client.sendgrid_api_key,
                 sendgrid_from_email: client.sendgrid_from_email,
                 sendgrid_from_name: client.sendgrid_from_name,
-                sendgrid_reply_to: client.sendgrid_reply_to
+                sendgrid_reply_to: client.sendgrid_reply_to,
+                outbound_voicemail_message: client.outbound_voicemail_message
             }
         });
 
@@ -577,7 +578,7 @@ router.get('/crm-settings/:client_id', async (req, res) => {
 router.put('/crm-settings/:client_id', async (req, res) => {
     try {
         const { client_id } = req.params;
-        const { ghl_api_key, ghl_location_id, sendgrid_api_key, sendgrid_from_email, sendgrid_from_name, sendgrid_reply_to } = req.body;
+        const { ghl_api_key, ghl_location_id, sendgrid_api_key, sendgrid_from_email, sendgrid_from_name, sendgrid_reply_to, outbound_voicemail_message } = req.body;
         const { sequelize } = require('../models');
 
         // First verify client exists
@@ -628,6 +629,12 @@ router.put('/crm-settings/:client_id', async (req, res) => {
         if (sendgrid_reply_to !== undefined) {
             updates.push('sendgrid_reply_to = :sendgrid_reply_to');
             replacements.sendgrid_reply_to = sendgrid_reply_to || null;
+        }
+
+        // Outbound voicemail message
+        if (outbound_voicemail_message !== undefined) {
+            updates.push('outbound_voicemail_message = :outbound_voicemail_message');
+            replacements.outbound_voicemail_message = outbound_voicemail_message || null;
         }
 
         if (updates.length === 0) {
