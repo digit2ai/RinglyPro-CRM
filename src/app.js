@@ -239,6 +239,11 @@ console.log('⚙️ Client Settings routes mounted at /api/client-settings');
 app.use('/api/scheduled-caller', scheduledCallerRoutes);
 console.log('⏰ Scheduled Auto-Caller routes mounted at /api/scheduled-caller');
 
+// GoHighLevel Webhook routes (bidirectional sync for contacts and appointments)
+const ghlWebhookRoutes = require('./routes/ghl-webhook');
+app.use('/api/webhooks/gohighlevel', ghlWebhookRoutes);
+console.log('🔄 GoHighLevel Webhook routes mounted at /api/webhooks/gohighlevel');
+
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 

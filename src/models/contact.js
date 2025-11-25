@@ -57,11 +57,23 @@ const Contact = sequelize.define('Contact', {
   source: {
     type: DataTypes.STRING,
     defaultValue: 'manual',
-    comment: 'How the contact was created (manual, voice_call, sms, etc.)'
+    comment: 'How the contact was created (manual, voice_call, sms, ghl_sync, etc.)'
   },
   lastContactedAt: {
     type: DataTypes.DATE,
     allowNull: true
+  },
+  ghlContactId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'ghl_contact_id',
+    comment: 'GoHighLevel contact ID for synced contacts'
+  },
+  ghlSyncedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'ghl_synced_at',
+    comment: 'Last time this contact was synced from GHL'
   },
   createdAt: {
     type: DataTypes.DATE,

@@ -89,8 +89,32 @@ const Appointment = sequelize.define('Appointment', {
     type: DataTypes.STRING,
     defaultValue: 'voice_booking',
     validate: {
-      isIn: [['voice_booking', 'online', 'manual', 'walk-in']]
+      isIn: [['voice_booking', 'online', 'manual', 'walk-in', 'ghl_sync']]
     }
+  },
+  ghlAppointmentId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'ghl_appointment_id',
+    comment: 'GoHighLevel appointment event ID for synced appointments'
+  },
+  ghlContactId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'ghl_contact_id',
+    comment: 'GoHighLevel contact ID associated with this appointment'
+  },
+  ghlCalendarId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'ghl_calendar_id',
+    comment: 'GoHighLevel calendar ID where appointment was created'
+  },
+  ghlSyncedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'ghl_synced_at',
+    comment: 'Last time this appointment was synced from GHL'
   }
 }, {
   tableName: 'appointments',
