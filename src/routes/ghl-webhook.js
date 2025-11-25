@@ -256,14 +256,18 @@ async function deleteContact(ghlContactId, clientId) {
  */
 router.post('/', async (req, res) => {
   try {
-    const { type, locationId, contact, appointment } = req.body;
+    const { type, locationId, contact, appointment, customData } = req.body;
 
-    console.log(`📨 Received GHL webhook: ${type}`);
+    // Get type from customData if not at root level
+    const eventType = type || customData?.type;
+
+    console.log(`📨 Received GHL webhook: ${eventType}`);
     console.log(`📍 Location ID from body: ${locationId}`);
     console.log(`🔍 Full webhook payload:`, JSON.stringify(req.body, null, 2));
 
     // Try to get locationId from multiple possible sources
     let finalLocationId = locationId ||
+                          customData?.locationId ||
                           req.body.location_id ||
                           req.body.location?.id ||
                           appointment?.locationId ||
@@ -286,7 +290,7 @@ router.post('/', async (req, res) => {
     console.log(`👤 Mapped to clientId: ${clientId}`);
 
     // Handle different webhook event types
-    switch (type) {
+    switch (eventType) {
       case 'ContactCreate':
       case 'ContactUpdate':
         if (!contact) {
@@ -304,10 +308,27 @@ router.post('/', async (req, res) => {
 
       case 'AppointmentCreate':
       case 'AppointmentUpdate':
-        if (!appointment) {
-          return res.status(400).json({ success: false, error: 'Appointment data missing' });
+        // Check if appointment data is in customData (GHL workflow format)
+        let appointmentData = appointment;
+        if (!appointmentData && customData) {
+          // Construct appointment object from customData fields
+          appointmentData = {
+            id: customData['appointment.id'] || customData.appointmentId,
+            contactId: customData['appointment.contactId'] || customData.contactId || req.body.contact_id,
+            calendarId: customData['appointment.calendarId'] || customData.calendarId,
+            startTime: customData['appointment.startTime'] || customData.startTime,
+            endTime: customData['appointment.endTime'] || customData.endTime,
+            title: customData['appointment.title'] || customData.title,
+            status: customData['appointment.status'] || customData.status,
+            appointmentStatus: customData['appointment.appointmentStatus'] || customData.appointmentStatus
+          };
         }
-        await syncAppointment(appointment, clientId);
+
+        if (!appointmentData || !appointmentData.id) {
+          console.error('❌ Appointment data missing or incomplete:', appointmentData);
+          return res.status(400).json({ success: false, error: 'Appointment data missing or incomplete' });
+        }
+        await syncAppointment(appointmentData, clientId);
         break;
 
       case 'AppointmentDelete':
@@ -318,18 +339,18 @@ router.post('/', async (req, res) => {
         break;
 
       default:
-        console.log(`⚠️ Unhandled webhook event type: ${type}`);
+        console.log(`⚠️ Unhandled webhook event type: ${eventType}`);
         return res.status(200).json({
           success: true,
           message: 'Event type not handled'
         });
     }
 
-    console.log(`✅ Successfully processed ${type} webhook`);
+    console.log(`✅ Successfully processed ${eventType} webhook`);
 
     return res.status(200).json({
       success: true,
-      message: `${type} processed successfully`
+      message: `${eventType} processed successfully`
     });
 
   } catch (error) {
