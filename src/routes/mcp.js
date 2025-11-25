@@ -4221,35 +4221,65 @@ No text in image.`;
           const duration = parseDuration(dateTimeText);
 
           // Search for contact
-          const contacts = await session.proxy.searchContacts(identifier, 1);
-          if (contacts && contacts.length > 0) {
-            const contactId = contacts[0].id;
+          let contacts = await session.proxy.searchContacts(identifier, 1);
+          let contactId;
+          let contactName = identifier;
 
-            // Get available calendars
-            const calendarsData = await session.proxy.getCalendars();
-            const calendars = calendarsData?.calendars || [];
+          // If contact doesn't exist, create it first (like GHL AI agent does)
+          if (!contacts || contacts.length === 0) {
+            console.log(`📝 Contact not found for ${identifier}, creating new contact...`);
 
-            if (calendars.length > 0) {
-              const calendar = calendars[0]; // Use first available calendar
+            // Determine if identifier is email or name
+            const isEmail = /^[\w.-]+@[\w.-]+\.\w+$/i.test(identifier);
 
-              // Create appointment
-              const appointmentData = {
-                calendarId: calendar.id,
-                contactId: contactId,
-                startTime: appointmentDate.toISOString(),
-                endTime: new Date(appointmentDate.getTime() + duration * 60000).toISOString(),
-                title: `Appointment with ${contacts[0].contactName || identifier}`,
-                appointmentStatus: 'confirmed'
-              };
+            const newContactData = isEmail
+              ? { email: identifier, fullName: identifier.split('@')[0] }
+              : { fullName: identifier };
 
-              await session.proxy.createAppointment(appointmentData);
-              response = `✅ Appointment booked successfully!\n\n📅 ${formatFriendlyDate(appointmentDate)}\n⏱️ Duration: ${duration} minutes\n👤 Contact: ${contacts[0].contactName}\n📍 Calendar: ${calendar.name}`;
-              data = { appointment: appointmentData };
-            } else {
-              response = "❌ No calendars available. Please set up a calendar in GoHighLevel first.";
+            console.log('📝 Creating contact with data:', JSON.stringify(newContactData));
+
+            try {
+              const createResult = await session.proxy.createContact(newContactData);
+              contactId = createResult?.contact?.id;
+              contactName = newContactData.fullName;
+
+              if (!contactId) {
+                throw new Error('Contact creation returned no ID');
+              }
+
+              console.log(`✅ Contact created successfully: ${contactId}`);
+            } catch (createError) {
+              console.error('❌ Failed to create contact:', createError.response?.data || createError.message);
+              response = `❌ Failed to create contact for appointment: ${createError.response?.data?.message || createError.message}`;
+              return;
             }
           } else {
-            response = `❌ Contact not found: ${identifier}`;
+            contactId = contacts[0].id;
+            contactName = contacts[0].contactName || identifier;
+          }
+
+          // Get available calendars
+          const calendarsData = await session.proxy.getCalendars();
+          const calendars = calendarsData?.calendars || [];
+
+          if (calendars.length > 0) {
+            const calendar = calendars[0]; // Use first available calendar
+
+            // Create appointment
+            const appointmentData = {
+              calendarId: calendar.id,
+              contactId: contactId,
+              startTime: appointmentDate.toISOString(),
+              endTime: new Date(appointmentDate.getTime() + duration * 60000).toISOString(),
+              title: `Appointment with ${contactName}`,
+              appointmentStatus: 'confirmed'
+            };
+
+            await session.proxy.createAppointment(appointmentData);
+            response = `✅ Appointment booked successfully!\n\n📅 ${formatFriendlyDate(appointmentDate)}\n⏱️ Duration: ${duration} minutes\n👤 Contact: ${contactName}\n📍 Calendar: ${calendar.name}`;
+            data = { appointment: appointmentData };
+          } else {
+            response = "❌ No calendars available. Please set up a calendar in GoHighLevel first.";
           }
         } catch (error) {
           console.error('❌ Appointment creation error:', error.response?.data || error.message);
