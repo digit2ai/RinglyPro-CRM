@@ -47,9 +47,16 @@ async function getClientIdFromLocationId(locationId) {
 }
 
 // Helper: Sync contact from GHL to RinglyPro
-async function syncContact(contactData, clientId) {
+async function syncContact(contactData, clientId, customData = null) {
   try {
-    const { id: ghlContactId, firstName, lastName, email, phone, dateAdded, dateUpdated } = contactData;
+    // Try to get contact data from multiple sources
+    const ghlContactId = contactData?.id || customData?.['contact.id'] || contactData?.contact_id;
+    const firstName = contactData?.firstName || customData?.['contact.firstName'] || contactData?.first_name;
+    const lastName = contactData?.lastName || customData?.['contact.lastName'] || contactData?.last_name;
+    const email = contactData?.email || customData?.['contact.email'];
+    const phone = contactData?.phone || customData?.['contact.phone'];
+    const dateAdded = contactData?.dateAdded || customData?.['contact.dateAdded'];
+    const dateUpdated = contactData?.dateUpdated || customData?.['contact.dateUpdated'];
 
     console.log(`📇 Syncing contact from GHL: ${firstName} ${lastName} (${ghlContactId})`);
 
@@ -293,10 +300,9 @@ router.post('/', async (req, res) => {
     switch (eventType) {
       case 'ContactCreate':
       case 'ContactUpdate':
-        if (!contact) {
-          return res.status(400).json({ success: false, error: 'Contact data missing' });
-        }
-        await syncContact(contact, clientId);
+        // Contact data might be in req.body or customData
+        const contactData = contact || req.body;
+        await syncContact(contactData, clientId, customData);
         break;
 
       case 'ContactDelete':
