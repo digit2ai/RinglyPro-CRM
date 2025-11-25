@@ -259,13 +259,24 @@ router.post('/', async (req, res) => {
     const { type, locationId, contact, appointment } = req.body;
 
     console.log(`📨 Received GHL webhook: ${type}`);
-    console.log(`📍 Location ID: ${locationId}`);
+    console.log(`📍 Location ID from body: ${locationId}`);
+    console.log(`🔍 Full webhook payload:`, JSON.stringify(req.body, null, 2));
+
+    // Try to get locationId from multiple possible sources
+    let finalLocationId = locationId ||
+                          req.body.location_id ||
+                          req.body.location?.id ||
+                          appointment?.locationId ||
+                          contact?.locationId;
+
+    console.log(`📍 Final Location ID: ${finalLocationId}`);
 
     // Map locationId to clientId
-    const clientId = await getClientIdFromLocationId(locationId);
+    const clientId = await getClientIdFromLocationId(finalLocationId);
 
     if (!clientId) {
-      console.error(`❌ No client found for locationId: ${locationId}`);
+      console.error(`❌ No client found for locationId: ${finalLocationId}`);
+      console.error(`❌ Tried sources: locationId=${locationId}, location_id=${req.body.location_id}, location.id=${req.body.location?.id}`);
       return res.status(404).json({
         success: false,
         error: 'Client not found for this location'
