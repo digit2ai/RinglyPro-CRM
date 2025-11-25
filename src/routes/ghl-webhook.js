@@ -102,7 +102,7 @@ async function syncContact(contactData, clientId, customData = null) {
 }
 
 // Helper: Sync appointment from GHL to RinglyPro
-async function syncAppointment(appointmentData, clientId) {
+async function syncAppointment(appointmentData, clientId, webhookPayload = null) {
   try {
     const {
       id: ghlAppointmentId,
@@ -124,12 +124,26 @@ async function syncAppointment(appointmentData, clientId) {
     const appointmentTime = startDate.toTimeString().split(' ')[0];
     const duration = Math.round((endDate - startDate) / (1000 * 60)); // minutes
 
-    // Get contact information from GHL or create placeholder
+    // Get contact information from webhook payload first (most reliable)
     let contactName = 'Unknown';
     let contactPhone = '+10000000000';
     let contactEmail = null;
 
-    if (ghlContactId) {
+    // Try to extract from webhook payload (root level)
+    if (webhookPayload) {
+      contactName = webhookPayload.full_name ||
+                    webhookPayload.fullName ||
+                    (webhookPayload.first_name && webhookPayload.last_name ?
+                      `${webhookPayload.first_name} ${webhookPayload.last_name}` :
+                      'Unknown');
+      contactPhone = webhookPayload.phone || webhookPayload.customerPhone || '+10000000000';
+      contactEmail = webhookPayload.email || null;
+
+      console.log(`📇 Extracted contact from webhook payload: ${contactName}, ${contactPhone}`);
+    }
+
+    // If still unknown, try to find existing contact in database
+    if (contactName === 'Unknown' && ghlContactId) {
       const contact = await Contact.findOne({
         where: { ghlContactId, clientId }
       });
@@ -138,6 +152,7 @@ async function syncAppointment(appointmentData, clientId) {
         contactName = `${contact.firstName} ${contact.lastName}`;
         contactPhone = contact.phone;
         contactEmail = contact.email;
+        console.log(`📇 Found contact in database: ${contactName}`);
       }
     }
 
@@ -334,7 +349,9 @@ router.post('/', async (req, res) => {
           console.error('❌ Appointment data missing or incomplete:', appointmentData);
           return res.status(400).json({ success: false, error: 'Appointment data missing or incomplete' });
         }
-        await syncAppointment(appointmentData, clientId);
+
+        // Pass full webhook payload for contact name extraction
+        await syncAppointment(appointmentData, clientId, req.body);
         break;
 
       case 'AppointmentDelete':
