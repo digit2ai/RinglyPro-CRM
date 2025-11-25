@@ -27,7 +27,7 @@ const sequelize = require('../config/database');
 async function getClientIdFromLocationId(locationId) {
   try {
     const [result] = await sequelize.query(
-      `SELECT client_id FROM ghl_integrations WHERE location_id = :locationId LIMIT 1`,
+      `SELECT client_id FROM ghl_integrations WHERE ghl_location_id = :locationId LIMIT 1`,
       {
         replacements: { locationId },
         type: QueryTypes.SELECT
