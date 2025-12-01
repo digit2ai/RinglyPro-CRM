@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Food Photo Studio - Turn Phone Photos Into Professional Food Photography</title>
+    <style>
+        /* ============================================
+           RESET & BASE STYLES
+        ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background-color: #ffffff;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ============================================
+           TYPOGRAPHY
+        ============================================ */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            color: #0a0a0a;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            letter-spacing: -0.03em;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+        }
+
+        p {
+            font-size: 1.125rem;
+            line-height: 1.7;
+            color: #4a5568;
+            margin-bottom: 1rem;
+        }
+
+        .subheadline {
+            font-size: 1.25rem;
+            line-height: 1.6;
+            color: #64748b;
+            font-weight: 400;
+        }
+
+        /* ============================================
+           LAYOUT & CONTAINERS
+        ============================================ */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .container-wide {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        section {
+            padding: 5rem 0;
+        }
+
+        .section-alt {
+            background-color: #f8fafc;
+        }
+
+        /* ============================================
+           BUTTONS (RinglyPro Style)
+        ============================================ */
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: #6366f1;
+            color: #ffffff;
+            box-shadow: 0 4px 6px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: #6366f1;
+            border: 2px solid #6366f1;
+        }
+
+        .btn-secondary:hover {
+            background-color: #6366f1;
+            color: #ffffff;
+        }
+
+        .btn-large {
+            padding: 1.25rem 2.5rem;
+            font-size: 1.25rem;
+        }
+
+        .text-link {
+            display: inline-block;
+            margin-left: 1.5rem;
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.125rem;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .text-link:hover {
+            border-bottom-color: #6366f1;
+        }
+
+        /* ============================================
+           HEADER/LOGO
+        ============================================ */
+        .header {
+            padding: 2rem 0;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-container img {
+            height: 50px;
+            width: auto;
+        }
+
+        .brand-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0a0a0a;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-service {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #64748b;
+            margin-left: 0.5rem;
+        }
+
+        /* ============================================
+           HERO SECTION
+        ============================================ */
+        .hero {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            padding: 6rem 0 8rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-text h1 {
+            margin-bottom: 1.5rem;
+            color: #0a0a0a;
+        }
+
+        .hero-text .subheadline {
+            margin-bottom: 2.5rem;
+            max-width: 540px;
+        }
+
+        .hero-cta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .hero-image {
+            background: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%);
+            border-radius: 1rem;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .hero-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 1rem;
+        }
+
+        /* ============================================
+           HOW IT WORKS SECTION
+        ============================================ */
+        .how-it-works {
+            text-align: center;
+        }
+
+        .how-it-works h2 {
+            margin-bottom: 4rem;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        .step {
+            padding: 2rem;
+        }
+
+        .step-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            font-weight: 700;
+        }
+
+        .step h3 {
+            margin-bottom: 1rem;
+            color: #0a0a0a;
+        }
+
+        .step p {
+            font-size: 1rem;
+            color: #64748b;
+        }
+
+        /* ============================================
+           BEFORE/AFTER SECTION
+        ============================================ */
+        .before-after {
+            background-color: #f8fafc;
+        }
+
+        .before-after h2 {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .comparison-item {
+            text-align: center;
+        }
+
+        .comparison-image {
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+            border-radius: 1rem;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .comparison-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 1rem;
+        }
+
+        .comparison-label {
+            font-weight: 600;
+            font-size: 1.125rem;
+            color: #1a1a1a;
+        }
+
+        .comparison-description {
+            max-width: 800px;
+            margin: 3rem auto 0;
+            text-align: center;
+        }
+
+        /* ============================================
+           WHY SECTION
+        ============================================ */
+        .why-section {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .why-section h2 {
+            margin-bottom: 2rem;
+        }
+
+        .why-section p {
+            margin-bottom: 2rem;
+        }
+
+        .benefits-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .benefits-list li {
+            display: flex;
+            align-items: flex-start;
+            padding: 1rem;
+            background-color: #f8fafc;
+            border-radius: 0.5rem;
+            border-left: 4px solid #6366f1;
+        }
+
+        .benefits-list li::before {
+            content: '✓';
+            color: #6366f1;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .benefits-list li span {
+            font-size: 1.125rem;
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+
+        /* ============================================
+           PRICING SECTION
+        ============================================ */
+        .pricing {
+            background-color: #f8fafc;
+            text-align: center;
+        }
+
+        .pricing h2 {
+            margin-bottom: 4rem;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            border: 2px solid transparent;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+        }
+
+        .pricing-card.featured {
+            border-color: #6366f1;
+            transform: scale(1.05);
+        }
+
+        .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-8px);
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .pricing-card h3 {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            color: #0a0a0a;
+        }
+
+        .pricing-price {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #6366f1;
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-description {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+            min-height: 120px;
+        }
+
+        .pricing-total {
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: #0a0a0a;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background-color: #f1f5f9;
+            border-radius: 0.5rem;
+        }
+
+        /* ============================================
+           FINAL CTA SECTION
+        ============================================ */
+        .final-cta {
+            text-align: center;
+            padding: 6rem 0;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .final-cta h2 {
+            color: white;
+            margin-bottom: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .final-cta .btn-primary {
+            background-color: white;
+            color: #6366f1;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .final-cta .btn-primary:hover {
+            background-color: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .final-cta-subtitle {
+            margin-top: 1.5rem;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+        }
+
+        /* ============================================
+           RESPONSIVE DESIGN
+        ============================================ */
+        @media (max-width: 1024px) {
+            h1 {
+                font-size: 2.75rem;
+            }
+
+            h2 {
+                font-size: 2rem;
+            }
+
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .hero-image {
+                height: 400px;
+            }
+
+            .steps-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .pricing-card.featured {
+                transform: scale(1);
+            }
+
+            .pricing-card.featured:hover {
+                transform: translateY(-8px);
+            }
+
+            .benefits-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.25rem;
+            }
+
+            h2 {
+                font-size: 1.75rem;
+            }
+
+            p, .subheadline {
+                font-size: 1rem;
+            }
+
+            section {
+                padding: 3rem 0;
+            }
+
+            .hero {
+                padding: 4rem 0 5rem;
+            }
+
+            .hero-cta {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .text-link {
+                margin-left: 0;
+                margin-top: 0.5rem;
+                text-align: center;
+            }
+
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-image {
+                height: 300px;
+            }
+
+            .hero-image {
+                height: 300px;
+            }
+
+            .container, .container-wide {
+                padding: 0 1.5rem;
+            }
+
+            .final-cta {
+                padding: 4rem 0;
+            }
+
+            .brand-name {
+                font-size: 1.25rem;
+            }
+
+            .brand-service {
+                font-size: 0.875rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.875rem;
+            }
+
+            .btn {
+                padding: 0.875rem 1.5rem;
+                font-size: 1rem;
+            }
+
+            .btn-large {
+                padding: 1rem 1.75rem;
+                font-size: 1.125rem;
+            }
+
+            .pricing-price {
+                font-size: 2.5rem;
+            }
+
+            .logo-container img {
+                height: 40px;
+            }
+
+            .brand-name {
+                font-size: 1.125rem;
+            }
+
+            .brand-service {
+                display: block;
+                margin-left: 0;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="container">
+            <div class="logo-container">
+                <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69175f336c431e834ac954b8.png" alt="RinglyPro Photo Studio Logo">
+                <div>
+                    <span class="brand-name">RinglyPro</span>
+                    <span class="brand-service">Photo Studio</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>Turn Your Phone Photos Into Masterpieces</h1>
+                    <p class="subheadline">Send us the pictures you take with your phone and we'll transform them into high-quality professional images—without expensive photo shoots.</p>
+                    <div class="hero-cta">
+                        <a href="#pricing" class="btn btn-primary btn-large">Get Started</a>
+                        <a href="#pricing" class="text-link">View Packages</a>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/692de7f7f3ff22dd725fd53c.png" alt="Before and After Food Photo Comparison">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS SECTION -->
+    <section class="how-it-works section-alt">
+        <div class="container">
+            <h2>How It Works</h2>
+            <div class="steps-grid">
+                <div class="step">
+                    <div class="step-icon">1</div>
+                    <h3>You Snap</h3>
+                    <p>Take the photo with your phone. No special equipment or lighting needed—just capture your images as you normally would.</p>
+                </div>
+                <div class="step">
+                    <div class="step-icon">2</div>
+                    <h3>You Send</h3>
+                    <p>Share your photos with us online. Simply upload through our secure portal and tell us about your vision.</p>
+                </div>
+                <div class="step">
+                    <div class="step-icon">3</div>
+                    <h3>We Enhance</h3>
+                    <p>We deliver professional-grade images ready for your website, social media, and marketing materials. Usually within 48-72 hours.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BEFORE/AFTER SECTION -->
+    <section class="before-after">
+        <div class="container">
+            <h2>From This… To This…</h2>
+            <div class="comparison">
+                <div class="comparison-item">
+                    <div class="comparison-image">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/692de29dfd073aedd39ea686.jpg" alt="Original Phone Photo - Before AI Enhancement">
+                    </div>
+                    <p class="comparison-label">Original Phone Photo</p>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-image">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/692de2a382f4c539e1634522.jpg" alt="AI-Enhanced Professional Photo - After Enhancement">
+                    </div>
+                    <p class="comparison-label">AI-Enhanced Professional Photo</p>
+                </div>
+            </div>
+            <div class="comparison-description">
+                <p>Our AI-powered enhancement process transforms everyday phone photos into stunning professional-quality images. We adjust lighting, enhance colors, improve composition, and perfect every detail—making your images stand out. This helps businesses and professionals shine on social media, websites, and marketing materials without the cost and hassle of traditional photography.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- WHY SECTION -->
+    <section class="why-section-wrapper">
+        <div class="container">
+            <div class="why-section">
+                <h2>Why It's Perfect for Small Businesses</h2>
+                <p>Professional photography can cost thousands of dollars and requires coordinating schedules, setting up equipment, and disrupting your operations. We've made it simple: use the phone you already have, take photos on your own time, and let our AI do the heavy lifting.</p>
+                <ul class="benefits-list">
+                    <li><span>No expensive photo shoots</span></li>
+                    <li><span>Use only your existing phone</span></li>
+                    <li><span>Perfect for websites, social media, and marketing</span></li>
+                    <li><span>Consistent, high-quality visuals for your brand</span></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING SECTION -->
+    <section class="pricing" id="pricing">
+        <div class="container-wide">
+            <h2>Pick Your Package</h2>
+            <div class="pricing-grid">
+                <!-- STARTER -->
+                <div class="pricing-card">
+                    <h3>Starter</h3>
+                    <div class="pricing-price">$150</div>
+                    <p class="pricing-description">You send us 10 photos and we send you back 10 professional photos.</p>
+                    <div class="pricing-total">Total: You have 10 professional photos</div>
+                    <button class="btn btn-secondary" onclick="purchasePackage('starter')">Get Started</button>
+                </div>
+
+                <!-- PRO (FEATURED) -->
+                <div class="pricing-card featured">
+                    <div class="pricing-badge">Best Value</div>
+                    <h3>Pro</h3>
+                    <div class="pricing-price">$350</div>
+                    <p class="pricing-description">You send us 10 photos and we send you back 10 professional photos plus 2 variations of each.</p>
+                    <div class="pricing-total">Total: You have 30 professional photos</div>
+                    <button class="btn btn-primary" onclick="purchasePackage('pro')">Get Started</button>
+                </div>
+
+                <!-- ELITE -->
+                <div class="pricing-card">
+                    <h3>Elite</h3>
+                    <div class="pricing-price">$500</div>
+                    <p class="pricing-description">You send us 20 photos and we send you back 20 professional photos plus 2 variations of each.</p>
+                    <div class="pricing-total">Total: You have 60 professional photos</div>
+                    <button class="btn btn-secondary" onclick="purchasePackage('elite')">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="final-cta">
+        <div class="container">
+            <h2>Ready to upgrade your photos without hiring a photographer?</h2>
+            <a href="#pricing" class="btn btn-primary btn-large">Send My Photos</a>
+            <p class="final-cta-subtitle">No studio. No equipment. Just your phone and our AI.</p>
+        </div>
+    </section>
+
+    <!-- JavaScript for Payment Integration -->
+    <script>
+        /**
+         * Purchase package - Redirects to auth with package selection
+         * NEW WORKFLOW: User clicks package → Auth page → Stripe checkout
+         * @param {string} packageType - 'starter', 'pro', or 'elite'
+         */
+        async function purchasePackage(packageType) {
+            try {
+                // Get authentication token
+                const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+
+                // If not logged in, store the selected package and redirect to auth
+                if (!token) {
+                    // Store the package selection so we can resume after login
+                    localStorage.setItem('selectedPackage', packageType);
+
+                    // Redirect to auth page with package info
+                    window.location.href = 'https://aiagent.ringlypro.com/photo-studio-auth?package=' + packageType;
+                    return;
+                }
+
+                // User is already logged in - create checkout directly
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = 'Processing...';
+                button.disabled = true;
+
+                // Create Stripe checkout session
+                const response = await fetch('https://aiagent.ringlypro.com/api/photo-studio/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        package_type: packageType
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.url) {
+                    // Redirect to Stripe checkout
+                    window.location.href = data.url;
+                } else {
+                    throw new Error(data.error || 'Failed to create checkout session');
+                }
+
+            } catch (error) {
+                console.error('Purchase error:', error);
+
+                // Re-enable button
+                if (event && event.target) {
+                    event.target.textContent = 'Get Started';
+                    event.target.disabled = false;
+                }
+
+                // Show error to user
+                alert('Failed to start checkout. Please try again or contact support at support@ringlypro.com');
+            }
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href !== '#' && href !== '') {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
