@@ -396,6 +396,13 @@ app.get('/purchase-success', (req, res) => {
 });
 
 // Photo Studio success page route
+// Photo Studio landing page route
+app.get('/photo-studio', (req, res) => {
+  res.render('photo-studio-landing', {
+    title: 'AI Photo Studio - Turn Phone Photos Into Professional Photography | RinglyPro'
+  });
+});
+
 app.get('/photo-studio-success', (req, res) => {
   res.render('photo-studio-success', {
     title: 'Order Confirmed - RinglyPro Photo Studio',
