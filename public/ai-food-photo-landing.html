@@ -852,10 +852,13 @@
                 // Get authentication token
                 const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
 
-                // If not logged in, redirect to Photo Studio auth page with return URL
+                // If not logged in, store the selected package and redirect to auth
                 if (!token) {
-                    const returnUrl = 'https://ringlypro.com/photo-studio#pricing';
-                    window.location.href = 'https://aiagent.ringlypro.com/photo-studio-auth?redirect=' + encodeURIComponent(returnUrl);
+                    // Store the package selection so we can resume after login
+                    localStorage.setItem('selectedPackage', packageType);
+
+                    // Redirect to auth page with package info
+                    window.location.href = 'https://aiagent.ringlypro.com/photo-studio-auth?package=' + packageType;
                     return;
                 }
 
