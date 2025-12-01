@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Photo Studio Orders - RinglyPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            color: #0a0a0a;
+        }
+
+        .header .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header .logo img {
+            height: 40px;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background-color: #6366f1;
+            color: #ffffff;
+            box-shadow: 0 4px 6px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: #4f46e5;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: #6366f1;
+            border: 2px solid #6366f1;
+        }
+
+        .btn-secondary:hover {
+            background-color: #6366f1;
+            color: #ffffff;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: #ffffff;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .order-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .order-id {
+            font-size: 0.875rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            padding: 0.375rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-awaiting_upload {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-processing {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .package-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0a0a0a;
+            margin-bottom: 0.5rem;
+        }
+
+        .package-price {
+            font-size: 1.125rem;
+            color: #6366f1;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .order-details {
+            margin: 1.5rem 0;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .detail-label {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .detail-value {
+            color: #0a0a0a;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .upload-progress {
+            margin: 1.5rem 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 9999px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .upload-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            margin: 1rem 0;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 1rem;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .file-input-label:hover {
+            background: #f1f5f9;
+            border-color: #6366f1;
+        }
+
+        .file-input-label.drag-over {
+            background: #e0e7ff;
+            border-color: #6366f1;
+        }
+
+        .selected-files {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: white;
+            border-radius: 0.25rem;
+        }
+
+        .file-name {
+            font-size: 0.875rem;
+            color: #0a0a0a;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-size {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin: 0 0.5rem;
+        }
+
+        .remove-file {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 1.25rem;
+            padding: 0.25rem;
+        }
+
+        .uploaded-photos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .photo-thumbnail {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background: #f3f4f6;
+        }
+
+        .photo-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-delete {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            display: none;
+        }
+
+        .photo-thumbnail:hover .photo-delete {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state h2 {
+            font-size: 1.5rem;
+            color: #0a0a0a;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .orders-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .order-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69175f336c431e834ac954b8.png" alt="RinglyPro">
+                <h1>Photo Studio Portal</h1>
+            </div>
+            <a href="/ai-food-photo-landing.html" class="btn btn-secondary btn-sm">Back to Photo Studio</a>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading your orders...</p>
+        </div>
+
+        <div id="orders-container" style="display: none;">
+            <div id="orders-grid" class="orders-grid"></div>
+        </div>
+
+        <div id="empty-state" class="empty-state" style="display: none;">
+            <h2>No Orders Yet</h2>
+            <p>You haven't placed any Photo Studio orders yet.</p>
+            <a href="/ai-food-photo-landing.html" class="btn btn-primary">Browse Packages</a>
+        </div>
+    </div>
+
+    <script>
+        let orders = [];
+        let uploadedPhotos = {};
+
+        // Get auth token
+        function getAuthToken() {
+            return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        }
+
+        // Load orders
+        async function loadOrders() {
+            try {
+                const token = getAuthToken();
+                if (!token) {
+                    window.location.href = '/photo-studio-auth?redirect=/photo-studio-portal';
+                    return;
+                }
+
+                const response = await fetch('/api/photo-studio/orders', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.orders.length > 0) {
+                    orders = data.orders;
+                    renderOrders();
+
+                    // Load uploaded photos for each order
+                    for (const order of orders) {
+                        await loadUploadedPhotos(order.id);
+                    }
+                } else {
+                    showEmptyState();
+                }
+
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                showError('Failed to load orders');
+            }
+        }
+
+        // Load uploaded photos for an order
+        async function loadUploadedPhotos(orderId) {
+            try {
+                const token = getAuthToken();
+                const response = await fetch(`/api/photo-uploads/order/${orderId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    uploadedPhotos[orderId] = data.uploads;
+                    renderUploadedPhotos(orderId);
+                }
+
+            } catch (error) {
+                console.error('Error loading photos:', error);
+            }
+        }
+
+        // Render orders
+        function renderOrders() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('orders-container').style.display = 'block';
+
+            const grid = document.getElementById('orders-grid');
+            grid.innerHTML = '';
+
+            orders.forEach(order => {
+                const card = createOrderCard(order);
+                grid.appendChild(card);
+            });
+        }
+
+        // Create order card
+        function createOrderCard(order) {
+            const card = document.createElement('div');
+            card.className = 'order-card';
+            card.id = `order-${order.id}`;
+
+            const packageName = order.package_type.charAt(0).toUpperCase() + order.package_type.slice(1);
+            const uploadProgress = (order.photos_uploaded / order.photos_to_upload) * 100;
+            const canUpload = order.order_status === 'awaiting_upload' || order.order_status === 'processing';
+
+            card.innerHTML = `
+                <div class="order-header">
+                    <span class="order-id">Order #${order.id}</span>
+                    <span class="status-badge status-${order.order_status}">${order.order_status.replace('_', ' ')}</span>
+                </div>
+
+                <div class="package-name">${packageName} Package</div>
+                <div class="package-price">$${order.price}</div>
+
+                <div class="order-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Order Date:</span>
+                        <span class="detail-value">${new Date(order.order_date).toLocaleDateString()}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Photos to Upload:</span>
+                        <span class="detail-value">${order.photos_to_upload}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Photos You'll Receive:</span>
+                        <span class="detail-value">${order.photos_to_receive}</span>
+                    </div>
+                </div>
+
+                <div class="upload-progress">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span class="detail-label">Upload Progress</span>
+                        <span class="detail-value">${order.photos_uploaded} / ${order.photos_to_upload}</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${uploadProgress}%"></div>
+                    </div>
+                </div>
+
+                <div id="uploaded-photos-${order.id}" class="uploaded-photos"></div>
+
+                ${canUpload && order.photos_uploaded < order.photos_to_upload ? `
+                    <div class="upload-section">
+                        <h3 style="margin-bottom: 1rem; font-size: 1rem;">Upload Your Photos</h3>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="file-input-${order.id}" class="file-input" accept="image/jpeg,image/jpg,image/png,image/heic,image/heif,image/webp" multiple>
+                            <label for="file-input-${order.id}" class="file-input-label" id="file-label-${order.id}">
+                                📸 Click or drag photos here<br>
+                                <span style="font-size: 0.875rem; color: #64748b;">JPEG, PNG, HEIC, or WebP</span>
+                            </label>
+                        </div>
+                        <div id="selected-files-${order.id}" class="selected-files" style="display: none;"></div>
+                        <button class="btn btn-primary" id="upload-btn-${order.id}" style="width: 100%; display: none;" onclick="uploadPhotos(${order.id})">
+                            Upload Selected Photos
+                        </button>
+                        <div id="upload-status-${order.id}"></div>
+                    </div>
+                ` : ''}
+            `;
+
+            // Setup file input handlers
+            if (canUpload && order.photos_uploaded < order.photos_to_upload) {
+                setTimeout(() => setupFileInput(order.id, order.photos_to_upload - order.photos_uploaded), 100);
+            }
+
+            return card;
+        }
+
+        // Render uploaded photos
+        function renderUploadedPhotos(orderId) {
+            const container = document.getElementById(`uploaded-photos-${orderId}`);
+            if (!container) return;
+
+            const photos = uploadedPhotos[orderId] || [];
+
+            if (photos.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = photos.map(photo => `
+                <div class="photo-thumbnail" data-upload-id="${photo.id}">
+                    <img src="${photo.storage_url}" alt="${photo.original_filename}" loading="lazy">
+                    ${photo.upload_status === 'uploaded' ? `
+                        <button class="photo-delete" onclick="deletePhoto(${orderId}, ${photo.id})">×</button>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Setup file input
+        function setupFileInput(orderId, maxFiles) {
+            const fileInput = document.getElementById(`file-input-${orderId}`);
+            const fileLabel = document.getElementById(`file-label-${orderId}`);
+            const selectedFilesDiv = document.getElementById(`selected-files-${orderId}`);
+            const uploadBtn = document.getElementById(`upload-btn-${orderId}`);
+            let selectedFiles = [];
+
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+
+            // Drag and drop
+            fileLabel.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileLabel.classList.add('drag-over');
+            });
+
+            fileLabel.addEventListener('dragleave', () => {
+                fileLabel.classList.remove('drag-over');
+            });
+
+            fileLabel.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileLabel.classList.remove('drag-over');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            function handleFiles(files) {
+                const newFiles = Array.from(files);
+
+                if (selectedFiles.length + newFiles.length > maxFiles) {
+                    alert(`You can only upload ${maxFiles} more photo(s) for this order.`);
+                    return;
+                }
+
+                selectedFiles = [...selectedFiles, ...newFiles];
+                renderSelectedFiles();
+            }
+
+            function renderSelectedFiles() {
+                if (selectedFiles.length === 0) {
+                    selectedFilesDiv.style.display = 'none';
+                    uploadBtn.style.display = 'none';
+                    return;
+                }
+
+                selectedFilesDiv.style.display = 'block';
+                uploadBtn.style.display = 'block';
+
+                selectedFilesDiv.innerHTML = selectedFiles.map((file, index) => `
+                    <div class="file-item">
+                        <span class="file-name">${file.name}</span>
+                        <span class="file-size">${(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                        <button class="remove-file" onclick="removeFile_${orderId}(${index})">×</button>
+                    </div>
+                `).join('');
+            }
+
+            window[`removeFile_${orderId}`] = function(index) {
+                selectedFiles.splice(index, 1);
+                renderSelectedFiles();
+            };
+
+            window[`getSelectedFiles_${orderId}`] = function() {
+                return selectedFiles;
+            };
+
+            window[`clearSelectedFiles_${orderId}`] = function() {
+                selectedFiles = [];
+                fileInput.value = '';
+                renderSelectedFiles();
+            };
+        }
+
+        // Upload photos
+        async function uploadPhotos(orderId) {
+            const getFiles = window[`getSelectedFiles_${orderId}`];
+            const clearFiles = window[`clearSelectedFiles_${orderId}`];
+            const files = getFiles();
+
+            if (!files || files.length === 0) {
+                alert('Please select photos to upload');
+                return;
+            }
+
+            const uploadBtn = document.getElementById(`upload-btn-${orderId}`);
+            const statusDiv = document.getElementById(`upload-status-${orderId}`);
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+
+            const formData = new FormData();
+            formData.append('order_id', orderId);
+            formData.append('service_type', 'photo_studio');
+
+            files.forEach(file => {
+                formData.append('photos', file);
+            });
+
+            try {
+                const token = getAuthToken();
+                const response = await fetch('/api/photo-uploads/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    statusDiv.innerHTML = `<div class="alert alert-success">Successfully uploaded ${data.uploads.filter(u => u.success).length} photo(s)!</div>`;
+
+                    // Clear files and reload
+                    clearFiles();
+                    await loadOrders();
+
+                    setTimeout(() => {
+                        statusDiv.innerHTML = '';
+                    }, 5000);
+                } else {
+                    throw new Error(data.error || 'Upload failed');
+                }
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                statusDiv.innerHTML = `<div class="alert alert-error">Upload failed: ${error.message}</div>`;
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload Selected Photos';
+            }
+        }
+
+        // Delete photo
+        async function deletePhoto(orderId, uploadId) {
+            if (!confirm('Are you sure you want to delete this photo?')) {
+                return;
+            }
+
+            try {
+                const token = getAuthToken();
+                const response = await fetch(`/api/photo-uploads/${uploadId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    await loadOrders();
+                } else {
+                    throw new Error(data.error || 'Delete failed');
+                }
+
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('Failed to delete photo: ' + error.message);
+            }
+        }
+
+        // Show empty state
+        function showEmptyState() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'block';
+        }
+
+        // Show error
+        function showError(message) {
+            document.getElementById('loading').innerHTML = `
+                <div class="alert alert-error">${message}</div>
+                <a href="/ai-food-photo-landing.html" class="btn btn-secondary">Back to Photo Studio</a>
+            `;
+        }
+
+        // Load orders on page load
+        window.addEventListener('DOMContentLoaded', loadOrders);
+    </script>
+</body>
+</html>

@@ -133,6 +133,14 @@ console.log('✅ Copilot access routes loaded successfully');
 const ghlPaymentRoutes = require('./routes/ghl-payment'); // GHL subscription payments
 console.log('✅ GHL payment routes loaded successfully');
 
+// Import Photo Studio routes
+const photoStudioRoutes = require('./routes/photo-studio'); // Photo Studio package purchases
+console.log('✅ Photo Studio routes loaded successfully');
+
+// Import Photo Upload routes
+const photoUploadRoutes = require('./routes/photo-uploads'); // Photo upload handling for all services
+console.log('✅ Photo Upload routes loaded successfully');
+
 // API Routes - Organized by functionality
 console.log('📄 About to mount auth routes...');
 app.use('/api/auth', authRoutes); // Mount user authentication routes
@@ -145,6 +153,14 @@ console.log('✅ Copilot access routes mounted at /api/copilot');
 // Mount GHL payment routes
 app.use('/api/payment', ghlPaymentRoutes); // GHL subscription payments via Stripe
 console.log('✅ GHL payment routes mounted at /api/payment');
+
+// Mount Photo Studio routes
+app.use('/api/photo-studio', photoStudioRoutes); // Photo Studio package purchases
+console.log('✅ Photo Studio routes mounted at /api/photo-studio');
+
+// Mount Photo Upload routes
+app.use('/api/photo-uploads', photoUploadRoutes); // Photo upload handling for all services
+console.log('✅ Photo Upload routes mounted at /api/photo-uploads');
 
 // Core CRM API routes
 app.use('/api/contacts', contactsRoutes);
@@ -376,6 +392,28 @@ app.get('/purchase-success', (req, res) => {
     clientName: CLIENT_NAME,
     clientId: CLIENT_ID,
     sessionId: req.query.session_id || ''
+  });
+});
+
+// Photo Studio success page route
+app.get('/photo-studio-success', (req, res) => {
+  res.render('photo-studio-success', {
+    title: 'Order Confirmed - RinglyPro Photo Studio',
+    sessionId: req.query.session_id || ''
+  });
+});
+
+// Photo Studio authentication page route
+app.get('/photo-studio-auth', (req, res) => {
+  res.render('photo-studio-auth', {
+    title: 'Sign In - RinglyPro Photo Studio'
+  });
+});
+
+// Photo Studio customer portal route
+app.get('/photo-studio-portal', (req, res) => {
+  res.render('photo-studio-portal', {
+    title: 'My Photo Studio Orders - RinglyPro'
   });
 });
 
