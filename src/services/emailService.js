@@ -781,11 +781,230 @@ The RinglyPro Team`,
     }
 }
 
+/**
+ * Send admin notification when customer provides feedback on enhanced photos
+ * @param {Object} options Feedback notification options
+ * @param {Number} options.orderId Order ID
+ * @param {Number} options.photoId Enhanced photo ID
+ * @param {String} options.customerName Customer name
+ * @param {String} options.customerEmail Customer email
+ * @param {String} options.approvalStatus Approval status (approved, rejected, revision_requested)
+ * @param {String} options.feedback Customer feedback
+ * @param {String} options.photoFilename Photo filename
+ */
+async function sendPhotoFeedbackNotification({ orderId, photoId, customerName, customerEmail, approvalStatus, feedback, photoFilename }) {
+    if (!SENDGRID_API_KEY) {
+        console.log('SendGrid not configured - skipping feedback notification');
+        return { success: false, reason: 'SendGrid not configured' };
+    }
+
+    const adminEmail = 'mstagg@digit2ai.com';
+    const dashboardUrl = `${APP_URL}/photo-studio-admin-dashboard`;
+
+    const statusText = {
+        'approved': 'Approved',
+        'rejected': 'Rejected',
+        'revision_requested': 'Revision Requested'
+    }[approvalStatus] || approvalStatus;
+
+    const statusEmoji = {
+        'approved': '✅',
+        'rejected': '❌',
+        'revision_requested': '🔄'
+    }[approvalStatus] || '📝';
+
+    const msg = {
+        to: adminEmail,
+        from: {
+            email: FROM_EMAIL,
+            name: 'RinglyPro Photo Studio'
+        },
+        subject: `${statusEmoji} Photo ${statusText} - Order #${orderId}`,
+        text: `PHOTO FEEDBACK RECEIVED
+
+Order Information:
+- Order ID: #${orderId}
+- Photo ID: #${photoId}
+- Photo File: ${photoFilename}
+- Customer: ${customerName}
+- Email: ${customerEmail}
+- Status: ${statusText}
+
+Customer Feedback:
+${feedback}
+
+${approvalStatus === 'revision_requested' ? 'Action Required: Please make the requested revisions and re-upload the photo.' : ''}
+
+View Dashboard: ${dashboardUrl}`,
+        html: `<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f7; }
+        .header { background: ${approvalStatus === 'approved' ? '#22c55e' : approvalStatus === 'rejected' ? '#ef4444' : '#f59e0b'}; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .header h1 { color: white; margin: 0; font-size: 24px; }
+        .content { background: white; padding: 30px; border: 1px solid #e5e7eb; }
+        .status-box { background: ${approvalStatus === 'approved' ? '#d1fae5' : approvalStatus === 'rejected' ? '#fee2e2' : '#fef3c7'}; border: 2px solid ${approvalStatus === 'approved' ? '#22c55e' : approvalStatus === 'rejected' ? '#ef4444' : '#f59e0b'}; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .info-label { font-weight: bold; color: #1e40af; display: inline-block; width: 150px; }
+        .feedback-box { background: #f8fafc; border-left: 4px solid #6366f1; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+        .button { display: inline-block; background: #667eea; color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; margin: 10px 5px; font-weight: bold; }
+        .footer { text-align: center; color: #6b7280; padding: 20px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>${statusEmoji} Photo ${statusText}</h1>
+        </div>
+        <div class="content">
+            <div class="status-box">
+                <h2 style="margin-top: 0; color: ${approvalStatus === 'approved' ? '#065f46' : approvalStatus === 'rejected' ? '#991b1b' : '#92400e'};">
+                    Customer ${statusText} Photo
+                </h2>
+                <p style="margin: 0;">A customer has ${approvalStatus === 'approved' ? 'approved' : approvalStatus === 'rejected' ? 'rejected' : 'requested revisions for'} an enhanced photo.</p>
+            </div>
+
+            <h3 style="color: #1e40af; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Order Details</h3>
+            <p><span class="info-label">Order ID:</span> #${orderId}</p>
+            <p><span class="info-label">Photo ID:</span> #${photoId}</p>
+            <p><span class="info-label">Photo File:</span> ${photoFilename}</p>
+            <p><span class="info-label">Customer:</span> ${customerName}</p>
+            <p><span class="info-label">Email:</span> <a href="mailto:${customerEmail}">${customerEmail}</a></p>
+
+            <h3 style="color: #1e40af; margin-top: 30px;">Customer Feedback:</h3>
+            <div class="feedback-box">
+                <p style="margin: 0; white-space: pre-wrap;">${feedback}</p>
+            </div>
+
+            ${approvalStatus === 'revision_requested' ? `
+                <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                    <strong style="color: #92400e;">⚠️ Action Required:</strong>
+                    <p style="margin: 10px 0 0; color: #92400e;">Please make the requested revisions and re-upload the photo to the customer's order.</p>
+                </div>
+            ` : ''}
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${dashboardUrl}" class="button">View Admin Dashboard</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p><strong>RinglyPro Photo Studio Admin</strong></p>
+            <p style="font-size: 12px; color: #9ca3af;">Automated notification</p>
+        </div>
+    </div>
+</body>
+</html>`
+    };
+
+    try {
+        await sgMail.send(msg);
+        console.log(`Photo feedback notification sent to: ${adminEmail}`);
+        return { success: true };
+    } catch (error) {
+        console.error('SendGrid photo feedback notification error:', error.response ? error.response.body : error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Send message from admin to customer
+ * @param {Object} options Message options
+ * @param {String} options.email Customer email
+ * @param {String} options.firstName Customer first name
+ * @param {Number} options.orderId Order ID
+ * @param {String} options.message Message from admin
+ */
+async function sendAdminMessageToCustomer({ email, firstName, orderId, message }) {
+    if (!SENDGRID_API_KEY) {
+        console.log('SendGrid not configured - skipping admin message');
+        return { success: false, reason: 'SendGrid not configured' };
+    }
+
+    const portalUrl = `${APP_URL}/photo-studio-portal`;
+
+    const msg = {
+        to: email,
+        from: {
+            email: FROM_EMAIL,
+            name: FROM_NAME
+        },
+        subject: `Message from RinglyPro - Order #${orderId}`,
+        text: `Hello ${firstName},
+
+You have received a message from the RinglyPro team regarding Order #${orderId}:
+
+${message}
+
+---
+
+View your order in the portal: ${portalUrl}
+
+If you have any questions, please reply to this email.
+
+Best regards,
+The RinglyPro Team`,
+        html: `<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .header h1 { color: white; margin: 0; font-size: 24px; }
+        .content { background: white; padding: 40px; border: 1px solid #e5e7eb; }
+        .message-box { background: #f0f9ff; border-left: 4px solid #6366f1; padding: 20px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+        .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: bold; }
+        .footer { text-align: center; color: #6b7280; margin-top: 20px; font-size: 14px; padding: 20px; background: #f9fafb; border-radius: 0 0 10px 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Message from RinglyPro</h1>
+        </div>
+        <div class="content">
+            <p>Hello <strong>${firstName}</strong>,</p>
+            <p>We have an update regarding your Order #${orderId}:</p>
+
+            <div class="message-box">
+                <p style="margin: 0; white-space: pre-wrap;">${message}</p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${portalUrl}" class="button">View Your Order</a>
+            </div>
+
+            <p style="margin-top: 30px;">If you have any questions, please reply to this email and we'll be happy to help!</p>
+
+            <p style="margin-top: 30px;"><strong>Best regards,</strong><br>The RinglyPro Team</p>
+        </div>
+        <div class="footer">
+            <p><strong>RinglyPro Photo Studio</strong></p>
+            <p style="font-size: 12px; color: #9ca3af; margin-top: 10px;">&copy; ${new Date().getFullYear()} RinglyPro. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>`
+    };
+
+    try {
+        await sgMail.send(msg);
+        console.log(`Admin message sent to: ${email}`);
+        return { success: true };
+    } catch (error) {
+        console.error('SendGrid admin message error:', error.response ? error.response.body : error.message);
+        return { success: false, error: error.message };
+    }
+}
+
 module.exports = {
     sendPasswordResetEmail,
     sendWelcomeEmail,
     sendPartnershipConfirmationEmail,
     sendPartnershipAdminNotification,
     sendPhotoUploadAdminNotification,
-    sendPhotosCompletedEmail
+    sendPhotosCompletedEmail,
+    sendPhotoFeedbackNotification,
+    sendAdminMessageToCustomer
 };

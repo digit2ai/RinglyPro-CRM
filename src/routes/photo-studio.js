@@ -724,11 +724,12 @@ router.get('/order/:orderId/enhanced-photos', authenticateToken, async (req, res
       });
     }
 
-    // Get all enhanced photos for this order
+    // Get all enhanced photos for this order with approval status
     const enhancedPhotos = await sequelize.query(
       `SELECT
         id, filename, file_size, mime_type, storage_url,
-        image_width, image_height, delivery_status, uploaded_at
+        image_width, image_height, delivery_status, uploaded_at,
+        approval_status, customer_feedback, approved_at, reviewed_at
        FROM enhanced_photos
        WHERE order_id = :orderId
        ORDER BY uploaded_at DESC`,
@@ -751,6 +752,407 @@ router.get('/order/:orderId/enhanced-photos', authenticateToken, async (req, res
     res.status(500).json({
       success: false,
       error: 'Failed to get enhanced photos'
+    });
+  }
+});
+
+/**
+ * POST /api/photo-studio/enhanced-photo/:photoId/approve
+ * Approve or reject enhanced photo with optional feedback
+ */
+router.post('/enhanced-photo/:photoId/approve', authenticateToken, async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { photoId } = req.params;
+    const { approval_status, customer_feedback } = req.body;
+
+    // Validate approval_status
+    const validStatuses = ['approved', 'rejected', 'revision_requested'];
+    if (!validStatuses.includes(approval_status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid approval status'
+      });
+    }
+
+    // Get photo and verify user owns the order
+    const [photo] = await sequelize.query(
+      `SELECT ep.*, pso.user_id, pso.id as order_id
+       FROM enhanced_photos ep
+       JOIN photo_studio_orders pso ON ep.order_id = pso.id
+       WHERE ep.id = :photoId`,
+      {
+        replacements: { photoId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!photo) {
+      return res.status(404).json({
+        success: false,
+        error: 'Photo not found'
+      });
+    }
+
+    if (photo.user_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied'
+      });
+    }
+
+    // Update photo approval status
+    await sequelize.query(
+      `UPDATE enhanced_photos
+       SET approval_status = :approval_status,
+           customer_feedback = :customer_feedback,
+           reviewed_at = NOW(),
+           approved_at = CASE WHEN :approval_status = 'approved' THEN NOW() ELSE NULL END,
+           updated_at = NOW()
+       WHERE id = :photoId`,
+      {
+        replacements: {
+          photoId,
+          approval_status,
+          customer_feedback: customer_feedback || null
+        },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    // Create communication record
+    await sequelize.query(
+      `INSERT INTO photo_communications
+        (order_id, enhanced_photo_id, from_user_id, from_type, to_type,
+         subject, message, communication_type, status)
+       VALUES
+        (:orderId, :photoId, :userId, 'customer', 'admin',
+         :subject, :message, :commType, 'unread')`,
+      {
+        replacements: {
+          orderId: photo.order_id,
+          photoId,
+          userId,
+          subject: approval_status === 'approved'
+            ? `Photo Approved - Order #${photo.order_id}`
+            : approval_status === 'rejected'
+            ? `Photo Rejected - Order #${photo.order_id}`
+            : `Revision Requested - Order #${photo.order_id}`,
+          message: customer_feedback || `Photo ${approval_status}`,
+          commType: approval_status === 'revision_requested' ? 'revision_request' : approval_status
+        },
+        type: QueryTypes.INSERT
+      }
+    );
+
+    // Send email notification to admin if revision requested or rejected
+    if (approval_status === 'revision_requested' || approval_status === 'rejected') {
+      try {
+        const { sendPhotoFeedbackNotification } = require('../services/emailService');
+
+        // Get user details
+        const [user] = await sequelize.query(
+          'SELECT first_name, last_name, email FROM users WHERE id = :userId',
+          {
+            replacements: { userId },
+            type: QueryTypes.SELECT
+          }
+        );
+
+        if (user) {
+          const customerName = `${user.first_name} ${user.last_name}`.trim() || 'Customer';
+
+          await sendPhotoFeedbackNotification({
+            orderId: photo.order_id,
+            photoId,
+            customerName,
+            customerEmail: user.email,
+            approvalStatus: approval_status,
+            feedback: customer_feedback || 'No feedback provided',
+            photoFilename: photo.filename
+          });
+
+          logger.info(`[PHOTO STUDIO] Feedback notification sent for photo ${photoId}`);
+        }
+      } catch (emailError) {
+        // Don't fail the request if email fails
+        logger.error(`[PHOTO STUDIO] Failed to send feedback notification:`, emailError);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Photo ${approval_status}`,
+      photo_id: photoId,
+      approval_status
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] Photo approval error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update photo approval status'
+    });
+  }
+});
+
+/**
+ * GET /api/photo-studio/admin/all-orders
+ * Get all orders with enhanced photos for admin dashboard
+ */
+router.get('/admin/all-orders', authenticateToken, async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    // Verify admin access
+    const userId = req.user.userId || req.user.id;
+    const [user] = await sequelize.query(
+      'SELECT is_admin FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user || !user.is_admin) {
+      return res.status(403).json({
+        success: false,
+        error: 'Admin access required'
+      });
+    }
+
+    // Get all orders with customer info and enhanced photos
+    const orders = await sequelize.query(
+      `SELECT
+        pso.id, pso.package_type, pso.order_status, pso.order_date, pso.price,
+        pso.photos_to_upload, pso.photos_uploaded,
+        u.first_name, u.last_name, u.email as customer_email,
+        (SELECT json_agg(json_build_object(
+          'id', ep.id,
+          'filename', ep.filename,
+          'approval_status', ep.approval_status,
+          'customer_feedback', ep.customer_feedback
+        )) FROM enhanced_photos ep WHERE ep.order_id = pso.id) as enhanced_photos
+       FROM photo_studio_orders pso
+       JOIN users u ON pso.user_id = u.id
+       WHERE pso.order_status IN ('processing', 'completed')
+       ORDER BY pso.order_date DESC`,
+      { type: QueryTypes.SELECT }
+    );
+
+    // Format orders
+    const formattedOrders = orders.map(order => ({
+      ...order,
+      customer_name: `${order.first_name || ''} ${order.last_name || ''}`.trim() || 'Unknown',
+      enhanced_photos: order.enhanced_photos || []
+    }));
+
+    res.json({
+      success: true,
+      orders: formattedOrders,
+      total: formattedOrders.length
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO ADMIN] Get all orders error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get orders'
+    });
+  }
+});
+
+/**
+ * GET /api/photo-studio/admin/order/:orderId/details
+ * Get detailed order information including photos and communications
+ */
+router.get('/admin/order/:orderId/details', authenticateToken, async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    // Verify admin access
+    const userId = req.user.userId || req.user.id;
+    const [user] = await sequelize.query(
+      'SELECT is_admin FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user || !user.is_admin) {
+      return res.status(403).json({
+        success: false,
+        error: 'Admin access required'
+      });
+    }
+
+    const { orderId } = req.params;
+
+    // Get order details
+    const [order] = await sequelize.query(
+      `SELECT
+        pso.*, u.first_name, u.last_name, u.email as customer_email
+       FROM photo_studio_orders pso
+       JOIN users u ON pso.user_id = u.id
+       WHERE pso.id = :orderId`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    // Get enhanced photos
+    const enhancedPhotos = await sequelize.query(
+      `SELECT * FROM enhanced_photos WHERE order_id = :orderId ORDER BY uploaded_at ASC`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    // Get original photos
+    const originalPhotos = await sequelize.query(
+      `SELECT * FROM photo_uploads WHERE service_order_id = :orderId ORDER BY upload_date ASC`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    // Get communications
+    const communications = await sequelize.query(
+      `SELECT * FROM photo_communications WHERE order_id = :orderId ORDER BY created_at DESC`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    res.json({
+      success: true,
+      order: {
+        ...order,
+        customer_name: `${order.first_name || ''} ${order.last_name || ''}`.trim() || 'Unknown'
+      },
+      enhanced_photos: enhancedPhotos,
+      original_photos: originalPhotos,
+      communications: communications
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO ADMIN] Get order details error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get order details'
+    });
+  }
+});
+
+/**
+ * POST /api/photo-studio/admin/order/:orderId/send-message
+ * Send email message to customer
+ */
+router.post('/admin/order/:orderId/send-message', authenticateToken, async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    // Verify admin access
+    const userId = req.user.userId || req.user.id;
+    const [user] = await sequelize.query(
+      'SELECT is_admin FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user || !user.is_admin) {
+      return res.status(403).json({
+        success: false,
+        error: 'Admin access required'
+      });
+    }
+
+    const { orderId } = req.params;
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({
+        success: false,
+        error: 'Message is required'
+      });
+    }
+
+    // Get order and customer details
+    const [order] = await sequelize.query(
+      `SELECT
+        pso.id, u.email, u.first_name, u.last_name
+       FROM photo_studio_orders pso
+       JOIN users u ON pso.user_id = u.id
+       WHERE pso.id = :orderId`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    // Send email
+    const { sendAdminMessageToCustomer } = require('../services/emailService');
+    await sendAdminMessageToCustomer({
+      email: order.email,
+      firstName: order.first_name,
+      orderId,
+      message
+    });
+
+    // Record communication
+    await sequelize.query(
+      `INSERT INTO photo_communications
+        (order_id, from_user_id, from_type, to_type, subject, message, communication_type, status)
+       VALUES
+        (:orderId, :userId, 'admin', 'customer', :subject, :message, 'general', 'unread')`,
+      {
+        replacements: {
+          orderId,
+          userId,
+          subject: `Message from Admin - Order #${orderId}`,
+          message
+        },
+        type: QueryTypes.INSERT
+      }
+    );
+
+    res.json({
+      success: true,
+      message: 'Email sent successfully'
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO ADMIN] Send message error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send message'
     });
   }
 });

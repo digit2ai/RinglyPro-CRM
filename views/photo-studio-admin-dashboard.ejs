@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Studio Admin Dashboard - RinglyPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        .dashboard-header {
+            background: white;
+            border-bottom: 2px solid #e5e7eb;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            z-index: 10;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            color: #0a0a0a;
+        }
+
+        .stats-summary {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #6366f1;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        /* Main Content - Horizontal Split */
+        .dashboard-main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Left Panel - Orders List */
+        .orders-panel {
+            width: 400px;
+            background: white;
+            border-right: 2px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 2px solid #e5e7eb;
+            background: #f8fafc;
+        }
+
+        .panel-header h2 {
+            font-size: 1.125rem;
+            color: #0a0a0a;
+        }
+
+        .orders-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .order-item {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .order-item:hover {
+            border-color: #6366f1;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+        }
+
+        .order-item.active {
+            border-color: #6366f1;
+            background: #f0f4ff;
+        }
+
+        .order-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .order-number {
+            font-weight: 700;
+            color: #0a0a0a;
+        }
+
+        .order-status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-processing {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .order-customer {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.25rem;
+        }
+
+        .order-meta {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .approval-indicator {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .approval-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .dot-pending {
+            background: #fbbf24;
+        }
+
+        .dot-approved {
+            background: #22c55e;
+        }
+
+        .dot-rejected {
+            background: #ef4444;
+        }
+
+        .dot-revision {
+            background: #f59e0b;
+        }
+
+        /* Right Panel - Order Details */
+        .details-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .details-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #94a3b8;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .order-detail-header {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .order-detail-title {
+            font-size: 1.5rem;
+            color: #0a0a0a;
+            margin-bottom: 1rem;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .detail-item {
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 0.5rem;
+        }
+
+        .detail-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0a0a0a;
+        }
+
+        /* Photos Grid - Horizontal Layout */
+        .photos-section {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            color: #0a0a0a;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .photos-horizontal-grid {
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+        }
+
+        .photo-card {
+            flex: 0 0 400px;
+            background: #f8fafc;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+        }
+
+        .photo-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .photo-wrapper {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background: white;
+        }
+
+        .photo-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-badge {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .badge-before {
+            background: rgba(239, 68, 68, 0.9);
+        }
+
+        .badge-after {
+            background: rgba(34, 197, 94, 0.9);
+        }
+
+        .photo-info {
+            margin-bottom: 1rem;
+        }
+
+        .photo-filename {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 0.5rem;
+            word-break: break-all;
+        }
+
+        .photo-approval-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-revision {
+            background: #fed7aa;
+            color: #9a3412;
+        }
+
+        .photo-feedback {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #6366f1;
+            margin-bottom: 1rem;
+        }
+
+        .feedback-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-text {
+            font-size: 0.875rem;
+            color: #0a0a0a;
+            white-space: pre-wrap;
+        }
+
+        /* Communications Section */
+        .communications-section {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .comm-thread {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .comm-item {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        .comm-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .comm-from {
+            font-weight: 600;
+            color: #0a0a0a;
+        }
+
+        .comm-date {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .comm-subject {
+            font-weight: 600;
+            color: #6366f1;
+            margin-bottom: 0.5rem;
+        }
+
+        .comm-message {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .comm-form {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .comm-form textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            font-family: inherit;
+            font-size: 0.875rem;
+            resize: vertical;
+            margin-bottom: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #6366f1;
+            border: 2px solid #6366f1;
+        }
+
+        .btn-secondary:hover {
+            background: #6366f1;
+            color: white;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 1024px) {
+            .dashboard-main {
+                flex-direction: column;
+            }
+
+            .orders-panel {
+                width: 100%;
+                max-height: 40vh;
+                border-right: none;
+                border-bottom: 2px solid #e5e7eb;
+            }
+
+            .photos-horizontal-grid {
+                flex-direction: column;
+            }
+
+            .photo-card {
+                flex: 1 1 auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: 1rem;
+            }
+
+            .stats-summary {
+                gap: 1rem;
+            }
+
+            .stat-value {
+                font-size: 1.25rem;
+            }
+
+            .orders-panel {
+                max-height: 50vh;
+            }
+
+            .details-content {
+                padding: 1rem;
+            }
+
+            .photo-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69175f336c431e834ac954b8.png" alt="RinglyPro" style="height: 40px;">
+                    <h1>Photo Studio Admin Dashboard</h1>
+                </div>
+                <div class="stats-summary" id="stats-summary">
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-total">-</div>
+                        <div class="stat-label">Total Orders</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-pending">-</div>
+                        <div class="stat-label">Pending Review</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-revisions">-</div>
+                        <div class="stat-label">Revisions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="dashboard-main">
+            <!-- Left Panel: Orders List -->
+            <div class="orders-panel">
+                <div class="panel-header">
+                    <h2>Active Orders</h2>
+                </div>
+                <div class="orders-list" id="orders-list">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Order Details -->
+            <div class="details-panel">
+                <div class="details-content" id="details-content">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📸</div>
+                        <h3>Select an order to view details</h3>
+                        <p style="margin-top: 0.5rem;">Choose an order from the list to see photos and communications</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allOrders = [];
+        let selectedOrderId = null;
+
+        // Get auth token
+        function getAuthToken() {
+            return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        }
+
+        // Load all orders
+        async function loadOrders() {
+            try {
+                const token = getAuthToken();
+                if (!token) {
+                    window.location.href = '/photo-studio-auth?redirect=/photo-studio-admin-dashboard';
+                    return;
+                }
+
+                const response = await fetch('/api/photo-studio/admin/all-orders', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    allOrders = data.orders;
+                    updateStats();
+                    renderOrdersList();
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+            }
+        }
+
+        // Update stats
+        function updateStats() {
+            const total = allOrders.length;
+            const pending = allOrders.reduce((acc, order) => {
+                return acc + (order.enhanced_photos || []).filter(p => p.approval_status === 'pending').length;
+            }, 0);
+            const revisions = allOrders.reduce((acc, order) => {
+                return acc + (order.enhanced_photos || []).filter(p => p.approval_status === 'revision_requested').length;
+            }, 0);
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-pending').textContent = pending;
+            document.getElementById('stat-revisions').textContent = revisions;
+        }
+
+        // Render orders list
+        function renderOrdersList() {
+            const container = document.getElementById('orders-list');
+
+            if (allOrders.length === 0) {
+                container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #94a3b8;">No orders found</div>';
+                return;
+            }
+
+            container.innerHTML = allOrders.map(order => {
+                const photos = order.enhanced_photos || [];
+                const statusCounts = {
+                    pending: photos.filter(p => p.approval_status === 'pending').length,
+                    approved: photos.filter(p => p.approval_status === 'approved').length,
+                    rejected: photos.filter(p => p.approval_status === 'rejected').length,
+                    revision: photos.filter(p => p.approval_status === 'revision_requested').length
+                };
+
+                return `
+                    <div class="order-item ${selectedOrderId === order.id ? 'active' : ''}" onclick="selectOrder(${order.id})">
+                        <div class="order-item-header">
+                            <span class="order-number">Order #${order.id}</span>
+                            <span class="order-status-badge status-${order.order_status}">${order.order_status}</span>
+                        </div>
+                        <div class="order-customer">${order.customer_name || 'Unknown'}</div>
+                        <div class="order-meta">${order.package_type.toUpperCase()} • ${photos.length} photos</div>
+                        ${photos.length > 0 ? `
+                            <div class="approval-indicator">
+                                ${Array(statusCounts.pending).fill('<div class="approval-dot dot-pending"></div>').join('')}
+                                ${Array(statusCounts.approved).fill('<div class="approval-dot dot-approved"></div>').join('')}
+                                ${Array(statusCounts.rejected).fill('<div class="approval-dot dot-rejected"></div>').join('')}
+                                ${Array(statusCounts.revision).fill('<div class="approval-dot dot-revision"></div>').join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Select order
+        async function selectOrder(orderId) {
+            selectedOrderId = orderId;
+            renderOrdersList();
+            await loadOrderDetails(orderId);
+        }
+
+        // Load order details
+        async function loadOrderDetails(orderId) {
+            const container = document.getElementById('details-content');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const token = getAuthToken();
+                const response = await fetch(`/api/photo-studio/admin/order/${orderId}/details`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    renderOrderDetails(data.order, data.enhanced_photos, data.original_photos, data.communications);
+                }
+            } catch (error) {
+                console.error('Error loading order details:', error);
+                container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #ef4444;">Failed to load order details</div>';
+            }
+        }
+
+        // Render order details
+        function renderOrderDetails(order, enhancedPhotos, originalPhotos, communications) {
+            const container = document.getElementById('details-content');
+
+            container.innerHTML = `
+                <div class="order-detail-header">
+                    <h2 class="order-detail-title">Order #${order.id} - ${order.customer_name || 'Unknown'}</h2>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Customer Email</div>
+                            <div class="detail-value"><a href="mailto:${order.customer_email}">${order.customer_email}</a></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Package</div>
+                            <div class="detail-value">${order.package_type.toUpperCase()}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Order Date</div>
+                            <div class="detail-value">${new Date(order.order_date).toLocaleDateString()}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Status</div>
+                            <div class="detail-value">${order.order_status}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="photos-section">
+                    <h3 class="section-title">
+                        <span style="font-size: 1.5rem;">🖼️</span>
+                        Enhanced Photos
+                    </h3>
+                    <div class="photos-horizontal-grid">
+                        ${enhancedPhotos.length > 0 ? enhancedPhotos.map((photo, index) => {
+                            const original = originalPhotos[index] || originalPhotos[0];
+                            const statusText = {
+                                'pending': 'Pending Review',
+                                'approved': 'Approved',
+                                'rejected': 'Rejected',
+                                'revision_requested': 'Revision Requested'
+                            }[photo.approval_status] || photo.approval_status;
+
+                            const statusClass = photo.approval_status === 'revision_requested' ? 'status-revision' : `status-${photo.approval_status}`;
+
+                            return `
+                                <div class="photo-card">
+                                    <div class="photo-comparison">
+                                        <div class="photo-wrapper">
+                                            <img src="${original ? original.storage_url : ''}" alt="Before" loading="lazy">
+                                            <div class="photo-badge badge-before">Before</div>
+                                        </div>
+                                        <div class="photo-wrapper">
+                                            <img src="${photo.storage_url}" alt="After" loading="lazy">
+                                            <div class="photo-badge badge-after">After</div>
+                                        </div>
+                                    </div>
+                                    <div class="photo-info">
+                                        <div class="photo-filename">${photo.filename}</div>
+                                        <div class="photo-approval-status ${statusClass}">
+                                            ${statusText}
+                                        </div>
+                                    </div>
+                                    ${photo.customer_feedback ? `
+                                        <div class="photo-feedback">
+                                            <div class="feedback-label">Customer Feedback:</div>
+                                            <div class="feedback-text">${photo.customer_feedback}</div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        }).join('') : '<p style="color: #94a3b8;">No enhanced photos uploaded yet</p>'}
+                    </div>
+                </div>
+
+                <div class="communications-section">
+                    <h3 class="section-title">
+                        <span style="font-size: 1.5rem;">💬</span>
+                        Communications
+                    </h3>
+                    <div class="comm-thread">
+                        ${communications.length > 0 ? communications.map(comm => `
+                            <div class="comm-item">
+                                <div class="comm-header">
+                                    <span class="comm-from">${comm.from_type === 'customer' ? order.customer_name : 'Admin'}</span>
+                                    <span class="comm-date">${new Date(comm.created_at).toLocaleString()}</span>
+                                </div>
+                                <div class="comm-subject">${comm.subject}</div>
+                                <div class="comm-message">${comm.message}</div>
+                            </div>
+                        `).join('') : '<p style="color: #94a3b8;">No communications yet</p>'}
+                    </div>
+                    <div class="comm-form">
+                        <h4 style="margin-bottom: 1rem;">Send Message to Customer</h4>
+                        <textarea id="message-text" placeholder="Type your message to the customer..."></textarea>
+                        <button class="btn btn-primary" onclick="sendMessage(${order.id}, '${order.customer_email}')">
+                            Send Email to Customer
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Send message to customer
+        async function sendMessage(orderId, customerEmail) {
+            const textarea = document.getElementById('message-text');
+            const message = textarea.value.trim();
+
+            if (!message) {
+                alert('Please enter a message');
+                return;
+            }
+
+            try {
+                const token = getAuthToken();
+                const response = await fetch(`/api/photo-studio/admin/order/${orderId}/send-message`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Message sent successfully!');
+                    textarea.value = '';
+                    await loadOrderDetails(orderId);
+                } else {
+                    throw new Error(data.error || 'Failed to send message');
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Failed to send message: ' + error.message);
+            }
+        }
+
+        // Load orders on page load
+        window.addEventListener('DOMContentLoaded', loadOrders);
+
+        // Refresh every 30 seconds
+        setInterval(loadOrders, 30000);
+    </script>
+</body>
+</html>

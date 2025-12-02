@@ -421,6 +421,117 @@
             transform: translateY(0);
         }
 
+        .download-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .approval-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .btn-approve {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-approve:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-reject {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-reject:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .feedback-form {
+            margin-top: 1rem;
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid #e5e7eb;
+        }
+
+        .feedback-form textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            font-family: inherit;
+            font-size: 0.875rem;
+            resize: vertical;
+            margin-bottom: 0.75rem;
+        }
+
+        .feedback-form textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .status-approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-revision {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        @media (max-width: 640px) {
+            .approval-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 640px) {
             .comparison-photos {
                 grid-template-columns: 1fr;
@@ -756,17 +867,26 @@
                 return;
             }
 
+            const allApproved = enhanced.every(p => p.approval_status === 'approved');
+            const hasAnyApproved = enhanced.some(p => p.approval_status === 'approved');
+
             container.innerHTML = `
                 <div class="enhanced-section">
                     <h3>
                         <span style="font-size: 1.5rem;">✨</span>
                         Your Enhanced Photos Are Ready!
                     </h3>
+                    <p style="color: #64748b; margin-bottom: 1rem;">Please review each photo and approve or request revisions before downloading.</p>
                     <div class="comparison-grid">
                         ${enhanced.map((enhancedPhoto, index) => {
-                            const originalPhoto = original[index] || original[0]; // Match by index or use first
+                            const originalPhoto = original[index] || original[0];
+                            const isPending = enhancedPhoto.approval_status === 'pending';
+                            const isApproved = enhancedPhoto.approval_status === 'approved';
+                            const isRejected = enhancedPhoto.approval_status === 'rejected';
+                            const needsRevision = enhancedPhoto.approval_status === 'revision_requested';
+
                             return `
-                                <div class="comparison-item">
+                                <div class="comparison-item" id="photo-item-${enhancedPhoto.id}">
                                     <div class="comparison-photos">
                                         <div class="comparison-photo">
                                             <img src="${originalPhoto ? originalPhoto.storage_url : ''}"
@@ -781,18 +901,69 @@
                                             <div class="photo-label after">After</div>
                                         </div>
                                     </div>
-                                    <button class="download-btn" onclick="downloadPhoto('${enhancedPhoto.storage_url}', '${enhancedPhoto.filename}')">
-                                        <span style="font-size: 1.25rem;">⬇️</span>
-                                        Download Enhanced Photo
-                                    </button>
+
+                                    ${isApproved ? `
+                                        <div class="status-indicator status-approved">
+                                            ✓ Approved - Ready to Download
+                                        </div>
+                                        <button class="download-btn" onclick="downloadPhoto('${enhancedPhoto.storage_url}', '${enhancedPhoto.filename}')">
+                                            <span style="font-size: 1.25rem;">⬇️</span>
+                                            Download Enhanced Photo
+                                        </button>
+                                    ` : isRejected ? `
+                                        <div class="status-indicator status-rejected">
+                                            ✗ Rejected - Admin notified
+                                        </div>
+                                        ${enhancedPhoto.customer_feedback ? `
+                                            <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem;">
+                                                <strong>Your feedback:</strong> ${enhancedPhoto.customer_feedback}
+                                            </p>
+                                        ` : ''}
+                                    ` : needsRevision ? `
+                                        <div class="status-indicator status-revision">
+                                            🔄 Revision Requested - Admin notified
+                                        </div>
+                                        ${enhancedPhoto.customer_feedback ? `
+                                            <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem;">
+                                                <strong>Your requirements:</strong> ${enhancedPhoto.customer_feedback}
+                                            </p>
+                                        ` : ''}
+                                    ` : `
+                                        <div class="approval-actions">
+                                            <button class="btn-approve" onclick="approvePhoto(${orderId}, ${enhancedPhoto.id})">
+                                                <span style="font-size: 1.25rem;">✓</span>
+                                                Approve
+                                            </button>
+                                            <button class="btn-reject" onclick="showFeedbackForm(${orderId}, ${enhancedPhoto.id})">
+                                                <span style="font-size: 1.25rem;">✗</span>
+                                                Request Revision
+                                            </button>
+                                        </div>
+                                        <div id="feedback-form-${enhancedPhoto.id}" class="feedback-form" style="display: none;">
+                                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0a0a0a;">
+                                                What changes would you like?
+                                            </label>
+                                            <textarea id="feedback-text-${enhancedPhoto.id}" placeholder="Please describe the changes you'd like us to make..."></textarea>
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                                <button class="btn btn-primary btn-sm" onclick="submitFeedback(${orderId}, ${enhancedPhoto.id}, 'revision_requested')">
+                                                    Submit Revision Request
+                                                </button>
+                                                <button class="btn btn-secondary btn-sm" onclick="hideFeedbackForm(${enhancedPhoto.id})">
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `}
                                 </div>
                             `;
                         }).join('')}
                     </div>
-                    <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="downloadAllPhotos(${orderId})">
-                        <span style="font-size: 1.25rem;">📦</span>
-                        Download All Enhanced Photos
-                    </button>
+                    ${hasAnyApproved ? `
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="downloadAllApprovedPhotos(${orderId})">
+                            <span style="font-size: 1.25rem;">📦</span>
+                            Download All Approved Photos
+                        </button>
+                    ` : ''}
                 </div>
             `;
         }
@@ -1013,6 +1184,106 @@
                 if (i < enhanced.length - 1) {
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
+            }
+        }
+
+        // Download all approved photos
+        async function downloadAllApprovedPhotos(orderId) {
+            const enhanced = enhancedPhotos[orderId] || [];
+            const approved = enhanced.filter(p => p.approval_status === 'approved');
+
+            if (approved.length === 0) {
+                alert('No approved photos available to download.');
+                return;
+            }
+
+            for (let i = 0; i < approved.length; i++) {
+                const photo = approved[i];
+                await downloadPhoto(photo.storage_url, photo.filename);
+                if (i < approved.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+        }
+
+        // Show feedback form
+        function showFeedbackForm(orderId, photoId) {
+            const form = document.getElementById(`feedback-form-${photoId}`);
+            if (form) {
+                form.style.display = 'block';
+            }
+        }
+
+        // Hide feedback form
+        function hideFeedbackForm(photoId) {
+            const form = document.getElementById(`feedback-form-${photoId}`);
+            if (form) {
+                form.style.display = 'none';
+            }
+        }
+
+        // Approve photo
+        async function approvePhoto(orderId, photoId) {
+            try {
+                const token = getAuthToken();
+                const response = await fetch(`/api/photo-studio/enhanced-photo/${photoId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ approval_status: 'approved' })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Reload enhanced photos to update UI
+                    await loadEnhancedPhotos(orderId);
+                } else {
+                    throw new Error(data.error || 'Approval failed');
+                }
+            } catch (error) {
+                console.error('Approval error:', error);
+                alert('Failed to approve photo: ' + error.message);
+            }
+        }
+
+        // Submit feedback for revision
+        async function submitFeedback(orderId, photoId, status) {
+            const textarea = document.getElementById(`feedback-text-${photoId}`);
+            const feedback = textarea ? textarea.value.trim() : '';
+
+            if (!feedback) {
+                alert('Please describe the changes you would like.');
+                return;
+            }
+
+            try {
+                const token = getAuthToken();
+                const response = await fetch(`/api/photo-studio/enhanced-photo/${photoId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        approval_status: status,
+                        customer_feedback: feedback
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Reload enhanced photos to update UI
+                    await loadEnhancedPhotos(orderId);
+                } else {
+                    throw new Error(data.error || 'Failed to submit feedback');
+                }
+            } catch (error) {
+                console.error('Feedback submission error:', error);
+                alert('Failed to submit feedback: ' + error.message);
             }
         }
 

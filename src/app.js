@@ -424,6 +424,13 @@ app.get('/photo-studio-portal', (req, res) => {
   });
 });
 
+// Photo Studio admin dashboard route
+app.get('/photo-studio-admin-dashboard', (req, res) => {
+  res.render('photo-studio-admin-dashboard', {
+    title: 'Admin Dashboard - Photo Studio - RinglyPro'
+  });
+});
+
 // Privacy Policy page route (required for App Store)
 app.get('/privacy', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/privacy.html'));
