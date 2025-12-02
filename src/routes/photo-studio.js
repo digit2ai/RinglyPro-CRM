@@ -6,8 +6,56 @@
 
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { authenticateToken } = require('../middleware/auth');
 const logger = require('../utils/logger');
+const sharp = require('sharp');
+const crypto = require('crypto');
+const path = require('path');
+
+// S3 Configuration
+let s3Client = null;
+const BUCKET_NAME = process.env.AWS_S3_BUCKET || 'ringlypro-uploads';
+
+function getS3Client() {
+  if (!s3Client && process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+    s3Client = new S3Client({
+      region: process.env.AWS_REGION || 'us-east-1',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+      }
+    });
+  }
+  return s3Client;
+}
+
+// Multer configuration for enhanced photos
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB max file size
+    files: 50 // Max 50 files per request
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/heic',
+      'image/heif',
+      'image/webp'
+    ];
+
+    if (allowedMimeTypes.includes(file.mimetype.toLowerCase())) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Invalid file type: ${file.mimetype}. Only JPEG, PNG, HEIC, and WebP are allowed.`), false);
+    }
+  }
+});
 
 // Package definitions
 const PHOTO_PACKAGES = {
@@ -461,6 +509,248 @@ router.put('/admin/order/:orderId/complete', authenticateToken, async (req, res)
     res.status(500).json({
       success: false,
       error: 'Failed to complete order'
+    });
+  }
+});
+
+/**
+ * POST /api/photo-studio/admin/order/:orderId/upload-enhanced
+ * Admin endpoint to upload enhanced photos
+ */
+router.post('/admin/order/:orderId/upload-enhanced', authenticateToken, upload.array('photos', 50), async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { orderId } = req.params;
+    const files = req.files;
+
+    logger.info(`[PHOTO STUDIO] Admin uploading enhanced photos for order ${orderId}`);
+
+    // Verify user is admin
+    const [adminUser] = await sequelize.query(
+      'SELECT email, is_admin FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!adminUser || (!adminUser.is_admin && adminUser.email !== 'mstagg@digit2ai.com')) {
+      return res.status(403).json({
+        success: false,
+        error: 'Admin access required'
+      });
+    }
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No files uploaded'
+      });
+    }
+
+    // Verify order exists
+    const [order] = await sequelize.query(
+      `SELECT id, user_id, order_status, photos_to_receive
+       FROM photo_studio_orders
+       WHERE id = :orderId`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    // Get S3 client
+    const client = getS3Client();
+    if (!client) {
+      return res.status(503).json({
+        success: false,
+        error: 'AWS S3 is not configured'
+      });
+    }
+
+    // Process each enhanced photo
+    const uploadResults = [];
+    const uploadedFileIds = [];
+
+    for (const file of files) {
+      try {
+        logger.info(`[PHOTO STUDIO] Processing enhanced photo: ${file.originalname} (${file.size} bytes)`);
+
+        // Get image metadata
+        const metadata = await sharp(file.buffer).metadata();
+
+        // Generate storage key for enhanced photos
+        const timestamp = Date.now();
+        const randomString = crypto.randomBytes(8).toString('hex');
+        const ext = path.extname(file.originalname);
+        const sanitizedName = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9-_]/g, '_');
+        const storageKey = `uploads/photo_studio/user_${order.user_id}/order_${orderId}/enhanced/${timestamp}_${randomString}_${sanitizedName}${ext}`;
+
+        // Upload to S3
+        const putCommand = new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: storageKey,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+          ServerSideEncryption: 'AES256'
+        });
+
+        await client.send(putCommand);
+
+        // Generate presigned URL (valid for 30 days)
+        const getCommand = new GetObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: storageKey
+        });
+
+        const signedUrl = await getSignedUrl(client, getCommand, { expiresIn: 2592000 }); // 30 days
+
+        // Save to database
+        const [enhancedPhoto] = await sequelize.query(
+          `INSERT INTO enhanced_photos (
+            order_id, filename, file_size, mime_type, storage_provider,
+            storage_bucket, storage_key, storage_url, image_width,
+            image_height, image_format, uploaded_by, delivery_status
+          ) VALUES (
+            :orderId, :filename, :fileSize, :mimeType, 's3',
+            :bucket, :storageKey, :storageUrl, :imageWidth,
+            :imageHeight, :imageFormat, :uploadedBy, 'ready'
+          ) RETURNING id, storage_key, storage_url`,
+          {
+            replacements: {
+              orderId,
+              filename: file.originalname,
+              fileSize: file.size,
+              mimeType: file.mimetype,
+              bucket: BUCKET_NAME,
+              storageKey,
+              storageUrl: signedUrl,
+              imageWidth: metadata.width,
+              imageHeight: metadata.height,
+              imageFormat: metadata.format,
+              uploadedBy: userId
+            },
+            type: QueryTypes.INSERT
+          }
+        );
+
+        uploadedFileIds.push(enhancedPhoto[0].id);
+        uploadResults.push({
+          success: true,
+          filename: file.originalname,
+          enhancedPhotoId: enhancedPhoto[0].id,
+          url: enhancedPhoto[0].storage_url
+        });
+
+        logger.info(`[PHOTO STUDIO] Enhanced photo uploaded: ${file.originalname} -> ${storageKey}`);
+
+      } catch (error) {
+        logger.error(`[PHOTO STUDIO] Failed to upload enhanced photo ${file.originalname}:`, error);
+        uploadResults.push({
+          success: false,
+          filename: file.originalname,
+          error: error.message
+        });
+      }
+    }
+
+    const successfulUploads = uploadResults.filter(r => r.success).length;
+
+    // Get count of enhanced photos for this order
+    const [photoCount] = await sequelize.query(
+      'SELECT COUNT(*) as count FROM enhanced_photos WHERE order_id = :orderId',
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    logger.info(`[PHOTO STUDIO] Uploaded ${successfulUploads} enhanced photos for order ${orderId}. Total: ${photoCount.count}`);
+
+    res.json({
+      success: true,
+      message: `Uploaded ${successfulUploads} of ${files.length} enhanced photo(s)`,
+      uploads: uploadResults,
+      order: {
+        id: orderId,
+        total_enhanced_photos: parseInt(photoCount.count)
+      }
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] Upload enhanced photos error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to upload enhanced photos'
+    });
+  }
+});
+
+/**
+ * GET /api/photo-studio/order/:orderId/enhanced-photos
+ * Get enhanced photos for an order (customer endpoint)
+ */
+router.get('/order/:orderId/enhanced-photos', authenticateToken, async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { orderId } = req.params;
+
+    // Verify order belongs to user
+    const [order] = await sequelize.query(
+      'SELECT id, order_status FROM photo_studio_orders WHERE id = :orderId AND user_id = :userId',
+      {
+        replacements: { orderId, userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    // Get all enhanced photos for this order
+    const enhancedPhotos = await sequelize.query(
+      `SELECT
+        id, filename, file_size, mime_type, storage_url,
+        image_width, image_height, delivery_status, uploaded_at
+       FROM enhanced_photos
+       WHERE order_id = :orderId
+       ORDER BY uploaded_at DESC`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    res.json({
+      success: true,
+      order_id: orderId,
+      order_status: order.order_status,
+      enhanced_photos: enhancedPhotos,
+      total: enhancedPhotos.length
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] Get enhanced photos error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get enhanced photos'
     });
   }
 });
