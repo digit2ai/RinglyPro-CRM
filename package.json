@@ -13,6 +13,7 @@
     "migrate:undo": "npx sequelize-cli db:migrate:undo",
     "migrate:status": "npx sequelize-cli db:migrate:status",
     "create-migration": "npx sequelize-cli migration:generate --name",
+    "set-admin": "node scripts/set-admin-user.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:appointments": "jest tests/appointments.test.js",
