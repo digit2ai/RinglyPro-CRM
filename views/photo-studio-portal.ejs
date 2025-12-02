@@ -13,111 +13,96 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f8fafc;
             min-height: 100vh;
-            padding: 1rem;
+            overflow: hidden;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        /* Dashboard Layout */
+        .dashboard-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        .header {
+        .dashboard-header {
             background: white;
-            border-radius: 1rem;
-            padding: 1.5rem 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-bottom: 2px solid #e5e7eb;
+            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
 
-        .header h1 {
-            font-size: 1.75rem;
-            color: #0a0a0a;
-        }
-
-        .header .logo {
+        .header-logo {
             display: flex;
             align-items: center;
             gap: 1rem;
         }
 
-        .header .logo img {
+        .header-logo img {
             height: 40px;
         }
 
-        .btn {
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            text-decoration: none;
-            border-radius: 0.5rem;
-            transition: all 0.2s ease;
-            cursor: pointer;
-            border: none;
-            display: inline-block;
+        .header-logo h1 {
+            font-size: 1.5rem;
+            color: #0a0a0a;
         }
 
-        .btn-primary {
-            background-color: #6366f1;
-            color: #ffffff;
-            box-shadow: 0 4px 6px rgba(99, 102, 241, 0.2);
+        .dashboard-main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
         }
 
-        .btn-primary:hover {
-            background-color: #4f46e5;
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background-color: transparent;
-            color: #6366f1;
-            border: 2px solid #6366f1;
-        }
-
-        .btn-secondary:hover {
-            background-color: #6366f1;
-            color: #ffffff;
-        }
-
-        .btn-danger {
-            background-color: #ef4444;
-            color: #ffffff;
-        }
-
-        .btn-danger:hover {
-            background-color: #dc2626;
-        }
-
-        .btn-sm {
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-        }
-
-        .orders-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .order-card {
+        /* Orders Panel (Left Side) */
+        .orders-panel {
+            width: 400px;
             background: white;
-            border-radius: 1rem;
-            padding: 2rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-right: 2px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
-        .order-header {
+        .orders-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .orders-header h2 {
+            font-size: 1.25rem;
+            color: #0a0a0a;
+            margin-bottom: 0.5rem;
+        }
+
+        .orders-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .order-item {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .order-item:hover {
+            background: #f8fafc;
+        }
+
+        .order-item.active {
+            background: #e0e7ff;
+            border-left: 4px solid #6366f1;
+        }
+
+        .order-item-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 0.5rem;
         }
 
         .order-id {
@@ -127,7 +112,7 @@
         }
 
         .status-badge {
-            padding: 0.375rem 0.75rem;
+            padding: 0.25rem 0.5rem;
             border-radius: 9999px;
             font-size: 0.75rem;
             font-weight: 600;
@@ -149,70 +134,125 @@
             color: #065f46;
         }
 
-        .package-name {
-            font-size: 1.5rem;
-            font-weight: 700;
+        .order-item-name {
+            font-size: 1rem;
+            font-weight: 600;
             color: #0a0a0a;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
         }
 
-        .package-price {
-            font-size: 1.125rem;
+        .order-item-price {
+            font-size: 0.875rem;
             color: #6366f1;
             font-weight: 600;
-            margin-bottom: 1rem;
         }
 
-        .order-details {
-            margin: 1.5rem 0;
-        }
-
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #f3f4f6;
-        }
-
-        .detail-label {
+        .order-item-progress {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
             color: #64748b;
-            font-size: 0.875rem;
         }
 
-        .detail-value {
-            color: #0a0a0a;
-            font-weight: 600;
-            font-size: 0.875rem;
-        }
-
-        .upload-progress {
-            margin: 1.5rem 0;
-        }
-
-        .progress-bar {
+        .mini-progress-bar {
             width: 100%;
-            height: 8px;
+            height: 4px;
             background: #e5e7eb;
             border-radius: 9999px;
             overflow: hidden;
-            margin: 0.5rem 0;
+            margin-top: 0.25rem;
         }
 
-        .progress-fill {
+        .mini-progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
             transition: width 0.3s ease;
         }
 
-        .upload-section {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 2px solid #e5e7eb;
+        /* Details Panel (Right Side) */
+        .details-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #f8fafc;
+        }
+
+        .details-header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .details-title {
+            font-size: 1.75rem;
+            color: #0a0a0a;
+            margin-bottom: 0.5rem;
+        }
+
+        .details-subtitle {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .details-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        /* Order Details Card */
+        .order-details-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .detail-item {
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 0.5rem;
+        }
+
+        .detail-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            font-size: 1.125rem;
+            color: #0a0a0a;
+            font-weight: 600;
+        }
+
+        /* Upload Section */
+        .upload-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-card h3 {
+            font-size: 1.125rem;
+            color: #0a0a0a;
+            margin-bottom: 1rem;
         }
 
         .file-input-wrapper {
             position: relative;
-            margin: 1rem 0;
+            margin-bottom: 1rem;
         }
 
         .file-input {
@@ -221,7 +261,7 @@
 
         .file-input-label {
             display: block;
-            padding: 1rem;
+            padding: 2rem;
             background: #f8fafc;
             border: 2px dashed #cbd5e1;
             border-radius: 0.5rem;
@@ -283,11 +323,12 @@
             padding: 0.25rem;
         }
 
-        .uploaded-photos {
+        /* Uploaded Photos Grid */
+        .uploaded-photos-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 0.5rem;
-            margin: 1rem 0;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
         }
 
         .photo-thumbnail {
@@ -296,6 +337,7 @@
             border-radius: 0.5rem;
             overflow: hidden;
             background: #f3f4f6;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .photo-thumbnail img {
@@ -312,9 +354,9 @@
             color: white;
             border: none;
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            font-size: 0.75rem;
+            width: 28px;
+            height: 28px;
+            font-size: 0.875rem;
             cursor: pointer;
             display: none;
         }
@@ -323,10 +365,13 @@
             display: block;
         }
 
+        /* Enhanced Photos Section */
         .enhanced-section {
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 2px solid #e5e7eb;
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .enhanced-section h3 {
@@ -338,14 +383,15 @@
             gap: 0.5rem;
         }
 
-        .comparison-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            margin: 1.5rem 0;
+        .photos-horizontal-grid {
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
         }
 
         .comparison-item {
+            min-width: 600px;
             background: #f8fafc;
             border-radius: 0.75rem;
             padding: 1rem;
@@ -361,6 +407,7 @@
 
         .comparison-photo {
             position: relative;
+            aspect-ratio: 1;
             border-radius: 0.5rem;
             overflow: hidden;
             background: white;
@@ -393,38 +440,6 @@
 
         .photo-label.after {
             background: rgba(34, 197, 94, 0.9);
-        }
-
-        .download-btn {
-            width: 100%;
-            padding: 0.75rem;
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        .download-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }
-
-        .download-btn:active {
-            transform: translateY(0);
-        }
-
-        .download-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
         }
 
         .approval-actions {
@@ -476,7 +491,7 @@
 
         .feedback-form {
             margin-top: 1rem;
-            background: #f8fafc;
+            background: white;
             padding: 1rem;
             border-radius: 0.5rem;
             border: 2px solid #e5e7eb;
@@ -484,7 +499,7 @@
 
         .feedback-form textarea {
             width: 100%;
-            min-height: 100px;
+            min-height: 80px;
             padding: 0.75rem;
             border: 1px solid #cbd5e1;
             border-radius: 0.5rem;
@@ -526,18 +541,79 @@
             color: #92400e;
         }
 
-        @media (max-width: 640px) {
-            .approval-actions {
-                grid-template-columns: 1fr;
-            }
+        .download-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
 
-        @media (max-width: 640px) {
-            .comparison-photos {
-                grid-template-columns: 1fr;
-            }
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
+        .download-btn:active {
+            transform: translateY(0);
+        }
+
+        .download-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background-color: #6366f1;
+            color: #ffffff;
+            box-shadow: 0 4px 6px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: #4f46e5;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: #6366f1;
+            border: 2px solid #6366f1;
+        }
+
+        .btn-secondary:hover {
+            background-color: #6366f1;
+            color: #ffffff;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        /* Loading & Empty States */
         .loading {
             text-align: center;
             padding: 3rem;
@@ -556,6 +632,25 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state h2 {
+            font-size: 1.5rem;
+            color: #0a0a0a;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            color: #64748b;
+            margin-bottom: 2rem;
         }
 
         .alert {
@@ -579,64 +674,98 @@
             color: #1e40af;
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .empty-state h2 {
-            font-size: 1.5rem;
-            color: #0a0a0a;
-            margin-bottom: 1rem;
-        }
-
-        .empty-state p {
-            color: #64748b;
-            margin-bottom: 2rem;
-        }
-
-        @media (max-width: 768px) {
-            .header {
+        /* Mobile Responsive */
+        @media (max-width: 1024px) {
+            .dashboard-main {
                 flex-direction: column;
-                gap: 1rem;
-                text-align: center;
             }
 
-            .orders-grid {
+            .orders-panel {
+                width: 100%;
+                border-right: none;
+                border-bottom: 2px solid #e5e7eb;
+                max-height: 40vh;
+            }
+
+            .details-panel {
+                max-height: 60vh;
+            }
+
+            .comparison-item {
+                min-width: 90vw;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .comparison-photos {
                 grid-template-columns: 1fr;
             }
 
-            .order-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.5rem;
+            .approval-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-header {
+                padding: 1rem;
+            }
+
+            .header-logo h1 {
+                font-size: 1.125rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="header-logo">
                 <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69175f336c431e834ac954b8.png" alt="RinglyPro">
                 <h1>Photo Studio Portal</h1>
             </div>
             <a href="/ai-food-photo-landing.html" class="btn btn-secondary btn-sm">Back to Photo Studio</a>
         </div>
 
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p>Loading your orders...</p>
+        <!-- Main Dashboard -->
+        <div class="dashboard-main">
+            <!-- Left Panel: Orders List -->
+            <div class="orders-panel">
+                <div class="orders-header">
+                    <h2>My Orders</h2>
+                    <p style="font-size: 0.875rem; color: #64748b;">Select an order to view details</p>
+                </div>
+                <div class="orders-list" id="orders-list">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading orders...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Order Details -->
+            <div class="details-panel">
+                <div id="details-placeholder" style="display: flex; align-items: center; justify-content: center; height: 100%; color: #94a3b8;">
+                    <div style="text-align: center;">
+                        <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">Select an order to view details</p>
+                        <p style="font-size: 0.875rem;">Choose an order from the list on the left</p>
+                    </div>
+                </div>
+                <div id="details-container" style="display: none; flex-direction: column; height: 100%;">
+                    <div class="details-header">
+                        <div class="details-title" id="details-title">Order Details</div>
+                        <div class="details-subtitle" id="details-subtitle"></div>
+                    </div>
+                    <div class="details-content" id="details-content"></div>
+                </div>
+            </div>
         </div>
 
-        <div id="orders-container" style="display: none;">
-            <div id="orders-grid" class="orders-grid"></div>
-        </div>
-
-        <div id="empty-state" class="empty-state" style="display: none;">
+        <!-- Empty State (No Orders) -->
+        <div id="empty-state" class="empty-state" style="display: none; margin: 2rem;">
             <h2>No Orders Yet</h2>
             <p>You haven't placed any Photo Studio orders yet.</p>
             <a href="/ai-food-photo-landing.html" class="btn btn-primary">Browse Packages</a>
@@ -647,6 +776,7 @@
         let orders = [];
         let uploadedPhotos = {};
         let enhancedPhotos = {};
+        let selectedOrderId = null;
 
         // Get auth token
         function getAuthToken() {
@@ -672,15 +802,19 @@
 
                 if (data.success && data.orders.length > 0) {
                     orders = data.orders;
-                    renderOrders();
+                    renderOrdersList();
 
-                    // Load uploaded photos for each order
+                    // Load photos for each order
                     for (const order of orders) {
                         await loadUploadedPhotos(order.id);
-                        // Load enhanced photos for completed orders
                         if (order.order_status === 'completed') {
                             await loadEnhancedPhotos(order.id);
                         }
+                    }
+
+                    // Select first order by default
+                    if (orders.length > 0) {
+                        selectOrder(orders[0].id);
                     }
                 } else {
                     showEmptyState();
@@ -688,7 +822,7 @@
 
             } catch (error) {
                 console.error('Error loading orders:', error);
-                showError('Failed to load orders');
+                document.getElementById('orders-list').innerHTML = `<div class="alert alert-error" style="margin: 1rem;">Failed to load orders</div>`;
             }
         }
 
@@ -706,7 +840,10 @@
 
                 if (data.success) {
                     uploadedPhotos[orderId] = data.uploads;
-                    renderUploadedPhotos(orderId);
+                    // Refresh details if this is the selected order
+                    if (selectedOrderId === orderId) {
+                        renderOrderDetails(orderId);
+                    }
                 }
 
             } catch (error) {
@@ -728,7 +865,10 @@
 
                 if (data.success) {
                     enhancedPhotos[orderId] = data.enhanced_photos;
-                    renderEnhancedPhotos(orderId);
+                    // Refresh details if this is the selected order
+                    if (selectedOrderId === orderId) {
+                        renderOrderDetails(orderId);
+                    }
                 }
 
             } catch (error) {
@@ -736,236 +876,266 @@
             }
         }
 
-        // Render orders
-        function renderOrders() {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('orders-container').style.display = 'block';
-
-            const grid = document.getElementById('orders-grid');
-            grid.innerHTML = '';
+        // Render orders list
+        function renderOrdersList() {
+            const ordersList = document.getElementById('orders-list');
+            ordersList.innerHTML = '';
 
             orders.forEach(order => {
-                const card = createOrderCard(order);
-                grid.appendChild(card);
+                const orderItem = createOrderListItem(order);
+                ordersList.appendChild(orderItem);
             });
         }
 
-        // Create order card
-        function createOrderCard(order) {
-            const card = document.createElement('div');
-            card.className = 'order-card';
-            card.id = `order-${order.id}`;
+        // Create order list item
+        function createOrderListItem(order) {
+            const div = document.createElement('div');
+            div.className = 'order-item';
+            div.id = `order-item-${order.id}`;
+            div.onclick = () => selectOrder(order.id);
 
             const packageName = order.package_type.charAt(0).toUpperCase() + order.package_type.slice(1);
             const uploadProgress = (order.photos_uploaded / order.photos_to_upload) * 100;
-            const canUpload = order.order_status === 'awaiting_upload' || order.order_status === 'processing';
 
-            card.innerHTML = `
-                <div class="order-header">
+            div.innerHTML = `
+                <div class="order-item-header">
                     <span class="order-id">Order #${order.id}</span>
                     <span class="status-badge status-${order.order_status}">${order.order_status.replace('_', ' ')}</span>
                 </div>
-
-                <div class="package-name">${packageName} Package</div>
-                <div class="package-price">$${order.price}</div>
-
-                <div class="order-details">
-                    <div class="detail-row">
-                        <span class="detail-label">Order Date:</span>
-                        <span class="detail-value">${new Date(order.order_date).toLocaleDateString()}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Photos to Upload:</span>
-                        <span class="detail-value">${order.photos_to_upload}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Photos You'll Receive:</span>
-                        <span class="detail-value">${order.photos_to_receive}</span>
+                <div class="order-item-name">${packageName} Package</div>
+                <div class="order-item-price">$${order.price}</div>
+                <div class="order-item-progress">
+                    ${order.photos_uploaded} / ${order.photos_to_upload} photos uploaded
+                    <div class="mini-progress-bar">
+                        <div class="mini-progress-fill" style="width: ${uploadProgress}%"></div>
                     </div>
                 </div>
+            `;
 
-                <div class="upload-progress">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                        <span class="detail-label">Upload Progress</span>
-                        <span class="detail-value">${order.photos_uploaded} / ${order.photos_to_upload}</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${uploadProgress}%"></div>
+            return div;
+        }
+
+        // Select an order
+        function selectOrder(orderId) {
+            // Update active state
+            document.querySelectorAll('.order-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const orderItem = document.getElementById(`order-item-${orderId}`);
+            if (orderItem) {
+                orderItem.classList.add('active');
+            }
+
+            selectedOrderId = orderId;
+
+            // Hide placeholder, show details
+            document.getElementById('details-placeholder').style.display = 'none';
+            document.getElementById('details-container').style.display = 'flex';
+
+            // Render order details
+            renderOrderDetails(orderId);
+        }
+
+        // Render order details
+        function renderOrderDetails(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+
+            const packageName = order.package_type.charAt(0).toUpperCase() + order.package_type.slice(1);
+
+            // Update header
+            document.getElementById('details-title').textContent = `${packageName} Package`;
+            document.getElementById('details-subtitle').textContent = `Order #${order.id} • ${new Date(order.order_date).toLocaleDateString()}`;
+
+            const canUpload = (order.order_status === 'awaiting_upload' || order.order_status === 'processing') &&
+                             order.photos_uploaded < order.photos_to_upload;
+
+            // Build details content
+            let contentHTML = `
+                <!-- Order Summary -->
+                <div class="order-details-card">
+                    <h3 style="margin-bottom: 1rem; font-size: 1.125rem;">Order Summary</h3>
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Status</div>
+                            <div class="detail-value">
+                                <span class="status-badge status-${order.order_status}">${order.order_status.replace('_', ' ')}</span>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Package Price</div>
+                            <div class="detail-value">$${order.price}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Photos to Upload</div>
+                            <div class="detail-value">${order.photos_to_upload}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Photos Uploaded</div>
+                            <div class="detail-value">${order.photos_uploaded}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Photos to Receive</div>
+                            <div class="detail-value">${order.photos_to_receive}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Order Date</div>
+                            <div class="detail-value" style="font-size: 0.875rem;">${new Date(order.order_date).toLocaleDateString()}</div>
+                        </div>
                     </div>
                 </div>
+            `;
 
-                <div id="uploaded-photos-${order.id}" class="uploaded-photos"></div>
+            // Show uploaded photos (only if not completed)
+            const uploaded = uploadedPhotos[orderId] || [];
+            if (uploaded.length > 0 && order.order_status !== 'completed') {
+                contentHTML += `
+                    <div class="upload-card">
+                        <h3>Uploaded Photos (${uploaded.length})</h3>
+                        <div class="uploaded-photos-grid">
+                            ${uploaded.map(photo => `
+                                <div class="photo-thumbnail">
+                                    <img src="${photo.storage_url}" alt="${photo.original_filename}" loading="lazy">
+                                    ${photo.upload_status === 'uploaded' ? `
+                                        <button class="photo-delete" onclick="deletePhoto(${orderId}, ${photo.id})">×</button>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
 
-                <div id="enhanced-photos-${order.id}"></div>
-
-                ${canUpload && order.photos_uploaded < order.photos_to_upload ? `
-                    <div class="upload-section">
-                        <h3 style="margin-bottom: 1rem; font-size: 1rem;">Upload Your Photos</h3>
+            // Upload section
+            if (canUpload) {
+                contentHTML += `
+                    <div class="upload-card">
+                        <h3>Upload Your Photos</h3>
                         <div class="file-input-wrapper">
-                            <input type="file" id="file-input-${order.id}" class="file-input" accept="image/jpeg,image/jpg,image/png,image/heic,image/heif,image/webp" multiple>
-                            <label for="file-input-${order.id}" class="file-input-label" id="file-label-${order.id}">
+                            <input type="file" id="file-input-${orderId}" class="file-input" accept="image/jpeg,image/jpg,image/png,image/heic,image/heif,image/webp" multiple>
+                            <label for="file-input-${orderId}" class="file-input-label" id="file-label-${orderId}">
                                 📸 Click or drag photos here<br>
-                                <span style="font-size: 0.875rem; color: #64748b;">JPEG, PNG, HEIC, or WebP</span>
+                                <span style="font-size: 0.875rem; color: #64748b;">JPEG, PNG, HEIC, or WebP (Max ${order.photos_to_upload - order.photos_uploaded} photos)</span>
                             </label>
                         </div>
-                        <div id="selected-files-${order.id}" class="selected-files" style="display: none;"></div>
-                        <button class="btn btn-primary" id="upload-btn-${order.id}" style="width: 100%; display: none;" onclick="uploadPhotos(${order.id})">
+                        <div id="selected-files-${orderId}" class="selected-files" style="display: none;"></div>
+                        <button class="btn btn-primary" id="upload-btn-${orderId}" style="width: 100%; display: none;" onclick="uploadPhotos(${orderId})">
                             Upload Selected Photos
                         </button>
-                        <div id="upload-status-${order.id}"></div>
+                        <div id="upload-status-${orderId}"></div>
                     </div>
-                ` : ''}
-            `;
-
-            // Setup file input handlers
-            if (canUpload && order.photos_uploaded < order.photos_to_upload) {
-                setTimeout(() => setupFileInput(order.id, order.photos_to_upload - order.photos_uploaded), 100);
+                `;
             }
 
-            return card;
-        }
-
-        // Render uploaded photos
-        function renderUploadedPhotos(orderId) {
-            const container = document.getElementById(`uploaded-photos-${orderId}`);
-            if (!container) return;
-
-            const photos = uploadedPhotos[orderId] || [];
-            const order = orders.find(o => o.id === orderId);
-
-            // Only show thumbnails if order is not completed (completed orders show comparison view)
-            if (order && order.order_status === 'completed') {
-                container.innerHTML = '';
-                return;
-            }
-
-            if (photos.length === 0) {
-                container.innerHTML = '';
-                return;
-            }
-
-            container.innerHTML = photos.map(photo => `
-                <div class="photo-thumbnail" data-upload-id="${photo.id}">
-                    <img src="${photo.storage_url}" alt="${photo.original_filename}" loading="lazy">
-                    ${photo.upload_status === 'uploaded' ? `
-                        <button class="photo-delete" onclick="deletePhoto(${orderId}, ${photo.id})">×</button>
-                    ` : ''}
-                </div>
-            `).join('');
-        }
-
-        // Render enhanced photos with before/after comparison
-        function renderEnhancedPhotos(orderId) {
-            const container = document.getElementById(`enhanced-photos-${orderId}`);
-            if (!container) return;
-
+            // Enhanced photos section
             const enhanced = enhancedPhotos[orderId] || [];
-            const original = uploadedPhotos[orderId] || [];
+            if (enhanced.length > 0) {
+                const hasAnyApproved = enhanced.some(p => p.approval_status === 'approved');
 
-            if (enhanced.length === 0) {
-                container.innerHTML = '';
-                return;
-            }
+                contentHTML += `
+                    <div class="enhanced-section">
+                        <h3>
+                            <span style="font-size: 1.5rem;">✨</span>
+                            Your Enhanced Photos Are Ready!
+                        </h3>
+                        <p style="color: #64748b; margin-bottom: 1rem;">Please review each photo and approve or request revisions before downloading.</p>
+                        <div class="photos-horizontal-grid">
+                            ${enhanced.map((enhancedPhoto, index) => {
+                                const originalPhoto = uploaded[index] || uploaded[0];
+                                const isPending = enhancedPhoto.approval_status === 'pending';
+                                const isApproved = enhancedPhoto.approval_status === 'approved';
+                                const isRejected = enhancedPhoto.approval_status === 'rejected';
+                                const needsRevision = enhancedPhoto.approval_status === 'revision_requested';
 
-            const allApproved = enhanced.every(p => p.approval_status === 'approved');
-            const hasAnyApproved = enhanced.some(p => p.approval_status === 'approved');
-
-            container.innerHTML = `
-                <div class="enhanced-section">
-                    <h3>
-                        <span style="font-size: 1.5rem;">✨</span>
-                        Your Enhanced Photos Are Ready!
-                    </h3>
-                    <p style="color: #64748b; margin-bottom: 1rem;">Please review each photo and approve or request revisions before downloading.</p>
-                    <div class="comparison-grid">
-                        ${enhanced.map((enhancedPhoto, index) => {
-                            const originalPhoto = original[index] || original[0];
-                            const isPending = enhancedPhoto.approval_status === 'pending';
-                            const isApproved = enhancedPhoto.approval_status === 'approved';
-                            const isRejected = enhancedPhoto.approval_status === 'rejected';
-                            const needsRevision = enhancedPhoto.approval_status === 'revision_requested';
-
-                            return `
-                                <div class="comparison-item" id="photo-item-${enhancedPhoto.id}">
-                                    <div class="comparison-photos">
-                                        <div class="comparison-photo">
-                                            <img src="${originalPhoto ? originalPhoto.storage_url : ''}"
-                                                 alt="Before"
-                                                 loading="lazy">
-                                            <div class="photo-label before">Before</div>
-                                        </div>
-                                        <div class="comparison-photo">
-                                            <img src="${enhancedPhoto.storage_url}"
-                                                 alt="After"
-                                                 loading="lazy">
-                                            <div class="photo-label after">After</div>
-                                        </div>
-                                    </div>
-
-                                    ${isApproved ? `
-                                        <div class="status-indicator status-approved">
-                                            ✓ Approved - Ready to Download
-                                        </div>
-                                        <button class="download-btn" onclick="downloadPhoto('${enhancedPhoto.storage_url}', '${enhancedPhoto.filename}')">
-                                            <span style="font-size: 1.25rem;">⬇️</span>
-                                            Download Enhanced Photo
-                                        </button>
-                                    ` : isRejected ? `
-                                        <div class="status-indicator status-rejected">
-                                            ✗ Rejected - Admin notified
-                                        </div>
-                                        ${enhancedPhoto.customer_feedback ? `
-                                            <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem;">
-                                                <strong>Your feedback:</strong> ${enhancedPhoto.customer_feedback}
-                                            </p>
-                                        ` : ''}
-                                    ` : needsRevision ? `
-                                        <div class="status-indicator status-revision">
-                                            🔄 Revision Requested - Admin notified
-                                        </div>
-                                        ${enhancedPhoto.customer_feedback ? `
-                                            <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem;">
-                                                <strong>Your requirements:</strong> ${enhancedPhoto.customer_feedback}
-                                            </p>
-                                        ` : ''}
-                                    ` : `
-                                        <div class="approval-actions">
-                                            <button class="btn-approve" onclick="approvePhoto(${orderId}, ${enhancedPhoto.id})">
-                                                <span style="font-size: 1.25rem;">✓</span>
-                                                Approve
-                                            </button>
-                                            <button class="btn-reject" onclick="showFeedbackForm(${orderId}, ${enhancedPhoto.id})">
-                                                <span style="font-size: 1.25rem;">✗</span>
-                                                Request Revision
-                                            </button>
-                                        </div>
-                                        <div id="feedback-form-${enhancedPhoto.id}" class="feedback-form" style="display: none;">
-                                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0a0a0a;">
-                                                What changes would you like?
-                                            </label>
-                                            <textarea id="feedback-text-${enhancedPhoto.id}" placeholder="Please describe the changes you'd like us to make..."></textarea>
-                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                                                <button class="btn btn-primary btn-sm" onclick="submitFeedback(${orderId}, ${enhancedPhoto.id}, 'revision_requested')">
-                                                    Submit Revision Request
-                                                </button>
-                                                <button class="btn btn-secondary btn-sm" onclick="hideFeedbackForm(${enhancedPhoto.id})">
-                                                    Cancel
-                                                </button>
+                                return `
+                                    <div class="comparison-item" id="photo-item-${enhancedPhoto.id}">
+                                        <div class="comparison-photos">
+                                            <div class="comparison-photo">
+                                                <img src="${originalPhoto ? originalPhoto.storage_url : ''}"
+                                                     alt="Before"
+                                                     loading="lazy">
+                                                <div class="photo-label before">Before</div>
+                                            </div>
+                                            <div class="comparison-photo">
+                                                <img src="${enhancedPhoto.storage_url}"
+                                                     alt="After"
+                                                     loading="lazy">
+                                                <div class="photo-label after">After</div>
                                             </div>
                                         </div>
-                                    `}
-                                </div>
-                            `;
-                        }).join('')}
+
+                                        ${isApproved ? `
+                                            <div class="status-indicator status-approved">
+                                                ✓ Approved - Ready to Download
+                                            </div>
+                                            <button class="download-btn" onclick="downloadPhoto('${enhancedPhoto.storage_url}', '${enhancedPhoto.filename}')">
+                                                <span style="font-size: 1.25rem;">⬇️</span>
+                                                Download Enhanced Photo
+                                            </button>
+                                        ` : isRejected ? `
+                                            <div class="status-indicator status-rejected">
+                                                ✗ Rejected - Admin notified
+                                            </div>
+                                            ${enhancedPhoto.customer_feedback ? `
+                                                <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem;">
+                                                    <strong>Your feedback:</strong> ${enhancedPhoto.customer_feedback}
+                                                </p>
+                                            ` : ''}
+                                        ` : needsRevision ? `
+                                            <div class="status-indicator status-revision">
+                                                🔄 Revision Requested - Admin notified
+                                            </div>
+                                            ${enhancedPhoto.customer_feedback ? `
+                                                <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem;">
+                                                    <strong>Your requirements:</strong> ${enhancedPhoto.customer_feedback}
+                                                </p>
+                                            ` : ''}
+                                        ` : `
+                                            <div class="approval-actions">
+                                                <button class="btn-approve" onclick="approvePhoto(${orderId}, ${enhancedPhoto.id})">
+                                                    <span style="font-size: 1.25rem;">✓</span>
+                                                    Approve
+                                                </button>
+                                                <button class="btn-reject" onclick="showFeedbackForm(${enhancedPhoto.id})">
+                                                    <span style="font-size: 1.25rem;">✗</span>
+                                                    Request Revision
+                                                </button>
+                                            </div>
+                                            <div id="feedback-form-${enhancedPhoto.id}" class="feedback-form" style="display: none;">
+                                                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0a0a0a;">
+                                                    What changes would you like?
+                                                </label>
+                                                <textarea id="feedback-text-${enhancedPhoto.id}" placeholder="Please describe the changes you'd like us to make..."></textarea>
+                                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                                    <button class="btn btn-primary btn-sm" onclick="submitFeedback(${orderId}, ${enhancedPhoto.id}, 'revision_requested')">
+                                                        Submit Request
+                                                    </button>
+                                                    <button class="btn btn-secondary btn-sm" onclick="hideFeedbackForm(${enhancedPhoto.id})">
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        `}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        ${hasAnyApproved ? `
+                            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="downloadAllApprovedPhotos(${orderId})">
+                                <span style="font-size: 1.25rem;">📦</span>
+                                Download All Approved Photos
+                            </button>
+                        ` : ''}
                     </div>
-                    ${hasAnyApproved ? `
-                        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="downloadAllApprovedPhotos(${orderId})">
-                            <span style="font-size: 1.25rem;">📦</span>
-                            Download All Approved Photos
-                        </button>
-                    ` : ''}
-                </div>
-            `;
+                `;
+            }
+
+            document.getElementById('details-content').innerHTML = contentHTML;
+
+            // Setup file input if upload is available
+            if (canUpload) {
+                setTimeout(() => setupFileInput(orderId, order.photos_to_upload - order.photos_uploaded), 100);
+            }
         }
 
         // Setup file input
@@ -974,6 +1144,9 @@
             const fileLabel = document.getElementById(`file-label-${orderId}`);
             const selectedFilesDiv = document.getElementById(`selected-files-${orderId}`);
             const uploadBtn = document.getElementById(`upload-btn-${orderId}`);
+
+            if (!fileInput || !fileLabel) return;
+
             let selectedFiles = [];
 
             fileInput.addEventListener('change', (e) => {
@@ -1131,28 +1304,12 @@
             }
         }
 
-        // Show empty state
-        function showEmptyState() {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('empty-state').style.display = 'block';
-        }
-
-        // Show error
-        function showError(message) {
-            document.getElementById('loading').innerHTML = `
-                <div class="alert alert-error">${message}</div>
-                <a href="/ai-food-photo-landing.html" class="btn btn-secondary">Back to Photo Studio</a>
-            `;
-        }
-
         // Download single photo
         async function downloadPhoto(url, filename) {
             try {
-                // Fetch the image
                 const response = await fetch(url);
                 const blob = await response.blob();
 
-                // Create download link
                 const downloadUrl = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = downloadUrl;
@@ -1164,26 +1321,6 @@
             } catch (error) {
                 console.error('Download error:', error);
                 alert('Failed to download photo. Please try again.');
-            }
-        }
-
-        // Download all enhanced photos for an order
-        async function downloadAllPhotos(orderId) {
-            const enhanced = enhancedPhotos[orderId] || [];
-
-            if (enhanced.length === 0) {
-                alert('No enhanced photos available to download.');
-                return;
-            }
-
-            // Download each photo with a small delay to avoid overwhelming the browser
-            for (let i = 0; i < enhanced.length; i++) {
-                const photo = enhanced[i];
-                await downloadPhoto(photo.storage_url, photo.filename);
-                // Add delay between downloads
-                if (i < enhanced.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
             }
         }
 
@@ -1207,7 +1344,7 @@
         }
 
         // Show feedback form
-        function showFeedbackForm(orderId, photoId) {
+        function showFeedbackForm(photoId) {
             const form = document.getElementById(`feedback-form-${photoId}`);
             if (form) {
                 form.style.display = 'block';
@@ -1238,7 +1375,6 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    // Reload enhanced photos to update UI
                     await loadEnhancedPhotos(orderId);
                 } else {
                     throw new Error(data.error || 'Approval failed');
@@ -1276,7 +1412,6 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    // Reload enhanced photos to update UI
                     await loadEnhancedPhotos(orderId);
                 } else {
                     throw new Error(data.error || 'Failed to submit feedback');
@@ -1285,6 +1420,12 @@
                 console.error('Feedback submission error:', error);
                 alert('Failed to submit feedback: ' + error.message);
             }
+        }
+
+        // Show empty state
+        function showEmptyState() {
+            document.querySelector('.dashboard-main').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'block';
         }
 
         // Load orders on page load
