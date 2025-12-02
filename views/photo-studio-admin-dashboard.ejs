@@ -632,7 +632,7 @@
             try {
                 const token = getAuthToken();
                 if (!token) {
-                    window.location.href = '/photo-studio-auth?redirect=/photo-studio-admin-dashboard';
+                    window.location.href = '/admin-login?redirect=/photo-studio-admin-dashboard';
                     return;
                 }
 
