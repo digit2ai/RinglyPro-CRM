@@ -12,10 +12,13 @@ I've created a simple web page you can open in your browser!
 
 ### Steps:
 1. **Open the admin tool:**
+
+   **🌐 Web URL:** https://aiagent.ringlypro.com/admin-upload-tool.html
+
+   Or open locally:
    ```
-   open admin-upload-tool.html
+   open public/admin-upload-tool.html
    ```
-   Or double-click the file: `admin-upload-tool.html`
 
 2. **Login with your credentials:**
    - Email: `mstagg@digit2ai.com`
