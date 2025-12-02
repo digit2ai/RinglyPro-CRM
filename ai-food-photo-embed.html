@@ -1,0 +1,757 @@
+<!-- AI FOOD PHOTO STUDIO - EMBEDDABLE SECTION -->
+<!-- Copy this entire block and paste it into your existing webpage -->
+
+<div id="ai-food-photo-landing">
+    <style scoped>
+        /* Scoped styles for AI Food Photo Landing - won't affect your existing page styles */
+        #ai-food-photo-landing {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        #ai-food-photo-landing * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        #ai-food-photo-landing h1,
+        #ai-food-photo-landing h2,
+        #ai-food-photo-landing h3,
+        #ai-food-photo-landing h4,
+        #ai-food-photo-landing h5,
+        #ai-food-photo-landing h6 {
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            color: #0a0a0a;
+        }
+
+        #ai-food-photo-landing h1 {
+            font-size: 3.5rem;
+            letter-spacing: -0.03em;
+        }
+
+        #ai-food-photo-landing h2 {
+            font-size: 2.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        #ai-food-photo-landing h3 {
+            font-size: 1.5rem;
+        }
+
+        #ai-food-photo-landing p {
+            font-size: 1.125rem;
+            line-height: 1.7;
+            color: #4a5568;
+            margin-bottom: 1rem;
+        }
+
+        #ai-food-photo-landing .subheadline {
+            font-size: 1.25rem;
+            line-height: 1.6;
+            color: #64748b;
+            font-weight: 400;
+        }
+
+        #ai-food-photo-landing .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        #ai-food-photo-landing .container-wide {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        #ai-food-photo-landing section {
+            padding: 5rem 0;
+        }
+
+        #ai-food-photo-landing .section-alt {
+            background-color: #f8fafc;
+        }
+
+        #ai-food-photo-landing .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+            text-align: center;
+        }
+
+        #ai-food-photo-landing .btn-primary {
+            background-color: #6366f1;
+            color: #ffffff;
+            box-shadow: 0 4px 6px rgba(99, 102, 241, 0.2);
+        }
+
+        #ai-food-photo-landing .btn-primary:hover {
+            background-color: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        #ai-food-photo-landing .btn-secondary {
+            background-color: transparent;
+            color: #6366f1;
+            border: 2px solid #6366f1;
+        }
+
+        #ai-food-photo-landing .btn-secondary:hover {
+            background-color: #6366f1;
+            color: #ffffff;
+        }
+
+        #ai-food-photo-landing .btn-large {
+            padding: 1.25rem 2.5rem;
+            font-size: 1.25rem;
+        }
+
+        #ai-food-photo-landing .text-link {
+            display: inline-block;
+            margin-left: 1.5rem;
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.125rem;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        #ai-food-photo-landing .text-link:hover {
+            border-bottom-color: #6366f1;
+        }
+
+        #ai-food-photo-landing .hero {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            padding: 6rem 0 8rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #ai-food-photo-landing .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        #ai-food-photo-landing .hero-text h1 {
+            margin-bottom: 1.5rem;
+            color: #0a0a0a;
+        }
+
+        #ai-food-photo-landing .hero-text .subheadline {
+            margin-bottom: 2.5rem;
+            max-width: 540px;
+        }
+
+        #ai-food-photo-landing .hero-cta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        #ai-food-photo-landing .hero-image {
+            background: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%);
+            border-radius: 1rem;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        #ai-food-photo-landing .hero-image::after {
+            content: 'Before → After';
+            font-size: 2rem;
+            font-weight: 700;
+            color: rgba(99, 102, 241, 0.3);
+        }
+
+        #ai-food-photo-landing .how-it-works {
+            text-align: center;
+        }
+
+        #ai-food-photo-landing .how-it-works h2 {
+            margin-bottom: 4rem;
+        }
+
+        #ai-food-photo-landing .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        #ai-food-photo-landing .step {
+            padding: 2rem;
+        }
+
+        #ai-food-photo-landing .step-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            font-weight: 700;
+        }
+
+        #ai-food-photo-landing .step h3 {
+            margin-bottom: 1rem;
+            color: #0a0a0a;
+        }
+
+        #ai-food-photo-landing .step p {
+            font-size: 1rem;
+            color: #64748b;
+        }
+
+        #ai-food-photo-landing .before-after {
+            background-color: #f8fafc;
+        }
+
+        #ai-food-photo-landing .before-after h2 {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        #ai-food-photo-landing .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        #ai-food-photo-landing .comparison-item {
+            text-align: center;
+        }
+
+        #ai-food-photo-landing .comparison-image {
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+            border-radius: 1rem;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #ai-food-photo-landing .comparison-image::after {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: rgba(0, 0, 0, 0.2);
+        }
+
+        #ai-food-photo-landing .comparison-item:first-child .comparison-image::after {
+            content: '📱 Original';
+        }
+
+        #ai-food-photo-landing .comparison-item:last-child .comparison-image::after {
+            content: '✨ Enhanced';
+        }
+
+        #ai-food-photo-landing .comparison-label {
+            font-weight: 600;
+            font-size: 1.125rem;
+            color: #1a1a1a;
+        }
+
+        #ai-food-photo-landing .comparison-description {
+            max-width: 800px;
+            margin: 3rem auto 0;
+            text-align: center;
+        }
+
+        #ai-food-photo-landing .why-section {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        #ai-food-photo-landing .why-section h2 {
+            margin-bottom: 2rem;
+        }
+
+        #ai-food-photo-landing .why-section p {
+            margin-bottom: 2rem;
+        }
+
+        #ai-food-photo-landing .benefits-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        #ai-food-photo-landing .benefits-list li {
+            display: flex;
+            align-items: flex-start;
+            padding: 1rem;
+            background-color: #f8fafc;
+            border-radius: 0.5rem;
+            border-left: 4px solid #6366f1;
+        }
+
+        #ai-food-photo-landing .benefits-list li::before {
+            content: '✓';
+            color: #6366f1;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        #ai-food-photo-landing .benefits-list li span {
+            font-size: 1.125rem;
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+
+        #ai-food-photo-landing .pricing {
+            background-color: #f8fafc;
+            text-align: center;
+        }
+
+        #ai-food-photo-landing .pricing h2 {
+            margin-bottom: 4rem;
+        }
+
+        #ai-food-photo-landing .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        #ai-food-photo-landing .pricing-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            border: 2px solid transparent;
+        }
+
+        #ai-food-photo-landing .pricing-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+        }
+
+        #ai-food-photo-landing .pricing-card.featured {
+            border-color: #6366f1;
+            transform: scale(1.05);
+        }
+
+        #ai-food-photo-landing .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-8px);
+        }
+
+        #ai-food-photo-landing .pricing-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        #ai-food-photo-landing .pricing-card h3 {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            color: #0a0a0a;
+        }
+
+        #ai-food-photo-landing .pricing-price {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #6366f1;
+            margin-bottom: 1.5rem;
+        }
+
+        #ai-food-photo-landing .pricing-description {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+            min-height: 120px;
+        }
+
+        #ai-food-photo-landing .pricing-total {
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: #0a0a0a;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background-color: #f1f5f9;
+            border-radius: 0.5rem;
+        }
+
+        #ai-food-photo-landing .final-cta {
+            text-align: center;
+            padding: 6rem 0;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        #ai-food-photo-landing .final-cta h2 {
+            color: white;
+            margin-bottom: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #ai-food-photo-landing .final-cta .btn-primary {
+            background-color: white;
+            color: #6366f1;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        #ai-food-photo-landing .final-cta .btn-primary:hover {
+            background-color: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        #ai-food-photo-landing .final-cta-subtitle {
+            margin-top: 1.5rem;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+        }
+
+        #ai-food-photo-landing .ai-footer {
+            background-color: #0f172a;
+            color: #94a3b8;
+            padding: 3rem 0 2rem;
+            text-align: center;
+        }
+
+        #ai-food-photo-landing .footer-brand {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 1.5rem;
+        }
+
+        #ai-food-photo-landing .footer-links {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        #ai-food-photo-landing .footer-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        #ai-food-photo-landing .footer-links a:hover {
+            color: #6366f1;
+        }
+
+        #ai-food-photo-landing .footer-copyright {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 1024px) {
+            #ai-food-photo-landing h1 {
+                font-size: 2.75rem;
+            }
+
+            #ai-food-photo-landing h2 {
+                font-size: 2rem;
+            }
+
+            #ai-food-photo-landing .hero-content {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            #ai-food-photo-landing .hero-image {
+                height: 400px;
+            }
+
+            #ai-food-photo-landing .steps-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            #ai-food-photo-landing .pricing-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            #ai-food-photo-landing .pricing-card.featured {
+                transform: scale(1);
+            }
+
+            #ai-food-photo-landing .pricing-card.featured:hover {
+                transform: translateY(-8px);
+            }
+
+            #ai-food-photo-landing .benefits-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #ai-food-photo-landing h1 {
+                font-size: 2.25rem;
+            }
+
+            #ai-food-photo-landing h2 {
+                font-size: 1.75rem;
+            }
+
+            #ai-food-photo-landing p,
+            #ai-food-photo-landing .subheadline {
+                font-size: 1rem;
+            }
+
+            #ai-food-photo-landing section {
+                padding: 3rem 0;
+            }
+
+            #ai-food-photo-landing .hero {
+                padding: 4rem 0 5rem;
+            }
+
+            #ai-food-photo-landing .hero-cta {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            #ai-food-photo-landing .text-link {
+                margin-left: 0;
+                margin-top: 0.5rem;
+                text-align: center;
+            }
+
+            #ai-food-photo-landing .comparison {
+                grid-template-columns: 1fr;
+            }
+
+            #ai-food-photo-landing .comparison-image {
+                height: 300px;
+            }
+
+            #ai-food-photo-landing .hero-image {
+                height: 300px;
+            }
+
+            #ai-food-photo-landing .container,
+            #ai-food-photo-landing .container-wide {
+                padding: 0 1.5rem;
+            }
+
+            #ai-food-photo-landing .final-cta {
+                padding: 4rem 0;
+            }
+
+            #ai-food-photo-landing .footer-links {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #ai-food-photo-landing h1 {
+                font-size: 1.875rem;
+            }
+
+            #ai-food-photo-landing .btn {
+                padding: 0.875rem 1.5rem;
+                font-size: 1rem;
+            }
+
+            #ai-food-photo-landing .btn-large {
+                padding: 1rem 1.75rem;
+                font-size: 1.125rem;
+            }
+
+            #ai-food-photo-landing .pricing-price {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>Turn Your Phone Food Photos Into Masterpieces</h1>
+                    <p class="subheadline">Send us the food pictures you take with your phone and we'll transform them into high-quality professional images—without expensive photo shoots.</p>
+                    <div class="hero-cta">
+                        <a href="#ai-pricing" class="btn btn-primary btn-large">Get Started</a>
+                        <a href="#ai-pricing" class="text-link">View Packages</a>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <!-- Placeholder for before/after food photo -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS SECTION -->
+    <section class="how-it-works section-alt">
+        <div class="container">
+            <h2>How It Works</h2>
+            <div class="steps-grid">
+                <div class="step">
+                    <div class="step-icon">1</div>
+                    <h3>You Snap</h3>
+                    <p>Take the photo with your phone. No special equipment or lighting needed—just capture your dishes as you normally would.</p>
+                </div>
+                <div class="step">
+                    <div class="step-icon">2</div>
+                    <h3>You Send</h3>
+                    <p>Share your photos with us online. Simply upload through our secure portal and tell us about your vision.</p>
+                </div>
+                <div class="step">
+                    <div class="step-icon">3</div>
+                    <h3>We Enhance</h3>
+                    <p>We deliver professional-grade images ready for menus, websites, and social media. Usually within 48-72 hours.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BEFORE/AFTER SECTION -->
+    <section class="before-after">
+        <div class="container">
+            <h2>From This… To This…</h2>
+            <div class="comparison">
+                <div class="comparison-item">
+                    <div class="comparison-image">
+                        <!-- Placeholder for original photo -->
+                    </div>
+                    <p class="comparison-label">Original Phone Photo</p>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-image">
+                        <!-- Placeholder for enhanced photo -->
+                    </div>
+                    <p class="comparison-label">AI-Enhanced Professional Photo</p>
+                </div>
+            </div>
+            <div class="comparison-description">
+                <p>Our AI-powered enhancement process transforms everyday phone photos into stunning professional-quality images. We adjust lighting, enhance colors, improve composition, and perfect every detail—making your dishes look irresistible to customers. This helps restaurants stand out on delivery apps, social media, and websites without the cost and hassle of traditional food photography.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- WHY SECTION -->
+    <section class="why-section-wrapper">
+        <div class="container">
+            <div class="why-section">
+                <h2>Why It's Perfect for Small Restaurants</h2>
+                <p>Professional food photography can cost thousands of dollars and requires coordinating schedules, setting up equipment, and disrupting your kitchen operations. We've made it simple: use the phone you already have, take photos on your own time, and let our AI do the heavy lifting.</p>
+                <ul class="benefits-list">
+                    <li><span>No expensive photo shoots</span></li>
+                    <li><span>Use only your existing phone</span></li>
+                    <li><span>Perfect for menus, delivery apps, websites, and social media</span></li>
+                    <li><span>Consistent, high-quality visuals for your brand</span></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING SECTION -->
+    <section class="pricing" id="ai-pricing">
+        <div class="container-wide">
+            <h2>Pick Your Package</h2>
+            <div class="pricing-grid">
+                <!-- STARTER -->
+                <div class="pricing-card">
+                    <h3>Starter</h3>
+                    <div class="pricing-price">$150</div>
+                    <p class="pricing-description">You send us 10 photos and we send you back 10 professional photos.</p>
+                    <div class="pricing-total">Total: You have 10 professional photos</div>
+                    <a href="#contact" class="btn btn-secondary">Get Started</a>
+                </div>
+
+                <!-- PRO (FEATURED) -->
+                <div class="pricing-card featured">
+                    <div class="pricing-badge">Best Value</div>
+                    <h3>Pro</h3>
+                    <div class="pricing-price">$350</div>
+                    <p class="pricing-description">You send us 10 photos and we send you back 10 professional photos plus 2 variations of each.</p>
+                    <div class="pricing-total">Total: You have 30 professional photos</div>
+                    <a href="#contact" class="btn btn-primary">Get Started</a>
+                </div>
+
+                <!-- ELITE -->
+                <div class="pricing-card">
+                    <h3>Elite</h3>
+                    <div class="pricing-price">$500</div>
+                    <p class="pricing-description">You send us 20 photos and we send you back 20 professional photos plus 2 variations of each.</p>
+                    <div class="pricing-total">Total: You have 60 professional photos</div>
+                    <a href="#contact" class="btn btn-secondary">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="final-cta">
+        <div class="container">
+            <h2>Ready to upgrade your food photos without hiring a photographer?</h2>
+            <a href="#ai-pricing" class="btn btn-primary btn-large">Send My Photos</a>
+            <p class="final-cta-subtitle">No studio. No equipment. Just your phone and our AI.</p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <div class="ai-footer">
+        <div class="container">
+            <div class="footer-brand">Powered by RinglyPro · Digit2AI LLC</div>
+            <ul class="footer-links">
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="#terms">Terms</a></li>
+                <li><a href="#privacy">Privacy</a></li>
+            </ul>
+            <p class="footer-copyright">© 2025 RinglyPro & AI Food Photo Studio. All rights reserved.</p>
+        </div>
+    </div>
+</div>
+
+<!-- END OF AI FOOD PHOTO STUDIO EMBEDDABLE SECTION -->

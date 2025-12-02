@@ -428,9 +428,9 @@
 
         .pricing-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 2rem;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -567,7 +567,7 @@
             }
 
             .pricing-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
                 gap: 2rem;
             }
 
@@ -649,6 +649,10 @@
             }
 
             .steps-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -801,6 +805,15 @@
         <div class="container-wide">
             <h2>Pick Your Package</h2>
             <div class="pricing-grid">
+                <!-- DEMO -->
+                <div class="pricing-card">
+                    <h3>Demo</h3>
+                    <div class="pricing-price">$1</div>
+                    <p class="pricing-description">Try our service with 1 photo for just $1.</p>
+                    <div class="pricing-total">Total: You have 1 professional photo</div>
+                    <button class="btn btn-secondary" onclick="purchasePackage('demo')">Get Started</button>
+                </div>
+
                 <!-- STARTER -->
                 <div class="pricing-card">
                     <h3>Starter</h3>
@@ -845,7 +858,7 @@
     <script>
         /**
          * Purchase package - Creates Stripe checkout session
-         * @param {string} packageType - 'starter', 'pro', or 'elite'
+         * @param {string} packageType - 'demo', 'starter', 'pro', or 'elite'
          */
         async function purchasePackage(packageType) {
             try {

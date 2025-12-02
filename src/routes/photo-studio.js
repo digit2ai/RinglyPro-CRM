@@ -11,6 +11,13 @@ const logger = require('../utils/logger');
 
 // Package definitions
 const PHOTO_PACKAGES = {
+  demo: {
+    name: 'Demo',
+    price: 1,
+    photos_to_upload: 1,
+    photos_to_receive: 1,
+    description: 'Try our service with 1 photo for just $1'
+  },
   starter: {
     name: 'Starter',
     price: 150,
@@ -76,7 +83,7 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
     if (!selectedPackage) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid package type. Must be starter, pro, or elite'
+        error: 'Invalid package type. Must be demo, starter, pro, or elite'
       });
     }
 
