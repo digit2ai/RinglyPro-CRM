@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Studio Admin Upload Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding-bottom: 40px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            color: #1e40af;
+            font-size: 20px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #e5e7eb;
+            border-radius: 6px;
+            background: #f9fafb;
+            cursor: pointer;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button-secondary {
+            background: #f59e0b;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            border: 1px solid #22c55e;
+            color: #065f46;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        .file-list {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .file-item {
+            padding: 8px;
+            background: #f9fafb;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .help-text {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+
+        .token-status {
+            padding: 10px;
+            background: #f0f9ff;
+            border: 1px solid #3b82f6;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #1e40af;
+            margin-bottom: 20px;
+        }
+
+        .response-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📸 Photo Studio Admin Tool</h1>
+            <p>Upload Enhanced Photos & Manage Orders</p>
+        </div>
+
+        <div class="content">
+            <!-- Login Section -->
+            <div class="section" id="loginSection">
+                <h2 class="section-title">🔐 Step 1: Login</h2>
+
+                <div class="alert alert-info" id="loginInfo">
+                    Enter your admin credentials to get started.
+                </div>
+
+                <div class="form-group">
+                    <label for="adminEmail">Email</label>
+                    <input type="text" id="adminEmail" value="mstagg@digit2ai.com" placeholder="mstagg@digit2ai.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="adminPassword">Password</label>
+                    <input type="password" id="adminPassword" placeholder="Enter your password">
+                </div>
+
+                <button class="button" onclick="login()">Login</button>
+
+                <div class="token-status" id="tokenStatus" style="display: none; margin-top: 20px;">
+                    ✅ Logged in successfully!
+                </div>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="section" id="uploadSection" style="display: none;">
+                <h2 class="section-title">📤 Step 2: Upload Enhanced Photos</h2>
+
+                <div class="alert" id="uploadAlert"></div>
+
+                <div class="form-group">
+                    <label for="orderId">Order ID</label>
+                    <input type="number" id="orderId" placeholder="2" value="2">
+                    <p class="help-text">Enter the order ID from the email notification you received</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="photoFiles">Select Enhanced Photos</label>
+                    <input type="file" id="photoFiles" multiple accept="image/jpeg,image/jpg,image/png,image/webp">
+                    <p class="help-text">Select up to 50 photos (JPEG, PNG, WebP). Max 50MB per file.</p>
+                </div>
+
+                <div class="file-list" id="fileList"></div>
+
+                <div class="progress-bar" id="uploadProgress">
+                    <div class="progress-fill" id="uploadProgressFill"></div>
+                </div>
+
+                <button class="button" onclick="uploadPhotos()" id="uploadBtn">Upload Enhanced Photos</button>
+
+                <div class="response-box" id="uploadResponse" style="display: none;"></div>
+            </div>
+
+            <!-- Complete Order Section -->
+            <div class="section" id="completeSection" style="display: none;">
+                <h2 class="section-title">✅ Step 3: Mark Order Complete</h2>
+
+                <div class="alert" id="completeAlert"></div>
+
+                <div class="form-group">
+                    <label for="completeOrderId">Order ID</label>
+                    <input type="number" id="completeOrderId" placeholder="2" value="2">
+                    <p class="help-text">Same order ID as above. This will send email to customer.</p>
+                </div>
+
+                <button class="button button-secondary" onclick="completeOrder()">Mark Order Complete & Notify Customer</button>
+
+                <div class="response-box" id="completeResponse" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('adminAuthToken');
+        const API_BASE = 'https://aiagent.ringlypro.com/api';
+
+        // Check if already logged in
+        if (authToken) {
+            showUploadSections();
+        }
+
+        // Update file list when files selected
+        document.getElementById('photoFiles').addEventListener('change', function(e) {
+            const files = e.target.files;
+            const fileList = document.getElementById('fileList');
+
+            if (files.length > 0) {
+                let html = '<p><strong>Selected ' + files.length + ' file(s):</strong></p>';
+                for (let i = 0; i < files.length; i++) {
+                    const sizeMB = (files[i].size / 1024 / 1024).toFixed(2);
+                    html += '<div class="file-item">' + (i + 1) + '. ' + files[i].name + ' (' + sizeMB + ' MB)</div>';
+                }
+                fileList.innerHTML = html;
+            } else {
+                fileList.innerHTML = '';
+            }
+        });
+
+        async function login() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            const loginInfo = document.getElementById('loginInfo');
+
+            if (!email || !password) {
+                showAlert('loginInfo', 'Please enter email and password', 'error');
+                return;
+            }
+
+            try {
+                loginInfo.textContent = 'Logging in...';
+                loginInfo.className = 'alert alert-info';
+                loginInfo.style.display = 'block';
+
+                const response = await fetch(API_BASE + '/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.token) {
+                    authToken = data.token;
+                    localStorage.setItem('adminAuthToken', authToken);
+
+                    loginInfo.textContent = '✅ Login successful! You can now upload photos.';
+                    loginInfo.className = 'alert alert-success';
+
+                    document.getElementById('tokenStatus').style.display = 'block';
+
+                    // Show upload sections
+                    showUploadSections();
+                } else {
+                    showAlert('loginInfo', 'Login failed: ' + (data.error || 'Invalid credentials'), 'error');
+                }
+            } catch (error) {
+                showAlert('loginInfo', 'Login error: ' + error.message, 'error');
+            }
+        }
+
+        function showUploadSections() {
+            document.getElementById('uploadSection').style.display = 'block';
+            document.getElementById('completeSection').style.display = 'block';
+        }
+
+        async function uploadPhotos() {
+            const orderId = document.getElementById('orderId').value;
+            const files = document.getElementById('photoFiles').files;
+            const uploadBtn = document.getElementById('uploadBtn');
+            const progressBar = document.getElementById('uploadProgress');
+            const progressFill = document.getElementById('uploadProgressFill');
+            const responseBox = document.getElementById('uploadResponse');
+
+            if (!orderId) {
+                showAlert('uploadAlert', 'Please enter Order ID', 'error');
+                return;
+            }
+
+            if (!files || files.length === 0) {
+                showAlert('uploadAlert', 'Please select at least one photo', 'error');
+                return;
+            }
+
+            if (!authToken) {
+                showAlert('uploadAlert', 'Please login first', 'error');
+                return;
+            }
+
+            // Create FormData
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('photos', files[i]);
+            }
+
+            try {
+                uploadBtn.disabled = true;
+                uploadBtn.textContent = 'Uploading...';
+                progressBar.style.display = 'block';
+                progressFill.style.width = '50%';
+
+                const response = await fetch(`${API_BASE}/photo-studio/admin/order/${orderId}/upload-enhanced`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken
+                    },
+                    body: formData
+                });
+
+                progressFill.style.width = '100%';
+
+                const data = await response.json();
+
+                responseBox.textContent = JSON.stringify(data, null, 2);
+                responseBox.style.display = 'block';
+
+                if (data.success) {
+                    showAlert('uploadAlert', '✅ ' + data.message, 'success');
+                    // Auto-fill complete order ID
+                    document.getElementById('completeOrderId').value = orderId;
+                } else {
+                    showAlert('uploadAlert', '❌ Upload failed: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                showAlert('uploadAlert', '❌ Upload error: ' + error.message, 'error');
+                responseBox.textContent = 'Error: ' + error.message;
+                responseBox.style.display = 'block';
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload Enhanced Photos';
+                setTimeout(() => {
+                    progressBar.style.display = 'none';
+                    progressFill.style.width = '0%';
+                }, 1000);
+            }
+        }
+
+        async function completeOrder() {
+            const orderId = document.getElementById('completeOrderId').value;
+            const responseBox = document.getElementById('completeResponse');
+
+            if (!orderId) {
+                showAlert('completeAlert', 'Please enter Order ID', 'error');
+                return;
+            }
+
+            if (!authToken) {
+                showAlert('completeAlert', 'Please login first', 'error');
+                return;
+            }
+
+            if (!confirm('Mark order ' + orderId + ' as completed? Customer will receive email notification.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/photo-studio/admin/order/${orderId}/complete`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                responseBox.textContent = JSON.stringify(data, null, 2);
+                responseBox.style.display = 'block';
+
+                if (data.success) {
+                    showAlert('completeAlert', '✅ Order completed! Customer ' + data.customerEmail + ' has been notified.', 'success');
+                } else {
+                    showAlert('completeAlert', '❌ Failed to complete order: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                showAlert('completeAlert', '❌ Error: ' + error.message, 'error');
+                responseBox.textContent = 'Error: ' + error.message;
+                responseBox.style.display = 'block';
+            }
+        }
+
+        function showAlert(elementId, message, type) {
+            const alert = document.getElementById(elementId);
+            alert.textContent = message;
+            alert.className = 'alert alert-' + type;
+            alert.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
