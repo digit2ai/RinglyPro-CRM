@@ -428,9 +428,9 @@
 
         .pricing-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 2rem;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -797,6 +797,15 @@
         <div class="container-wide">
             <h2>Pick Your Package</h2>
             <div class="pricing-grid">
+                <!-- DEMO -->
+                <div class="pricing-card">
+                    <h3>Demo</h3>
+                    <div class="pricing-price">$1</div>
+                    <p class="pricing-description">Test our service! Send us 1 photo and we'll send you back 1 professionally enhanced photo.</p>
+                    <div class="pricing-total">Total: You have 1 professional photo</div>
+                    <button class="btn btn-secondary" onclick="purchasePackage('demo')">Try Demo</button>
+                </div>
+
                 <!-- STARTER -->
                 <div class="pricing-card">
                     <h3>Starter</h3>
