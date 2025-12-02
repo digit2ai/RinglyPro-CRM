@@ -319,6 +319,46 @@ router.post('/upload', authenticateToken, upload.array('photos', 20), async (req
           }
         );
         logger.info(`[PHOTO UPLOAD] Order ${order_id} upload completed - moved to processing`);
+
+        // Send admin notification email
+        try {
+          // Get user details and order info
+          const [userDetails] = await sequelize.query(
+            `SELECT u.first_name, u.last_name, u.email, o.package_type
+             FROM users u
+             JOIN ${orderTable} o ON o.user_id = u.id
+             WHERE o.id = :orderId`,
+            {
+              replacements: { orderId: order_id },
+              type: QueryTypes.SELECT
+            }
+          );
+
+          if (userDetails) {
+            const { sendPhotoUploadAdminNotification } = require('../services/emailService');
+
+            // Get all uploaded photo URLs for this order
+            const photoUrls = uploadResults
+              .filter(r => r.success)
+              .map(r => r.url);
+
+            const customerName = `${userDetails.first_name} ${userDetails.last_name}`.trim() || 'Customer';
+
+            await sendPhotoUploadAdminNotification({
+              orderId: order_id,
+              customerName,
+              customerEmail: userDetails.email,
+              packageType: userDetails.package_type,
+              photosUploaded: order.photos_uploaded + successfulUploads,
+              photoUrls
+            });
+
+            logger.info(`[PHOTO UPLOAD] Admin notification email sent for order ${order_id}`);
+          }
+        } catch (emailError) {
+          // Don't fail the upload if email fails
+          logger.error(`[PHOTO UPLOAD] Failed to send admin notification email for order ${order_id}:`, emailError);
+        }
       }
     }
 

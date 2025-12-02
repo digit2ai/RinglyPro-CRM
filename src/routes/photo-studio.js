@@ -355,4 +355,114 @@ router.get('/order/:orderId', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * PUT /api/photo-studio/admin/order/:orderId/complete
+ * Admin endpoint to mark order as completed (triggers customer notification email)
+ */
+router.put('/admin/order/:orderId/complete', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { orderId } = req.params;
+    const { sequelize, User } = require('../models');
+    const { QueryTypes } = require('sequelize');
+
+    logger.info(`[PHOTO STUDIO] Admin completing order ${orderId}`);
+
+    // Verify user is admin (mstagg@digit2ai.com)
+    const [adminUser] = await sequelize.query(
+      'SELECT email, is_admin FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!adminUser || (!adminUser.is_admin && adminUser.email !== 'mstagg@digit2ai.com')) {
+      return res.status(403).json({
+        success: false,
+        error: 'Admin access required'
+      });
+    }
+
+    // Get order details and user info
+    const [orderDetails] = await sequelize.query(
+      `
+      SELECT
+        o.id, o.user_id, o.package_type, o.photos_to_receive, o.order_status,
+        u.email, u.first_name, u.last_name
+      FROM photo_studio_orders o
+      JOIN users u ON o.user_id = u.id
+      WHERE o.id = :orderId
+      `,
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!orderDetails) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    if (orderDetails.order_status === 'completed') {
+      return res.status(400).json({
+        success: false,
+        error: 'Order is already marked as completed'
+      });
+    }
+
+    // Update order status to completed
+    await sequelize.query(
+      `
+      UPDATE photo_studio_orders
+      SET order_status = 'completed',
+          delivery_date = NOW(),
+          updated_at = NOW()
+      WHERE id = :orderId
+      `,
+      {
+        replacements: { orderId },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`[PHOTO STUDIO] Order ${orderId} marked as completed`);
+
+    // Send customer notification email
+    try {
+      const { sendPhotosCompletedEmail } = require('../services/emailService');
+
+      await sendPhotosCompletedEmail({
+        email: orderDetails.email,
+        firstName: orderDetails.first_name || 'Valued Customer',
+        orderId: orderDetails.id,
+        packageType: orderDetails.package_type,
+        photosDelivered: orderDetails.photos_to_receive
+      });
+
+      logger.info(`[PHOTO STUDIO] Completion email sent to ${orderDetails.email} for order ${orderId}`);
+    } catch (emailError) {
+      // Don't fail the completion if email fails
+      logger.error(`[PHOTO STUDIO] Failed to send completion email for order ${orderId}:`, emailError);
+    }
+
+    res.json({
+      success: true,
+      message: 'Order marked as completed and customer notified',
+      orderId: orderDetails.id,
+      customerEmail: orderDetails.email
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] Complete order error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to complete order'
+    });
+  }
+});
+
 module.exports = router;

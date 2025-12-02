@@ -510,9 +510,282 @@ Login to review: ${APP_URL}/admin`,
     }
 }
 
+/**
+ * Send admin notification when customer uploads photos
+ * @param {Object} options Upload notification options
+ * @param {Number} options.orderId Order ID
+ * @param {String} options.customerName Customer name
+ * @param {String} options.customerEmail Customer email
+ * @param {String} options.packageType Package type (demo, starter, pro, elite)
+ * @param {Number} options.photosUploaded Number of photos uploaded
+ * @param {Array} options.photoUrls Array of S3 URLs
+ */
+async function sendPhotoUploadAdminNotification({ orderId, customerName, customerEmail, packageType, photosUploaded, photoUrls }) {
+    if (!SENDGRID_API_KEY) {
+        console.log('SendGrid not configured - skipping admin notification');
+        return { success: false, reason: 'SendGrid not configured' };
+    }
+
+    const adminEmail = 'mstagg@digit2ai.com';
+    const portalUrl = `${APP_URL}/photo-studio-portal`;
+    const s3BucketUrl = `https://s3.console.aws.amazon.com/s3/buckets/ringlypro-uploads?region=us-east-1&prefix=uploads/photo_studio/`;
+
+    const photoList = photoUrls.map((url, index) => `${index + 1}. ${url}`).join('\n');
+
+    const msg = {
+        to: adminEmail,
+        from: {
+            email: FROM_EMAIL,
+            name: 'RinglyPro Photo Studio'
+        },
+        subject: `📸 New Photos Uploaded - Order #${orderId}`,
+        text: `NEW PHOTO STUDIO ORDER READY FOR PROCESSING
+
+Order Information:
+- Order ID: #${orderId}
+- Customer: ${customerName}
+- Email: ${customerEmail}
+- Package: ${packageType.toUpperCase()}
+- Photos Uploaded: ${photosUploaded}
+
+Next Steps:
+1. Download photos from S3
+2. Enhance photos using AI
+3. Upload enhanced photos back to portal
+4. Mark order as completed
+
+View Order: ${portalUrl}
+S3 Bucket: ${s3BucketUrl}
+
+Photo URLs:
+${photoList}`,
+        html: `<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f7; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .header h1 { color: white; margin: 0; font-size: 24px; }
+        .content { background: white; padding: 30px; border: 1px solid #e5e7eb; }
+        .order-box { background: #f0f9ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .info-label { font-weight: bold; color: #1e40af; display: inline-block; width: 150px; }
+        .step { background: #f8fafc; border-left: 4px solid #667eea; padding: 15px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .button { display: inline-block; background: #667eea; color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; margin: 10px 5px; font-weight: bold; }
+        .photos-list { background: #f8fafc; padding: 15px; border-radius: 8px; margin: 15px 0; max-height: 200px; overflow-y: auto; }
+        .photos-list a { color: #3b82f6; word-break: break-all; font-size: 12px; }
+        .footer { text-align: center; color: #6b7280; padding: 20px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📸 New Photos Ready for Enhancement</h1>
+        </div>
+        <div class="content">
+            <p style="background: #d1fae5; padding: 15px; border-radius: 8px; border: 1px solid #22c55e;"><strong>✅ Photos Uploaded:</strong> A customer has uploaded photos and is waiting for enhancement!</p>
+
+            <h2 style="color: #1e40af; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Order Details</h2>
+            <div class="order-box">
+                <p><span class="info-label">Order ID:</span> #${orderId}</p>
+                <p><span class="info-label">Customer:</span> ${customerName}</p>
+                <p><span class="info-label">Email:</span> <a href="mailto:${customerEmail}">${customerEmail}</a></p>
+                <p><span class="info-label">Package:</span> ${packageType.toUpperCase()}</p>
+                <p><span class="info-label">Photos Uploaded:</span> ${photosUploaded}</p>
+            </div>
+
+            <h3 style="color: #1e40af;">Next Steps:</h3>
+            <div class="step">
+                <strong>1. Download Photos</strong>
+                <p style="margin: 5px 0 0; color: #64748b;">Access photos from AWS S3 bucket</p>
+            </div>
+            <div class="step">
+                <strong>2. Enhance Photos</strong>
+                <p style="margin: 5px 0 0; color: #64748b;">Use AI tools to enhance the photos</p>
+            </div>
+            <div class="step">
+                <strong>3. Upload Enhanced Photos</strong>
+                <p style="margin: 5px 0 0; color: #64748b;">Upload enhanced photos back to customer portal</p>
+            </div>
+            <div class="step">
+                <strong>4. Mark as Completed</strong>
+                <p style="margin: 5px 0 0; color: #64748b;">Update order status to notify customer</p>
+            </div>
+
+            <div style="text-align: center; margin: 20px 0;">
+                <a href="${portalUrl}" class="button">View Order Portal</a>
+                <a href="${s3BucketUrl}" class="button" style="background: #f59e0b;">Open S3 Bucket</a>
+            </div>
+
+            <h3 style="color: #1e40af;">Photo URLs:</h3>
+            <div class="photos-list">
+                ${photoUrls.map((url, index) => `<p style="margin: 5px 0;"><strong>${index + 1}.</strong> <a href="${url}" target="_blank">${url}</a></p>`).join('')}
+            </div>
+        </div>
+        <div class="footer">
+            <p><strong>RinglyPro Photo Studio</strong></p>
+            <p style="font-size: 12px; color: #9ca3af;">Automated notification</p>
+        </div>
+    </div>
+</body>
+</html>`
+    };
+
+    try {
+        await sgMail.send(msg);
+        console.log(`Photo upload admin notification sent to: ${adminEmail}`);
+        return { success: true };
+    } catch (error) {
+        console.error('SendGrid photo upload notification error:', error.response ? error.response.body : error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Send customer notification when enhanced photos are ready
+ * @param {Object} options Completion notification options
+ * @param {String} options.email Customer email
+ * @param {String} options.firstName Customer first name
+ * @param {Number} options.orderId Order ID
+ * @param {String} options.packageType Package type
+ * @param {Number} options.photosDelivered Number of photos delivered
+ */
+async function sendPhotosCompletedEmail({ email, firstName, orderId, packageType, photosDelivered }) {
+    if (!SENDGRID_API_KEY) {
+        console.log('SendGrid not configured - skipping completion email');
+        return { success: false, reason: 'SendGrid not configured' };
+    }
+
+    const portalUrl = `${APP_URL}/photo-studio-portal`;
+    const supportEmail = 'info@ringlypro.com';
+
+    const msg = {
+        to: email,
+        from: {
+            email: FROM_EMAIL,
+            name: FROM_NAME
+        },
+        subject: `🎉 Your Enhanced Photos Are Ready! - Order #${orderId}`,
+        text: `Hello ${firstName},
+
+Great news! Your enhanced photos are ready for download!
+
+Order #${orderId}
+Package: ${packageType.toUpperCase()}
+Photos Delivered: ${photosDelivered}
+
+DOWNLOAD YOUR PHOTOS:
+Visit your portal to download your professionally enhanced photos:
+${portalUrl}
+
+Your photos have been enhanced with AI to improve:
+- Lighting and exposure
+- Color balance and vibrancy
+- Sharpness and detail
+- Professional composition
+
+Questions or concerns? Contact us at ${supportEmail}
+
+Thank you for using RinglyPro Photo Studio!
+
+Best regards,
+The RinglyPro Team`,
+        html: `<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; text-align: center; border-radius: 10px 10px 0 0; }
+        .header h1 { color: white; margin: 0; font-size: 28px; }
+        .header p { color: rgba(255,255,255,0.9); margin: 10px 0 0; }
+        .content { background: white; padding: 40px; border: 1px solid #e5e7eb; }
+        .success-box { background: #d1fae5; border: 2px solid #22c55e; border-radius: 12px; padding: 25px; text-align: center; margin: 25px 0; }
+        .success-icon { font-size: 60px; margin-bottom: 15px; }
+        .order-info { background: #f0f9ff; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .info-label { font-weight: bold; color: #1e40af; }
+        .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 18px 40px; text-decoration: none; border-radius: 50px; margin: 20px 0; font-weight: bold; font-size: 18px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+        .features { background: #f8fafc; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .feature-item { display: flex; align-items: center; margin: 10px 0; }
+        .feature-icon { color: #22c55e; font-size: 20px; margin-right: 12px; }
+        .footer { text-align: center; color: #6b7280; margin-top: 20px; font-size: 14px; padding: 20px; background: #f9fafb; border-radius: 0 0 10px 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Your Photos Are Ready!</h1>
+            <p>Professionally Enhanced & Ready to Download</p>
+        </div>
+        <div class="content">
+            <div class="success-box">
+                <div class="success-icon">✨</div>
+                <h2 style="color: #22c55e; margin: 10px 0;">Enhancement Complete!</h2>
+                <p style="margin: 10px 0; color: #64748b; font-size: 16px;">Your photos have been professionally enhanced and are ready for download.</p>
+            </div>
+
+            <p>Hello <strong>${firstName}</strong>,</p>
+            <p>Great news! We've completed the enhancement of your photos and they're ready for you to download.</p>
+
+            <div class="order-info">
+                <p style="margin: 8px 0;"><span class="info-label">Order ID:</span> #${orderId}</p>
+                <p style="margin: 8px 0;"><span class="info-label">Package:</span> ${packageType.toUpperCase()}</p>
+                <p style="margin: 8px 0;"><span class="info-label">Photos Delivered:</span> ${photosDelivered} professionally enhanced photos</p>
+            </div>
+
+            <div style="text-align: center;">
+                <a href="${portalUrl}" class="button">Download Your Photos</a>
+            </div>
+
+            <div class="features">
+                <h3 style="color: #1e40af; margin-top: 0;">What We Enhanced:</h3>
+                <div class="feature-item">
+                    <span class="feature-icon">✓</span>
+                    <strong>Lighting & Exposure</strong> - Perfect brightness and contrast
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">✓</span>
+                    <strong>Color Balance</strong> - Vibrant, natural colors
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">✓</span>
+                    <strong>Sharpness & Detail</strong> - Crystal clear images
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">✓</span>
+                    <strong>Professional Composition</strong> - Gallery-ready photos
+                </div>
+            </div>
+
+            <p style="margin-top: 30px;">Questions or concerns about your photos? We're here to help!</p>
+            <p>Contact us at <a href="mailto:${supportEmail}" style="color: #667eea;">${supportEmail}</a></p>
+
+            <p style="margin-top: 30px;"><strong>Thank you for choosing RinglyPro Photo Studio!</strong></p>
+        </div>
+        <div class="footer">
+            <p><strong>RinglyPro Photo Studio</strong></p>
+            <p style="font-size: 12px; color: #9ca3af; margin-top: 10px;">&copy; ${new Date().getFullYear()} RinglyPro. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>`
+    };
+
+    try {
+        await sgMail.send(msg);
+        console.log(`Photos completed email sent to: ${email}`);
+        return { success: true };
+    } catch (error) {
+        console.error('SendGrid photos completed email error:', error.response ? error.response.body : error.message);
+        return { success: false, error: error.message };
+    }
+}
+
 module.exports = {
     sendPasswordResetEmail,
     sendWelcomeEmail,
     sendPartnershipConfirmationEmail,
-    sendPartnershipAdminNotification
+    sendPartnershipAdminNotification,
+    sendPhotoUploadAdminNotification,
+    sendPhotosCompletedEmail
 };
