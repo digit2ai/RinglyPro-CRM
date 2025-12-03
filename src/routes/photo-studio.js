@@ -146,6 +146,18 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
     // Initialize Stripe
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
+    // Create workflow description
+    const workflowSteps = `${selectedPackage.description}
+
+How It Works:
+1. Complete payment for your photos
+2. PixlyPro receives your request and begins processing
+3. Upload your photos through our secure portal
+4. Processing takes 24-48 hours
+5. PixlyPro sends you an email notification when complete
+6. Go to PixlyPro.com and click "My Orders" to download
+7. Review your enhanced photos and approve or request revisions`;
+
     // Create Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -155,7 +167,7 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
             currency: 'usd',
             product_data: {
               name: `RinglyPro Photo Studio - ${selectedPackage.name} Package`,
-              description: selectedPackage.description,
+              description: workflowSteps,
               images: ['https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69175f336c431e834ac954b8.png']
             },
             unit_amount: selectedPackage.price * 100, // Stripe expects cents
