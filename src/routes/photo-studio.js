@@ -1332,4 +1332,131 @@ router.post('/admin/order/:orderId/send-message', authenticateToken, async (req,
   }
 });
 
+/**
+ * POST /api/photo-studio/register
+ * Simple registration for Photo Studio customers (no Twilio provisioning)
+ */
+router.post('/register', async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+  const bcrypt = require('bcrypt');
+  const jwt = require('jsonwebtoken');
+
+  try {
+    const { firstName, lastName, email, phoneNumber, password } = req.body;
+
+    logger.info(`[PHOTO STUDIO] Registration attempt:`, {
+      email,
+      firstName,
+      lastName
+    });
+
+    // Validate required fields
+    if (!firstName || !lastName || !email || !phoneNumber || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'All fields are required'
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email format'
+      });
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 6 characters'
+      });
+    }
+
+    // Check if user already exists
+    const [existingUser] = await sequelize.query(
+      'SELECT id FROM users WHERE email = :email',
+      {
+        replacements: { email: email.toLowerCase() },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        error: 'An account with this email already exists'
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Normalize phone number
+    const normalizedPhone = phoneNumber.replace(/\D/g, '');
+
+    // Create user (Photo Studio customer - no Twilio provisioning)
+    const [result] = await sequelize.query(
+      `INSERT INTO users (
+        first_name, last_name, email, phone_number, password_hash,
+        business_name, business_phone, business_type,
+        created_at, updated_at
+      ) VALUES (
+        :firstName, :lastName, :email, :phoneNumber, :password,
+        :businessName, :businessPhone, 'other',
+        NOW(), NOW()
+      ) RETURNING id`,
+      {
+        replacements: {
+          firstName,
+          lastName,
+          email: email.toLowerCase(),
+          phoneNumber: normalizedPhone,
+          password: hashedPassword,
+          businessName: `${firstName}'s Photos`,
+          businessPhone: normalizedPhone
+        },
+        type: QueryTypes.INSERT
+      }
+    );
+
+    const userId = Array.isArray(result) ? result[0].id : result.id;
+
+    logger.info(`[PHOTO STUDIO] User created successfully:`, {
+      userId,
+      email,
+      name: `${firstName} ${lastName}`
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId, email: email.toLowerCase() },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '30d' }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Account created successfully',
+      token,
+      user: {
+        id: userId,
+        firstName,
+        lastName,
+        email: email.toLowerCase()
+      }
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] Registration error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Registration failed. Please try again.'
+    });
+  }
+});
+
 module.exports = router;

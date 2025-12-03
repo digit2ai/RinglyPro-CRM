@@ -464,16 +464,11 @@
                 lastName: document.getElementById('signup-lastname').value,
                 email: document.getElementById('signup-email').value,
                 phoneNumber: document.getElementById('signup-phone').value,
-                password: document.getElementById('signup-password').value,
-                // Minimal fields for Photo Studio customers
-                businessName: document.getElementById('signup-firstname').value + "'s Photos",
-                businessPhone: document.getElementById('signup-phone').value,
-                businessType: 'other',
-                termsAccepted: true
+                password: document.getElementById('signup-password').value
             };
 
             try {
-                const response = await fetch('/api/auth/register', {
+                const response = await fetch('/api/photo-studio/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
