@@ -1267,8 +1267,18 @@
             formData.append('photos', file);
             formData.append('original_photo_id', originalPhotoId);
 
+            console.log('[Upload] Starting upload:', {
+                orderId,
+                originalPhotoId,
+                filename: file.name,
+                size: file.size,
+                type: file.type
+            });
+
             try {
                 const token = getAuthToken();
+                console.log('[Upload] Token exists:', !!token);
+
                 const response = await fetch(`/api/photo-studio/admin/order/${orderId}/upload-enhanced`, {
                     method: 'POST',
                     headers: {
@@ -1277,7 +1287,10 @@
                     body: formData
                 });
 
+                console.log('[Upload] Response status:', response.status);
+
                 const data = await response.json();
+                console.log('[Upload] Response data:', data);
 
                 if (data.success) {
                     statusDiv.innerHTML = '<div style="color: #16a34a;">✅ Uploaded!</div>';
@@ -1287,13 +1300,14 @@
 
                     // Reload order details after 1 second
                     setTimeout(() => {
+                        console.log('[Upload] Reloading order details...');
                         loadOrderDetails(orderId);
                     }, 1000);
                 } else {
                     throw new Error(data.error || 'Upload failed');
                 }
             } catch (error) {
-                console.error('Upload error:', error);
+                console.error('[Upload] Error:', error);
                 statusDiv.innerHTML = `<div style="color: #991b1b;">❌ ${error.message}</div>`;
                 uploadBtn.disabled = false;
                 uploadBtn.textContent = 'Upload Enhanced';
