@@ -85,7 +85,7 @@ async function setupPhotoStudio() {
         console.log('🎉 Photo Studio setup completed successfully!');
         console.log('\nYou can now:');
         console.log('1. Login at: /photo-studio-admin-login');
-        console.log('2. Email: mstagg@digit2ai.com');
+        console.log('2. Admin emails: mstagg@digit2ai.com, pixlypro@digit2ai.com');
         console.log('3. Access admin dashboard to manage orders\n');
     } else {
         console.log('⚠️  Some migrations failed. Check errors above.');

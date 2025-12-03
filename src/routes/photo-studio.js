@@ -416,7 +416,7 @@ router.put('/admin/order/:orderId/complete', authenticateToken, async (req, res)
 
     logger.info(`[PHOTO STUDIO] Admin completing order ${orderId}`);
 
-    // Verify user is admin (mstagg@digit2ai.com)
+    // Verify user is admin (Photo Studio admins)
     const [adminUser] = await sequelize.query(
       'SELECT email, is_admin FROM users WHERE id = :userId',
       {
@@ -425,7 +425,8 @@ router.put('/admin/order/:orderId/complete', authenticateToken, async (req, res)
       }
     );
 
-    if (!adminUser || (!adminUser.is_admin && adminUser.email !== 'mstagg@digit2ai.com')) {
+    const photoStudioAdmins = ['mstagg@digit2ai.com', 'pixlypro@digit2ai.com'];
+    if (!adminUser || (!adminUser.is_admin && !photoStudioAdmins.includes(adminUser.email))) {
       return res.status(403).json({
         success: false,
         error: 'Admin access required'
@@ -538,7 +539,8 @@ router.post('/admin/order/:orderId/upload-enhanced', authenticateToken, upload.a
       }
     );
 
-    if (!adminUser || (!adminUser.is_admin && adminUser.email !== 'mstagg@digit2ai.com')) {
+    const photoStudioAdmins = ['mstagg@digit2ai.com', 'pixlypro@digit2ai.com'];
+    if (!adminUser || (!adminUser.is_admin && !photoStudioAdmins.includes(adminUser.email))) {
       return res.status(403).json({
         success: false,
         error: 'Admin access required'
