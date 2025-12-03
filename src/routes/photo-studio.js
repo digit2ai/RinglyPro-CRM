@@ -617,7 +617,7 @@ router.post('/admin/order/:orderId/upload-enhanced', authenticateToken, upload.a
         const signedUrl = await getSignedUrl(client, getCommand, { expiresIn: 2592000 }); // 30 days
 
         // Save to database
-        const [enhancedPhoto] = await sequelize.query(
+        const [results] = await sequelize.query(
           `INSERT INTO enhanced_photos (
             order_id, original_photo_id, filename, file_size, mime_type, storage_provider,
             storage_bucket, storage_key, storage_url, image_width,
@@ -626,7 +626,7 @@ router.post('/admin/order/:orderId/upload-enhanced', authenticateToken, upload.a
             :orderId, :originalPhotoId, :filename, :fileSize, :mimeType, 's3',
             :bucket, :storageKey, :storageUrl, :imageWidth,
             :imageHeight, :imageFormat, :uploadedBy, 'ready'
-          ) RETURNING id, storage_key, storage_url`,
+          ) RETURNING *`,
           {
             replacements: {
               orderId,
@@ -646,12 +646,17 @@ router.post('/admin/order/:orderId/upload-enhanced', authenticateToken, upload.a
           }
         );
 
-        uploadedFileIds.push(enhancedPhoto[0].id);
+        // With QueryTypes.INSERT and RETURNING, first element is the array of returned rows
+        const enhancedPhoto = Array.isArray(results) ? results[0] : results;
+
+        logger.info(`[PHOTO STUDIO] Database insert result:`, enhancedPhoto);
+
+        uploadedFileIds.push(enhancedPhoto.id);
         uploadResults.push({
           success: true,
           filename: file.originalname,
-          enhancedPhotoId: enhancedPhoto[0].id,
-          url: enhancedPhoto[0].storage_url
+          enhancedPhotoId: enhancedPhoto.id,
+          url: enhancedPhoto.storage_url
         });
 
         logger.info(`[PHOTO STUDIO] Enhanced photo uploaded: ${file.originalname} -> ${storageKey}`);
