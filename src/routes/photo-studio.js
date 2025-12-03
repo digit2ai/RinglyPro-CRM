@@ -1032,14 +1032,20 @@ router.get('/admin/order/:orderId/details', authenticateToken, async (req, res) 
       }
     );
 
-    // Get communications
-    const communications = await sequelize.query(
-      `SELECT * FROM photo_communications WHERE order_id = :orderId ORDER BY created_at DESC`,
-      {
-        replacements: { orderId },
-        type: QueryTypes.SELECT
-      }
-    );
+    // Get communications (gracefully handle if table doesn't exist yet)
+    let communications = [];
+    try {
+      communications = await sequelize.query(
+        `SELECT * FROM photo_communications WHERE order_id = :orderId ORDER BY created_at DESC`,
+        {
+          replacements: { orderId },
+          type: QueryTypes.SELECT
+        }
+      );
+    } catch (commError) {
+      console.warn('[PHOTO STUDIO] Communications table not found, skipping:', commError.message);
+      // Table doesn't exist yet - that's okay, return empty array
+    }
 
     res.json({
       success: true,
