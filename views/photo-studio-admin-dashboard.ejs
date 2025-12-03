@@ -1306,11 +1306,8 @@
 
                 if (data.success) {
                     statusDiv.innerHTML = '<div style="color: #16a34a;">✅ Uploaded!</div>';
-                    fileInput.value = '';
-                    document.getElementById(`preview-${orderId}-${originalPhotoId}`).style.display = 'none';
-                    uploadBtn.style.display = 'none';
 
-                    // Reload order details after 1 second
+                    // Reload order details after a brief moment to show the enhanced photo
                     setTimeout(() => {
                         console.log('[Upload] Reloading order details...');
                         loadOrderDetails(orderId);
