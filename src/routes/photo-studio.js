@@ -733,7 +733,7 @@ router.post('/admin/order/:orderId/upload-enhanced', authenticateToken, upload.a
  * POST /api/photo-studio/admin/order/:orderId/complete
  * Mark order as completed and send notification email to customer
  */
-router.post('/admin/order/:orderId/complete', authenticatePhotoStudioAdmin, async (req, res) => {
+router.post('/admin/order/:orderId/complete', authenticateToken, async (req, res) => {
   const { sequelize } = require('../models');
   const { QueryTypes } = require('sequelize');
 
