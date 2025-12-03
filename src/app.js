@@ -302,6 +302,13 @@ app.get('/admin/login', (req, res) => {
   });
 });
 
+// Photo Studio Admin login page - separate from main admin
+app.get('/photo-studio-admin-login', (req, res) => {
+  res.render('photo-studio-admin-login', {
+    title: 'Photo Studio Admin - Sign In'
+  });
+});
+
 // Admin portal route - for info@digit2ai.com only
 app.get('/admin', async (req, res) => {
   try {

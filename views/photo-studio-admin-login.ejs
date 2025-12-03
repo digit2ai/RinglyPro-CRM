@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Studio Admin - Sign In</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+            padding: 3rem 2rem;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo-container img {
+            height: 60px;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            color: #0a0a0a;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            font-size: 0.875rem;
+            margin-bottom: 2rem;
+        }
+
+        .admin-badge {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.875rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .back-link a {
+            color: #6366f1;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo-container">
+            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/692f57c22b865e4e4a6c8a63.png" alt="Photo Studio">
+            <div style="display: flex; justify-content: center;">
+                <span class="admin-badge">📸 Photo Studio Admin</span>
+            </div>
+        </div>
+
+        <h1>Admin Login</h1>
+        <p class="subtitle">Sign in to manage photo studio orders</p>
+
+        <div id="alert" style="display: none;"></div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    autocomplete="email"
+                    placeholder="mstagg@digit2ai.com"
+                    value="mstagg@digit2ai.com"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    autocomplete="current-password"
+                    placeholder="Enter your password"
+                >
+            </div>
+
+            <button type="submit" class="btn" id="submit-btn">Sign In</button>
+        </form>
+
+        <div class="back-link">
+            <a href="/ai-food-photo-landing.html">← Back to Photo Studio</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('login-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const alertDiv = document.getElementById('alert');
+
+        // Check if already logged in
+        const existingToken = localStorage.getItem('photoStudioAdminToken') || sessionStorage.getItem('photoStudioAdminToken');
+        if (existingToken) {
+            // Verify it's an admin token by trying to fetch admin orders
+            fetch('/api/photo-studio/admin/all-orders', {
+                headers: { 'Authorization': `Bearer ${existingToken}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Already logged in as admin
+                    window.location.href = '/photo-studio-admin-dashboard';
+                }
+            })
+            .catch(() => {
+                // Token invalid or not admin, continue with login
+            });
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Signing in...';
+            hideAlert();
+
+            try {
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.token) {
+                    // Store token with Photo Studio specific key
+                    localStorage.setItem('photoStudioAdminToken', data.token);
+
+                    // Show success and redirect
+                    showAlert('Login successful! Redirecting...', 'success');
+
+                    setTimeout(() => {
+                        const redirect = new URLSearchParams(window.location.search).get('redirect');
+                        window.location.href = redirect || '/photo-studio-admin-dashboard';
+                    }, 500);
+                } else {
+                    throw new Error(data.error || 'Login failed');
+                }
+
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert(error.message || 'Login failed. Please check your credentials.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Sign In';
+            }
+        });
+
+        function showAlert(message, type) {
+            alertDiv.textContent = message;
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.style.display = 'block';
+        }
+
+        function hideAlert() {
+            alertDiv.style.display = 'none';
+        }
+
+        // Focus password field on load
+        document.getElementById('password').focus();
+    </script>
+</body>
+</html>

@@ -624,7 +624,7 @@
 
         // Get auth token
         function getAuthToken() {
-            return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            return localStorage.getItem('photoStudioAdminToken') || sessionStorage.getItem('photoStudioAdminToken');
         }
 
         // Load all orders
@@ -632,7 +632,7 @@
             try {
                 const token = getAuthToken();
                 if (!token) {
-                    window.location.href = '/admin/login?redirect=/photo-studio-admin-dashboard';
+                    window.location.href = '/photo-studio-admin-login?redirect=/photo-studio-admin-dashboard';
                     return;
                 }
 
