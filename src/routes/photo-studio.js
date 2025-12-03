@@ -1038,7 +1038,10 @@ router.get('/admin/order/:orderId/details', authenticateToken, async (req, res) 
     let originalPhotos = [];
     try {
       originalPhotos = await sequelize.query(
-        `SELECT * FROM photo_uploads WHERE service_order_id = :orderId ORDER BY upload_date ASC`,
+        `SELECT * FROM photo_uploads
+         WHERE service_order_id = :orderId
+         AND service_type = 'photo_studio'
+         ORDER BY uploaded_at ASC`,
         {
           replacements: { orderId },
           type: QueryTypes.SELECT
