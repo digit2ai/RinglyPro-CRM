@@ -163,10 +163,10 @@
                     type="email"
                     id="email"
                     name="email"
-                    placeholder="mstagg@digit2ai.com"
+                    placeholder="info@digit2ai.com"
                     required
                     autocomplete="email"
-                    value="mstagg@digit2ai.com"
+                    value="info@digit2ai.com"
                 >
             </div>
 
@@ -220,14 +220,12 @@
                 const data = await response.json();
 
                 if (data.success && data.token) {
-                    // Store admin token (use 'authToken' key for compatibility)
-                    localStorage.setItem('authToken', data.token);
+                    // Store admin token
+                    localStorage.setItem('adminToken', data.token);
 
-                    // Get redirect URL from query param or default to photo studio admin dashboard
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const redirect = urlParams.get('redirect') || '/photo-studio-admin-dashboard';
-                    window.location.href = redirect;
-                } else {
+                    // Redirect to admin portal
+                    window.location.href = '/admin';
+                } else{
                     throw new Error(data.error || 'Login failed');
                 }
             } catch (error) {
