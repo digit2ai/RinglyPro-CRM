@@ -995,17 +995,23 @@ router.get('/admin/order/:orderId/details', authenticateToken, async (req, res) 
     const { orderId } = req.params;
 
     // Get order details
-    const [order] = await sequelize.query(
-      `SELECT
-        pso.*, u.first_name, u.last_name, u.email as customer_email
-       FROM photo_studio_orders pso
-       JOIN users u ON pso.user_id = u.id
-       WHERE pso.id = :orderId`,
-      {
-        replacements: { orderId },
-        type: QueryTypes.SELECT
-      }
-    );
+    let order;
+    try {
+      [order] = await sequelize.query(
+        `SELECT
+          pso.*, u.first_name, u.last_name, u.email as customer_email
+         FROM photo_studio_orders pso
+         JOIN users u ON pso.user_id = u.id
+         WHERE pso.id = :orderId`,
+        {
+          replacements: { orderId },
+          type: QueryTypes.SELECT
+        }
+      );
+    } catch (orderError) {
+      console.error('[PHOTO STUDIO] Failed to get order:', orderError.message);
+      throw new Error(`Failed to get order: ${orderError.message}`);
+    }
 
     if (!order) {
       return res.status(404).json({
@@ -1014,23 +1020,33 @@ router.get('/admin/order/:orderId/details', authenticateToken, async (req, res) 
       });
     }
 
-    // Get enhanced photos
-    const enhancedPhotos = await sequelize.query(
-      `SELECT * FROM enhanced_photos WHERE order_id = :orderId ORDER BY uploaded_at ASC`,
-      {
-        replacements: { orderId },
-        type: QueryTypes.SELECT
-      }
-    );
+    // Get enhanced photos (may not exist yet)
+    let enhancedPhotos = [];
+    try {
+      enhancedPhotos = await sequelize.query(
+        `SELECT * FROM enhanced_photos WHERE order_id = :orderId ORDER BY uploaded_at ASC`,
+        {
+          replacements: { orderId },
+          type: QueryTypes.SELECT
+        }
+      );
+    } catch (enhancedError) {
+      console.warn('[PHOTO STUDIO] Enhanced photos table not found:', enhancedError.message);
+    }
 
     // Get original photos
-    const originalPhotos = await sequelize.query(
-      `SELECT * FROM photo_uploads WHERE service_order_id = :orderId ORDER BY upload_date ASC`,
-      {
-        replacements: { orderId },
-        type: QueryTypes.SELECT
-      }
-    );
+    let originalPhotos = [];
+    try {
+      originalPhotos = await sequelize.query(
+        `SELECT * FROM photo_uploads WHERE service_order_id = :orderId ORDER BY upload_date ASC`,
+        {
+          replacements: { orderId },
+          type: QueryTypes.SELECT
+        }
+      );
+    } catch (photoError) {
+      console.warn('[PHOTO STUDIO] Photo uploads table not found:', photoError.message);
+    }
 
     // Get communications (gracefully handle if table doesn't exist yet)
     let communications = [];
