@@ -15,8 +15,9 @@ router.post('/login', async (req, res) => {
 
         console.log(`🔐 Admin login attempt: ${email}`);
 
-        // Only allow info@digit2ai.com
-        if (email !== 'info@digit2ai.com') {
+        // Allow CRM admin and Photo Studio admins
+        const allowedAdmins = ['info@digit2ai.com', 'mstagg@digit2ai.com', 'pixlypro@digit2ai.com'];
+        if (!allowedAdmins.includes(email)) {
             console.log(`🚨 Non-admin email attempted admin login: ${email}`);
             return res.status(403).json({
                 success: false,
