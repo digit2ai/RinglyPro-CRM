@@ -608,13 +608,13 @@ router.post('/admin/order/:orderId/upload-enhanced', authenticateToken, upload.a
 
         await client.send(putCommand);
 
-        // Generate presigned URL (valid for 30 days)
+        // Generate presigned URL (valid for 7 days - AWS S3 maximum)
         const getCommand = new GetObjectCommand({
           Bucket: BUCKET_NAME,
           Key: storageKey
         });
 
-        const signedUrl = await getSignedUrl(client, getCommand, { expiresIn: 2592000 }); // 30 days
+        const signedUrl = await getSignedUrl(client, getCommand, { expiresIn: 604800 }); // 7 days (max allowed by AWS)
 
         // Save to database
         const [results] = await sequelize.query(
