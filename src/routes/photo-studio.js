@@ -658,10 +658,12 @@ router.post('/admin/order/:orderId/upload-enhanced', authenticateToken, upload.a
 
       } catch (error) {
         logger.error(`[PHOTO STUDIO] Failed to upload enhanced photo ${file.originalname}:`, error);
+        logger.error(`[PHOTO STUDIO] Error stack:`, error.stack);
         uploadResults.push({
           success: false,
           filename: file.originalname,
-          error: error.message
+          error: error.message,
+          errorStack: error.stack // Include stack trace for debugging
         });
       }
     }

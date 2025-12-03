@@ -1264,6 +1264,24 @@
                 console.log('[Upload] Response data:', data);
 
                 if (data.success) {
+                    // Check if any uploads actually succeeded
+                    const successCount = (data.uploads || []).filter(u => u.success).length;
+                    console.log('[Upload] Success count:', successCount, 'of', (data.uploads || []).length);
+
+                    if (successCount === 0) {
+                        // Upload failed - log error details
+                        console.error('[Upload] Upload failed despite success=true response');
+                        console.error('[Upload] Upload results:', data.uploads);
+
+                        const failedUpload = data.uploads.find(u => !u.success);
+                        if (failedUpload) {
+                            console.error('[Upload] Error message:', failedUpload.error);
+                            console.error('[Upload] Error stack:', failedUpload.errorStack);
+                            throw new Error(failedUpload.error || 'Database insert failed');
+                        }
+                        throw new Error('Upload failed - no files were saved');
+                    }
+
                     statusDiv.innerHTML = '<div style="color: #16a34a;">✅ Upload successful! Loading enhanced photo...</div>';
 
                     // Wait a moment then reload just this order's details to show the enhanced photo
