@@ -202,6 +202,21 @@
         .header-nav {
             display: flex;
             gap: 1rem;
+            align-items: center;
+        }
+
+        .phone-number {
+            color: #6366f1;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .phone-number:hover {
+            color: #4f46e5;
         }
 
         .btn-nav {
@@ -583,8 +598,20 @@
                 grid-template-columns: 1fr;
             }
 
-            .header-nav {
+            .header-nav .btn-nav {
                 display: none;
+            }
+
+            .phone-number {
+                font-size: 0.875rem;
+            }
+
+            .phone-number span:last-child {
+                display: none;
+            }
+
+            .phone-number span:first-child {
+                font-size: 1.5rem;
             }
         }
 
@@ -697,6 +724,10 @@
                     <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/692f57c22b865e4e4a6c8a63.png" alt="Photo Studio Logo" style="height: 48px;">
                 </div>
                 <div class="header-nav">
+                    <a href="tel:608-573-8344" class="phone-number">
+                        <span style="font-size: 1.25rem;">📞</span>
+                        <span>608-573-8344</span>
+                    </a>
                     <a href="https://aiagent.ringlypro.com/photo-studio-portal" class="btn btn-secondary btn-nav">My Orders</a>
                 </div>
             </div>
