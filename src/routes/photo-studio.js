@@ -679,6 +679,37 @@ router.post('/admin/order/:orderId/upload-enhanced', authenticateToken, upload.a
 
     logger.info(`[PHOTO STUDIO] Uploaded ${successfulUploads} enhanced photos for order ${orderId}. Total: ${photoCount.count}`);
 
+    // Send email notification to customer
+    if (successfulUploads > 0) {
+      try {
+        const { sendPhotosCompletedEmail } = require('../services/emailService');
+        const [customer] = await sequelize.query(
+          `SELECT u.email, u.first_name, pso.package_type
+           FROM users u
+           JOIN photo_studio_orders pso ON pso.user_id = u.id
+           WHERE pso.id = :orderId`,
+          {
+            replacements: { orderId },
+            type: QueryTypes.SELECT
+          }
+        );
+
+        if (customer) {
+          await sendPhotosCompletedEmail({
+            email: customer.email,
+            firstName: customer.first_name || 'Valued Customer',
+            orderId: orderId,
+            packageType: customer.package_type,
+            photosDelivered: parseInt(photoCount.count)
+          });
+          logger.info(`[PHOTO STUDIO] Email notification sent to ${customer.email} for order ${orderId}`);
+        }
+      } catch (emailError) {
+        logger.error('[PHOTO STUDIO] Failed to send email notification:', emailError);
+        // Don't fail the upload if email fails
+      }
+    }
+
     res.json({
       success: true,
       message: `Uploaded ${successfulUploads} of ${files.length} enhanced photo(s)`,

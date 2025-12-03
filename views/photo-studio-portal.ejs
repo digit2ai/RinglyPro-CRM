@@ -442,6 +442,21 @@
             background: rgba(34, 197, 94, 0.9);
         }
 
+        .photo-name-small {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 0.5rem;
+            font-size: 0.625rem;
+            text-align: center;
+            word-break: break-all;
+            max-height: 3rem;
+            overflow: hidden;
+        }
+
         .approval-actions {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -1041,7 +1056,8 @@
                         <p style="color: #64748b; margin-bottom: 1rem;">Please review each photo and approve or request revisions before downloading.</p>
                         <div class="photos-horizontal-grid">
                             ${enhanced.map((enhancedPhoto, index) => {
-                                const originalPhoto = uploaded[index] || uploaded[0];
+                                // Find the correct original photo by ID
+                                const originalPhoto = uploaded.find(u => u.id === enhancedPhoto.original_photo_id) || uploaded[index] || uploaded[0];
                                 const isPending = enhancedPhoto.approval_status === 'pending';
                                 const isApproved = enhancedPhoto.approval_status === 'approved';
                                 const isRejected = enhancedPhoto.approval_status === 'rejected';
@@ -1055,12 +1071,14 @@
                                                      alt="Before"
                                                      loading="lazy">
                                                 <div class="photo-label before">Before</div>
+                                                ${originalPhoto ? `<div class="photo-name-small">${originalPhoto.original_filename}</div>` : ''}
                                             </div>
                                             <div class="comparison-photo">
                                                 <img src="${enhancedPhoto.storage_url}"
                                                      alt="After"
                                                      loading="lazy">
-                                                <div class="photo-label after">After</div>
+                                                <div class="photo-label after">After (Enhanced)</div>
+                                                <div class="photo-name-small">${enhancedPhoto.filename}</div>
                                             </div>
                                         </div>
 

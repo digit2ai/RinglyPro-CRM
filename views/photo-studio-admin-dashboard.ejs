@@ -610,6 +610,54 @@
             min-height: 1.5rem;
         }
 
+        .enhanced-preview {
+            width: 100%;
+            max-width: 300px;
+            margin: 0.5rem auto;
+        }
+
+        .enhanced-preview img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            border: 2px solid #16a34a;
+            margin-bottom: 0.5rem;
+        }
+
+        .enhanced-info {
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .enhanced-status {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 0.25rem;
+        }
+
+        .customer-feedback-small {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-style: italic;
+            margin-top: 0.25rem;
+            padding: 0.5rem;
+            background: #f8fafc;
+            border-radius: 0.25rem;
+        }
+
+        .btn-outline {
+            background: white;
+            border: 2px solid #6366f1;
+            color: #6366f1;
+        }
+
+        .btn-outline:hover {
+            background: #6366f1;
+            color: white;
+        }
+
         @media (max-width: 1024px) {
             .before-after-upload-item {
                 grid-template-columns: 1fr;
@@ -1017,7 +1065,10 @@
 
                     ${originalPhotos.length > 0 ? `
                         <div class="before-after-upload-grid">
-                            ${originalPhotos.map((photo, index) => `
+                            ${originalPhotos.map((photo, index) => {
+                                // Find enhanced photo for this original
+                                const enhanced = enhancedPhotos.find(e => e.original_photo_id === photo.id);
+                                return `
                                 <div class="before-after-upload-item">
                                     <div class="before-photo">
                                         <div class="photo-label">Original Photo ${index + 1}</div>
@@ -1027,19 +1078,41 @@
                                     <div class="arrow-separator">→</div>
                                     <div class="after-photo-upload">
                                         <div class="photo-label">Enhanced Version</div>
-                                        <input type="file" id="enhanced-input-${order.id}-${photo.id}" class="file-input" accept="image/jpeg,image/jpg,image/png,image/webp" data-original-id="${photo.id}">
-                                        <label for="enhanced-input-${order.id}-${photo.id}" class="upload-box">
-                                            <div class="upload-icon">📸</div>
-                                            <div class="upload-text">Click to upload<br>enhanced version</div>
-                                        </label>
-                                        <div id="preview-${order.id}-${photo.id}" class="upload-preview" style="display: none;"></div>
-                                        <button class="btn btn-primary btn-sm" id="upload-single-btn-${order.id}-${photo.id}" style="display: none; width: 100%; margin-top: 0.5rem;" onclick="uploadSingleEnhanced(${order.id}, ${photo.id})">
-                                            Upload Enhanced
-                                        </button>
+                                        ${enhanced ? `
+                                            <div class="enhanced-preview">
+                                                <img src="${enhanced.storage_url}" alt="${enhanced.filename}" loading="lazy">
+                                                <div class="enhanced-info">
+                                                    <div class="enhanced-status">
+                                                        ${enhanced.approval_status === 'approved' ? '✅ Approved' :
+                                                          enhanced.approval_status === 'rejected' ? '❌ Rejected' :
+                                                          enhanced.approval_status === 'revision_requested' ? '🔄 Revision Requested' :
+                                                          '⏳ Pending Review'}
+                                                    </div>
+                                                    <div class="photo-name">${enhanced.filename}</div>
+                                                    ${enhanced.customer_feedback ? `<div class="customer-feedback-small">Customer: "${enhanced.customer_feedback}"</div>` : ''}
+                                                </div>
+                                                <button class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 0.5rem;" onclick="downloadPhoto('${enhanced.storage_url}', '${enhanced.filename}')">
+                                                    ⬇️ Download Enhanced
+                                                </button>
+                                                <button class="btn btn-outline btn-sm" style="width: 100%; margin-top: 0.5rem;" onclick="showReplaceUpload(${order.id}, ${photo.id})">
+                                                    🔄 Replace Photo
+                                                </button>
+                                            </div>
+                                        ` : `
+                                            <input type="file" id="enhanced-input-${order.id}-${photo.id}" class="file-input" accept="image/jpeg,image/jpg,image/png,image/webp" data-original-id="${photo.id}">
+                                            <label for="enhanced-input-${order.id}-${photo.id}" class="upload-box">
+                                                <div class="upload-icon">📸</div>
+                                                <div class="upload-text">Click to upload<br>enhanced version</div>
+                                            </label>
+                                            <div id="preview-${order.id}-${photo.id}" class="upload-preview" style="display: none;"></div>
+                                            <button class="btn btn-primary btn-sm" id="upload-single-btn-${order.id}-${photo.id}" style="display: none; width: 100%; margin-top: 0.5rem;" onclick="uploadSingleEnhanced(${order.id}, ${photo.id})">
+                                                Upload Enhanced
+                                            </button>
+                                        `}
                                         <div id="status-${order.id}-${photo.id}" class="upload-status-small"></div>
                                     </div>
                                 </div>
-                            `).join('')}
+                            `}).join('')}
                         </div>
                     ` : '<p style="color: #94a3b8;">Customer has not uploaded any photos yet</p>'}
                 </div>
@@ -1252,6 +1325,16 @@
                     reader.readAsDataURL(file);
                 });
             });
+        }
+
+        // Show replace upload interface
+        function showReplaceUpload(orderId, originalPhotoId) {
+            if (!confirm('Are you sure you want to replace this enhanced photo? The current version will be overwritten.')) {
+                return;
+            }
+
+            // Reload the page to show upload interface again
+            loadOrderDetails(orderId);
         }
 
         // Call setup after rendering order details
