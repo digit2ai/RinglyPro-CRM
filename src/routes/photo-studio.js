@@ -953,6 +953,21 @@ router.post('/enhanced-photo/:photoId/approve', authenticateToken, async (req, r
       }
     );
 
+    // If revision requested, update order status back to 'processing'
+    if (approval_status === 'revision_requested') {
+      await sequelize.query(
+        `UPDATE photo_studio_orders
+         SET order_status = 'processing',
+             updated_at = NOW()
+         WHERE id = :orderId`,
+        {
+          replacements: { orderId: photo.order_id },
+          type: QueryTypes.UPDATE
+        }
+      );
+      logger.info(`[PHOTO STUDIO] Order ${photo.order_id} status changed to 'processing' due to revision request`);
+    }
+
     // Create communication record
     await sequelize.query(
       `INSERT INTO photo_communications
