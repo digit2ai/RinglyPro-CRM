@@ -524,9 +524,10 @@ router.post('/admin/order/:orderId/upload-enhanced', authenticateToken, upload.a
   try {
     const userId = req.user.userId || req.user.id;
     const { orderId } = req.params;
+    const { original_photo_id } = req.body;
     const files = req.files;
 
-    logger.info(`[PHOTO STUDIO] Admin uploading enhanced photos for order ${orderId}`);
+    logger.info(`[PHOTO STUDIO] Admin uploading enhanced photos for order ${orderId}, original_photo_id: ${original_photo_id}`);
 
     // Verify user is admin
     const [adminUser] = await sequelize.query(
@@ -618,17 +619,18 @@ router.post('/admin/order/:orderId/upload-enhanced', authenticateToken, upload.a
         // Save to database
         const [enhancedPhoto] = await sequelize.query(
           `INSERT INTO enhanced_photos (
-            order_id, filename, file_size, mime_type, storage_provider,
+            order_id, original_photo_id, filename, file_size, mime_type, storage_provider,
             storage_bucket, storage_key, storage_url, image_width,
             image_height, image_format, uploaded_by, delivery_status
           ) VALUES (
-            :orderId, :filename, :fileSize, :mimeType, 's3',
+            :orderId, :originalPhotoId, :filename, :fileSize, :mimeType, 's3',
             :bucket, :storageKey, :storageUrl, :imageWidth,
             :imageHeight, :imageFormat, :uploadedBy, 'ready'
           ) RETURNING id, storage_key, storage_url`,
           {
             replacements: {
               orderId,
+              originalPhotoId: original_photo_id || null,
               filename: file.originalname,
               fileSize: file.size,
               mimeType: file.mimetype,
