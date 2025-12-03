@@ -1010,6 +1010,12 @@
         function renderOrderDetails(order, enhancedPhotos, originalPhotos, communications) {
             const container = document.getElementById('details-content');
 
+            // Debug logging
+            console.log('[Render] Order ID:', order.id);
+            console.log('[Render] Enhanced photos count:', enhancedPhotos.length);
+            console.log('[Render] Enhanced photos:', enhancedPhotos);
+            console.log('[Render] Original photos count:', originalPhotos.length);
+
             container.innerHTML = `
                 <div class="order-detail-header">
                     <h2 class="order-detail-title">Order #${order.id} - ${order.customer_name || 'Unknown'}</h2>
@@ -1127,53 +1133,6 @@
                             </div>
                         ` : ''}
                     ` : '<p style="color: #94a3b8;">Customer has not uploaded any photos yet</p>'}
-                </div>
-
-                <div class="photos-section">
-                    <h3 class="section-title">
-                        <span style="font-size: 1.5rem;">🖼️</span>
-                        Enhanced Photos (Customer Review)
-                    </h3>
-                    <div class="photos-horizontal-grid">
-                        ${enhancedPhotos.length > 0 ? enhancedPhotos.map((photo, index) => {
-                            const original = originalPhotos[index] || originalPhotos[0];
-                            const statusText = {
-                                'pending': 'Pending Review',
-                                'approved': 'Approved',
-                                'rejected': 'Rejected',
-                                'revision_requested': 'Revision Requested'
-                            }[photo.approval_status] || photo.approval_status;
-
-                            const statusClass = photo.approval_status === 'revision_requested' ? 'status-revision' : `status-${photo.approval_status}`;
-
-                            return `
-                                <div class="photo-card">
-                                    <div class="photo-comparison">
-                                        <div class="photo-wrapper">
-                                            <img src="${original ? original.storage_url : ''}" alt="Before" loading="lazy">
-                                            <div class="photo-badge badge-before">Before</div>
-                                        </div>
-                                        <div class="photo-wrapper">
-                                            <img src="${photo.storage_url}" alt="After" loading="lazy">
-                                            <div class="photo-badge badge-after">After</div>
-                                        </div>
-                                    </div>
-                                    <div class="photo-info">
-                                        <div class="photo-filename">${photo.filename}</div>
-                                        <div class="photo-approval-status ${statusClass}">
-                                            ${statusText}
-                                        </div>
-                                    </div>
-                                    ${photo.customer_feedback ? `
-                                        <div class="photo-feedback">
-                                            <div class="feedback-label">Customer Feedback:</div>
-                                            <div class="feedback-text">${photo.customer_feedback}</div>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            `;
-                        }).join('') : '<p style="color: #94a3b8;">No enhanced photos uploaded yet</p>'}
-                    </div>
                 </div>
 
                 <div class="communications-section">
