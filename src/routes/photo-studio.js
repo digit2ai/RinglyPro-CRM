@@ -730,6 +730,96 @@ router.post('/admin/order/:orderId/upload-enhanced', authenticateToken, upload.a
 });
 
 /**
+ * POST /api/photo-studio/admin/order/:orderId/complete
+ * Mark order as completed and send notification email to customer
+ */
+router.post('/admin/order/:orderId/complete', authenticatePhotoStudioAdmin, async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const { orderId } = req.params;
+
+    // Verify order exists
+    const [order] = await sequelize.query(
+      `SELECT pso.id, pso.user_id, pso.package_type, pso.order_status,
+              u.email, u.first_name
+       FROM photo_studio_orders pso
+       JOIN users u ON pso.user_id = u.id
+       WHERE pso.id = :orderId`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    // Get enhanced photos count
+    const [photoCount] = await sequelize.query(
+      'SELECT COUNT(*) as count FROM enhanced_photos WHERE order_id = :orderId',
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    // Update order status to completed
+    await sequelize.query(
+      `UPDATE photo_studio_orders
+       SET order_status = 'completed', updated_at = NOW()
+       WHERE id = :orderId`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`[PHOTO STUDIO] Order ${orderId} marked as completed`);
+
+    // Send email notification to customer
+    try {
+      const { sendPhotosCompletedEmail } = require('../services/emailService');
+
+      await sendPhotosCompletedEmail({
+        email: order.email,
+        firstName: order.first_name || 'Valued Customer',
+        orderId: orderId,
+        packageType: order.package_type,
+        photosDelivered: parseInt(photoCount.count)
+      });
+
+      logger.info(`[PHOTO STUDIO] Completion email sent to ${order.email} for order ${orderId}`);
+    } catch (emailError) {
+      logger.error('[PHOTO STUDIO] Failed to send completion email:', emailError);
+      // Don't fail the request if email fails
+    }
+
+    res.json({
+      success: true,
+      message: 'Order marked as completed and customer notified',
+      order: {
+        id: orderId,
+        status: 'completed',
+        photosDelivered: parseInt(photoCount.count)
+      }
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] Complete order error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to complete order'
+    });
+  }
+});
+
+/**
  * GET /api/photo-studio/order/:orderId/enhanced-photos
  * Get enhanced photos for an order (customer endpoint)
  */

@@ -1076,7 +1076,7 @@
                                         <div class="photo-name">${photo.original_filename}</div>
                                     </div>
                                     <div class="arrow-separator">→</div>
-                                    <div class="after-photo-upload">
+                                    <div class="after-photo-upload" id="after-container-${order.id}-${photo.id}">
                                         <div class="photo-label">Enhanced Version</div>
                                         ${enhanced ? `
                                             <div class="enhanced-preview">
@@ -1100,20 +1100,32 @@
                                             </div>
                                         ` : `
                                             <input type="file" id="enhanced-input-${order.id}-${photo.id}" class="file-input" accept="image/jpeg,image/jpg,image/png,image/webp" data-original-id="${photo.id}">
-                                            <label for="enhanced-input-${order.id}-${photo.id}" class="upload-box">
+                                            <label for="enhanced-input-${order.id}-${photo.id}" class="upload-box" id="upload-box-${order.id}-${photo.id}">
                                                 <div class="upload-icon">📸</div>
                                                 <div class="upload-text">Click to upload<br>enhanced version</div>
                                             </label>
-                                            <div id="preview-${order.id}-${photo.id}" class="upload-preview" style="display: none;"></div>
-                                            <button class="btn btn-primary btn-sm" id="upload-single-btn-${order.id}-${photo.id}" style="display: none; width: 100%; margin-top: 0.5rem;" onclick="uploadSingleEnhanced(${order.id}, ${photo.id})">
-                                                Upload Enhanced
-                                            </button>
+                                            <div id="preview-container-${order.id}-${photo.id}" style="display: none;">
+                                                <div class="enhanced-preview">
+                                                    <img id="preview-img-${order.id}-${photo.id}" src="" alt="Preview" loading="lazy">
+                                                </div>
+                                                <button class="btn btn-primary btn-sm" id="upload-single-btn-${order.id}-${photo.id}" style="width: 100%; margin-top: 0.5rem;" onclick="uploadSingleEnhanced(${order.id}, ${photo.id})">
+                                                    Upload Enhanced Version
+                                                </button>
+                                            </div>
                                         `}
                                         <div id="status-${order.id}-${photo.id}" class="upload-status-small"></div>
                                     </div>
                                 </div>
                             `}).join('')}
                         </div>
+                        ${originalPhotos.every(photo => enhancedPhotos.find(e => e.original_photo_id === photo.id)) ? `
+                            <div style="margin-top: 2rem; padding: 1.5rem; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 0.75rem; text-align: center;">
+                                <p style="color: #15803d; font-weight: 600; margin-bottom: 1rem;">✅ All photos have been enhanced!</p>
+                                <button class="btn btn-primary" style="font-size: 1.125rem; padding: 1rem 2rem;" onclick="markOrderAsCompleted(${order.id})">
+                                    📧 Mark Order as Completed & Notify Customer
+                                </button>
+                            </div>
+                        ` : ''}
                     ` : '<p style="color: #94a3b8;">Customer has not uploaded any photos yet</p>'}
                 </div>
 
@@ -1320,8 +1332,9 @@
 
             originalPhotos.forEach(photo => {
                 const fileInput = document.getElementById(`enhanced-input-${orderId}-${photo.id}`);
-                const previewDiv = document.getElementById(`preview-${orderId}-${photo.id}`);
-                const uploadBtn = document.getElementById(`upload-single-btn-${orderId}-${photo.id}`);
+                const uploadBox = document.getElementById(`upload-box-${orderId}-${photo.id}`);
+                const previewContainer = document.getElementById(`preview-container-${orderId}-${photo.id}`);
+                const previewImg = document.getElementById(`preview-img-${orderId}-${photo.id}`);
 
                 if (!fileInput) return;
 
@@ -1329,16 +1342,55 @@
                     const file = e.target.files[0];
                     if (!file) return;
 
-                    // Show preview
+                    // Validate file type
+                    if (!file.type.startsWith('image/')) {
+                        alert('Please select an image file');
+                        fileInput.value = '';
+                        return;
+                    }
+
+                    // Show preview in same frame (hide upload box, show preview)
                     const reader = new FileReader();
                     reader.onload = (event) => {
-                        previewDiv.innerHTML = `<img src="${event.target.result}" alt="Preview">`;
-                        previewDiv.style.display = 'block';
-                        uploadBtn.style.display = 'block';
+                        previewImg.src = event.target.result;
+                        uploadBox.style.display = 'none';
+                        previewContainer.style.display = 'block';
                     };
                     reader.readAsDataURL(file);
                 });
             });
+        }
+
+        // Mark order as completed and notify customer
+        async function markOrderAsCompleted(orderId) {
+            if (!confirm('Mark this order as completed and send notification email to the customer?')) {
+                return;
+            }
+
+            try {
+                const token = getAuthToken();
+                const response = await fetch(`/api/photo-studio/admin/order/${orderId}/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('✅ Order marked as completed! Customer has been notified via email.');
+                    // Reload order details and orders list
+                    await loadOrderDetails(orderId);
+                    await loadOrders();
+                } else {
+                    throw new Error(data.error || 'Failed to complete order');
+                }
+            } catch (error) {
+                console.error('Error completing order:', error);
+                alert('Failed to mark order as completed: ' + error.message);
+            }
         }
 
         // Show replace upload interface
