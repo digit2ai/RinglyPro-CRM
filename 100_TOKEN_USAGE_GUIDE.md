@@ -11,7 +11,7 @@ Every new RinglyPro account starts with **100 free tokens** to explore all featu
 | Service | Token Cost | What You Get |
 |---------|------------|--------------|
 | **🤖 AI Copilot Chat** | 1 token | Single chat message |
-| **🤖 GoHighLevel Query** | 2 tokens | CRM data query |
+| **🤖 GoHighLevel Query* | 2 tokens | CRM data query |
 | **🤖 Data Analysis** | 5 tokens | Complex AI analysis |
 | **🎯 Business Collector** | 20 tokens | Collect 100 leads |
 | **📥 CSV Export** | 5 tokens | Export lead data |
