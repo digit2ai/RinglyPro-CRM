@@ -398,6 +398,110 @@
             white-space: pre-wrap;
         }
 
+        /* Upload Section */
+        .upload-section {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-zone {
+            position: relative;
+            margin: 1.5rem 0;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-label {
+            display: block;
+            padding: 3rem 2rem;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .upload-label:hover {
+            background: #f1f5f9;
+            border-color: #6366f1;
+        }
+
+        .upload-label.drag-over {
+            background: #e0e7ff;
+            border-color: #6366f1;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .selected-files-list {
+            background: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .selected-file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        .selected-file-name {
+            font-size: 0.875rem;
+            color: #0a0a0a;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .selected-file-size {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin: 0 1rem;
+        }
+
+        .remove-file-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 1.25rem;
+            padding: 0.25rem;
+        }
+
+        .photo-meta {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
         /* Communications Section */
         .communications-section {
             background: white;
@@ -764,8 +868,51 @@
 
                 <div class="photos-section">
                     <h3 class="section-title">
+                        <span style="font-size: 1.5rem;">📤</span>
+                        Customer Uploaded Photos
+                    </h3>
+                    <div class="photos-horizontal-grid">
+                        ${originalPhotos.length > 0 ? originalPhotos.map(photo => `
+                            <div class="photo-card">
+                                <div class="photo-wrapper">
+                                    <img src="${photo.storage_url}" alt="${photo.original_filename}" loading="lazy">
+                                </div>
+                                <div class="photo-info">
+                                    <div class="photo-filename">${photo.original_filename}</div>
+                                    <div class="photo-meta">${(photo.file_size / 1024 / 1024).toFixed(2)} MB</div>
+                                </div>
+                                <button class="btn btn-secondary btn-sm" onclick="downloadPhoto('${photo.storage_url}', '${photo.original_filename}')">
+                                    ⬇️ Download
+                                </button>
+                            </div>
+                        `).join('') : '<p style="color: #94a3b8;">No photos uploaded by customer yet</p>'}
+                    </div>
+                </div>
+
+                <div class="upload-section">
+                    <h3 class="section-title">
+                        <span style="font-size: 1.5rem;">⬆️</span>
+                        Upload Enhanced Photos
+                    </h3>
+                    <div class="upload-zone" id="upload-zone-${order.id}">
+                        <input type="file" id="file-input-${order.id}" class="file-input" accept="image/jpeg,image/jpg,image/png,image/webp" multiple>
+                        <label for="file-input-${order.id}" class="upload-label">
+                            <div class="upload-icon">📸</div>
+                            <div class="upload-text">Click or drag enhanced photos here</div>
+                            <div class="upload-hint">JPEG, PNG, or WebP (Max 50MB per file)</div>
+                        </label>
+                    </div>
+                    <div id="selected-files-${order.id}" class="selected-files-list" style="display: none;"></div>
+                    <button class="btn btn-primary" id="upload-btn-${order.id}" style="display: none; width: 100%; margin-top: 1rem;" onclick="uploadEnhancedPhotos(${order.id})">
+                        Upload Enhanced Photos
+                    </button>
+                    <div id="upload-status-${order.id}" style="margin-top: 1rem;"></div>
+                </div>
+
+                <div class="photos-section">
+                    <h3 class="section-title">
                         <span style="font-size: 1.5rem;">🖼️</span>
-                        Enhanced Photos
+                        Enhanced Photos (Customer Review)
                     </h3>
                     <div class="photos-horizontal-grid">
                         ${enhancedPhotos.length > 0 ? enhancedPhotos.map((photo, index) => {
@@ -872,6 +1019,140 @@
                 alert('Failed to send message: ' + error.message);
             }
         }
+
+        // Download photo
+        async function downloadPhoto(url, filename) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = filename || 'photo.jpg';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(downloadUrl);
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Failed to download photo');
+            }
+        }
+
+        // Upload enhanced photos
+        async function uploadEnhancedPhotos(orderId) {
+            const fileInput = document.getElementById(`file-input-${orderId}`);
+            const files = fileInput.files;
+
+            if (files.length === 0) {
+                alert('Please select photos to upload');
+                return;
+            }
+
+            const uploadBtn = document.getElementById(`upload-btn-${orderId}`);
+            const statusDiv = document.getElementById(`upload-status-${orderId}`);
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+            statusDiv.innerHTML = '<div style="color: #6366f1;">Uploading photos...</div>';
+
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('photos', files[i]);
+            }
+
+            try {
+                const token = getAuthToken();
+                const response = await fetch(`/api/photo-studio/admin/order/${orderId}/upload-enhanced`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    statusDiv.innerHTML = `<div style="color: #16a34a; padding: 1rem; background: #d1fae5; border-radius: 0.5rem;">✅ Successfully uploaded ${data.uploads.filter(u => u.success).length} of ${files.length} photo(s)</div>`;
+                    fileInput.value = '';
+                    document.getElementById(`selected-files-${orderId}`).style.display = 'none';
+                    uploadBtn.style.display = 'none';
+
+                    // Reload order details after 2 seconds
+                    setTimeout(() => {
+                        loadOrderDetails(orderId);
+                        statusDiv.innerHTML = '';
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Upload failed');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                statusDiv.innerHTML = `<div style="color: #991b1b; padding: 1rem; background: #fee2e2; border-radius: 0.5rem;">❌ Upload failed: ${error.message}</div>`;
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload Enhanced Photos';
+            }
+        }
+
+        // Setup file input for enhanced photos upload
+        function setupEnhancedUpload(orderId) {
+            const fileInput = document.getElementById(`file-input-${orderId}`);
+            const fileLabel = document.querySelector(`label[for="file-input-${orderId}"]`);
+            const selectedFilesDiv = document.getElementById(`selected-files-${orderId}`);
+            const uploadBtn = document.getElementById(`upload-btn-${orderId}`);
+
+            if (!fileInput) return;
+
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+
+            // Drag and drop
+            fileLabel.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileLabel.classList.add('drag-over');
+            });
+
+            fileLabel.addEventListener('dragleave', () => {
+                fileLabel.classList.remove('drag-over');
+            });
+
+            fileLabel.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileLabel.classList.remove('drag-over');
+                fileInput.files = e.dataTransfer.files;
+                handleFiles(e.dataTransfer.files);
+            });
+
+            function handleFiles(files) {
+                if (files.length === 0) {
+                    selectedFilesDiv.style.display = 'none';
+                    uploadBtn.style.display = 'none';
+                    return;
+                }
+
+                selectedFilesDiv.style.display = 'block';
+                uploadBtn.style.display = 'block';
+
+                const fileList = Array.from(files).map((file, index) => `
+                    <div class="selected-file-item">
+                        <span class="selected-file-name">${file.name}</span>
+                        <span class="selected-file-size">${(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                    </div>
+                `).join('');
+
+                selectedFilesDiv.innerHTML = fileList;
+            }
+        }
+
+        // Call setup after rendering order details
+        const originalRenderOrderDetails = window.renderOrderDetails;
+        window.renderOrderDetails = function(order, enhancedPhotos, originalPhotos, communications) {
+            const result = originalRenderOrderDetails(order, enhancedPhotos, originalPhotos, communications);
+            setTimeout(() => setupEnhancedUpload(order.id), 100);
+            return result;
+        };
 
         // Load orders on page load
         window.addEventListener('DOMContentLoaded', loadOrders);
