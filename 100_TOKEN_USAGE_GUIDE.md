@@ -15,7 +15,7 @@ Every new RinglyPro account starts with **100 free tokens** to explore all featu
 | **🤖 Data Analysis** | 5 tokens | Complex AI analysis |
 | **🎯 Business Collector** | 20 tokens | Collect 100 leads |
 | **📥 CSV Export** | 5 tokens | Export lead data |
-| **📞 Single Outbound Call** | 1 token | One phone call |
+| **📞 Single Outbound Call** | 1 token- | One phone call |
 | **📞 Campaign (100 calls)** | 50 tokens | Automated calling campaign |
 | **📧 Single Email** | 2 tokens | One email sent |
 | **📧 Email Campaign** | 50 tokens | Up to 1,000 emails |
