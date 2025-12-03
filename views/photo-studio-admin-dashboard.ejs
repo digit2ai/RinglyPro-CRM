@@ -1305,13 +1305,13 @@
                 console.log('[Upload] Response data:', data);
 
                 if (data.success) {
-                    statusDiv.innerHTML = '<div style="color: #16a34a;">✅ Uploaded!</div>';
+                    statusDiv.innerHTML = '<div style="color: #16a34a;">✅ Upload successful! Loading enhanced photo...</div>';
 
-                    // Reload order details after a brief moment to show the enhanced photo
+                    // Wait a moment then reload just this order's details to show the enhanced photo
                     setTimeout(() => {
                         console.log('[Upload] Reloading order details...');
                         loadOrderDetails(orderId);
-                    }, 1000);
+                    }, 800);
                 } else {
                     throw new Error(data.error || 'Upload failed');
                 }
