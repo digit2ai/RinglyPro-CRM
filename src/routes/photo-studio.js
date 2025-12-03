@@ -1053,10 +1053,13 @@ router.get('/admin/order/:orderId/details', authenticateToken, async (req, res) 
     });
 
   } catch (error) {
+    console.error('[PHOTO STUDIO ADMIN] Get order details error:', error);
+    console.error('Error stack:', error.stack);
     logger.error('[PHOTO STUDIO ADMIN] Get order details error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get order details'
+      error: 'Failed to get order details',
+      details: error.message
     });
   }
 });
