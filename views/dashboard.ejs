@@ -5233,48 +5233,13 @@
             );
         }
 
-        // Rename openAdHocCall to openOutboundCall
+        // Open Outbound Call modal directly - no GHL or voicemail requirement
         function openOutboundCall() {
-            // Check if custom voicemail message is configured
-            const clientId = getClientIdFromToken();
-            if (!clientId) return;
-
-            fetch(`/api/client-settings/${clientId}/voicemail-message`)
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.success || !data.hasCustomMessage) {
-                        alert('Please configure your Outbound Voicemail Message in Settings before making calls.\\n\\nThis ensures your calls have a personalized greeting instead of the default RinglyPro message.');
-                        openSettings();
-
-                        // Switch to CRM Settings tab after a short delay
-                        setTimeout(() => {
-                            const crmTab = document.querySelector('[data-settings-tab="crm"]');
-                            if (crmTab) {
-                                crmTab.click();
-                                // Scroll to voicemail message field
-                                setTimeout(() => {
-                                    const messageField = document.getElementById('outboundVoicemailMessage');
-                                    if (messageField) {
-                                        messageField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                        messageField.focus();
-                                    }
-                                }, 300);
-                            }
-                        }, 500);
-                        return;
-                    }
-
-                    // Has custom message, proceed with call
-                    if (typeof openAdHocCall === 'function') {
-                        openAdHocCall();
-                    } else {
-                        console.error('openAdHocCall function not found');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error checking voicemail message:', error);
-                    alert('Failed to check voicemail message configuration. Please try again.');
-                });
+            if (typeof openAdHocCall === 'function') {
+                openAdHocCall();
+            } else {
+                console.error('openAdHocCall function not found');
+            }
         }
     </script>
 </body>
