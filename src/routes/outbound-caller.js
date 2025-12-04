@@ -79,7 +79,7 @@ router.post('/call-from-copilot', async (req, res) => {
     const userId = result[0].user_id;
     logger.info(`Making call for client ${clientId}, user ${userId}`);
 
-    const callResult = await outboundCallerService.makeCall(phone, leadData, userId);
+    const callResult = await outboundCallerService.makeCall(phone, leadData, userId, clientId);
 
     res.json(callResult);
 

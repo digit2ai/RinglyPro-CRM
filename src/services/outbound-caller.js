@@ -165,7 +165,32 @@ class OutboundCallerService {
     }
 
     try {
-      logger.info(`Making call to ${validation.normalized}`);
+      logger.info(`Making call to ${validation.normalized}${clientId ? ` for client ${clientId}` : ''}`);
+
+      // Fetch client's Twilio number if clientId provided
+      let fromNumber = this.twilioNumber; // Default to environment variable
+
+      if (clientId) {
+        try {
+          const [clientData] = await sequelize.query(
+            'SELECT ringlypro_number FROM clients WHERE id = :clientId',
+            {
+              replacements: { clientId },
+              type: QueryTypes.SELECT
+            }
+          );
+
+          if (clientData && clientData.ringlypro_number) {
+            fromNumber = clientData.ringlypro_number;
+            logger.info(`Using client's Twilio number: ${fromNumber}`);
+          } else {
+            logger.warn(`Client ${clientId} has no ringlypro_number, using default: ${this.twilioNumber}`);
+          }
+        } catch (error) {
+          logger.error(`Error fetching client Twilio number: ${error.message}`);
+          // Fall back to default number
+        }
+      }
 
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
       const voiceUrl = clientId
@@ -174,7 +199,7 @@ class OutboundCallerService {
 
       const call = await this.twilioClient.calls.create({
         to: validation.normalized,
-        from: this.twilioNumber,
+        from: fromNumber,
         url: voiceUrl,
         statusCallback: `${baseUrl}/api/outbound-caller/call-status`,
         statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
@@ -339,21 +364,29 @@ class OutboundCallerService {
 
     // Default RinglyPro TCPA-compliant informational voicemail message
     let voicemailMessage = "Hi, this is Lina from RinglyPro.com, calling with a quick business update. RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send automatic follow-ups — so you never miss a lead, even after hours. This message is for informational purposes only, and there's no obligation or payment required. If you'd like to learn more, you can visit RinglyPro.com or call us back at 813-212-4888. If you'd prefer not to receive future informational updates, you can reply stop or call the same number and we'll remove you. Thanks for your time, and have a great day.";
+    let customAudioUrl = null;
 
-    // Fetch client's custom message if clientId provided
+    // Fetch client's custom message and audio URL if clientId provided
     if (clientId) {
       try {
         const [results] = await sequelize.query(
-          'SELECT outbound_voicemail_message FROM clients WHERE id = :clientId',
+          'SELECT outbound_voicemail_message, outbound_voicemail_audio_url FROM clients WHERE id = :clientId',
           {
             replacements: { clientId },
             type: sequelize.QueryTypes.SELECT
           }
         );
 
-        if (results && results.outbound_voicemail_message) {
-          voicemailMessage = results.outbound_voicemail_message;
-          logger.info(`Using custom voicemail message for client ${clientId}`);
+        if (results) {
+          if (results.outbound_voicemail_message) {
+            voicemailMessage = results.outbound_voicemail_message;
+            logger.info(`Using custom voicemail message for client ${clientId}`);
+          }
+
+          if (results.outbound_voicemail_audio_url) {
+            customAudioUrl = results.outbound_voicemail_audio_url;
+            logger.info(`Using custom Lina voice audio for client ${clientId}: ${customAudioUrl}`);
+          }
         } else {
           logger.info(`No custom message for client ${clientId}, using default`);
         }
@@ -363,25 +396,31 @@ class OutboundCallerService {
       }
     }
 
-    // Check if ElevenLabs voice URL is configured (pre-generated audio file)
-    const elevenLabsVoiceUrl = process.env.ELEVENLABS_VOICEMAIL_URL;
+    const baseUrl = process.env.BASE_URL || 'https://ringlypro-crm.onrender.com';
 
-    // If we have a custom message, use Twilio TTS (Polly voice)
-    // If using default message and ElevenLabs URL exists, use pre-generated audio
-    if (clientId && voicemailMessage !== "Hi, this is Lina from RinglyPro.com, calling with a quick business update. RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send automatic follow-ups — so you never miss a lead, even after hours. This message is for informational purposes only, and there's no obligation or payment required. If you'd like to learn more, you can visit RinglyPro.com or call us back at 813-212-4888. If you'd prefer not to receive future informational updates, you can reply stop or call the same number and we'll remove you. Thanks for your time, and have a great day.") {
-      // Custom message - use Twilio Polly voice
-      logger.info('Using Twilio Polly voice for custom message');
+    // Priority order for voicemail audio:
+    // 1. Custom ElevenLabs audio (Lina voice) for client
+    // 2. Default ElevenLabs audio from environment variable
+    // 3. Fallback to Twilio Polly TTS
+
+    if (customAudioUrl) {
+      // Custom client message with Lina's ElevenLabs voice
+      twiml.play(`${baseUrl}${customAudioUrl}`);
+      logger.info(`🎤 Playing custom Lina voice audio: ${baseUrl}${customAudioUrl}`);
+    } else if (clientId && voicemailMessage !== "Hi, this is Lina from RinglyPro.com, calling with a quick business update. RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send automatic follow-ups — so you never miss a lead, even after hours. This message is for informational purposes only, and there's no obligation or payment required. If you'd like to learn more, you can visit RinglyPro.com or call us back at 813-212-4888. If you'd prefer not to receive future informational updates, you can reply stop or call the same number and we'll remove you. Thanks for your time, and have a great day.") {
+      // Custom message but audio generation failed - use Twilio Polly TTS as fallback
+      logger.info('⚠️ No custom audio found, using Twilio Polly TTS fallback');
       twiml.say({
         voice: 'Polly.Joanna',
         language: 'en-US'
       }, voicemailMessage);
-    } else if (elevenLabsVoiceUrl) {
+    } else if (process.env.ELEVENLABS_VOICEMAIL_URL) {
       // Default message with ElevenLabs - play pre-generated audio
-      twiml.play(elevenLabsVoiceUrl);
-      logger.info('Playing ElevenLabs voice from: ' + elevenLabsVoiceUrl);
+      twiml.play(process.env.ELEVENLABS_VOICEMAIL_URL);
+      logger.info('🎤 Playing default ElevenLabs voice from: ' + process.env.ELEVENLABS_VOICEMAIL_URL);
     } else {
-      // Fallback to Twilio Polly voice
-      logger.warn('ElevenLabs voice URL not configured, falling back to Twilio Polly');
+      // Final fallback to Twilio Polly voice
+      logger.warn('⚠️ No audio available, falling back to Twilio Polly TTS');
       twiml.say({
         voice: 'Polly.Joanna',
         language: 'en-US'

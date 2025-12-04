@@ -56,6 +56,12 @@ module.exports = (sequelize) => {
             defaultValue: null,
             comment: 'Custom voicemail message for outbound calls. If null, uses default RinglyPro message.'
         },
+        outbound_voicemail_audio_url: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+            defaultValue: null,
+            comment: 'URL to ElevenLabs-generated audio file for custom outbound voicemail message (Lina voice)'
+        },
         business_hours_start: {
             type: DataTypes.TIME,
             defaultValue: '09:00:00'
