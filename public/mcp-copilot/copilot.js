@@ -119,6 +119,13 @@ function downloadCSVFromPopup(csvData, filename) {
 function disableAllButtons() {
     const buttons = document.querySelectorAll('.action-btn');
     buttons.forEach(button => {
+        // Skip Business Collector, Prospect Manager, and Outbound Call - they work without GHL
+        if (button.classList.contains('btn-business') ||
+            button.classList.contains('btn-prospects') ||
+            button.classList.contains('btn-call')) {
+            return; // Skip these buttons
+        }
+
         button.disabled = true;
         button.classList.add('disabled');
         button.style.opacity = '0.4';
@@ -151,7 +158,7 @@ function disableAllButtons() {
     const lockReason = (featuresDisabled || tokenBalance <= 0)
         ? `Zero token balance (${tokenBalance} tokens)`
         : 'GHL not configured';
-    console.log(`🔒 All buttons disabled - ${lockReason}`);
+    console.log(`🔒 GHL-dependent buttons disabled - ${lockReason} (Business tools remain available)`);
 }
 
 // Enable all feature buttons
@@ -543,11 +550,7 @@ function openProspectManager() {
 
 // Connect to Business Collector
 function connectBusinessCollector() {
-    // Check GHL requirement
-    if (!requireGHL('Business Collector')) {
-        return;
-    }
-
+    // GHL requirement removed - Business Collector works independently
     console.log('🔍 Opening Business Collector...');
     if (typeof openBusinessCollectorForm === 'function') {
         openBusinessCollectorForm();
