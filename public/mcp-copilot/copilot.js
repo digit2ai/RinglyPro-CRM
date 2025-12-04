@@ -469,17 +469,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Check GHL configuration first (this also checks tokens and enables/disables buttons)
         await checkGHLConfiguration();
 
-        // If GHL is not configured, redirect to signup page immediately
-        // Note: ghlConfigured is set by checkGHLConfiguration()
-        if (!ghlConfigured) {
-            console.log('🚫 GHL not configured - redirecting to signup page');
-            const ghlSignupUrl = `https://aiagent.ringlypro.com/ghl-signup?client_id=${clientId}`;
-            window.location.href = ghlSignupUrl;
-            return; // Stop execution
-        }
+        // NO automatic redirect to GHL signup - users can still use Business Collector,
+        // Prospect Manager, and Outbound Call without GHL
+        // GHL-dependent features (AI Agent, Social Media, Email Marketing) will show
+        // upgrade prompt when clicked
 
-        // Then load credentials (only if GHL is configured)
-        await autoLoadCredentials(clientId);
+        // Load credentials if GHL is configured
+        if (ghlConfigured) {
+            await autoLoadCredentials(clientId);
+        }
     }
 
     // Check for hash anchor to auto-open features
