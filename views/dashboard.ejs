@@ -5215,9 +5215,23 @@
     </script>
 
     <!-- Business Tools Scripts -->
-    <script src="/mcp-copilot/business-collector-form.js"></script>
     <script src="/mcp-copilot/adhoc-call.js"></script>
     <script>
+        // Override: Open Business Collector in new window instead of modal
+        function openBusinessCollectorForm() {
+            const businessCollectorUrl = '/mcp-copilot/index.html#business-collector';
+            const width = 1400;
+            const height = 900;
+            const left = (screen.width - width) / 2;
+            const top = (screen.height - height) / 2;
+
+            window.open(
+                businessCollectorUrl,
+                'businessCollector',
+                `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+            );
+        }
+
         // Open Prospect Manager (no GHL requirement)
         function openProspectManager() {
             const prospectManagerUrl = '/mcp-copilot/prospect-manager.html';
