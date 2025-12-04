@@ -1,9 +1,9 @@
-// Ad-Hoc Single Outbound Call Feature
+// Outbound Call Feature
 // Standalone feature for making instant calls without Business Collector
 
 let adhocCallModal = null;
 
-// Open ad-hoc call modal
+// Open outbound call modal
 function openAdHocCall() {
     if (!adhocCallModal) {
         createAdHocCallModal();
@@ -15,7 +15,7 @@ function openAdHocCall() {
     }, 100);
 }
 
-// Create the ad-hoc call modal
+// Create the outbound call modal
 function createAdHocCallModal() {
     const modalHTML = `
         <div id="adhocCallModal" class="bc-modal">
@@ -70,7 +70,7 @@ function createAdHocCallModal() {
     document.getElementById('adhocCallForm').addEventListener('submit', handleAdHocCallSubmit);
 }
 
-// Handle ad-hoc call form submission
+// Handle outbound call form submission
 async function handleAdHocCallSubmit(e) {
     e.preventDefault();
 
@@ -136,12 +136,12 @@ async function handleAdHocCallSubmit(e) {
             console.error('❌ Call failed:', data.error);
         }
     } catch (error) {
-        console.error('Error making ad-hoc call:', error);
+        console.error('Error making outbound call:', error);
         alert('Failed to initiate call. Check server logs.');
     }
 }
 
-// Save ad-hoc contact to database
+// Save outbound call contact to database
 async function saveAdHocContactToDatabase(phone, name) {
     if (!currentClientId) {
         console.warn('No client ID - skipping database save');
@@ -150,11 +150,11 @@ async function saveAdHocContactToDatabase(phone, name) {
 
     try {
         const contact = {
-            business_name: name || 'Ad-Hoc Call',
+            business_name: name || 'Outbound Call',
             phone: phone,
-            category: 'Ad-Hoc Outbound Call',
+            category: 'Outbound Call',
             source_url: 'Manual Entry',
-            notes: `Ad-hoc call initiated on ${new Date().toLocaleString()}`
+            notes: `Outbound call initiated on ${new Date().toLocaleString()}`
         };
 
         const response = await fetch(`${API_BASE}/business-collector/save`, {
@@ -171,12 +171,12 @@ async function saveAdHocContactToDatabase(phone, name) {
             console.log('✅ Contact saved to database');
         }
     } catch (error) {
-        console.error('Error saving ad-hoc contact:', error);
+        console.error('Error saving outbound call contact:', error);
         // Don't fail the call if database save fails
     }
 }
 
-// Export ad-hoc contact to GHL CRM
+// Export outbound call contact to GHL CRM
 async function exportAdHocContactToGHL(phone, name) {
     if (!currentClientId) {
         console.warn('No client ID - skipping GHL export');
@@ -185,10 +185,10 @@ async function exportAdHocContactToGHL(phone, name) {
 
     try {
         const contact = {
-            business_name: name || 'Ad-Hoc Call',
+            business_name: name || 'Outbound Call',
             phone: phone,
-            category: 'Ad-Hoc Outbound Call',
-            notes: `Ad-hoc call initiated on ${new Date().toLocaleString()}`
+            category: 'Outbound Call',
+            notes: `Outbound call initiated on ${new Date().toLocaleString()}`
         };
 
         const response = await fetch(`${API_BASE}/business-collector/export-to-ghl`, {
@@ -207,12 +207,12 @@ async function exportAdHocContactToGHL(phone, name) {
             console.log('ℹ️ Contact already exists in GHL CRM');
         }
     } catch (error) {
-        console.error('Error exporting ad-hoc contact to GHL:', error);
+        console.error('Error exporting outbound call contact to GHL:', error);
         // Don't fail the call if GHL export fails
     }
 }
 
-// Close ad-hoc call modal
+// Close outbound call modal
 function closeAdHocCall() {
     if (adhocCallModal) {
         adhocCallModal.style.display = 'none';

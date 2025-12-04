@@ -515,10 +515,8 @@ function openEmailMarketing() {
 
 // Open Prospect Manager
 function openProspectManager() {
-    // Check GHL requirement
-    if (!requireGHL('Prospect Manager')) {
-        return;
-    }
+    // GHL requirement removed - Prospect Manager works independently
+    // Optional GHL integration enhances features but is not required
 
     // Build URL with optional client_id
     const prospectUrl = currentClientId
