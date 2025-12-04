@@ -474,6 +474,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Then load credentials (only if GHL is configured)
         await autoLoadCredentials(clientId);
     }
+
+    // Check for hash anchor to auto-open features
+    const hash = window.location.hash.substring(1); // Remove the # character
+    if (hash === 'business-collector') {
+        console.log('📋 Auto-opening Business Collector from hash anchor');
+        setTimeout(() => openBusinessCollectorForm(), 500);
+    } else if (hash === 'outbound-call') {
+        console.log('📞 Auto-opening Outbound Call from hash anchor');
+        setTimeout(() => openAdHocCall(), 500);
+    }
 });
 
 // Open Social Media Marketing Tool

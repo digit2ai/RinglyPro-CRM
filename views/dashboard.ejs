@@ -5217,11 +5217,28 @@
     <!-- Business Tools Scripts -->
     <script src="/mcp-copilot/adhoc-call.js"></script>
     <script>
-        // Override: Open Business Collector in new window instead of modal
+        // Helper to get client ID from JWT token
+        function getClientIdFromDashboard() {
+            try {
+                const token = localStorage.getItem('authToken');
+                if (!token) return null;
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                return payload.clientId;
+            } catch (error) {
+                console.error('Error extracting clientId from token:', error);
+                return null;
+            }
+        }
+
+        // Override: Open Business Collector in copilot window
         function openBusinessCollectorForm() {
-            const businessCollectorUrl = '/mcp-copilot/index.html#business-collector';
-            const width = 1400;
-            const height = 900;
+            const clientId = getClientIdFromDashboard();
+            const businessCollectorUrl = clientId
+                ? `/mcp-copilot/?client_id=${clientId}#business-collector`
+                : '/mcp-copilot/#business-collector';
+
+            const width = Math.min(1400, screen.width - 100);
+            const height = Math.min(900, screen.height - 100);
             const left = (screen.width - width) / 2;
             const top = (screen.height - height) / 2;
 
@@ -5234,9 +5251,13 @@
 
         // Open Prospect Manager (no GHL requirement)
         function openProspectManager() {
-            const prospectManagerUrl = '/mcp-copilot/prospect-manager.html';
-            const width = 1400;
-            const height = 900;
+            const clientId = getClientIdFromDashboard();
+            const prospectManagerUrl = clientId
+                ? `/mcp-copilot/prospect-manager.html?client_id=${clientId}`
+                : '/mcp-copilot/prospect-manager.html';
+
+            const width = Math.min(1400, screen.width - 100);
+            const height = Math.min(900, screen.height - 100);
             const left = (screen.width - width) / 2;
             const top = (screen.height - height) / 2;
 
@@ -5247,13 +5268,23 @@
             );
         }
 
-        // Open Outbound Call modal directly - no GHL or voicemail requirement
+        // Open Outbound Call in copilot window
         function openOutboundCall() {
-            if (typeof openAdHocCall === 'function') {
-                openAdHocCall();
-            } else {
-                console.error('openAdHocCall function not found');
-            }
+            const clientId = getClientIdFromDashboard();
+            const outboundCallUrl = clientId
+                ? `/mcp-copilot/?client_id=${clientId}#outbound-call`
+                : '/mcp-copilot/#outbound-call';
+
+            const width = Math.min(1400, screen.width - 100);
+            const height = Math.min(900, screen.height - 100);
+            const left = (screen.width - width) / 2;
+            const top = (screen.height - height) / 2;
+
+            window.open(
+                outboundCallUrl,
+                'outboundCall',
+                `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+            );
         }
     </script>
 </body>
