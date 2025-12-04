@@ -126,16 +126,21 @@ function disableAllButtons() {
             return; // Skip these buttons
         }
 
-        button.disabled = true;
-        button.classList.add('disabled');
-        button.style.opacity = '0.4';
-        button.style.cursor = 'not-allowed';
+        // Don't fully disable - keep clickable but add visual indicator
+        button.classList.add('requires-ghl');
         button.style.textDecoration = 'line-through';
-        button.style.pointerEvents = 'none'; // Prevent all clicks
+        button.style.cursor = 'pointer';
 
-        // DO NOT override button.onclick! The HTML has onclick attributes we need to preserve.
-        // The CSS pointer-events:none will prevent clicks from reaching the handler.
-        // When we enable buttons, we'll remove pointer-events and the original handlers will work.
+        // Add lock emoji to button text if not already there
+        const buttonText = button.querySelector('div:last-child');
+        if (buttonText && !buttonText.textContent.includes('🔒')) {
+            buttonText.textContent = '🔒 ' + buttonText.textContent;
+        }
+
+        // Override onclick to show GHL upgrade prompt
+        const originalOnclick = button.getAttribute('onclick');
+        button.setAttribute('data-original-onclick', originalOnclick);
+        button.setAttribute('onclick', 'showGHLUpgradePrompt()');
     });
 
     // Also disable chat input
@@ -158,7 +163,7 @@ function disableAllButtons() {
     const lockReason = (featuresDisabled || tokenBalance <= 0)
         ? `Zero token balance (${tokenBalance} tokens)`
         : 'GHL not configured';
-    console.log(`🔒 GHL-dependent buttons disabled - ${lockReason} (Business tools remain available)`);
+    console.log(`🔒 GHL-dependent buttons require upgrade - ${lockReason} (Business tools remain available)`);
 }
 
 // Enable all feature buttons
@@ -166,13 +171,24 @@ function enableAllButtons() {
     const buttons = document.querySelectorAll('.action-btn');
     buttons.forEach(button => {
         button.disabled = false;
-        button.classList.remove('disabled');
+        button.classList.remove('disabled', 'requires-ghl');
         button.style.opacity = '';
         button.style.cursor = '';
         button.style.textDecoration = '';
-        button.style.pointerEvents = ''; // Re-enable pointer events
-        // DO NOT set onclick = null! That removes the HTML onclick handlers!
-        // The HTML buttons have onclick="functionName()" which we need to keep
+        button.style.pointerEvents = '';
+
+        // Restore original onclick if it was saved
+        const originalOnclick = button.getAttribute('data-original-onclick');
+        if (originalOnclick) {
+            button.setAttribute('onclick', originalOnclick);
+            button.removeAttribute('data-original-onclick');
+        }
+
+        // Remove lock emoji from button text
+        const buttonText = button.querySelector('div:last-child');
+        if (buttonText && buttonText.textContent.includes('🔒 ')) {
+            buttonText.textContent = buttonText.textContent.replace('🔒 ', '');
+        }
     });
 
     // Enable chat input
@@ -452,6 +468,22 @@ function requireGHL(featureName) {
     }
 
     return true;
+}
+
+// Show GHL upgrade prompt when locked features are clicked
+function showGHLUpgradePrompt() {
+    console.log('🔒 User clicked GHL-required feature - showing upgrade prompt');
+    if (window.ghlUpgrade && window.ghlUpgrade.show) {
+        window.ghlUpgrade.show();
+    } else {
+        // Fallback if upgrade modal not loaded
+        const ghlSignupUrl = currentClientId
+            ? `https://aiagent.ringlypro.com/ghl-signup?client_id=${currentClientId}`
+            : 'https://aiagent.ringlypro.com/ghl-signup';
+        if (confirm('This feature requires GoHighLevel integration.\n\nWould you like to upgrade now?')) {
+            window.open(ghlSignupUrl, '_blank');
+        }
+    }
 }
 
 // Check for client_id in URL and auto-load credentials
