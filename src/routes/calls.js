@@ -231,9 +231,104 @@ router.get('/stats', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error fetching call stats:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch call stats',
-      details: error.message 
+      details: error.message
+    });
+  }
+});
+
+// POST /api/calls/callback - Initiate callback to voicemail caller (MULTI-TENANT)
+router.post('/callback', async (req, res) => {
+  try {
+    const { to, from, voicemail_id, clientId } = req.body;
+
+    // Validate input
+    if (!to || !clientId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: to, clientId'
+      });
+    }
+
+    console.log(`📞 Client ${clientId} initiating callback to ${to}`);
+
+    // Get client's dedicated Twilio number and verify ownership
+    const { sequelize } = require('../models');
+    const clientQuery = `
+      SELECT ringlypro_number, business_name
+      FROM clients
+      WHERE id = $1 AND active = TRUE
+    `;
+
+    const [clientData] = await sequelize.query(clientQuery, {
+      bind: [clientId],
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    if (!clientData) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found or inactive'
+      });
+    }
+
+    // Use the provided 'from' number or default to client's RinglyPro number
+    const fromNumber = from || clientData.ringlypro_number;
+
+    // Initiate outbound call via Twilio
+    const call = await client.calls.create({
+      to: to,
+      from: fromNumber,
+      url: 'http://demo.twilio.com/docs/voice.xml', // Default TwiML - can be customized for AI receptionist
+      statusCallback: `${process.env.BASE_URL || 'https://aiagent.ringlypro.com'}/api/calls/webhook/voice`,
+      statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed']
+    });
+
+    console.log(`✅ Callback call initiated! Call SID: ${call.sid}`);
+
+    // Store call record in database WITH client_id
+    let callRecord = null;
+    if (Call) {
+      try {
+        callRecord = await Call.create({
+          clientId: clientId,  // CRITICAL: Multi-tenant isolation
+          twilioCallSid: call.sid,
+          direction: 'outgoing',
+          fromNumber: fromNumber,
+          toNumber: to,
+          status: 'queued',
+          callStatus: 'initiated',
+          notes: voicemail_id ? `Callback for voicemail ID: ${voicemail_id}` : 'Manual callback',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+
+        console.log(`💾 Callback call stored in database with ID: ${callRecord.id} for client ${clientId}`);
+      } catch (dbError) {
+        console.error('⚠️ Failed to store call record:', dbError.message);
+        // Continue without failing the call initiation
+      }
+    }
+
+    // Return success response
+    res.json({
+      success: true,
+      message: 'Callback initiated successfully',
+      twilioCallSid: call.sid,
+      status: call.status,
+      callId: callRecord ? callRecord.id : null,
+      storedInDb: !!callRecord,
+      to: to,
+      from: fromNumber
+    });
+
+  } catch (error) {
+    console.error('❌ Error initiating callback:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to initiate callback',
+      details: error.message
     });
   }
 });
