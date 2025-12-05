@@ -150,7 +150,8 @@ class VoicemailAudioService {
                 Key: s3Key,
                 Body: audioBuffer,
                 ContentType: 'audio/mpeg',
-                ACL: 'public-read', // Make file publicly accessible
+                // Note: Using bucket policy for public access instead of ACL
+                // ACL: 'public-read' is not supported when bucket has ACLs disabled
                 ServerSideEncryption: 'AES256',
                 CacheControl: 'max-age=31536000' // Cache for 1 year (audio doesn't change)
             });
