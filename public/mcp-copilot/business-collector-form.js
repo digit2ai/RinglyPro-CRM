@@ -168,6 +168,48 @@ function createBusinessCollectorModal() {
                                 <option value="welding service">Welding & Fabrication</option>
                                 <option value="equipment rental service">Equipment Rental</option>
                             </optgroup>
+                            <optgroup label="Jewelry & Accessories Retail">
+                                <option value="women's boutique">Women's Boutiques</option>
+                                <option value="clothing boutique">Clothing Boutiques</option>
+                                <option value="fashion boutique">Fashion Boutiques</option>
+                                <option value="accessories store">Accessories Stores</option>
+                                <option value="jewelry store">Jewelry Stores</option>
+                            </optgroup>
+                            <optgroup label="Gift & Specialty Retail">
+                                <option value="gift shop">Gift Shops</option>
+                                <option value="souvenir shop">Souvenir Shops</option>
+                                <option value="specialty gift store">Specialty Gift Stores</option>
+                                <option value="tourist gift shop">Tourist Gift Shops</option>
+                                <option value="beach shop">Beach Shops</option>
+                            </optgroup>
+                            <optgroup label="Consignment & Resale">
+                                <option value="consignment boutique">Consignment Boutiques</option>
+                                <option value="resale boutique">Resale Boutiques</option>
+                                <option value="upscale consignment shop">Upscale Consignment Shops</option>
+                                <option value="designer resale store">Designer Resale Stores</option>
+                            </optgroup>
+                            <optgroup label="Beauty & Wellness">
+                                <option value="day spa">Day Spas</option>
+                                <option value="hair salon">Hair Salons</option>
+                                <option value="nail salon">Nail Salons</option>
+                                <option value="med spa">Med Spas</option>
+                                <option value="beauty salon">Beauty Salons</option>
+                            </optgroup>
+                            <optgroup label="Home & Lifestyle">
+                                <option value="home décor store">Home Décor Stores</option>
+                                <option value="antique shop">Antique Shops</option>
+                                <option value="art gallery">Art Galleries</option>
+                            </optgroup>
+                            <optgroup label="Bridal & Special Occasion">
+                                <option value="bridal shop">Bridal Shops</option>
+                                <option value="formal wear store">Formal Wear Stores</option>
+                                <option value="dress boutique">Dress Boutiques</option>
+                            </optgroup>
+                            <optgroup label="Tourism & Hospitality">
+                                <option value="hotel gift shop">Hotel Gift Shops</option>
+                                <option value="resort shop">Resort Shops</option>
+                                <option value="museum gift shop">Museum Gift Shops</option>
+                            </optgroup>
                         </select>
                     </div>
 
