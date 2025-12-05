@@ -122,6 +122,20 @@ function createBusinessCollectorModal() {
                                 <option value="event venue">Event Venues</option>
                                 <option value="florist">Florists</option>
                             </optgroup>
+                            <optgroup label="Food & Beverage">
+                                <option value="restaurant">Restaurants</option>
+                                <option value="bakery">Bakeries</option>
+                                <option value="pastry shop">Pastry Shops</option>
+                                <option value="dessert cafe">Dessert Cafés</option>
+                                <option value="confectionery">Confectioneries</option>
+                                <option value="ice cream shop">Ice Cream Shops</option>
+                                <option value="cafe">Cafés & Coffee Shops</option>
+                                <option value="pizza restaurant">Pizza Restaurants</option>
+                                <option value="fast food restaurant">Fast Food</option>
+                                <option value="deli">Delis & Sandwich Shops</option>
+                                <option value="food truck">Food Trucks</option>
+                                <option value="bar">Bars & Pubs</option>
+                            </optgroup>
                             <optgroup label="Pet & Animal Services">
                                 <option value="dog grooming service">Dog Groomers</option>
                                 <option value="veterinarian">Veterinarians</option>
