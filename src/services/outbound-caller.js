@@ -405,8 +405,10 @@ class OutboundCallerService {
 
     if (customAudioUrl) {
       // Custom client message with Lina's ElevenLabs voice
-      twiml.play(`${baseUrl}${customAudioUrl}`);
-      logger.info(`🎤 Playing custom Lina voice audio: ${baseUrl}${customAudioUrl}`);
+      // Check if it's an S3 URL (full URL) or local URL (relative path)
+      const audioUrl = customAudioUrl.startsWith('http') ? customAudioUrl : `${baseUrl}${customAudioUrl}`;
+      twiml.play(audioUrl);
+      logger.info(`🎤 Playing custom Lina voice audio: ${audioUrl}`);
     } else if (clientId && voicemailMessage !== "Hi, this is Lina from RinglyPro.com, calling with a quick business update. RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send automatic follow-ups — so you never miss a lead, even after hours. This message is for informational purposes only, and there's no obligation or payment required. If you'd like to learn more, you can visit RinglyPro.com or call us back at 813-212-4888. If you'd prefer not to receive future informational updates, you can reply stop or call the same number and we'll remove you. Thanks for your time, and have a great day.") {
       // Custom message but audio generation failed - use Twilio Polly TTS as fallback
       logger.info('⚠️ No custom audio found, using Twilio Polly TTS fallback');
