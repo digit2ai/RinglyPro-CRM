@@ -1714,4 +1714,525 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// =====================================================
+// DESIGN BRIEF ENDPOINTS (Customer & Admin)
+// =====================================================
+
+/**
+ * POST /api/photo-studio/order/:orderId/brief
+ * Create or update design brief for an order (customer endpoint)
+ */
+router.post('/order/:orderId/brief', authenticateToken, async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { orderId } = req.params;
+    const briefData = req.body;
+
+    logger.info(`[PHOTO STUDIO] Creating/updating design brief for order ${orderId}`);
+
+    // Verify user owns this order
+    const [order] = await sequelize.query(
+      'SELECT id, user_id FROM photo_studio_orders WHERE id = :orderId',
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    if (order.user_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied'
+      });
+    }
+
+    // Validate required fields
+    if (!briefData.business_name || !briefData.primary_design_need || !briefData.design_goal) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: business_name, primary_design_need, design_goal'
+      });
+    }
+
+    // Check if brief already exists
+    const [existingBrief] = await sequelize.query(
+      'SELECT id FROM photo_studio_design_briefs WHERE order_id = :orderId',
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    let brief;
+
+    if (existingBrief) {
+      // Update existing brief
+      await sequelize.query(
+        `UPDATE photo_studio_design_briefs
+         SET business_name = :businessName,
+             business_type = :businessType,
+             website = :website,
+             business_phone = :businessPhone,
+             location_city = :locationCity,
+             location_country = :locationCountry,
+             primary_design_need = :primaryDesignNeed,
+             design_goal = :designGoal,
+             target_audience = :targetAudience,
+             usage_channels = :usageChannels,
+             brand_colors = :brandColors,
+             brand_fonts = :brandFonts,
+             style_reference_links = :styleReferenceLinks,
+             logo_present = :logoPresent,
+             logo_notes = :logoNotes,
+             copy_status = :copyStatus,
+             main_headline = :mainHeadline,
+             key_offers_or_items = :keyOffersOrItems,
+             special_requirements = :specialRequirements,
+             languages = :languages,
+             updated_at = NOW()
+         WHERE order_id = :orderId
+         RETURNING *`,
+        {
+          replacements: {
+            orderId,
+            businessName: briefData.business_name,
+            businessType: briefData.business_type || 'Restaurant',
+            website: briefData.website || null,
+            businessPhone: briefData.business_phone || null,
+            locationCity: briefData.location_city || null,
+            locationCountry: briefData.location_country || null,
+            primaryDesignNeed: briefData.primary_design_need,
+            designGoal: briefData.design_goal,
+            targetAudience: briefData.target_audience || null,
+            usageChannels: briefData.usage_channels || null,
+            brandColors: briefData.brand_colors || null,
+            brandFonts: briefData.brand_fonts || null,
+            styleReferenceLinks: briefData.style_reference_links || null,
+            logoPresent: briefData.logo_present || false,
+            logoNotes: briefData.logo_notes || null,
+            copyStatus: briefData.copy_status || 'designer_writes_copy',
+            mainHeadline: briefData.main_headline || null,
+            keyOffersOrItems: briefData.key_offers_or_items || null,
+            specialRequirements: briefData.special_requirements || null,
+            languages: briefData.languages || null
+          },
+          type: QueryTypes.UPDATE
+        }
+      );
+
+      [brief] = await sequelize.query(
+        'SELECT * FROM photo_studio_design_briefs WHERE order_id = :orderId',
+        {
+          replacements: { orderId },
+          type: QueryTypes.SELECT
+        }
+      );
+
+      logger.info(`[PHOTO STUDIO] Design brief updated for order ${orderId}`);
+    } else {
+      // Create new brief
+      const [results] = await sequelize.query(
+        `INSERT INTO photo_studio_design_briefs (
+          order_id, business_name, business_type, website, business_phone,
+          location_city, location_country, primary_design_need, design_goal,
+          target_audience, usage_channels, brand_colors, brand_fonts,
+          style_reference_links, logo_present, logo_notes, copy_status,
+          main_headline, key_offers_or_items, special_requirements, languages
+         ) VALUES (
+          :orderId, :businessName, :businessType, :website, :businessPhone,
+          :locationCity, :locationCountry, :primaryDesignNeed, :designGoal,
+          :targetAudience, :usageChannels, :brandColors, :brandFonts,
+          :styleReferenceLinks, :logoPresent, :logoNotes, :copyStatus,
+          :mainHeadline, :keyOffersOrItems, :specialRequirements, :languages
+         ) RETURNING *`,
+        {
+          replacements: {
+            orderId,
+            businessName: briefData.business_name,
+            businessType: briefData.business_type || 'Restaurant',
+            website: briefData.website || null,
+            businessPhone: briefData.business_phone || null,
+            locationCity: briefData.location_city || null,
+            locationCountry: briefData.location_country || null,
+            primaryDesignNeed: briefData.primary_design_need,
+            designGoal: briefData.design_goal,
+            targetAudience: briefData.target_audience || null,
+            usageChannels: briefData.usage_channels || null,
+            brandColors: briefData.brand_colors || null,
+            brandFonts: briefData.brand_fonts || null,
+            styleReferenceLinks: briefData.style_reference_links || null,
+            logoPresent: briefData.logo_present || false,
+            logoNotes: briefData.logo_notes || null,
+            copyStatus: briefData.copy_status || 'designer_writes_copy',
+            mainHeadline: briefData.main_headline || null,
+            keyOffersOrItems: briefData.key_offers_or_items || null,
+            specialRequirements: briefData.special_requirements || null,
+            languages: briefData.languages || null
+          },
+          type: QueryTypes.INSERT
+        }
+      );
+
+      brief = results[0];
+      logger.info(`[PHOTO STUDIO] Design brief created for order ${orderId}`);
+    }
+
+    res.json({
+      success: true,
+      brief,
+      message: existingBrief ? 'Design brief updated' : 'Design brief created'
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] Create/update design brief error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to save design brief'
+    });
+  }
+});
+
+/**
+ * PUT /api/photo-studio/order/:orderId/brief
+ * Update design brief (alias for POST - supports both)
+ */
+router.put('/order/:orderId/brief', authenticateToken, async (req, res) => {
+  // Just forward to POST endpoint
+  return router.handle(
+    Object.assign(req, { method: 'POST' }),
+    res
+  );
+});
+
+/**
+ * GET /api/photo-studio/order/:orderId/brief
+ * Get design brief for an order (customer or admin)
+ */
+router.get('/order/:orderId/brief', authenticateToken, async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { orderId } = req.params;
+
+    // Check if user is admin
+    const [user] = await sequelize.query(
+      'SELECT email, is_admin FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const photoStudioAdmins = ['mstagg@digit2ai.com', 'pixlypro@digit2ai.com'];
+    const isAdmin = user && (user.is_admin || photoStudioAdmins.includes(user.email));
+
+    if (!isAdmin) {
+      // Verify user owns this order
+      const [order] = await sequelize.query(
+        'SELECT id, user_id FROM photo_studio_orders WHERE id = :orderId',
+        {
+          replacements: { orderId },
+          type: QueryTypes.SELECT
+        }
+      );
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          error: 'Order not found'
+        });
+      }
+
+      if (order.user_id !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied'
+        });
+      }
+    }
+
+    // Get design brief
+    const [brief] = await sequelize.query(
+      'SELECT * FROM photo_studio_design_briefs WHERE order_id = :orderId',
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!brief) {
+      return res.json({
+        success: true,
+        brief: null,
+        exists: false
+      });
+    }
+
+    res.json({
+      success: true,
+      brief,
+      exists: true
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] Get design brief error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get design brief'
+    });
+  }
+});
+
+// =====================================================
+// AI DESIGN ASSISTANT ENDPOINTS (Admin Only)
+// =====================================================
+
+const { runAIAssistant, generateFallbackContent } = require('../services/mcpClient');
+
+/**
+ * POST /api/photo-studio/admin/order/:orderId/ai/generate
+ * Generate AI content for an order (admin only)
+ */
+router.post('/admin/order/:orderId/ai/generate', authenticateToken, async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { orderId } = req.params;
+    const { mode, extraInstructions, preferredModel } = req.body;
+
+    logger.info(`[PHOTO STUDIO] AI generation request - Order: ${orderId}, Mode: ${mode}`);
+
+    // Verify user is admin
+    const [adminUser] = await sequelize.query(
+      'SELECT email, is_admin FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const photoStudioAdmins = ['mstagg@digit2ai.com', 'pixlypro@digit2ai.com'];
+    if (!adminUser || (!adminUser.is_admin && !photoStudioAdmins.includes(adminUser.email))) {
+      return res.status(403).json({
+        success: false,
+        error: 'Admin access required'
+      });
+    }
+
+    // Validate mode
+    const validModes = ['menu', 'flyer', 'social', 'generic'];
+    if (!mode || !validModes.includes(mode)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid mode. Must be one of: ${validModes.join(', ')}`
+      });
+    }
+
+    // Load order
+    const [order] = await sequelize.query(
+      'SELECT * FROM photo_studio_orders WHERE id = :orderId',
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    // Load design brief
+    const [brief] = await sequelize.query(
+      'SELECT * FROM photo_studio_design_briefs WHERE order_id = :orderId',
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!brief) {
+      logger.warn(`[PHOTO STUDIO] No design brief for order ${orderId}, proceeding with limited context`);
+    }
+
+    // Load photo metadata (optional)
+    const photos = await sequelize.query(
+      `SELECT filename, file_size, mime_type, uploaded_at
+       FROM photo_uploads
+       WHERE order_id = :orderId
+       ORDER BY uploaded_at DESC
+       LIMIT 10`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    // Call MCP AI Assistant
+    const aiResult = await runAIAssistant({
+      mode,
+      brief,
+      order,
+      photos,
+      extraInstructions: extraInstructions || '',
+      preferredModel: preferredModel || 'openai'
+    });
+
+    // If MCP failed, use fallback
+    if (!aiResult.success || aiResult.fallback) {
+      logger.warn(`[PHOTO STUDIO] MCP unavailable, using fallback content for order ${orderId}`);
+
+      const fallbackContent = generateFallbackContent(mode, brief);
+
+      // Still save to database with fallback flag
+      const [results] = await sequelize.query(
+        `INSERT INTO photo_studio_ai_outputs (
+          order_id, mode, request_context, model_name, output_json, raw_text, created_by_admin_id
+         ) VALUES (
+          :orderId, :mode, :requestContext, :modelName, :outputJson, :rawText, :adminId
+         ) RETURNING *`,
+        {
+          replacements: {
+            orderId,
+            mode,
+            requestContext: JSON.stringify({ brief, order, photos, extraInstructions, fallback: true }),
+            modelName: 'fallback',
+            outputJson: JSON.stringify(fallbackContent),
+            rawText: aiResult.error || 'MCP server unavailable - fallback content generated',
+            adminId: userId
+          },
+          type: QueryTypes.INSERT
+        }
+      );
+
+      return res.json({
+        success: true,
+        mode,
+        model: 'fallback',
+        content: fallbackContent,
+        rawText: 'MCP server unavailable - this is placeholder content',
+        fallback: true,
+        warning: 'MCP server is not available. Fallback content provided.',
+        aiOutput: results[0]
+      });
+    }
+
+    // Save successful AI output to database
+    const [results] = await sequelize.query(
+      `INSERT INTO photo_studio_ai_outputs (
+        order_id, mode, request_context, model_name, output_json, raw_text, created_by_admin_id
+       ) VALUES (
+        :orderId, :mode, :requestContext, :modelName, :outputJson, :rawText, :adminId
+       ) RETURNING *`,
+      {
+        replacements: {
+          orderId,
+          mode,
+          requestContext: JSON.stringify(aiResult.requestContext),
+          modelName: aiResult.model,
+          outputJson: JSON.stringify(aiResult.content),
+          rawText: aiResult.rawText,
+          adminId: userId
+        },
+        type: QueryTypes.INSERT
+      }
+    );
+
+    logger.info(`[PHOTO STUDIO] AI output generated and saved for order ${orderId}, mode: ${mode}`);
+
+    res.json({
+      success: true,
+      mode,
+      model: aiResult.model,
+      content: aiResult.content,
+      rawText: aiResult.rawText,
+      tokensUsed: aiResult.tokensUsed,
+      aiOutput: results[0]
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] AI generation error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate AI content',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/photo-studio/admin/order/:orderId/ai/outputs
+ * List all AI outputs for an order (admin only)
+ */
+router.get('/admin/order/:orderId/ai/outputs', authenticateToken, async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { orderId } = req.params;
+
+    // Verify user is admin
+    const [adminUser] = await sequelize.query(
+      'SELECT email, is_admin FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const photoStudioAdmins = ['mstagg@digit2ai.com', 'pixlypro@digit2ai.com'];
+    if (!adminUser || (!adminUser.is_admin && !photoStudioAdmins.includes(adminUser.email))) {
+      return res.status(403).json({
+        success: false,
+        error: 'Admin access required'
+      });
+    }
+
+    // Get all AI outputs for this order
+    const outputs = await sequelize.query(
+      `SELECT
+        id, order_id, mode, model_name, output_json, raw_text,
+        created_by_admin_id, created_at
+       FROM photo_studio_ai_outputs
+       WHERE order_id = :orderId
+       ORDER BY created_at DESC`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    res.json({
+      success: true,
+      orderId,
+      outputs,
+      total: outputs.length
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] Get AI outputs error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get AI outputs'
+    });
+  }
+});
+
 module.exports = router;
