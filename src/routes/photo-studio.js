@@ -919,6 +919,90 @@ router.get('/order/:orderId/enhanced-photos', authenticateToken, async (req, res
 });
 
 /**
+ * GET /api/photo-studio/enhanced-photo/:photoId/download
+ * Generate fresh download URL for enhanced photo
+ */
+router.get('/enhanced-photo/:photoId/download', authenticateToken, async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { photoId } = req.params;
+
+    // Get photo and verify user owns the order
+    const [photo] = await sequelize.query(
+      `SELECT ep.*, pso.user_id
+       FROM enhanced_photos ep
+       JOIN photo_studio_orders pso ON ep.order_id = pso.id
+       WHERE ep.id = :photoId`,
+      {
+        replacements: { photoId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!photo) {
+      return res.status(404).json({
+        success: false,
+        error: 'Photo not found'
+      });
+    }
+
+    if (photo.user_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied'
+      });
+    }
+
+    // Generate fresh presigned URL (valid for 1 hour)
+    const client = getS3Client();
+    if (!client) {
+      return res.status(500).json({
+        success: false,
+        error: 'S3 storage not configured'
+      });
+    }
+
+    const getCommand = new GetObjectCommand({
+      Bucket: photo.storage_bucket,
+      Key: photo.storage_key,
+      ResponseContentDisposition: `attachment; filename="${photo.filename}"`
+    });
+
+    const downloadUrl = await getSignedUrl(client, getCommand, { expiresIn: 3600 }); // 1 hour
+
+    // Update download tracking
+    await sequelize.query(
+      `UPDATE enhanced_photos
+       SET delivery_status = 'downloaded',
+           downloaded_at = CASE WHEN downloaded_at IS NULL THEN NOW() ELSE downloaded_at END
+       WHERE id = :photoId`,
+      {
+        replacements: { photoId },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    res.json({
+      success: true,
+      download_url: downloadUrl,
+      filename: photo.filename,
+      file_size: photo.file_size,
+      expires_in: 3600
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] Generate download URL error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate download URL'
+    });
+  }
+});
+
+/**
  * POST /api/photo-studio/enhanced-photo/:photoId/approve
  * Approve or reject enhanced photo with optional feedback
  */

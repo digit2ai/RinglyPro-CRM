@@ -1086,7 +1086,7 @@
                                             <div class="status-indicator status-approved">
                                                 ✓ Approved - Ready to Download
                                             </div>
-                                            <button class="download-btn" onclick="downloadPhoto('${enhancedPhoto.storage_url}', '${enhancedPhoto.filename}')">
+                                            <button class="download-btn" onclick="downloadPhoto(${enhancedPhoto.id}, '${enhancedPhoto.filename}')">
                                                 <span style="font-size: 1.25rem;">⬇️</span>
                                                 Download Enhanced Photo
                                             </button>
@@ -1350,15 +1350,29 @@
         }
 
         // Download single photo
-        async function downloadPhoto(url, filename) {
+        async function downloadPhoto(photoId, filename) {
             try {
-                const response = await fetch(url);
-                const blob = await response.blob();
+                const token = getAuthToken();
+
+                // Get fresh download URL from backend
+                const response = await fetch(`/api/photo-studio/enhanced-photo/${photoId}/download`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to get download URL');
+                }
+
+                // Download using the fresh presigned URL
+                const downloadResponse = await fetch(data.download_url);
+                const blob = await downloadResponse.blob();
 
                 const downloadUrl = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = downloadUrl;
-                link.download = filename || 'enhanced-photo.jpg';
+                link.download = filename || data.filename || 'enhanced-photo.jpg';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -1381,7 +1395,7 @@
 
             for (let i = 0; i < approved.length; i++) {
                 const photo = approved[i];
-                await downloadPhoto(photo.storage_url, photo.filename);
+                await downloadPhoto(photo.id, photo.filename);
                 if (i < approved.length - 1) {
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
