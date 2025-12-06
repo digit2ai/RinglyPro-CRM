@@ -931,6 +931,7 @@
     <script>
         let allOrders = [];
         let selectedOrderId = null;
+        let designBriefs = {}; // Store design briefs by orderId
 
         // Get auth token
         function getAuthToken() {
@@ -1105,6 +1106,8 @@
                         </div>
                     </div>
                 </div>
+
+                ${renderDesignBriefSection(order.id)}
 
                 <div class="photos-section">
                     <h3 class="section-title">
@@ -1592,8 +1595,97 @@
         window.renderOrderDetails = function(order, enhancedPhotos, originalPhotos, communications) {
             const result = originalRenderOrderDetails(order, enhancedPhotos, originalPhotos, communications);
             setTimeout(() => setupEnhancedUpload(order.id, originalPhotos), 100);
+            loadDesignBrief(order.id); // Load design brief for selected order
             return result;
         };
+
+        // ===== DESIGN BRIEF FUNCTIONS =====
+
+        // Load design brief for an order
+        async function loadDesignBrief(orderId) {
+            try {
+                const token = getAuthToken();
+                const response = await fetch(`/api/photo-studio/order/${orderId}/brief`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (data.success && data.brief) {
+                    designBriefs[orderId] = data.brief;
+                    updateDesignBriefDisplay(orderId);
+                }
+            } catch (error) {
+                console.error('Error loading design brief:', error);
+            }
+        }
+
+        // Render design brief section
+        function renderDesignBriefSection(orderId) {
+            return `
+                <div class="photos-section" id="design-brief-section-${orderId}">
+                    <h3 class="section-title">
+                        <span style="font-size: 1.5rem;">📋</span>
+                        Design Brief
+                    </h3>
+                    <div id="design-brief-content-${orderId}" style="color: #94a3b8;">
+                        Loading design brief...
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update design brief display
+        function updateDesignBriefDisplay(orderId) {
+            const container = document.getElementById(`design-brief-content-${orderId}`);
+            if (!container) return;
+
+            const brief = designBriefs[orderId];
+
+            if (!brief) {
+                container.innerHTML = '<p style="color: #94a3b8;">Customer has not completed their design brief yet.</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div style="display: grid; gap: 1rem; background: #f8fafc; padding: 1.5rem; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; font-size: 0.875rem;">
+                        <div>
+                            <div style="font-weight: 600; color: #0a0a0a; margin-bottom: 0.25rem;">Business</div>
+                            <div style="color: #64748b;">${brief.business_name} (${brief.business_type})</div>
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: #0a0a0a; margin-bottom: 0.25rem;">Design Need</div>
+                            <div style="color: #64748b;">${brief.primary_design_need}</div>
+                        </div>
+                        ${brief.location_city || brief.location_country ? `
+                        <div>
+                            <div style="font-weight: 600; color: #0a0a0a; margin-bottom: 0.25rem;">Location</div>
+                            <div style="color: #64748b;">${[brief.location_city, brief.location_country].filter(Boolean).join(', ')}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: #0a0a0a; margin-bottom: 0.25rem;">Design Goal</div>
+                        <div style="color: #64748b;">${brief.design_goal}</div>
+                    </div>
+                    ${brief.brand_colors || brief.key_offers_or_items ? `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                        ${brief.brand_colors ? `
+                        <div>
+                            <div style="font-weight: 600; color: #0a0a0a; margin-bottom: 0.25rem;">Brand Colors</div>
+                            <div style="color: #64748b;">${brief.brand_colors}</div>
+                        </div>
+                        ` : ''}
+                        ${brief.key_offers_or_items ? `
+                        <div>
+                            <div style="font-weight: 600; color: #0a0a0a; margin-bottom: 0.25rem;">Key Offers / Menu Items</div>
+                            <div style="color: #64748b; white-space: pre-wrap;">${brief.key_offers_or_items.substring(0, 200)}${brief.key_offers_or_items.length > 200 ? '...' : ''}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }
 
         // Load orders on page load
         window.addEventListener('DOMContentLoaded', loadOrders);
