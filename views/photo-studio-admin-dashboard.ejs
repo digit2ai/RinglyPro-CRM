@@ -911,15 +911,29 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
+                // Check for authentication errors
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('photoStudioAdminToken');
+                    sessionStorage.removeItem('photoStudioAdminToken');
+                    window.location.href = '/photo-studio-admin-login?redirect=/photo-studio-admin-dashboard';
+                    return;
+                }
+
                 const data = await response.json();
 
                 if (data.success) {
                     allOrders = data.orders;
                     updateStats();
                     renderOrdersList();
+                } else {
+                    console.error('Failed to load orders:', data.error);
+                    document.getElementById('orders-list').innerHTML =
+                        '<div style="padding: 2rem; text-align: center; color: #ef4444;">Failed to load orders. Please refresh the page.</div>';
                 }
             } catch (error) {
                 console.error('Error loading orders:', error);
+                document.getElementById('orders-list').innerHTML =
+                    '<div style="padding: 2rem; text-align: center; color: #ef4444;">Error loading orders. Please refresh the page.</div>';
             }
         }
 
