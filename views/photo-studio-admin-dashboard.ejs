@@ -1099,7 +1099,7 @@
                                     <div class="after-photo-upload" id="after-container-${order.id}-${photo.id}">
                                         <div class="photo-label">Enhanced Version</div>
                                         ${enhanced ? `
-                                            <div class="enhanced-preview">
+                                            <div class="enhanced-preview" id="enhanced-preview-${order.id}-${photo.id}">
                                                 <img src="${enhanced.storage_url}" alt="${enhanced.filename}" loading="lazy">
                                                 <div class="enhanced-info">
                                                     <div class="enhanced-status">
@@ -1112,10 +1112,28 @@
                                                     ${enhanced.customer_feedback ? `<div class="customer-feedback-small">Customer: "${enhanced.customer_feedback}"</div>` : ''}
                                                 </div>
                                                 <button class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 0.5rem;" onclick="downloadPhoto('${enhanced.storage_url}', '${enhanced.filename}')">
-                                                    ⬇️ Download Enhanced
+                                                    ⬇️ Download Current Version
                                                 </button>
-                                                <button class="btn btn-outline btn-sm" style="width: 100%; margin-top: 0.5rem;" onclick="showReplaceUpload(${order.id}, ${photo.id})">
-                                                    🔄 Replace Photo
+                                                <button class="btn btn-outline btn-sm" style="width: 100%; margin-top: 0.5rem;" onclick="showReplaceUpload(${order.id}, ${photo.id}, ${enhanced.id})">
+                                                    🔄 Upload Replacement
+                                                </button>
+                                            </div>
+                                            <div id="replace-upload-${order.id}-${photo.id}" style="display: none;">
+                                                <input type="file" id="replace-input-${order.id}-${photo.id}" class="file-input" accept="image/jpeg,image/jpg,image/png,image/webp" data-original-id="${photo.id}" data-enhanced-id="${enhanced.id}">
+                                                <label for="replace-input-${order.id}-${photo.id}" class="upload-box" id="replace-box-${order.id}-${photo.id}">
+                                                    <div class="upload-icon">📸</div>
+                                                    <div class="upload-text">Click to upload<br>replacement photo</div>
+                                                </label>
+                                                <div id="replace-preview-container-${order.id}-${photo.id}" style="display: none;">
+                                                    <div class="enhanced-preview">
+                                                        <img id="replace-preview-img-${order.id}-${photo.id}" src="" alt="Preview" loading="lazy">
+                                                    </div>
+                                                    <button class="btn btn-primary btn-sm" id="replace-upload-btn-${order.id}-${photo.id}" style="width: 100%; margin-top: 0.5rem;" onclick="uploadReplacement(${order.id}, ${photo.id}, ${enhanced.id})">
+                                                        Upload Replacement
+                                                    </button>
+                                                </div>
+                                                <button class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 0.5rem;" onclick="cancelReplace(${order.id}, ${photo.id})">
+                                                    Cancel
                                                 </button>
                                             </div>
                                         ` : `
@@ -1382,13 +1400,138 @@
         }
 
         // Show replace upload interface
-        function showReplaceUpload(orderId, originalPhotoId) {
-            if (!confirm('Are you sure you want to replace this enhanced photo? The current version will be overwritten.')) {
+        function showReplaceUpload(orderId, originalPhotoId, enhancedId) {
+            // Hide the current enhanced photo preview
+            const previewDiv = document.getElementById(`enhanced-preview-${orderId}-${originalPhotoId}`);
+            const replaceDiv = document.getElementById(`replace-upload-${orderId}-${originalPhotoId}`);
+
+            if (previewDiv && replaceDiv) {
+                previewDiv.style.display = 'none';
+                replaceDiv.style.display = 'block';
+
+                // Setup file input listener
+                setupReplaceFileInput(orderId, originalPhotoId);
+            }
+        }
+
+        // Cancel replace and show original enhanced photo again
+        function cancelReplace(orderId, originalPhotoId) {
+            const previewDiv = document.getElementById(`enhanced-preview-${orderId}-${originalPhotoId}`);
+            const replaceDiv = document.getElementById(`replace-upload-${orderId}-${originalPhotoId}`);
+
+            if (previewDiv && replaceDiv) {
+                previewDiv.style.display = 'block';
+                replaceDiv.style.display = 'none';
+
+                // Clear file input
+                const fileInput = document.getElementById(`replace-input-${orderId}-${originalPhotoId}`);
+                if (fileInput) {
+                    fileInput.value = '';
+                }
+
+                // Hide preview
+                const previewContainer = document.getElementById(`replace-preview-container-${orderId}-${originalPhotoId}`);
+                const uploadBox = document.getElementById(`replace-box-${orderId}-${originalPhotoId}`);
+                if (previewContainer && uploadBox) {
+                    previewContainer.style.display = 'none';
+                    uploadBox.style.display = 'flex';
+                }
+            }
+        }
+
+        // Setup replace file input
+        function setupReplaceFileInput(orderId, originalPhotoId) {
+            const fileInput = document.getElementById(`replace-input-${orderId}-${originalPhotoId}`);
+            const uploadBox = document.getElementById(`replace-box-${orderId}-${originalPhotoId}`);
+            const previewContainer = document.getElementById(`replace-preview-container-${orderId}-${originalPhotoId}`);
+            const previewImg = document.getElementById(`replace-preview-img-${orderId}-${originalPhotoId}`);
+
+            if (!fileInput) return;
+
+            // Remove any existing listeners
+            const newFileInput = fileInput.cloneNode(true);
+            fileInput.parentNode.replaceChild(newFileInput, fileInput);
+
+            newFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file');
+                    newFileInput.value = '';
+                    return;
+                }
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    previewImg.src = event.target.result;
+                    uploadBox.style.display = 'none';
+                    previewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Upload replacement photo
+        async function uploadReplacement(orderId, originalPhotoId, oldEnhancedId) {
+            const fileInput = document.getElementById(`replace-input-${orderId}-${originalPhotoId}`);
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a photo to upload');
                 return;
             }
 
-            // Reload the page to show upload interface again
-            loadOrderDetails(orderId);
+            const uploadBtn = document.getElementById(`replace-upload-btn-${orderId}-${originalPhotoId}`);
+            const statusDiv = document.getElementById(`status-${orderId}-${originalPhotoId}`);
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+            statusDiv.innerHTML = '<div style="color: #6366f1;">Uploading replacement...</div>';
+
+            const formData = new FormData();
+            formData.append('photos', file);
+            formData.append('original_photo_id', originalPhotoId);
+            formData.append('replace_enhanced_id', oldEnhancedId); // Tell backend to delete old one
+
+            try {
+                const token = getAuthToken();
+
+                const response = await fetch(`/api/photo-studio/admin/order/${orderId}/upload-enhanced`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const successCount = (data.uploads || []).filter(u => u.success).length;
+
+                    if (successCount === 0) {
+                        const failedUpload = data.uploads.find(u => !u.success);
+                        throw new Error(failedUpload?.error || 'Upload failed');
+                    }
+
+                    statusDiv.innerHTML = '<div style="color: #16a34a;">✅ Replacement uploaded! Reloading...</div>';
+
+                    // Reload order details to show new enhanced photo
+                    setTimeout(() => {
+                        loadOrderDetails(orderId);
+                    }, 800);
+                } else {
+                    throw new Error(data.error || 'Upload failed');
+                }
+            } catch (error) {
+                console.error('[Replace Upload] Error:', error);
+                statusDiv.innerHTML = `<div style="color: #991b1b;">❌ ${error.message}</div>`;
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload Replacement';
+            }
         }
 
         // Call setup after rendering order details

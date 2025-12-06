@@ -537,10 +537,10 @@ router.post('/admin/order/:orderId/upload-enhanced', authenticateToken, upload.a
   try {
     const userId = req.user.userId || req.user.id;
     const { orderId } = req.params;
-    const { original_photo_id } = req.body;
+    const { original_photo_id, replace_enhanced_id } = req.body;
     const files = req.files;
 
-    logger.info(`[PHOTO STUDIO] Admin uploading enhanced photos for order ${orderId}, original_photo_id: ${original_photo_id}`);
+    logger.info(`[PHOTO STUDIO] Admin uploading enhanced photos for order ${orderId}, original_photo_id: ${original_photo_id}, replace_enhanced_id: ${replace_enhanced_id}`);
 
     // Verify user is admin
     const [adminUser] = await sequelize.query(
@@ -591,6 +591,24 @@ router.post('/admin/order/:orderId/upload-enhanced', authenticateToken, upload.a
         success: false,
         error: 'AWS S3 is not configured'
       });
+    }
+
+    // If replacing an existing enhanced photo, delete the old one first
+    if (replace_enhanced_id) {
+      try {
+        logger.info(`[PHOTO STUDIO] Deleting old enhanced photo ${replace_enhanced_id} before uploading replacement`);
+        await sequelize.query(
+          'DELETE FROM enhanced_photos WHERE id = :enhancedId AND order_id = :orderId',
+          {
+            replacements: { enhancedId: replace_enhanced_id, orderId },
+            type: QueryTypes.DELETE
+          }
+        );
+        logger.info(`[PHOTO STUDIO] Old enhanced photo ${replace_enhanced_id} deleted successfully`);
+      } catch (deleteError) {
+        logger.error(`[PHOTO STUDIO] Failed to delete old enhanced photo:`, deleteError);
+        // Continue anyway - worst case we have duplicate photos
+      }
     }
 
     // Process each enhanced photo
