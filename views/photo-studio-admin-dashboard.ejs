@@ -195,6 +195,45 @@
             background: #f59e0b;
         }
 
+        /* Orders needing attention */
+        .order-item.needs-attention {
+            border-color: #f59e0b;
+            border-width: 3px;
+            background: #fffbeb;
+        }
+
+        .order-item.needs-attention:hover {
+            border-color: #d97706;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+        }
+
+        .order-item.needs-attention.active {
+            border-color: #d97706;
+            background: #fef3c7;
+        }
+
+        .attention-badge {
+            font-size: 1rem;
+            margin-right: 0.25rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .attention-message {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #fef3c7;
+            border-left: 3px solid #f59e0b;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #92400e;
+        }
+
         /* Right Panel - Order Details */
         .details-panel {
             flex: 1;
@@ -970,10 +1009,17 @@
                     revision: photos.filter(p => p.approval_status === 'revision_requested').length
                 };
 
+                // Determine if order needs attention (has revisions or rejections)
+                const needsAttention = statusCounts.revision > 0 || statusCounts.rejected > 0;
+                const attentionClass = needsAttention ? 'needs-attention' : '';
+
                 return `
-                    <div class="order-item ${selectedOrderId === order.id ? 'active' : ''}" onclick="selectOrder(${order.id})">
+                    <div class="order-item ${selectedOrderId === order.id ? 'active' : ''} ${attentionClass}" onclick="selectOrder(${order.id})">
                         <div class="order-item-header">
-                            <span class="order-number">Order #${order.id}</span>
+                            <span class="order-number">
+                                ${needsAttention ? '<span class="attention-badge">⚠️</span>' : ''}
+                                Order #${order.id}
+                            </span>
                             <span class="order-status-badge status-${order.order_status}">${order.order_status}</span>
                         </div>
                         <div class="order-customer">${order.customer_name || 'Unknown'}</div>
@@ -984,6 +1030,13 @@
                                 ${Array(statusCounts.approved).fill('<div class="approval-dot dot-approved"></div>').join('')}
                                 ${Array(statusCounts.rejected).fill('<div class="approval-dot dot-rejected"></div>').join('')}
                                 ${Array(statusCounts.revision).fill('<div class="approval-dot dot-revision"></div>').join('')}
+                            </div>
+                        ` : ''}
+                        ${needsAttention ? `
+                            <div class="attention-message">
+                                ${statusCounts.revision > 0 ? `${statusCounts.revision} revision${statusCounts.revision > 1 ? 's' : ''} requested` : ''}
+                                ${statusCounts.revision > 0 && statusCounts.rejected > 0 ? ' • ' : ''}
+                                ${statusCounts.rejected > 0 ? `${statusCounts.rejected} rejected` : ''}
                             </div>
                         ` : ''}
                     </div>
