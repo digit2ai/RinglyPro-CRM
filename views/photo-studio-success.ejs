@@ -215,6 +215,19 @@
                 </ol>
             </div>
 
+            <!-- Design Brief CTA -->
+            <div style="background: #eff6ff; border: 2px solid #3b82f6; border-radius: 0.5rem; padding: 1.5rem; margin: 2rem 0; text-align: left;">
+                <h3 style="color: #1e40af; margin-bottom: 0.75rem; font-size: 1.125rem;">
+                    📋 Next Step: Complete Your Design Brief
+                </h3>
+                <p style="color: #1e3a8a; margin-bottom: 1rem; font-size: 0.9375rem;">
+                    Before we start working on your photos and graphics, please fill out a brief about your brand, menu, and goals so our designer and AI can create the perfect designs for you.
+                </p>
+                <a href="#" id="designBriefLink" class="btn btn-primary" style="display: inline-block; margin: 0;">
+                    Go to My Portal & Design Brief →
+                </a>
+            </div>
+
             <div>
                 <a href="/photo-studio-portal" class="btn btn-primary">Upload Photos Now</a>
             </div>
@@ -270,6 +283,9 @@
                     document.getElementById('packageName').textContent = data.packageType.charAt(0).toUpperCase() + data.packageType.slice(1);
                     document.getElementById('photosToUpload').textContent = data.photosToUpload;
                     document.getElementById('photosToReceive').textContent = data.photosToReceive;
+
+                    // Set Design Brief link with orderId
+                    document.getElementById('designBriefLink').href = `/photo-studio-portal?orderId=${data.orderId}`;
                 } else {
                     throw new Error(data.error || 'Payment verification failed');
                 }
