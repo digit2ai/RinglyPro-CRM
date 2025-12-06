@@ -1363,6 +1363,147 @@ router.post('/admin/order/:orderId/send-message', authenticateToken, async (req,
 });
 
 /**
+ * GET /api/photo-studio/order/:orderId/communications
+ * Get all communications for an order (customer endpoint)
+ */
+router.get('/order/:orderId/communications', authenticateToken, async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { orderId } = req.params;
+
+    // Verify user owns this order
+    const [order] = await sequelize.query(
+      'SELECT id, user_id FROM photo_studio_orders WHERE id = :orderId',
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    if (order.user_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied'
+      });
+    }
+
+    // Get all communications for this order
+    const communications = await sequelize.query(
+      `SELECT * FROM photo_communications
+       WHERE order_id = :orderId
+       ORDER BY created_at DESC`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    res.json({
+      success: true,
+      communications: communications
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] Get communications error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get communications'
+    });
+  }
+});
+
+/**
+ * POST /api/photo-studio/order/:orderId/send-message-to-admin
+ * Customer sends message to admin about their order
+ */
+router.post('/order/:orderId/send-message-to-admin', authenticateToken, async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { orderId } = req.params;
+    const { message } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Message is required'
+      });
+    }
+
+    // Verify user owns this order
+    const [order] = await sequelize.query(
+      'SELECT id, user_id FROM photo_studio_orders WHERE id = :orderId',
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    if (order.user_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied'
+      });
+    }
+
+    const subject = `Customer Message - Order #${orderId}`;
+
+    // Record communication in database
+    await sequelize.query(
+      `INSERT INTO photo_communications
+        (order_id, from_user_id, from_type, to_type, subject, message, communication_type, status)
+       VALUES
+        (:orderId, :userId, 'customer', 'admin', :subject, :message, 'general', 'unread')`,
+      {
+        replacements: {
+          orderId,
+          userId,
+          subject,
+          message: message.trim()
+        },
+        type: QueryTypes.INSERT
+      }
+    );
+
+    logger.info(`[PHOTO STUDIO] Customer message sent for order ${orderId}`);
+
+    // TODO: Send email notification to admin
+    // For now, admin will see it in the dashboard communications section
+
+    res.json({
+      success: true,
+      message: 'Message sent to admin successfully'
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] Send customer message error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send message'
+    });
+  }
+});
+
+/**
  * POST /api/photo-studio/register
  * Simple registration for Photo Studio customers (no Twilio provisioning)
  */

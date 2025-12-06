@@ -1145,7 +1145,34 @@
                             </button>
                         ` : ''}
                     </div>
+
+                    <!-- Communications Section -->
+                    <div class="enhanced-section" style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">
+                            <span style="font-size: 1.5rem;">💬</span>
+                            Messages
+                        </h3>
+                        <div id="communications-thread-${orderId}" style="max-height: 400px; overflow-y: auto; margin-bottom: 1rem;">
+                            <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+                                Loading messages...
+                            </div>
+                        </div>
+                        <div style="border-top: 2px solid #e5e7eb; padding-top: 1rem;">
+                            <h4 style="margin-bottom: 0.75rem; color: #64748b; font-size: 0.875rem;">Send a message to the team</h4>
+                            <textarea
+                                id="customer-message-${orderId}"
+                                placeholder="Ask a question or provide additional details about your order..."
+                                style="width: 100%; min-height: 100px; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-family: inherit; font-size: 0.875rem; resize: vertical; margin-bottom: 0.75rem;"
+                            ></textarea>
+                            <button class="btn btn-primary" onclick="sendMessageToAdmin(${orderId})" style="width: 100%;">
+                                Send Message
+                            </button>
+                        </div>
+                    </div>
                 `;
+
+                // Load communications after rendering
+                setTimeout(() => loadCommunications(orderId), 100);
             }
 
             document.getElementById('details-content').innerHTML = contentHTML;
@@ -1437,6 +1464,91 @@
             } catch (error) {
                 console.error('Feedback submission error:', error);
                 alert('Failed to submit feedback: ' + error.message);
+            }
+        }
+
+        // Load communications for an order
+        async function loadCommunications(orderId) {
+            const container = document.getElementById(`communications-thread-${orderId}`);
+            if (!container) return;
+
+            try {
+                const token = getAuthToken();
+                const response = await fetch(`/api/photo-studio/order/${orderId}/communications`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const communications = data.communications || [];
+
+                    if (communications.length === 0) {
+                        container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #94a3b8;">No messages yet</div>';
+                        return;
+                    }
+
+                    container.innerHTML = communications.map(comm => `
+                        <div style="padding: 1rem; margin-bottom: 1rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; ${comm.from_type === 'customer' ? 'background: #f0f4ff;' : 'background: #f8fafc;'}">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-weight: 600; color: #0a0a0a;">
+                                    ${comm.from_type === 'customer' ? 'You' : 'PixlyPro Team'}
+                                </span>
+                                <span style="font-size: 0.75rem; color: #94a3b8;">
+                                    ${new Date(comm.created_at).toLocaleString()}
+                                </span>
+                            </div>
+                            <div style="font-weight: 600; color: #6366f1; margin-bottom: 0.5rem; font-size: 0.875rem;">
+                                ${comm.subject}
+                            </div>
+                            <div style="font-size: 0.875rem; color: #64748b; white-space: pre-wrap;">
+                                ${comm.message}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #ef4444;">Failed to load messages</div>';
+                }
+            } catch (error) {
+                console.error('Error loading communications:', error);
+                container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #ef4444;">Error loading messages</div>';
+            }
+        }
+
+        // Send message to admin
+        async function sendMessageToAdmin(orderId) {
+            const textarea = document.getElementById(`customer-message-${orderId}`);
+            const message = textarea.value.trim();
+
+            if (!message) {
+                alert('Please enter a message');
+                return;
+            }
+
+            try {
+                const token = getAuthToken();
+                const response = await fetch(`/api/photo-studio/order/${orderId}/send-message-to-admin`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Message sent successfully!');
+                    textarea.value = '';
+                    // Reload communications
+                    loadCommunications(orderId);
+                } else {
+                    throw new Error(data.error || 'Failed to send message');
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Failed to send message: ' + error.message);
             }
         }
 
