@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmed - Lina's Treasures</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .confirmation-hero {
+      background: linear-gradient(135deg, var(--blush) 0%, var(--champagne) 100%);
+      padding: 80px 0;
+      text-align: center;
+    }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--rose-gold);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      animation: scaleIn 0.5s ease;
+    }
+
+    @keyframes scaleIn {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+
+    .success-icon svg {
+      width: 40px;
+      height: 40px;
+      stroke: white;
+      stroke-width: 3;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .confirmation-hero h1 {
+      font-size: 48px;
+      color: var(--charcoal);
+      margin-bottom: 16px;
+    }
+
+    .confirmation-hero .subtitle {
+      font-size: 18px;
+      color: var(--warm-gray);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .order-number {
+      display: inline-block;
+      background: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--charcoal);
+      margin-top: 24px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .order-number span {
+      color: var(--rose-gold);
+      font-family: monospace;
+      font-size: 16px;
+    }
+
+    .confirmation-content {
+      max-width: 900px;
+      margin: -40px auto 80px;
+      position: relative;
+    }
+
+    .info-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .info-card {
+      background: white;
+      padding: 32px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: var(--shadow-card);
+    }
+
+    .info-card-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--blush);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+
+    .info-card-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--rose-gold);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .info-card h3 {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--warm-gray);
+      margin-bottom: 8px;
+    }
+
+    .info-card p {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--charcoal);
+    }
+
+    .order-details-section {
+      background: white;
+      border-radius: 12px;
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      margin-bottom: 40px;
+    }
+
+    .section-header {
+      background: var(--blush);
+      padding: 24px 32px;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .section-header h2 {
+      font-family: var(--font-serif);
+      font-size: 24px;
+      color: var(--charcoal);
+      margin: 0;
+    }
+
+    .section-content {
+      padding: 32px;
+    }
+
+    .order-items {
+      margin-bottom: 24px;
+    }
+
+    .order-item {
+      display: flex;
+      gap: 20px;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .order-item:first-child {
+      padding-top: 0;
+    }
+
+    .order-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .item-image {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: var(--blush);
+    }
+
+    .item-info {
+      flex: 1;
+    }
+
+    .item-name {
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--charcoal);
+      margin-bottom: 8px;
+    }
+
+    .item-meta {
+      font-size: 14px;
+      color: var(--warm-gray);
+      margin-bottom: 4px;
+    }
+
+    .item-pricing {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-top: auto;
+    }
+
+    .item-quantity {
+      font-size: 14px;
+      color: var(--warm-gray);
+    }
+
+    .item-price {
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--rose-gold);
+      font-family: var(--font-serif);
+    }
+
+    .order-totals {
+      background: var(--blush);
+      padding: 24px;
+      border-radius: 8px;
+      margin-top: 24px;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      font-size: 15px;
+    }
+
+    .total-row.grand-total {
+      border-top: 2px solid var(--rose-gold);
+      padding-top: 16px;
+      margin-top: 8px;
+    }
+
+    .total-label {
+      color: var(--warm-gray);
+    }
+
+    .total-label.grand {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--charcoal);
+    }
+
+    .total-value {
+      font-weight: 600;
+      color: var(--charcoal);
+    }
+
+    .total-value.grand {
+      font-family: var(--font-serif);
+      font-size: 24px;
+      color: var(--rose-gold);
+    }
+
+    .address-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+
+    .address-box h3 {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--warm-gray);
+      margin-bottom: 12px;
+    }
+
+    .address-box p {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--charcoal);
+      margin: 0;
+    }
+
+    .next-steps {
+      background: var(--ivory);
+      padding: 32px;
+      border-radius: 12px;
+      margin-bottom: 40px;
+    }
+
+    .next-steps h3 {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      color: var(--charcoal);
+      margin-bottom: 16px;
+    }
+
+    .next-steps ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .next-steps li {
+      padding: 12px 0;
+      padding-left: 32px;
+      position: relative;
+      font-size: 15px;
+      color: var(--warm-gray);
+      line-height: 1.6;
+    }
+
+    .next-steps li:before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--rose-gold);
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 40px;
+    }
+
+    @media (max-width: 768px) {
+      .info-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .address-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6933628937a6f36a3c6b1c23.jpg" alt="Lina's Treasures">
+        <span class="nav-brand-name">Lina's Treasures</span>
+      </div>
+      <ul class="nav-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="catalog.html">Shop Wholesale</a></li>
+        <li><a href="about.html">Our Story</a></li>
+        <li><a href="resources.html">Retailer Resources</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="login.html" class="btn btn-outline">Sign In</a>
+        <a href="cart.html" class="btn btn-secondary">Cart (<span id="cart-count">0</span>)</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Confirmation Hero -->
+  <div class="confirmation-hero">
+    <div class="container">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <h1>Order Confirmed!</h1>
+      <p class="subtitle">
+        Thank you for your wholesale order. We're excited to partner with you and help your boutique shine!
+      </p>
+      <div class="order-number">
+        Order Number: <span id="order-number">Loading...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Content -->
+  <section style="padding: 0 0 80px;">
+    <div class="container">
+      <div class="confirmation-content">
+
+        <!-- Info Cards -->
+        <div class="info-cards">
+          <div class="info-card">
+            <div class="info-card-icon">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </div>
+            <h3>Estimated Delivery</h3>
+            <p id="estimated-delivery">5-7 Business Days</p>
+          </div>
+
+          <div class="info-card">
+            <div class="info-card-icon">
+              <svg viewBox="0 0 24 24">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                <line x1="1" y1="10" x2="23" y2="10"></line>
+              </svg>
+            </div>
+            <h3>Payment Method</h3>
+            <p id="payment-method">Credit Card</p>
+          </div>
+
+          <div class="info-card">
+            <div class="info-card-icon">
+              <svg viewBox="0 0 24 24">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </div>
+            <h3>Confirmation Sent</h3>
+            <p id="email-sent">Check Your Email</p>
+          </div>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="next-steps">
+          <h3>What Happens Next?</h3>
+          <ul>
+            <li>We'll process your order within 1-2 business days</li>
+            <li>You'll receive a shipping confirmation email with tracking information</li>
+            <li>Your wholesale products will arrive ready to display in your boutique</li>
+            <li>Access your order history anytime in your retailer dashboard</li>
+            <li>Need help? Our support team is here for you at support@linastreasures.com</li>
+          </ul>
+        </div>
+
+        <!-- Order Details -->
+        <div class="order-details-section">
+          <div class="section-header">
+            <h2>Order Details</h2>
+          </div>
+          <div class="section-content">
+            <div class="order-items" id="order-items">
+              <!-- Items loaded by JavaScript -->
+            </div>
+
+            <div class="order-totals">
+              <div class="total-row">
+                <span class="total-label">Subtotal</span>
+                <span class="total-value" id="subtotal">$0.00</span>
+              </div>
+              <div class="total-row">
+                <span class="total-label">Shipping</span>
+                <span class="total-value" id="shipping">$0.00</span>
+              </div>
+              <div class="total-row">
+                <span class="total-label">Tax</span>
+                <span class="total-value" id="tax">$0.00</span>
+              </div>
+              <div class="total-row grand-total">
+                <span class="total-label grand">Order Total</span>
+                <span class="total-value grand" id="grand-total">$0.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shipping & Billing -->
+        <div class="order-details-section">
+          <div class="section-header">
+            <h2>Shipping & Billing Information</h2>
+          </div>
+          <div class="section-content">
+            <div class="address-grid">
+              <div class="address-box">
+                <h3>Shipping Address</h3>
+                <p id="shipping-address">Loading...</p>
+              </div>
+              <div class="address-box">
+                <h3>Billing Address</h3>
+                <p id="billing-address">Loading...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <a href="catalog.html" class="btn btn-primary">Continue Shopping</a>
+          <a href="dashboard.html" class="btn btn-outline">View All Orders</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3>Lina's Treasures</h3>
+          <p>Curated jewelry & accessories for boutiques, gift shops, and specialty retailers.</p>
+          <p style="margin-top: 20px;">Crafting with passion, designed to sell.</p>
+        </div>
+
+        <div class="footer-section">
+          <h4>Shop</h4>
+          <ul>
+            <li><a href="catalog.html">All Products</a></li>
+            <li><a href="catalog.html?category=necklaces">Necklaces</a></li>
+            <li><a href="catalog.html?category=earrings">Earrings</a></li>
+            <li><a href="catalog.html?category=bracelets">Bracelets</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="about.html">Our Story</a></li>
+            <li><a href="resources.html">Retailer Resources</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Account</h4>
+          <ul>
+            <li><a href="signup.html">Apply for Account</a></li>
+            <li><a href="login.html">Sign In</a></li>
+            <li><a href="dashboard.html">Retailer Dashboard</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2024 Lina's Treasures. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/order-confirmation.js"></script>
+</body>
+</html>

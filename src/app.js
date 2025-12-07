@@ -242,6 +242,16 @@ if (ghlMCPRoutes) {
 app.use('/api/email', emailRoutes);
 console.log('📧 Email Marketing routes mounted at /api/email');
 
+// Lina's Treasures E-Commerce routes
+const linasTreasuresRoutes = require('./routes/linas-treasures');
+const linasTreasuresAdminRoutes = require('./routes/linas-treasures-admin');
+const linasTreasuresPartnerRoutes = require('./routes/linas-treasures-partner');
+
+app.use('/api/linas-treasures', linasTreasuresRoutes); // Public routes
+app.use('/api/linas-treasures/admin', linasTreasuresAdminRoutes); // Admin routes
+app.use('/api/linas-treasures/partner', linasTreasuresPartnerRoutes); // Partner routes
+console.log('💍 Lina\'s Treasures e-commerce routes mounted at /api/linas-treasures');
+
 // Outbound Caller routes (Twilio integration)
 app.use('/api/outbound-caller', outboundCallerRoutes);
 console.log('📞 Outbound Caller routes mounted at /api/outbound-caller');

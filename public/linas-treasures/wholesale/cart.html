@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopping Cart - Lina's Treasures Wholesale</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .cart-page {
+      padding: 60px 0 100px;
+    }
+
+    .cart-header {
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .cart-header h1 {
+      font-size: 36px;
+      margin-bottom: 8px;
+    }
+
+    .cart-count-text {
+      color: var(--warm-gray);
+      font-size: 16px;
+    }
+
+    .cart-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 40px;
+    }
+
+    .cart-items {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .cart-item {
+      display: flex;
+      gap: 24px;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      transition: all 0.3s;
+    }
+
+    .cart-item:hover {
+      box-shadow: var(--shadow-card);
+    }
+
+    .item-image {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: var(--blush);
+      flex-shrink: 0;
+    }
+
+    .item-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .item-header {
+      margin-bottom: 12px;
+    }
+
+    .item-name {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      color: var(--charcoal);
+      margin-bottom: 6px;
+    }
+
+    .item-sku {
+      font-size: 13px;
+      color: var(--warm-gray);
+    }
+
+    .item-price {
+      font-size: 18px;
+      color: var(--rose-gold);
+      font-weight: 700;
+    }
+
+    .item-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .qty-btn {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--light-gray);
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    .qty-btn:hover {
+      background: var(--blush);
+      border-color: var(--rose-gold);
+      color: var(--rose-gold);
+    }
+
+    .qty-display {
+      min-width: 40px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .remove-btn {
+      padding: 8px 16px;
+      background: transparent;
+      color: #dc3545;
+      border: 1px solid #dc3545;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .remove-btn:hover {
+      background: #dc3545;
+      color: white;
+    }
+
+    .cart-summary {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 32px;
+      position: sticky;
+      top: 100px;
+      height: fit-content;
+    }
+
+    .summary-title {
+      font-family: var(--font-serif);
+      font-size: 24px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      font-size: 15px;
+    }
+
+    .summary-label {
+      color: var(--warm-gray);
+    }
+
+    .summary-value {
+      font-weight: 600;
+      color: var(--charcoal);
+    }
+
+    .summary-total {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 2px solid var(--rose-gold);
+      font-size: 20px;
+    }
+
+    .summary-total .summary-label {
+      color: var(--charcoal);
+      font-weight: 600;
+    }
+
+    .summary-total .summary-value {
+      color: var(--rose-gold);
+      font-size: 28px;
+      font-family: var(--font-serif);
+    }
+
+    .checkout-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--rose-gold);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: all 0.3s;
+    }
+
+    .checkout-btn:hover {
+      background: #c19b2e;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .continue-shopping {
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .continue-shopping a {
+      color: var(--warm-gray);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .continue-shopping a:hover {
+      color: var(--rose-gold);
+    }
+
+    .empty-cart {
+      text-align: center;
+      padding: 100px 20px;
+    }
+
+    .empty-cart h2 {
+      font-size: 32px;
+      margin-bottom: 16px;
+      color: var(--warm-gray);
+    }
+
+    .empty-cart p {
+      margin-bottom: 32px;
+      color: var(--warm-gray);
+    }
+
+    @media (max-width: 1024px) {
+      .cart-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .cart-summary {
+        position: relative;
+        top: 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .cart-item {
+        flex-direction: column;
+      }
+
+      .item-image {
+        width: 100%;
+        height: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6933628937a6f36a3c6b1c23.jpg" alt="Lina's Treasures">
+        <span class="nav-brand-name">Lina's Treasures</span>
+      </div>
+      <ul class="nav-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="catalog.html">Shop Wholesale</a></li>
+        <li><a href="about.html">Our Story</a></li>
+        <li><a href="resources.html">Retailer Resources</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="login.html" class="btn btn-outline">Sign In</a>
+        <a href="cart.html" class="btn btn-secondary">Cart (<span id="cart-count">0</span>)</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Cart Page -->
+  <div class="cart-page">
+    <div class="container">
+      <div class="cart-header">
+        <h1>Shopping Cart</h1>
+        <div class="cart-count-text" id="cart-count-text">Loading...</div>
+      </div>
+
+      <div id="cart-container">
+        <!-- Loading state -->
+        <div style="text-align: center; padding: 60px;">
+          <div class="spinner" style="margin: 0 auto 20px;"></div>
+          <p style="color: var(--warm-gray);">Loading your cart...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3>Lina's Treasures</h3>
+          <p>Curated jewelry & accessories for boutiques, gift shops, and specialty retailers.</p>
+        </div>
+
+        <div class="footer-section">
+          <h4>Shop</h4>
+          <ul>
+            <li><a href="catalog.html">All Products</a></li>
+            <li><a href="catalog.html?category=necklaces">Necklaces</a></li>
+            <li><a href="catalog.html?category=earrings">Earrings</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="about.html">Our Story</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Account</h4>
+          <ul>
+            <li><a href="signup.html">Apply for Account</a></li>
+            <li><a href="login.html">Sign In</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2024 Lina's Treasures. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/cart-page.js"></script>
+</body>
+</html>

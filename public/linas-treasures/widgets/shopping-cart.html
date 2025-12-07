@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopping Cart Widget</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: transparent;
+      padding: 20px;
+    }
+
+    .cart-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .cart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .cart-header h1 {
+      font-size: 28px;
+      font-weight: 300;
+      color: #333;
+    }
+
+    .cart-count {
+      color: #666;
+      font-size: 16px;
+    }
+
+    /* Empty Cart */
+    .empty-cart {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-cart-icon {
+      font-size: 64px;
+      color: #ddd;
+      margin-bottom: 20px;
+    }
+
+    .empty-cart h2 {
+      font-size: 24px;
+      color: #666;
+      margin-bottom: 10px;
+      font-weight: 300;
+    }
+
+    .empty-cart p {
+      color: #999;
+      margin-bottom: 30px;
+    }
+
+    /* Cart Items */
+    .cart-items {
+      margin-bottom: 30px;
+    }
+
+    .cart-item {
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .item-image {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 4px;
+      background: #f5f5f5;
+    }
+
+    .item-details {
+      flex: 1;
+    }
+
+    .item-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .item-price {
+      font-size: 16px;
+      color: #d4af37;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    .quantity-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .quantity-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .quantity-btn:hover {
+      background: #d4af37;
+      color: white;
+      border-color: #d4af37;
+    }
+
+    .quantity-input {
+      width: 60px;
+      text-align: center;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+
+    .item-total {
+      text-align: right;
+    }
+
+    .item-total-price {
+      font-size: 20px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 15px;
+    }
+
+    .remove-btn {
+      padding: 8px 16px;
+      background: transparent;
+      color: #dc3545;
+      border: 1px solid #dc3545;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .remove-btn:hover {
+      background: #dc3545;
+      color: white;
+    }
+
+    /* Cart Summary */
+    .cart-summary {
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 25px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .summary-row:last-child {
+      border-bottom: none;
+      margin-top: 10px;
+      padding-top: 20px;
+      border-top: 2px solid #d4af37;
+    }
+
+    .summary-label {
+      font-size: 16px;
+      color: #666;
+    }
+
+    .summary-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .summary-total .summary-label {
+      font-size: 20px;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .summary-total .summary-value {
+      font-size: 24px;
+      color: #d4af37;
+      font-weight: 700;
+    }
+
+    .checkout-btn {
+      width: 100%;
+      padding: 16px;
+      background: #d4af37;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: 600;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: all 0.3s;
+    }
+
+    .checkout-btn:hover {
+      background: #c19b2e;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    }
+
+    .continue-shopping {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .continue-shopping a {
+      color: #666;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .continue-shopping a:hover {
+      color: #d4af37;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    @media (max-width: 768px) {
+      .cart-item {
+        flex-direction: column;
+      }
+
+      .item-image {
+        width: 100%;
+        height: 200px;
+      }
+
+      .item-total {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cart-container">
+  <div class="cart-header">
+    <h1>Shopping Cart</h1>
+    <div class="cart-count" id="cart-count">0 items</div>
+  </div>
+
+  <div id="cart-content">
+    <div class="loading">Loading cart...</div>
+  </div>
+</div>
+
+<script>
+const API_URL = window.location.origin + '/api/linas-treasures';
+
+// Get session ID
+let sessionId = localStorage.getItem('lt_session_id');
+if (!sessionId) {
+  sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  localStorage.setItem('lt_session_id', sessionId);
+}
+
+let cartData = null;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', async function() {
+  await loadCart();
+});
+
+// Load cart
+async function loadCart() {
+  try {
+    const response = await fetch(`${API_URL}/cart/${sessionId}`);
+    cartData = await response.json();
+
+    renderCart();
+  } catch (error) {
+    console.error('Error loading cart:', error);
+    document.getElementById('cart-content').innerHTML =
+      '<div class="loading">Error loading cart. Please refresh the page.</div>';
+  }
+}
+
+// Render cart
+function renderCart() {
+  const content = document.getElementById('cart-content');
+  const countEl = document.getElementById('cart-count');
+
+  if (!cartData || !cartData.items || cartData.items.length === 0) {
+    countEl.textContent = '0 items';
+    content.innerHTML = `
+      <div class="empty-cart">
+        <div class="empty-cart-icon">🛒</div>
+        <h2>Your cart is empty</h2>
+        <p>Add some beautiful treasures to get started!</p>
+      </div>
+    `;
+    return;
+  }
+
+  countEl.textContent = `${cartData.items.length} item${cartData.items.length !== 1 ? 's' : ''}`;
+
+  const itemsHtml = cartData.items.map(item => createCartItem(item)).join('');
+
+  const taxAmount = parseFloat(cartData.subtotal) * 0.08;
+  const shippingAmount = parseFloat(cartData.subtotal) > 100 ? 0 : 9.99;
+  const total = parseFloat(cartData.subtotal) + taxAmount + shippingAmount;
+
+  content.innerHTML = `
+    <div class="cart-items">
+      ${itemsHtml}
+    </div>
+
+    <div class="cart-summary">
+      <div class="summary-row">
+        <span class="summary-label">Subtotal</span>
+        <span class="summary-value">$${parseFloat(cartData.subtotal).toFixed(2)}</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Tax (8%)</span>
+        <span class="summary-value">$${taxAmount.toFixed(2)}</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Shipping</span>
+        <span class="summary-value">${shippingAmount === 0 ? 'FREE' : '$' + shippingAmount.toFixed(2)}</span>
+      </div>
+      <div class="summary-row summary-total">
+        <span class="summary-label">Total</span>
+        <span class="summary-value">$${total.toFixed(2)}</span>
+      </div>
+
+      <button class="checkout-btn" onclick="proceedToCheckout()">
+        Proceed to Checkout
+      </button>
+
+      <div class="continue-shopping">
+        <a href="product-catalog.html" target="_parent">← Continue Shopping</a>
+      </div>
+    </div>
+  `;
+}
+
+// Create cart item HTML
+function createCartItem(item) {
+  const imageUrl = item.images && item.images.length > 0
+    ? item.images[0]
+    : 'https://via.placeholder.com/100x100?text=No+Image';
+
+  const lineTotal = parseFloat(item.line_total);
+
+  return `
+    <div class="cart-item">
+      <img src="${imageUrl}" alt="${item.name}" class="item-image"
+           onerror="this.src='https://via.placeholder.com/100x100?text=No+Image'">
+      <div class="item-details">
+        <div class="item-name">${item.name}</div>
+        <div class="item-price">$${parseFloat(item.retail_price).toFixed(2)} each</div>
+        <div class="quantity-control">
+          <button class="quantity-btn" onclick="updateQuantity(${item.id}, ${item.quantity - 1})">−</button>
+          <input type="number" class="quantity-input" value="${item.quantity}"
+                 min="1" max="${item.stock_quantity}"
+                 onchange="updateQuantity(${item.id}, this.value)">
+          <button class="quantity-btn" onclick="updateQuantity(${item.id}, ${item.quantity + 1})"
+                  ${item.quantity >= item.stock_quantity ? 'disabled' : ''}>+</button>
+        </div>
+      </div>
+      <div class="item-total">
+        <div class="item-total-price">$${lineTotal.toFixed(2)}</div>
+        <button class="remove-btn" onclick="removeItem(${item.id})">Remove</button>
+      </div>
+    </div>
+  `;
+}
+
+// Update quantity
+async function updateQuantity(cartItemId, newQuantity) {
+  newQuantity = parseInt(newQuantity);
+
+  if (newQuantity < 1) {
+    return removeItem(cartItemId);
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/cart/${cartItemId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quantity: newQuantity })
+    });
+
+    if (response.ok) {
+      await loadCart();
+      notifyParent();
+    } else {
+      const data = await response.json();
+      alert(data.error || 'Failed to update quantity');
+    }
+  } catch (error) {
+    console.error('Error updating quantity:', error);
+    alert('Error updating cart');
+  }
+}
+
+// Remove item
+async function removeItem(cartItemId) {
+  if (!confirm('Remove this item from your cart?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/cart/${cartItemId}`, {
+      method: 'DELETE'
+    });
+
+    if (response.ok) {
+      await loadCart();
+      notifyParent();
+    } else {
+      alert('Failed to remove item');
+    }
+  } catch (error) {
+    console.error('Error removing item:', error);
+    alert('Error removing item');
+  }
+}
+
+// Proceed to checkout
+function proceedToCheckout() {
+  // Redirect to checkout widget or notify parent
+  if (window.parent !== window) {
+    window.parent.postMessage({
+      type: 'PROCEED_TO_CHECKOUT',
+      sessionId: sessionId,
+      cartData: cartData
+    }, '*');
+  } else {
+    window.location.href = 'checkout.html';
+  }
+}
+
+// Notify parent window of cart update
+function notifyParent() {
+  if (window.parent !== window) {
+    window.parent.postMessage({
+      type: 'CART_UPDATED',
+      sessionId: sessionId,
+      itemCount: cartData ? cartData.items.length : 0
+    }, '*');
+  }
+}
+</script>
+
+</body>
+</html>

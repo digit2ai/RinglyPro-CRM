@@ -1150,6 +1150,10 @@
                                         <div class="photo-label">Original Photo ${index + 1}</div>
                                         <img src="${photo.storage_url}" alt="${photo.original_filename}" loading="lazy">
                                         <div class="photo-name">${photo.original_filename}</div>
+                                        <button class="btn btn-sm" style="width: 100%; margin-top: 0.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;" onclick="enhancePhotoWithAI(${order.id}, ${photo.id})">
+                                            🎨 AI Enhance This Photo
+                                        </button>
+                                        <div id="ai-enhance-status-${order.id}-${photo.id}" style="margin-top: 0.5rem; font-size: 0.875rem;"></div>
                                     </div>
                                     <div class="arrow-separator">→</div>
                                     <div class="after-photo-upload" id="after-container-${order.id}-${photo.id}">
@@ -1778,6 +1782,113 @@
                 console.error('Copy failed:', err);
                 alert('Failed to copy content');
             });
+        }
+
+        // AI Enhance Photo
+        async function enhancePhotoWithAI(orderId, photoId) {
+            const statusDiv = document.getElementById(`ai-enhance-status-${orderId}-${photoId}`);
+            const button = event.target;
+
+            try {
+                // Show loading state
+                button.disabled = true;
+                button.innerHTML = '⏳ Enhancing with AI...';
+                statusDiv.innerHTML = '<div style="color: #6366f1; font-size: 0.875rem;">🎨 AI is enhancing your photo...</div>';
+
+                const token = getAuthToken();
+                const response = await fetch(`/api/photo-studio/admin/order/${orderId}/photo/${photoId}/ai-enhance`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    statusDiv.innerHTML = `
+                        <div style="background: #f0fdf4; border: 1px solid #86efac; padding: 0.75rem; border-radius: 0.375rem; font-size: 0.875rem;">
+                            <div style="color: #15803d; font-weight: 600; margin-bottom: 0.5rem;">✅ Enhancement Complete!</div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button onclick="downloadPhoto('${data.enhancedUrl}', 'enhanced-${photoId}.jpg')" style="flex: 1; background: #10b981; color: white; padding: 0.5rem; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.75rem; font-weight: 500;">
+                                    ⬇️ Download Enhanced
+                                </button>
+                                <button onclick="autoUploadEnhanced(${orderId}, ${photoId}, '${data.enhancedUrl}')" style="flex: 1; background: #6366f1; color: white; padding: 0.5rem; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.75rem; font-weight: 500;">
+                                    📤 Upload to Order
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    button.innerHTML = '🎨 AI Enhance This Photo';
+                    button.disabled = false;
+
+                    // Show preview
+                    const photoContainer = button.closest('.before-photo');
+                    const existingPreview = photoContainer.querySelector('.ai-enhanced-preview');
+                    if (existingPreview) {
+                        existingPreview.remove();
+                    }
+
+                    const preview = document.createElement('div');
+                    preview.className = 'ai-enhanced-preview';
+                    preview.style.cssText = 'margin-top: 0.5rem; border: 2px solid #10b981; border-radius: 0.5rem; overflow: hidden;';
+                    preview.innerHTML = `
+                        <div style="background: #10b981; color: white; padding: 0.25rem 0.5rem; font-size: 0.75rem; font-weight: 600; text-align: center;">AI Enhanced Preview</div>
+                        <img src="${data.enhancedUrl}" alt="AI Enhanced" style="width: 100%; display: block;">
+                    `;
+                    statusDiv.insertAdjacentElement('beforebegin', preview);
+                } else {
+                    throw new Error(data.error || 'Enhancement failed');
+                }
+            } catch (error) {
+                console.error('AI enhancement error:', error);
+                statusDiv.innerHTML = `<div style="color: #dc2626; font-size: 0.875rem;">❌ ${error.message}</div>`;
+                button.innerHTML = '🎨 AI Enhance This Photo';
+                button.disabled = false;
+            }
+        }
+
+        // Auto-upload enhanced photo from AI
+        async function autoUploadEnhanced(orderId, photoId, enhancedUrl) {
+            try {
+                const statusDiv = document.getElementById(`ai-enhance-status-${orderId}-${photoId}`);
+                statusDiv.innerHTML = '<div style="color: #6366f1; font-size: 0.875rem;">📤 Uploading enhanced photo...</div>';
+
+                // Download the enhanced image from URL
+                const imageResponse = await fetch(enhancedUrl);
+                const imageBlob = await imageResponse.blob();
+                const imageFile = new File([imageBlob], `enhanced-${photoId}.jpg`, { type: 'image/jpeg' });
+
+                // Upload to server
+                const formData = new FormData();
+                formData.append('photos', imageFile);
+                formData.append('original_photo_id', photoId);
+
+                const token = getAuthToken();
+                const uploadResponse = await fetch(`/api/photo-studio/admin/order/${orderId}/upload-enhanced`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await uploadResponse.json();
+
+                if (data.success) {
+                    statusDiv.innerHTML = '<div style="color: #15803d; font-size: 0.875rem;">✅ Enhanced photo uploaded successfully!</div>';
+                    // Reload order details to show the new enhanced photo
+                    setTimeout(() => {
+                        loadOrderDetails(orderId);
+                    }, 1500);
+                } else {
+                    throw new Error(data.error || 'Upload failed');
+                }
+            } catch (error) {
+                console.error('Auto-upload error:', error);
+                alert('Failed to upload enhanced photo: ' + error.message);
+            }
         }
 
         // Load orders on page load

@@ -2196,4 +2196,85 @@ router.get('/admin/order/:orderId/ai/outputs', authenticateToken, async (req, re
   }
 });
 
+// =====================================================
+// AI PHOTO ENHANCEMENT ENDPOINT
+// =====================================================
+
+/**
+ * POST /api/photo-studio/admin/order/:orderId/photo/:photoId/ai-enhance
+ * Enhance a customer's photo using AI
+ */
+router.post('/admin/order/:orderId/photo/:photoId/ai-enhance', authenticatePhotoStudioUser, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { orderId, photoId } = req.params;
+
+    logger.info(`[PHOTO STUDIO] AI photo enhancement requested - Order: ${orderId}, Photo: ${photoId}, Admin: ${userId}`);
+
+    // Verify user is admin
+    const [adminUser] = await sequelize.query(
+      'SELECT email, is_admin FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const photoStudioAdmins = ['mstagg@digit2ai.com', 'pixlypro@digit2ai.com'];
+    if (!adminUser || (!adminUser.is_admin && !photoStudioAdmins.includes(adminUser.email))) {
+      return res.status(403).json({
+        success: false,
+        error: 'Admin access required'
+      });
+    }
+
+    // Get the photo
+    const [photo] = await sequelize.query(
+      'SELECT * FROM photo_studio_photos WHERE id = :photoId AND order_id = :orderId AND photo_type = :photoType',
+      {
+        replacements: { photoId, orderId, photoType: 'original' },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!photo) {
+      return res.status(404).json({
+        success: false,
+        error: 'Photo not found'
+      });
+    }
+
+    // Import AI enhancement service
+    const { enhancePhoto } = require('../services/aiPhotoEnhancer');
+
+    // Enhance the photo with AI
+    const enhancedResult = await enhancePhoto({
+      photoUrl: photo.storage_url,
+      photoId: photo.id,
+      orderId: orderId
+    });
+
+    if (!enhancedResult.success) {
+      throw new Error(enhancedResult.error || 'Enhancement failed');
+    }
+
+    logger.info(`[PHOTO STUDIO] AI enhancement successful - Photo: ${photoId}`);
+
+    res.json({
+      success: true,
+      photoId: photo.id,
+      enhancedUrl: enhancedResult.enhancedUrl,
+      model: enhancedResult.model || 'stability-ai',
+      message: 'Photo enhanced successfully'
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] AI photo enhancement error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to enhance photo'
+    });
+  }
+});
+
 module.exports = router;

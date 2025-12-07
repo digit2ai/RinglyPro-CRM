@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Details - Lina's Treasures</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    /* Product Detail Specific Styles */
+    .breadcrumb {
+      padding: 20px 0;
+      font-size: 13px;
+      color: var(--warm-gray);
+    }
+
+    .breadcrumb a {
+      color: var(--warm-gray);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .breadcrumb a:hover {
+      color: var(--rose-gold);
+    }
+
+    .breadcrumb span {
+      margin: 0 8px;
+    }
+
+    .product-detail-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      margin-bottom: 80px;
+    }
+
+    .product-gallery {
+      position: sticky;
+      top: 100px;
+      height: fit-content;
+    }
+
+    .main-image {
+      width: 100%;
+      height: 600px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      background: var(--blush);
+      box-shadow: var(--shadow-card);
+    }
+
+    .thumbnail-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .thumbnail {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.3s;
+      background: var(--blush);
+    }
+
+    .thumbnail:hover {
+      border-color: var(--rose-gold);
+    }
+
+    .thumbnail.active {
+      border-color: var(--rose-gold);
+      box-shadow: 0 0 0 1px var(--rose-gold);
+    }
+
+    .product-details {
+      padding-top: 20px;
+    }
+
+    .product-header .eyebrow {
+      margin-bottom: 12px;
+    }
+
+    .product-header h1 {
+      font-size: 42px;
+      margin-bottom: 16px;
+      color: var(--charcoal);
+    }
+
+    .product-sku {
+      font-size: 13px;
+      color: var(--warm-gray);
+      margin-bottom: 24px;
+    }
+
+    .pricing-section {
+      background: var(--blush);
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 32px;
+    }
+
+    .pricing-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .pricing-label {
+      font-size: 14px;
+      color: var(--warm-gray);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    .pricing-value {
+      font-family: var(--font-serif);
+      font-size: 28px;
+      color: var(--rose-gold);
+      font-weight: 600;
+    }
+
+    .pricing-retail {
+      font-size: 16px;
+      color: var(--warm-gray);
+      text-decoration: line-through;
+    }
+
+    .tier-pricing {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+
+    .tier-pricing h4 {
+      font-size: 14px;
+      margin-bottom: 12px;
+      color: var(--charcoal);
+    }
+
+    .tier-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .tier-row:last-child {
+      border-bottom: none;
+    }
+
+    .stock-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stock-badge.in-stock {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .stock-badge.low-stock {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .stock-badge.out-of-stock {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .quantity-selector {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .quantity-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--charcoal);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      border: 2px solid var(--light-gray);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .qty-btn {
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: white;
+      cursor: pointer;
+      font-size: 20px;
+      color: var(--charcoal);
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qty-btn:hover {
+      background: var(--blush);
+      color: var(--rose-gold);
+    }
+
+    .qty-input {
+      width: 70px;
+      height: 44px;
+      border: none;
+      border-left: 1px solid var(--light-gray);
+      border-right: 1px solid var(--light-gray);
+      text-align: center;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .add-to-cart-section {
+      margin: 32px 0;
+    }
+
+    .add-to-cart-btn {
+      width: 100%;
+      padding: 18px;
+      background: var(--rose-gold);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .add-to-cart-btn:hover:not(:disabled) {
+      background: #c19b2e;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .add-to-cart-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .product-info-tabs {
+      border-top: 2px solid var(--border-color);
+      margin: 40px 0;
+    }
+
+    .tab-buttons {
+      display: flex;
+      gap: 32px;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 32px;
+    }
+
+    .tab-btn {
+      padding: 16px 0;
+      background: none;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--warm-gray);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.3s;
+    }
+
+    .tab-btn.active {
+      color: var(--rose-gold);
+    }
+
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--rose-gold);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 16px 32px;
+    }
+
+    .info-label {
+      font-weight: 600;
+      color: var(--charcoal);
+    }
+
+    .info-value {
+      color: var(--warm-gray);
+    }
+
+    @media (max-width: 1024px) {
+      .product-detail-layout {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+
+      .product-gallery {
+        position: relative;
+        top: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6933628937a6f36a3c6b1c23.jpg" alt="Lina's Treasures">
+        <span class="nav-brand-name">Lina's Treasures</span>
+      </div>
+      <ul class="nav-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="catalog.html">Shop Wholesale</a></li>
+        <li><a href="about.html">Our Story</a></li>
+        <li><a href="resources.html">Retailer Resources</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="login.html" class="btn btn-outline">Sign In</a>
+        <a href="cart.html" class="btn btn-secondary">Cart (<span id="cart-count">0</span>)</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Breadcrumb -->
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a>
+      <span>→</span>
+      <a href="catalog.html">Shop</a>
+      <span>→</span>
+      <span id="product-category">...</span>
+      <span>→</span>
+      <span id="product-name-breadcrumb">...</span>
+    </div>
+  </div>
+
+  <!-- Product Detail -->
+  <section style="padding: 0 0 80px;">
+    <div class="container">
+      <div class="product-detail-layout" id="product-container">
+        <!-- Loading state -->
+        <div style="grid-column: 1 / -1; text-align: center; padding: 60px;">
+          <div class="spinner" style="margin: 0 auto 20px;"></div>
+          <p style="color: var(--warm-gray);">Loading product details...</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3>Lina's Treasures</h3>
+          <p>Curated jewelry & accessories for boutiques, gift shops, and specialty retailers.</p>
+          <p style="margin-top: 20px;">Crafting with passion, designed to sell.</p>
+        </div>
+
+        <div class="footer-section">
+          <h4>Shop</h4>
+          <ul>
+            <li><a href="catalog.html">All Products</a></li>
+            <li><a href="catalog.html?category=necklaces">Necklaces</a></li>
+            <li><a href="catalog.html?category=earrings">Earrings</a></li>
+            <li><a href="catalog.html?category=bracelets">Bracelets</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="about.html">Our Story</a></li>
+            <li><a href="resources.html">Retailer Resources</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Account</h4>
+          <ul>
+            <li><a href="signup.html">Apply for Account</a></li>
+            <li><a href="login.html">Sign In</a></li>
+            <li><a href="dashboard.html">Retailer Dashboard</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2024 Lina's Treasures. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/product-detail.js"></script>
+</body>
+</html>

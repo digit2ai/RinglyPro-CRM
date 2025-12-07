@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Catalog Widget</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: transparent;
+      padding: 20px;
+    }
+
+    .widget-container {
+      max-width: 100%;
+    }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .filter-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    select, input {
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      background: white;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: #d4af37;
+    }
+
+    /* Products Grid */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 25px;
+      margin-bottom: 30px;
+    }
+
+    .product-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .product-card:hover {
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      transform: translateY(-4px);
+    }
+
+    .product-image {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      background: #f5f5f5;
+    }
+
+    .product-info {
+      padding: 20px;
+    }
+
+    .product-category {
+      font-size: 11px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .product-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+
+    .product-price {
+      font-size: 22px;
+      color: #d4af37;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .product-stock {
+      font-size: 12px;
+      margin-bottom: 15px;
+    }
+
+    .in-stock {
+      color: #28a745;
+    }
+
+    .low-stock {
+      color: #ffc107;
+    }
+
+    .out-of-stock {
+      color: #dc3545;
+    }
+
+    .add-to-cart-btn {
+      width: 100%;
+      padding: 12px;
+      background: #d4af37;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .add-to-cart-btn:hover:not(:disabled) {
+      background: #c19b2e;
+    }
+
+    .add-to-cart-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    /* Loading & Empty States */
+    .loading, .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+
+    .loading {
+      font-size: 16px;
+    }
+
+    .empty-state {
+      font-size: 18px;
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    .pagination button {
+      padding: 10px 20px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: #d4af37;
+      color: white;
+      border-color: #d4af37;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination .page-info {
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      color: #666;
+    }
+
+    /* Notification */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #d4af37;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 10000;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(400px); opacity: 0; }
+    }
+
+    @media (max-width: 768px) {
+      .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+      }
+
+      .filters {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="widget-container">
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <label>Search</label>
+      <input type="text" id="search-input" placeholder="Search products...">
+    </div>
+    <div class="filter-group">
+      <label>Category</label>
+      <select id="category-filter">
+        <option value="">All Categories</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Sort By</label>
+      <select id="sort-filter">
+        <option value="newest">Newest First</option>
+        <option value="price-low">Price: Low to High</option>
+        <option value="price-high">Price: High to Low</option>
+        <option value="name">Name A-Z</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Products Grid -->
+  <div id="products-grid" class="products-grid">
+    <div class="loading">Loading products...</div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" id="pagination">
+    <button id="prev-btn" disabled>Previous</button>
+    <div class="page-info">
+      <span id="page-info">Page 1</span>
+    </div>
+    <button id="next-btn">Next</button>
+  </div>
+</div>
+
+<script>
+// Configuration
+const API_URL = window.location.origin + '/api/linas-treasures';
+const PRODUCTS_PER_PAGE = 12;
+
+let currentPage = 1;
+let currentCategory = '';
+let currentSearch = '';
+let currentSort = 'newest';
+let totalProducts = 0;
+
+// Session ID for cart
+let sessionId = localStorage.getItem('lt_session_id');
+if (!sessionId) {
+  sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  localStorage.setItem('lt_session_id', sessionId);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', async function() {
+  await loadCategories();
+  await loadProducts();
+  setupEventListeners();
+});
+
+// Load categories for filter
+async function loadCategories() {
+  try {
+    const response = await fetch(`${API_URL}/categories`);
+    const categories = await response.json();
+
+    const select = document.getElementById('category-filter');
+    categories.forEach(cat => {
+      const option = document.createElement('option');
+      option.value = cat.slug;
+      option.textContent = cat.name;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    console.error('Error loading categories:', error);
+  }
+}
+
+// Load products
+async function loadProducts() {
+  const grid = document.getElementById('products-grid');
+  grid.innerHTML = '<div class="loading">Loading products...</div>';
+
+  try {
+    const offset = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    let url = `${API_URL}/products?limit=${PRODUCTS_PER_PAGE}&offset=${offset}`;
+
+    if (currentCategory) url += `&category=${currentCategory}`;
+    if (currentSearch) url += `&search=${encodeURIComponent(currentSearch)}`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    totalProducts = data.total;
+
+    // Clear grid
+    grid.innerHTML = '';
+
+    if (data.products && data.products.length > 0) {
+      // Sort products
+      const sorted = sortProducts(data.products, currentSort);
+
+      sorted.forEach(product => {
+        grid.appendChild(createProductCard(product));
+      });
+
+      updatePagination();
+    } else {
+      grid.innerHTML = '<div class="empty-state">No products found. Try adjusting your filters.</div>';
+    }
+  } catch (error) {
+    console.error('Error loading products:', error);
+    grid.innerHTML = '<div class="empty-state">Error loading products. Please try again later.</div>';
+  }
+}
+
+// Sort products
+function sortProducts(products, sortBy) {
+  const sorted = [...products];
+
+  switch(sortBy) {
+    case 'price-low':
+      return sorted.sort((a, b) => parseFloat(a.retail_price) - parseFloat(b.retail_price));
+    case 'price-high':
+      return sorted.sort((a, b) => parseFloat(b.retail_price) - parseFloat(a.retail_price));
+    case 'name':
+      return sorted.sort((a, b) => a.name.localeCompare(b.name));
+    case 'newest':
+    default:
+      return sorted;
+  }
+}
+
+// Create product card
+function createProductCard(product) {
+  const card = document.createElement('div');
+  card.className = 'product-card';
+
+  const imageUrl = product.images && product.images.length > 0
+    ? product.images[0]
+    : 'https://via.placeholder.com/300x300?text=No+Image';
+
+  const stock = product.stock_quantity || 0;
+  const isOutOfStock = stock <= 0;
+  const isLowStock = stock > 0 && stock <= (product.low_stock_threshold || 10);
+
+  let stockClass = 'in-stock';
+  let stockText = `${stock} in stock`;
+
+  if (isOutOfStock) {
+    stockClass = 'out-of-stock';
+    stockText = 'Out of stock';
+  } else if (isLowStock) {
+    stockClass = 'low-stock';
+    stockText = `Only ${stock} left!`;
+  }
+
+  card.innerHTML = `
+    <img src="${imageUrl}" alt="${product.name}" class="product-image"
+         onerror="this.src='https://via.placeholder.com/300x300?text=No+Image'">
+    <div class="product-info">
+      <div class="product-category">${product.category_name || 'Uncategorized'}</div>
+      <h3 class="product-name">${product.name}</h3>
+      <div class="product-price">$${parseFloat(product.retail_price).toFixed(2)}</div>
+      <div class="product-stock ${stockClass}">${stockText}</div>
+      <button class="add-to-cart-btn"
+              onclick="addToCart(${product.id}, '${product.name}')"
+              ${isOutOfStock ? 'disabled' : ''}>
+        ${isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+      </button>
+    </div>
+  `;
+
+  return card;
+}
+
+// Add to cart
+async function addToCart(productId, productName) {
+  try {
+    const response = await fetch(`${API_URL}/cart`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: sessionId,
+        productId: productId,
+        quantity: 1
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      showNotification(`${productName} added to cart!`);
+
+      // Notify parent window (if embedded in iframe)
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'CART_UPDATED',
+          action: 'added',
+          productId: productId
+        }, '*');
+      }
+    } else {
+      showNotification(data.error || 'Failed to add to cart', 'error');
+    }
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    showNotification('Error adding to cart', 'error');
+  }
+}
+
+// Update pagination
+function updatePagination() {
+  const totalPages = Math.ceil(totalProducts / PRODUCTS_PER_PAGE);
+
+  document.getElementById('prev-btn').disabled = currentPage === 1;
+  document.getElementById('next-btn').disabled = currentPage >= totalPages;
+  document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+}
+
+// Event listeners
+function setupEventListeners() {
+  // Search
+  let searchTimeout;
+  document.getElementById('search-input').addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      currentSearch = e.target.value;
+      currentPage = 1;
+      loadProducts();
+    }, 500);
+  });
+
+  // Category filter
+  document.getElementById('category-filter').addEventListener('change', (e) => {
+    currentCategory = e.target.value;
+    currentPage = 1;
+    loadProducts();
+  });
+
+  // Sort filter
+  document.getElementById('sort-filter').addEventListener('change', (e) => {
+    currentSort = e.target.value;
+    loadProducts();
+  });
+
+  // Pagination
+  document.getElementById('prev-btn').addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      loadProducts();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+
+  document.getElementById('next-btn').addEventListener('click', () => {
+    const totalPages = Math.ceil(totalProducts / PRODUCTS_PER_PAGE);
+    if (currentPage < totalPages) {
+      currentPage++;
+      loadProducts();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+}
+
+// Show notification
+function showNotification(message, type = 'success') {
+  const notification = document.createElement('div');
+  notification.className = 'notification';
+  notification.textContent = message;
+  notification.style.background = type === 'success' ? '#d4af37' : '#dc3545';
+
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => document.body.removeChild(notification), 300);
+  }, 3000);
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lina's Treasures - For Boutique & Specialty Retailers</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: #ffffff;
+    }
+
+    .lina-treasure-section {
+      background: #ffffff;
+      padding: 60px 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      color: #333;
+    }
+
+  .lt-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .lt-eyebrow {
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+
+  .lt-logo {
+    display: block;
+    max-width: 300px;
+    height: auto;
+    margin: 0 auto 30px;
+  }
+
+  .lt-headline {
+    text-align: center;
+    font-size: 48px;
+    font-weight: 300;
+    letter-spacing: 1px;
+    color: #d4af37;
+    margin: 0 0 15px 0;
+    font-style: italic;
+  }
+
+  .lt-subheadline {
+    text-align: center;
+    font-size: 18px;
+    color: #666;
+    margin: 0 0 50px 0;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+  }
+
+  .lt-columns {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 40px;
+  }
+
+  .lt-column-left {
+    flex: 1;
+  }
+
+  .lt-column-right {
+    flex: 1;
+  }
+
+  .lt-description {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #555;
+  }
+
+  .lt-description p {
+    margin: 0 0 20px 0;
+  }
+
+  .lt-audience-card {
+    background: #fafafa;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 30px;
+  }
+
+  .lt-audience-title {
+    font-size: 20px;
+    color: #d4af37;
+    margin: 0 0 25px 0;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .lt-audience-group {
+    margin-bottom: 25px;
+  }
+
+  .lt-audience-group:last-child {
+    margin-bottom: 0;
+  }
+
+  .lt-audience-group h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #d4af37;
+    margin: 0 0 10px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .lt-audience-group ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .lt-audience-group li {
+    font-size: 14px;
+    color: #666;
+    padding: 4px 0 4px 20px;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .lt-audience-group li:before {
+    content: "✦";
+    position: absolute;
+    left: 0;
+    color: #d4af37;
+    font-size: 10px;
+  }
+
+  .lt-cta-container {
+    text-align: center;
+    margin-top: 50px;
+  }
+
+  .lt-cta-btn {
+    display: inline-block;
+    background: #d4af37;
+    color: #ffffff;
+    padding: 16px 40px;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+  }
+
+  .lt-cta-btn:hover {
+    background: #c19b2e;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+    transform: translateY(-2px);
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    .lina-treasure-section {
+      padding: 40px 15px;
+    }
+
+    .lt-headline {
+      font-size: 36px;
+    }
+
+    .lt-subheadline {
+      font-size: 16px;
+      margin-bottom: 35px;
+    }
+
+    .lt-columns {
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .lt-logo {
+      max-width: 200px;
+    }
+
+    .lt-description {
+      font-size: 15px;
+    }
+
+    .lt-audience-card {
+      padding: 20px;
+    }
+
+    .lt-cta-btn {
+      padding: 14px 30px;
+      font-size: 14px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<section class="lina-treasure-section">
+  <div class="lt-container">
+
+    <!-- Eyebrow Label -->
+    <div class="lt-eyebrow">For Boutique & Specialty Retailers</div>
+
+    <!-- Logo -->
+    <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6933628937a6f36a3c6b1c23.jpg" alt="Lina's Treasures - Crafting With Passion" class="lt-logo">
+
+    <!-- Headline -->
+    <h1 class="lt-headline">Lina's Treasures</h1>
+
+    <!-- Subheadline -->
+    <p class="lt-subheadline">Curated jewelry & accessories crafted to elevate your boutique, spa, or gift shop.</p>
+
+    <!-- Two Column Layout -->
+    <div class="lt-columns">
+
+      <!-- Left Column: Description -->
+      <div class="lt-column-left">
+        <div class="lt-description">
+          <p>
+            Lina's Treasures is a curated jewelry and accessories brand designed specifically for stylish retail environments — from women's boutiques and fashion stores to gift shops, spas, bridal studios, and resort retailers. Built on a love for elegance, craftsmanship, and meaningful design, Lina's Treasures offers beautifully selected pieces that elevate any retail space and delight customers looking for something special.
+          </p>
+          <p>
+            Our collection is tailored for boutique buyers who value quality, trend-forward styles, and fast-moving giftable items. Whether it's modern accessories for fashion boutiques, unique keepsakes for gift and beach shops, elegant pieces for hotel gift stores, or refined accents for bridal and formalwear boutiques — Lina's Treasures delivers collections that seamlessly fit each store's personality and customer base.
+          </p>
+          <p>
+            With a focus on boutiques, specialty retail, tourism, wellness, and bridal markets, Lina's Treasures helps retailers stand out with products that feel luxurious yet accessible, meaningful yet stylish, and always memorable for the customer.
+          </p>
+        </div>
+      </div>
+
+      <!-- Right Column: Audience List -->
+      <div class="lt-column-right">
+        <div class="lt-audience-card">
+          <h3 class="lt-audience-title">We Serve</h3>
+
+          <div class="lt-audience-group">
+            <h4>Jewelry & Accessories Retail</h4>
+            <ul>
+              <li>Women's boutiques</li>
+              <li>Clothing boutiques</li>
+              <li>Fashion boutiques</li>
+              <li>Accessories stores</li>
+              <li>Jewelry stores</li>
+            </ul>
+          </div>
+
+          <div class="lt-audience-group">
+            <h4>Gift & Specialty Retail</h4>
+            <ul>
+              <li>Gift shops</li>
+              <li>Souvenir shops</li>
+              <li>Specialty gift stores</li>
+              <li>Tourist gift shops</li>
+              <li>Beach shops</li>
+            </ul>
+          </div>
+
+          <div class="lt-audience-group">
+            <h4>Consignment & Resale</h4>
+            <ul>
+              <li>Consignment boutiques</li>
+              <li>Resale boutiques</li>
+              <li>Upscale consignment shops</li>
+              <li>Designer resale stores</li>
+            </ul>
+          </div>
+
+          <div class="lt-audience-group">
+            <h4>Beauty & Wellness</h4>
+            <ul>
+              <li>Day spas</li>
+              <li>Hair salons</li>
+              <li>Nail salons</li>
+              <li>Med spas</li>
+              <li>Beauty salons</li>
+            </ul>
+          </div>
+
+          <div class="lt-audience-group">
+            <h4>Home & Lifestyle</h4>
+            <ul>
+              <li>Home décor stores</li>
+              <li>Antique shops</li>
+              <li>Art galleries</li>
+            </ul>
+          </div>
+
+          <div class="lt-audience-group">
+            <h4>Bridal & Special Occasion</h4>
+            <ul>
+              <li>Bridal shops</li>
+              <li>Formal wear stores</li>
+              <li>Dress boutiques</li>
+            </ul>
+          </div>
+
+          <div class="lt-audience-group">
+            <h4>Tourism & Hospitality</h4>
+            <ul>
+              <li>Hotel gift shops</li>
+              <li>Resort shops</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Call to Action -->
+    <div class="lt-cta-container">
+      <a href="#" class="lt-cta-btn">Partner With Lina's Treasures</a>
+    </div>
+
+  </div>
+</section>
+
+</body>
+</html>

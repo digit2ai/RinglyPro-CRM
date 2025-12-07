@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Become a Wholesale Partner - Lina's Treasures</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .signup-hero {
+      background: linear-gradient(135deg, var(--blush) 0%, var(--champagne) 100%);
+      padding: 80px 0 60px;
+      text-align: center;
+    }
+
+    .signup-hero h1 {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .signup-hero .subtitle {
+      font-size: 18px;
+      color: var(--warm-gray);
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .signup-container {
+      max-width: 800px;
+      margin: -40px auto 80px;
+      position: relative;
+    }
+
+    .signup-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: var(--blush);
+      padding: 32px 40px;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .card-header h2 {
+      font-family: var(--font-serif);
+      font-size: 28px;
+      color: var(--charcoal);
+      margin-bottom: 8px;
+    }
+
+    .card-header p {
+      color: var(--warm-gray);
+      font-size: 15px;
+      margin: 0;
+    }
+
+    .card-body {
+      padding: 40px;
+    }
+
+    .form-section {
+      margin-bottom: 40px;
+    }
+
+    .form-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      color: var(--charcoal);
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-number {
+      width: 32px;
+      height: 32px;
+      background: var(--rose-gold);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--charcoal);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-label .required {
+      color: var(--rose-gold);
+    }
+
+    .form-label .optional {
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      color: var(--warm-gray);
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--light-gray);
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: var(--font-sans);
+      transition: all 0.3s;
+      background: white;
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 120px;
+      font-family: var(--font-sans);
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--rose-gold);
+      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+      color: #aaa;
+    }
+
+    .form-help {
+      font-size: 12px;
+      color: var(--warm-gray);
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    .checkbox-group {
+      margin: 24px 0;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+      padding: 16px;
+      border: 2px solid var(--light-gray);
+      border-radius: 8px;
+      transition: all 0.3s;
+      margin-bottom: 12px;
+    }
+
+    .checkbox-label:hover {
+      border-color: var(--rose-gold);
+      background: var(--blush);
+    }
+
+    .checkbox-label input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      cursor: pointer;
+      accent-color: var(--rose-gold);
+    }
+
+    .checkbox-text {
+      flex: 1;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--charcoal);
+    }
+
+    .checkbox-text a {
+      color: var(--rose-gold);
+      text-decoration: none;
+    }
+
+    .checkbox-text a:hover {
+      text-decoration: underline;
+    }
+
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      background: var(--ivory);
+      padding: 24px;
+      border-radius: 8px;
+      margin-bottom: 32px;
+    }
+
+    .benefit-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--charcoal);
+    }
+
+    .benefit-item:before {
+      content: '✓';
+      color: var(--rose-gold);
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 18px;
+      background: var(--rose-gold);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      background: #c19b2e;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .submit-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .existing-account {
+      text-align: center;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-color);
+      font-size: 14px;
+      color: var(--warm-gray);
+    }
+
+    .existing-account a {
+      color: var(--rose-gold);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .existing-account a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .benefits-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .signup-hero h1 {
+        font-size: 36px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6933628937a6f36a3c6b1c23.jpg" alt="Lina's Treasures">
+        <span class="nav-brand-name">Lina's Treasures</span>
+      </div>
+      <ul class="nav-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="catalog.html">Shop Wholesale</a></li>
+        <li><a href="about.html">Our Story</a></li>
+        <li><a href="resources.html">Retailer Resources</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="login.html" class="btn btn-outline">Sign In</a>
+        <a href="cart.html" class="btn btn-secondary">Cart (<span id="cart-count">0</span>)</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Signup Hero -->
+  <div class="signup-hero">
+    <div class="container">
+      <div class="eyebrow">Wholesale Partnership Application</div>
+      <h1>Join Our Retail Community</h1>
+      <p class="subtitle">
+        Partner with Lina's Treasures to bring curated jewelry and accessories to your boutique.
+        Apply for a wholesale account and start offering your customers treasures they'll love.
+      </p>
+    </div>
+  </div>
+
+  <!-- Signup Form -->
+  <section style="padding: 0 0 80px;">
+    <div class="container">
+      <div class="signup-container">
+        <div class="signup-card">
+
+          <div class="card-header">
+            <h2>Wholesale Account Application</h2>
+            <p>Complete the form below to apply for wholesale pricing. We typically review applications within 1-2 business days.</p>
+          </div>
+
+          <div class="card-body">
+            <form id="signup-form">
+
+              <!-- Benefits -->
+              <div class="benefits-grid">
+                <div class="benefit-item">Wholesale pricing (20-40% off)</div>
+                <div class="benefit-item">Flexible payment terms</div>
+                <div class="benefit-item">Low minimum orders</div>
+                <div class="benefit-item">Dedicated support</div>
+                <div class="benefit-item">Early access to new products</div>
+                <div class="benefit-item">Marketing materials included</div>
+              </div>
+
+              <!-- Section 1: Business Information -->
+              <div class="form-section">
+                <div class="section-title">
+                  <span class="section-number">1</span>
+                  Business Information
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Business Name <span class="required">*</span></label>
+                  <input type="text" class="form-input" id="business-name" required placeholder="Your Boutique Name">
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Business Type <span class="required">*</span></label>
+                    <select class="form-select" id="business-type" required>
+                      <option value="">Select business type</option>
+                      <option value="boutique">Women's Boutique</option>
+                      <option value="gift-shop">Gift Shop</option>
+                      <option value="jewelry-store">Jewelry Store</option>
+                      <option value="spa">Spa/Salon</option>
+                      <option value="bridal">Bridal Shop</option>
+                      <option value="resort">Resort/Hotel Gift Shop</option>
+                      <option value="specialty">Specialty Retailer</option>
+                      <option value="online">Online Store</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Tax ID / EIN <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="tax-id" required placeholder="XX-XXXXXXX">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Business Website <span class="optional">(Optional)</span></label>
+                  <input type="url" class="form-input" id="website" placeholder="https://yourboutique.com">
+                  <p class="form-help">If you have a website or social media page showcasing your store</p>
+                </div>
+              </div>
+
+              <!-- Section 2: Contact Information -->
+              <div class="form-section">
+                <div class="section-title">
+                  <span class="section-number">2</span>
+                  Contact Information
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">First Name <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="first-name" required placeholder="First name">
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Last Name <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="last-name" required placeholder="Last name">
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Email Address <span class="required">*</span></label>
+                    <input type="email" class="form-input" id="email" required placeholder="you@yourboutique.com">
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Phone Number <span class="required">*</span></label>
+                    <input type="tel" class="form-input" id="phone" required placeholder="(555) 123-4567">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 3: Business Address -->
+              <div class="form-section">
+                <div class="section-title">
+                  <span class="section-number">3</span>
+                  Business Address
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Street Address <span class="required">*</span></label>
+                  <input type="text" class="form-input" id="address" required placeholder="123 Main Street">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Address Line 2 <span class="optional">(Optional)</span></label>
+                  <input type="text" class="form-input" id="address-2" placeholder="Suite, Unit, Building, etc.">
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">City <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="city" required placeholder="City">
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">State / Province <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="state" required placeholder="State">
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">ZIP / Postal Code <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="zip" required placeholder="12345">
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Country <span class="required">*</span></label>
+                    <select class="form-select" id="country" required>
+                      <option value="">Select country</option>
+                      <option value="US" selected>United States</option>
+                      <option value="CA">Canada</option>
+                      <option value="MX">Mexico</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 4: Additional Information -->
+              <div class="form-section">
+                <div class="section-title">
+                  <span class="section-number">4</span>
+                  Tell Us About Your Business
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">How did you hear about us? <span class="optional">(Optional)</span></label>
+                  <select class="form-select" id="referral-source">
+                    <option value="">Please select</option>
+                    <option value="search">Google/Online Search</option>
+                    <option value="social">Social Media</option>
+                    <option value="referral">Referral from Another Retailer</option>
+                    <option value="trade-show">Trade Show</option>
+                    <option value="email">Email/Newsletter</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Tell us about your store and why you'd like to partner with us <span class="optional">(Optional)</span></label>
+                  <textarea class="form-textarea" id="about-business" placeholder="Share your boutique's story, target customers, and what drew you to Lina's Treasures..."></textarea>
+                  <p class="form-help">This helps us understand how we can best support your business</p>
+                </div>
+              </div>
+
+              <!-- Terms & Conditions -->
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="terms-agree" required>
+                  <span class="checkbox-text">
+                    I agree to the <a href="terms.html" target="_blank">Terms & Conditions</a> and
+                    <a href="privacy.html" target="_blank">Privacy Policy</a> <span class="required">*</span>
+                  </span>
+                </label>
+
+                <label class="checkbox-label">
+                  <input type="checkbox" id="marketing-agree">
+                  <span class="checkbox-text">
+                    Yes, I'd like to receive updates about new products, promotions, and wholesale opportunities
+                  </span>
+                </label>
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit" class="submit-btn" id="submit-btn">
+                Submit Application
+              </button>
+
+              <!-- Existing Account -->
+              <div class="existing-account">
+                Already have an account? <a href="login.html">Sign in here</a>
+              </div>
+
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3>Lina's Treasures</h3>
+          <p>Curated jewelry & accessories for boutiques, gift shops, and specialty retailers.</p>
+          <p style="margin-top: 20px;">Crafting with passion, designed to sell.</p>
+        </div>
+
+        <div class="footer-section">
+          <h4>Shop</h4>
+          <ul>
+            <li><a href="catalog.html">All Products</a></li>
+            <li><a href="catalog.html?category=necklaces">Necklaces</a></li>
+            <li><a href="catalog.html?category=earrings">Earrings</a></li>
+            <li><a href="catalog.html?category=bracelets">Bracelets</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="about.html">Our Story</a></li>
+            <li><a href="resources.html">Retailer Resources</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Account</h4>
+          <ul>
+            <li><a href="signup.html">Apply for Account</a></li>
+            <li><a href="login.html">Sign In</a></li>
+            <li><a href="dashboard.html">Retailer Dashboard</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2024 Lina's Treasures. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/signup.js"></script>
+</body>
+</html>
