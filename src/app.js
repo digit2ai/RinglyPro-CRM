@@ -145,6 +145,9 @@ console.log('✅ Photo Upload routes loaded successfully');
 const storefrontRoutes = require('./routes/storefront'); // Online storefront & menu system
 console.log('✅ Storefront routes loaded successfully');
 
+const ordergoProRoutes = require('./routes/ordergopro'); // OrderGoPro SaaS platform
+console.log('✅ OrderGoPro routes loaded successfully');
+
 // API Routes - Organized by functionality
 console.log('📄 About to mount auth routes...');
 app.use('/api/auth', authRoutes); // Mount user authentication routes
@@ -169,6 +172,10 @@ console.log('✅ Photo Upload routes mounted at /api/photo-uploads');
 // Mount Storefront routes
 app.use('/api/storefront', storefrontRoutes); // Online storefront & menu system
 console.log('✅ Storefront routes mounted at /api/storefront');
+
+// Mount OrderGoPro routes
+app.use('/api/ordergopro', ordergoProRoutes); // OrderGoPro SaaS platform
+console.log('✅ OrderGoPro routes mounted at /api/ordergopro');
 
 // Core CRM API routes
 app.use('/api/contacts', contactsRoutes);
@@ -468,6 +475,31 @@ app.get('/storefront/:businessSlug', (req, res) => {
 app.get('/storefront-admin', (req, res) => {
   res.render('storefront-admin', {
     title: 'Storefront Manager - RinglyPro'
+  });
+});
+
+// OrderGoPro SaaS Platform routes
+app.get('/ordergopro', (req, res) => {
+  res.render('ordergopro-landing', {
+    title: 'OrderGoPro - Online Ordering Platform'
+  });
+});
+
+app.get('/ordergopro/signup', (req, res) => {
+  res.render('ordergopro-signup', {
+    title: 'Sign Up - OrderGoPro'
+  });
+});
+
+app.get('/ordergopro/login', (req, res) => {
+  res.render('ordergopro-login', {
+    title: 'Login - OrderGoPro'
+  });
+});
+
+app.get('/ordergopro/dashboard', (req, res) => {
+  res.render('ordergopro-dashboard', {
+    title: 'Dashboard - OrderGoPro'
   });
 });
 
