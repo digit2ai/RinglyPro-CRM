@@ -1999,7 +1999,7 @@ router.get('/order/:orderId/brief', authenticateToken, async (req, res) => {
 // AI DESIGN ASSISTANT ENDPOINTS (Admin Only)
 // =====================================================
 
-const { runAIAssistant, generateFallbackContent } = require('../services/mcpClient');
+const { generateDesignContent } = require('../services/aiDesignAssistant');
 
 /**
  * POST /api/photo-studio/admin/order/:orderId/ai/generate
@@ -2084,56 +2084,16 @@ router.post('/admin/order/:orderId/ai/generate', authenticateToken, async (req, 
       }
     );
 
-    // Call MCP AI Assistant
-    const aiResult = await runAIAssistant({
+    // Call AI Design Assistant
+    const aiResult = await generateDesignContent({
       mode,
       brief,
       order,
       photos,
-      extraInstructions: extraInstructions || '',
-      preferredModel: preferredModel || 'openai'
+      extraInstructions: extraInstructions || ''
     });
 
-    // If MCP failed, use fallback
-    if (!aiResult.success || aiResult.fallback) {
-      logger.warn(`[PHOTO STUDIO] MCP unavailable, using fallback content for order ${orderId}`);
-
-      const fallbackContent = generateFallbackContent(mode, brief);
-
-      // Still save to database with fallback flag
-      const [results] = await sequelize.query(
-        `INSERT INTO photo_studio_ai_outputs (
-          order_id, mode, request_context, model_name, output_json, raw_text, created_by_admin_id
-         ) VALUES (
-          :orderId, :mode, :requestContext, :modelName, :outputJson, :rawText, :adminId
-         ) RETURNING *`,
-        {
-          replacements: {
-            orderId,
-            mode,
-            requestContext: JSON.stringify({ brief, order, photos, extraInstructions, fallback: true }),
-            modelName: 'fallback',
-            outputJson: JSON.stringify(fallbackContent),
-            rawText: aiResult.error || 'MCP server unavailable - fallback content generated',
-            adminId: userId
-          },
-          type: QueryTypes.INSERT
-        }
-      );
-
-      return res.json({
-        success: true,
-        mode,
-        model: 'fallback',
-        content: fallbackContent,
-        rawText: 'MCP server unavailable - this is placeholder content',
-        fallback: true,
-        warning: 'MCP server is not available. Fallback content provided.',
-        aiOutput: results[0]
-      });
-    }
-
-    // Save successful AI output to database
+    // Save AI output to database
     const [results] = await sequelize.query(
       `INSERT INTO photo_studio_ai_outputs (
         order_id, mode, request_context, model_name, output_json, raw_text, created_by_admin_id
@@ -2144,7 +2104,7 @@ router.post('/admin/order/:orderId/ai/generate', authenticateToken, async (req, 
         replacements: {
           orderId,
           mode,
-          requestContext: JSON.stringify(aiResult.requestContext),
+          requestContext: JSON.stringify({ brief, order, photos, extraInstructions, fallback: aiResult.fallback || false }),
           modelName: aiResult.model,
           outputJson: JSON.stringify(aiResult.content),
           rawText: aiResult.rawText,
@@ -2163,6 +2123,7 @@ router.post('/admin/order/:orderId/ai/generate', authenticateToken, async (req, 
       content: aiResult.content,
       rawText: aiResult.rawText,
       tokensUsed: aiResult.tokensUsed,
+      fallback: aiResult.fallback || false,
       aiOutput: results[0]
     });
 
