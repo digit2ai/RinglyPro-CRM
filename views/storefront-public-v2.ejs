@@ -60,11 +60,11 @@
         .header {
             background: var(--bg-color);
             border-bottom: 1px solid var(--border-color);
-            padding: 1.5rem 0;
+            padding: 1rem 0;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .header-content {
@@ -74,29 +74,111 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 2rem;
         }
 
         .logo-container {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.25rem;
+            flex: 1;
+        }
+
+        .logo-wrapper {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 70px;
+            height: 70px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
         }
 
         .logo {
-            max-height: 60px;
-            max-width: 200px;
+            max-height: 55px;
+            max-width: 180px;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            font-size: 2rem;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .business-info {
+            flex: 1;
         }
 
         .business-name {
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-size: 1.75rem;
+            font-weight: 800;
             color: var(--text-color);
+            line-height: 1.2;
+            margin-bottom: 0.25rem;
         }
 
         .tagline {
             font-size: 0.875rem;
             color: var(--text-light);
-            margin-top: 0.25rem;
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .phone-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+        }
+
+        .phone-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .phone-icon {
+            font-size: 1.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-wrap: wrap;
+            }
+
+            .phone-link {
+                padding: 0.6rem 1rem;
+                font-size: 0.875rem;
+            }
+
+            .business-name {
+                font-size: 1.25rem;
+            }
+
+            .logo-wrapper {
+                min-width: 60px;
+                height: 60px;
+            }
+
+            .logo-text {
+                font-size: 1.5rem;
+            }
         }
 
         /* Cart Button */
@@ -632,10 +714,16 @@
         <header class="header">
             <div class="header-content">
                 <div class="logo-container" id="logo-container"></div>
-                <button class="cart-button" onclick="toggleCart()">
-                    <span>🛒 Cart</span>
-                    <span class="cart-badge" id="cart-count">0</span>
-                </button>
+                <div class="header-actions">
+                    <a href="tel:8134124888" class="phone-link">
+                        <span class="phone-icon">📞</span>
+                        <span>(813) 412-4888</span>
+                    </a>
+                    <button class="cart-button" onclick="toggleCart()">
+                        <span>🛒 Cart</span>
+                        <span class="cart-badge" id="cart-count">0</span>
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -804,9 +892,18 @@
 
             // Header
             const logoContainer = document.getElementById('logo-container');
+
+            // Get first letter for logo if no image
+            const firstLetter = storefront.business_name.charAt(0).toUpperCase();
+
             logoContainer.innerHTML = `
-                <div>
-                    ${storefront.logo_url ? `<img src="${storefront.logo_url}" alt="${storefront.business_name}" class="logo">` : ''}
+                <div class="logo-wrapper">
+                    ${storefront.logo_url
+                        ? `<img src="${storefront.logo_url}" alt="${storefront.business_name}" class="logo">`
+                        : `<div class="logo-text">${firstLetter}</div>`
+                    }
+                </div>
+                <div class="business-info">
                     <div class="business-name">${storefront.business_name}</div>
                     ${storefront.tagline ? `<div class="tagline">${storefront.tagline}</div>` : ''}
                 </div>
