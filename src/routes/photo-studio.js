@@ -2204,7 +2204,7 @@ router.get('/admin/order/:orderId/ai/outputs', authenticateToken, async (req, re
  * POST /api/photo-studio/admin/order/:orderId/photo/:photoId/ai-enhance
  * Enhance a customer's photo using AI
  */
-router.post('/admin/order/:orderId/photo/:photoId/ai-enhance', authenticatePhotoStudioUser, async (req, res) => {
+router.post('/admin/order/:orderId/photo/:photoId/ai-enhance', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const { orderId, photoId } = req.params;
