@@ -305,14 +305,7 @@ CREATE TRIGGER trigger_storefront_items_updated_at
 -- INITIAL DATA / SEED
 -- =====================================================
 
--- Example business type categories
-INSERT INTO storefront_categories (storefront_id, name, slug, icon_emoji, display_order)
-VALUES
-    (1, 'Appetizers', 'appetizers', '🍤', 1),
-    (1, 'Main Courses', 'main-courses', '🍽️', 2),
-    (1, 'Desserts', 'desserts', '🍰', 3),
-    (1, 'Beverages', 'beverages', '☕', 4)
-ON CONFLICT DO NOTHING;
+-- No seed data - categories will be created when storefronts are created
 
 COMMENT ON TABLE storefront_businesses IS 'Multi-tenant storefront businesses hosted at orders.ringlypro.com/{business_slug}';
 COMMENT ON TABLE storefront_categories IS 'Menu categories/sections for organizing products';
