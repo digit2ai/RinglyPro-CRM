@@ -559,4 +559,308 @@ async function importWebsiteAsync(storefrontId, websiteUrl, businessType) {
   }
 }
 
+// =====================================================
+// ORDER ENDPOINTS (Public - No Auth Required)
+// =====================================================
+
+/**
+ * POST /api/storefront/orders/create
+ * Create a new order
+ */
+router.post('/orders/create', async (req, res) => {
+  try {
+    const {
+      businessSlug,
+      customerInfo,
+      orderType,
+      deliveryAddress,
+      items,
+      pricing,
+      notes,
+      paymentMethod
+    } = req.body;
+
+    logger.info(`[Storefront Orders] New order for ${businessSlug}`);
+
+    // Get storefront
+    const [storefront] = await sequelize.query(
+      'SELECT * FROM storefront_businesses WHERE business_slug = :slug',
+      {
+        replacements: { slug: businessSlug },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!storefront) {
+      return res.status(404).json({
+        success: false,
+        error: 'Storefront not found'
+      });
+    }
+
+    // Create order
+    const [order] = await sequelize.query(
+      `INSERT INTO storefront_orders (
+        storefront_id,
+        customer_name,
+        customer_email,
+        customer_phone,
+        order_type,
+        delivery_address,
+        items_json,
+        subtotal_amount,
+        tax_amount,
+        delivery_fee,
+        total_amount,
+        payment_method,
+        payment_status,
+        order_status,
+        special_instructions,
+        created_at
+      ) VALUES (
+        :storefrontId,
+        :customerName,
+        :customerEmail,
+        :customerPhone,
+        :orderType,
+        :deliveryAddress,
+        :itemsJson,
+        :subtotal,
+        :tax,
+        :deliveryFee,
+        :total,
+        :paymentMethod,
+        :paymentStatus,
+        'pending',
+        :notes,
+        NOW()
+      ) RETURNING *`,
+      {
+        replacements: {
+          storefrontId: storefront.id,
+          customerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
+          customerEmail: customerInfo.email,
+          customerPhone: customerInfo.phone,
+          orderType: orderType,
+          deliveryAddress: deliveryAddress ? JSON.stringify(deliveryAddress) : null,
+          itemsJson: JSON.stringify(items),
+          subtotal: pricing.subtotal,
+          tax: pricing.tax,
+          deliveryFee: pricing.deliveryFee || 0,
+          total: pricing.total,
+          paymentMethod: paymentMethod,
+          paymentStatus: paymentMethod === 'cash' ? 'pending' : 'pending',
+          notes: notes || null
+        },
+        type: QueryTypes.INSERT
+      }
+    );
+
+    // Create CRM contact
+    try {
+      await sequelize.query(
+        `INSERT INTO storefront_visitors (
+          storefront_id,
+          email,
+          phone,
+          first_name,
+          last_name,
+          total_orders,
+          lifetime_value,
+          created_at
+        ) VALUES (
+          :storefrontId,
+          :email,
+          :phone,
+          :firstName,
+          :lastName,
+          1,
+          :total,
+          NOW()
+        )
+        ON CONFLICT (storefront_id, email)
+        DO UPDATE SET
+          total_orders = storefront_visitors.total_orders + 1,
+          lifetime_value = storefront_visitors.lifetime_value + :total,
+          last_order_at = NOW()`,
+        {
+          replacements: {
+            storefrontId: storefront.id,
+            email: customerInfo.email,
+            phone: customerInfo.phone,
+            firstName: customerInfo.firstName,
+            lastName: customerInfo.lastName,
+            total: pricing.total
+          },
+          type: QueryTypes.INSERT
+        }
+      );
+    } catch (crmError) {
+      logger.error('[Storefront Orders] CRM contact creation error:', crmError);
+      // Don't fail order if CRM creation fails
+    }
+
+    // Update storefront analytics
+    await sequelize.query(
+      `UPDATE storefront_businesses
+       SET total_orders = COALESCE(total_orders, 0) + 1,
+           total_revenue = COALESCE(total_revenue, 0) + :total
+       WHERE id = :id`,
+      {
+        replacements: {
+          id: storefront.id,
+          total: pricing.total
+        },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`[Storefront Orders] Order created successfully: ${order[0].id}`);
+
+    res.json({
+      success: true,
+      order: order[0],
+      message: 'Order placed successfully'
+    });
+
+  } catch (error) {
+    logger.error('[Storefront Orders] Create order error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create order'
+    });
+  }
+});
+
+/**
+ * GET /api/storefront/orders/:orderId
+ * Get order details (for customer tracking)
+ */
+router.get('/orders/:orderId', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const [order] = await sequelize.query(
+      `SELECT o.*, b.business_name, b.business_slug
+       FROM storefront_orders o
+       JOIN storefront_businesses b ON o.storefront_id = b.id
+       WHERE o.id = :orderId`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      order
+    });
+
+  } catch (error) {
+    logger.error('[Storefront Orders] Get order error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve order'
+    });
+  }
+});
+
+/**
+ * GET /api/storefront/admin/orders
+ * Get all orders for admin (authenticated)
+ */
+router.get('/admin/orders', authenticateToken, async (req, res) => {
+  try {
+    const { storefrontId, status } = req.query;
+
+    let whereClause = '';
+    const replacements = {};
+
+    if (storefrontId) {
+      whereClause = 'WHERE o.storefront_id = :storefrontId';
+      replacements.storefrontId = storefrontId;
+    }
+
+    if (status) {
+      whereClause += whereClause ? ' AND ' : 'WHERE ';
+      whereClause += 'o.order_status = :status';
+      replacements.status = status;
+    }
+
+    const orders = await sequelize.query(
+      `SELECT o.*, b.business_name, b.business_slug
+       FROM storefront_orders o
+       JOIN storefront_businesses b ON o.storefront_id = b.id
+       ${whereClause}
+       ORDER BY o.created_at DESC
+       LIMIT 100`,
+      {
+        replacements,
+        type: QueryTypes.SELECT
+      }
+    );
+
+    res.json({
+      success: true,
+      orders
+    });
+
+  } catch (error) {
+    logger.error('[Storefront Orders] List orders error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve orders'
+    });
+  }
+});
+
+/**
+ * PUT /api/storefront/admin/orders/:orderId/status
+ * Update order status (authenticated)
+ */
+router.put('/admin/orders/:orderId/status', authenticateToken, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'completed', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid status'
+      });
+    }
+
+    await sequelize.query(
+      `UPDATE storefront_orders
+       SET order_status = :status,
+           updated_at = NOW()
+       WHERE id = :orderId`,
+      {
+        replacements: { orderId, status },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    res.json({
+      success: true,
+      message: 'Order status updated'
+    });
+
+  } catch (error) {
+    logger.error('[Storefront Orders] Update status error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update order status'
+    });
+  }
+});
+
 module.exports = router;

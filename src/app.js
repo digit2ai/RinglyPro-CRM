@@ -458,7 +458,7 @@ app.get('/photo-studio-admin-dashboard', (req, res) => {
 
 // Online Storefront public page route
 app.get('/storefront/:businessSlug', (req, res) => {
-  res.render('storefront-public', {
+  res.render('storefront-public-v2', {
     title: 'Online Menu & Storefront',
     businessSlug: req.params.businessSlug
   });
