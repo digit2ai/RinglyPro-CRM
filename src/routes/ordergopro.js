@@ -10,6 +10,7 @@ const jwt = require('jsonwebtoken');
 const { QueryTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const logger = require('../utils/logger');
+const { createStorefrontFromWebsite, createStorefrontFromDesignBrief } = require('../services/storefrontAutomation');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
@@ -308,7 +309,7 @@ router.get('/storefronts', authenticateClient, async (req, res) => {
 
 /**
  * POST /api/ordergopro/storefronts/create
- * Create new storefront for client
+ * Create new storefront for client (autonomous with AI)
  */
 router.post('/storefronts/create', authenticateClient, async (req, res) => {
   try {
@@ -317,12 +318,8 @@ router.post('/storefronts/create', authenticateClient, async (req, res) => {
       businessSlug,
       businessType,
       websiteUrl,
-      tagline,
-      description,
-      primaryColor,
-      secondaryColor,
-      isPublished,
-      enableOrdering
+      designBrief,
+      subscriptionPlan
     } = req.body;
 
     logger.info(`[OrderGoPro] Creating storefront: ${businessSlug} for client ${req.clientId}`);
@@ -343,70 +340,56 @@ router.post('/storefronts/create', authenticateClient, async (req, res) => {
       });
     }
 
-    // Create storefront
-    const [storefront] = await sequelize.query(
-      `INSERT INTO storefront_businesses (
-        ordergopro_client_id,
-        business_name,
-        business_slug,
-        business_type,
-        tagline,
-        description,
-        primary_color,
-        secondary_color,
-        is_published,
-        ordering_enabled,
-        created_at
-      ) VALUES (
-        :clientId,
-        :businessName,
-        :businessSlug,
-        :businessType,
-        :tagline,
-        :description,
-        :primaryColor,
-        :secondaryColor,
-        :isPublished,
-        :enableOrdering,
-        NOW()
-      ) RETURNING *`,
+    // Get client's subscription plan
+    const [client] = await sequelize.query(
+      'SELECT subscription_plan FROM ordergopro_clients WHERE id = :id',
       {
-        replacements: {
-          clientId: req.clientId,
-          businessName,
-          businessSlug,
-          businessType: businessType || 'restaurant',
-          tagline,
-          description,
-          primaryColor: primaryColor || '#6366f1',
-          secondaryColor: secondaryColor || '#8b5cf6',
-          isPublished: isPublished !== false,
-          enableOrdering: enableOrdering !== false
-        },
-        type: QueryTypes.INSERT
+        replacements: { id: req.clientId },
+        type: QueryTypes.SELECT
       }
     );
 
-    // If website URL provided, trigger AI import
+    const plan = subscriptionPlan || client?.subscription_plan || 'essential';
+
+    let result;
+
+    // Choose creation method based on whether they have a website
     if (websiteUrl) {
-      // TODO: Trigger async AI import
-      logger.info(`[OrderGoPro] AI import requested for: ${websiteUrl}`);
+      // AUTONOMOUS: Import from website with AI
+      result = await createStorefrontFromWebsite({
+        clientId: req.clientId,
+        businessName,
+        businessSlug,
+        businessType,
+        websiteUrl,
+        subscriptionPlan: plan
+      });
+    } else if (designBrief) {
+      // AUTONOMOUS: Create from design brief with AI
+      result = await createStorefrontFromDesignBrief({
+        clientId: req.clientId,
+        businessName,
+        businessSlug,
+        businessType,
+        designBrief,
+        subscriptionPlan: plan
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: 'Must provide either websiteUrl or designBrief'
+      });
     }
 
-    logger.info(`[OrderGoPro] Storefront created: ${storefront[0].id}`);
+    logger.info(`[OrderGoPro] Storefront creation initiated: ${result.storefrontId}`);
 
-    res.json({
-      success: true,
-      storefront: storefront[0],
-      publicUrl: `https://ordergopro.com/${businessSlug}`,
-      embedCode: `<iframe src="https://ordergopro.com/${businessSlug}" style="width: 100%; min-height: 900px; border: none;"></iframe>`
-    });
+    res.json(result);
 
   } catch (error) {
     logger.error('[OrderGoPro] Create storefront error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to create storefront'
+      error: 'Failed to create storefront: ' + error.message
     });
   }
 });

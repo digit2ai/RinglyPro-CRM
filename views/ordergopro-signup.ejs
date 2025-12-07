@@ -243,13 +243,12 @@
         const plan = urlParams.get('plan') || 'professional';
 
         const planNames = {
-            'starter': 'Starter Plan - Free Forever',
-            'basic': 'Basic Plan - $29/month (after trial)',
-            'professional': 'Professional Plan - $79/month (after trial)',
-            'enterprise': 'Enterprise Plan - $149/month (after trial)'
+            'essential': 'Essential Plan - $49/month (after trial)',
+            'professional': 'Professional Plan - $79/month (after trial) + RinglyPro AI',
+            'enterprise': 'Enterprise Plan - $149/month (after trial) + RinglyPro AI + CRM'
         };
 
-        document.getElementById('plan-badge').textContent = planNames[plan] || planNames['professional'];
+        document.getElementById('plan-badge').textContent = planNames[plan] || planNames['essential'];
 
         // Handle form submission
         document.getElementById('signup-form').addEventListener('submit', async (e) => {
