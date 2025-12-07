@@ -141,6 +141,10 @@ console.log('✅ Photo Studio routes loaded successfully');
 const photoUploadRoutes = require('./routes/photo-uploads'); // Photo upload handling for all services
 console.log('✅ Photo Upload routes loaded successfully');
 
+// Import Storefront routes
+const storefrontRoutes = require('./routes/storefront'); // Online storefront & menu system
+console.log('✅ Storefront routes loaded successfully');
+
 // API Routes - Organized by functionality
 console.log('📄 About to mount auth routes...');
 app.use('/api/auth', authRoutes); // Mount user authentication routes
@@ -161,6 +165,10 @@ console.log('✅ Photo Studio routes mounted at /api/photo-studio');
 // Mount Photo Upload routes
 app.use('/api/photo-uploads', photoUploadRoutes); // Photo upload handling for all services
 console.log('✅ Photo Upload routes mounted at /api/photo-uploads');
+
+// Mount Storefront routes
+app.use('/api/storefront', storefrontRoutes); // Online storefront & menu system
+console.log('✅ Storefront routes mounted at /api/storefront');
 
 // Core CRM API routes
 app.use('/api/contacts', contactsRoutes);
@@ -445,6 +453,21 @@ app.get('/photo-studio-portal', (req, res) => {
 app.get('/photo-studio-admin-dashboard', (req, res) => {
   res.render('photo-studio-admin-dashboard', {
     title: 'Admin Dashboard - Photo Studio - RinglyPro'
+  });
+});
+
+// Online Storefront public page route
+app.get('/storefront/:businessSlug', (req, res) => {
+  res.render('storefront-public', {
+    title: 'Online Menu & Storefront',
+    businessSlug: req.params.businessSlug
+  });
+});
+
+// Storefront admin management route
+app.get('/storefront-admin', (req, res) => {
+  res.render('storefront-admin', {
+    title: 'Storefront Manager - RinglyPro'
   });
 });
 
