@@ -66,6 +66,207 @@
         }
 
         /* ============================================
+           TESTIMONIALS SECTION
+        ============================================ */
+        .testimonials {
+            background-color: #f8fafc;
+        }
+
+        .testimonials h2 {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .testimonial-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            position: relative;
+        }
+
+        .testimonial-quote {
+            font-size: 1rem;
+            color: #1a1a1a;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .testimonial-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .testimonial-info {
+            flex: 1;
+        }
+
+        .testimonial-name {
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 0.25rem;
+        }
+
+        .testimonial-business {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .testimonial-stars {
+            color: #fbbf24;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* ============================================
+           FAQ SECTION
+        ============================================ */
+        .faq {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .faq h2 {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .faq-item {
+            background: white;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            border: 2px solid #e2e8f0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:hover {
+            border-color: #6366f1;
+        }
+
+        .faq-question {
+            padding: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #0a0a0a;
+            user-select: none;
+        }
+
+        .faq-toggle {
+            font-size: 1.5rem;
+            color: #6366f1;
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .faq-toggle {
+            transform: rotate(45deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding: 0 1.5rem;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .faq-answer p {
+            color: #4a5568;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* ============================================
+           TRUST BADGES
+        ============================================ */
+        .trust-badges {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+            padding: 2rem 0;
+            background: #f8fafc;
+        }
+
+        .trust-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #64748b;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .trust-badge-icon {
+            font-size: 1.5rem;
+            color: #6366f1;
+        }
+
+        /* ============================================
+           STATS SECTION
+        ============================================ */
+        .stats {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            text-align: center;
+            padding: 4rem 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .stat-item {
+            padding: 1rem;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        /* ============================================
            LAYOUT & CONTAINERS
         ============================================ */
         .container {
@@ -669,6 +870,19 @@
             .pricing-grid {
                 grid-template-columns: 1fr;
             }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+            }
+
+            .trust-badges {
+                gap: 1.5rem;
+            }
         }
 
         @media (max-width: 480px) {
@@ -744,6 +958,26 @@
         </div>
     </section>
 
+    <!-- TRUST BADGES -->
+    <div class="trust-badges">
+        <div class="trust-badge">
+            <span class="trust-badge-icon">🔒</span>
+            <span>Secure Payment</span>
+        </div>
+        <div class="trust-badge">
+            <span class="trust-badge-icon">⚡</span>
+            <span>48-72 Hour Delivery</span>
+        </div>
+        <div class="trust-badge">
+            <span class="trust-badge-icon">✓</span>
+            <span>100% Satisfaction</span>
+        </div>
+        <div class="trust-badge">
+            <span class="trust-badge-icon">🎨</span>
+            <span>Professional Quality</span>
+        </div>
+    </div>
+
     <!-- HOW IT WORKS SECTION -->
     <section class="how-it-works section-alt">
         <div class="container">
@@ -814,6 +1048,72 @@
         </div>
     </section>
 
+    <!-- STATS SECTION -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">500+</div>
+                    <div class="stat-label">Photos Enhanced</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">48-72h</div>
+                    <div class="stat-label">Average Delivery</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Satisfaction Rate</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">$1</div>
+                    <div class="stat-label">Demo Package</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS SECTION -->
+    <section class="testimonials">
+        <div class="container">
+            <h2>What Our Customers Say</h2>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-quote">"I was skeptical at first, but the results blew me away. My food photos went from amateur to magazine-quality. This service paid for itself in the first month!"</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">S</div>
+                        <div class="testimonial-info">
+                            <div class="testimonial-name">Sarah Chen</div>
+                            <div class="testimonial-business">Sweet Treats Bakery</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-quote">"As a small café owner, I don't have time or budget for professional photography. This service is perfect - I take photos with my phone and they come back looking incredible."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">M</div>
+                        <div class="testimonial-info">
+                            <div class="testimonial-name">Marcus Johnson</div>
+                            <div class="testimonial-business">Downtown Coffee Co.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-quote">"The $1 demo convinced me immediately. I upgraded to the Pro package and now my Instagram looks professional. My engagement has doubled since using these photos!"</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">L</div>
+                        <div class="testimonial-info">
+                            <div class="testimonial-name">Lisa Martinez</div>
+                            <div class="testimonial-business">La Bonita Restaurant</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- PRICING SECTION -->
     <section class="pricing" id="pricing">
         <div class="container-wide">
@@ -854,6 +1154,69 @@
                     <p class="pricing-description">You send us 20 photos and we send you back 20 professional photos plus 2 variations of each.</p>
                     <div class="pricing-total">Total: You have 60 professional photos</div>
                     <button class="btn btn-secondary" onclick="purchasePackage('elite')">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ SECTION -->
+    <section class="faq-section">
+        <div class="container">
+            <div class="faq">
+                <h2>Frequently Asked Questions</h2>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How does the photo enhancement process work?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Simply purchase a package, upload your phone photos through our secure portal, and our AI-powered system enhances them with professional-grade adjustments to lighting, color, composition, and detail. You'll receive your enhanced photos within 48-72 hours.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>What kind of photos work best?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Any photos taken with your phone camera work great! We specialize in food, product, and business photos. Just make sure your subject is well-framed and in focus. Our AI handles the rest - fixing lighting, enhancing colors, and perfecting the overall look.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Can I try the service before committing to a larger package?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Absolutely! That's why we offer the $1 Demo package. Send us 1 photo and see the results for yourself before upgrading to a larger package.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How long does it take to get my enhanced photos?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Most orders are delivered within 48-72 hours. You'll receive an email notification when your enhanced photos are ready for download in your customer portal.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>What file formats do you accept and deliver?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>We accept JPEG, PNG, HEIC, and WebP formats. Your enhanced photos are delivered as high-resolution JPEGs, perfect for print and digital use.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>What if I'm not satisfied with the results?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>We stand behind our work with a 100% satisfaction guarantee. If you're not happy with your enhanced photos, contact us at support@ringlypro.com and we'll make it right.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -945,6 +1308,22 @@
                 }, 100);
             }
         });
+
+        // FAQ Toggle functionality
+        function toggleFaq(element) {
+            const faqItem = element.parentElement;
+            const wasActive = faqItem.classList.contains('active');
+
+            // Close all FAQ items
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Open clicked item if it wasn't already active
+            if (!wasActive) {
+                faqItem.classList.add('active');
+            }
+        }
     </script>
 
 </body>
