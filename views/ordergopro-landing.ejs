@@ -291,6 +291,46 @@
             display: none;
         }
 
+        .mobile-menu-button {
+            color: var(--navy);
+            transition: all 0.3s;
+        }
+
+        .mobile-menu-button:hover {
+            color: var(--orange);
+        }
+
+        .mobile-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 40;
+        }
+
+        .mobile-menu.active {
+            display: block;
+        }
+
+        .mobile-menu a {
+            display: block;
+            padding: 1rem 1.5rem;
+            color: var(--navy);
+            font-weight: 500;
+            border-bottom: 1px solid #f3f4f6;
+            transition: all 0.2s;
+        }
+
+        .mobile-menu a:hover {
+            background: #f9fafb;
+            color: var(--orange);
+            padding-left: 2rem;
+        }
+
         @media (max-width: 768px) {
             .desktop-nav {
                 display: none !important;
@@ -316,6 +356,10 @@
 
             .desktop-buttons {
                 display: flex !important;
+            }
+
+            .mobile-menu {
+                display: none !important;
             }
         }
     </style>
@@ -343,6 +387,13 @@
 
                 <!-- Mobile Navigation (Simplified) -->
                 <div class="mobile-nav flex items-center gap-3">
+                    <!-- Hamburger Menu Button -->
+                    <button onclick="toggleMobileMenu()" class="mobile-menu-button p-2" aria-label="Menu">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M3 12h18M3 6h18M3 18h18" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+
                     <a href="javascript:void(0)" onclick="toggleAIChat()" class="text-gray-700 hover:text-gray-900 font-medium transition flex items-center justify-center" title="AI Assistant">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -368,6 +419,13 @@
                         Start Free
                     </a>
                 </div>
+            </div>
+
+            <!-- Mobile Dropdown Menu -->
+            <div class="mobile-menu" id="mobileMenu">
+                <a href="#features" onclick="toggleMobileMenu()">Features</a>
+                <a href="#how-it-works" onclick="toggleMobileMenu()">How It Works</a>
+                <a href="#pricing" onclick="toggleMobileMenu()">Pricing</a>
             </div>
         </div>
     </header>
