@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 const { QueryTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const logger = require('../utils/logger');
@@ -455,7 +456,6 @@ Your responses should:
 User question: ${message}`;
 
     // Call Claude AI API
-    const axios = require('axios');
     const claudeResponse = await axios.post(
       'https://api.anthropic.com/v1/messages',
       {
