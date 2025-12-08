@@ -205,6 +205,72 @@
             cursor: pointer;
             font-weight: 600;
         }
+
+        /* Mobile Menu */
+        .mobile-menu-button {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .mobile-menu-button span {
+            width: 24px;
+            height: 3px;
+            background: var(--navy);
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+        .mobile-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .mobile-menu.active {
+            display: block;
+        }
+
+        .mobile-menu a {
+            display: block;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f3f4f6;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .desktop-nav {
+                display: none;
+            }
+
+            .mobile-menu-button {
+                display: flex;
+            }
+
+            .desktop-buttons {
+                display: none;
+            }
+
+            .mobile-buttons {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                padding: 1rem 1.5rem;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-buttons {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body class="bg-white">
@@ -212,17 +278,43 @@
     <header class="w-full border-b bg-white/80 backdrop-blur sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-8">
+                <!-- Desktop Navigation -->
+                <div class="desktop-nav flex items-center gap-8">
                     <a href="#features" class="text-gray-700 hover:text-gray-900 font-medium transition">Features</a>
                     <a href="#how-it-works" class="text-gray-700 hover:text-gray-900 font-medium transition">How It Works</a>
                     <a href="#pricing" class="text-gray-700 hover:text-gray-900 font-medium transition">Pricing</a>
                     <a href="javascript:void(0)" onclick="toggleAIChat()" class="text-gray-700 hover:text-gray-900 font-medium transition">Conversational AI</a>
                 </div>
-                <div class="flex gap-3">
+
+                <!-- Mobile Menu Button -->
+                <div class="mobile-menu-button" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <!-- Desktop Buttons -->
+                <div class="desktop-buttons flex gap-3">
                     <a href="/ordergopro/login" class="px-5 py-2.5 text-gray-700 hover:text-gray-900 font-medium transition">
                         Sign In
                     </a>
                     <a href="/ordergopro/signup" class="px-6 py-2.5 text-white rounded-lg font-semibold transition hover:opacity-90" style="background: var(--orange)">
+                        Start Free
+                    </a>
+                </div>
+            </div>
+
+            <!-- Mobile Menu -->
+            <div class="mobile-menu" id="mobileMenu">
+                <a href="#features" onclick="toggleMobileMenu()">Features</a>
+                <a href="#how-it-works" onclick="toggleMobileMenu()">How It Works</a>
+                <a href="#pricing" onclick="toggleMobileMenu()">Pricing</a>
+                <a href="javascript:void(0)" onclick="toggleAIChat(); toggleMobileMenu();">Conversational AI</a>
+                <div class="mobile-buttons">
+                    <a href="/ordergopro/login" class="px-5 py-2.5 text-center text-gray-700 hover:text-gray-900 font-medium transition border border-gray-300 rounded-lg">
+                        Sign In
+                    </a>
+                    <a href="/ordergopro/signup" class="px-6 py-2.5 text-center text-white rounded-lg font-semibold transition hover:opacity-90" style="background: var(--orange)">
                         Start Free
                     </a>
                 </div>
@@ -614,5 +706,32 @@
             </div>
         </div>
     </footer>
+
+    <script>
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('active');
+        }
+
+        function toggleAIChat() {
+            // This will be implemented when adding the AI chat functionality
+            alert('AI Chat feature coming soon!');
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const mobileMenu = document.getElementById('mobileMenu');
+            const menuButton = document.querySelector('.mobile-menu-button');
+
+            if (mobileMenu && menuButton) {
+                const isClickInsideMenu = mobileMenu.contains(event.target);
+                const isClickOnButton = menuButton.contains(event.target);
+
+                if (!isClickInsideMenu && !isClickOnButton && mobileMenu.classList.contains('active')) {
+                    mobileMenu.classList.remove('active');
+                }
+            }
+        });
+    </script>
 </body>
 </html>
