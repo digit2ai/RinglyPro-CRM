@@ -27,6 +27,8 @@
         .plan-card {
             position: relative;
             transition: all 0.3s ease;
+            border-color: #e5e7eb !important;
+            background: white !important;
         }
 
         .plan-radio:checked + .plan-card {
@@ -45,10 +47,6 @@
 
         .plan-radio:checked + .plan-card .plan-badge {
             display: block;
-        }
-
-        .professional-plan .plan-badge {
-            display: block !important;
         }
     </style>
 </head>
@@ -94,9 +92,9 @@
                     </label>
 
                     <!-- Professional Plan -->
-                    <label class="plan-option cursor-pointer professional-plan">
+                    <label class="plan-option cursor-pointer">
                         <input type="radio" name="plan" value="professional" class="hidden plan-radio" checked>
-                        <div class="plan-card border-2 rounded-lg p-4 transition hover:border-orange-400" style="border-color: var(--orange); background: linear-gradient(135deg, rgba(255, 145, 77, 0.05), transparent);">
+                        <div class="plan-card border-2 border-gray-200 rounded-lg p-4 transition hover:border-orange-400">
                             <div class="plan-badge px-3 py-1 text-xs font-bold text-white rounded-full" style="background: var(--orange)">
                                 Most Popular
                             </div>
