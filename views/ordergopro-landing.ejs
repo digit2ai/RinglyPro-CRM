@@ -97,6 +97,114 @@
             color: var(--orange);
             border-bottom-color: var(--orange);
         }
+
+        /* AI Chat Widget */
+        .ai-chat-widget {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+        }
+
+        .ai-chat-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--navy), #1e3a5f);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(11, 30, 62, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .ai-chat-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(11, 30, 62, 0.4);
+        }
+
+        .ai-chat-window {
+            position: fixed;
+            bottom: 6rem;
+            right: 2rem;
+            width: 380px;
+            max-width: calc(100vw - 4rem);
+            height: 500px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .ai-chat-window.active {
+            display: flex;
+        }
+
+        .ai-chat-header {
+            background: linear-gradient(135deg, var(--navy), #1e3a5f);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ai-chat-body {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+
+        .ai-message {
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            max-width: 85%;
+        }
+
+        .ai-message.bot {
+            background: white;
+            margin-right: auto;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .ai-message.user {
+            background: var(--navy);
+            color: white;
+            margin-left: auto;
+        }
+
+        .ai-chat-input {
+            padding: 1rem;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .ai-chat-input input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .ai-chat-input button {
+            padding: 0.75rem 1.25rem;
+            background: var(--orange);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body class="bg-white">
@@ -104,13 +212,11 @@
     <header class="w-full border-b bg-white/80 backdrop-blur sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6935f87381eaa1f4da169f8e.png" alt="OrderGoPro" class="h-12 md:h-14" style="height: 56px; width: auto;">
-                </div>
-                <div class="hidden md:flex items-center gap-8">
+                <div class="flex items-center gap-8">
                     <a href="#features" class="text-gray-700 hover:text-gray-900 font-medium transition">Features</a>
+                    <a href="#how-it-works" class="text-gray-700 hover:text-gray-900 font-medium transition">How It Works</a>
                     <a href="#pricing" class="text-gray-700 hover:text-gray-900 font-medium transition">Pricing</a>
-                    <a href="#about" class="text-gray-700 hover:text-gray-900 font-medium transition">About</a>
+                    <a href="javascript:void(0)" onclick="toggleAIChat()" class="text-gray-700 hover:text-gray-900 font-medium transition">Conversational AI</a>
                 </div>
                 <div class="flex gap-3">
                     <a href="/ordergopro/login" class="px-5 py-2.5 text-gray-700 hover:text-gray-900 font-medium transition">
@@ -135,7 +241,7 @@
                         <div class="sound-wave"></div>
                         <div class="sound-wave"></div>
                         <div class="sound-wave"></div>
-                        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6935f87381eaa1f4da169f8e.png" alt="OrderGoPro" class="w-64 md:w-80 lg:w-96" style="max-width: 400px; height: auto;">
+                        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6935f87381eaa1f4da169f8e.png" alt="OrderGoPro" class="w-64 md:w-80 lg:w-96 rounded-2xl" style="max-width: 400px; height: auto;">
                     </div>
                 </div>
 
