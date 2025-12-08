@@ -562,6 +562,19 @@
                 <h1>🏪 Storefront Manager</h1>
                 <div class="header-subtitle">Create and manage online storefronts for your clients</div>
             </div>
+            <div style="text-align: right; color: var(--text-light); font-size: 0.9rem;">
+                <div id="user-info" style="display: none;">
+                    <div style="font-weight: 600; color: var(--navy); margin-bottom: 0.25rem;">
+                        <span id="user-name"></span>
+                    </div>
+                    <div style="font-size: 0.85rem;">
+                        User ID: <span id="user-id" style="font-family: monospace; background: #f3f4f6; padding: 2px 6px; border-radius: 4px;"></span>
+                    </div>
+                    <div style="font-size: 0.85rem; margin-top: 0.25rem;">
+                        Plan: <span id="user-plan" style="font-weight: 600; color: var(--orange);"></span>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -934,6 +947,37 @@
             }
         }
 
+        // Load user information
+        async function loadUserInfo() {
+            try {
+                const token = localStorage.getItem('ordergopro_token');
+                if (!token) {
+                    return;
+                }
+
+                const response = await fetch('/api/ordergopro/me', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success && result.client) {
+                        document.getElementById('user-name').textContent =
+                            `${result.client.firstName} ${result.client.lastName}`;
+                        document.getElementById('user-id').textContent = result.client.id;
+                        document.getElementById('user-plan').textContent =
+                            result.client.plan.charAt(0).toUpperCase() + result.client.plan.slice(1);
+                        document.getElementById('user-info').style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading user info:', error);
+            }
+        }
+
         function renderStorefronts(storefronts) {
             const container = document.getElementById('storefronts-container');
 
@@ -1237,6 +1281,7 @@ Brand Colors: Primary ${primaryColor || '#FF914D'}, Secondary ${secondaryColor |
         });
 
         // Initialize
+        loadUserInfo();
         loadStorefronts();
     </script>
 </body>
