@@ -261,6 +261,9 @@ async function processWebsiteImport(storefrontId, websiteUrl, businessType) {
     });
 
     // Step 3: Update storefront with brand info
+    const keywords = brandData.brandKit?.brandKeywords || [];
+    const keywordsArray = Array.isArray(keywords) ? `ARRAY[${keywords.map(k => `'${k.replace(/'/g, "''")}'`).join(', ')}]` : 'ARRAY[]::text[]';
+
     await sequelize.query(
       `UPDATE storefront_businesses
        SET tagline = :tagline,
@@ -271,7 +274,7 @@ async function processWebsiteImport(storefrontId, websiteUrl, businessType) {
            logo_url = :logoUrl,
            brand_style = :brandStyle,
            brand_tone = :brandTone,
-           brand_keywords = :brandKeywords,
+           brand_keywords = ${keywordsArray},
            website_import_status = 'importing_menu'
        WHERE id = :id`,
       {
@@ -284,8 +287,7 @@ async function processWebsiteImport(storefrontId, websiteUrl, businessType) {
           accentColor: brandData.brandKit?.accentColor || '#ec4899',
           logoUrl: brandData.brandKit?.logo || null,
           brandStyle: brandData.brandKit?.brandStyle || 'modern',
-          brandTone: brandData.brandKit?.brandTone || 'warm',
-          brandKeywords: brandData.brandKit?.brandKeywords || []
+          brandTone: brandData.brandKit?.brandTone || 'warm'
         },
         type: QueryTypes.UPDATE
       }

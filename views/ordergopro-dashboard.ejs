@@ -970,11 +970,11 @@
                                         <div class="storefront-stat-label">Items</div>
                                     </div>
                                     <div class="storefront-stat">
-                                        <div class="storefront-stat-value">${storefront.total_orders || 0}</div>
+                                        <div class="storefront-stat-value">${parseInt(storefront.total_orders) || 0}</div>
                                         <div class="storefront-stat-label">Orders</div>
                                     </div>
                                     <div class="storefront-stat">
-                                        <div class="storefront-stat-value">$${(storefront.total_revenue || 0).toFixed(0)}</div>
+                                        <div class="storefront-stat-value">$${parseFloat(storefront.total_revenue || 0).toFixed(0)}</div>
                                         <div class="storefront-stat-label">Revenue</div>
                                     </div>
                                 </div>
