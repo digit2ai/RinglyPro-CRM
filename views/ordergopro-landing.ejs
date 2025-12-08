@@ -796,8 +796,120 @@
         </div>
     </section>
 
+    <!-- Delivery Dispatcher Section -->
+    <section class="py-20 md:py-32" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <!-- Left: Visual/Mockup -->
+                <div class="relative order-2 lg:order-1">
+                    <div class="bg-white rounded-3xl p-12 shadow-2xl">
+                        <div class="text-center mb-8">
+                            <div class="inline-block bg-gradient-to-br from-sky-100 to-orange-100 rounded-full p-6 mb-4">
+                                <span class="text-6xl">🚚</span>
+                            </div>
+                            <h3 class="text-2xl font-bold" style="color: var(--navy)">Smart Delivery Network</h3>
+                        </div>
+
+                        <!-- Delivery Flow Visualization -->
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-4 bg-gradient-to-r from-sky-50 to-transparent p-4 rounded-lg">
+                                <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold" style="background: var(--sky)">1</div>
+                                <div>
+                                    <p class="font-semibold text-gray-800">Order Received</p>
+                                    <p class="text-sm text-gray-600">System processes order</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 bg-gradient-to-r from-sky-50 to-transparent p-4 rounded-lg">
+                                <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold" style="background: var(--sky)">2</div>
+                                <div>
+                                    <p class="font-semibold text-gray-800">Driver Auto-Assigned</p>
+                                    <p class="text-sm text-gray-600">Best available driver selected</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 bg-gradient-to-r from-orange-50 to-transparent p-4 rounded-lg">
+                                <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold" style="background: var(--orange)">3</div>
+                                <div>
+                                    <p class="font-semibold text-gray-800">Delivery Completed</p>
+                                    <p class="text-sm text-gray-600">Customer receives order</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating badge -->
+                    <div class="absolute -top-6 -right-6 animate-pulse">
+                        <div class="bg-white rounded-full px-6 py-3 shadow-xl border-2" style="border-color: var(--orange)">
+                            <p class="font-bold" style="color: var(--orange)">No Drivers Needed!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Content -->
+                <div class="order-1 lg:order-2">
+                    <h2 class="text-3xl md:text-5xl font-black mb-6" style="color: var(--navy)">
+                        Smart Delivery Dispatcher
+                    </h2>
+                    <p class="text-xl md:text-2xl mb-8 leading-relaxed" style="color: var(--sky)">
+                        Offer delivery without maintaining your own driver fleet
+                    </p>
+                    <p class="text-lg text-gray-600 mb-10 leading-relaxed">
+                        Start delivering orders immediately without hiring drivers or managing vehicle maintenance costs.
+                        OrderGoPro seamlessly connects you with third-party delivery networks to handle fulfillment.
+                    </p>
+
+                    <!-- Benefits List -->
+                    <div class="space-y-4 mb-10">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 mt-1">
+                                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="14" cy="14" r="14" fill="#FF914D"/>
+                                    <path d="M9 14l4 4 6-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-1" style="color: var(--navy)">Integrate with Third-Party Fleets</h4>
+                                <p class="text-gray-600">Connect to established delivery networks and scale instantly</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 mt-1">
+                                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="14" cy="14" r="14" fill="#FF914D"/>
+                                    <path d="M9 14l4 4 6-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-1" style="color: var(--navy)">Automatic Driver Assignment</h4>
+                                <p class="text-gray-600">Smart routing assigns the best available driver for each order</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 mt-1">
+                                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="14" cy="14" r="14" fill="#FF914D"/>
+                                    <path d="M9 14l4 4 6-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-1" style="color: var(--navy)">Unified Delivery Management</h4>
+                                <p class="text-gray-600">Manage both internal and external deliveries from one dashboard</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CTA Button -->
+                    <a href="/ordergopro/signup" class="inline-block px-8 py-4 text-white text-lg font-bold rounded-lg transition hover:opacity-90 shadow-lg" style="background: var(--orange)">
+                        Start Delivering Today →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Pricing Section -->
-    <section id="pricing" class="py-20 md:py-32" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
+    <section id="pricing" class="py-20 md:py-32 bg-white">
         <div class="max-w-7xl mx-auto px-6">
             <div class="text-center mb-16">
                 <h2 class="text-3xl md:text-5xl font-black mb-4" style="color: var(--navy)">
