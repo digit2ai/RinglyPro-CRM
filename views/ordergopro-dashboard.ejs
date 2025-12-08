@@ -1191,12 +1191,16 @@ Brand Colors: Primary ${primaryColor || '#FF914D'}, Secondary ${secondaryColor |
                 console.log('Response data:', result);
 
                 if (result.success) {
-                    alert(`✅ Storefront "${businessName}" created successfully!\n\nView at: https://aiagent.ringlypro.com/storefront/${businessSlug}`);
-                    closeCreateModal();
-                    // Auto-refresh the storefront list
+                    // Auto-refresh the storefront list BEFORE showing alert
                     console.log('Refreshing storefront list...');
                     await loadStorefronts();
                     console.log('Storefront list refreshed');
+
+                    // Close modal
+                    closeCreateModal();
+
+                    // Show success message
+                    alert(`✅ Storefront "${businessName}" created successfully!\n\nView at: https://aiagent.ringlypro.com/storefront/${businessSlug}`);
                 } else {
                     const errorMsg = result.error || result.message || 'Unknown error';
                     console.error('Storefront creation failed:', errorMsg);
