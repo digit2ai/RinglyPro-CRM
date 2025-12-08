@@ -92,8 +92,11 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // Store token
+                    // Store token and plan
                     localStorage.setItem('ordergopro_token', result.token);
+                    if (result.client && result.client.plan) {
+                        localStorage.setItem('ordergopro_plan', result.client.plan);
+                    }
                     // Redirect to dashboard
                     window.location.href = '/ordergopro/dashboard';
                 } else {

@@ -649,13 +649,56 @@
                                 <div class="form-group">
                                     <label>Business Type *</label>
                                     <select name="businessType" required>
-                                        <option value="restaurant">Restaurant</option>
-                                        <option value="cafe">Café</option>
-                                        <option value="bakery">Bakery</option>
-                                        <option value="food_truck">Food Truck</option>
-                                        <option value="bar">Bar/Pub</option>
-                                        <option value="retail">Retail Store</option>
-                                        <option value="other">Other</option>
+                                        <optgroup label="Food & Beverage">
+                                            <option value="restaurant">Restaurant</option>
+                                            <option value="cafe">Café / Coffee Shop</option>
+                                            <option value="bakery">Bakery</option>
+                                            <option value="food_truck">Food Truck</option>
+                                            <option value="bar">Bar / Pub</option>
+                                            <option value="fast_food">Fast Food</option>
+                                            <option value="pizza">Pizzeria</option>
+                                            <option value="ice_cream">Ice Cream Shop</option>
+                                            <option value="juice_bar">Juice Bar / Smoothie Shop</option>
+                                            <option value="deli">Deli / Sandwich Shop</option>
+                                            <option value="catering">Catering Service</option>
+                                            <option value="food_delivery">Food Delivery Service</option>
+                                        </optgroup>
+                                        <optgroup label="Retail & Shopping">
+                                            <option value="retail">Retail Store</option>
+                                            <option value="clothing">Clothing / Apparel</option>
+                                            <option value="jewelry">Jewelry Store</option>
+                                            <option value="electronics">Electronics Store</option>
+                                            <option value="bookstore">Bookstore</option>
+                                            <option value="gift_shop">Gift Shop</option>
+                                            <option value="toy_store">Toy Store</option>
+                                            <option value="sporting_goods">Sporting Goods</option>
+                                            <option value="pet_store">Pet Store / Pet Supplies</option>
+                                            <option value="furniture">Furniture Store</option>
+                                            <option value="home_decor">Home Decor</option>
+                                            <option value="hardware">Hardware Store</option>
+                                            <option value="garden_center">Garden Center / Nursery</option>
+                                        </optgroup>
+                                        <optgroup label="Health & Beauty">
+                                            <option value="salon">Hair Salon / Barbershop</option>
+                                            <option value="spa">Spa / Wellness Center</option>
+                                            <option value="fitness">Fitness Center / Gym</option>
+                                            <option value="pharmacy">Pharmacy</option>
+                                            <option value="cosmetics">Cosmetics / Beauty Products</option>
+                                        </optgroup>
+                                        <optgroup label="Services">
+                                            <option value="auto_repair">Auto Repair / Mechanic</option>
+                                            <option value="car_wash">Car Wash / Detailing</option>
+                                            <option value="dry_cleaning">Dry Cleaning / Laundry</option>
+                                            <option value="photography">Photography Studio</option>
+                                            <option value="printing">Printing Services</option>
+                                            <option value="florist">Florist</option>
+                                        </optgroup>
+                                        <optgroup label="Other">
+                                            <option value="convenience">Convenience Store</option>
+                                            <option value="liquor_store">Liquor Store</option>
+                                            <option value="market">Market / Grocery</option>
+                                            <option value="other">Other</option>
+                                        </optgroup>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -677,11 +720,21 @@
                             <p style="color: var(--text-light); margin-bottom: 1rem;">
                                 Our AI will automatically extract your menu, branding, and images from your existing website.
                             </p>
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="noWebsiteCheckbox" name="noWebsite" onchange="toggleWebsiteInput()"> I do NOT have a website
-                                </label>
-                                <div class="form-hint">Check this to skip URL import and go straight to customization</div>
+                            <div class="form-row">
+                                <div class="form-group" style="flex: 1;">
+                                    <label>
+                                        <input type="checkbox" id="noWebsiteCheckbox" name="noWebsite" onchange="toggleWebsiteInput()"> I do NOT have a website
+                                    </label>
+                                    <div class="form-hint">Check this to skip URL import and go straight to customization</div>
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Creation Method</label>
+                                    <select id="creationMethodSelect" name="creationMethod">
+                                        <option value="ai_import" selected>AI Import from URL</option>
+                                        <option value="manual">Manual Setup</option>
+                                        <option value="design_brief">From Design Brief</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="form-group" id="websiteUrlGroup">
                                 <label>Existing Website URL</label>
@@ -838,36 +891,39 @@
         // Load storefronts on page load
         async function loadStorefronts() {
             try {
-                // For now, we'll use mock data since we need authentication
-                // In production, this would fetch from /api/storefront/list
-                const mockStorefronts = [
-                    {
-                        id: 1,
-                        business_name: "Joe's Pizza",
-                        business_slug: "joes-pizza",
-                        business_type: "restaurant",
-                        is_active: true,
-                        is_published: true,
-                        total_orders: 0,
-                        total_revenue: 0,
-                        total_items: 15,
-                        logo_url: null,
-                        primary_color: "#c92a2a"
-                    }
-                ];
+                // Get authentication token
+                const token = localStorage.getItem('ordergopro_token');
+                if (!token) {
+                    console.log('No authentication token found');
+                    storefronts = [];
+                    renderStorefronts(storefronts);
+                    updateStats(storefronts);
+                    return;
+                }
 
-                storefronts = mockStorefronts;
+                // Fetch storefronts from API
+                const response = await fetch('/api/ordergopro/storefronts', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    storefronts = result.storefronts || [];
+                } else {
+                    console.error('Failed to load storefronts:', response.status);
+                    storefronts = [];
+                }
+
                 renderStorefronts(storefronts);
                 updateStats(storefronts);
             } catch (error) {
                 console.error('Error loading storefronts:', error);
-                document.getElementById('storefronts-container').innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">⚠️</div>
-                        <h3>Error Loading Storefronts</h3>
-                        <p>Please try again later</p>
-                    </div>
-                `;
+                storefronts = [];
+                renderStorefronts(storefronts);
+                updateStats(storefronts);
             }
         }
 
@@ -946,6 +1002,15 @@
             document.getElementById('create-modal').classList.add('active');
             currentStep = 1;
             showStep(1);
+
+            // Auto-select subscription plan from signup
+            const savedPlan = localStorage.getItem('ordergopro_plan');
+            if (savedPlan) {
+                const planSelect = document.getElementById('subscriptionPlanSelect');
+                if (planSelect) {
+                    planSelect.value = savedPlan;
+                }
+            }
         }
 
         function closeCreateModal() {
@@ -1066,26 +1131,62 @@
             submitBtn.textContent = 'Creating...';
 
             try {
+                const businessName = formData.get('businessName');
+                const businessSlug = formData.get('businessSlug');
+                const businessType = formData.get('businessType');
+                const websiteUrl = formData.get('websiteUrl');
+                const tagline = formData.get('tagline');
+                const description = formData.get('description');
+                const primaryColor = formData.get('primaryColor');
+                const secondaryColor = formData.get('secondaryColor');
+
+                // Build storefront data based on whether they have a website
                 const storefrontData = {
-                    businessName: formData.get('businessName'),
-                    businessSlug: formData.get('businessSlug'),
-                    businessType: formData.get('businessType'),
-                    websiteUrl: formData.get('websiteUrl'),
-                    subscriptionPlan: formData.get('subscriptionPlan'),
-                    tagline: formData.get('tagline'),
-                    description: formData.get('description'),
-                    primaryColor: formData.get('primaryColor'),
-                    secondaryColor: formData.get('secondaryColor'),
-                    isPublished: formData.get('isPublished') === 'on',
-                    enableOrdering: formData.get('enableOrdering') === 'on'
+                    businessName,
+                    businessSlug,
+                    businessType,
+                    subscriptionPlan: formData.get('subscriptionPlan')
                 };
 
-                // In production, this would POST to /api/storefront/create
-                // For now, show success message
-                alert(`✅ Storefront "${storefrontData.businessName}" created successfully!\n\nView at: https://aiagent.ringlypro.com/storefront/${storefrontData.businessSlug}`);
+                // If they have a website URL, send it for AI import
+                if (websiteUrl && websiteUrl.trim()) {
+                    storefrontData.websiteUrl = websiteUrl.trim();
+                } else {
+                    // No website - create a design brief from manual inputs
+                    storefrontData.designBrief = `Create a ${businessType} storefront called "${businessName}".
+Tagline: ${tagline || 'A great place to shop'}
+Description: ${description || 'Quality products and services'}
+Brand Colors: Primary ${primaryColor || '#FF914D'}, Secondary ${secondaryColor || '#87CEEB'}`;
+                }
 
-                closeCreateModal();
-                loadStorefronts();
+                // Get authentication token
+                const token = localStorage.getItem('ordergopro_token');
+                if (!token) {
+                    alert('Please log in to create a storefront');
+                    window.location.href = '/ordergopro/login';
+                    return;
+                }
+
+                // Call the actual API to create storefront
+                const response = await fetch('/api/ordergopro/storefronts/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(storefrontData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(`✅ Storefront "${businessName}" created successfully!\n\nView at: https://aiagent.ringlypro.com/storefront/${businessSlug}`);
+                    closeCreateModal();
+                    // Auto-refresh the storefront list
+                    await loadStorefronts();
+                } else {
+                    alert('Error creating storefront: ' + (result.error || 'Unknown error'));
+                }
             } catch (error) {
                 alert('Error creating storefront: ' + error.message);
             } finally {

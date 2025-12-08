@@ -272,8 +272,9 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // Store token
+                    // Store token and selected plan
                     localStorage.setItem('ordergopro_token', result.token);
+                    localStorage.setItem('ordergopro_plan', selectedPlan);
                     // Redirect to dashboard
                     window.location.href = '/ordergopro/dashboard';
                 } else {
