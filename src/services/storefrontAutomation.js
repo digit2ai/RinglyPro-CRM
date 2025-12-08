@@ -294,9 +294,9 @@ async function processWebsiteImport(storefrontId, websiteUrl, businessType) {
     );
 
     // Step 4: Import categories and items
-    if (scrapedData.aiProcessed?.menu?.categories) {
-      for (let catIndex = 0; catIndex < scrapedData.aiProcessed.menu.categories.length; catIndex++) {
-        const category = scrapedData.aiProcessed.menu.categories[catIndex];
+    if (scrapedData.aiProcessed?.categories) {
+      for (let catIndex = 0; catIndex < scrapedData.aiProcessed.categories.length; catIndex++) {
+        const category = scrapedData.aiProcessed.categories[catIndex];
 
         // Create category
         const [categoryResult] = await sequelize.query(
