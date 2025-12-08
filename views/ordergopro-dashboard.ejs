@@ -901,6 +901,8 @@
                     return;
                 }
 
+                console.log('Loading storefronts from API...');
+
                 // Fetch storefronts from API
                 const response = await fetch('/api/ordergopro/storefronts', {
                     method: 'GET',
@@ -909,11 +911,16 @@
                     }
                 });
 
+                console.log('Storefronts API response status:', response.status);
+
                 if (response.ok) {
                     const result = await response.json();
+                    console.log('Storefronts loaded:', result);
                     storefronts = result.storefronts || [];
+                    console.log('Number of storefronts:', storefronts.length);
                 } else {
-                    console.error('Failed to load storefronts:', response.status);
+                    const errorText = await response.text();
+                    console.error('Failed to load storefronts:', response.status, errorText);
                     storefronts = [];
                 }
 
@@ -1168,6 +1175,8 @@ Brand Colors: Primary ${primaryColor || '#FF914D'}, Secondary ${secondaryColor |
                 }
 
                 // Call the actual API to create storefront
+                console.log('Creating storefront with data:', storefrontData);
+
                 const response = await fetch('/api/ordergopro/storefronts/create', {
                     method: 'POST',
                     headers: {
@@ -1177,18 +1186,25 @@ Brand Colors: Primary ${primaryColor || '#FF914D'}, Secondary ${secondaryColor |
                     body: JSON.stringify(storefrontData)
                 });
 
+                console.log('Response status:', response.status);
                 const result = await response.json();
+                console.log('Response data:', result);
 
                 if (result.success) {
                     alert(`✅ Storefront "${businessName}" created successfully!\n\nView at: https://aiagent.ringlypro.com/storefront/${businessSlug}`);
                     closeCreateModal();
                     // Auto-refresh the storefront list
+                    console.log('Refreshing storefront list...');
                     await loadStorefronts();
+                    console.log('Storefront list refreshed');
                 } else {
-                    alert('Error creating storefront: ' + (result.error || 'Unknown error'));
+                    const errorMsg = result.error || result.message || 'Unknown error';
+                    console.error('Storefront creation failed:', errorMsg);
+                    alert('Error creating storefront: ' + errorMsg + '\n\nPlease check the console for details.');
                 }
             } catch (error) {
-                alert('Error creating storefront: ' + error.message);
+                console.error('Exception during storefront creation:', error);
+                alert('Error creating storefront: ' + error.message + '\n\nPlease check the console for details.');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = '🚀 Create Storefront';
