@@ -96,7 +96,7 @@ router.post('/create', authenticateToken, async (req, res) => {
       storefrontId,
       businessSlug,
       embedCode,
-      publicUrl: `https://orders.ringlypro.com/${businessSlug}`,
+      publicUrl: `https://aiagent.ringlypro.com/storefront/${businessSlug}`,
       message: 'Storefront created. Website import started in background.'
     });
 
@@ -390,7 +390,7 @@ router.get('/public/:businessSlug', async (req, res) => {
 function generateEmbedCode(businessSlug) {
   return `<!-- RinglyPro Storefront Embed -->
 <iframe
-  src="https://orders.ringlypro.com/${businessSlug}"
+  src="https://aiagent.ringlypro.com/storefront/${businessSlug}"
   style="width: 100%; min-height: 900px; border: none;"
   loading="lazy"
   title="${businessSlug} Online Menu"
