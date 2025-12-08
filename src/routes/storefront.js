@@ -58,11 +58,11 @@ router.post('/create', authenticateToken, async (req, res) => {
       });
     }
 
-    // Create storefront record
+    // Create storefront record with published=true by default
     const [storefront] = await sequelize.query(
       `INSERT INTO storefront_businesses
-       (business_slug, business_name, business_type, original_website_url, client_id, website_import_status)
-       VALUES (:slug, :name, :type, :url, :clientId, 'pending')
+       (business_slug, business_name, business_type, original_website_url, client_id, website_import_status, is_published, is_active)
+       VALUES (:slug, :name, :type, :url, :clientId, 'pending', true, true)
        RETURNING *`,
       {
         replacements: {
