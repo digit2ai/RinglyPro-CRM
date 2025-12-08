@@ -167,68 +167,31 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-semibold mb-2" style="color: var(--navy)">Business Name</label>
-                    <input type="text" name="businessName" required placeholder="Joe's Pizza"
-                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-sky-400 focus:outline-none transition">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold mb-2" style="color: var(--navy)">Business Type</label>
-                    <select name="businessType" required
-                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-sky-400 focus:outline-none transition">
-                        <option value="">Select type...</option>
-                        <optgroup label="Food & Beverage">
-                            <option value="restaurant">Restaurant</option>
-                            <option value="cafe">Café / Coffee Shop</option>
-                            <option value="bakery">Bakery</option>
-                            <option value="food_truck">Food Truck</option>
-                            <option value="bar">Bar / Pub</option>
-                            <option value="pizzeria">Pizzeria</option>
-                            <option value="deli">Deli / Sandwich Shop</option>
-                            <option value="ice_cream">Ice Cream Shop</option>
-                            <option value="juice_bar">Juice Bar / Smoothie Shop</option>
-                            <option value="catering">Catering Service</option>
-                        </optgroup>
-                        <optgroup label="Retail Stores">
-                            <option value="clothing_store">Clothing Store</option>
-                            <option value="boutique">Boutique</option>
-                            <option value="gift_shop">Gift Shop</option>
-                            <option value="bookstore">Bookstore</option>
-                            <option value="jewelry_store">Jewelry Store</option>
-                            <option value="toy_store">Toy Store</option>
-                            <option value="electronics">Electronics Store</option>
-                            <option value="home_decor">Home Décor Store</option>
-                            <option value="sporting_goods">Sporting Goods</option>
-                            <option value="pet_store">Pet Store</option>
-                            <option value="flower_shop">Flower Shop</option>
-                            <option value="craft_store">Craft / Art Supply Store</option>
-                        </optgroup>
-                        <optgroup label="Health & Beauty">
-                            <option value="salon">Salon / Barbershop</option>
-                            <option value="spa">Spa / Wellness Center</option>
-                            <option value="cosmetics">Cosmetics Store</option>
-                            <option value="pharmacy">Pharmacy</option>
-                        </optgroup>
-                        <optgroup label="Services">
-                            <option value="dry_cleaning">Dry Cleaning / Laundry</option>
-                            <option value="car_wash">Car Wash</option>
-                            <option value="photography">Photography Studio</option>
-                            <option value="printing">Print Shop</option>
-                        </optgroup>
-                        <optgroup label="Other">
-                            <option value="grocery">Grocery / Market</option>
-                            <option value="convenience">Convenience Store</option>
-                            <option value="liquor_store">Liquor Store</option>
-                            <option value="farm_stand">Farm Stand / Farmers Market</option>
-                            <option value="other">Other</option>
-                        </optgroup>
-                    </select>
-                </div>
-
-                <div>
                     <label class="block text-sm font-semibold mb-2" style="color: var(--navy)">Password</label>
-                    <input type="password" name="password" required placeholder="••••••••" minlength="8"
-                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-sky-400 focus:outline-none transition">
+                    <div class="relative">
+                        <input type="password" id="password" name="password" required placeholder="••••••••" minlength="8"
+                            class="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-lg focus:border-sky-400 focus:outline-none transition">
+                        <button type="button" onclick="togglePassword('password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                            <svg id="password-eye" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-2" style="color: var(--navy)">Confirm Password</label>
+                    <div class="relative">
+                        <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="••••••••" minlength="8"
+                            class="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-lg focus:border-sky-400 focus:outline-none transition">
+                        <button type="button" onclick="togglePassword('confirmPassword')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                            <svg id="confirmPassword-eye" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" class="w-full px-6 py-4 text-white rounded-lg font-bold text-lg transition hover:opacity-90 shadow-lg" style="background: var(--orange)">
@@ -256,11 +219,32 @@
             document.querySelector(`input[name="plan"][value="${urlPlan}"]`).checked = true;
         }
 
+        // Toggle password visibility
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const eye = document.getElementById(fieldId + '-eye');
+
+            if (field.type === 'password') {
+                field.type = 'text';
+            } else {
+                field.type = 'password';
+            }
+        }
+
         // Handle form submission
         document.getElementById('signup-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const form = e.target;
             const formData = new FormData(form);
+
+            // Validate password match
+            const password = formData.get('password');
+            const confirmPassword = formData.get('confirmPassword');
+
+            if (password !== confirmPassword) {
+                alert('Passwords do not match. Please try again.');
+                return;
+            }
 
             // Get selected plan from radio buttons
             const selectedPlan = document.querySelector('input[name="plan"]:checked')?.value || 'professional';
@@ -275,9 +259,7 @@
                     lastName: formData.get('lastName'),
                     email: formData.get('email'),
                     phone: formData.get('phone'),
-                    businessName: formData.get('businessName'),
-                    businessType: formData.get('businessType'),
-                    password: formData.get('password'),
+                    password: password,
                     plan: selectedPlan
                 };
 

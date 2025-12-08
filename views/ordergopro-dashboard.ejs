@@ -593,10 +593,6 @@
 
         <!-- Action Bar -->
         <div class="action-bar">
-            <div class="search-box">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="search-input" placeholder="Search storefronts...">
-            </div>
             <button class="btn btn-primary" onclick="openCreateModal()">
                 ➕ Create New Storefront
             </button>
@@ -970,16 +966,6 @@
             input.addEventListener('input', (e) => {
                 e.target.nextElementSibling.value = e.target.value;
             });
-        });
-
-        // Search
-        document.getElementById('search-input')?.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
-            const filtered = storefronts.filter(s =>
-                s.business_name.toLowerCase().includes(query) ||
-                s.business_slug.toLowerCase().includes(query)
-            );
-            renderStorefronts(filtered);
         });
 
         // Initialize

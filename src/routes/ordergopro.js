@@ -30,8 +30,6 @@ router.post('/signup', async (req, res) => {
       lastName,
       email,
       phone,
-      businessName,
-      businessType,
       password,
       plan
     } = req.body;
@@ -57,7 +55,7 @@ router.post('/signup', async (req, res) => {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create client
+    // Create client without business_name and business_type
     const [client] = await sequelize.query(
       `INSERT INTO ordergopro_clients (
         first_name,
@@ -65,8 +63,6 @@ router.post('/signup', async (req, res) => {
         email,
         phone,
         password_hash,
-        business_name,
-        business_type,
         subscription_plan,
         subscription_status,
         trial_ends_at,
@@ -77,8 +73,6 @@ router.post('/signup', async (req, res) => {
         :email,
         :phone,
         :passwordHash,
-        :businessName,
-        :businessType,
         :plan,
         'trial',
         NOW() + INTERVAL '14 days',
@@ -91,8 +85,6 @@ router.post('/signup', async (req, res) => {
           email,
           phone,
           passwordHash,
-          businessName,
-          businessType,
           plan: plan || 'professional'
         },
         type: QueryTypes.INSERT
@@ -116,7 +108,6 @@ router.post('/signup', async (req, res) => {
         firstName: client[0].first_name,
         lastName: client[0].last_name,
         email: client[0].email,
-        businessName: client[0].business_name,
         plan: client[0].subscription_plan
       }
     });
