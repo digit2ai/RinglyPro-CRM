@@ -857,8 +857,8 @@
 
         function updateStats(storefronts) {
             const totalStorefronts = storefronts.length;
-            const totalOrders = storefronts.reduce((sum, s) => sum + (s.total_orders || 0), 0);
-            const totalRevenue = storefronts.reduce((sum, s) => sum + (s.total_revenue || 0), 0);
+            const totalOrders = storefronts.reduce((sum, s) => sum + parseInt(s.total_orders || 0, 10), 0);
+            const totalRevenue = storefronts.reduce((sum, s) => sum + parseFloat(s.total_revenue || 0), 0);
 
             document.getElementById('total-storefronts').textContent = totalStorefronts;
             document.getElementById('total-orders').textContent = totalOrders;

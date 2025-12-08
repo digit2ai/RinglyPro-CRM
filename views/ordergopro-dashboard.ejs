@@ -1039,8 +1039,8 @@
 
         function updateStats(storefronts) {
             const totalStorefronts = storefronts.length;
-            const totalOrders = storefronts.reduce((sum, s) => sum + (s.total_orders || 0), 0);
-            const totalRevenue = storefronts.reduce((sum, s) => sum + (s.total_revenue || 0), 0);
+            const totalOrders = storefronts.reduce((sum, s) => sum + parseInt(s.total_orders || 0, 10), 0);
+            const totalRevenue = storefronts.reduce((sum, s) => sum + parseFloat(s.total_revenue || 0), 0);
 
             document.getElementById('total-storefronts').textContent = totalStorefronts;
             document.getElementById('total-orders').textContent = totalOrders;
@@ -1244,7 +1244,7 @@ Brand Colors: Primary ${primaryColor || '#FF914D'}, Secondary ${secondaryColor |
                     closeCreateModal();
 
                     // Show success message
-                    alert(`✅ Storefront "${businessName}" created successfully!\n\nView at: https://aiagent.ringlypro.com/storefront/${businessSlug}`);
+                    alert(`✅ Storefront "${businessName}" is being created!\n\n⏳ AI is extracting menu items and branding from your website. This takes 1-2 minutes.\n\nYou can monitor progress in the dashboard. The storefront will be published automatically when ready.`);
                 } else {
                     const errorMsg = result.error || result.message || 'Unknown error';
                     console.error('Storefront creation failed:', errorMsg);

@@ -272,8 +272,8 @@ router.get('/storefronts', authenticateClient, async (req, res) => {
       `SELECT
         sb.*,
         COUNT(DISTINCT si.id) as total_items,
-        COALESCE(sb.total_orders, 0) as total_orders,
-        COALESCE(sb.total_revenue, 0) as total_revenue
+        CAST(COALESCE(sb.total_orders, 0) AS INTEGER) as total_orders,
+        CAST(COALESCE(sb.total_revenue, 0) AS NUMERIC) as total_revenue
        FROM storefront_businesses sb
        LEFT JOIN storefront_items si ON sb.id = si.storefront_id AND si.is_active = true
        WHERE sb.ordergopro_client_id = :clientId
