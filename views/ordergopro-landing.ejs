@@ -1130,6 +1130,9 @@
                         <button onclick="sendQuickQuestion('Show me pricing')" class="text-xs px-3 py-2 rounded-lg w-full text-left hover:bg-gray-100 transition" style="background: #f3f4f6;">
                             Show me pricing
                         </button>
+                        <a href="/ordergopro/signup" class="text-xs px-3 py-2 rounded-lg w-full text-left hover:bg-gray-100 transition block" style="background: linear-gradient(135deg, var(--orange), #ff7a3d); color: white; font-weight: 600;">
+                            How do I get started? →
+                        </a>
                     </div>
                 </div>
             </div>
@@ -1220,6 +1223,24 @@
             sendChatMessage();
         }
 
+        // Fallback responses for common questions
+        const fallbackResponses = {
+            'what is ordergopro': "OrderGoPro is an AI-powered online ordering platform that helps restaurants and retail businesses create their own online store in just 5 minutes! Our AI automatically extracts your menu, photos, and branding from your existing website. You get a complete ordering system with payment processing, mobile-responsive design, and more.",
+            'how does it work': "It's incredibly simple! 1) Sign up in 30 seconds, 2) Enter your website URL or fill out a design brief, 3) Our AI automatically extracts your menu, photos, and branding, 4) Review and customize your store, 5) Go live and start accepting orders immediately! The entire process takes about 5 minutes.",
+            'what are the benefits': "With OrderGoPro you get: ✓ 5-minute AI-powered setup ✓ Complete online ordering system ✓ Mobile-first responsive design ✓ Secure payment processing with Stripe ✓ Your own branded mobile app ✓ Smart delivery dispatcher ✓ AI photo enhancement via PixlyPro ✓ Integration with RinglyPro AI answering service",
+            'show me pricing': "We have 3 simple plans: Essential ($29/mo) - Online ordering, menu management, payment processing. Professional ($79/mo) - Everything in Essential + RinglyPro AI answering, branded mobile app. Enterprise ($149/mo) - Everything + RinglyPro CRM, priority support. All plans include a 14-day free trial!"
+        };
+
+        function getFallbackResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            for (const [key, response] of Object.entries(fallbackResponses)) {
+                if (lowerMessage.includes(key)) {
+                    return response;
+                }
+            }
+            return null;
+        }
+
         async function sendChatMessage() {
             const input = document.getElementById('aiChatInput');
             const message = input.value.trim();
@@ -1232,6 +1253,9 @@
 
             // Show typing indicator
             const typingIndicator = addTypingIndicator();
+
+            // Check for fallback response first
+            const fallback = getFallbackResponse(message);
 
             try {
                 // Call API
@@ -1264,11 +1288,25 @@
                         }, 1000);
                     }
                 } else {
-                    addMessageToChat('Sorry, I encountered an error. Please try again.', 'bot');
+                    // Use fallback if API fails
+                    if (fallback) {
+                        addMessageToChat(fallback, 'bot');
+                        addSignupButton();
+                    } else {
+                        addMessageToChat('I apologize, but I\'m having technical difficulties right now. Please try the "How do I get started?" button below to sign up, or contact our support team for assistance.', 'bot');
+                        addSignupButton();
+                    }
                 }
             } catch (error) {
                 typingIndicator.remove();
-                addMessageToChat('Sorry, I\'m having trouble connecting. Please try again.', 'bot');
+                // Use fallback on error
+                if (fallback) {
+                    addMessageToChat(fallback, 'bot');
+                    addSignupButton();
+                } else {
+                    addMessageToChat('I apologize, but I\'m having technical difficulties right now. Please try the "How do I get started?" button below to sign up, or contact our support team for assistance.', 'bot');
+                    addSignupButton();
+                }
                 console.error('Chat error:', error);
             }
         }
