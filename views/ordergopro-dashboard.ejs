@@ -660,11 +660,10 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Subscription Plan</label>
-                                    <select name="subscriptionPlan">
-                                        <option value="free">Free - $0/mo</option>
-                                        <option value="basic">Basic - $29/mo</option>
-                                        <option value="pro" selected>Pro - $79/mo</option>
-                                        <option value="premium">Premium - $149/mo</option>
+                                    <select id="subscriptionPlanSelect" name="subscriptionPlan">
+                                        <option value="essential">Essential - $49/mo</option>
+                                        <option value="professional" selected>Professional - $79/mo</option>
+                                        <option value="enterprise">Enterprise - $149/mo</option>
                                     </select>
                                 </div>
                             </div>
@@ -679,11 +678,17 @@
                                 Our AI will automatically extract your menu, branding, and images from your existing website.
                             </p>
                             <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="noWebsiteCheckbox" name="noWebsite" onchange="toggleWebsiteInput()"> I do NOT have a website
+                                </label>
+                                <div class="form-hint">Check this to skip URL import and go straight to customization</div>
+                            </div>
+                            <div class="form-group" id="websiteUrlGroup">
                                 <label>Existing Website URL</label>
-                                <input type="url" name="websiteUrl" placeholder="https://joespizza.com">
+                                <input type="url" id="websiteUrlInput" name="websiteUrl" placeholder="www.joespizza.com or joespizza.com" onblur="formatWebsiteUrl()">
                                 <div class="form-hint">Leave blank to create from scratch</div>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group" id="aiImportGroup">
                                 <label>
                                     <input type="checkbox" name="enableAiImport" checked> Enable AI auto-import
                                 </label>
@@ -707,17 +712,91 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Primary Color</label>
-                                    <div class="color-picker-group">
-                                        <input type="color" name="primaryColor" value="#6366f1">
-                                        <input type="text" value="#6366f1" readonly>
-                                    </div>
+                                    <select id="primaryColorSelect" name="primaryColor" onchange="updateColorDisplay('primary')">
+                                        <optgroup label="Primary Colors">
+                                            <option value="#FF0000">Red — #FF0000</option>
+                                            <option value="#0000FF">Blue — #0000FF</option>
+                                            <option value="#FFFF00">Yellow — #FFFF00</option>
+                                        </optgroup>
+                                        <optgroup label="Secondary Colors">
+                                            <option value="#008000">Green — #008000</option>
+                                            <option value="#FFA500">Orange — #FFA500</option>
+                                            <option value="#800080">Purple — #800080</option>
+                                        </optgroup>
+                                        <optgroup label="Neutrals">
+                                            <option value="#FFFFFF">White — #FFFFFF</option>
+                                            <option value="#000000">Black — #000000</option>
+                                            <option value="#808080">Gray — #808080</option>
+                                            <option value="#D3D3D3">Light Gray — #D3D3D3</option>
+                                            <option value="#333333">Dark Gray — #333333</option>
+                                        </optgroup>
+                                        <optgroup label="Additional Colors">
+                                            <option value="#FFC0CB">Pink — #FFC0CB</option>
+                                            <option value="#FF69B4">Hot Pink — #FF69B4</option>
+                                            <option value="#A52A2A">Brown — #A52A2A</option>
+                                            <option value="#F5F5DC">Beige — #F5F5DC</option>
+                                            <option value="#D2B48C">Tan — #D2B48C</option>
+                                            <option value="#40E0D0">Turquoise — #40E0D0</option>
+                                            <option value="#008080">Teal — #008080</option>
+                                            <option value="#00FFFF">Cyan — #00FFFF</option>
+                                            <option value="#FF00FF">Magenta — #FF00FF</option>
+                                            <option value="#FFD700">Gold — #FFD700</option>
+                                            <option value="#C0C0C0">Silver — #C0C0C0</option>
+                                            <option value="#E6E6FA">Lavender — #E6E6FA</option>
+                                            <option value="#6366F1" selected>Indigo — #6366F1</option>
+                                        </optgroup>
+                                        <optgroup label="Earth Tones">
+                                            <option value="#808000">Olive — #808000</option>
+                                            <option value="#228B22">Forest Green — #228B22</option>
+                                            <option value="#800000">Maroon — #800000</option>
+                                            <option value="#000080">Navy — #000080</option>
+                                            <option value="#7B3F00">Chocolate — #7B3F00</option>
+                                        </optgroup>
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label>Secondary Color</label>
-                                    <div class="color-picker-group">
-                                        <input type="color" name="secondaryColor" value="#8b5cf6">
-                                        <input type="text" value="#8b5cf6" readonly>
-                                    </div>
+                                    <select id="secondaryColorSelect" name="secondaryColor" onchange="updateColorDisplay('secondary')">
+                                        <optgroup label="Primary Colors">
+                                            <option value="#FF0000">Red — #FF0000</option>
+                                            <option value="#0000FF">Blue — #0000FF</option>
+                                            <option value="#FFFF00">Yellow — #FFFF00</option>
+                                        </optgroup>
+                                        <optgroup label="Secondary Colors">
+                                            <option value="#008000">Green — #008000</option>
+                                            <option value="#FFA500">Orange — #FFA500</option>
+                                            <option value="#800080">Purple — #800080</option>
+                                        </optgroup>
+                                        <optgroup label="Neutrals">
+                                            <option value="#FFFFFF">White — #FFFFFF</option>
+                                            <option value="#000000">Black — #000000</option>
+                                            <option value="#808080">Gray — #808080</option>
+                                            <option value="#D3D3D3">Light Gray — #D3D3D3</option>
+                                            <option value="#333333">Dark Gray — #333333</option>
+                                        </optgroup>
+                                        <optgroup label="Additional Colors">
+                                            <option value="#FFC0CB">Pink — #FFC0CB</option>
+                                            <option value="#FF69B4">Hot Pink — #FF69B4</option>
+                                            <option value="#A52A2A">Brown — #A52A2A</option>
+                                            <option value="#F5F5DC">Beige — #F5F5DC</option>
+                                            <option value="#D2B48C">Tan — #D2B48C</option>
+                                            <option value="#40E0D0">Turquoise — #40E0D0</option>
+                                            <option value="#008080">Teal — #008080</option>
+                                            <option value="#00FFFF">Cyan — #00FFFF</option>
+                                            <option value="#FF00FF">Magenta — #FF00FF</option>
+                                            <option value="#FFD700">Gold — #FFD700</option>
+                                            <option value="#C0C0C0">Silver — #C0C0C0</option>
+                                            <option value="#E6E6FA">Lavender — #E6E6FA</option>
+                                            <option value="#8B5CF6" selected>Indigo — #8B5CF6</option>
+                                        </optgroup>
+                                        <optgroup label="Earth Tones">
+                                            <option value="#808000">Olive — #808000</option>
+                                            <option value="#228B22">Forest Green — #228B22</option>
+                                            <option value="#800000">Maroon — #800000</option>
+                                            <option value="#000080">Navy — #000080</option>
+                                            <option value="#7B3F00">Chocolate — #7B3F00</option>
+                                        </optgroup>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -908,6 +987,74 @@
                 currentStep--;
                 showStep(currentStep);
             }
+        }
+
+        // Toggle website input visibility
+        function toggleWebsiteInput() {
+            const checkbox = document.getElementById('noWebsiteCheckbox');
+            const urlGroup = document.getElementById('websiteUrlGroup');
+            const aiGroup = document.getElementById('aiImportGroup');
+            const urlInput = document.getElementById('websiteUrlInput');
+
+            if (checkbox.checked) {
+                urlGroup.style.display = 'none';
+                aiGroup.style.display = 'none';
+                urlInput.value = '';
+                urlInput.required = false;
+            } else {
+                urlGroup.style.display = 'block';
+                aiGroup.style.display = 'block';
+            }
+        }
+
+        // Format website URL to add https:// if missing
+        function formatWebsiteUrl() {
+            const urlInput = document.getElementById('websiteUrlInput');
+            let url = urlInput.value.trim();
+
+            if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+                // Add https:// prefix
+                url = 'https://' + url;
+                urlInput.value = url;
+            }
+
+            // Toggle branding fields based on URL presence
+            toggleBrandingFields(!!url);
+        }
+
+        // Grey out branding fields when URL is provided
+        function toggleBrandingFields(hasUrl) {
+            const taglineInput = document.querySelector('input[name="tagline"]');
+            const descriptionTextarea = document.querySelector('textarea[name="description"]');
+            const primaryColorSelect = document.getElementById('primaryColorSelect');
+            const secondaryColorSelect = document.getElementById('secondaryColorSelect');
+
+            if (hasUrl) {
+                // Disable branding fields when URL is provided (AI will extract)
+                taglineInput.disabled = true;
+                descriptionTextarea.disabled = true;
+                primaryColorSelect.disabled = true;
+                secondaryColorSelect.disabled = true;
+                taglineInput.style.backgroundColor = '#f3f4f6';
+                descriptionTextarea.style.backgroundColor = '#f3f4f6';
+                primaryColorSelect.style.backgroundColor = '#f3f4f6';
+                secondaryColorSelect.style.backgroundColor = '#f3f4f6';
+            } else {
+                // Enable branding fields for manual customization
+                taglineInput.disabled = false;
+                descriptionTextarea.disabled = false;
+                primaryColorSelect.disabled = false;
+                secondaryColorSelect.disabled = false;
+                taglineInput.style.backgroundColor = '';
+                descriptionTextarea.style.backgroundColor = '';
+                primaryColorSelect.style.backgroundColor = '';
+                secondaryColorSelect.style.backgroundColor = '';
+            }
+        }
+
+        // Placeholder for color display update
+        function updateColorDisplay(colorType) {
+            // Color dropdowns already show the color and hex code
         }
 
         async function submitStorefront() {
