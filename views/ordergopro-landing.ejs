@@ -316,7 +316,15 @@
                     <a href="#features" class="text-gray-700 hover:text-gray-900 font-medium transition">Features</a>
                     <a href="#how-it-works" class="text-gray-700 hover:text-gray-900 font-medium transition">How It Works</a>
                     <a href="#pricing" class="text-gray-700 hover:text-gray-900 font-medium transition">Pricing</a>
-                    <a href="javascript:void(0)" onclick="toggleAIChat()" class="text-gray-700 hover:text-gray-900 font-medium transition">Conversational AI</a>
+                    <a href="javascript:void(0)" onclick="toggleAIChat()" class="text-gray-700 hover:text-gray-900 font-medium transition flex items-center gap-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="9" cy="10" r="1" fill="currentColor"/>
+                            <circle cx="12" cy="10" r="1" fill="currentColor"/>
+                            <circle cx="15" cy="10" r="1" fill="currentColor"/>
+                        </svg>
+                        Conversational AI
+                    </a>
                 </div>
 
                 <!-- Mobile Menu Button -->
@@ -1087,6 +1095,73 @@
         </div>
     </section>
 
+    <!-- AI Chat Widget -->
+    <div class="ai-chat-widget">
+        <button class="ai-chat-button" id="aiChatButton" onclick="toggleAIChat()" aria-label="Open AI Chat">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="9" cy="10" r="1" fill="white"/>
+                <circle cx="12" cy="10" r="1" fill="white"/>
+                <circle cx="15" cy="10" r="1" fill="white"/>
+            </svg>
+        </button>
+
+        <div class="ai-chat-window" id="aiChatWindow">
+            <div class="ai-chat-header">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: var(--orange)">
+                        <svg width="20" height="20" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="22" cy="24" r="3" fill="white"/>
+                            <circle cx="34" cy="24" r="3" fill="white"/>
+                            <path d="M28 28c-3.5 0-6 2-6 4.5h12c0-2.5-2.5-4.5-6-4.5z" fill="white"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white">OrderGoPro Assistant</h3>
+                        <p class="text-xs text-gray-300">Ask me anything!</p>
+                    </div>
+                </div>
+                <button onclick="toggleAIChat()" class="text-white hover:text-gray-200">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M18 6L6 18M6 6l12 12" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="ai-chat-body" id="aiChatBody">
+                <div class="ai-message bot">
+                    <p class="text-sm mb-2">👋 Hi! I'm your OrderGoPro AI assistant.</p>
+                    <p class="text-sm">I can help you learn about:</p>
+                    <div class="mt-3 space-y-2">
+                        <button onclick="sendQuickQuestion('What is OrderGoPro?')" class="text-xs px-3 py-2 rounded-lg w-full text-left hover:bg-gray-100 transition" style="background: #f3f4f6;">
+                            What is OrderGoPro?
+                        </button>
+                        <button onclick="sendQuickQuestion('How does it work?')" class="text-xs px-3 py-2 rounded-lg w-full text-left hover:bg-gray-100 transition" style="background: #f3f4f6;">
+                            How does it work?
+                        </button>
+                        <button onclick="sendQuickQuestion('What are the benefits?')" class="text-xs px-3 py-2 rounded-lg w-full text-left hover:bg-gray-100 transition" style="background: #f3f4f6;">
+                            What are the benefits?
+                        </button>
+                        <button onclick="sendQuickQuestion('Show me pricing')" class="text-xs px-3 py-2 rounded-lg w-full text-left hover:bg-gray-100 transition" style="background: #f3f4f6;">
+                            Show me pricing
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ai-chat-input">
+                <input type="text" id="aiChatInput" placeholder="Type or click mic to speak..." onkeypress="handleChatKeyPress(event)">
+                <button onclick="toggleVoiceInput()" id="voiceButton" class="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 transition" title="Voice input">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" stroke-width="2"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <button onclick="sendChatMessage()" style="background: var(--orange);">Send</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="py-16" style="background: var(--navy); color: white;">
         <div class="max-w-7xl mx-auto px-6">
@@ -1132,14 +1207,188 @@
     </footer>
 
     <script>
+        let recognition = null;
+        let isRecording = false;
+
         function toggleMobileMenu() {
             const mobileMenu = document.getElementById('mobileMenu');
             mobileMenu.classList.toggle('active');
         }
 
         function toggleAIChat() {
-            // This will be implemented when adding the AI chat functionality
-            alert('AI Chat feature coming soon!');
+            const chatWindow = document.getElementById('aiChatWindow');
+            chatWindow.classList.toggle('active');
+
+            if (chatWindow.classList.contains('active')) {
+                document.getElementById('aiChatInput').focus();
+            }
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        function sendQuickQuestion(question) {
+            document.getElementById('aiChatInput').value = question;
+            sendChatMessage();
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('aiChatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message to chat
+            addMessageToChat(message, 'user');
+            input.value = '';
+
+            // Show typing indicator
+            const typingIndicator = addTypingIndicator();
+
+            try {
+                // Call API
+                const response = await fetch('/api/ordergopro/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+
+                // Remove typing indicator
+                typingIndicator.remove();
+
+                if (data.success) {
+                    // Add bot response
+                    addMessageToChat(data.response, 'bot');
+
+                    // Play audio if available
+                    if (data.audioUrl) {
+                        playAudio(data.audioUrl);
+                    }
+
+                    // Check if response suggests signup
+                    if (data.response.toLowerCase().includes('sign up') || data.response.toLowerCase().includes('get started')) {
+                        setTimeout(() => {
+                            addSignupButton();
+                        }, 1000);
+                    }
+                } else {
+                    addMessageToChat('Sorry, I encountered an error. Please try again.', 'bot');
+                }
+            } catch (error) {
+                typingIndicator.remove();
+                addMessageToChat('Sorry, I\'m having trouble connecting. Please try again.', 'bot');
+                console.error('Chat error:', error);
+            }
+        }
+
+        function addMessageToChat(message, type) {
+            const chatBody = document.getElementById('aiChatBody');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `ai-message ${type}`;
+            messageDiv.innerHTML = `<p class="text-sm">${escapeHtml(message)}</p>`;
+            chatBody.appendChild(messageDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+            return messageDiv;
+        }
+
+        function addTypingIndicator() {
+            const chatBody = document.getElementById('aiChatBody');
+            const indicator = document.createElement('div');
+            indicator.className = 'ai-message bot';
+            indicator.innerHTML = `
+                <div class="flex gap-1">
+                    <span class="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style="animation-delay: 0s"></span>
+                    <span class="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style="animation-delay: 0.2s"></span>
+                    <span class="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style="animation-delay: 0.4s"></span>
+                </div>
+            `;
+            chatBody.appendChild(indicator);
+            chatBody.scrollTop = chatBody.scrollHeight;
+            return indicator;
+        }
+
+        function addSignupButton() {
+            const chatBody = document.getElementById('aiChatBody');
+            const buttonDiv = document.createElement('div');
+            buttonDiv.className = 'ai-message bot';
+            buttonDiv.innerHTML = `
+                <a href="/ordergopro/signup" class="inline-block px-6 py-3 text-white text-center rounded-lg font-bold transition hover:opacity-90 mt-2" style="background: var(--orange)">
+                    Start Free Trial →
+                </a>
+            `;
+            chatBody.appendChild(buttonDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function toggleVoiceInput() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('Sorry, your browser doesn\'t support voice input. Please use Chrome, Edge, or Safari.');
+                return;
+            }
+
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        function startRecording() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                isRecording = true;
+                document.getElementById('voiceButton').style.color = '#FF914D';
+                document.getElementById('aiChatInput').placeholder = 'Listening...';
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('aiChatInput').value = transcript;
+                sendChatMessage();
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                stopRecording();
+            };
+
+            recognition.onend = () => {
+                stopRecording();
+            };
+
+            recognition.start();
+        }
+
+        function stopRecording() {
+            if (recognition) {
+                recognition.stop();
+            }
+            isRecording = false;
+            document.getElementById('voiceButton').style.color = '';
+            document.getElementById('aiChatInput').placeholder = 'Type or click mic to speak...';
+        }
+
+        function playAudio(url) {
+            const audio = new Audio(url);
+            audio.play().catch(err => console.error('Audio playback error:', err));
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         // Close mobile menu when clicking outside

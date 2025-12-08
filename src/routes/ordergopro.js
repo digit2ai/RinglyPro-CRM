@@ -394,4 +394,119 @@ router.post('/storefronts/create', authenticateClient, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/ordergopro/chat
+ * AI Chat Assistant for OrderGoPro landing page
+ */
+router.post('/chat', async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({
+        success: false,
+        error: 'Message is required'
+      });
+    }
+
+    logger.info(`[OrderGoPro Chat] User message: ${message}`);
+
+    // Import Claude AI and ElevenLabs services
+    const ClaudeAIService = require('../services/claudeAI');
+    const elevenLabsService = require('../services/elevenLabsService');
+    const claudeAI = new ClaudeAIService();
+
+    // Create a comprehensive system prompt about OrderGoPro
+    const systemPrompt = `You are an expert AI assistant for OrderGoPro, an online ordering platform for restaurants and retail businesses. Your goal is to help potential customers understand OrderGoPro and guide them to sign up.
+
+KEY FEATURES OF ORDERGOPRO:
+1. **5-Minute Setup**: AI automatically extracts menu, photos, and branding from existing website
+2. **Complete Online Ordering**: Shopping cart, checkout, payment processing (Stripe)
+3. **Mobile-First Design**: Beautiful responsive storefronts optimized for mobile
+4. **Branded Mobile App**: Custom iOS/Android apps with push notifications and loyalty programs
+5. **Smart Delivery Dispatcher**: Integration with third-party delivery fleets, no drivers needed
+6. **AI-Powered Features**: Photo enhancement via PixlyPro, conversational AI support
+7. **RinglyPro Integration**: AI answering service and CRM management available
+
+PRICING:
+- **Essential**: $29/month - Online ordering, menu management, payment processing, PixlyPro photo enhancement
+- **Professional**: $79/month - Everything in Essential + RinglyPro AI answering, branded mobile app, advanced analytics
+- **Enterprise**: $149/month - Everything in Professional + RinglyPro CRM, priority support, custom integrations
+
+HOW IT WORKS:
+1. Sign up (30 seconds)
+2. Enter your website URL or fill design brief
+3. AI extracts menu, photos, branding automatically
+4. Customize and review your store
+5. Go live and start accepting orders immediately
+
+LIVE EXAMPLE: Joe's Pizza (https://aiagent.ringlypro.com/storefront/joes-pizza) - created in 2 minutes
+
+Your responses should:
+- Be friendly, conversational, and enthusiastic
+- Keep answers concise (2-3 sentences max unless detailed explanation needed)
+- Always emphasize the speed and ease of setup
+- Highlight the AI automation features
+- Guide users towards signing up when appropriate
+- Answer questions about features, pricing, and how it works
+- If asked about pricing, direct them to scroll to the pricing section
+- If they seem interested, encourage them to start their free 14-day trial
+
+User question: ${message}`;
+
+    // Call Claude AI API
+    const axios = require('axios');
+    const claudeResponse = await axios.post(
+      'https://api.anthropic.com/v1/messages',
+      {
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 500,
+        messages: [
+          {
+            role: 'user',
+            content: systemPrompt
+          }
+        ]
+      },
+      {
+        headers: {
+          'x-api-key': process.env.ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json'
+        }
+      }
+    );
+
+    const aiResponse = claudeResponse.data.content[0].text;
+    logger.info(`[OrderGoPro Chat] AI response: ${aiResponse.substring(0, 100)}...`);
+
+    // Generate premium voice audio using ElevenLabs
+    let audioUrl = null;
+    try {
+      audioUrl = await elevenLabsService.generateSpeech(aiResponse);
+      if (audioUrl) {
+        const baseUrl = process.env.BASE_URL || 'https://aiagent.ringlypro.com';
+        audioUrl = `${baseUrl}${audioUrl}`;
+        logger.info(`[OrderGoPro Chat] Premium voice generated: ${audioUrl}`);
+      }
+    } catch (audioError) {
+      logger.error('[OrderGoPro Chat] Audio generation error:', audioError.message);
+      // Continue without audio
+    }
+
+    res.json({
+      success: true,
+      response: aiResponse,
+      audioUrl: audioUrl
+    });
+
+  } catch (error) {
+    logger.error('[OrderGoPro Chat] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process chat message'
+    });
+  }
+});
+
 module.exports = router;
