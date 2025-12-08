@@ -286,69 +286,36 @@
             }
         }
 
-        /* Mobile Menu */
-        .mobile-menu-button {
+        /* Mobile Navigation */
+        .mobile-nav {
             display: none;
-            flex-direction: column;
-            gap: 4px;
-            cursor: pointer;
-            padding: 8px;
-        }
-
-        .mobile-menu-button span {
-            width: 24px;
-            height: 3px;
-            background: var(--navy);
-            border-radius: 2px;
-            transition: all 0.3s;
-        }
-
-        .mobile-menu {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border-bottom: 1px solid #e5e7eb;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .mobile-menu.active {
-            display: block;
-        }
-
-        .mobile-menu a {
-            display: block;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #f3f4f6;
-            text-align: center;
         }
 
         @media (max-width: 768px) {
             .desktop-nav {
-                display: none;
-            }
-
-            .mobile-menu-button {
-                display: flex;
+                display: none !important;
             }
 
             .desktop-buttons {
-                display: none;
+                display: none !important;
             }
 
-            .mobile-buttons {
-                display: flex;
-                flex-direction: column;
-                gap: 0.5rem;
-                padding: 1rem 1.5rem;
+            .mobile-nav {
+                display: flex !important;
             }
         }
 
         @media (min-width: 769px) {
-            .mobile-buttons {
-                display: none;
+            .mobile-nav {
+                display: none !important;
+            }
+
+            .desktop-nav {
+                display: flex !important;
+            }
+
+            .desktop-buttons {
+                display: flex !important;
             }
         }
     </style>
@@ -374,11 +341,22 @@
                     </a>
                 </div>
 
-                <!-- Mobile Menu Button -->
-                <div class="mobile-menu-button" onclick="toggleMobileMenu()">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                <!-- Mobile Navigation (Simplified) -->
+                <div class="mobile-nav flex items-center gap-3">
+                    <a href="javascript:void(0)" onclick="toggleAIChat()" class="text-gray-700 hover:text-gray-900 font-medium transition flex items-center justify-center" title="AI Assistant">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="9" cy="10" r="1" fill="currentColor"/>
+                            <circle cx="12" cy="10" r="1" fill="currentColor"/>
+                            <circle cx="15" cy="10" r="1" fill="currentColor"/>
+                        </svg>
+                    </a>
+                    <a href="/ordergopro/login" class="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition text-sm">
+                        Sign In
+                    </a>
+                    <a href="/ordergopro/signup" class="px-4 py-2 text-white rounded-lg font-semibold transition hover:opacity-90 text-sm" style="background: var(--orange)">
+                        Start Free
+                    </a>
                 </div>
 
                 <!-- Desktop Buttons -->
@@ -387,22 +365,6 @@
                         Sign In
                     </a>
                     <a href="/ordergopro/signup" class="px-6 py-2.5 text-white rounded-lg font-semibold transition hover:opacity-90" style="background: var(--orange)">
-                        Start Free
-                    </a>
-                </div>
-            </div>
-
-            <!-- Mobile Menu -->
-            <div class="mobile-menu" id="mobileMenu">
-                <a href="#features" onclick="toggleMobileMenu()">Features</a>
-                <a href="#how-it-works" onclick="toggleMobileMenu()">How It Works</a>
-                <a href="#pricing" onclick="toggleMobileMenu()">Pricing</a>
-                <a href="javascript:void(0)" onclick="toggleAIChat(); toggleMobileMenu();">Conversational AI</a>
-                <div class="mobile-buttons">
-                    <a href="/ordergopro/login" class="px-5 py-2.5 text-center text-gray-700 hover:text-gray-900 font-medium transition border border-gray-300 rounded-lg">
-                        Sign In
-                    </a>
-                    <a href="/ordergopro/signup" class="px-6 py-2.5 text-center text-white rounded-lg font-semibold transition hover:opacity-90" style="background: var(--orange)">
                         Start Free
                     </a>
                 </div>
