@@ -719,15 +719,16 @@
             </div>
 
             <div class="cart-content">
-                <!-- Pricing Info -->
+                <!-- Photo Tips -->
                 <div class="pricing-info-card">
-                    <h4>Volume Pricing</h4>
-                    <div class="tier-list">
-                        <div>1-10 photos: $150 (base)</div>
-                        <div>11-20 photos: +$12/photo</div>
-                        <div>21-40 photos: +$10/photo</div>
-                        <div>41+ photos: +$8/photo</div>
+                    <h4>📸 Best Results Tips</h4>
+                    <div class="tier-list" style="font-size: 0.85rem; line-height: 1.5;">
+                        <div>✓ Clear and not blurry</div>
+                        <div>✓ High resolution (1024×1024+)</div>
+                        <div>✓ Good lighting</div>
+                        <div>✓ Minimal compression</div>
                     </div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">Our designers need to see details clearly to enhance faces, objects, and textures.</div>
                 </div>
 
                 <!-- Price Breakdown -->
@@ -1123,16 +1124,16 @@
 
         // Demo mode UI updates
         if (isDemo) {
-            // Update pricing info card
+            // Add demo banner before the pricing card
             const pricingCard = document.querySelector('.pricing-info-card');
             if (pricingCard) {
-                pricingCard.innerHTML = `
-                    <h4 style="color: #059669;">🎉 Demo Mode</h4>
-                    <div class="tier-list" style="color: #059669;">
-                        <div><strong>$1 for 1 photo</strong></div>
-                        <div style="font-size: 0.8rem; margin-top: 0.5rem;">Try our service risk-free!</div>
-                    </div>
+                const demoBanner = document.createElement('div');
+                demoBanner.style.cssText = 'background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; text-align: center;';
+                demoBanner.innerHTML = `
+                    <div style="font-size: 1.25rem; font-weight: 700;">🎉 $1 Demo</div>
+                    <div style="font-size: 0.85rem; opacity: 0.9;">1 photo • Try risk-free!</div>
                 `;
+                pricingCard.parentNode.insertBefore(demoBanner, pricingCard);
             }
 
             // Update minimum notice
