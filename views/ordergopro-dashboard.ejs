@@ -1268,9 +1268,36 @@ Brand Colors: Primary ${primaryColor || '#FF914D'}, Secondary ${secondaryColor |
             alert(`Edit storefront ${id} - Feature coming soon!`);
         }
 
-        // Slug Preview
-        document.querySelector('input[name="businessSlug"]')?.addEventListener('input', (e) => {
-            document.getElementById('slug-preview').textContent = e.target.value || 'your-slug';
+        // Slug Generation & Validation
+        const slugInput = document.querySelector('input[name="businessSlug"]');
+        const businessNameInput = document.querySelector('input[name="businessName"]');
+
+        // Function to generate clean slug
+        function generateSlug(text) {
+            return text
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')  // Replace non-alphanumeric with hyphens
+                .replace(/^-+|-+$/g, '')       // Remove leading/trailing hyphens
+                .replace(/-+/g, '-');          // Replace multiple hyphens with single
+        }
+
+        // Auto-generate slug from business name
+        businessNameInput?.addEventListener('input', (e) => {
+            if (slugInput && !slugInput.dataset.userModified) {
+                const autoSlug = generateSlug(e.target.value);
+                slugInput.value = autoSlug;
+                document.getElementById('slug-preview').textContent = autoSlug || 'your-slug';
+            }
+        });
+
+        // Clean slug as user types & mark as user-modified
+        slugInput?.addEventListener('input', (e) => {
+            slugInput.dataset.userModified = 'true';
+            const cleanSlug = generateSlug(e.target.value);
+            if (e.target.value !== cleanSlug) {
+                e.target.value = cleanSlug;
+            }
+            document.getElementById('slug-preview').textContent = cleanSlug || 'your-slug';
         });
 
         // Color Picker Sync
