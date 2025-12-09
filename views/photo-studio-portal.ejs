@@ -909,7 +909,14 @@
             div.id = `order-item-${order.id}`;
             div.onclick = () => selectOrder(order.id);
 
-            const packageName = order.package_type.charAt(0).toUpperCase() + order.package_type.slice(1);
+            // Handle custom package type from cart model
+            let packageDisplay;
+            if (order.package_type === 'custom') {
+                packageDisplay = `${order.photos_to_upload} Photos`;
+            } else {
+                const packageName = order.package_type.charAt(0).toUpperCase() + order.package_type.slice(1);
+                packageDisplay = `${packageName} Package`;
+            }
             const uploadProgress = (order.photos_uploaded / order.photos_to_upload) * 100;
 
             div.innerHTML = `
@@ -917,7 +924,7 @@
                     <span class="order-id">Order #${order.id}</span>
                     <span class="status-badge status-${order.order_status}">${order.order_status.replace('_', ' ')}</span>
                 </div>
-                <div class="order-item-name">${packageName} Package</div>
+                <div class="order-item-name">${packageDisplay}</div>
                 <div class="order-item-price">$${order.price}</div>
                 <div class="order-item-progress">
                     ${order.photos_uploaded} / ${order.photos_to_upload} photos uploaded
@@ -956,10 +963,16 @@
             const order = orders.find(o => o.id === orderId);
             if (!order) return;
 
-            const packageName = order.package_type.charAt(0).toUpperCase() + order.package_type.slice(1);
+            // Handle custom package type from cart model
+            let packageName;
+            if (order.package_type === 'custom') {
+                packageName = `Custom (${order.photos_to_upload} photos)`;
+            } else {
+                packageName = order.package_type.charAt(0).toUpperCase() + order.package_type.slice(1);
+            }
 
             // Update header
-            document.getElementById('details-title').textContent = `${packageName} Package`;
+            document.getElementById('details-title').textContent = order.package_type === 'custom' ? 'Photo Enhancement' : `${packageName} Package`;
             document.getElementById('details-subtitle').textContent = `Order #${order.id} • ${new Date(order.order_date).toLocaleDateString()}`;
 
             const canUpload = (order.order_status === 'awaiting_upload' || order.order_status === 'processing') &&

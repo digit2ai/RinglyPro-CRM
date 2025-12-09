@@ -108,6 +108,396 @@ router.get('/packages', async (req, res) => {
   }
 });
 
+// =====================================================
+// CART-BASED PRICING (Volume Discount Model)
+// =====================================================
+
+/**
+ * Calculate price based on photo count with volume discounts
+ * @param {number} photoCount - Number of photos
+ * @returns {object} - { total, breakdown }
+ */
+function calculateCartPrice(photoCount) {
+  if (photoCount <= 0) return { total: 0, breakdown: [] };
+  if (photoCount <= 10) return {
+    total: 150,
+    breakdown: [{ tier: 'Base (1-10 photos)', count: photoCount, rate: null, amount: 150 }]
+  };
+
+  let total = 150;
+  let breakdown = [{ tier: 'Base (1-10 photos)', count: 10, rate: null, amount: 150 }];
+  let remaining = photoCount - 10;
+
+  // Photos 11-20: $12/photo
+  if (remaining > 0) {
+    const tier1Count = Math.min(remaining, 10);
+    const tier1Amount = tier1Count * 12;
+    total += tier1Amount;
+    breakdown.push({ tier: 'Photos 11-20', count: tier1Count, rate: 12, amount: tier1Amount });
+    remaining -= tier1Count;
+  }
+
+  // Photos 21-40: $10/photo
+  if (remaining > 0) {
+    const tier2Count = Math.min(remaining, 20);
+    const tier2Amount = tier2Count * 10;
+    total += tier2Amount;
+    breakdown.push({ tier: 'Photos 21-40', count: tier2Count, rate: 10, amount: tier2Amount });
+    remaining -= tier2Count;
+  }
+
+  // Photos 41+: $8/photo
+  if (remaining > 0) {
+    const tier3Amount = remaining * 8;
+    total += tier3Amount;
+    breakdown.push({ tier: 'Photos 41+', count: remaining, rate: 8, amount: tier3Amount });
+  }
+
+  return { total, breakdown };
+}
+
+/**
+ * POST /api/photo-studio/calculate-price
+ * Calculate price for a given photo count (public endpoint)
+ */
+router.post('/calculate-price', async (req, res) => {
+  try {
+    const { photo_count } = req.body;
+    const count = parseInt(photo_count) || 0;
+
+    if (count <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Photo count must be greater than 0'
+      });
+    }
+
+    const pricing = calculateCartPrice(count);
+
+    res.json({
+      success: true,
+      photo_count: count,
+      price: pricing.total,
+      per_photo: (pricing.total / count).toFixed(2),
+      breakdown: pricing.breakdown
+    });
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] Calculate price error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to calculate price'
+    });
+  }
+});
+
+/**
+ * POST /api/photo-studio/create-cart-checkout
+ * Create Stripe Checkout Session for cart-based purchase
+ */
+router.post('/create-cart-checkout', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { photo_count } = req.body;
+    const count = parseInt(photo_count) || 0;
+
+    logger.info(`[PHOTO STUDIO] Creating cart checkout for user ${userId}, ${count} photos`);
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'User ID not found'
+      });
+    }
+
+    if (count <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Photo count must be greater than 0'
+      });
+    }
+
+    // Calculate price
+    const pricing = calculateCartPrice(count);
+
+    // Check Stripe configuration
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(503).json({
+        success: false,
+        error: 'Payment processing not configured'
+      });
+    }
+
+    // Initialize Stripe
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+    // Create workflow description
+    const workflowSteps = `Professional photo enhancement for ${count} photos.
+
+How It Works:
+1. Complete payment
+2. Your photos will be uploaded automatically
+3. Processing takes 48-72 hours
+4. You'll receive an email when complete
+5. Go to PixlyPro.com "My Orders" to download
+6. Review and approve your enhanced photos`;
+
+    // Create Checkout Session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `PixlyPro Photo Enhancement - ${count} Photos`,
+              description: workflowSteps,
+              images: ['https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69175f336c431e834ac954b8.png']
+            },
+            unit_amount: pricing.total * 100, // Stripe expects cents
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'}/photo-studio-success?session_id={CHECKOUT_SESSION_ID}&cart=true`,
+      cancel_url: `${process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'}/photo-studio-upload?canceled=true`,
+      client_reference_id: userId.toString(),
+      metadata: {
+        userId: userId.toString(),
+        package_type: 'custom',
+        photos_to_upload: count.toString(),
+        photos_to_receive: count.toString(), // 1:1 ratio for cart model
+        service_type: 'photo_studio',
+        pricing_model: 'cart'
+      }
+    });
+
+    logger.info(`[PHOTO STUDIO] Created cart checkout session for user ${userId}: ${session.id}`);
+
+    res.json({
+      success: true,
+      checkout_url: session.url,
+      session_id: session.id,
+      price: pricing.total,
+      photo_count: count
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] Create cart checkout error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to create checkout session'
+    });
+  }
+});
+
+/**
+ * POST /api/photo-studio/complete-cart-upload
+ * Upload photos to S3 after successful cart payment
+ */
+router.post('/complete-cart-upload', authenticateToken, upload.array('photos', 100), async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { session_id } = req.body;
+    const files = req.files;
+
+    logger.info(`[PHOTO STUDIO] Completing cart upload for user ${userId}, session: ${session_id}, files: ${files?.length || 0}`);
+
+    if (!session_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Session ID is required'
+      });
+    }
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No photos provided'
+      });
+    }
+
+    // Verify payment with Stripe
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+
+    // Verify the session belongs to this user
+    if (session.client_reference_id !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: 'Unauthorized'
+      });
+    }
+
+    // Check if payment was successful
+    if (session.payment_status !== 'paid') {
+      return res.status(400).json({
+        success: false,
+        error: 'Payment not completed'
+      });
+    }
+
+    const { sequelize } = require('../models');
+    const { QueryTypes } = require('sequelize');
+
+    // Check if order already exists for this session
+    let order = await sequelize.query(
+      'SELECT id, photos_to_upload FROM photo_studio_orders WHERE stripe_session_id = :sessionId',
+      {
+        replacements: { sessionId: session_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    let orderId;
+
+    if (order && order.length > 0) {
+      // Order exists, use it
+      orderId = order[0].id;
+      logger.info(`[PHOTO STUDIO] Using existing order ${orderId} for session ${session_id}`);
+    } else {
+      // Create new order
+      const photosToUpload = parseInt(session.metadata.photos_to_upload);
+      const photosToReceive = parseInt(session.metadata.photos_to_receive);
+      const pricing = calculateCartPrice(photosToUpload);
+
+      const [newOrder] = await sequelize.query(
+        `
+        INSERT INTO photo_studio_orders (
+          user_id, package_type, price, photos_to_upload, photos_to_receive,
+          stripe_session_id, stripe_payment_intent, payment_status, payment_date, order_status
+        ) VALUES (
+          :userId, 'custom', :price, :photosToUpload, :photosToReceive,
+          :stripeSessionId, :stripePaymentIntent, 'paid', NOW(), 'processing'
+        )
+        RETURNING id
+        `,
+        {
+          replacements: {
+            userId,
+            price: pricing.total,
+            photosToUpload,
+            photosToReceive,
+            stripeSessionId: session_id,
+            stripePaymentIntent: session.payment_intent
+          },
+          type: QueryTypes.INSERT
+        }
+      );
+
+      orderId = newOrder[0]?.id || newOrder[0];
+      logger.info(`[PHOTO STUDIO] Created new order ${orderId} for cart checkout`);
+    }
+
+    // Upload photos to S3
+    const s3 = getS3Client();
+    if (!s3) {
+      return res.status(503).json({
+        success: false,
+        error: 'S3 storage not configured'
+      });
+    }
+
+    const uploadResults = [];
+
+    for (const file of files) {
+      try {
+        const timestamp = Date.now();
+        const randomString = crypto.randomBytes(8).toString('hex');
+        const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+        const s3Key = `uploads/photo_studio/user_${userId}/order_${orderId}/${timestamp}_${randomString}${ext}`;
+
+        // Upload to S3
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: s3Key,
+          Body: file.buffer,
+          ContentType: file.mimetype
+        }));
+
+        // Generate presigned URL
+        const presignedUrl = await getSignedUrl(s3, new GetObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: s3Key
+        }), { expiresIn: 604800 }); // 7 days
+
+        // Insert into photo_uploads table
+        await sequelize.query(
+          `
+          INSERT INTO photo_uploads (
+            user_id, service_type, service_order_id, original_filename,
+            file_size, mime_type, file_extension, storage_provider,
+            storage_bucket, storage_key, storage_url, upload_status, uploaded_at
+          ) VALUES (
+            :userId, 'photo_studio', :orderId, :originalFilename,
+            :fileSize, :mimeType, :fileExtension, 's3',
+            :bucket, :s3Key, :storageUrl, 'uploaded', NOW()
+          )
+          `,
+          {
+            replacements: {
+              userId,
+              orderId,
+              originalFilename: file.originalname,
+              fileSize: file.size,
+              mimeType: file.mimetype,
+              fileExtension: ext,
+              bucket: BUCKET_NAME,
+              s3Key,
+              storageUrl: presignedUrl
+            },
+            type: QueryTypes.INSERT
+          }
+        );
+
+        uploadResults.push({
+          filename: file.originalname,
+          success: true
+        });
+
+      } catch (uploadError) {
+        logger.error(`[PHOTO STUDIO] Error uploading file ${file.originalname}:`, uploadError);
+        uploadResults.push({
+          filename: file.originalname,
+          success: false,
+          error: uploadError.message
+        });
+      }
+    }
+
+    // Update order photo count
+    const successfulUploads = uploadResults.filter(r => r.success).length;
+    await sequelize.query(
+      `UPDATE photo_studio_orders SET photos_uploaded = :count, order_status = 'processing' WHERE id = :orderId`,
+      {
+        replacements: { count: successfulUploads, orderId },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`[PHOTO STUDIO] Cart upload complete: ${successfulUploads}/${files.length} photos uploaded`);
+
+    res.json({
+      success: true,
+      order_id: orderId,
+      uploaded: successfulUploads,
+      total: files.length,
+      results: uploadResults
+    });
+
+  } catch (error) {
+    logger.error('[PHOTO STUDIO] Complete cart upload error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to upload photos'
+    });
+  }
+});
+
+// =====================================================
+// END CART-BASED PRICING
+// =====================================================
+
 /**
  * POST /api/photo-studio/create-checkout-session
  * Create Stripe Checkout Session for Photo Studio package purchase

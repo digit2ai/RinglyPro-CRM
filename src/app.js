@@ -456,6 +456,13 @@ app.get('/photo-studio-portal', (req, res) => {
   });
 });
 
+// Photo Studio upload page (cart model)
+app.get('/photo-studio-upload', (req, res) => {
+  res.render('photo-studio-upload', {
+    title: 'Upload Photos - PixlyPro Photo Studio'
+  });
+});
+
 // Photo Studio admin dashboard route
 app.get('/photo-studio-admin-dashboard', (req, res) => {
   res.render('photo-studio-admin-dashboard', {

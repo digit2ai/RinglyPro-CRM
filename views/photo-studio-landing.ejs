@@ -947,8 +947,8 @@
                     <h1>Turn Your Phone Photos Into Masterpieces</h1>
                     <p class="subheadline">Send us the pictures you take with your phone and we'll transform them into high-quality professional images—without expensive photo shoots.</p>
                     <div class="hero-cta">
-                        <a href="#pricing" class="btn btn-primary btn-large">Get Started</a>
-                        <a href="#pricing" class="text-link">View Packages</a>
+                        <a href="/photo-studio-upload" class="btn btn-primary btn-large">Start Uploading</a>
+                        <a href="#pricing" class="text-link">View Pricing</a>
                     </div>
                 </div>
                 <div class="hero-image">
@@ -985,19 +985,18 @@
             <div class="steps-grid">
                 <div class="step">
                     <div class="step-icon">1</div>
-                    <h3>Choose Package</h3>
-                    <p>Select the package that fits your needs. Pay securely with your credit card.</p>
+                    <h3>Upload Photos</h3>
+                    <p>Select your photos and see the price update in real-time. Pay only for what you need.</p>
                 </div>
                 <div class="step">
                     <div class="step-icon">2</div>
-                    <h3>Upload Photos</h3>
-                    <p>Use our secure portal to upload your photos from your phone, tablet, or computer.</p>
-                    <a href="/photo-studio-portal" class="btn btn-secondary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Go to Upload Portal</a>
+                    <h3>Checkout</h3>
+                    <p>Review your cart and pay securely with your credit card. Photos upload after payment.</p>
                 </div>
                 <div class="step">
                     <div class="step-icon">3</div>
                     <h3>We Enhance</h3>
-                    <p>Our AI transforms your photos into professional-grade images with perfect lighting and composition.</p>
+                    <p>Our team transforms your photos into professional-grade images with perfect lighting and composition.</p>
                 </div>
                 <div class="step">
                     <div class="step-icon">4</div>
@@ -1116,45 +1115,59 @@
 
     <!-- PRICING SECTION -->
     <section class="pricing" id="pricing">
-        <div class="container-wide">
-            <h2>Pick Your Package</h2>
-            <div class="pricing-grid">
-                <!-- DEMO -->
-                <div class="pricing-card">
-                    <h3>Demo</h3>
-                    <div class="pricing-price">$1</div>
-                    <p class="pricing-description">Try our service with 1 photo for just $1.</p>
-                    <div class="pricing-total">Total: You have 1 professional photo</div>
-                    <button class="btn btn-secondary" onclick="purchasePackage('demo')">Get Started</button>
-                </div>
+        <div class="container">
+            <h2>Simple Volume Pricing</h2>
+            <p style="text-align: center; color: #64748b; margin-bottom: 3rem; font-size: 1.125rem;">
+                Upload as many photos as you need. The more you upload, the more you save per photo.
+            </p>
 
-                <!-- STARTER -->
-                <div class="pricing-card">
-                    <h3>Starter</h3>
-                    <div class="pricing-price">$150</div>
-                    <p class="pricing-description">You send us 10 photos and we send you back 10 professional photos.</p>
-                    <div class="pricing-total">Total: You have 10 professional photos</div>
-                    <button class="btn btn-secondary" onclick="purchasePackage('starter')">Get Started</button>
+            <!-- Pricing Tiers Info -->
+            <div class="pricing-tiers-container" style="max-width: 800px; margin: 0 auto 3rem;">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                    <div class="pricing-tier-card" style="background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid #6366f1;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #6366f1; margin-bottom: 0.5rem;">$150</div>
+                        <div style="font-weight: 600; color: #0a0a0a; margin-bottom: 0.25rem;">Base Package</div>
+                        <div style="color: #64748b; font-size: 0.875rem;">1-10 photos</div>
+                    </div>
+                    <div class="pricing-tier-card" style="background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid #8b5cf6;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #8b5cf6; margin-bottom: 0.5rem;">+$12/photo</div>
+                        <div style="font-weight: 600; color: #0a0a0a; margin-bottom: 0.25rem;">Photos 11-20</div>
+                        <div style="color: #64748b; font-size: 0.875rem;">Additional photos</div>
+                    </div>
+                    <div class="pricing-tier-card" style="background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid #a78bfa;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #a78bfa; margin-bottom: 0.5rem;">+$10/photo</div>
+                        <div style="font-weight: 600; color: #0a0a0a; margin-bottom: 0.25rem;">Photos 21-40</div>
+                        <div style="color: #64748b; font-size: 0.875rem;">Volume discount</div>
+                    </div>
+                    <div class="pricing-tier-card" style="background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid #c4b5fd;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #7c3aed; margin-bottom: 0.5rem;">+$8/photo</div>
+                        <div style="font-weight: 600; color: #0a0a0a; margin-bottom: 0.25rem;">Photos 41+</div>
+                        <div style="color: #64748b; font-size: 0.875rem;">Best value</div>
+                    </div>
                 </div>
+            </div>
 
-                <!-- PRO (FEATURED) -->
-                <div class="pricing-card featured">
-                    <div class="pricing-badge">Best Value</div>
-                    <h3>Pro</h3>
-                    <div class="pricing-price">$350</div>
-                    <p class="pricing-description">You send us 10 photos and we send you back 10 professional photos plus 2 variations of each.</p>
-                    <div class="pricing-total">Total: You have 30 professional photos</div>
-                    <button class="btn btn-primary" onclick="purchasePackage('pro')">Get Started</button>
+            <!-- Price Calculator -->
+            <div style="max-width: 500px; margin: 0 auto 3rem; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 2rem; border-radius: 1rem; color: white; text-align: center;">
+                <h3 style="color: white; margin-bottom: 1rem;">Quick Price Calculator</h3>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1rem;">
+                    <label style="font-size: 1rem;">How many photos?</label>
+                    <input type="number" id="photo-calculator" min="1" max="200" value="10"
+                           style="width: 80px; padding: 0.5rem; border-radius: 0.5rem; border: none; font-size: 1.125rem; text-align: center; font-weight: 600;"
+                           onchange="updatePriceCalculator()" oninput="updatePriceCalculator()">
                 </div>
+                <div id="calculated-price" style="font-size: 2.5rem; font-weight: 700;">$150</div>
+                <div id="price-per-photo" style="font-size: 0.875rem; opacity: 0.9;">$15.00 per photo</div>
+            </div>
 
-                <!-- ELITE -->
-                <div class="pricing-card">
-                    <h3>Elite</h3>
-                    <div class="pricing-price">$500</div>
-                    <p class="pricing-description">You send us 20 photos and we send you back 20 professional photos plus 2 variations of each.</p>
-                    <div class="pricing-total">Total: You have 60 professional photos</div>
-                    <button class="btn btn-secondary" onclick="purchasePackage('elite')">Get Started</button>
-                </div>
+            <!-- CTA Button -->
+            <div style="text-align: center;">
+                <a href="/photo-studio-upload" class="btn btn-primary btn-large" style="font-size: 1.25rem; padding: 1.25rem 3rem;">
+                    Start Uploading Photos
+                </a>
+                <p style="margin-top: 1rem; color: #64748b; font-size: 0.875rem;">
+                    No commitment until you checkout. Upload and preview your cart first.
+                </p>
             </div>
         </div>
     </section>
@@ -1226,87 +1239,60 @@
     <section class="final-cta">
         <div class="container">
             <h2>Ready to upgrade your photos without hiring a photographer?</h2>
-            <a href="#pricing" class="btn btn-primary btn-large">Send My Photos</a>
+            <a href="/photo-studio-upload" class="btn btn-primary btn-large">Start Uploading Now</a>
             <p class="final-cta-subtitle">No studio. No equipment. Just your phone and our AI.</p>
         </div>
     </section>
 
-    <!-- PAYMENT INTEGRATION SCRIPT -->
+    <!-- SCRIPT -->
     <script>
-        /**
-         * Purchase package - Creates Stripe checkout session
-         * @param {string} packageType - 'demo', 'starter', 'pro', or 'elite'
-         */
-        async function purchasePackage(packageType) {
-            try {
-                // Get authentication token
-                const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        // Price calculator function
+        function calculatePrice(photoCount) {
+            if (photoCount <= 0) return 0;
+            if (photoCount <= 10) return 150;
 
-                // If not logged in, store the selected package and redirect to auth
-                if (!token) {
-                    // Store the package selection so we can resume after login
-                    localStorage.setItem('selectedPackage', packageType);
+            let price = 150;
+            let remaining = photoCount - 10;
 
-                    // Redirect to auth page with package info
-                    window.location.href = '/photo-studio-auth?package=' + packageType;
-                    return;
-                }
-
-                // Disable button and show loading state
-                const button = event.target;
-                const originalText = button.textContent;
-                button.textContent = 'Processing...';
-                button.disabled = true;
-
-                // Create Stripe checkout session
-                const response = await fetch('/api/photo-studio/create-checkout-session', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        package_type: packageType
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success && data.url) {
-                    // Redirect to Stripe checkout
-                    window.location.href = data.url;
-                } else {
-                    throw new Error(data.error || 'Failed to create checkout session');
-                }
-
-            } catch (error) {
-                console.error('Purchase error:', error);
-
-                // Re-enable button
-                if (event && event.target) {
-                    event.target.textContent = 'Get Started';
-                    event.target.disabled = false;
-                }
-
-                // Show error to user
-                alert('Failed to start checkout. Please try again or contact support at support@ringlypro.com');
+            // Photos 11-20: $12/photo
+            if (remaining > 0) {
+                const tier1 = Math.min(remaining, 10);
+                price += tier1 * 12;
+                remaining -= tier1;
             }
+
+            // Photos 21-40: $10/photo
+            if (remaining > 0) {
+                const tier2 = Math.min(remaining, 20);
+                price += tier2 * 10;
+                remaining -= tier2;
+            }
+
+            // Photos 41+: $8/photo
+            if (remaining > 0) {
+                price += remaining * 8;
+            }
+
+            return price;
         }
 
-        // Check if user just logged in and needs to continue purchase
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const justLoggedIn = urlParams.get('logged_in');
+        // Update price calculator display
+        function updatePriceCalculator() {
+            const input = document.getElementById('photo-calculator');
+            let count = parseInt(input.value) || 0;
+            if (count < 1) count = 1;
+            if (count > 200) count = 200;
 
-            if (justLoggedIn === 'true' && window.location.hash) {
-                // Scroll to pricing section if redirected after login
-                setTimeout(() => {
-                    const pricingSection = document.querySelector(window.location.hash);
-                    if (pricingSection) {
-                        pricingSection.scrollIntoView({ behavior: 'smooth' });
-                    }
-                }, 100);
-            }
+            const price = calculatePrice(count);
+            const perPhoto = (price / count).toFixed(2);
+
+            document.getElementById('calculated-price').textContent = '$' + price;
+            document.getElementById('price-per-photo').textContent = '$' + perPhoto + ' per photo';
+        }
+
+        // Initialize calculator
+        window.addEventListener('DOMContentLoaded', () => {
+            updatePriceCalculator();
         });
 
         // FAQ Toggle functionality

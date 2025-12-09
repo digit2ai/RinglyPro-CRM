@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Photos - PixlyPro Photo Studio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 2px solid #e5e7eb;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-logo img {
+            height: 40px;
+        }
+
+        .header-logo h1 {
+            font-size: 1.5rem;
+            color: #0a0a0a;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #6366f1;
+            border: 2px solid #6366f1;
+        }
+
+        .btn-secondary:hover {
+            background: #6366f1;
+            color: white;
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            min-height: calc(100vh - 73px);
+        }
+
+        /* Upload Area */
+        .upload-area {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .upload-zone {
+            background: white;
+            border: 3px dashed #cbd5e1;
+            border-radius: 1rem;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.drag-over {
+            border-color: #6366f1;
+            background: #f0f4ff;
+        }
+
+        .upload-zone-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-zone h2 {
+            font-size: 1.5rem;
+            color: #0a0a0a;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-zone p {
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+
+        .upload-zone .btn-upload {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .upload-zone .btn-upload:hover {
+            transform: translateY(-2px);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        /* Photos Grid */
+        .photos-section {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .photos-section h3 {
+            font-size: 1.125rem;
+            color: #0a0a0a;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .photo-count-badge {
+            background: #6366f1;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+        }
+
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .photo-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background: #f3f4f6;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-item .remove-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .photo-item:hover .remove-btn {
+            opacity: 1;
+        }
+
+        .photo-item .photo-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.5rem;
+            font-size: 0.625rem;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .empty-photos {
+            text-align: center;
+            padding: 3rem;
+            color: #94a3b8;
+        }
+
+        /* Cart Sidebar */
+        .cart-sidebar {
+            width: 400px;
+            background: white;
+            border-left: 2px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 73px;
+            height: calc(100vh - 73px);
+        }
+
+        .cart-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .cart-header h2 {
+            font-size: 1.25rem;
+            color: #0a0a0a;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cart-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        /* Pricing Breakdown */
+        .pricing-breakdown {
+            background: #f8fafc;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-breakdown h4 {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .price-tier {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            font-size: 0.875rem;
+            color: #475569;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .price-tier:last-child {
+            border-bottom: none;
+        }
+
+        .price-tier.active {
+            color: #6366f1;
+            font-weight: 600;
+        }
+
+        .price-tier .tier-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .price-tier .tier-rate {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        /* Cart Summary */
+        .cart-summary {
+            background: #f0f4ff;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            color: #475569;
+        }
+
+        .summary-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .summary-row.total {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0a0a0a;
+            padding-top: 0.75rem;
+            border-top: 2px solid #c7d2fe;
+            margin-top: 0.75rem;
+        }
+
+        .summary-row .value {
+            font-weight: 600;
+        }
+
+        /* What You Get */
+        .what-you-get {
+            margin-bottom: 1.5rem;
+        }
+
+        .what-you-get h4 {
+            font-size: 0.875rem;
+            color: #0a0a0a;
+            margin-bottom: 0.75rem;
+        }
+
+        .what-you-get ul {
+            list-style: none;
+            font-size: 0.875rem;
+            color: #475569;
+        }
+
+        .what-you-get li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .what-you-get li::before {
+            content: "✓";
+            color: #22c55e;
+            font-weight: bold;
+        }
+
+        /* Cart Footer */
+        .cart-footer {
+            padding: 1.5rem;
+            border-top: 2px solid #e5e7eb;
+            background: white;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            padding: 1rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .checkout-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .checkout-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .minimum-notice {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.75rem;
+        }
+
+        /* Pricing Info Card */
+        .pricing-info-card {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-info-card h4 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .pricing-info-card .tier-list {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .pricing-info-card .tier-list div {
+            margin-bottom: 0.25rem;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .cart-sidebar {
+                width: 100%;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: auto;
+                max-height: 50vh;
+                border-left: none;
+                border-top: 2px solid #e5e7eb;
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            }
+
+            .upload-area {
+                padding-bottom: 300px;
+            }
+
+            .cart-content {
+                max-height: 200px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .header-logo h1 {
+                font-size: 1.125rem;
+            }
+
+            .upload-area {
+                padding: 1rem;
+            }
+
+            .photos-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-logo">
+            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69175f336c431e834ac954b8.png" alt="PixlyPro">
+            <h1>Photo Studio</h1>
+        </div>
+        <div class="header-actions">
+            <a href="/photo-studio-portal" class="btn btn-secondary">My Orders</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Upload Area -->
+        <div class="upload-area">
+            <div class="upload-zone" id="upload-zone">
+                <div class="upload-zone-icon">📸</div>
+                <h2>Upload Your Photos</h2>
+                <p>Drag and drop your photos here, or click to browse</p>
+                <button class="btn-upload">Select Photos</button>
+                <input type="file" id="file-input" class="file-input" accept="image/jpeg,image/jpg,image/png,image/heic,image/heif,image/webp" multiple>
+                <p style="margin-top: 1rem; font-size: 0.75rem; color: #94a3b8;">
+                    Supports: JPEG, PNG, HEIC, WebP • Max 25MB per photo
+                </p>
+            </div>
+
+            <div class="photos-section">
+                <h3>
+                    Your Photos
+                    <span class="photo-count-badge" id="photo-count-badge">0 photos</span>
+                </h3>
+                <div class="photos-grid" id="photos-grid">
+                    <div class="empty-photos">
+                        <p>No photos added yet</p>
+                        <p style="font-size: 0.75rem; margin-top: 0.5rem;">Upload photos to see them here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Sidebar -->
+        <div class="cart-sidebar">
+            <div class="cart-header">
+                <h2>🛒 Your Cart</h2>
+            </div>
+
+            <div class="cart-content">
+                <!-- Pricing Info -->
+                <div class="pricing-info-card">
+                    <h4>Volume Pricing</h4>
+                    <div class="tier-list">
+                        <div>1-10 photos: $150 (base)</div>
+                        <div>11-20 photos: +$12/photo</div>
+                        <div>21-40 photos: +$10/photo</div>
+                        <div>41+ photos: +$8/photo</div>
+                    </div>
+                </div>
+
+                <!-- Price Breakdown -->
+                <div class="pricing-breakdown" id="pricing-breakdown">
+                    <h4>Price Breakdown</h4>
+                    <div id="price-tiers">
+                        <div class="price-tier">
+                            <span>No photos yet</span>
+                            <span>$0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Summary -->
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>Photos</span>
+                        <span class="value" id="summary-photos">0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Enhanced photos you'll receive</span>
+                        <span class="value" id="summary-receive">0</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total</span>
+                        <span class="value" id="summary-total">$0</span>
+                    </div>
+                </div>
+
+                <!-- What You Get -->
+                <div class="what-you-get">
+                    <h4>What You'll Get</h4>
+                    <ul>
+                        <li>Professional photo enhancement</li>
+                        <li>High-resolution outputs</li>
+                        <li>Color correction & optimization</li>
+                        <li>Background cleanup</li>
+                        <li>48-72 hour turnaround</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="cart-footer">
+                <button class="checkout-btn" id="checkout-btn" disabled>
+                    <span>Proceed to Checkout</span>
+                    <span id="checkout-price">$0</span>
+                </button>
+                <p class="minimum-notice">Minimum order: 1 photo ($150)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h3 id="loading-title">Processing...</h3>
+            <p id="loading-message">Please wait while we prepare your checkout</p>
+        </div>
+    </div>
+
+    <script>
+        // Photo storage (in browser memory)
+        let photos = [];
+        let photoUrls = {};
+
+        // Pricing calculation
+        function calculatePrice(photoCount) {
+            if (photoCount <= 0) return { total: 0, breakdown: [] };
+            if (photoCount <= 10) return {
+                total: 150,
+                breakdown: [{ tier: 'Base (1-10 photos)', count: photoCount, rate: null, amount: 150 }]
+            };
+
+            let total = 150;
+            let breakdown = [{ tier: 'Base (1-10 photos)', count: 10, rate: null, amount: 150 }];
+            let remaining = photoCount - 10;
+
+            // Photos 11-20: $12/photo
+            if (remaining > 0) {
+                const tier1Count = Math.min(remaining, 10);
+                const tier1Amount = tier1Count * 12;
+                total += tier1Amount;
+                breakdown.push({ tier: 'Photos 11-20', count: tier1Count, rate: 12, amount: tier1Amount });
+                remaining -= tier1Count;
+            }
+
+            // Photos 21-40: $10/photo
+            if (remaining > 0) {
+                const tier2Count = Math.min(remaining, 20);
+                const tier2Amount = tier2Count * 10;
+                total += tier2Amount;
+                breakdown.push({ tier: 'Photos 21-40', count: tier2Count, rate: 10, amount: tier2Amount });
+                remaining -= tier2Count;
+            }
+
+            // Photos 41+: $8/photo
+            if (remaining > 0) {
+                const tier3Amount = remaining * 8;
+                total += tier3Amount;
+                breakdown.push({ tier: 'Photos 41+', count: remaining, rate: 8, amount: tier3Amount });
+            }
+
+            return { total, breakdown };
+        }
+
+        // Update cart display
+        function updateCart() {
+            const photoCount = photos.length;
+            const pricing = calculatePrice(photoCount);
+
+            // Update photo count badge
+            document.getElementById('photo-count-badge').textContent = `${photoCount} photo${photoCount !== 1 ? 's' : ''}`;
+
+            // Update price breakdown
+            const priceTiersDiv = document.getElementById('price-tiers');
+            if (photoCount === 0) {
+                priceTiersDiv.innerHTML = `
+                    <div class="price-tier">
+                        <span>No photos yet</span>
+                        <span>$0</span>
+                    </div>
+                `;
+            } else {
+                priceTiersDiv.innerHTML = pricing.breakdown.map(tier => `
+                    <div class="price-tier active">
+                        <div class="tier-info">
+                            <span>${tier.tier}</span>
+                            ${tier.rate ? `<span class="tier-rate">${tier.count} × $${tier.rate}</span>` : ''}
+                        </div>
+                        <span>$${tier.amount}</span>
+                    </div>
+                `).join('');
+            }
+
+            // Update summary
+            document.getElementById('summary-photos').textContent = photoCount;
+            document.getElementById('summary-receive').textContent = photoCount; // 1:1 ratio
+            document.getElementById('summary-total').textContent = `$${pricing.total}`;
+            document.getElementById('checkout-price').textContent = `$${pricing.total}`;
+
+            // Update checkout button
+            const checkoutBtn = document.getElementById('checkout-btn');
+            checkoutBtn.disabled = photoCount === 0;
+        }
+
+        // Render photos grid
+        function renderPhotosGrid() {
+            const grid = document.getElementById('photos-grid');
+
+            if (photos.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-photos">
+                        <p>No photos added yet</p>
+                        <p style="font-size: 0.75rem; margin-top: 0.5rem;">Upload photos to see them here</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = photos.map((photo, index) => `
+                <div class="photo-item" data-index="${index}">
+                    <img src="${photoUrls[index]}" alt="${photo.name}">
+                    <button class="remove-btn" onclick="removePhoto(${index})">×</button>
+                    <div class="photo-name">${photo.name}</div>
+                </div>
+            `).join('');
+        }
+
+        // Add photos
+        function addPhotos(files) {
+            const maxSize = 25 * 1024 * 1024; // 25MB
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif', 'image/webp'];
+
+            Array.from(files).forEach(file => {
+                // Validate type
+                if (!validTypes.includes(file.type.toLowerCase())) {
+                    alert(`${file.name} is not a supported image type`);
+                    return;
+                }
+
+                // Validate size
+                if (file.size > maxSize) {
+                    alert(`${file.name} is too large (max 25MB)`);
+                    return;
+                }
+
+                // Add to photos array
+                const index = photos.length;
+                photos.push(file);
+                photoUrls[index] = URL.createObjectURL(file);
+            });
+
+            renderPhotosGrid();
+            updateCart();
+        }
+
+        // Remove photo
+        function removePhoto(index) {
+            // Revoke object URL to free memory
+            URL.revokeObjectURL(photoUrls[index]);
+
+            // Remove from arrays
+            photos.splice(index, 1);
+
+            // Rebuild photoUrls with new indices
+            const newPhotoUrls = {};
+            photos.forEach((photo, i) => {
+                if (i >= index) {
+                    // Revoke old URL and create new one for shifted items
+                    if (photoUrls[i + 1]) {
+                        URL.revokeObjectURL(photoUrls[i + 1]);
+                    }
+                    newPhotoUrls[i] = URL.createObjectURL(photo);
+                } else {
+                    newPhotoUrls[i] = photoUrls[i];
+                }
+            });
+            photoUrls = newPhotoUrls;
+
+            renderPhotosGrid();
+            updateCart();
+        }
+
+        // Setup drag and drop
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('file-input');
+
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('drag-over');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('drag-over');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag-over');
+            addPhotos(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            addPhotos(e.target.files);
+            fileInput.value = ''; // Reset input
+        });
+
+        // Checkout
+        document.getElementById('checkout-btn').addEventListener('click', async () => {
+            if (photos.length === 0) return;
+
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            if (!token) {
+                // Store photos info and redirect to auth
+                sessionStorage.setItem('pendingPhotoCount', photos.length);
+                window.location.href = '/photo-studio-auth?redirect=/photo-studio-upload';
+                return;
+            }
+
+            // Show loading
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.classList.add('active');
+            document.getElementById('loading-title').textContent = 'Creating checkout...';
+            document.getElementById('loading-message').textContent = 'Please wait while we prepare your order';
+
+            try {
+                // Create checkout session
+                const response = await fetch('/api/photo-studio/create-cart-checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ photo_count: photos.length })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to create checkout');
+                }
+
+                // Store photos in IndexedDB for retrieval after payment
+                await storePhotosInIndexedDB(data.session_id, photos);
+
+                // Redirect to Stripe
+                window.location.href = data.checkout_url;
+
+            } catch (error) {
+                console.error('Checkout error:', error);
+                alert('Failed to create checkout: ' + error.message);
+                loadingOverlay.classList.remove('active');
+            }
+        });
+
+        // IndexedDB functions for photo persistence
+        function openPhotoDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('PhotoStudioDB', 1);
+
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('pendingPhotos')) {
+                        db.createObjectStore('pendingPhotos', { keyPath: 'sessionId' });
+                    }
+                };
+            });
+        }
+
+        async function storePhotosInIndexedDB(sessionId, photoFiles) {
+            const db = await openPhotoDB();
+
+            // Convert files to array buffers for storage
+            const photoData = await Promise.all(photoFiles.map(async (file, index) => ({
+                index,
+                name: file.name,
+                type: file.type,
+                data: await file.arrayBuffer()
+            })));
+
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['pendingPhotos'], 'readwrite');
+                const store = transaction.objectStore('pendingPhotos');
+
+                const request = store.put({
+                    sessionId,
+                    photos: photoData,
+                    timestamp: Date.now()
+                });
+
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Check auth on page load
+        async function checkAuth() {
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = '/photo-studio-auth?redirect=/photo-studio-upload';
+                return;
+            }
+
+            // Verify token is valid
+            try {
+                const response = await fetch('/api/photo-studio/orders', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.status === 401) {
+                    localStorage.removeItem('authToken');
+                    sessionStorage.removeItem('authToken');
+                    window.location.href = '/photo-studio-auth?redirect=/photo-studio-upload';
+                }
+            } catch (error) {
+                console.error('Auth check error:', error);
+            }
+        }
+
+        // Initialize
+        checkAuth();
+        updateCart();
+    </script>
+</body>
+</html>

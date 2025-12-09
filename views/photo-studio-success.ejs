@@ -177,13 +177,63 @@
             color: #991b1b;
             margin-bottom: 2rem;
         }
+
+        .upload-progress {
+            background: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .upload-progress h3 {
+            color: #0a0a0a;
+            margin-bottom: 1rem;
+            font-size: 1.125rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.875rem;
+            color: #64748b;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="success-container">
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <p>Verifying your payment...</p>
+            <p id="loading-text">Verifying your payment...</p>
+        </div>
+
+        <!-- Cart Upload Progress -->
+        <div id="upload-section" style="display: none;">
+            <div class="success-icon">📤</div>
+            <h1>Uploading Your Photos</h1>
+            <p style="color: #64748b; margin-bottom: 2rem;">Please wait while we upload your photos...</p>
+
+            <div class="upload-progress">
+                <h3>Upload Progress</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+                <p class="progress-text" id="progress-text">Preparing upload...</p>
+            </div>
         </div>
 
         <div id="success" style="display: none;">
@@ -215,21 +265,8 @@
                 </ol>
             </div>
 
-            <!-- Design Brief CTA -->
-            <div style="background: #eff6ff; border: 2px solid #3b82f6; border-radius: 0.5rem; padding: 1.5rem; margin: 2rem 0; text-align: left;">
-                <h3 style="color: #1e40af; margin-bottom: 0.75rem; font-size: 1.125rem;">
-                    📋 Next Step: Complete Your Design Brief
-                </h3>
-                <p style="color: #1e3a8a; margin-bottom: 1rem; font-size: 0.9375rem;">
-                    Before we start working on your photos and graphics, please fill out a brief about your brand, menu, and goals so our designer and AI can create the perfect designs for you.
-                </p>
-                <a href="#" id="designBriefLink" class="btn btn-primary" style="display: inline-block; margin: 0;">
-                    Go to My Portal & Design Brief →
-                </a>
-            </div>
-
             <div>
-                <a href="/photo-studio-portal" class="btn btn-primary">Upload Photos Now</a>
+                <a href="/photo-studio-portal" class="btn btn-primary">View My Orders</a>
             </div>
 
             <p class="support-text">Questions? Contact us at support@ringlypro.com</p>
@@ -245,11 +282,124 @@
     </div>
 
     <script>
+        // IndexedDB functions
+        function openPhotoDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('PhotoStudioDB', 1);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('pendingPhotos')) {
+                        db.createObjectStore('pendingPhotos', { keyPath: 'sessionId' });
+                    }
+                };
+            });
+        }
+
+        async function getPhotosFromIndexedDB(sessionId) {
+            const db = await openPhotoDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['pendingPhotos'], 'readonly');
+                const store = transaction.objectStore('pendingPhotos');
+                const request = store.get(sessionId);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function deletePhotosFromIndexedDB(sessionId) {
+            const db = await openPhotoDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['pendingPhotos'], 'readwrite');
+                const store = transaction.objectStore('pendingPhotos');
+                const request = store.delete(sessionId);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function updateProgress(current, total, status) {
+            const percentage = Math.round((current / total) * 100);
+            document.getElementById('progress-fill').style.width = percentage + '%';
+            document.getElementById('progress-text').textContent = status || `Uploading ${current} of ${total} photos...`;
+        }
+
+        async function handleCartUpload(sessionId, token) {
+            // Show upload section
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('upload-section').style.display = 'block';
+
+            try {
+                // Get photos from IndexedDB
+                const storedData = await getPhotosFromIndexedDB(sessionId);
+
+                if (!storedData || !storedData.photos || storedData.photos.length === 0) {
+                    throw new Error('No photos found. Please try uploading again from the upload page.');
+                }
+
+                const photos = storedData.photos;
+                updateProgress(0, photos.length, 'Preparing photos...');
+
+                // Convert array buffers back to Files and create FormData
+                const formData = new FormData();
+                formData.append('session_id', sessionId);
+
+                for (let i = 0; i < photos.length; i++) {
+                    const photoData = photos[i];
+                    const blob = new Blob([photoData.data], { type: photoData.type });
+                    const file = new File([blob], photoData.name, { type: photoData.type });
+                    formData.append('photos', file);
+                    updateProgress(i + 1, photos.length, `Preparing photo ${i + 1} of ${photos.length}...`);
+                }
+
+                updateProgress(0, photos.length, 'Uploading to server...');
+
+                // Upload to backend
+                const response = await fetch('/api/photo-studio/complete-cart-upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Upload failed');
+                }
+
+                // Clear IndexedDB
+                await deletePhotosFromIndexedDB(sessionId);
+
+                updateProgress(photos.length, photos.length, 'Upload complete!');
+
+                // Show success after a brief delay
+                setTimeout(() => {
+                    document.getElementById('upload-section').style.display = 'none';
+                    document.getElementById('success').style.display = 'block';
+
+                    document.getElementById('orderId').textContent = data.order_id;
+                    document.getElementById('packageName').textContent = `Custom (${photos.length} photos)`;
+                    document.getElementById('photosToUpload').textContent = photos.length;
+                    document.getElementById('photosToReceive').textContent = photos.length;
+                }, 1000);
+
+            } catch (error) {
+                console.error('Cart upload error:', error);
+                document.getElementById('upload-section').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('errorMessage').textContent = error.message;
+            }
+        }
+
         async function verifyPayment() {
             try {
-                // Get session ID from URL
+                // Get session ID and cart flag from URL
                 const urlParams = new URLSearchParams(window.location.search);
                 const sessionId = urlParams.get('session_id');
+                const isCart = urlParams.get('cart') === 'true';
 
                 if (!sessionId) {
                     throw new Error('No session ID found');
@@ -259,11 +409,17 @@
                 const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
 
                 if (!token) {
-                    window.location.href = '/login';
+                    window.location.href = '/photo-studio-auth?redirect=/photo-studio-success?session_id=' + sessionId + (isCart ? '&cart=true' : '');
                     return;
                 }
 
-                // Verify payment with backend
+                // If this is a cart checkout, handle the upload
+                if (isCart) {
+                    await handleCartUpload(sessionId, token);
+                    return;
+                }
+
+                // Otherwise, verify payment normally (for package purchases)
                 const response = await fetch(`/api/photo-studio/verify-payment?session_id=${sessionId}`, {
                     method: 'GET',
                     headers: {
@@ -284,8 +440,6 @@
                     document.getElementById('photosToUpload').textContent = data.photosToUpload;
                     document.getElementById('photosToReceive').textContent = data.photosToReceive;
 
-                    // Set Design Brief link with orderId
-                    document.getElementById('designBriefLink').href = `/photo-studio-portal?orderId=${data.orderId}`;
                 } else {
                     throw new Error(data.error || 'Payment verification failed');
                 }
@@ -293,6 +447,7 @@
             } catch (error) {
                 console.error('Verification error:', error);
                 document.getElementById('loading').style.display = 'none';
+                document.getElementById('upload-section').style.display = 'none';
                 document.getElementById('error').style.display = 'block';
                 document.getElementById('errorMessage').textContent = error.message;
             }

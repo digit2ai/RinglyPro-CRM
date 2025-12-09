@@ -327,44 +327,7 @@
     <script>
         // Get URL params
         const urlParams = new URLSearchParams(window.location.search);
-        const selectedPackage = urlParams.get('package') || localStorage.getItem('selectedPackage');
-        const redirectUrl = urlParams.get('redirect') || '/photo-studio#pricing';
-
-        // Helper function to create Stripe checkout after authentication
-        async function createStripeCheckout(token, packageType) {
-            try {
-                const response = await fetch('/api/photo-studio/create-checkout-session', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        package_type: packageType
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success && data.url) {
-                    // Clear selected package from storage
-                    localStorage.removeItem('selectedPackage');
-
-                    // Redirect to Stripe checkout
-                    window.location.href = data.url;
-                } else {
-                    throw new Error(data.error || 'Failed to create checkout session');
-                }
-            } catch (error) {
-                console.error('Checkout error:', error);
-                showAlert('Failed to create checkout. Redirecting to packages...', 'error');
-
-                // Redirect to landing page after short delay
-                setTimeout(() => {
-                    window.location.href = redirectUrl;
-                }, 2000);
-            }
-        }
+        const redirectUrl = urlParams.get('redirect') || '/photo-studio-upload';
 
         // Tab switching
         function switchTab(tab) {
@@ -426,19 +389,10 @@
                         localStorage.setItem('user', JSON.stringify(data.user));
                     }
 
-                    // If user selected a package, redirect to Stripe checkout
-                    if (selectedPackage) {
-                        showAlert('Login successful! Creating checkout...', 'success');
-                        setTimeout(() => {
-                            createStripeCheckout(data.token, selectedPackage);
-                        }, 500);
-                    } else {
-                        // Otherwise redirect to landing page
-                        showAlert('Login successful! Redirecting...', 'success');
-                        setTimeout(() => {
-                            window.location.href = redirectUrl;
-                        }, 1000);
-                    }
+                    showAlert('Login successful! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 1000);
                 } else {
                     throw new Error(data.error || 'Login failed');
                 }
@@ -487,19 +441,10 @@
                         localStorage.setItem('user', JSON.stringify(data.user));
                     }
 
-                    // If user selected a package, redirect to Stripe checkout
-                    if (selectedPackage) {
-                        showAlert('Account created! Creating checkout...', 'success');
-                        setTimeout(() => {
-                            createStripeCheckout(data.token, selectedPackage);
-                        }, 1000);
-                    } else {
-                        // Otherwise redirect to landing page
-                        showAlert('Account created successfully! Redirecting...', 'success');
-                        setTimeout(() => {
-                            window.location.href = redirectUrl;
-                        }, 1500);
-                    }
+                    showAlert('Account created successfully! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 1500);
                 } else {
                     throw new Error(data.error || 'Signup failed');
                 }
@@ -516,17 +461,8 @@
         window.addEventListener('DOMContentLoaded', () => {
             const token = localStorage.getItem('authToken');
             if (token) {
-                // Already logged in
-                if (selectedPackage) {
-                    // User selected a package, go straight to Stripe checkout
-                    showAlert('Already logged in! Creating checkout...', 'success');
-                    setTimeout(() => {
-                        createStripeCheckout(token, selectedPackage);
-                    }, 500);
-                } else {
-                    // No package selected, redirect to landing page
-                    window.location.href = redirectUrl;
-                }
+                // Already logged in, redirect to upload page
+                window.location.href = redirectUrl;
             }
         });
     </script>
