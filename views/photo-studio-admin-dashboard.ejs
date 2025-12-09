@@ -146,8 +146,8 @@
         }
 
         .status-processing {
-            background: #dbeafe;
-            color: #1e40af;
+            background: #fed7aa;
+            color: #9a3412;
         }
 
         .status-completed {
@@ -156,8 +156,8 @@
         }
 
         .status-awaiting_upload {
-            background: #fed7aa;
-            color: #9a3412;
+            background: #e0e7ff;
+            color: #3730a3;
         }
 
         .order-customer {
@@ -1015,9 +1015,9 @@
                     revision: photos.filter(p => p.approval_status === 'revision_requested').length
                 };
 
-                // Determine if order needs attention (new orders, has revisions or rejections)
-                const isNewOrder = order.order_status === 'awaiting_upload';
-                const needsAttention = isNewOrder || statusCounts.revision > 0 || statusCounts.rejected > 0;
+                // Determine if order needs attention (processing orders, has revisions or rejections)
+                const isProcessing = order.order_status === 'processing';
+                const needsAttention = isProcessing || statusCounts.revision > 0 || statusCounts.rejected > 0;
                 const attentionClass = needsAttention ? 'needs-attention' : '';
 
                 return `
@@ -1041,8 +1041,8 @@
                         ` : ''}
                         ${needsAttention ? `
                             <div class="attention-message">
-                                ${isNewOrder ? '🆕 New Order' : ''}
-                                ${isNewOrder && (statusCounts.revision > 0 || statusCounts.rejected > 0) ? ' • ' : ''}
+                                ${isProcessing ? '🔄 Processing' : ''}
+                                ${isProcessing && (statusCounts.revision > 0 || statusCounts.rejected > 0) ? ' • ' : ''}
                                 ${statusCounts.revision > 0 ? `${statusCounts.revision} revision${statusCounts.revision > 1 ? 's' : ''} requested` : ''}
                                 ${statusCounts.revision > 0 && statusCounts.rejected > 0 ? ' • ' : ''}
                                 ${statusCounts.rejected > 0 ? `${statusCounts.rejected} rejected` : ''}
