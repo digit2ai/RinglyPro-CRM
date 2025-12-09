@@ -3,1494 +3,918 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OrderGoPro - Online Ordering Platform for Restaurants & Retail</title>
-    <meta name="description" content="Create your online store in minutes with AI. Accept orders, manage menu, and grow your business. No coding required.">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>OrderGoPro - Complete Restaurant Management Platform | Order Online + Phone Answering + Photo Studio</title>
+    <meta name="description" content="Run your restaurant smarter with OrderGoPro's all-in-one platform. Online ordering, professional phone answering (RinglyPro), photo studio (PixlyPro), and marketing tools integrated in one place.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         :root {
-            --navy: #0b1e3e;
-            --sky: #87ceeb;
-            --orange: #FF914D;
+            --primary: #0066FF;
+            --secondary: #00C896;
+            --orange: #FF6B35;
+            --purple: #8B5CF6;
+            --dark: #0F172A;
+            --gray: #64748B;
+            --light: #F1F5F9;
         }
 
-        /* Sound wave animations emanating from logo */
-        @keyframes soundWave {
-            0% {
-                width: 100%;
-                height: 100%;
-                opacity: 0.5;
-                border-width: 2px;
-            }
-            100% {
-                width: 200%;
-                height: 200%;
-                opacity: 0;
-                border-width: 0.5px;
-            }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
         }
 
-        .logo-container {
-            position: relative;
-            display: inline-block;
+        /* Navigation */
+        nav {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #E2E8F0;
+            z-index: 100;
         }
 
-        .sound-wave {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border-radius: 50%;
-            border: 2px solid var(--sky);
-            animation: soundWave 3s infinite ease-out;
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .sound-wave:nth-child(1) {
-            animation-delay: 0s;
-        }
-
-        .sound-wave:nth-child(2) {
-            animation-delay: 0.75s;
-        }
-
-        .sound-wave:nth-child(3) {
-            animation-delay: 1.5s;
-        }
-
-        .sound-wave:nth-child(4) {
-            animation-delay: 2.25s;
-        }
-
-        .gradient-text {
-            background: linear-gradient(135deg, var(--sky), var(--orange));
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .feature-card {
-            transition: all 0.3s ease;
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
         }
 
-        .feature-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 24px rgba(11, 30, 62, 0.15);
-        }
-
-        .pricing-card {
-            transition: all 0.3s ease;
-        }
-
-        .pricing-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 24px rgba(11, 30, 62, 0.15);
-        }
-
-        .feature-link {
-            color: var(--sky);
+        .nav-links a {
+            color: var(--gray);
             text-decoration: none;
             font-weight: 600;
-            transition: all 0.2s;
-            border-bottom: 2px solid transparent;
+            font-size: 0.95rem;
+            transition: color 0.3s;
         }
 
-        .feature-link:hover {
-            color: var(--orange);
-            border-bottom-color: var(--orange);
+        .nav-links a:hover {
+            color: var(--primary);
         }
 
-        /* How It Works Animations */
-        @keyframes slideRight {
-            0%, 100% {
-                transform: translateX(0);
-            }
-            50% {
-                transform: translateX(8px);
-            }
+        .nav-cta {
+            display: flex;
+            gap: 1rem;
         }
 
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(1.05);
-                opacity: 0.8;
-            }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            font-size: 0.95rem;
+            display: inline-block;
         }
 
-        .workflow-arrow {
-            animation: slideRight 2s ease-in-out infinite;
-        }
-
-        .step-number {
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        .step-circle {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--sky), var(--orange));
+        .btn-primary {
+            background: var(--primary);
             color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0052CC;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 102, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--gray);
+            border: 2px solid #E2E8F0;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 5rem 2rem;
+            background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><circle cx="900" cy="300" r="400" fill="%230066FF" opacity="0.05"/><circle cx="1000" cy="100" r="200" fill="%2300C896" opacity="0.05"/></svg>') no-repeat right center;
+            background-size: contain;
+        }
+
+        .hero-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+        }
+
+        .hero-content .highlight {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-content p {
+            font-size: 1.25rem;
+            color: var(--gray);
+            margin-bottom: 2rem;
+            line-height: 1.7;
+        }
+
+        .hero-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .hero-feature {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            font-weight: 900;
-            animation: pulse 2s ease-in-out infinite;
-            box-shadow: 0 4px 12px rgba(255, 145, 77, 0.3);
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
         }
 
-        .live-demo-indicator {
-            animation: pulse 2s ease-in-out infinite;
+        .hero-feature svg {
+            color: var(--secondary);
         }
 
-        /* AI Chat Widget */
-        .ai-chat-widget {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            z-index: 1000;
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
 
-        .ai-chat-button {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--navy), #1e3a5f);
-            color: white;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(11, 30, 62, 0.3);
+        .hero-visual {
+            position: relative;
+        }
+
+        .platform-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .platform-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .platform-card:hover {
+            transform: translateY(-8px);
+        }
+
+        .platform-card-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
-            transition: all 0.3s;
-        }
-
-        .ai-chat-button:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(11, 30, 62, 0.4);
-        }
-
-        .ai-chat-window {
-            position: fixed;
-            bottom: 6rem;
-            right: 2rem;
-            width: 380px;
-            max-width: calc(100vw - 4rem);
-            height: 500px;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .ai-chat-window.active {
-            display: flex;
-        }
-
-        .ai-chat-header {
-            background: linear-gradient(135deg, var(--navy), #1e3a5f);
-            color: white;
-            padding: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .ai-chat-body {
-            flex: 1;
-            padding: 1rem;
-            overflow-y: auto;
-            background: #f8fafc;
-        }
-
-        .ai-message {
             margin-bottom: 1rem;
-            padding: 0.75rem 1rem;
-            border-radius: 12px;
-            max-width: 85%;
         }
 
-        .ai-message.bot {
-            background: white;
-            margin-right: auto;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        .platform-card h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
         }
 
-        .ai-message.user {
-            background: var(--navy);
+        .platform-card p {
+            font-size: 0.875rem;
+            color: var(--gray);
+        }
+
+        /* Stats Section */
+        .stats {
+            padding: 3rem 2rem;
+            background: var(--dark);
             color: white;
-            margin-left: auto;
         }
 
-        .ai-chat-input {
-            padding: 1rem;
-            border-top: 1px solid #e5e7eb;
-            display: flex;
-            gap: 0.5rem;
+        .stats-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3rem;
+            text-align: center;
         }
 
-        .ai-chat-input input {
-            flex: 1;
-            padding: 0.75rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            outline: none;
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .ai-chat-input button {
-            padding: 0.75rem 1.25rem;
-            background: var(--orange);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
+        .stat-label {
+            color: #94A3B8;
             font-weight: 600;
         }
 
-        /* Mobile Styles for Chat Widget */
-        @media (max-width: 768px) {
-            .ai-chat-widget {
-                bottom: 1rem;
-                right: 1rem;
-            }
-
-            .ai-chat-button {
-                width: 56px;
-                height: 56px;
-            }
-
-            .ai-chat-window {
-                position: fixed;
-                bottom: 0;
-                right: 0;
-                left: 0;
-                top: auto;
-                width: 100%;
-                max-width: 100%;
-                height: 70vh;
-                max-height: 600px;
-                border-radius: 16px 16px 0 0;
-                box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
-            }
-
-            .ai-chat-header {
-                padding: 1rem 1.25rem;
-            }
-
-            .ai-chat-body {
-                padding: 1rem;
-            }
-
-            .ai-message {
-                max-width: 90%;
-            }
-
-            .ai-chat-input {
-                padding: 1rem 1.25rem;
-            }
-
-            .ai-chat-input input {
-                font-size: 16px; /* Prevents zoom on iOS */
-            }
-        }
-
-        /* Mobile Navigation */
-        .mobile-nav {
-            display: none;
-        }
-
-        .mobile-menu-button {
-            color: var(--navy);
-            transition: all 0.3s;
-        }
-
-        .mobile-menu-button:hover {
-            color: var(--orange);
-        }
-
-        .mobile-menu {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
+        /* Integrated Platform Section */
+        .integrated-platform {
+            padding: 6rem 2rem;
             background: white;
-            border-bottom: 1px solid #e5e7eb;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            z-index: 40;
         }
 
-        .mobile-menu.active {
-            display: block;
+        .section-header {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 4rem;
         }
 
-        .mobile-menu a {
-            display: block;
-            padding: 1rem 1.5rem;
-            color: var(--navy);
-            font-weight: 500;
-            border-bottom: 1px solid #f3f4f6;
-            transition: all 0.2s;
+        .section-header h2 {
+            font-size: 2.75rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            color: var(--dark);
         }
 
-        .mobile-menu a:hover {
-            background: #f9fafb;
-            color: var(--orange);
-            padding-left: 2rem;
+        .section-header p {
+            font-size: 1.25rem;
+            color: var(--gray);
         }
 
+        .platforms-grid {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            gap: 2rem;
+        }
+
+        .platform-feature {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+            border-radius: 1.5rem;
+        }
+
+        .platform-feature:nth-child(even) {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .platform-feature:nth-child(even) .platform-feature-content {
+            order: 2;
+        }
+
+        .platform-feature:nth-child(even) .platform-feature-visual {
+            order: 1;
+        }
+
+        .platform-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .platform-feature h3 {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+        }
+
+        .platform-feature-list {
+            list-style: none;
+            margin: 1.5rem 0;
+        }
+
+        .platform-feature-list li {
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 1.0625rem;
+        }
+
+        .platform-feature-list svg {
+            flex-shrink: 0;
+            margin-top: 0.25rem;
+        }
+
+        .platform-feature-visual {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .platform-icon-large {
+            width: 5rem;
+            height: 5rem;
+            border-radius: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Why Better Section */
+        .why-better {
+            padding: 6rem 2rem;
+            background: var(--dark);
+            color: white;
+        }
+
+        .comparison-grid {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .comparison-card {
+            padding: 3rem;
+            border-radius: 1.5rem;
+        }
+
+        .comparison-card.them {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comparison-card.us {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            box-shadow: 0 20px 50px rgba(0, 102, 255, 0.3);
+        }
+
+        .comparison-card h3 {
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: 2rem;
+        }
+
+        .comparison-list {
+            list-style: none;
+        }
+
+        .comparison-list li {
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .comparison-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 6rem 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+        }
+
+        .cta p {
+            font-size: 1.25rem;
+            margin-bottom: 2.5rem;
+            opacity: 0.95;
+        }
+
+        .btn-white {
+            background: white;
+            color: var(--primary);
+            padding: 1.25rem 3rem;
+            font-size: 1.125rem;
+        }
+
+        .btn-white:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 4rem 2rem 2rem;
+        }
+
+        .footer-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-column h3 {
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-column a {
+            color: #94A3B8;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-column a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            color: #64748B;
+        }
+
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            .desktop-nav {
-                display: none !important;
+            .nav-links {
+                display: none;
             }
 
-            .desktop-buttons {
-                display: none !important;
+            .hero-container {
+                grid-template-columns: 1fr;
             }
 
-            .mobile-nav {
-                display: flex !important;
-            }
-        }
-
-        @media (min-width: 769px) {
-            .mobile-nav {
-                display: none !important;
+            .hero-content h1 {
+                font-size: 2.5rem;
             }
 
-            .desktop-nav {
-                display: flex !important;
+            .platform-cards {
+                grid-template-columns: 1fr;
             }
 
-            .desktop-buttons {
-                display: flex !important;
+            .stats-container {
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
             }
 
-            .mobile-menu {
-                display: none !important;
+            .platform-feature {
+                grid-template-columns: 1fr !important;
+            }
+
+            .platform-feature:nth-child(even) .platform-feature-content {
+                order: 1 !important;
+            }
+
+            .platform-feature:nth-child(even) .platform-feature-visual {
+                order: 2 !important;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
-<body class="bg-white">
+<body>
     <!-- Navigation -->
-    <header class="w-full border-b bg-white/80 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-6 py-4">
-            <div class="flex items-center justify-between">
-                <!-- Desktop Navigation -->
-                <div class="desktop-nav flex items-center gap-8">
-                    <a href="#features" class="text-gray-700 hover:text-gray-900 font-medium transition">Features</a>
-                    <a href="#how-it-works" class="text-gray-700 hover:text-gray-900 font-medium transition">How It Works</a>
-                    <a href="#pricing" class="text-gray-700 hover:text-gray-900 font-medium transition">Pricing</a>
-                    <a href="javascript:void(0)" onclick="toggleAIChat()" class="text-gray-700 hover:text-gray-900 font-medium transition flex items-center gap-2">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <circle cx="9" cy="10" r="1" fill="currentColor"/>
-                            <circle cx="12" cy="10" r="1" fill="currentColor"/>
-                            <circle cx="15" cy="10" r="1" fill="currentColor"/>
-                        </svg>
-                        Conversational AI
-                    </a>
-                </div>
-
-                <!-- Mobile Navigation (Simplified) -->
-                <div class="mobile-nav flex items-center gap-3">
-                    <!-- Hamburger Menu Button -->
-                    <button onclick="toggleMobileMenu()" class="mobile-menu-button p-2" aria-label="Menu">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M3 12h18M3 6h18M3 18h18" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-
-                    <a href="javascript:void(0)" onclick="toggleAIChat()" class="text-gray-700 hover:text-gray-900 font-medium transition flex items-center justify-center" title="AI Assistant">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <circle cx="9" cy="10" r="1" fill="currentColor"/>
-                            <circle cx="12" cy="10" r="1" fill="currentColor"/>
-                            <circle cx="15" cy="10" r="1" fill="currentColor"/>
-                        </svg>
-                    </a>
-                    <a href="/ordergopro/login" class="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition text-sm">
-                        Sign In
-                    </a>
-                    <a href="/ordergopro/signup" class="px-4 py-2 text-white rounded-lg font-semibold transition hover:opacity-90 text-sm" style="background: var(--orange)">
-                        Start Free
-                    </a>
-                </div>
-
-                <!-- Desktop Buttons -->
-                <div class="desktop-buttons flex gap-3">
-                    <a href="/ordergopro/login" class="px-5 py-2.5 text-gray-700 hover:text-gray-900 font-medium transition">
-                        Sign In
-                    </a>
-                    <a href="/ordergopro/signup" class="px-6 py-2.5 text-white rounded-lg font-semibold transition hover:opacity-90" style="background: var(--orange)">
-                        Start Free
-                    </a>
-                </div>
-            </div>
-
-            <!-- Mobile Dropdown Menu -->
-            <div class="mobile-menu" id="mobileMenu">
-                <a href="#features" onclick="toggleMobileMenu()">Features</a>
-                <a href="#how-it-works" onclick="toggleMobileMenu()">How It Works</a>
-                <a href="#pricing" onclick="toggleMobileMenu()">Pricing</a>
+    <nav>
+        <div class="nav-container">
+            <div class="logo">OrderGoPro</div>
+            <ul class="nav-links">
+                <li><a href="#platforms">Platform</a></li>
+                <li><a href="#why-better">Why Better</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+            </ul>
+            <div class="nav-cta">
+                <a href="/ordergopro/login" class="btn btn-secondary">Sign In</a>
+                <a href="/ordergopro/signup" class="btn btn-primary">Get Started Free</a>
             </div>
         </div>
-    </header>
+    </nav>
 
     <!-- Hero Section -->
-    <section class="relative overflow-hidden" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
-        <div class="max-w-7xl mx-auto px-6 py-20 md:py-32">
-            <div class="text-center">
-                <!-- Logo with sound waves -->
-                <div class="flex justify-center mb-8">
-                    <div class="logo-container">
-                        <div class="sound-wave"></div>
-                        <div class="sound-wave"></div>
-                        <div class="sound-wave"></div>
-                        <div class="sound-wave"></div>
-                        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6935f87381eaa1f4da169f8e.png" alt="OrderGoPro" class="w-64 md:w-80 lg:w-96 rounded-2xl" style="max-width: 400px; height: auto;">
-                    </div>
-                </div>
-
-                <h1 class="text-4xl md:text-6xl lg:text-7xl font-black mb-6" style="color: var(--navy)">
-                    Create Your <span class="gradient-text">Online Store</span><br>
-                    in Minutes with AI
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>
+                    <span class="highlight">One Platform</span><br>
+                    To Run Your Entire Restaurant
                 </h1>
-
-                <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-10 leading-relaxed">
-                    The easiest way to accept online orders. Perfect for restaurants, cafés, bakeries, and retail stores.
-                    No coding required. Setup in under 5 minutes.
+                <p>
+                    Unlike owner.com, we integrate online ordering, professional phone answering, photo studio, and marketing tools. Everything your restaurant needs in one seamless platform.
                 </p>
 
-                <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-                    <a href="/ordergopro/signup" class="px-8 py-4 text-white text-lg font-semibold rounded-lg transition hover:opacity-90 shadow-lg" style="background: var(--orange)">
-                        🚀 Start Free Trial
-                    </a>
-                    <a href="#pricing" class="px-8 py-4 text-lg font-semibold rounded-lg transition border-2 hover:bg-gray-50" style="color: var(--navy); border-color: var(--navy)">
-                        View Pricing
-                    </a>
+                <div class="hero-features">
+                    <div class="hero-feature">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        Online Ordering
+                    </div>
+                    <div class="hero-feature">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        Phone Answering (RinglyPro)
+                    </div>
+                    <div class="hero-feature">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        Photo Studio (PixlyPro)
+                    </div>
+                    <div class="hero-feature">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        Marketing Automation
+                    </div>
                 </div>
 
-                <!-- Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                    <div class="text-center">
-                        <div class="text-4xl md:text-5xl font-black mb-2" style="color: var(--sky)">500+</div>
-                        <div class="text-gray-600 font-medium">Active Businesses</div>
+                <div class="hero-buttons">
+                    <a href="/ordergopro/signup" class="btn btn-primary" style="padding: 1.25rem 3rem; font-size: 1.125rem;">Start Free Trial</a>
+                    <a href="#platforms" class="btn btn-secondary" style="padding: 1.25rem 3rem; font-size: 1.125rem;">See How It Works</a>
+                </div>
+            </div>
+
+            <div class="hero-visual">
+                <div class="platform-cards">
+                    <div class="platform-card">
+                        <div class="platform-card-icon" style="background: linear-gradient(135deg, #FF6B35, #FF8C42);">🛒</div>
+                        <h3>OrderGoPro</h3>
+                        <p>Online ordering & delivery management</p>
                     </div>
-                    <div class="text-center">
-                        <div class="text-4xl md:text-5xl font-black mb-2" style="color: var(--sky)">50K+</div>
-                        <div class="text-gray-600 font-medium">Orders Processed</div>
+                    <div class="platform-card">
+                        <div class="platform-card-icon" style="background: linear-gradient(135deg, #0066FF, #00A3FF);">📞</div>
+                        <h3>RinglyPro</h3>
+                        <p>24/7 phone answering service</p>
                     </div>
-                    <div class="text-center">
-                        <div class="text-4xl md:text-5xl font-black mb-2" style="color: var(--sky)">$2M+</div>
-                        <div class="text-gray-600 font-medium">Revenue Generated</div>
+                    <div class="platform-card">
+                        <div class="platform-card-icon" style="background: linear-gradient(135deg, #8B5CF6, #A78BFA);">📸</div>
+                        <h3>PixlyPro</h3>
+                        <p>Professional photo studio</p>
+                    </div>
+                    <div class="platform-card">
+                        <div class="platform-card-icon" style="background: linear-gradient(135deg, #00C896, #00E6AC);">📊</div>
+                        <h3>Marketing</h3>
+                        <p>Social media & email tools</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section id="features" class="py-20 md:py-32 bg-white">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-5xl font-black mb-4" style="color: var(--navy)">
-                    Everything You Need to Succeed Online
-                </h2>
-                <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                    Powerful features designed to help you sell more, serve better, and grow faster
-                </p>
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="stats-container">
+            <div>
+                <div class="stat-number">500+</div>
+                <div class="stat-label">Restaurants Powered</div>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="feature-card bg-white border-2 border-gray-200 rounded-xl p-8">
-                    <div class="mb-4">
-                        <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <linearGradient id="aiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" style="stop-color:#87ceeb;stop-opacity:1" />
-                                    <stop offset="100%" style="stop-color:#FF914D;stop-opacity:1" />
-                                </linearGradient>
-                            </defs>
-                            <circle cx="28" cy="28" r="26" fill="url(#aiGradient)" opacity="0.1"/>
-                            <path d="M28 8C16.954 8 8 16.954 8 28s8.954 20 20 20 20-8.954 20-20S39.046 8 28 8zm0 36c-8.822 0-16-7.178-16-16S19.178 12 28 12s16 7.178 16 16-7.178 16-16 16z" fill="url(#aiGradient)"/>
-                            <circle cx="22" cy="24" r="3" fill="url(#aiGradient)"/>
-                            <circle cx="34" cy="24" r="3" fill="url(#aiGradient)"/>
-                            <path d="M28 28c-3.5 0-6 2-6 4.5h12c0-2.5-2.5-4.5-6-4.5z" fill="url(#aiGradient)"/>
-                            <path d="M16 20c0-2 1-4 3-4M40 20c0-2-1-4-3-4" stroke="url(#aiGradient)" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3" style="color: var(--navy)">AI-Powered Setup</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Just enter your website URL. Our AI automatically extracts your menu, branding, photos, and pricing.
-                        Launch in minutes, not days.
-                    </p>
-                </div>
-
-                <div class="feature-card bg-white border-2 border-gray-200 rounded-xl p-8">
-                    <div class="text-5xl mb-4">🛒</div>
-                    <h3 class="text-xl font-bold mb-3" style="color: var(--navy)">Complete Online Ordering</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Shopping cart, checkout, payment processing, and order management. Everything your customers need
-                        to order online.
-                    </p>
-                </div>
-
-                <div class="feature-card bg-white border-2 border-gray-200 rounded-xl p-8">
-                    <div class="text-5xl mb-4">📱</div>
-                    <h3 class="text-xl font-bold mb-3" style="color: var(--navy)">Mobile-First Design</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Beautiful, responsive storefronts that work perfectly on any device. 80% of orders come from mobile.
-                    </p>
-                </div>
-
-                <div class="feature-card bg-white border-2 border-gray-200 rounded-xl p-8">
-                    <div class="text-5xl mb-4">🎨</div>
-                    <h3 class="text-xl font-bold mb-3" style="color: var(--navy)">Brand Customization</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Match your brand perfectly. Custom colors, fonts, logos, and layouts. AI extracts your brand
-                        automatically.
-                    </p>
-                </div>
-
-                <div class="feature-card bg-white border-2 border-gray-200 rounded-xl p-8">
-                    <div class="text-5xl mb-4">💳</div>
-                    <h3 class="text-xl font-bold mb-3" style="color: var(--navy)">Secure Payments</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Accept credit cards, debit cards, and cash. Powered by Stripe for secure, reliable payments.
-                    </p>
-                </div>
-
-                <div class="feature-card bg-white border-2 border-gray-200 rounded-xl p-8">
-                    <div class="text-5xl mb-4">📊</div>
-                    <h3 class="text-xl font-bold mb-3" style="color: var(--navy)">Real-Time Analytics</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Track orders, revenue, customer behavior, and popular items. Make data-driven decisions to grow
-                        your business.
-                    </p>
-                </div>
-
-                <div class="feature-card bg-white border-2 border-gray-200 rounded-xl p-8">
-                    <div class="text-5xl mb-4">📧</div>
-                    <h3 class="text-xl font-bold mb-3" style="color: var(--navy)">Marketing Automation</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Email and SMS campaigns, customer segmentation, and automated follow-ups. Turn visitors into
-                        loyal customers.
-                    </p>
-                </div>
-
-                <div class="feature-card bg-white border-2 border-gray-200 rounded-xl p-8">
-                    <div class="text-5xl mb-4">🚚</div>
-                    <h3 class="text-xl font-bold mb-3" style="color: var(--navy)">Delivery & Pickup</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Support pickup, delivery, and dine-in orders. Set delivery zones, fees, and minimum orders.
-                    </p>
-                </div>
-
-                <div class="feature-card bg-white border-2 border-gray-200 rounded-xl p-8">
-                    <div class="text-5xl mb-4">🌐</div>
-                    <h3 class="text-xl font-bold mb-3" style="color: var(--navy)">Embed Anywhere</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Add your storefront to any website with a simple iframe. Works with WordPress, Wix, Squarespace,
-                        and more.
-                    </p>
-                </div>
+            <div>
+                <div class="stat-number">50K+</div>
+                <div class="stat-label">Orders Processed</div>
+            </div>
+            <div>
+                <div class="stat-number">$2M+</div>
+                <div class="stat-label">Revenue Generated</div>
+            </div>
+            <div>
+                <div class="stat-number">98%</div>
+                <div class="stat-label">Customer Satisfaction</div>
             </div>
         </div>
     </section>
 
-    <!-- How It Works Section -->
-    <section id="how-it-works" class="py-20 md:py-32" style="background: var(--navy);">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-5xl font-black mb-4 text-white">
-                    Launch Your Store in 5 Minutes
-                </h2>
-                <p class="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
-                    Our AI does all the heavy lifting. No manual data entry, no coding, no hassle.
-                </p>
-            </div>
-
-            <!-- 5-Step Workflow -->
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-20 max-w-6xl mx-auto">
-                <!-- Step 1 -->
-                <div class="text-center">
-                    <div class="bg-white rounded-xl p-6 mb-4">
-                        <div class="step-circle mx-auto mb-4">1</div>
-                        <h3 class="text-lg font-bold mb-2" style="color: var(--navy)">Sign Up</h3>
-                        <p class="text-sm text-gray-600">Create your free account in 30 seconds</p>
-                    </div>
-                    <div class="hidden md:block text-center">
-                        <span class="workflow-arrow text-4xl" style="color: var(--sky)">→</span>
-                    </div>
-                </div>
-
-                <!-- Step 2 -->
-                <div class="text-center">
-                    <div class="bg-white rounded-xl p-6 mb-4">
-                        <div class="step-circle mx-auto mb-4">2</div>
-                        <h3 class="text-lg font-bold mb-2" style="color: var(--navy)">Enter Your URL</h3>
-                        <p class="text-sm text-gray-600">Paste your website link or fill design brief</p>
-                    </div>
-                    <div class="hidden md:block text-center">
-                        <span class="workflow-arrow text-4xl" style="color: var(--sky)">→</span>
-                    </div>
-                </div>
-
-                <!-- Step 3 -->
-                <div class="text-center">
-                    <div class="bg-white rounded-xl p-6 mb-4">
-                        <div class="step-circle mx-auto mb-4">3</div>
-                        <h3 class="text-lg font-bold mb-2" style="color: var(--navy)">AI Works Magic</h3>
-                        <p class="text-sm text-gray-600">Menu, photos, and branding extracted automatically</p>
-                    </div>
-                    <div class="hidden md:block text-center">
-                        <span class="workflow-arrow text-4xl" style="color: var(--sky)">→</span>
-                    </div>
-                </div>
-
-                <!-- Step 4 -->
-                <div class="text-center">
-                    <div class="bg-white rounded-xl p-6 mb-4">
-                        <div class="step-circle mx-auto mb-4">4</div>
-                        <h3 class="text-lg font-bold mb-2" style="color: var(--navy)">Customize & Review</h3>
-                        <p class="text-sm text-gray-600">Fine-tune your store with our easy dashboard</p>
-                    </div>
-                    <div class="hidden md:block text-center">
-                        <span class="workflow-arrow text-4xl" style="color: var(--sky)">→</span>
-                    </div>
-                </div>
-
-                <!-- Step 5 -->
-                <div class="text-center">
-                    <div class="bg-white rounded-xl p-6 mb-4">
-                        <div class="step-circle mx-auto mb-4">5</div>
-                        <h3 class="text-lg font-bold mb-2" style="color: var(--navy)">Go Live!</h3>
-                        <p class="text-sm text-gray-600">Start accepting orders immediately</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Before/After Demo -->
-            <div class="mb-12">
-                <div class="text-center mb-8">
-                    <h3 class="text-2xl md:text-3xl font-bold text-white mb-3">
-                        <span class="live-demo-indicator inline-block w-3 h-3 rounded-full mr-2" style="background: #10b981;"></span>
-                        See What You Get
-                    </h3>
-                    <p class="text-gray-300 text-lg">Example: Joe's Pizza storefront created in 2 minutes</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                    <!-- Before -->
-                    <div class="bg-white/5 border-2 border-gray-600 rounded-xl p-8">
-                        <div class="text-center mb-4">
-                            <span class="inline-block px-4 py-2 bg-gray-700 text-white rounded-full font-bold mb-4">Before</span>
-                        </div>
-                        <div class="text-5xl mb-4 text-center">🌐</div>
-                        <h4 class="text-xl font-bold text-white mb-4 text-center">joespizza.com</h4>
-                        <div class="space-y-3 text-gray-300">
-                            <p>• Basic restaurant website</p>
-                            <p class="text-red-400">❌ No online ordering</p>
-                            <p class="text-red-400">❌ Call-in only</p>
-                            <p class="text-red-400">❌ Lost customers</p>
-                        </div>
-                    </div>
-
-                    <!-- After -->
-                    <div class="bg-white border-2 rounded-xl p-8 shadow-2xl" style="border-color: var(--orange)">
-                        <div class="text-center mb-4">
-                            <span class="inline-block px-4 py-2 text-white rounded-full font-bold mb-4" style="background: var(--orange)">After (2 mins)</span>
-                        </div>
-                        <div class="text-5xl mb-4 text-center">🛒</div>
-                        <h4 class="text-xl font-bold mb-4 text-center" style="color: var(--navy)">Joe's Pizza Store</h4>
-                        <div class="space-y-3 text-gray-700">
-                            <p class="font-semibold">Full online ordering system</p>
-                            <p class="text-green-600">✅ 15 menu items imported</p>
-                            <p class="text-green-600">✅ Photos enhanced with AI</p>
-                            <p class="text-green-600">✅ Brand colors extracted</p>
-                            <p class="text-green-600">✅ Payment processing ready</p>
-                            <p class="text-green-600">✅ Mobile responsive</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Live Example Button -->
-                <div class="text-center mt-10">
-                    <a href="https://aiagent.ringlypro.com/storefront/joes-pizza" target="_blank" class="inline-block px-8 py-4 bg-white text-lg font-bold rounded-lg transition hover:shadow-2xl transform hover:scale-105" style="color: var(--navy)">
-                        View Live Example →
-                    </a>
-                </div>
-            </div>
-
-            <!-- CTA -->
-            <div class="text-center">
-                <p class="text-xl text-gray-300 mb-6">Ready to create your store?</p>
-                <p class="text-lg text-gray-400 mb-8">Join hundreds of businesses selling online in minutes</p>
-                <a href="/ordergopro/signup" class="inline-block px-10 py-5 text-white text-xl font-bold rounded-lg transition hover:opacity-90 shadow-2xl" style="background: var(--orange)">
-                    🚀 Start Free Trial - No Credit Card
-                </a>
-            </div>
+    <!-- Integrated Platform Section -->
+    <section id="platforms" class="integrated-platform">
+        <div class="section-header">
+            <h2>The Only Truly Integrated Restaurant Platform</h2>
+            <p>Stop juggling multiple tools. OrderGoPro brings everything together in one seamless platform that actually works together.</p>
         </div>
-    </section>
 
-    <!-- Branded Mobile App Section -->
-    <section class="py-20 md:py-32 bg-white">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <!-- Left: Content -->
-                <div>
-                    <h2 class="text-3xl md:text-5xl font-black mb-6" style="color: var(--navy)">
-                        Your Own Branded Mobile App
-                    </h2>
-                    <p class="text-xl md:text-2xl mb-8 leading-relaxed" style="color: var(--sky)">
-                        Build lasting customer relationships with a dedicated mobile app for your business
-                    </p>
-                    <p class="text-lg text-gray-600 mb-10 leading-relaxed">
-                        Direct communication with your customers is essential for growth. OrderGoPro makes it effortless to launch
-                        targeted campaigns, special offers, and updates through your own custom-branded mobile application.
-                    </p>
-
-                    <!-- Benefits Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0">
-                                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="16" cy="16" r="16" fill="#87ceeb" opacity="0.2"/>
-                                    <path d="M12 16l3 3 6-6" stroke="#87ceeb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-lg mb-1" style="color: var(--navy)">Stand Out from Competitors</h4>
-                                <p class="text-gray-600">Your brand front and center on customer devices</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0">
-                                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="16" cy="16" r="16" fill="#87ceeb" opacity="0.2"/>
-                                    <path d="M12 16l3 3 6-6" stroke="#87ceeb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-lg mb-1" style="color: var(--navy)">Boost Sales Instantly</h4>
-                                <p class="text-gray-600">Drive orders with targeted push notifications</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0">
-                                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="16" cy="16" r="16" fill="#87ceeb" opacity="0.2"/>
-                                    <path d="M12 16l3 3 6-6" stroke="#87ceeb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-lg mb-1" style="color: var(--navy)">Increase Repeat Orders</h4>
-                                <p class="text-gray-600">Built-in loyalty programs and rewards</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0">
-                                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="16" cy="16" r="16" fill="#87ceeb" opacity="0.2"/>
-                                    <path d="M12 16l3 3 6-6" stroke="#87ceeb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-lg mb-1" style="color: var(--navy)">Zero Extra Cost</h4>
-                                <p class="text-gray-600">Included in your OrderGoPro subscription</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- CTA Button -->
-                    <a href="/ordergopro/signup" class="inline-block px-8 py-4 text-white text-lg font-bold rounded-lg transition hover:opacity-90 shadow-lg" style="background: var(--orange)">
-                        Get Started Free →
-                    </a>
-                </div>
-
-                <!-- Right: Visual/Mockup -->
-                <div class="relative">
-                    <div class="bg-gradient-to-br from-sky-100 to-orange-100 rounded-3xl p-12 text-center">
-                        <div class="inline-block bg-white rounded-2xl p-8 shadow-2xl transform hover:scale-105 transition duration-300">
-                            <div class="mb-6">
-                                <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6907c98e68dfc29cb7910e98.png" alt="Mobile App" class="mx-auto" style="max-width: 200px; height: auto;">
-                            </div>
-                            <h3 class="text-2xl font-bold mb-4" style="color: var(--navy)">Your Brand, Your App</h3>
-                            <div class="space-y-3 text-left">
-                                <div class="flex items-center gap-3">
-                                    <span style="color: var(--orange)">✓</span>
-                                    <span class="text-gray-700">Custom logo & colors</span>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <span style="color: var(--orange)">✓</span>
-                                    <span class="text-gray-700">iOS & Android ready</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Floating elements -->
-                        <div class="absolute bottom-10 left-10 animate-pulse">
-                            <div class="bg-white rounded-full p-4 shadow-lg">
-                                <span class="text-3xl">🔔</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Delivery Dispatcher Section -->
-    <section class="py-20 md:py-32" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <!-- Left: Visual/Mockup -->
-                <div class="relative order-2 lg:order-1">
-                    <div class="bg-white rounded-3xl p-12 shadow-2xl">
-                        <div class="text-center mb-8">
-                            <div class="inline-block bg-gradient-to-br from-sky-100 to-orange-100 rounded-full p-6 mb-4">
-                                <span class="text-6xl">🚚</span>
-                            </div>
-                            <h3 class="text-2xl font-bold" style="color: var(--navy)">Smart Delivery Network</h3>
-                        </div>
-
-                        <!-- Delivery Flow Visualization -->
-                        <div class="space-y-4">
-                            <div class="flex items-center gap-4 bg-gradient-to-r from-sky-50 to-transparent p-4 rounded-lg">
-                                <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold" style="background: var(--sky)">1</div>
-                                <div>
-                                    <p class="font-semibold text-gray-800">Order Received</p>
-                                    <p class="text-sm text-gray-600">System processes order</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-4 bg-gradient-to-r from-sky-50 to-transparent p-4 rounded-lg">
-                                <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold" style="background: var(--sky)">2</div>
-                                <div>
-                                    <p class="font-semibold text-gray-800">Driver Auto-Assigned</p>
-                                    <p class="text-sm text-gray-600">Best available driver selected</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-4 bg-gradient-to-r from-orange-50 to-transparent p-4 rounded-lg">
-                                <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold" style="background: var(--orange)">3</div>
-                                <div>
-                                    <p class="font-semibold text-gray-800">Delivery Completed</p>
-                                    <p class="text-sm text-gray-600">Customer receives order</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Floating badge -->
-                    <div class="absolute -top-6 -right-6 animate-pulse">
-                        <div class="bg-white rounded-full px-6 py-3 shadow-xl border-2" style="border-color: var(--orange)">
-                            <p class="font-bold" style="color: var(--orange)">No Drivers Needed!</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right: Content -->
-                <div class="order-1 lg:order-2">
-                    <h2 class="text-3xl md:text-5xl font-black mb-6" style="color: var(--navy)">
-                        Smart Delivery Dispatcher
-                    </h2>
-                    <p class="text-xl md:text-2xl mb-8 leading-relaxed" style="color: var(--sky)">
-                        Offer delivery without maintaining your own driver fleet
-                    </p>
-                    <p class="text-lg text-gray-600 mb-10 leading-relaxed">
-                        Start delivering orders immediately without hiring drivers or managing vehicle maintenance costs.
-                        OrderGoPro seamlessly connects you with third-party delivery networks to handle fulfillment.
-                    </p>
-
-                    <!-- Benefits List -->
-                    <div class="space-y-4 mb-10">
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0 mt-1">
-                                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="14" cy="14" r="14" fill="#FF914D"/>
-                                    <path d="M9 14l4 4 6-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-lg mb-1" style="color: var(--navy)">Integrate with Third-Party Fleets</h4>
-                                <p class="text-gray-600">Connect to established delivery networks and scale instantly</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0 mt-1">
-                                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="14" cy="14" r="14" fill="#FF914D"/>
-                                    <path d="M9 14l4 4 6-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-lg mb-1" style="color: var(--navy)">Automatic Driver Assignment</h4>
-                                <p class="text-gray-600">Smart routing assigns the best available driver for each order</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0 mt-1">
-                                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="14" cy="14" r="14" fill="#FF914D"/>
-                                    <path d="M9 14l4 4 6-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-lg mb-1" style="color: var(--navy)">Unified Delivery Management</h4>
-                                <p class="text-gray-600">Manage both internal and external deliveries from one dashboard</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- CTA Button -->
-                    <a href="/ordergopro/signup" class="inline-block px-8 py-4 text-white text-lg font-bold rounded-lg transition hover:opacity-90 shadow-lg" style="background: var(--orange)">
-                        Start Delivering Today →
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing Section -->
-    <section id="pricing" class="py-20 md:py-32 bg-white">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-5xl font-black mb-4" style="color: var(--navy)">
-                    Simple, Transparent Pricing
-                </h2>
-                <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                    Choose the plan that fits your business. Upgrade or downgrade anytime.
-                </p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                <!-- Essential Plan -->
-                <div class="pricing-card bg-white border-2 border-gray-200 rounded-xl p-8">
-                    <div class="text-xl font-bold mb-2" style="color: var(--navy)">Essential</div>
-                    <div class="flex items-baseline mb-6">
-                        <span class="text-5xl font-black" style="color: var(--sky)">$49</span>
-                        <span class="text-gray-600 ml-2">/month</span>
-                    </div>
-                    <ul class="space-y-4 mb-8">
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700"><strong>Online Store</strong></span>
+        <div class="platforms-grid">
+            <!-- OrderGoPro Feature -->
+            <div class="platform-feature">
+                <div class="platform-feature-content">
+                    <span class="platform-badge" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white;">OrderGoPro</span>
+                    <h3>Online Ordering That Converts</h3>
+                    <p style="color: var(--gray); margin-bottom: 1.5rem;">Beautiful, mobile-optimized storefronts that drive orders. Accept online orders, manage delivery, and increase revenue.</p>
+                    <ul class="platform-feature-list">
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Custom branded online storefront</span>
                         </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Mobile responsive design</span>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Real-time order tracking & notifications</span>
                         </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Card & cash payments</span>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Integrated delivery dispatch system</span>
                         </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Custom branding</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">AI website import OR design brief</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700"><a href="https://pixlypro.com" target="_blank" class="feature-link">PixlyPro</a> photo enhancement</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Pickup & delivery</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Basic analytics</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Email notifications</span>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Customer loyalty & rewards program</span>
                         </li>
                     </ul>
-                    <a href="/ordergopro/signup?plan=essential" class="block w-full text-center px-6 py-3 rounded-lg font-semibold transition border-2 hover:bg-gray-50" style="color: var(--navy); border-color: var(--navy)">
-                        Start Free Trial
-                    </a>
+                    <a href="/ordergopro/signup" class="btn btn-primary">Start Selling Online →</a>
                 </div>
+                <div class="platform-feature-visual">
+                    <div class="platform-icon-large" style="background: linear-gradient(135deg, #FF6B35, #FF8C42);">🛒</div>
+                    <h4 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Live Storefront Demo</h4>
+                    <p style="color: var(--gray); font-size: 0.875rem;">See your menu come to life with beautiful photos, easy ordering, and instant checkout.</p>
+                </div>
+            </div>
 
-                <!-- Professional Plan (Featured) -->
-                <div class="pricing-card bg-white rounded-xl p-8 relative" style="border: 3px solid var(--orange); box-shadow: 0 12px 24px rgba(255, 145, 77, 0.2);">
-                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 px-4 py-1 rounded-full text-sm font-bold text-white" style="background: var(--orange)">
-                        Most Popular
-                    </div>
-                    <div class="text-xl font-bold mb-2" style="color: var(--navy)">Professional</div>
-                    <div class="flex items-baseline mb-6">
-                        <span class="text-5xl font-black" style="color: var(--orange)">$79</span>
-                        <span class="text-gray-600 ml-2">/month</span>
-                    </div>
-                    <ul class="space-y-4 mb-8">
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700"><strong>Everything in Essential, plus:</strong></span>
+            <!-- RinglyPro Feature -->
+            <div class="platform-feature">
+                <div class="platform-feature-content">
+                    <span class="platform-badge" style="background: linear-gradient(135deg, #0066FF, #00A3FF); color: white;">RinglyPro Integration</span>
+                    <h3>Never Miss A Call Again</h3>
+                    <p style="color: var(--gray); margin-bottom: 1.5rem;">Professional phone answering service that takes orders while you focus on cooking. Integrated directly with your OrderGoPro system.</p>
+                    <ul class="platform-feature-list">
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>24/7 professional call answering</span>
                         </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">🤖 <strong><a href="https://ringlypro.com" target="_blank" class="feature-link">RinglyPro AI Answering</a></strong></span>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Phone orders sync automatically to your system</span>
                         </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">AI answers phone calls</span>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Call recording & quality monitoring</span>
                         </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Takes orders via phone</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">SMS order notifications</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Advanced analytics</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Coupons & discounts</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Priority support</span>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Custom scripts for your menu & specials</span>
                         </li>
                     </ul>
-                    <a href="/ordergopro/signup?plan=professional" class="block w-full text-center px-6 py-3 text-white rounded-lg font-semibold transition hover:opacity-90" style="background: var(--orange)">
-                        Start Free Trial
-                    </a>
+                    <a href="https://ringlypro.com" target="_blank" class="btn btn-primary">Learn About RinglyPro →</a>
                 </div>
+                <div class="platform-feature-visual">
+                    <div class="platform-icon-large" style="background: linear-gradient(135deg, #0066FF, #00A3FF);">📞</div>
+                    <h4 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Professional Answering</h4>
+                    <p style="color: var(--gray); font-size: 0.875rem;">Your calls answered by real people who know your menu, trained to take orders accurately.</p>
+                </div>
+            </div>
 
-                <!-- Enterprise Plan -->
-                <div class="pricing-card bg-white border-2 border-gray-200 rounded-xl p-8">
-                    <div class="text-xl font-bold mb-2" style="color: var(--navy)">Enterprise</div>
-                    <div class="flex items-baseline mb-6">
-                        <span class="text-5xl font-black" style="color: var(--sky)">$149</span>
-                        <span class="text-gray-600 ml-2">/month</span>
-                    </div>
-                    <ul class="space-y-4 mb-8">
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700"><strong>Everything in Professional, plus:</strong></span>
+            <!-- PixlyPro Feature -->
+            <div class="platform-feature">
+                <div class="platform-feature-content">
+                    <span class="platform-badge" style="background: linear-gradient(135deg, #8B5CF6, #A78BFA); color: white;">PixlyPro Integration</span>
+                    <h3>Professional Food Photography</h3>
+                    <p style="color: var(--gray); margin-bottom: 1.5rem;">Create stunning food photos without expensive photographers. Our AI-powered photo studio makes your menu items look irresistible.</p>
+                    <ul class="platform-feature-list">
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>AI-enhanced food photography</span>
                         </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">📊 <strong><a href="https://ringlypro.com" target="_blank" class="feature-link">RinglyPro CRM Management</a></strong></span>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Automatic background removal & enhancement</span>
                         </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Customer database</span>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Photos sync to your menu automatically</span>
                         </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Order history tracking</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Marketing automation</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Email/SMS campaigns</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Multi-location support</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-green-500 text-xl flex-shrink-0">✓</span>
-                            <span class="text-gray-700">Dedicated account manager</span>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Unlimited photo storage & editing</span>
                         </li>
                     </ul>
-                    <a href="/ordergopro/signup?plan=enterprise" class="block w-full text-center px-6 py-3 rounded-lg font-semibold transition border-2 hover:bg-gray-50" style="color: var(--navy); border-color: var(--navy)">
-                        Start Free Trial
-                    </a>
+                    <a href="https://pixlypro.com" target="_blank" class="btn btn-primary">Explore PixlyPro →</a>
                 </div>
+                <div class="platform-feature-visual">
+                    <div class="platform-icon-large" style="background: linear-gradient(135deg, #8B5CF6, #A78BFA);">📸</div>
+                    <h4 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Photo Studio</h4>
+                    <p style="color: var(--gray); font-size: 0.875rem;">Transform simple phone photos into professional menu images that sell.</p>
+                </div>
+            </div>
+
+            <!-- Marketing Feature -->
+            <div class="platform-feature">
+                <div class="platform-feature-content">
+                    <span class="platform-badge" style="background: linear-gradient(135deg, #00C896, #00E6AC); color: white;">Marketing Tools</span>
+                    <h3>Grow Your Customer Base</h3>
+                    <p style="color: var(--gray); margin-bottom: 1.5rem;">Built-in marketing tools to attract new customers and keep them coming back. Email campaigns, SMS, social media - all in one place.</p>
+                    <ul class="platform-feature-list">
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Automated email marketing campaigns</span>
+                        </li>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>SMS marketing & promotions</span>
+                        </li>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Social media post scheduling</span>
+                        </li>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Customer analytics & insights</span>
+                        </li>
+                    </ul>
+                    <a href="/ordergopro/signup" class="btn btn-primary">Start Marketing →</a>
+                </div>
+                <div class="platform-feature-visual">
+                    <div class="platform-icon-large" style="background: linear-gradient(135deg, #00C896, #00E6AC);">📊</div>
+                    <h4 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Marketing Hub</h4>
+                    <p style="color: var(--gray); font-size: 0.875rem;">Reach customers where they are with automated, personalized campaigns.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Better Section -->
+    <section id="why-better" class="why-better">
+        <div class="section-header" style="color: white;">
+            <h2 style="color: white;">Why OrderGoPro Beats Owner.com</h2>
+            <p style="color: #94A3B8;">We offer everything they do, plus integrated phone answering, photo studio, and better pricing.</p>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="comparison-card them">
+                <h3>❌ Other Platforms (owner.com)</h3>
+                <ul class="comparison-list">
+                    <li>
+                        <span style="color: #EF4444; font-size: 1.5rem;">✗</span>
+                        <span>Online ordering only</span>
+                    </li>
+                    <li>
+                        <span style="color: #EF4444; font-size: 1.5rem;">✗</span>
+                        <span>No phone answering service</span>
+                    </li>
+                    <li>
+                        <span style="color: #EF4444; font-size: 1.5rem;">✗</span>
+                        <span>Pay extra for food photography</span>
+                    </li>
+                    <li>
+                        <span style="color: #EF4444; font-size: 1.5rem;">✗</span>
+                        <span>Marketing tools cost extra</span>
+                    </li>
+                    <li>
+                        <span style="color: #EF4444; font-size: 1.5rem;">✗</span>
+                        <span>Limited integration with tools</span>
+                    </li>
+                    <li>
+                        <span style="color: #EF4444; font-size: 1.5rem;">✗</span>
+                        <span>Higher commission fees</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="comparison-card us">
+                <h3>✓ OrderGoPro Ecosystem</h3>
+                <ul class="comparison-list">
+                    <li>
+                        <span style="color: white; font-size: 1.5rem;">✓</span>
+                        <span>Complete online ordering platform</span>
+                    </li>
+                    <li>
+                        <span style="color: white; font-size: 1.5rem;">✓</span>
+                        <span>24/7 phone answering (RinglyPro)</span>
+                    </li>
+                    <li>
+                        <span style="color: white; font-size: 1.5rem;">✓</span>
+                        <span>AI photo studio included (PixlyPro)</span>
+                    </li>
+                    <li>
+                        <span style="color: white; font-size: 1.5rem;">✓</span>
+                        <span>Full marketing suite included</span>
+                    </li>
+                    <li>
+                        <span style="color: white; font-size: 1.5rem;">✓</span>
+                        <span>Everything seamlessly integrated</span>
+                    </li>
+                    <li>
+                        <span style="color: white; font-size: 1.5rem;">✓</span>
+                        <span>Lower fees, better value</span>
+                    </li>
+                </ul>
             </div>
         </div>
     </section>
 
     <!-- CTA Section -->
-    <section class="py-20 md:py-32 text-white text-center" style="background: linear-gradient(135deg, var(--navy), #1e3a5f);">
-        <div class="max-w-4xl mx-auto px-6">
-            <h2 class="text-3xl md:text-5xl font-black mb-6">
-                Ready to Grow Your Business Online?
-            </h2>
-            <p class="text-xl mb-10 opacity-90">
-                Join thousands of businesses already using OrderGoPro
-            </p>
-            <a href="/ordergopro/signup" class="inline-block px-10 py-4 text-lg font-semibold rounded-lg transition hover:opacity-90 shadow-lg" style="background: var(--orange); color: white;">
-                🚀 Start Your Free Trial
-            </a>
-            <p class="mt-6 text-sm opacity-75">
-                No credit card required · 14-day free trial · Cancel anytime
-            </p>
-        </div>
+    <section class="cta">
+        <h2>Ready to Upgrade Your Restaurant?</h2>
+        <p>Join 500+ restaurants already using OrderGoPro's integrated platform.</p>
+        <a href="/ordergopro/signup" class="btn btn-white">Start Your Free Trial Today →</a>
+        <p style="margin-top: 1.5rem; font-size: 0.95rem;">No credit card required • Cancel anytime • 14-day free trial</p>
     </section>
 
-    <!-- AI Chat Widget -->
-    <div class="ai-chat-widget">
-        <button class="ai-chat-button" id="aiChatButton" onclick="toggleAIChat()" aria-label="Open AI Chat">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="9" cy="10" r="1" fill="white"/>
-                <circle cx="12" cy="10" r="1" fill="white"/>
-                <circle cx="15" cy="10" r="1" fill="white"/>
-            </svg>
-        </button>
-
-        <div class="ai-chat-window" id="aiChatWindow">
-            <div class="ai-chat-header">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: var(--orange)">
-                        <svg width="20" height="20" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="22" cy="24" r="3" fill="white"/>
-                            <circle cx="34" cy="24" r="3" fill="white"/>
-                            <path d="M28 28c-3.5 0-6 2-6 4.5h12c0-2.5-2.5-4.5-6-4.5z" fill="white"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-white">OrderGoPro Assistant</h3>
-                        <p class="text-xs text-gray-300">Ask me anything!</p>
-                    </div>
-                </div>
-                <button onclick="toggleAIChat()" class="text-white hover:text-gray-200">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M18 6L6 18M6 6l12 12" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="ai-chat-body" id="aiChatBody">
-                <div class="ai-message bot">
-                    <p class="text-sm mb-2">👋 Hi! I'm your OrderGoPro AI assistant.</p>
-                    <p class="text-sm">I can help you learn about:</p>
-                    <div class="mt-3 space-y-2">
-                        <button onclick="sendQuickQuestion('What is OrderGoPro?')" class="text-xs px-3 py-2 rounded-lg w-full text-left hover:bg-gray-100 transition" style="background: #f3f4f6;">
-                            What is OrderGoPro?
-                        </button>
-                        <button onclick="sendQuickQuestion('How does it work?')" class="text-xs px-3 py-2 rounded-lg w-full text-left hover:bg-gray-100 transition" style="background: #f3f4f6;">
-                            How does it work?
-                        </button>
-                        <button onclick="sendQuickQuestion('What are the benefits?')" class="text-xs px-3 py-2 rounded-lg w-full text-left hover:bg-gray-100 transition" style="background: #f3f4f6;">
-                            What are the benefits?
-                        </button>
-                        <button onclick="sendQuickQuestion('Show me pricing')" class="text-xs px-3 py-2 rounded-lg w-full text-left hover:bg-gray-100 transition" style="background: #f3f4f6;">
-                            Show me pricing
-                        </button>
-                        <a href="/ordergopro/signup" class="text-xs px-3 py-2 rounded-lg w-full text-left hover:bg-gray-100 transition block" style="background: linear-gradient(135deg, var(--orange), #ff7a3d); color: white; font-weight: 600;">
-                            How do I get started? →
-                        </a>
-                    </div>
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-column">
+                <h3>OrderGoPro</h3>
+                <p style="color: #64748B; margin-bottom: 1.5rem;">The complete restaurant management platform. Online ordering, phone answering, photo studio, and marketing - all in one.</p>
+                <div style="display: flex; gap: 1rem;">
+                    <a href="https://ringlypro.com" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">RinglyPro</a>
+                    <a href="https://pixlypro.com" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">PixlyPro</a>
                 </div>
             </div>
-
-            <div class="ai-chat-input">
-                <input type="text" id="aiChatInput" placeholder="Type or click mic to speak..." onkeypress="handleChatKeyPress(event)">
-                <button onclick="toggleVoiceInput()" id="voiceButton" class="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 transition" title="Voice input">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" stroke-width="2"/>
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </button>
-                <button onclick="sendChatMessage()" style="background: var(--orange);">Send</button>
+            <div class="footer-column">
+                <h3>Product</h3>
+                <ul>
+                    <li><a href="#platforms">Platform Features</a></li>
+                    <li><a href="/ordergopro/signup">Pricing</a></li>
+                    <li><a href="#">Integrations</a></li>
+                    <li><a href="#">API</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Company</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Customers</a></li>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Careers</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Support</h3>
+                <ul>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                </ul>
             </div>
         </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="py-16" style="background: var(--navy); color: white;">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-                <div>
-                    <h3 class="text-xl font-bold mb-4">OrderGoPro</h3>
-                    <p class="text-gray-400 leading-relaxed">
-                        The easiest way to create your online store and accept orders.
-                    </p>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold mb-4">Product</h3>
-                    <ul class="space-y-3">
-                        <li><a href="#features" class="text-gray-400 hover:text-white transition">Features</a></li>
-                        <li><a href="#pricing" class="text-gray-400 hover:text-white transition">Pricing</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Demo</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">API</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold mb-4">Company</h3>
-                    <ul class="space-y-3">
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">About</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Blog</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Careers</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Contact</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold mb-4">Support</h3>
-                    <ul class="space-y-3">
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Help Center</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Documentation</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="border-t border-gray-700 pt-8 text-center text-gray-400">
-                <p>&copy; 2025 OrderGoPro. All rights reserved.</p>
-            </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 OrderGoPro. All rights reserved.</p>
         </div>
     </footer>
-
-    <script>
-        let recognition = null;
-        let isRecording = false;
-
-        function toggleMobileMenu() {
-            const mobileMenu = document.getElementById('mobileMenu');
-            mobileMenu.classList.toggle('active');
-        }
-
-        function toggleAIChat() {
-            const chatWindow = document.getElementById('aiChatWindow');
-            chatWindow.classList.toggle('active');
-
-            if (chatWindow.classList.contains('active')) {
-                document.getElementById('aiChatInput').focus();
-            }
-        }
-
-        function handleChatKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendChatMessage();
-            }
-        }
-
-        function sendQuickQuestion(question) {
-            document.getElementById('aiChatInput').value = question;
-            sendChatMessage();
-        }
-
-        // Fallback responses for common questions
-        const fallbackResponses = {
-            'what is ordergopro': "OrderGoPro is an AI-powered online ordering platform that helps restaurants and retail businesses create their own online store in just 5 minutes! Our AI automatically extracts your menu, photos, and branding from your existing website. You get a complete ordering system with payment processing, mobile-responsive design, and more.",
-            'how does it work': "It's incredibly simple! 1) Sign up in 30 seconds, 2) Enter your website URL or fill out a design brief, 3) Our AI automatically extracts your menu, photos, and branding, 4) Review and customize your store, 5) Go live and start accepting orders immediately! The entire process takes about 5 minutes.",
-            'what are the benefits': "With OrderGoPro you get: ✓ 5-minute AI-powered setup ✓ Complete online ordering system ✓ Mobile-first responsive design ✓ Secure payment processing with Stripe ✓ Your own branded mobile app ✓ Smart delivery dispatcher ✓ AI photo enhancement via PixlyPro ✓ Integration with RinglyPro AI answering service",
-            'show me pricing': "We have 3 simple plans: Essential ($29/mo) - Online ordering, menu management, payment processing. Professional ($79/mo) - Everything in Essential + RinglyPro AI answering, branded mobile app. Enterprise ($149/mo) - Everything + RinglyPro CRM, priority support. All plans include a 14-day free trial!"
-        };
-
-        function getFallbackResponse(message) {
-            const lowerMessage = message.toLowerCase();
-            for (const [key, response] of Object.entries(fallbackResponses)) {
-                if (lowerMessage.includes(key)) {
-                    return response;
-                }
-            }
-            return null;
-        }
-
-        async function sendChatMessage() {
-            const input = document.getElementById('aiChatInput');
-            const message = input.value.trim();
-
-            if (!message) return;
-
-            // Add user message to chat
-            addMessageToChat(message, 'user');
-            input.value = '';
-
-            // Show typing indicator
-            const typingIndicator = addTypingIndicator();
-
-            // Check for fallback response first
-            const fallback = getFallbackResponse(message);
-
-            try {
-                // Call API
-                const response = await fetch('/api/ordergopro/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ message })
-                });
-
-                const data = await response.json();
-
-                // Remove typing indicator
-                typingIndicator.remove();
-
-                if (data.success) {
-                    // Add bot response
-                    addMessageToChat(data.response, 'bot');
-
-                    // Play audio if available
-                    if (data.audioUrl) {
-                        playAudio(data.audioUrl);
-                    }
-
-                    // Check if response suggests signup
-                    if (data.response.toLowerCase().includes('sign up') || data.response.toLowerCase().includes('get started')) {
-                        setTimeout(() => {
-                            addSignupButton();
-                        }, 1000);
-                    }
-                } else {
-                    // Use fallback if API fails
-                    if (fallback) {
-                        addMessageToChat(fallback, 'bot');
-                        addSignupButton();
-                    } else {
-                        addMessageToChat('I apologize, but I\'m having technical difficulties right now. Please try the "How do I get started?" button below to sign up, or contact our support team for assistance.', 'bot');
-                        addSignupButton();
-                    }
-                }
-            } catch (error) {
-                typingIndicator.remove();
-                // Use fallback on error
-                if (fallback) {
-                    addMessageToChat(fallback, 'bot');
-                    addSignupButton();
-                } else {
-                    addMessageToChat('I apologize, but I\'m having technical difficulties right now. Please try the "How do I get started?" button below to sign up, or contact our support team for assistance.', 'bot');
-                    addSignupButton();
-                }
-                console.error('Chat error:', error);
-            }
-        }
-
-        function addMessageToChat(message, type) {
-            const chatBody = document.getElementById('aiChatBody');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `ai-message ${type}`;
-            messageDiv.innerHTML = `<p class="text-sm">${escapeHtml(message)}</p>`;
-            chatBody.appendChild(messageDiv);
-            chatBody.scrollTop = chatBody.scrollHeight;
-            return messageDiv;
-        }
-
-        function addTypingIndicator() {
-            const chatBody = document.getElementById('aiChatBody');
-            const indicator = document.createElement('div');
-            indicator.className = 'ai-message bot';
-            indicator.innerHTML = `
-                <div class="flex gap-1">
-                    <span class="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style="animation-delay: 0s"></span>
-                    <span class="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style="animation-delay: 0.2s"></span>
-                    <span class="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style="animation-delay: 0.4s"></span>
-                </div>
-            `;
-            chatBody.appendChild(indicator);
-            chatBody.scrollTop = chatBody.scrollHeight;
-            return indicator;
-        }
-
-        function addSignupButton() {
-            const chatBody = document.getElementById('aiChatBody');
-            const buttonDiv = document.createElement('div');
-            buttonDiv.className = 'ai-message bot';
-            buttonDiv.innerHTML = `
-                <a href="/ordergopro/signup" class="inline-block px-6 py-3 text-white text-center rounded-lg font-bold transition hover:opacity-90 mt-2" style="background: var(--orange)">
-                    Start Free Trial →
-                </a>
-            `;
-            chatBody.appendChild(buttonDiv);
-            chatBody.scrollTop = chatBody.scrollHeight;
-        }
-
-        function toggleVoiceInput() {
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                alert('Sorry, your browser doesn\'t support voice input. Please use Chrome, Edge, or Safari.');
-                return;
-            }
-
-            if (isRecording) {
-                stopRecording();
-            } else {
-                startRecording();
-            }
-        }
-
-        function startRecording() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.lang = 'en-US';
-            recognition.continuous = false;
-            recognition.interimResults = false;
-
-            recognition.onstart = () => {
-                isRecording = true;
-                document.getElementById('voiceButton').style.color = '#FF914D';
-                document.getElementById('aiChatInput').placeholder = 'Listening...';
-            };
-
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                document.getElementById('aiChatInput').value = transcript;
-                sendChatMessage();
-            };
-
-            recognition.onerror = (event) => {
-                console.error('Speech recognition error:', event.error);
-                stopRecording();
-            };
-
-            recognition.onend = () => {
-                stopRecording();
-            };
-
-            recognition.start();
-        }
-
-        function stopRecording() {
-            if (recognition) {
-                recognition.stop();
-            }
-            isRecording = false;
-            document.getElementById('voiceButton').style.color = '';
-            document.getElementById('aiChatInput').placeholder = 'Type or click mic to speak...';
-        }
-
-        function playAudio(url) {
-            const audio = new Audio(url);
-            audio.play().catch(err => console.error('Audio playback error:', err));
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', function(event) {
-            const mobileMenu = document.getElementById('mobileMenu');
-            const menuButton = document.querySelector('.mobile-menu-button');
-
-            if (mobileMenu && menuButton) {
-                const isClickInsideMenu = mobileMenu.contains(event.target);
-                const isClickOnButton = menuButton.contains(event.target);
-
-                if (!isClickInsideMenu && !isClickOnButton && mobileMenu.classList.contains('active')) {
-                    mobileMenu.classList.remove('active');
-                }
-            }
-        });
-    </script>
 </body>
 </html>
