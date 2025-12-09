@@ -1250,8 +1250,8 @@ router.post('/admin/order/:orderId/complete', authenticateToken, async (req, res
     // Save the completion message as a communication
     try {
       await sequelize.query(
-        `INSERT INTO photo_communications (order_id, from_type, subject, message, created_at)
-         VALUES (:orderId, 'admin', 'Order Completed', :message, NOW())`,
+        `INSERT INTO photo_communications (order_id, from_type, to_type, subject, message, communication_type, created_at)
+         VALUES (:orderId, 'admin', 'customer', 'Order Completed', :message, 'general', NOW())`,
         {
           replacements: {
             orderId,
@@ -1263,6 +1263,7 @@ router.post('/admin/order/:orderId/complete', authenticateToken, async (req, res
       logger.info(`[PHOTO STUDIO] Completion message saved for order ${orderId}`);
     } catch (commError) {
       logger.error('[PHOTO STUDIO] Failed to save completion message:', commError);
+      logger.error('[PHOTO STUDIO] Communication error details:', commError.message);
       // Don't fail if communication save fails
     }
 
