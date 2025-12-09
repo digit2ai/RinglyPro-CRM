@@ -1293,8 +1293,8 @@ The Photo Studio Team"
                 if (data.success) {
                     renderOrderDetails(data.order, data.enhanced_photos, data.original_photos, data.communications);
                 } else {
-                    console.error('Failed to load order details:', data.error);
-                    container.innerHTML = `<div style="padding: 2rem; text-align: center; color: #ef4444;">Failed to load order details: ${data.error || 'Unknown error'}</div>`;
+                    console.error('Failed to load order details:', data.error, data.details);
+                    container.innerHTML = `<div style="padding: 2rem; text-align: center; color: #ef4444;">Failed to load order details: ${data.error || 'Unknown error'}${data.details ? ' - ' + data.details : ''}</div>`;
                 }
             } catch (error) {
                 console.error('Error loading order details:', error);
@@ -1658,10 +1658,18 @@ The Photo Studio Team"
         // Track which order is being completed
         let pendingCompletionOrderId = null;
 
+        // Default message template for order completion
+        const defaultCompletionMessage = `Hi,
+
+Great news! Your enhanced photos are ready for download.
+We've carefully enhanced each photo with professional adjustments to lighting, colors, and detail. We hope you love the results!
+
+Regards, PixlyPro Design Team`;
+
         // Show the completion modal
         function markOrderAsCompleted(orderId) {
             pendingCompletionOrderId = orderId;
-            document.getElementById('completion-message').value = '';
+            document.getElementById('completion-message').value = defaultCompletionMessage;
             updateCharCounter();
             document.getElementById('completion-modal').classList.add('active');
         }

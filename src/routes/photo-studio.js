@@ -1250,7 +1250,7 @@ router.post('/admin/order/:orderId/complete', authenticateToken, async (req, res
     // Save the completion message as a communication
     try {
       await sequelize.query(
-        `INSERT INTO photo_studio_communications (order_id, from_type, subject, message, created_at)
+        `INSERT INTO photo_communications (order_id, from_type, subject, message, created_at)
          VALUES (:orderId, 'admin', 'Order Completed', :message, NOW())`,
         {
           replacements: {
