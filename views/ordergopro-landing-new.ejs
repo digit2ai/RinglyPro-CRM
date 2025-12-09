@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrderGoPro - Complete Restaurant Management Platform | Order Online + Phone Answering + Photo Studio</title>
+    <meta name="description" content="Run your restaurant smarter with OrderGoPro's all-in-one platform. Online ordering, professional phone answering (RinglyPro), photo studio (PixlyPro), and marketing tools integrated in one place.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0066FF;
+            --secondary: #00C896;
+            --orange: #FF6B35;
+            --purple: #8B5CF6;
+            --dark: #0F172A;
+            --gray: #64748B;
+            --light: #F1F5F9;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #E2E8F0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--gray);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-cta {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0052CC;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 102, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--gray);
+            border: 2px solid #E2E8F0;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 5rem 2rem;
+            background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><circle cx="900" cy="300" r="400" fill="%230066FF" opacity="0.05"/><circle cx="1000" cy="100" r="200" fill="%2300C896" opacity="0.05"/></svg>') no-repeat right center;
+            background-size: contain;
+        }
+
+        .hero-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+        }
+
+        .hero-content .highlight {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-content p {
+            font-size: 1.25rem;
+            color: var(--gray);
+            margin-bottom: 2rem;
+            line-height: 1.7;
+        }
+
+        .hero-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .hero-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .hero-feature svg {
+            color: var(--secondary);
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .hero-visual {
+            position: relative;
+        }
+
+        .platform-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .platform-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .platform-card:hover {
+            transform: translateY(-8px);
+        }
+
+        .platform-card-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .platform-card h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .platform-card p {
+            font-size: 0.875rem;
+            color: var(--gray);
+        }
+
+        /* Stats Section */
+        .stats {
+            padding: 3rem 2rem;
+            background: var(--dark);
+            color: white;
+        }
+
+        .stats-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: #94A3B8;
+            font-weight: 600;
+        }
+
+        /* Integrated Platform Section */
+        .integrated-platform {
+            padding: 6rem 2rem;
+            background: white;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.75rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .section-header p {
+            font-size: 1.25rem;
+            color: var(--gray);
+        }
+
+        .platforms-grid {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            gap: 2rem;
+        }
+
+        .platform-feature {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+            border-radius: 1.5rem;
+        }
+
+        .platform-feature:nth-child(even) {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .platform-feature:nth-child(even) .platform-feature-content {
+            order: 2;
+        }
+
+        .platform-feature:nth-child(even) .platform-feature-visual {
+            order: 1;
+        }
+
+        .platform-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .platform-feature h3 {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+        }
+
+        .platform-feature-list {
+            list-style: none;
+            margin: 1.5rem 0;
+        }
+
+        .platform-feature-list li {
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 1.0625rem;
+        }
+
+        .platform-feature-list svg {
+            flex-shrink: 0;
+            margin-top: 0.25rem;
+        }
+
+        .platform-feature-visual {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .platform-icon-large {
+            width: 5rem;
+            height: 5rem;
+            border-radius: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Why Better Section */
+        .why-better {
+            padding: 6rem 2rem;
+            background: var(--dark);
+            color: white;
+        }
+
+        .comparison-grid {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .comparison-card {
+            padding: 3rem;
+            border-radius: 1.5rem;
+        }
+
+        .comparison-card.them {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comparison-card.us {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            box-shadow: 0 20px 50px rgba(0, 102, 255, 0.3);
+        }
+
+        .comparison-card h3 {
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: 2rem;
+        }
+
+        .comparison-list {
+            list-style: none;
+        }
+
+        .comparison-list li {
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .comparison-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 6rem 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+        }
+
+        .cta p {
+            font-size: 1.25rem;
+            margin-bottom: 2.5rem;
+            opacity: 0.95;
+        }
+
+        .btn-white {
+            background: white;
+            color: var(--primary);
+            padding: 1.25rem 3rem;
+            font-size: 1.125rem;
+        }
+
+        .btn-white:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 4rem 2rem 2rem;
+        }
+
+        .footer-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-column h3 {
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-column a {
+            color: #94A3B8;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-column a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            color: #64748B;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero-container {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .platform-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-container {
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+            }
+
+            .platform-feature {
+                grid-template-columns: 1fr !important;
+            }
+
+            .platform-feature:nth-child(even) .platform-feature-content {
+                order: 1 !important;
+            }
+
+            .platform-feature:nth-child(even) .platform-feature-visual {
+                order: 2 !important;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo">OrderGoPro</div>
+            <ul class="nav-links">
+                <li><a href="#platforms">Platform</a></li>
+                <li><a href="#why-better">Why Better</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+            </ul>
+            <div class="nav-cta">
+                <a href="/ordergopro/login" class="btn btn-secondary">Sign In</a>
+                <a href="/ordergopro/signup" class="btn btn-primary">Get Started Free</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>
+                    <span class="highlight">One Platform</span><br>
+                    To Run Your Entire Restaurant
+                </h1>
+                <p>
+                    Unlike owner.com, we integrate online ordering, professional phone answering, photo studio, and marketing tools. Everything your restaurant needs in one seamless platform.
+                </p>
+
+                <div class="hero-features">
+                    <div class="hero-feature">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        Online Ordering
+                    </div>
+                    <div class="hero-feature">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        Phone Answering (RinglyPro)
+                    </div>
+                    <div class="hero-feature">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        Photo Studio (PixlyPro)
+                    </div>
+                    <div class="hero-feature">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        Marketing Automation
+                    </div>
+                </div>
+
+                <div class="hero-buttons">
+                    <a href="/ordergopro/signup" class="btn btn-primary" style="padding: 1.25rem 3rem; font-size: 1.125rem;">Start Free Trial</a>
+                    <a href="#platforms" class="btn btn-secondary" style="padding: 1.25rem 3rem; font-size: 1.125rem;">See How It Works</a>
+                </div>
+            </div>
+
+            <div class="hero-visual">
+                <div class="platform-cards">
+                    <div class="platform-card">
+                        <div class="platform-card-icon" style="background: linear-gradient(135deg, #FF6B35, #FF8C42);">🛒</div>
+                        <h3>OrderGoPro</h3>
+                        <p>Online ordering & delivery management</p>
+                    </div>
+                    <div class="platform-card">
+                        <div class="platform-card-icon" style="background: linear-gradient(135deg, #0066FF, #00A3FF);">📞</div>
+                        <h3>RinglyPro</h3>
+                        <p>24/7 phone answering service</p>
+                    </div>
+                    <div class="platform-card">
+                        <div class="platform-card-icon" style="background: linear-gradient(135deg, #8B5CF6, #A78BFA);">📸</div>
+                        <h3>PixlyPro</h3>
+                        <p>Professional photo studio</p>
+                    </div>
+                    <div class="platform-card">
+                        <div class="platform-card-icon" style="background: linear-gradient(135deg, #00C896, #00E6AC);">📊</div>
+                        <h3>Marketing</h3>
+                        <p>Social media & email tools</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="stats-container">
+            <div>
+                <div class="stat-number">500+</div>
+                <div class="stat-label">Restaurants Powered</div>
+            </div>
+            <div>
+                <div class="stat-number">50K+</div>
+                <div class="stat-label">Orders Processed</div>
+            </div>
+            <div>
+                <div class="stat-number">$2M+</div>
+                <div class="stat-label">Revenue Generated</div>
+            </div>
+            <div>
+                <div class="stat-number">98%</div>
+                <div class="stat-label">Customer Satisfaction</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Integrated Platform Section -->
+    <section id="platforms" class="integrated-platform">
+        <div class="section-header">
+            <h2>The Only Truly Integrated Restaurant Platform</h2>
+            <p>Stop juggling multiple tools. OrderGoPro brings everything together in one seamless platform that actually works together.</p>
+        </div>
+
+        <div class="platforms-grid">
+            <!-- OrderGoPro Feature -->
+            <div class="platform-feature">
+                <div class="platform-feature-content">
+                    <span class="platform-badge" style="background: linear-gradient(135deg, #FF6B35, #FF8C42); color: white;">OrderGoPro</span>
+                    <h3>Online Ordering That Converts</h3>
+                    <p style="color: var(--gray); margin-bottom: 1.5rem;">Beautiful, mobile-optimized storefronts that drive orders. Accept online orders, manage delivery, and increase revenue.</p>
+                    <ul class="platform-feature-list">
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Custom branded online storefront</span>
+                        </li>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Real-time order tracking & notifications</span>
+                        </li>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Integrated delivery dispatch system</span>
+                        </li>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Customer loyalty & rewards program</span>
+                        </li>
+                    </ul>
+                    <a href="/ordergopro/signup" class="btn btn-primary">Start Selling Online →</a>
+                </div>
+                <div class="platform-feature-visual">
+                    <div class="platform-icon-large" style="background: linear-gradient(135deg, #FF6B35, #FF8C42);">🛒</div>
+                    <h4 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Live Storefront Demo</h4>
+                    <p style="color: var(--gray); font-size: 0.875rem;">See your menu come to life with beautiful photos, easy ordering, and instant checkout.</p>
+                </div>
+            </div>
+
+            <!-- RinglyPro Feature -->
+            <div class="platform-feature">
+                <div class="platform-feature-content">
+                    <span class="platform-badge" style="background: linear-gradient(135deg, #0066FF, #00A3FF); color: white;">RinglyPro Integration</span>
+                    <h3>Never Miss A Call Again</h3>
+                    <p style="color: var(--gray); margin-bottom: 1.5rem;">Professional phone answering service that takes orders while you focus on cooking. Integrated directly with your OrderGoPro system.</p>
+                    <ul class="platform-feature-list">
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>24/7 professional call answering</span>
+                        </li>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Phone orders sync automatically to your system</span>
+                        </li>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Call recording & quality monitoring</span>
+                        </li>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Custom scripts for your menu & specials</span>
+                        </li>
+                    </ul>
+                    <a href="https://ringlypro.com" target="_blank" class="btn btn-primary">Learn About RinglyPro →</a>
+                </div>
+                <div class="platform-feature-visual">
+                    <div class="platform-icon-large" style="background: linear-gradient(135deg, #0066FF, #00A3FF);">📞</div>
+                    <h4 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Professional Answering</h4>
+                    <p style="color: var(--gray); font-size: 0.875rem;">Your calls answered by real people who know your menu, trained to take orders accurately.</p>
+                </div>
+            </div>
+
+            <!-- PixlyPro Feature -->
+            <div class="platform-feature">
+                <div class="platform-feature-content">
+                    <span class="platform-badge" style="background: linear-gradient(135deg, #8B5CF6, #A78BFA); color: white;">PixlyPro Integration</span>
+                    <h3>Professional Food Photography</h3>
+                    <p style="color: var(--gray); margin-bottom: 1.5rem;">Create stunning food photos without expensive photographers. Our AI-powered photo studio makes your menu items look irresistible.</p>
+                    <ul class="platform-feature-list">
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>AI-enhanced food photography</span>
+                        </li>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Automatic background removal & enhancement</span>
+                        </li>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Photos sync to your menu automatically</span>
+                        </li>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Unlimited photo storage & editing</span>
+                        </li>
+                    </ul>
+                    <a href="https://pixlypro.com" target="_blank" class="btn btn-primary">Explore PixlyPro →</a>
+                </div>
+                <div class="platform-feature-visual">
+                    <div class="platform-icon-large" style="background: linear-gradient(135deg, #8B5CF6, #A78BFA);">📸</div>
+                    <h4 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Photo Studio</h4>
+                    <p style="color: var(--gray); font-size: 0.875rem;">Transform simple phone photos into professional menu images that sell.</p>
+                </div>
+            </div>
+
+            <!-- Marketing Feature -->
+            <div class="platform-feature">
+                <div class="platform-feature-content">
+                    <span class="platform-badge" style="background: linear-gradient(135deg, #00C896, #00E6AC); color: white;">Marketing Tools</span>
+                    <h3>Grow Your Customer Base</h3>
+                    <p style="color: var(--gray); margin-bottom: 1.5rem;">Built-in marketing tools to attract new customers and keep them coming back. Email campaigns, SMS, social media - all in one place.</p>
+                    <ul class="platform-feature-list">
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Automated email marketing campaigns</span>
+                        </li>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>SMS marketing & promotions</span>
+                        </li>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Social media post scheduling</span>
+                        </li>
+                        <li>
+                            <svg width="24" height="24" fill="#00C896" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span>Customer analytics & insights</span>
+                        </li>
+                    </ul>
+                    <a href="/ordergopro/signup" class="btn btn-primary">Start Marketing →</a>
+                </div>
+                <div class="platform-feature-visual">
+                    <div class="platform-icon-large" style="background: linear-gradient(135deg, #00C896, #00E6AC);">📊</div>
+                    <h4 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Marketing Hub</h4>
+                    <p style="color: var(--gray); font-size: 0.875rem;">Reach customers where they are with automated, personalized campaigns.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Better Section -->
+    <section id="why-better" class="why-better">
+        <div class="section-header" style="color: white;">
+            <h2 style="color: white;">Why OrderGoPro Beats Owner.com</h2>
+            <p style="color: #94A3B8;">We offer everything they do, plus integrated phone answering, photo studio, and better pricing.</p>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="comparison-card them">
+                <h3>❌ Other Platforms (owner.com)</h3>
+                <ul class="comparison-list">
+                    <li>
+                        <span style="color: #EF4444; font-size: 1.5rem;">✗</span>
+                        <span>Online ordering only</span>
+                    </li>
+                    <li>
+                        <span style="color: #EF4444; font-size: 1.5rem;">✗</span>
+                        <span>No phone answering service</span>
+                    </li>
+                    <li>
+                        <span style="color: #EF4444; font-size: 1.5rem;">✗</span>
+                        <span>Pay extra for food photography</span>
+                    </li>
+                    <li>
+                        <span style="color: #EF4444; font-size: 1.5rem;">✗</span>
+                        <span>Marketing tools cost extra</span>
+                    </li>
+                    <li>
+                        <span style="color: #EF4444; font-size: 1.5rem;">✗</span>
+                        <span>Limited integration with tools</span>
+                    </li>
+                    <li>
+                        <span style="color: #EF4444; font-size: 1.5rem;">✗</span>
+                        <span>Higher commission fees</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="comparison-card us">
+                <h3>✓ OrderGoPro Ecosystem</h3>
+                <ul class="comparison-list">
+                    <li>
+                        <span style="color: white; font-size: 1.5rem;">✓</span>
+                        <span>Complete online ordering platform</span>
+                    </li>
+                    <li>
+                        <span style="color: white; font-size: 1.5rem;">✓</span>
+                        <span>24/7 phone answering (RinglyPro)</span>
+                    </li>
+                    <li>
+                        <span style="color: white; font-size: 1.5rem;">✓</span>
+                        <span>AI photo studio included (PixlyPro)</span>
+                    </li>
+                    <li>
+                        <span style="color: white; font-size: 1.5rem;">✓</span>
+                        <span>Full marketing suite included</span>
+                    </li>
+                    <li>
+                        <span style="color: white; font-size: 1.5rem;">✓</span>
+                        <span>Everything seamlessly integrated</span>
+                    </li>
+                    <li>
+                        <span style="color: white; font-size: 1.5rem;">✓</span>
+                        <span>Lower fees, better value</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <h2>Ready to Upgrade Your Restaurant?</h2>
+        <p>Join 500+ restaurants already using OrderGoPro's integrated platform.</p>
+        <a href="/ordergopro/signup" class="btn btn-white">Start Your Free Trial Today →</a>
+        <p style="margin-top: 1.5rem; font-size: 0.95rem;">No credit card required • Cancel anytime • 14-day free trial</p>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-column">
+                <h3>OrderGoPro</h3>
+                <p style="color: #64748B; margin-bottom: 1.5rem;">The complete restaurant management platform. Online ordering, phone answering, photo studio, and marketing - all in one.</p>
+                <div style="display: flex; gap: 1rem;">
+                    <a href="https://ringlypro.com" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">RinglyPro</a>
+                    <a href="https://pixlypro.com" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">PixlyPro</a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h3>Product</h3>
+                <ul>
+                    <li><a href="#platforms">Platform Features</a></li>
+                    <li><a href="/ordergopro/signup">Pricing</a></li>
+                    <li><a href="#">Integrations</a></li>
+                    <li><a href="#">API</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Company</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Customers</a></li>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Careers</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Support</h3>
+                <ul>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 OrderGoPro. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
