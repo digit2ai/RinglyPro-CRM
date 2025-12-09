@@ -1475,7 +1475,10 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    await loadEnhancedPhotos(orderId);
+                    // Reload orders list to update status
+                    await loadOrders();
+                    // Re-select the current order to refresh details
+                    await selectOrder(orderId);
                 } else {
                     throw new Error(data.error || 'Approval failed');
                 }
@@ -1512,7 +1515,16 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    await loadEnhancedPhotos(orderId);
+                    // Show success message for revision requests
+                    if (status === 'revision_requested') {
+                        alert('✅ Revision request submitted! Our designers have been notified and will update your photo.');
+                    }
+
+                    // Reload orders list to update status and highlighting
+                    await loadOrders();
+
+                    // Re-select the current order to refresh details
+                    await selectOrder(orderId);
                 } else {
                     throw new Error(data.error || 'Failed to submit feedback');
                 }
