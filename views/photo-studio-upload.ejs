@@ -794,9 +794,22 @@
         let photos = [];
         let photoUrls = {};
 
+        // Check if demo mode
+        const urlParams = new URLSearchParams(window.location.search);
+        const isDemo = urlParams.get('demo') === 'true';
+
         // Pricing calculation
         function calculatePrice(photoCount) {
             if (photoCount <= 0) return { total: 0, breakdown: [] };
+
+            // Demo mode: $1 for 1 photo only
+            if (isDemo) {
+                return {
+                    total: 1,
+                    breakdown: [{ tier: 'Demo (1 photo)', count: Math.min(photoCount, 1), rate: null, amount: 1 }]
+                };
+            }
+
             if (photoCount <= 10) return {
                 total: 150,
                 breakdown: [{ tier: 'Base (1-10 photos)', count: photoCount, rate: null, amount: 150 }]
@@ -902,7 +915,18 @@
             const maxSize = 25 * 1024 * 1024; // 25MB
             const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif', 'image/webp'];
 
+            // Demo mode: limit to 1 photo
+            if (isDemo && photos.length >= 1) {
+                alert('Demo mode is limited to 1 photo. Upgrade to upload more photos!');
+                return;
+            }
+
             Array.from(files).forEach(file => {
+                // Demo mode: only add 1 photo
+                if (isDemo && photos.length >= 1) {
+                    return;
+                }
+
                 // Validate type
                 if (!validTypes.includes(file.type.toLowerCase())) {
                     alert(`${file.name} is not a supported image type`);
@@ -1004,7 +1028,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ photo_count: photos.length })
+                    body: JSON.stringify({ photo_count: photos.length, is_demo: isDemo })
                 });
 
                 const data = await response.json();
@@ -1096,6 +1120,34 @@
         // Initialize
         checkAuth();
         updateCart();
+
+        // Demo mode UI updates
+        if (isDemo) {
+            // Update pricing info card
+            const pricingCard = document.querySelector('.pricing-info-card');
+            if (pricingCard) {
+                pricingCard.innerHTML = `
+                    <h4 style="color: #059669;">🎉 Demo Mode</h4>
+                    <div class="tier-list" style="color: #059669;">
+                        <div><strong>$1 for 1 photo</strong></div>
+                        <div style="font-size: 0.8rem; margin-top: 0.5rem;">Try our service risk-free!</div>
+                    </div>
+                `;
+            }
+
+            // Update minimum notice
+            const minimumNotice = document.querySelector('.minimum-notice');
+            if (minimumNotice) {
+                minimumNotice.textContent = 'Demo: 1 photo for just $1';
+                minimumNotice.style.color = '#059669';
+            }
+
+            // Update cart header
+            const cartHeader = document.querySelector('.cart-header h2');
+            if (cartHeader) {
+                cartHeader.textContent = '🎉 $1 Demo';
+            }
+        }
     </script>
 </body>
 </html>

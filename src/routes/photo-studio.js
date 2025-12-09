@@ -197,10 +197,11 @@ router.post('/calculate-price', async (req, res) => {
 router.post('/create-cart-checkout', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id;
-    const { photo_count } = req.body;
+    const { photo_count, is_demo } = req.body;
     const count = parseInt(photo_count) || 0;
+    const isDemo = is_demo === true;
 
-    logger.info(`[PHOTO STUDIO] Creating cart checkout for user ${userId}, ${count} photos`);
+    logger.info(`[PHOTO STUDIO] Creating cart checkout for user ${userId}, ${count} photos, demo: ${isDemo}`);
 
     if (!userId) {
       return res.status(401).json({
@@ -216,8 +217,16 @@ router.post('/create-cart-checkout', authenticateToken, async (req, res) => {
       });
     }
 
-    // Calculate price
-    const pricing = calculateCartPrice(count);
+    // Demo mode validation: only 1 photo allowed
+    if (isDemo && count > 1) {
+      return res.status(400).json({
+        success: false,
+        error: 'Demo mode is limited to 1 photo'
+      });
+    }
+
+    // Calculate price (demo mode: $1 for 1 photo)
+    const pricing = isDemo ? { total: 1, breakdown: [{ tier: 'Demo', count: 1, amount: 1 }] } : calculateCartPrice(count);
 
     // Check Stripe configuration
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -231,7 +240,18 @@ router.post('/create-cart-checkout', authenticateToken, async (req, res) => {
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
     // Create workflow description
-    const workflowSteps = `Professional photo enhancement for ${count} photos.
+    const workflowSteps = isDemo
+      ? `$1 Demo - Professional photo enhancement for 1 photo.
+
+Try our service risk-free! See the quality of our work before committing to a larger order.
+
+How It Works:
+1. Complete payment ($1)
+2. Your photo will be uploaded automatically
+3. Processing takes 48-72 hours
+4. You'll receive an email when complete
+5. Go to PixlyPro.com "My Orders" to download`
+      : `Professional photo enhancement for ${count} photos.
 
 How It Works:
 1. Complete payment
@@ -241,6 +261,11 @@ How It Works:
 5. Go to PixlyPro.com "My Orders" to download
 6. Review and approve your enhanced photos`;
 
+    // Product name for Stripe
+    const productName = isDemo
+      ? 'PixlyPro Demo - 1 Photo Enhancement'
+      : `PixlyPro Photo Enhancement - ${count} Photos`;
+
     // Create Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -249,7 +274,7 @@ How It Works:
           price_data: {
             currency: 'usd',
             product_data: {
-              name: `PixlyPro Photo Enhancement - ${count} Photos`,
+              name: productName,
               description: workflowSteps,
               images: ['https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69175f336c431e834ac954b8.png']
             },
@@ -260,15 +285,16 @@ How It Works:
       ],
       mode: 'payment',
       success_url: `${process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'}/photo-studio-success?session_id={CHECKOUT_SESSION_ID}&cart=true`,
-      cancel_url: `${process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'}/photo-studio-upload?canceled=true`,
+      cancel_url: `${process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'}/photo-studio-upload?canceled=true${isDemo ? '&demo=true' : ''}`,
       client_reference_id: userId.toString(),
       metadata: {
         userId: userId.toString(),
-        package_type: 'custom',
+        package_type: isDemo ? 'demo' : 'custom',
         photos_to_upload: count.toString(),
         photos_to_receive: count.toString(), // 1:1 ratio for cart model
         service_type: 'photo_studio',
-        pricing_model: 'cart'
+        pricing_model: isDemo ? 'demo' : 'cart',
+        is_demo: isDemo ? 'true' : 'false'
       }
     });
 
