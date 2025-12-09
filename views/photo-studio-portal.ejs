@@ -125,13 +125,39 @@
         }
 
         .status-processing {
-            background: #dbeafe;
-            color: #1e40af;
+            background: #fed7aa;
+            color: #9a3412;
         }
 
         .status-completed {
             background: #d1fae5;
             color: #065f46;
+        }
+
+        /* Processing orders need attention - orange highlight */
+        .order-item.processing-highlight {
+            border-left: 4px solid #f59e0b;
+            background: #fffbeb;
+        }
+
+        .order-item.processing-highlight:hover {
+            background: #fef3c7;
+        }
+
+        .order-item.processing-highlight.active {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .processing-message {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #fef3c7;
+            border-left: 3px solid #f59e0b;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #92400e;
         }
 
         .order-item-name {
@@ -905,7 +931,8 @@
         // Create order list item
         function createOrderListItem(order) {
             const div = document.createElement('div');
-            div.className = 'order-item';
+            const isProcessing = order.order_status === 'processing';
+            div.className = 'order-item' + (isProcessing ? ' processing-highlight' : '');
             div.id = `order-item-${order.id}`;
             div.onclick = () => selectOrder(order.id);
 
@@ -921,7 +948,7 @@
 
             div.innerHTML = `
                 <div class="order-item-header">
-                    <span class="order-id">Order #${order.id}</span>
+                    <span class="order-id">${isProcessing ? '🔄 ' : ''}Order #${order.id}</span>
                     <span class="status-badge status-${order.order_status}">${order.order_status.replace('_', ' ')}</span>
                 </div>
                 <div class="order-item-name">${packageDisplay}</div>
@@ -932,6 +959,7 @@
                         <div class="mini-progress-fill" style="width: ${uploadProgress}%"></div>
                     </div>
                 </div>
+                ${isProcessing ? '<div class="processing-message">🎨 Our designers are enhancing your photos!</div>' : ''}
             `;
 
             return div;

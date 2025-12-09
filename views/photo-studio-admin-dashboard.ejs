@@ -1292,6 +1292,9 @@ The Photo Studio Team"
 
                 if (data.success) {
                     renderOrderDetails(data.order, data.enhanced_photos, data.original_photos, data.communications);
+                } else {
+                    console.error('Failed to load order details:', data.error);
+                    container.innerHTML = `<div style="padding: 2rem; text-align: center; color: #ef4444;">Failed to load order details: ${data.error || 'Unknown error'}</div>`;
                 }
             } catch (error) {
                 console.error('Error loading order details:', error);
