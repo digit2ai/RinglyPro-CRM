@@ -1231,8 +1231,10 @@ The Photo Studio Team"
                 };
 
                 // Determine if order needs attention (processing orders, has revisions or rejections)
+                // Completed orders should NOT be highlighted
+                const isCompleted = order.order_status === 'completed';
                 const isProcessing = order.order_status === 'processing';
-                const needsAttention = isProcessing || statusCounts.revision > 0 || statusCounts.rejected > 0;
+                const needsAttention = !isCompleted && (isProcessing || statusCounts.revision > 0 || statusCounts.rejected > 0);
                 const attentionClass = needsAttention ? 'needs-attention' : '';
 
                 return `
