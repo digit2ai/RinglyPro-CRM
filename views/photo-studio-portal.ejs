@@ -791,7 +791,6 @@
         let orders = [];
         let uploadedPhotos = {};
         let enhancedPhotos = {};
-        let designBriefs = {}; // Store design briefs by orderId
         let selectedOrderId = null;
 
         // Get auth token
@@ -948,9 +947,6 @@
             document.getElementById('details-placeholder').style.display = 'none';
             document.getElementById('details-container').style.display = 'flex';
 
-            // Load design brief for this order
-            loadDesignBrief(orderId);
-
             // Render order details
             renderOrderDetails(orderId);
         }
@@ -1004,78 +1000,6 @@
                     </div>
                 </div>
             `;
-
-            // Design Brief Card
-            const brief = designBriefs[orderId];
-            if (!brief) {
-                contentHTML += `
-                    <div class="order-details-card">
-                        <h3 style="margin-bottom: 1rem; font-size: 1.125rem;">📋 Design Brief</h3>
-                        <p style="color: #64748b; margin-bottom: 1rem; font-size: 0.875rem;">
-                            Help us create perfect designs for your business. Tell us about your brand, goals, and style preferences.
-                        </p>
-                        <form id="design-brief-form-${orderId}" onsubmit="event.preventDefault(); saveDesignBrief(${orderId});" style="display:grid; gap:1rem;">
-                            <div>
-                                <label style="display:block; margin-bottom:0.5rem; font-weight:600; font-size:0.875rem;">Business Name *</label>
-                                <input type="text" name="business_name" required style="width:100%; padding:0.5rem; border:1px solid #cbd5e1; border-radius:0.375rem;">
-                            </div>
-                            <div>
-                                <label style="display:block; margin-bottom:0.5rem; font-weight:600; font-size:0.875rem;">Business Type *</label>
-                                <select name="business_type" required style="width:100%; padding:0.5rem; border:1px solid #cbd5e1; border-radius:0.375rem;">
-                                    <option value="">Select...</option>
-                                    <option value="Restaurant">Restaurant</option>
-                                    <option value="Bakery">Bakery</option>
-                                    <option value="Café">Café</option>
-                                    <option value="Pastry Shop">Pastry Shop</option>
-                                    <option value="Ice Cream Shop">Ice Cream Shop</option>
-                                    <option value="Dessert Shop">Dessert Shop</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label style="display:block; margin-bottom:0.5rem; font-weight:600; font-size:0.875rem;">Primary Design Need *</label>
-                                <select name="primary_design_need" required style="width:100%; padding:0.5rem; border:1px solid #cbd5e1; border-radius:0.375rem;">
-                                    <option value="">Select...</option>
-                                    <option value="Menu">Menu</option>
-                                    <option value="Flyer/Postcard">Flyer/Postcard</option>
-                                    <option value="Social Media Graphics">Social Media Graphics</option>
-                                    <option value="Product/Packaging Label">Product/Packaging Label</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label style="display:block; margin-bottom:0.5rem; font-weight:600; font-size:0.875rem;">Design Goal *</label>
-                                <textarea name="design_goal" required rows="3" placeholder="e.g., Promote weekend brunch specials..." style="width:100%; padding:0.5rem; border:1px solid #cbd5e1; border-radius:0.375rem;"></textarea>
-                            </div>
-                            <div>
-                                <label style="display:block; margin-bottom:0.5rem; font-weight:600; font-size:0.875rem;">Brand Colors (optional)</label>
-                                <input type="text" name="brand_colors" placeholder="e.g., #FF6B6B, soft pink + cream" style="width:100%; padding:0.5rem; border:1px solid #cbd5e1; border-radius:0.375rem;">
-                            </div>
-                            <div>
-                                <label style="display:block; margin-bottom:0.5rem; font-weight:600; font-size:0.875rem;">Key Offers/Menu Items (optional)</label>
-                                <textarea name="key_offers_or_items" rows="2" placeholder="List your signature dishes or special offers..." style="width:100%; padding:0.5rem; border:1px solid #cbd5e1; border-radius:0.375rem;"></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary" style="width:100%;">Save Design Brief</button>
-                        </form>
-                    </div>
-                `;
-            } else {
-                contentHTML += `
-                    <div class="order-details-card">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                            <h3 style="font-size:1.125rem; margin:0;">📋 Design Brief</h3>
-                            <span style="color:#10b981; font-size:0.875rem;">✓ Completed</span>
-                        </div>
-                        <div style="display:grid; gap:0.75rem; font-size:0.875rem;">
-                            <div><strong>Business:</strong> ${brief.business_name} (${brief.business_type})</div>
-                            <div><strong>Design Need:</strong> ${brief.primary_design_need}</div>
-                            <div><strong>Goal:</strong> ${brief.design_goal}</div>
-                            ${brief.brand_colors ? `<div><strong>Colors:</strong> ${brief.brand_colors}</div>` : ''}
-                            ${brief.key_offers_or_items ? `<div><strong>Key Items:</strong> ${brief.key_offers_or_items.substring(0,100)}...</div>` : ''}
-                        </div>
-                    </div>
-                `;
-            }
 
             // Show uploaded photos (only if not completed)
             const uploaded = uploadedPhotos[orderId] || [];
@@ -1646,56 +1570,6 @@
         function showEmptyState() {
             document.querySelector('.dashboard-main').style.display = 'none';
             document.getElementById('empty-state').style.display = 'block';
-        }
-
-        // ===== DESIGN BRIEF FUNCTIONS =====
-
-        // Load design brief for an order
-        async function loadDesignBrief(orderId) {
-            try {
-                const token = getAuthToken();
-                const response = await fetch(`/api/photo-studio/order/${orderId}/brief`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await response.json();
-                if (data.success && data.brief) {
-                    designBriefs[orderId] = data.brief;
-                }
-            } catch (error) {
-                console.error('Error loading design brief:', error);
-            }
-        }
-
-        // Save design brief
-        async function saveDesignBrief(orderId) {
-            try {
-                const form = document.getElementById(`design-brief-form-${orderId}`);
-                const formData = new FormData(form);
-                const briefData = Object.fromEntries(formData.entries());
-                briefData.logo_present = formData.has('logo_present');
-
-                const token = getAuthToken();
-                const response = await fetch(`/api/photo-studio/order/${orderId}/brief`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(briefData)
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    designBriefs[orderId] = data.brief;
-                    alert('Design brief saved successfully!');
-                    renderOrderDetails(orderId);
-                } else {
-                    throw new Error(data.error || 'Failed to save brief');
-                }
-            } catch (error) {
-                console.error('Save brief error:', error);
-                alert('Failed to save brief: ' + error.message);
-            }
         }
 
         // Load orders on page load
