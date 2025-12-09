@@ -649,8 +649,9 @@ ${photoList}`,
  * @param {Number} options.orderId Order ID
  * @param {String} options.packageType Package type
  * @param {Number} options.photosDelivered Number of photos delivered
+ * @param {String} options.customMessage Custom message from the graphic design team
  */
-async function sendPhotosCompletedEmail({ email, firstName, orderId, packageType, photosDelivered }) {
+async function sendPhotosCompletedEmail({ email, firstName, orderId, packageType, photosDelivered, customMessage }) {
     if (!SENDGRID_API_KEY) {
         console.log('SendGrid not configured - skipping completion email');
         return { success: false, reason: 'SendGrid not configured' };
@@ -674,11 +675,13 @@ Order #${orderId}
 Package: ${packageType.toUpperCase()}
 Photos Delivered: ${photosDelivered}
 
+${customMessage ? `--- MESSAGE FROM OUR DESIGN TEAM ---\n\n${customMessage}\n\n--- END MESSAGE ---\n` : ''}
+
 DOWNLOAD YOUR PHOTOS:
 Visit your portal to download your professionally enhanced photos:
 ${portalUrl}
 
-Your photos have been enhanced with AI to improve:
+Your photos have been enhanced to improve:
 - Lighting and exposure
 - Color balance and vibrancy
 - Sharpness and detail
@@ -726,6 +729,13 @@ The RinglyPro Team`,
 
             <p>Hello <strong>${firstName}</strong>,</p>
             <p>Great news! We've completed the enhancement of your photos and they're ready for you to download.</p>
+
+            ${customMessage ? `
+            <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid #0ea5e9; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                <h3 style="color: #0369a1; margin: 0 0 12px 0; font-size: 16px;">💬 Message from Our Design Team:</h3>
+                <p style="color: #1e40af; margin: 0; line-height: 1.7; white-space: pre-wrap;">${customMessage.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+            </div>
+            ` : ''}
 
             <div class="order-info">
                 <p style="margin: 8px 0;"><span class="info-label">Order ID:</span> #${orderId}</p>

@@ -1187,6 +1187,7 @@ router.post('/admin/order/:orderId/upload-enhanced', authenticateToken, upload.a
 /**
  * POST /api/photo-studio/admin/order/:orderId/complete
  * Mark order as completed and send notification email to customer
+ * Requires a completion_message from the graphic design team
  */
 router.post('/admin/order/:orderId/complete', authenticateToken, async (req, res) => {
   const { sequelize } = require('../models');
@@ -1194,6 +1195,15 @@ router.post('/admin/order/:orderId/complete', authenticateToken, async (req, res
 
   try {
     const { orderId } = req.params;
+    const { completion_message } = req.body;
+
+    // Validate completion message is provided and has minimum length
+    if (!completion_message || completion_message.trim().length < 50) {
+      return res.status(400).json({
+        success: false,
+        error: 'A personalized message of at least 50 characters is required when completing an order'
+      });
+    }
 
     // Verify order exists
     const [order] = await sequelize.query(
@@ -1237,7 +1247,26 @@ router.post('/admin/order/:orderId/complete', authenticateToken, async (req, res
 
     logger.info(`[PHOTO STUDIO] Order ${orderId} marked as completed`);
 
-    // Send email notification to customer
+    // Save the completion message as a communication
+    try {
+      await sequelize.query(
+        `INSERT INTO photo_studio_communications (order_id, from_type, subject, message, created_at)
+         VALUES (:orderId, 'admin', 'Order Completed', :message, NOW())`,
+        {
+          replacements: {
+            orderId,
+            message: completion_message.trim()
+          },
+          type: QueryTypes.INSERT
+        }
+      );
+      logger.info(`[PHOTO STUDIO] Completion message saved for order ${orderId}`);
+    } catch (commError) {
+      logger.error('[PHOTO STUDIO] Failed to save completion message:', commError);
+      // Don't fail if communication save fails
+    }
+
+    // Send email notification to customer with the custom message
     try {
       const { sendPhotosCompletedEmail } = require('../services/emailService');
 
@@ -1246,7 +1275,8 @@ router.post('/admin/order/:orderId/complete', authenticateToken, async (req, res
         firstName: order.first_name || 'Valued Customer',
         orderId: orderId,
         packageType: order.package_type,
-        photosDelivered: parseInt(photoCount.count)
+        photosDelivered: parseInt(photoCount.count),
+        customMessage: completion_message.trim()
       });
 
       logger.info(`[PHOTO STUDIO] Completion email sent to ${order.email} for order ${orderId}`);

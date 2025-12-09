@@ -878,9 +878,224 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Completion Modal Styles */
+        .completion-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .completion-modal-overlay.active {
+            display: flex;
+        }
+
+        .completion-modal {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .completion-modal-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .completion-modal-header h2 {
+            font-size: 1.25rem;
+            color: #0a0a0a;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .completion-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .completion-modal-close:hover {
+            background: #f1f5f9;
+            color: #0a0a0a;
+        }
+
+        .completion-modal-body {
+            padding: 2rem;
+        }
+
+        .completion-modal-info {
+            background: #f0fdf4;
+            border: 1px solid #22c55e;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .completion-modal-info p {
+            color: #15803d;
+            font-size: 0.875rem;
+            margin: 0;
+        }
+
+        .completion-modal-label {
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .completion-modal-required {
+            color: #ef4444;
+            margin-left: 0.25rem;
+        }
+
+        .completion-modal-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+
+        .completion-modal-textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .completion-modal-textarea::placeholder {
+            color: #94a3b8;
+        }
+
+        .completion-modal-hint {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+
+        .completion-modal-footer {
+            padding: 1.5rem 2rem;
+            border-top: 2px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .completion-modal-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .completion-modal-btn-cancel {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .completion-modal-btn-cancel:hover {
+            background: #e2e8f0;
+            color: #0a0a0a;
+        }
+
+        .completion-modal-btn-submit {
+            background: #22c55e;
+            color: white;
+        }
+
+        .completion-modal-btn-submit:hover {
+            background: #16a34a;
+        }
+
+        .completion-modal-btn-submit:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .char-counter {
+            text-align: right;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+
+        .char-counter.warning {
+            color: #f59e0b;
+        }
+
+        .char-counter.error {
+            color: #ef4444;
+        }
     </style>
 </head>
 <body>
+    <!-- Completion Modal -->
+    <div class="completion-modal-overlay" id="completion-modal">
+        <div class="completion-modal">
+            <div class="completion-modal-header">
+                <h2>📧 Complete Order & Notify Customer</h2>
+                <button class="completion-modal-close" onclick="closeCompletionModal()">&times;</button>
+            </div>
+            <div class="completion-modal-body">
+                <div class="completion-modal-info">
+                    <p>✅ All photos have been enhanced! Write a personalized message to the customer before completing this order.</p>
+                </div>
+
+                <label class="completion-modal-label">
+                    Message to Customer<span class="completion-modal-required">*</span>
+                </label>
+                <textarea
+                    class="completion-modal-textarea"
+                    id="completion-message"
+                    placeholder="Hi [Customer Name],
+
+Great news! Your enhanced photos are ready for download.
+
+We've carefully enhanced each photo with professional adjustments to lighting, colors, and detail. We hope you love the results!
+
+If you have any questions or need any revisions, please don't hesitate to reach out.
+
+Best regards,
+The Photo Studio Team"
+                    oninput="updateCharCounter()"
+                ></textarea>
+                <div class="char-counter" id="char-counter">0 / 50 minimum characters</div>
+                <p class="completion-modal-hint">This message will be included in the completion email sent to the customer.</p>
+            </div>
+            <div class="completion-modal-footer">
+                <button class="completion-modal-btn completion-modal-btn-cancel" onclick="closeCompletionModal()">Cancel</button>
+                <button class="completion-modal-btn completion-modal-btn-submit" id="submit-completion-btn" onclick="submitOrderCompletion()" disabled>
+                    Complete Order & Send Email
+                </button>
+            </div>
+        </div>
+    </div>
     <div class="dashboard-container">
         <!-- Header -->
         <div class="dashboard-header">
@@ -1435,28 +1650,78 @@
             });
         }
 
-        // Mark order as completed and notify customer
-        async function markOrderAsCompleted(orderId) {
-            if (!confirm('Mark this order as completed and send notification email to the customer?')) {
+        // Track which order is being completed
+        let pendingCompletionOrderId = null;
+
+        // Show the completion modal
+        function markOrderAsCompleted(orderId) {
+            pendingCompletionOrderId = orderId;
+            document.getElementById('completion-message').value = '';
+            updateCharCounter();
+            document.getElementById('completion-modal').classList.add('active');
+        }
+
+        // Close the completion modal
+        function closeCompletionModal() {
+            document.getElementById('completion-modal').classList.remove('active');
+            pendingCompletionOrderId = null;
+        }
+
+        // Update character counter and enable/disable submit button
+        function updateCharCounter() {
+            const textarea = document.getElementById('completion-message');
+            const counter = document.getElementById('char-counter');
+            const submitBtn = document.getElementById('submit-completion-btn');
+            const charCount = textarea.value.trim().length;
+            const minChars = 50;
+
+            counter.textContent = `${charCount} / ${minChars} minimum characters`;
+
+            if (charCount < minChars) {
+                counter.className = 'char-counter error';
+                submitBtn.disabled = true;
+            } else {
+                counter.className = 'char-counter';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Submit order completion with message
+        async function submitOrderCompletion() {
+            const message = document.getElementById('completion-message').value.trim();
+
+            if (message.length < 50) {
+                alert('Please write a message of at least 50 characters to the customer.');
                 return;
             }
 
+            if (!pendingCompletionOrderId) {
+                alert('Error: No order selected');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submit-completion-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Completing...';
+
             try {
                 const token = getAuthToken();
-                const response = await fetch(`/api/photo-studio/admin/order/${orderId}/complete`, {
+                const response = await fetch(`/api/photo-studio/admin/order/${pendingCompletionOrderId}/complete`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    body: JSON.stringify({ completion_message: message })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('✅ Order marked as completed! Customer has been notified via email.');
+                    closeCompletionModal();
+                    alert('✅ Order marked as completed! Customer has been notified via email with your message.');
                     // Reload order details and orders list
-                    await loadOrderDetails(orderId);
+                    await loadOrderDetails(pendingCompletionOrderId);
                     await loadOrders();
                 } else {
                     throw new Error(data.error || 'Failed to complete order');
@@ -1464,8 +1729,25 @@
             } catch (error) {
                 console.error('Error completing order:', error);
                 alert('Failed to mark order as completed: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Complete Order & Send Email';
             }
         }
+
+        // Close modal when clicking outside
+        document.getElementById('completion-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCompletionModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && document.getElementById('completion-modal').classList.contains('active')) {
+                closeCompletionModal();
+            }
+        });
 
         // Show replace upload interface
         function showReplaceUpload(orderId, originalPhotoId, enhancedId) {
