@@ -155,6 +155,11 @@
             color: #065f46;
         }
 
+        .status-awaiting_upload {
+            background: #fed7aa;
+            color: #9a3412;
+        }
+
         .order-customer {
             font-size: 0.875rem;
             color: #64748b;
@@ -1010,8 +1015,9 @@
                     revision: photos.filter(p => p.approval_status === 'revision_requested').length
                 };
 
-                // Determine if order needs attention (has revisions or rejections)
-                const needsAttention = statusCounts.revision > 0 || statusCounts.rejected > 0;
+                // Determine if order needs attention (new orders, has revisions or rejections)
+                const isNewOrder = order.order_status === 'awaiting_upload';
+                const needsAttention = isNewOrder || statusCounts.revision > 0 || statusCounts.rejected > 0;
                 const attentionClass = needsAttention ? 'needs-attention' : '';
 
                 return `
@@ -1035,6 +1041,8 @@
                         ` : ''}
                         ${needsAttention ? `
                             <div class="attention-message">
+                                ${isNewOrder ? '🆕 New Order' : ''}
+                                ${isNewOrder && (statusCounts.revision > 0 || statusCounts.rejected > 0) ? ' • ' : ''}
                                 ${statusCounts.revision > 0 ? `${statusCounts.revision} revision${statusCounts.revision > 1 ? 's' : ''} requested` : ''}
                                 ${statusCounts.revision > 0 && statusCounts.rejected > 0 ? ' • ' : ''}
                                 ${statusCounts.rejected > 0 ? `${statusCounts.rejected} rejected` : ''}
