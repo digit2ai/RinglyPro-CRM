@@ -238,6 +238,182 @@
             color: var(--gray);
         }
 
+        /* How It Works Section */
+        .how-it-works {
+            padding: 5rem 2rem;
+            background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+        }
+
+        .how-it-works .section-header {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 4rem;
+        }
+
+        .how-it-works h2 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .how-it-works .section-header p {
+            font-size: 1.25rem;
+            color: var(--gray);
+        }
+
+        .steps-container {
+            max-width: 1280px;
+            margin: 0 auto 5rem;
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .step {
+            flex: 1;
+            min-width: 200px;
+            max-width: 220px;
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin: 0 auto 1rem;
+        }
+
+        .step-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .step h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .step p {
+            font-size: 0.875rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        .step-arrow {
+            position: absolute;
+            right: -1.5rem;
+            top: 30px;
+            font-size: 1.5rem;
+            color: var(--primary);
+            opacity: 0.3;
+        }
+
+        .step:last-child .step-arrow {
+            display: none;
+        }
+
+        .before-after {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 1.5rem;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        }
+
+        .before-after h3 {
+            text-align: center;
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 2.5rem;
+            color: var(--dark);
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+        }
+
+        .before, .after {
+            padding: 2rem;
+            border-radius: 1rem;
+        }
+
+        .before {
+            background: linear-gradient(135deg, #FEE2E2, #FECACA);
+            border: 2px solid #EF4444;
+        }
+
+        .after {
+            background: linear-gradient(135deg, #D1FAE5, #A7F3D0);
+            border: 2px solid #10B981;
+        }
+
+        .comparison h4 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .comparison .subtitle {
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.8;
+        }
+
+        .comparison ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .comparison li {
+            padding: 0.5rem 0;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .comparison .before li {
+            color: #991B1B;
+        }
+
+        .comparison .after li {
+            color: #065F46;
+        }
+
+        .example-link {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .example-link a {
+            color: var(--primary);
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 1.125rem;
+        }
+
+        .example-link a:hover {
+            text-decoration: underline;
+        }
+
         /* Stats Section */
         .stats {
             padding: 3rem 2rem;
@@ -544,6 +720,32 @@
                 grid-template-columns: 1fr;
             }
 
+            .steps-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .step {
+                max-width: 100%;
+            }
+
+            .step-arrow {
+                display: none;
+            }
+
+            .comparison {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .before-after {
+                padding: 1.5rem;
+            }
+
+            .how-it-works h2 {
+                font-size: 2rem;
+            }
+
             .footer-container {
                 grid-template-columns: 1fr;
             }
@@ -633,6 +835,112 @@
                         <p>Social media & email tools</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works">
+        <div class="section-header">
+            <h2>Launch Your Store in 5 Minutes</h2>
+            <p>Our AI does all the heavy lifting. No manual data entry, no coding, no hassle.</p>
+        </div>
+
+        <div class="steps-container">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-icon">📝</div>
+                <h3>Sign Up</h3>
+                <p>Create your free account in 30 seconds</p>
+                <div class="step-arrow">→</div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-icon">🔗</div>
+                <h3>Enter Your URL</h3>
+                <p>Paste your website link or fill design brief</p>
+                <div class="step-arrow">→</div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-icon">🤖</div>
+                <h3>AI Works Magic</h3>
+                <p>Menu, photos, and branding extracted automatically</p>
+                <div class="step-arrow">→</div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-icon">✨</div>
+                <h3>Customize & Review</h3>
+                <p>Fine-tune your store with our easy dashboard</p>
+                <div class="step-arrow">→</div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-icon">🚀</div>
+                <h3>Go Live!</h3>
+                <p>Start accepting orders immediately</p>
+            </div>
+        </div>
+
+        <div class="before-after">
+            <h3>See What You Get</h3>
+            <p style="text-align: center; color: var(--gray); margin-bottom: 2rem;">Example: Joe's Pizza storefront created in 2 minutes</p>
+
+            <div class="comparison">
+                <div class="before">
+                    <h4>🌐 Before</h4>
+                    <div class="subtitle">joespizza.com<br>• Basic restaurant website</div>
+                    <ul>
+                        <li>
+                            <span>❌</span>
+                            <span>No online ordering</span>
+                        </li>
+                        <li>
+                            <span>❌</span>
+                            <span>Call-in only</span>
+                        </li>
+                        <li>
+                            <span>❌</span>
+                            <span>Lost customers</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="after">
+                    <h4>🛒 After (2 mins)</h4>
+                    <div class="subtitle">Joe's Pizza Store<br>Full online ordering system</div>
+                    <ul>
+                        <li>
+                            <span>✅</span>
+                            <span>15 menu items imported</span>
+                        </li>
+                        <li>
+                            <span>✅</span>
+                            <span>Photos enhanced with AI</span>
+                        </li>
+                        <li>
+                            <span>✅</span>
+                            <span>Brand colors extracted</span>
+                        </li>
+                        <li>
+                            <span>✅</span>
+                            <span>Payment processing ready</span>
+                        </li>
+                        <li>
+                            <span>✅</span>
+                            <span>Mobile responsive</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="example-link">
+                <a href="/storefront/joes-pizza">View Live Example →</a>
             </div>
         </div>
     </section>
