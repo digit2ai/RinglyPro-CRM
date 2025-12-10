@@ -14,6 +14,8 @@ const logger = require('../utils/logger');
 const sharp = require('sharp');
 const crypto = require('crypto');
 const path = require('path');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 // S3 Configuration
 let s3Client = null;
@@ -88,6 +90,92 @@ const PHOTO_PACKAGES = {
     description: 'You send us 20 photos and we send you back 20 professional photos plus 2 variations of each'
   }
 };
+
+/**
+ * POST /api/admin/login
+ * Admin login endpoint for photo studio admin dashboard
+ */
+router.post('/admin/login', async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and password are required'
+      });
+    }
+
+    // Get user from database
+    const [user] = await sequelize.query(
+      'SELECT id, email, password_hash, first_name, last_name, is_admin FROM users WHERE email = :email',
+      {
+        replacements: { email },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid credentials'
+      });
+    }
+
+    // Check if user is admin
+    if (!user.is_admin) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied. Admin privileges required.'
+      });
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid credentials'
+      });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+        isAdmin: user.is_admin
+      },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' }
+    );
+
+    logger.info(`[ADMIN LOGIN] Admin user ${email} logged in successfully`);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        isAdmin: user.is_admin
+      }
+    });
+
+  } catch (error) {
+    logger.error('[ADMIN LOGIN] Login error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Login failed. Please try again.'
+    });
+  }
+});
 
 /**
  * GET /api/photo-studio/packages
