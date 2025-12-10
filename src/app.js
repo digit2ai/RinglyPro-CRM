@@ -141,6 +141,11 @@ console.log('✅ Photo Studio routes loaded successfully');
 const photoUploadRoutes = require('./routes/photo-uploads'); // Photo upload handling for all services
 console.log('✅ Photo Upload routes loaded successfully');
 
+// Import PixlyPro routes
+const pixlyproRoutes = require('./routes/pixlypro'); // PixlyPro AI-assisted photo enhancement
+const vagaroRoutes = require('./routes/vagaro'); // Vagaro salon/spa scheduling integration
+console.log('✅ PixlyPro routes loaded successfully');
+
 // Import Storefront routes
 const storefrontRoutes = require('./routes/storefront'); // Online storefront & menu system
 console.log('✅ Storefront routes loaded successfully');
@@ -164,6 +169,13 @@ console.log('✅ GHL payment routes mounted at /api/payment');
 // Mount Photo Studio routes
 app.use('/api/photo-studio', photoStudioRoutes); // Photo Studio package purchases
 console.log('✅ Photo Studio routes mounted at /api/photo-studio');
+
+// Mount PixlyPro routes
+app.use('/api/pixlypro', pixlyproRoutes); // PixlyPro AI-assisted photo enhancement
+console.log('✅ PixlyPro routes mounted at /api/pixlypro');
+
+app.use('/api/vagaro', vagaroRoutes); // Vagaro salon/spa scheduling integration
+console.log('✅ Vagaro routes mounted at /api/vagaro');
 
 // Mount Photo Upload routes
 app.use('/api/photo-uploads', photoUploadRoutes); // Photo upload handling for all services
@@ -467,6 +479,60 @@ app.get('/photo-studio-upload', (req, res) => {
 app.get('/photo-studio-admin-dashboard', (req, res) => {
   res.render('photo-studio-admin-dashboard', {
     title: 'Admin Dashboard - Photo Studio - RinglyPro'
+  });
+});
+
+// =====================================================
+// PIXLYPRO ROUTES (AI-Assisted Photo Enhancement)
+// =====================================================
+
+// PixlyPro landing page
+app.get('/pixlypro', (req, res) => {
+  res.render('pixlypro-landing', {
+    title: 'PixlyPro - AI-Assisted Photo Enhancement | RinglyPro'
+  });
+});
+
+// PixlyPro AI Studio (main interface)
+app.get('/pixlypro-studio', (req, res) => {
+  res.render('pixlypro-studio', {
+    title: 'PixlyPro AI Studio - Instant Photo Enhancement | RinglyPro'
+  });
+});
+
+// PixlyPro authentication page (login/signup)
+app.get('/pixlypro-auth', (req, res) => {
+  res.render('pixlypro-auth', {
+    title: 'Sign In - PixlyPro AI Enhancement | RinglyPro'
+  });
+});
+
+// PixlyPro customer portal
+app.get('/pixlypro-portal', (req, res) => {
+  res.render('pixlypro-portal', {
+    title: 'My PixlyPro Orders - RinglyPro'
+  });
+});
+
+// PixlyPro upload page
+app.get('/pixlypro-upload', (req, res) => {
+  res.render('pixlypro-upload', {
+    title: 'Upload Photos - PixlyPro - RinglyPro'
+  });
+});
+
+// Vagaro Integration Settings
+app.get('/settings/vagaro', (req, res) => {
+  res.render('settings-vagaro', {
+    title: 'Vagaro Integration - RinglyPro Settings',
+    APP_URL: process.env.APP_URL || process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'
+  });
+});
+
+// PixlyPro admin dashboard
+app.get('/pixlypro-admin-dashboard', (req, res) => {
+  res.render('pixlypro-admin-dashboard', {
+    title: 'Admin Dashboard - PixlyPro - RinglyPro'
   });
 });
 

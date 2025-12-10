@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixlyPro - AI-Assisted Photo Enhancement | RinglyPro</title>
+    <style>
+        /* ============================================
+           RESET & BASE STYLES
+        ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background-color: #ffffff;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ============================================
+           TYPOGRAPHY
+        ============================================ */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            color: #0a0a0a;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            letter-spacing: -0.03em;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+        }
+
+        p {
+            font-size: 1.125rem;
+            line-height: 1.7;
+            color: #4a5568;
+            margin-bottom: 1rem;
+        }
+
+        .subheadline {
+            font-size: 1.25rem;
+            line-height: 1.6;
+            color: #64748b;
+            font-weight: 400;
+        }
+
+        /* ============================================
+           LAYOUT & CONTAINERS
+        ============================================ */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .container-wide {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        section {
+            padding: 5rem 0;
+        }
+
+        .section-alt {
+            background-color: #f8fafc;
+        }
+
+        /* ============================================
+           BUTTONS
+        ============================================ */
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: #3b82f6;
+            color: #ffffff;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: #3b82f6;
+            border: 2px solid #3b82f6;
+        }
+
+        .btn-secondary:hover {
+            background-color: #3b82f6;
+            color: #ffffff;
+        }
+
+        .btn-large {
+            padding: 1.25rem 2.5rem;
+            font-size: 1.25rem;
+        }
+
+        .text-link {
+            display: inline-block;
+            margin-left: 1.5rem;
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.125rem;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .text-link:hover {
+            border-bottom-color: #3b82f6;
+        }
+
+        /* ============================================
+           HEADER
+        ============================================ */
+        .header {
+            padding: 2rem 0;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-container img {
+            height: 50px;
+            width: auto;
+        }
+
+        .brand-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0a0a0a;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-service {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #64748b;
+            margin-left: 0.5rem;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-nav {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+        }
+
+        /* ============================================
+           HERO SECTION
+        ============================================ */
+        .hero {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            padding: 6rem 0 8rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-text h1 {
+            margin-bottom: 1.5rem;
+            color: #0a0a0a;
+        }
+
+        .hero-text .subheadline {
+            margin-bottom: 2.5rem;
+            max-width: 540px;
+        }
+
+        .hero-cta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .hero-image {
+            background: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%);
+            border-radius: 1rem;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .hero-badge {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            font-size: 0.875rem;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        /* ============================================
+           TRUST BADGES
+        ============================================ */
+        .trust-badges {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+            padding: 2rem 0;
+            background: #f8fafc;
+        }
+
+        .trust-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #64748b;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .trust-badge-icon {
+            font-size: 1.5rem;
+            color: #3b82f6;
+        }
+
+        /* ============================================
+           HOW IT WORKS SECTION
+        ============================================ */
+        .how-it-works {
+            text-align: center;
+        }
+
+        .how-it-works h2 {
+            margin-bottom: 4rem;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .step {
+            padding: 2rem;
+        }
+
+        .step-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            font-weight: 700;
+        }
+
+        .step h3 {
+            margin-bottom: 1rem;
+            color: #0a0a0a;
+        }
+
+        .step p {
+            font-size: 1rem;
+            color: #64748b;
+        }
+
+        .step-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+
+        /* ============================================
+           STATS SECTION
+        ============================================ */
+        .stats {
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            color: white;
+            text-align: center;
+            padding: 4rem 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .stat-item {
+            padding: 1rem;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        /* ============================================
+           PRICING SECTION
+        ============================================ */
+        .pricing {
+            background-color: #f8fafc;
+            text-align: center;
+        }
+
+        .pricing h2 {
+            margin-bottom: 4rem;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            border: 2px solid transparent;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+        }
+
+        .pricing-card.featured {
+            border-color: #3b82f6;
+            transform: scale(1.05);
+        }
+
+        .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-8px);
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .pricing-card h3 {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            color: #0a0a0a;
+        }
+
+        .pricing-price {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-description {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+            min-height: 120px;
+        }
+
+        /* ============================================
+           FAQ SECTION
+        ============================================ */
+        .faq {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .faq h2 {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .faq-item {
+            background: white;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            border: 2px solid #e2e8f0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:hover {
+            border-color: #3b82f6;
+        }
+
+        .faq-question {
+            padding: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #0a0a0a;
+            user-select: none;
+        }
+
+        .faq-toggle {
+            font-size: 1.5rem;
+            color: #3b82f6;
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .faq-toggle {
+            transform: rotate(45deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding: 0 1.5rem;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .faq-answer p {
+            color: #4a5568;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* ============================================
+           FINAL CTA SECTION
+        ============================================ */
+        .final-cta {
+            text-align: center;
+            padding: 6rem 0;
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            color: white;
+        }
+
+        .final-cta h2 {
+            color: white;
+            margin-bottom: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .final-cta .btn-primary {
+            background-color: white;
+            color: #3b82f6;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .final-cta .btn-primary:hover {
+            background-color: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .final-cta-subtitle {
+            margin-top: 1.5rem;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+        }
+
+        /* ============================================
+           RESPONSIVE DESIGN
+        ============================================ */
+        @media (max-width: 1024px) {
+            h1 { font-size: 2.75rem; }
+            h2 { font-size: 2rem; }
+            .hero-content { grid-template-columns: 1fr; gap: 3rem; }
+            .hero-image { height: 400px; }
+            .steps-grid { grid-template-columns: repeat(2, 1fr); }
+            .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+            .pricing-card.featured { transform: scale(1); }
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.25rem; }
+            h2 { font-size: 1.75rem; }
+            section { padding: 3rem 0; }
+            .hero { padding: 4rem 0 5rem; }
+            .steps-grid { grid-template-columns: 1fr; }
+            .pricing-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69175f336c431e834ac954b8.png" alt="RinglyPro PixlyPro Logo">
+                    <div>
+                        <span class="brand-name">PixlyPro</span>
+                        <span class="brand-service">AI-Assisted Photo Enhancement</span>
+                    </div>
+                </div>
+                <div class="header-nav">
+                    <a href="/pixlypro-portal" class="btn btn-secondary btn-nav">My Orders</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>AI Does the Work, Designers Ensure Perfection</h1>
+                    <p class="subheadline">Why pay full price for manual editing? Our AI instantly enhances your photos with professional-grade adjustments. Designers review each one to guarantee quality—all at a fraction of the cost.</p>
+                    <div class="hero-cta">
+                        <a href="#" class="btn btn-primary btn-large" onclick="handleGetStarted()">Get Started</a>
+                        <a href="#pricing" class="text-link">View Pricing</a>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <div class="hero-badge">AI + Human Expertise</div>
+                    <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69388dfbfb91d01d8d452c2f.jpeg" alt="AI-Assisted Photo Enhancement">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TRUST BADGES -->
+    <div class="trust-badges">
+        <div class="trust-badge">
+            <span class="trust-badge-icon">🤖</span>
+            <span>AI-Powered Enhancement</span>
+        </div>
+        <div class="trust-badge">
+            <span class="trust-badge-icon">👨‍🎨</span>
+            <span>Designer Reviewed</span>
+        </div>
+        <div class="trust-badge">
+            <span class="trust-badge-icon">⚡</span>
+            <span>48-72 Hour Delivery</span>
+        </div>
+        <div class="trust-badge">
+            <span class="trust-badge-icon">💰</span>
+            <span>Best Value Pricing</span>
+        </div>
+    </div>
+
+    <!-- HOW IT WORKS SECTION -->
+    <section class="how-it-works section-alt">
+        <div class="container">
+            <h2>The PixlyPro Advantage: AI Speed + Human Quality</h2>
+            <p style="text-align: center; max-width: 800px; margin: 0 auto 3rem; color: #64748b; font-size: 1.125rem;">
+                Unlike traditional photo editing services where designers manually edit every photo, PixlyPro uses AI to do the heavy lifting—then our designers ensure every image meets professional standards.
+            </p>
+            <div class="steps-grid">
+                <div class="step">
+                    <div class="step-icon">1</div>
+                    <h3>Upload & Pay</h3>
+                    <p>Choose your package, upload your phone photos, and check out securely.</p>
+                </div>
+                <div class="step">
+                    <div class="step-icon">2</div>
+                    <h3>AI Enhancement</h3>
+                    <p>Pixelixe AI instantly adjusts brightness, contrast, opacity, and applies professional filters (Clarendon, Ludwig, Hefe, etc.) automatically.</p>
+                    <span class="step-badge">INSTANT</span>
+                </div>
+                <div class="step">
+                    <div class="step-icon">3</div>
+                    <h3>Quality Review</h3>
+                    <p>Professional designers review AI results, make fine-tuning adjustments if needed, and approve for delivery.</p>
+                    <span class="step-badge">GUARANTEED QUALITY</span>
+                </div>
+                <div class="step">
+                    <div class="step-icon">4</div>
+                    <h3>Fast Delivery</h3>
+                    <p>Download your professionally-enhanced photos within 48-72 hours—ready for websites, social media, or print.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- COMPARISON SECTION -->
+    <section style="padding: 5rem 0; background: white;">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: 3rem;">PixlyPro vs Photo Studio: What's the Difference?</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 1000px; margin: 0 auto;">
+                <!-- Photo Studio -->
+                <div style="background: #f8fafc; padding: 2.5rem; border-radius: 1rem; border: 2px solid #e2e8f0;">
+                    <h3 style="color: #3b82f6; margin-bottom: 1.5rem; text-align: center;">Photo Studio</h3>
+                    <p style="color: #64748b; margin-bottom: 1.5rem; text-align: center; font-size: 0.875rem;">Full Manual Service</p>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: start;">
+                            <span style="color: #3b82f6; margin-right: 0.75rem;">👨‍🎨</span>
+                            <span style="color: #1a1a1a;">Designers manually edit every photo from scratch</span>
+                        </li>
+                        <li style="padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: start;">
+                            <span style="color: #3b82f6; margin-right: 0.75rem;">⏱️</span>
+                            <span style="color: #1a1a1a;">Longer turnaround time (more manual work)</span>
+                        </li>
+                        <li style="padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: start;">
+                            <span style="color: #3b82f6; margin-right: 0.75rem;">💰</span>
+                            <span style="color: #1a1a1a;">Higher pricing ($15/photo base rate)</span>
+                        </li>
+                        <li style="padding: 0.75rem 0; display: flex; align-items: start;">
+                            <span style="color: #3b82f6; margin-right: 0.75rem;">🎯</span>
+                            <span style="color: #1a1a1a;">Best for custom creative edits & complex requests</span>
+                        </li>
+                    </ul>
+                    <a href="/photo-studio" class="btn btn-secondary" style="width: 100%; margin-top: 1.5rem; display: block; text-align: center;">View Photo Studio</a>
+                </div>
+
+                <!-- PixlyPro -->
+                <div style="background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%); padding: 2.5rem; border-radius: 1rem; border: 3px solid #3b82f6; position: relative;">
+                    <div style="position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 0.5rem 1.5rem; border-radius: 2rem; font-size: 0.75rem; font-weight: 700; white-space: nowrap;">BETTER VALUE</div>
+                    <h3 style="color: white; margin-bottom: 1.5rem; text-align: center;">PixlyPro (AI-Assisted)</h3>
+                    <p style="color: rgba(255,255,255,0.9); margin-bottom: 1.5rem; text-align: center; font-size: 0.875rem;">AI + Designer Review</p>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.2); display: flex; align-items: start;">
+                            <span style="margin-right: 0.75rem;">🤖</span>
+                            <span style="color: white;">AI instantly enhances photos automatically</span>
+                        </li>
+                        <li style="padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.2); display: flex; align-items: start;">
+                            <span style="margin-right: 0.75rem;">⚡</span>
+                            <span style="color: white;">Faster delivery (AI does the heavy lifting)</span>
+                        </li>
+                        <li style="padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.2); display: flex; align-items: start;">
+                            <span style="margin-right: 0.75rem;">💎</span>
+                            <span style="color: white;">Affordable pricing (just $0.50 per photo)</span>
+                        </li>
+                        <li style="padding: 0.75rem 0; display: flex; align-items: start;">
+                            <span style="margin-right: 0.75rem;">✅</span>
+                            <span style="color: white;">Designer-reviewed for guaranteed quality</span>
+                        </li>
+                    </ul>
+                    <a href="#pricing" class="btn" style="width: 100%; margin-top: 1.5rem; display: block; text-align: center; background: white; color: #3b82f6;">Get Started with PixlyPro</a>
+                </div>
+            </div>
+
+            <p style="text-align: center; margin-top: 3rem; color: #64748b; font-size: 1rem; max-width: 700px; margin-left: auto; margin-right: auto;">
+                <strong style="color: #0a0a0a;">Bottom line:</strong> If you need standard photo enhancement (better lighting, colors, sharpness), PixlyPro gives you professional results at better prices. If you need custom creative work or complex edits, Photo Studio is the way to go.
+            </p>
+        </div>
+    </section>
+
+    <!-- PIXELIXE TOOLS SECTION -->
+    <section style="padding: 5rem 0; background: #f8fafc;">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: 1.5rem;">Powered by Pixelixe AI Technology</h2>
+            <p style="text-align: center; color: #64748b; margin-bottom: 3rem; font-size: 1.125rem; max-width: 700px; margin-left: auto; margin-right: auto;">
+                Our AI uses Pixelixe's professional image processing tools to automatically enhance your photos
+            </p>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; max-width: 900px; margin: 0 auto;">
+                <!-- Image Processing -->
+                <div style="background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                    <h3 style="color: #3b82f6; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="font-size: 1.5rem;">⚙️</span>
+                        Image Processing
+                    </h3>
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li style="padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: #3b82f6;">✓</span>
+                            <span style="color: #1a1a1a;">Brightness Adjustment</span>
+                        </li>
+                        <li style="padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: #3b82f6;">✓</span>
+                            <span style="color: #1a1a1a;">Contrast Enhancement</span>
+                        </li>
+                        <li style="padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: #3b82f6;">✓</span>
+                            <span style="color: #1a1a1a;">Opacity Control</span>
+                        </li>
+                        <li style="padding: 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: #3b82f6;">✓</span>
+                            <span style="color: #1a1a1a;">Smart Compression (20-60% smaller)</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Professional Filters -->
+                <div style="background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                    <h3 style="color: #3b82f6; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="font-size: 1.5rem;">🎨</span>
+                        Professional Filters
+                    </h3>
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li style="padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: #3b82f6;">✓</span>
+                            <span style="color: #1a1a1a;">Clarendon (light & dark enhancement)</span>
+                        </li>
+                        <li style="padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: #3b82f6;">✓</span>
+                            <span style="color: #1a1a1a;">Ludwig (light enhancement)</span>
+                        </li>
+                        <li style="padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: #3b82f6;">✓</span>
+                            <span style="color: #1a1a1a;">Hefe (high contrast & saturation)</span>
+                        </li>
+                        <li style="padding: 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: #3b82f6;">✓</span>
+                            <span style="color: #1a1a1a;">Plus Lofi, Moon, Inkwell & more</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <p style="text-align: center; margin-top: 2rem; color: #64748b; font-size: 0.875rem;">
+                All enhancements are applied automatically by AI, then reviewed by our designers for quality assurance
+            </p>
+        </div>
+    </section>
+
+    <!-- STATS SECTION -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">90%</div>
+                    <div class="stat-label">Faster Processing</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">40%</div>
+                    <div class="stat-label">Lower Cost</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Quality Reviewed</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">$0.50</div>
+                    <div class="stat-label">Per Photo</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING SECTION -->
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <h2>Professional Quality at Unbeatable Prices</h2>
+            <p style="text-align: center; color: #64748b; margin-bottom: 3rem; font-size: 1.125rem;">
+                Because AI does most of the work, you get professional results at an incredible price—just $0.50 per photo enhancement
+            </p>
+
+            <!-- $0.50 Demo Banner -->
+            <div style="max-width: 600px; margin: 0 auto 3rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 1.5rem 2rem; border-radius: 1rem; color: white; text-align: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">Try PixlyPro For Just $0.50</div>
+                <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem; font-size: 1rem;">See AI + human expertise in action with 1 photo for just $0.50</p>
+                <a href="#" onclick="handleGetStarted()" class="btn" style="background: white; color: #059669; padding: 0.75rem 2rem; font-weight: 600;">Get Your $0.50 Demo</a>
+            </div>
+
+            <!-- Pricing Cards -->
+            <div class="pricing-grid" id="pricing-cards-container">
+                <!-- Cards will be loaded dynamically -->
+            </div>
+
+            <!-- CTA Button -->
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="#" onclick="handleGetStarted()" class="btn btn-primary btn-large" style="font-size: 1.25rem; padding: 1.25rem 3rem;">
+                    Get Started Now
+                </a>
+                <p style="margin-top: 1rem; color: #64748b; font-size: 0.875rem;">
+                    No commitment required. Start with the $0.50 demo.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ SECTION -->
+    <section class="faq-section">
+        <div class="container">
+            <div class="faq">
+                <h2>Frequently Asked Questions</h2>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How is PixlyPro different from Photo Studio?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>PixlyPro uses AI to automatically enhance your photos, with our designers reviewing the AI results for quality. This means faster turnaround and lower costs compared to our full Photo Studio service where designers manually enhance each photo.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>What does "AI-assisted" mean?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Our AI automatically adjusts brightness, contrast, saturation, and sharpness based on photo type. Then, our professional designers review each AI-enhanced photo to ensure it meets our quality standards before delivering to you.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>What types of photos work best with PixlyPro?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>PixlyPro works great for food, product, and general business photos. Our AI has specialized presets for each photo type. Just make sure your photos are well-framed and in focus.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How long does delivery take?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Most orders are delivered within 48-72 hours. The AI enhancement is instant, but our designers need time to review each photo for quality assurance.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Can I request revisions?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes! If you're not satisfied with the AI-enhanced results, you can request revisions through your customer portal. We'll make adjustments to ensure you're happy.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>What file formats do you accept?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>We accept JPEG, PNG, HEIC, and WebP formats. Your enhanced photos are delivered as high-resolution JPEGs, perfect for web and print.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="final-cta">
+        <div class="container">
+            <h2>Ready to experience AI-assisted photo enhancement?</h2>
+            <a href="#" onclick="handleGetStarted()" class="btn btn-primary btn-large">Get Started Now</a>
+            <p class="final-cta-subtitle">Start with the $0.50 demo. No risk, no commitment.</p>
+        </div>
+    </section>
+
+    <!-- SCRIPT -->
+    <script>
+        let packages = null;
+
+        // Load packages on page load
+        async function loadPackages() {
+            try {
+                const response = await fetch('/api/pixlypro/packages');
+                const data = await response.json();
+
+                if (data.success) {
+                    packages = data.packages;
+                    renderPricingCards();
+                }
+            } catch (error) {
+                console.error('Failed to load packages:', error);
+            }
+        }
+
+        // Render pricing cards
+        function renderPricingCards() {
+            if (!packages) return;
+
+            const container = document.getElementById('pricing-cards-container');
+            const packageOrder = ['demo', 'starter', 'professional', 'premium'];
+
+            container.innerHTML = packageOrder.map(key => {
+                const pkg = packages[key];
+                const isFeatured = key === 'professional';
+
+                return `
+                    <div class="pricing-card ${isFeatured ? 'featured' : ''}">
+                        ${isFeatured ? '<div class="pricing-badge">Most Popular</div>' : ''}
+                        <h3>${pkg.name}</h3>
+                        <div class="pricing-price">$${pkg.price}</div>
+                        <div class="pricing-description">
+                            <p>${pkg.description}</p>
+                            <p style="margin-top: 1rem; font-weight: 600; color: #0a0a0a;">
+                                ${pkg.photos_to_receive} AI-Enhanced Photo${pkg.photos_to_receive > 1 ? 's' : ''}
+                            </p>
+                        </div>
+                        <a href="#" onclick="handleSelectPackage('${key}')" class="btn ${isFeatured ? 'btn-primary' : 'btn-secondary'}" style="width: 100%; margin-top: 1rem;">
+                            Select ${pkg.name}
+                        </a>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Handle get started - redirect to auth page
+        async function handleGetStarted() {
+            window.location.href = '/pixlypro-auth';
+        }
+
+        // Handle package selection
+        function handleSelectPackage(packageType) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Please log in or create an account to continue.');
+                window.location.href = '/login';
+                return;
+            }
+
+            window.location.href = `/pixlypro-upload?package=${packageType}`;
+        }
+
+        // FAQ Toggle functionality
+        function toggleFaq(element) {
+            const faqItem = element.parentElement;
+            const wasActive = faqItem.classList.contains('active');
+
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            if (!wasActive) {
+                faqItem.classList.add('active');
+            }
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            loadPackages();
+        });
+    </script>
+</body>
+</html>

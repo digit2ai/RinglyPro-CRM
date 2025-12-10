@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixlyPro Photo Studio - Upload Your Photos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .redirect-container {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 3rem;
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            animation: bounce 1s ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        h1 {
+            color: #1e293b;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            color: #64748b;
+            font-size: 1.125rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #e2e8f0;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 1rem 0;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.875rem 2rem;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .package-info {
+            background: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .package-info strong {
+            color: #3b82f6;
+            text-transform: capitalize;
+        }
+    </style>
+</head>
+<body>
+    <div class="redirect-container">
+        <div class="success-icon">✨</div>
+        <h1>Payment Successful!</h1>
+        <div id="packageInfo" class="package-info" style="display: none;">
+            <p>Package: <strong id="packageType"></strong></p>
+        </div>
+        <p id="message">Redirecting you to the Photo Studio...</p>
+        <div class="loading-spinner"></div>
+        <br><br>
+        <a href="/photo-studio" class="btn" id="manualLink" style="display: none;">Go to Photo Studio</a>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const packageType = urlParams.get('package');
+        const sessionId = urlParams.get('session_id');
+        const orderId = urlParams.get('order_id');
+        const canceled = urlParams.get('canceled');
+
+        // Handle canceled payment
+        if (canceled === 'true') {
+            document.querySelector('.success-icon').textContent = '⚠️';
+            document.querySelector('h1').textContent = 'Payment Canceled';
+            document.querySelector('#message').textContent = 'Your payment was canceled. You can try again from the Photo Studio.';
+            document.querySelector('.loading-spinner').style.display = 'none';
+            document.querySelector('#manualLink').style.display = 'inline-block';
+
+            // Redirect after 3 seconds
+            setTimeout(() => {
+                window.location.href = '/photo-studio';
+            }, 3000);
+        } else {
+            // Show package info if available
+            if (packageType) {
+                document.getElementById('packageInfo').style.display = 'block';
+                document.getElementById('packageType').textContent = packageType;
+            }
+
+            // Redirect to photo studio after 2 seconds
+            setTimeout(() => {
+                window.location.href = '/photo-studio';
+            }, 2000);
+
+            // Show manual link after 3 seconds in case redirect fails
+            setTimeout(() => {
+                document.querySelector('#manualLink').style.display = 'inline-block';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
