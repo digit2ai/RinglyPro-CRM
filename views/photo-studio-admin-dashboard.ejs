@@ -1444,7 +1444,12 @@ The Photo Studio Team"
                                 </div>
                             `}).join('')}
                         </div>
-                        ${originalPhotos.every(photo => enhancedPhotos.find(e => e.original_photo_id === photo.id)) ? `
+                        ${order.order_status === 'completed' ? `
+                            <div style="margin-top: 2rem; padding: 1.5rem; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 0.75rem; text-align: center;">
+                                <p style="color: #15803d; font-weight: 600; font-size: 1.125rem;">✅ Order Completed</p>
+                                <p style="color: #16a34a; margin-top: 0.5rem;">Customer has been notified and can download their enhanced photos.</p>
+                            </div>
+                        ` : originalPhotos.every(photo => enhancedPhotos.find(e => e.original_photo_id === photo.id)) ? `
                             <div style="margin-top: 2rem; padding: 1.5rem; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 0.75rem; text-align: center;">
                                 <p style="color: #15803d; font-weight: 600; margin-bottom: 1rem;">✅ All photos have been enhanced!</p>
                                 <button class="btn btn-primary" style="font-size: 1.125rem; padding: 1rem 2rem;" onclick="markOrderAsCompleted(${order.id})">
