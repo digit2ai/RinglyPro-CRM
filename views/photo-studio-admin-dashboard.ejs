@@ -1731,10 +1731,11 @@ The Photo Studio Team"
                 const data = await response.json();
 
                 if (data.success) {
+                    const completedOrderId = pendingCompletionOrderId;
                     closeCompletionModal();
                     alert('✅ Order marked as completed! Customer has been notified via email with your message.');
                     // Reload order details and orders list
-                    await loadOrderDetails(pendingCompletionOrderId);
+                    await loadOrderDetails(completedOrderId);
                     await loadOrders();
                 } else {
                     throw new Error(data.error || 'Failed to complete order');
