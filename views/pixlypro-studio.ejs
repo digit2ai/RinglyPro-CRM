@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixlyPro AI Studio - Instant Photo Enhancement | RinglyPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.125rem;
+            opacity: 0.9;
+        }
+
+        .studio-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .upload-section {
+            padding: 3rem;
+            text-align: center;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .upload-zone {
+            border: 3px dashed #3b82f6;
+            border-radius: 1rem;
+            padding: 3rem;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-zone:hover {
+            background: #eff6ff;
+            border-color: #2563eb;
+        }
+
+        .upload-zone.dragover {
+            background: #dbeafe;
+            border-color: #1d4ed8;
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-size: 1.25rem;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.875rem 2rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .gallery {
+            padding: 2rem 3rem 3rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .photo-card {
+            background: #f8fafc;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .photo-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .photo-preview {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            background: #e2e8f0;
+        }
+
+        .photo-info {
+            padding: 1rem;
+        }
+
+        .photo-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .photo-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-uploading {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-enhancing {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-ready {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+            transition: width 0.3s ease;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        .photo-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn-small {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-download {
+            background: #10b981;
+        }
+
+        .btn-download:hover {
+            background: #059669;
+        }
+
+        .btn-compare {
+            background: #3b82f6;
+        }
+
+        .btn-compare:hover {
+            background: #2563eb;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #64748b;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f4f6;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .comparison-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            padding: 2rem;
+            overflow: auto;
+        }
+
+        .comparison-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .comparison-content {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .comparison-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .comparison-images {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .comparison-side {
+            text-align: center;
+        }
+
+        .comparison-side img {
+            width: 100%;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .comparison-label {
+            font-weight: 600;
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+            color: #1e293b;
+        }
+
+        .close-modal {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1.5rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .close-modal:hover {
+            background: #dc2626;
+        }
+
+        @media (max-width: 768px) {
+            .comparison-images {
+                grid-template-columns: 1fr;
+            }
+
+            .gallery {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 PixlyPro AI Studio</h1>
+            <p>Upload your photos and watch AI enhance them instantly</p>
+        </div>
+
+        <div class="studio-card">
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">📸</div>
+                    <div class="upload-text">Drag & Drop Photos Here</div>
+                    <div class="upload-hint">or click to browse (supports JPG, PNG, HEIC)</div>
+                    <input type="file" id="fileInput" class="file-input" accept="image/*" multiple>
+                    <button class="btn" onclick="document.getElementById('fileInput').click()">
+                        Choose Photos
+                    </button>
+                </div>
+            </div>
+
+            <!-- Gallery Section -->
+            <div class="gallery" id="gallery">
+                <div class="empty-state">
+                    <div class="empty-icon">🎨</div>
+                    <h3>No photos yet</h3>
+                    <p>Upload your first photo to see AI magic happen!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison Modal -->
+    <div class="comparison-modal" id="comparisonModal">
+        <div class="comparison-content">
+            <div class="comparison-header">
+                <h2>Before & After Comparison</h2>
+                <button class="close-modal" onclick="closeComparison()">Close</button>
+            </div>
+            <div class="comparison-images">
+                <div class="comparison-side">
+                    <div class="comparison-label">Original</div>
+                    <img id="originalImage" src="" alt="Original">
+                </div>
+                <div class="comparison-side">
+                    <div class="comparison-label">✨ AI Enhanced</div>
+                    <img id="enhancedImage" src="" alt="Enhanced">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let photos = [];
+
+        // Upload Zone Interactions
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const gallery = document.getElementById('gallery');
+
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            handleFiles(files);
+        });
+
+        async function handleFiles(files) {
+            if (files.length === 0) return;
+
+            // Clear empty state
+            gallery.innerHTML = '';
+
+            for (const file of files) {
+                if (!file.type.startsWith('image/')) continue;
+
+                const photoId = Date.now() + Math.random();
+                const photo = {
+                    id: photoId,
+                    name: file.name,
+                    file: file,
+                    originalUrl: URL.createObjectURL(file),
+                    enhancedUrl: null,
+                    status: 'uploading',
+                    progress: 0
+                };
+
+                photos.push(photo);
+                renderPhoto(photo);
+
+                // Start enhancement process
+                enhancePhoto(photo);
+            }
+        }
+
+        function renderPhoto(photo) {
+            const card = document.createElement('div');
+            card.className = 'photo-card';
+            card.id = `photo-${photo.id}`;
+
+            let statusBadge = '';
+            if (photo.status === 'uploading') statusBadge = '<span class="status-badge status-uploading">Uploading</span>';
+            if (photo.status === 'enhancing') statusBadge = '<span class="status-badge status-enhancing">🤖 AI Enhancing</span>';
+            if (photo.status === 'ready') statusBadge = '<span class="status-badge status-ready">✨ Ready</span>';
+            if (photo.status === 'error') statusBadge = '<span class="status-badge status-error">Error</span>';
+
+            const progressBar = photo.status !== 'ready' && photo.status !== 'error' ?
+                `<div class="progress-bar"><div class="progress-fill" style="width: ${photo.progress}%"></div></div>` : '';
+
+            const actions = photo.status === 'ready' ? `
+                <div class="photo-actions">
+                    <button class="btn btn-small btn-download" onclick="downloadPhoto('${photo.id}')">Download</button>
+                    <button class="btn btn-small btn-compare" onclick="comparePhoto('${photo.id}')">Compare</button>
+                </div>
+            ` : '';
+
+            card.innerHTML = `
+                <img src="${photo.enhancedUrl || photo.originalUrl}" alt="${photo.name}" class="photo-preview">
+                <div class="photo-info">
+                    <div class="photo-name">${photo.name}</div>
+                    <div class="photo-status">
+                        ${statusBadge}
+                    </div>
+                    ${progressBar}
+                    ${actions}
+                </div>
+            `;
+
+            gallery.appendChild(card);
+        }
+
+        function updatePhoto(photoId, updates) {
+            const photo = photos.find(p => p.id === photoId);
+            if (!photo) return;
+
+            Object.assign(photo, updates);
+
+            const card = document.getElementById(`photo-${photoId}`);
+            if (card) {
+                card.remove();
+                renderPhoto(photo);
+            }
+        }
+
+        async function enhancePhoto(photo) {
+            try {
+                // Step 1: Upload to S3
+                updatePhoto(photo.id, { status: 'uploading', progress: 30 });
+
+                const formData = new FormData();
+                formData.append('photo', photo.file);
+
+                const uploadResponse = await fetch('/api/pixlypro/upload-temp', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!uploadResponse.ok) throw new Error('Upload failed');
+
+                const { imageUrl } = await uploadResponse.json();
+                updatePhoto(photo.id, { progress: 60 });
+
+                // Step 2: Enhance with AI
+                updatePhoto(photo.id, { status: 'enhancing', progress: 70 });
+
+                const enhanceResponse = await fetch('/api/pixlypro/enhance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageUrl })
+                });
+
+                if (!enhanceResponse.ok) throw new Error('Enhancement failed');
+
+                const { enhancedUrl } = await enhanceResponse.json();
+
+                updatePhoto(photo.id, {
+                    status: 'ready',
+                    progress: 100,
+                    enhancedUrl: enhancedUrl
+                });
+
+            } catch (error) {
+                console.error('Enhancement error:', error);
+                updatePhoto(photo.id, { status: 'error' });
+            }
+        }
+
+        function downloadPhoto(photoId) {
+            const photo = photos.find(p => p.id === photoId);
+            if (!photo || !photo.enhancedUrl) return;
+
+            const a = document.createElement('a');
+            a.href = photo.enhancedUrl;
+            a.download = `enhanced_${photo.name}`;
+            a.click();
+        }
+
+        function comparePhoto(photoId) {
+            const photo = photos.find(p => p.id === photoId);
+            if (!photo) return;
+
+            document.getElementById('originalImage').src = photo.originalUrl;
+            document.getElementById('enhancedImage').src = photo.enhancedUrl;
+            document.getElementById('comparisonModal').classList.add('active');
+        }
+
+        function closeComparison() {
+            document.getElementById('comparisonModal').classList.remove('active');
+        }
+
+        // Close modal on outside click
+        document.getElementById('comparisonModal').addEventListener('click', (e) => {
+            if (e.target.id === 'comparisonModal') {
+                closeComparison();
+            }
+        });
+    </script>
+</body>
+</html>
