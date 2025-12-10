@@ -4,6 +4,7 @@ const logger = require('../utils/logger');
 const { sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 const voicemailAudioService = require('../services/voicemailAudioService');
+const { authenticateToken } = require('../middleware/auth');
 
 /**
  * GET /api/client-settings/:clientId/voicemail-message
@@ -166,6 +167,202 @@ router.delete('/:clientId/voicemail-message', async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message
+    });
+  }
+});
+
+// =====================================================
+// VAGARO INTEGRATION SETTINGS
+// =====================================================
+
+/**
+ * GET /api/client-settings/current
+ * Get current client's settings
+ */
+router.get('/current', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+
+    // Get user's client ID
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user || !user.client_id) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    // Get client settings
+    const [client] = await sequelize.query(
+      'SELECT id, client_name, settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: user.client_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client settings not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      settings: client.settings || {}
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Get settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get settings'
+    });
+  }
+});
+
+/**
+ * POST /api/client-settings/vagaro
+ * Update Vagaro integration settings
+ */
+router.post('/vagaro', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { enabled, clientId, clientSecretKey, merchantId, webhookToken, region } = req.body;
+
+    // Get user's client ID
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user || !user.client_id) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    // Get current settings
+    const [client] = await sequelize.query(
+      'SELECT settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: user.client_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const currentSettings = client?.settings || {};
+
+    // Update Vagaro settings with OAuth credentials
+    const updatedSettings = {
+      ...currentSettings,
+      integration: {
+        ...(currentSettings.integration || {}),
+        vagaro: {
+          enabled: enabled === true,
+          clientId: clientId || null,
+          clientSecretKey: clientSecretKey || null,
+          merchantId: merchantId || null,
+          webhookToken: webhookToken || null,
+          region: region || 'us01',
+          updatedAt: new Date().toISOString()
+        }
+      }
+    };
+
+    // Save to database
+    await sequelize.query(
+      'UPDATE clients SET settings = :settings, updated_at = NOW() WHERE id = :clientId',
+      {
+        replacements: {
+          settings: JSON.stringify(updatedSettings),
+          clientId: user.client_id
+        },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`[CLIENT SETTINGS] Updated Vagaro settings for client ${user.client_id}`);
+
+    res.json({
+      success: true,
+      message: 'Vagaro settings updated successfully',
+      settings: updatedSettings
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Update Vagaro settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update settings'
+    });
+  }
+});
+
+/**
+ * GET /api/client-settings/vagaro
+ * Get Vagaro integration settings
+ */
+router.get('/vagaro', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+
+    // Get user's client ID
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user || !user.client_id) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    // Get client settings
+    const [client] = await sequelize.query(
+      'SELECT settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: user.client_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const vagaroSettings = client?.settings?.integration?.vagaro || {
+      enabled: false,
+      clientId: null,
+      clientSecretKey: null,
+      merchantId: null,
+      webhookToken: null,
+      region: 'us01'
+    };
+
+    res.json({
+      success: true,
+      vagaro: vagaroSettings
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Get Vagaro settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get Vagaro settings'
     });
   }
 });
