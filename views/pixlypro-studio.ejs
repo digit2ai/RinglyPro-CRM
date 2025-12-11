@@ -518,9 +518,34 @@
                 // Disable checkout button
                 const btn = document.getElementById('processCheckoutBtn');
                 btn.disabled = true;
+                btn.textContent = 'Uploading photos...';
+
+                // Step 1: Upload photos to server BEFORE creating checkout session
+                const formData = new FormData();
+                for (const photo of photos) {
+                    // Fetch the blob and convert to file
+                    const response = await fetch(photo.originalUrl);
+                    const blob = await response.blob();
+                    formData.append('photos', blob, photo.name);
+                }
+
+                const uploadResponse = await fetch('/api/pixlypro/upload-temp-photos', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const uploadData = await uploadResponse.json();
+
+                if (!uploadData.success) {
+                    throw new Error(uploadData.error || 'Failed to upload photos');
+                }
+
+                // Step 2: Create checkout session with uploaded photo IDs
                 btn.textContent = 'Creating checkout session...';
 
-                // Create checkout session
                 const response = await fetch('/api/pixlypro/create-checkout-session', {
                     method: 'POST',
                     headers: {
@@ -530,20 +555,15 @@
                     body: JSON.stringify({
                         packageType: 'custom',
                         photoCount: photoCount,
-                        totalAmount: totalAmount
+                        totalAmount: totalAmount,
+                        tempPhotoIds: uploadData.photoIds
                     })
                 });
 
                 const data = await response.json();
 
                 if (data.success && data.sessionUrl) {
-                    // Store photos in sessionStorage to upload after payment
-                    const photosData = photos.map(p => ({
-                        id: p.id,
-                        name: p.name,
-                        originalUrl: p.originalUrl
-                    }));
-                    sessionStorage.setItem('pixlypro_pending_photos', JSON.stringify(photosData));
+                    // Store order ID for after payment
                     sessionStorage.setItem('pixlypro_order_id', data.orderId);
 
                     // Redirect to Stripe checkout

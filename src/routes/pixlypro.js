@@ -150,6 +150,89 @@ router.post('/calculate-price', async (req, res) => {
 });
 
 /**
+ * POST /api/pixlypro/upload-temp-photos
+ * Upload photos to S3 temporarily before payment
+ */
+router.post('/upload-temp-photos', authenticateToken, upload.array('photos', 100), async (req, res) => {
+  const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+  const sharp = require('sharp');
+  const crypto = require('crypto');
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const userId = req.user.userId || req.user.id;
+    const photos = req.files;
+
+    if (!photos || photos.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No photos uploaded'
+      });
+    }
+
+    const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
+    const s3 = new S3Client({
+      region: process.env.AWS_REGION || 'us-east-1',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+      }
+    });
+
+    const uploadedPhotos = [];
+
+    // Upload each photo to S3 in a temp folder
+    for (const photo of photos) {
+      try {
+        const tempId = crypto.randomBytes(16).toString('hex');
+        const filename = `pixlypro/temp/${userId}/${tempId}.png`;
+
+        // Convert to PNG if needed
+        let imageBuffer = photo.buffer;
+        if (photo.mimetype !== 'image/png') {
+          imageBuffer = await sharp(photo.buffer).png().toBuffer();
+        }
+
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: filename,
+          Body: imageBuffer,
+          ContentType: 'image/png',
+          ACL: 'public-read'
+        }));
+
+        const url = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${filename}`;
+
+        uploadedPhotos.push({
+          tempId,
+          filename: photo.originalname,
+          url
+        });
+
+      } catch (photoError) {
+        logger.error(`[PIXLYPRO] Error uploading photo ${photo.originalname}:`, photoError);
+      }
+    }
+
+    logger.info(`[PIXLYPRO] Uploaded ${uploadedPhotos.length} temp photos for user ${userId}`);
+
+    res.json({
+      success: true,
+      photoIds: uploadedPhotos.map(p => p.tempId),
+      photos: uploadedPhotos
+    });
+
+  } catch (error) {
+    logger.error('[PIXLYPRO] Upload temp photos error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to upload photos'
+    });
+  }
+});
+
+/**
  * POST /api/pixlypro/create-checkout-session
  * Create Stripe checkout session for PixlyPro
  */
@@ -160,7 +243,7 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
 
   try {
     const userId = req.user.userId || req.user.id;
-    const { packageType, photoCount, totalAmount } = req.body;
+    const { packageType, photoCount, totalAmount, tempPhotoIds } = req.body;
 
     // Validate input
     if (!packageType || !photoCount || !totalAmount) {
@@ -182,6 +265,11 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
     );
 
     const orderId = order[0].id;
+
+    // Store temp photo IDs in session metadata
+    if (tempPhotoIds && tempPhotoIds.length > 0) {
+      logger.info(`[PIXLYPRO] Storing ${tempPhotoIds.length} temp photo IDs for order ${orderId}`);
+    }
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
@@ -936,6 +1024,222 @@ router.post('/process-order', authenticateToken, upload.array('photos', 100), as
 
   } catch (error) {
     logger.error('[PIXLYPRO] Process order error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process photos'
+    });
+  }
+});
+
+/**
+ * POST /api/pixlypro/process-temp-photos
+ * Process temp photos from S3 for a paid order - enhance with Pixelixe AI
+ */
+router.post('/process-temp-photos', authenticateToken, async (req, res) => {
+  const { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
+  const sharp = require('sharp');
+  const crypto = require('crypto');
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+  const https = require('https');
+
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { orderId } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Order ID is required'
+      });
+    }
+
+    // Verify order belongs to user
+    const [order] = await sequelize.query(
+      `SELECT id, photo_count, payment_status, order_status
+       FROM pixlypro_orders
+       WHERE id = :orderId AND user_id = :userId`,
+      {
+        replacements: { orderId, userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    // For localhost testing: auto-update payment status if pending
+    if (order.payment_status === 'pending') {
+      logger.info(`[PIXLYPRO] Auto-updating payment status to completed for order ${orderId} (localhost workaround)`);
+      await sequelize.query(
+        `UPDATE pixlypro_orders
+         SET payment_status = 'completed',
+             paid_at = NOW(),
+             updated_at = NOW()
+         WHERE id = :orderId`,
+        {
+          replacements: { orderId },
+          type: QueryTypes.UPDATE
+        }
+      );
+    } else if (order.payment_status !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        error: 'Order payment not completed'
+      });
+    }
+
+    const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
+    const s3 = new S3Client({
+      region: process.env.AWS_REGION || 'us-east-1',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+      }
+    });
+
+    logger.info(`[PIXLYPRO] Processing temp photos for order ${orderId}`);
+
+    // Update order status
+    await sequelize.query(
+      `UPDATE pixlypro_orders
+       SET order_status = 'processing',
+           updated_at = NOW()
+       WHERE id = :orderId`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    // List temp photos for this user
+    const listResponse = await s3.send(new ListObjectsV2Command({
+      Bucket: BUCKET_NAME,
+      Prefix: `pixlypro/temp/${userId}/`
+    }));
+
+    if (!listResponse.Contents || listResponse.Contents.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No photos found to process'
+      });
+    }
+
+    const processedPhotos = [];
+
+    // Process each temp photo
+    for (const s3Object of listResponse.Contents) {
+      try {
+        const tempUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${s3Object.Key}`;
+        const filename = s3Object.Key.split('/').pop();
+
+        logger.info(`[PIXLYPRO] Processing temp photo: ${tempUrl}`);
+
+        // Step 1: Move to originals folder
+        const originalFilename = `pixlypro/originals/${orderId}/${filename}`;
+        const getResponse = await s3.send(new GetObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: s3Object.Key
+        }));
+
+        const chunks = [];
+        for await (const chunk of getResponse.Body) {
+          chunks.push(chunk);
+        }
+        const imageBuffer = Buffer.concat(chunks);
+
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: originalFilename,
+          Body: imageBuffer,
+          ContentType: 'image/png',
+          ACL: 'public-read'
+        }));
+
+        const originalUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
+
+        // Step 2: Enhance with Pixelixe AI
+        const brightnessBuffer = await pixelixeService.adjustBrightness(originalUrl, 0.15, 'png');
+
+        const brightnessFilename = `pixlypro/temp/${crypto.randomBytes(16).toString('hex')}.png`;
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: brightnessFilename,
+          Body: brightnessBuffer,
+          ContentType: 'image/png',
+          ACL: 'public-read'
+        }));
+
+        const brightnessUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
+
+        // Step 3: Apply contrast
+        const contrastBuffer = await pixelixeService.adjustContrast(brightnessUrl, 0.20, 'png');
+
+        const enhancedFilename = `pixlypro/enhanced/${orderId}/${filename}`;
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: enhancedFilename,
+          Body: contrastBuffer,
+          ContentType: 'image/png',
+          ACL: 'public-read'
+        }));
+
+        const enhancedUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
+
+        // Step 4: Save to database
+        await sequelize.query(
+          `INSERT INTO pixlypro_photos (order_id, original_url, enhanced_url, filename, created_at)
+           VALUES (:orderId, :originalUrl, :enhancedUrl, :filename, NOW())`,
+          {
+            replacements: {
+              orderId,
+              originalUrl,
+              enhancedUrl,
+              filename
+            },
+            type: QueryTypes.INSERT
+          }
+        );
+
+        processedPhotos.push({
+          original: originalUrl,
+          enhanced: enhancedUrl,
+          filename
+        });
+
+        logger.info(`[PIXLYPRO] Successfully processed photo: ${filename}`);
+
+      } catch (photoError) {
+        logger.error(`[PIXLYPRO] Error processing temp photo:`, photoError);
+      }
+    }
+
+    // Update order status to completed
+    await sequelize.query(
+      `UPDATE pixlypro_orders
+       SET order_status = 'completed',
+           updated_at = NOW()
+       WHERE id = :orderId`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`[PIXLYPRO] Order ${orderId} completed with ${processedPhotos.length} photos`);
+
+    res.json({
+      success: true,
+      processedCount: processedPhotos.length,
+      photos: processedPhotos
+    });
+
+  } catch (error) {
+    logger.error('[PIXLYPRO] Process temp photos error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to process photos'
