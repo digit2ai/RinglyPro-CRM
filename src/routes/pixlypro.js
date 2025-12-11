@@ -130,34 +130,8 @@ router.post('/calculate-price', async (req, res) => {
       });
     }
 
-    // Volume pricing: 1-10: $150, 11-20: +$12/photo, 21-40: +$10/photo, 41+: +$8/photo
-    let price = 0;
-
-    if (photoCount <= 10) {
-      price = 150;
-    } else {
-      price = 150; // Base 10 photos
-      let remaining = photoCount - 10;
-
-      // Photos 11-20: $12 each
-      if (remaining > 0) {
-        const tier1 = Math.min(remaining, 10);
-        price += tier1 * 12;
-        remaining -= tier1;
-      }
-
-      // Photos 21-40: $10 each
-      if (remaining > 0) {
-        const tier2 = Math.min(remaining, 20);
-        price += tier2 * 10;
-        remaining -= tier2;
-      }
-
-      // Photos 41+: $8 each
-      if (remaining > 0) {
-        price += remaining * 8;
-      }
-    }
+    // Simple pricing: $0.50 per photo
+    const price = photoCount * 0.50;
 
     res.json({
       success: true,
