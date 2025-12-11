@@ -301,7 +301,7 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
       }],
       mode: 'payment',
       success_url: `${process.env.APP_URL || 'http://localhost:3000'}/pixlypro-upload?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
-      cancel_url: `${process.env.APP_URL || 'http://localhost:3000'}/photo-studio`,
+      cancel_url: `${process.env.APP_URL || 'http://localhost:3000'}/pixlypro-upload?canceled=true&order_id=${orderId}`,
       client_reference_id: orderId.toString(),
       metadata: {
         order_id: orderId.toString(),

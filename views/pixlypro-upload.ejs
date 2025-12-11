@@ -155,51 +155,6 @@
 
     <script>
         // =====================================================
-        // IndexedDB - Same config as studio page
-        // =====================================================
-        const DB_NAME = 'PixlyProPhotos';
-        const DB_VERSION = 1;
-        const STORE_NAME = 'photos';
-        let db = null;
-
-        async function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    db = request.result;
-                    resolve(db);
-                };
-                request.onupgradeneeded = (event) => {
-                    const database = event.target.result;
-                    if (!database.objectStoreNames.contains(STORE_NAME)) {
-                        database.createObjectStore(STORE_NAME, { keyPath: 'id' });
-                    }
-                };
-            });
-        }
-
-        async function getPhotosFromDB() {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readonly');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.getAll();
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        async function clearPhotosFromDB() {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readwrite');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.clear();
-                request.onsuccess = () => resolve();
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        // =====================================================
         // UI Helpers
         // =====================================================
         function updateStatus(icon, title, message) {
@@ -238,12 +193,12 @@
         async function processAfterPayment() {
             const urlParams = new URLSearchParams(window.location.search);
             const sessionId = urlParams.get('session_id');
-            const orderId = urlParams.get('order_id') || sessionStorage.getItem('pixlypro_order_id');
+            const orderId = urlParams.get('order_id');
             const canceled = urlParams.get('canceled');
 
             // Handle canceled payment
             if (canceled === 'true') {
-                updateStatus('⚠️', 'Payment Canceled', 'Your payment was canceled. You can try again from the Photo Studio.');
+                updateStatus('⚠️', 'Payment Canceled', 'Your payment was canceled. Your photos are still saved - you can try again.');
                 hideSpinner();
                 document.getElementById('dashboardBtn').href = '/photo-studio';
                 document.getElementById('dashboardBtn').textContent = 'Back to Photo Studio';
@@ -268,6 +223,7 @@
 
                 // Step 1: Verify payment with Stripe
                 updateStatus('💳', 'Verifying Payment...', 'Confirming your payment with Stripe...');
+                showProgress(10, 'Verifying payment...');
 
                 const verifyResponse = await fetch(`/api/pixlypro/verify-payment?session_id=${sessionId}&order_id=${orderId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -279,53 +235,18 @@
                     return;
                 }
 
-                // Step 2: Get photos from IndexedDB
-                updateStatus('📦', 'Preparing Photos...', 'Loading your photos from browser storage...');
+                // Step 2: Process temp photos from S3
+                // Photos were uploaded to S3 temp folder BEFORE checkout
+                updateStatus('🚀', 'Enhancing Photos...', 'Processing your photos with AI enhancement...');
+                showProgress(30, 'Starting AI enhancement...');
 
-                await initDB();
-                const storedPhotos = await getPhotosFromDB();
-
-                if (storedPhotos.length === 0) {
-                    // No photos in IndexedDB - check if they might already be processed
-                    updateStatus('⚠️', 'No Photos Found', 'No photos found in browser storage. They may have already been processed.');
-                    document.getElementById('errorContainer').innerHTML = `
-                        <div class="warning-message">
-                            If you closed your browser or cleared data before processing completed,
-                            please contact support with your Order #${orderId}.
-                        </div>
-                    `;
-                    document.getElementById('errorContainer').style.display = 'block';
-                    hideSpinner();
-                    document.getElementById('dashboardBtn').style.display = 'inline-block';
-                    return;
-                }
-
-                // Step 3: Upload photos to S3 and enhance
-                updateStatus('🚀', 'Uploading & Enhancing...', `Processing ${storedPhotos.length} photo${storedPhotos.length > 1 ? 's' : ''}...`);
-                showProgress(0, `Uploading photo 1 of ${storedPhotos.length}...`);
-
-                const formData = new FormData();
-                formData.append('orderId', orderId);
-
-                for (let i = 0; i < storedPhotos.length; i++) {
-                    const photo = storedPhotos[i];
-                    // Convert blob to File
-                    const file = new File([photo.blob], photo.name, { type: photo.type || 'image/png' });
-                    formData.append('photos', file);
-
-                    const percent = Math.round(((i + 1) / storedPhotos.length) * 30);
-                    showProgress(percent, `Preparing photo ${i + 1} of ${storedPhotos.length}...`);
-                }
-
-                showProgress(35, 'Uploading to server...');
-
-                // Upload and enhance in one call
-                const processResponse = await fetch('/api/pixlypro/upload-and-enhance', {
+                const processResponse = await fetch('/api/pixlypro/process-temp-photos', {
                     method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: formData
+                    body: JSON.stringify({ orderId: orderId })
                 });
 
                 const processData = await processResponse.json();
@@ -334,12 +255,7 @@
                     throw new Error(processData.error || 'Failed to process photos');
                 }
 
-                // Step 4: Clear IndexedDB
-                showProgress(95, 'Cleaning up...');
-                await clearPhotosFromDB();
-                sessionStorage.removeItem('pixlypro_order_id');
-
-                // Step 5: Success!
+                // Step 3: Success!
                 showProgress(100, 'Complete!');
                 updateStatus('✅', 'Photos Enhanced!', `Successfully enhanced ${processData.processedCount} photo${processData.processedCount > 1 ? 's' : ''}! Your enhanced photos are ready.`);
                 showSuccess();

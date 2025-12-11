@@ -566,10 +566,40 @@
                 // Disable checkout button
                 const btn = document.getElementById('processCheckoutBtn');
                 btn.disabled = true;
+                btn.textContent = 'Uploading photos...';
+
+                // Step 1: Upload photos to S3 temp folder BEFORE payment
+                // This ensures photos are available after Stripe redirect
+                const storedPhotos = await getPhotosFromDB();
+                const formData = new FormData();
+
+                for (const photo of storedPhotos) {
+                    const file = new File([photo.blob], photo.name, { type: photo.type || 'image/png' });
+                    formData.append('photos', file);
+                }
+
+                btn.textContent = 'Uploading to secure storage...';
+
+                const uploadResponse = await fetch('/api/pixlypro/upload-temp-photos', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const uploadData = await uploadResponse.json();
+
+                if (!uploadData.success) {
+                    throw new Error(uploadData.error || 'Failed to upload photos');
+                }
+
+                const tempPhotoIds = uploadData.photoIds;
+                console.log('Uploaded temp photos:', tempPhotoIds);
+
                 btn.textContent = 'Creating checkout session...';
 
-                // Create checkout session WITHOUT uploading photos first
-                // Photos stay in IndexedDB until payment is confirmed
+                // Step 2: Create checkout session with temp photo IDs
                 const response = await fetch('/api/pixlypro/create-checkout-session', {
                     method: 'POST',
                     headers: {
@@ -579,16 +609,16 @@
                     body: JSON.stringify({
                         packageType: 'custom',
                         photoCount: photoCount,
-                        totalAmount: totalAmount
-                        // NO tempPhotoIds - photos stay in browser until payment confirmed
+                        totalAmount: totalAmount,
+                        tempPhotoIds: tempPhotoIds  // Store temp photo IDs with order
                     })
                 });
 
                 const data = await response.json();
 
                 if (data.success && data.sessionUrl) {
-                    // Store order ID for after payment
-                    sessionStorage.setItem('pixlypro_order_id', data.orderId);
+                    // Clear IndexedDB since photos are now on S3
+                    await clearPhotosFromDB();
 
                     // Redirect to Stripe checkout
                     window.location.href = data.sessionUrl;
