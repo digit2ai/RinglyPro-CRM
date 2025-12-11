@@ -340,50 +340,6 @@
             margin-top: 0.5rem;
         }
 
-        /* ============================================
-           STATS SECTION
-        ============================================ */
-        .stats {
-            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
-            color: white;
-            text-align: center;
-            padding: 4rem 0;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 3rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .stat-item {
-            padding: 1rem;
-        }
-
-        .stat-number {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            font-size: 1rem;
-            opacity: 0.9;
-        }
-
-        /* ============================================
-           PRICING SECTION
-        ============================================ */
-        .pricing {
-            background-color: #f8fafc;
-            text-align: center;
-        }
-
-        .pricing h2 {
-            margin-bottom: 1.5rem;
-        }
 
         /* ============================================
            FAQ SECTION
@@ -504,7 +460,6 @@
             section { padding: 3rem 0; }
             .hero { padding: 4rem 0 5rem; }
             .steps-grid { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
@@ -733,84 +688,6 @@
         </div>
     </section>
 
-    <!-- STATS SECTION -->
-    <section class="stats">
-        <div class="container">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-number">90%</div>
-                    <div class="stat-label">Faster Processing</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number">40%</div>
-                    <div class="stat-label">Lower Cost</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number">100%</div>
-                    <div class="stat-label">Quality Reviewed</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number">$0.50</div>
-                    <div class="stat-label">Per Photo</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- BOOST PRODUCTIVITY SECTION -->
-    <section class="pricing" id="pricing">
-        <div class="container">
-            <h2>Boost Productivity, Scale Your Marketing</h2>
-            <p style="text-align: center; color: #64748b; margin-bottom: 4rem; font-size: 1.25rem; max-width: 800px; margin-left: auto; margin-right: auto;">
-                Create enhanced images and graphics in multiple formats instantly. Generate unlimited variations with AI-powered automation.
-            </p>
-
-            <!-- Laptop Showcase -->
-            <div style="max-width: 1200px; margin: 0 auto; position: relative;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 1.5rem; padding: 3rem; box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3); position: relative; overflow: hidden;">
-                    <!-- Decorative elements -->
-                    <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
-                    <div style="position: absolute; bottom: -30px; left: -30px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
-
-                    <!-- Laptop mockup -->
-                    <div style="position: relative; z-index: 1;">
-                        <img src="https://images.unsplash.com/photo-1587614382346-4ec70e388b28?w=1200&h=700&fit=crop&q=80"
-                             alt="PixlyPro AI Photo Enhancement Dashboard"
-                             style="width: 100%; border-radius: 0.75rem; box-shadow: 0 30px 60px rgba(0,0,0,0.4); border: 8px solid #1a1a1a;">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Features Grid -->
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 4rem; max-width: 1100px; margin-left: auto; margin-right: auto;">
-                <div style="text-align: center; padding: 2rem;">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
-                    <h3 style="color: #0a0a0a; margin-bottom: 0.75rem; font-size: 1.25rem;">Instant Processing</h3>
-                    <p style="color: #64748b; font-size: 1rem;">AI enhances your photos in seconds, not hours. Upload and download immediately.</p>
-                </div>
-                <div style="text-align: center; padding: 2rem;">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">🎨</div>
-                    <h3 style="color: #0a0a0a; margin-bottom: 0.75rem; font-size: 1.25rem;">Multiple Formats</h3>
-                    <p style="color: #64748b; font-size: 1rem;">Generate variations with different filters and adjustments in just one click.</p>
-                </div>
-                <div style="text-align: center; padding: 2rem;">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">📈</div>
-                    <h3 style="color: #0a0a0a; margin-bottom: 0.75rem; font-size: 1.25rem;">Scale Unlimited</h3>
-                    <p style="color: #64748b; font-size: 1rem;">Process 1 photo or 1,000 photos—our AI scales with your needs.</p>
-                </div>
-            </div>
-
-            <!-- CTA Button -->
-            <div style="text-align: center; margin-top: 3rem;">
-                <a href="#" onclick="handleGetStarted()" class="btn btn-primary btn-large" style="font-size: 1.25rem; padding: 1.25rem 3rem;">
-                    Get Started - Just $0.50/Photo
-                </a>
-                <p style="margin-top: 1rem; color: #64748b; font-size: 0.875rem;">
-                    No subscription. No commitment. Pay only for what you enhance.
-                </p>
-            </div>
-        </div>
-    </section>
 
     <!-- FAQ SECTION -->
     <section class="faq-section">
