@@ -131,6 +131,10 @@
             document.querySelector('.loading-spinner').style.display = 'none';
             document.querySelector('#manualLink').style.display = 'inline-block';
 
+            // Clear sessionStorage
+            sessionStorage.removeItem('pixlypro_pending_photos');
+            sessionStorage.removeItem('pixlypro_order_id');
+
             // Redirect after 3 seconds
             setTimeout(() => {
                 window.location.href = '/photo-studio';
@@ -142,15 +146,84 @@
                 document.getElementById('packageType').textContent = packageType;
             }
 
-            // Redirect to photo studio after 2 seconds
-            setTimeout(() => {
-                window.location.href = '/photo-studio';
-            }, 2000);
+            // Process photos if available in sessionStorage
+            processPhotosAfterPayment();
+        }
 
-            // Show manual link after 3 seconds in case redirect fails
-            setTimeout(() => {
+        async function processPhotosAfterPayment() {
+            const photosData = sessionStorage.getItem('pixlypro_pending_photos');
+            const storedOrderId = sessionStorage.getItem('pixlypro_order_id');
+            const finalOrderId = orderId || storedOrderId;
+
+            if (!photosData || !finalOrderId) {
+                // No photos to process, just redirect
+                document.querySelector('#message').textContent = 'Redirecting you to the customer portal...';
+                setTimeout(() => {
+                    window.location.href = '/pixlypro-portal';
+                }, 2000);
+                return;
+            }
+
+            try {
+                document.querySelector('#message').textContent = 'Processing your photos with AI...';
+
+                const photos = JSON.parse(photosData);
+                const token = localStorage.getItem('pixlypro_token');
+
+                if (!token) {
+                    throw new Error('Not authenticated');
+                }
+
+                // Convert data URLs back to files
+                const formData = new FormData();
+                formData.append('orderId', finalOrderId);
+
+                for (const photoData of photos) {
+                    // Fetch the blob from the URL
+                    const response = await fetch(photoData.originalUrl);
+                    const blob = await response.blob();
+                    formData.append('photos', blob, photoData.name);
+                }
+
+                // Upload and process photos
+                const processResponse = await fetch('/api/pixlypro/process-order', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const result = await processResponse.json();
+
+                if (result.success) {
+                    document.querySelector('.success-icon').textContent = '✅';
+                    document.querySelector('h1').textContent = 'Photos Enhanced!';
+                    document.querySelector('#message').textContent = `Successfully enhanced ${result.processedCount} photo${result.processedCount > 1 ? 's' : ''}! Redirecting to your dashboard...`;
+                    document.querySelector('.loading-spinner').style.display = 'none';
+
+                    // Clear sessionStorage
+                    sessionStorage.removeItem('pixlypro_pending_photos');
+                    sessionStorage.removeItem('pixlypro_order_id');
+
+                    // Redirect to portal
+                    setTimeout(() => {
+                        window.location.href = '/pixlypro-portal';
+                    }, 2000);
+                } else {
+                    throw new Error(result.error || 'Processing failed');
+                }
+
+            } catch (error) {
+                console.error('Photo processing error:', error);
+                document.querySelector('.success-icon').textContent = '⚠️';
+                document.querySelector('h1').textContent = 'Processing Issue';
+                document.querySelector('#message').textContent = 'Payment successful, but there was an issue processing photos. Please contact support.';
+                document.querySelector('.loading-spinner').style.display = 'none';
                 document.querySelector('#manualLink').style.display = 'inline-block';
-            }, 3000);
+                document.querySelector('#manualLink').href = '/pixlypro-portal';
+                document.querySelector('#manualLink').textContent = 'Go to Dashboard';
+            }
         }
     </script>
 </body>

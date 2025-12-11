@@ -190,8 +190,8 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
         price_data: {
           currency: 'usd',
           product_data: {
-            name: `PixlyPro ${packageType} Package`,
-            description: `AI-enhanced ${photoCount} photo${photoCount > 1 ? 's' : ''}`,
+            name: `PixlyPro Photo Enhancement`,
+            description: `AI-enhanced ${photoCount} photo${photoCount > 1 ? 's' : ''} at $0.50 each`,
           },
           unit_amount: Math.round(totalAmount * 100),
         },
@@ -199,12 +199,13 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
       }],
       mode: 'payment',
       success_url: `${process.env.APP_URL || 'http://localhost:3000'}/pixlypro-upload?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
-      cancel_url: `${process.env.APP_URL || 'http://localhost:3000'}/pixlypro`,
+      cancel_url: `${process.env.APP_URL || 'http://localhost:3000'}/photo-studio`,
       client_reference_id: orderId.toString(),
       metadata: {
         order_id: orderId.toString(),
         user_id: userId.toString(),
-        service: 'pixlypro'
+        service: 'pixlypro',
+        photo_count: photoCount.toString()
       }
     });
 
@@ -619,7 +620,7 @@ router.post('/create-cart-checkout', authenticateToken, async (req, res) => {
 
 /**
  * GET /api/pixlypro/orders
- * Get user's PixlyPro orders
+ * Get user's PixlyPro orders with photos
  */
 router.get('/orders', authenticateToken, async (req, res) => {
   const { sequelize } = require('../models');
@@ -628,10 +629,12 @@ router.get('/orders', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id;
 
+    // Get all orders
     const orders = await sequelize.query(
       `SELECT id, package_type, total_amount as price, photo_count as photos_to_upload,
               photo_count as photos_to_receive, photo_count as photos_uploaded,
-              payment_status, order_status, created_at as order_date
+              payment_status, order_status, created_at as order_date,
+              paid_at, updated_at
        FROM pixlypro_orders
        WHERE user_id = :userId
        ORDER BY created_at DESC`,
@@ -640,6 +643,21 @@ router.get('/orders', authenticateToken, async (req, res) => {
         type: QueryTypes.SELECT
       }
     );
+
+    // Get photos for each order
+    for (const order of orders) {
+      const photos = await sequelize.query(
+        `SELECT id, original_url, enhanced_url, filename, created_at
+         FROM pixlypro_photos
+         WHERE order_id = :orderId
+         ORDER BY created_at ASC`,
+        {
+          replacements: { orderId: order.id },
+          type: QueryTypes.SELECT
+        }
+      );
+      order.photos = photos;
+    }
 
     res.json({
       success: true,
@@ -651,6 +669,256 @@ router.get('/orders', authenticateToken, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to get orders'
+    });
+  }
+});
+
+/**
+ * POST /api/pixlypro/webhooks/stripe
+ * Stripe payment webhook - triggers AI photo processing after successful payment
+ */
+router.post('/webhooks/stripe', express.raw({type: 'application/json'}), async (req, res) => {
+  const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  const sig = req.headers['stripe-signature'];
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    logger.error('[PIXLYPRO] Webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  try {
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+
+      // Check if this is a PixlyPro payment
+      if (session.metadata && session.metadata.service === 'pixlypro') {
+        const orderId = session.metadata.order_id || session.client_reference_id;
+
+        logger.info(`[PIXLYPRO] Payment completed for order ${orderId}`);
+
+        // Update order payment status
+        await sequelize.query(
+          `UPDATE pixlypro_orders
+           SET payment_status = 'completed',
+               stripe_payment_intent_id = :paymentIntentId,
+               paid_at = NOW(),
+               updated_at = NOW()
+           WHERE id = :orderId`,
+          {
+            replacements: {
+              paymentIntentId: session.payment_intent,
+              orderId: orderId
+            },
+            type: QueryTypes.UPDATE
+          }
+        );
+
+        // Note: Photos will be uploaded and processed via the upload endpoint
+        // after payment is confirmed (user uploads from pixlypro-upload page)
+
+        logger.info(`[PIXLYPRO] Order ${orderId} payment confirmed - ready for photo upload`);
+      }
+    }
+
+    res.json({ received: true });
+
+  } catch (error) {
+    logger.error('[PIXLYPRO] Webhook processing error:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
+
+/**
+ * POST /api/pixlypro/process-order
+ * Process photos for a paid order - upload to S3 and enhance with Pixelixe AI
+ */
+router.post('/process-order', authenticateToken, upload.array('photos', 100), async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { orderId } = req.body;
+    const photos = req.files;
+
+    if (!orderId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Order ID is required'
+      });
+    }
+
+    if (!photos || photos.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No photos uploaded'
+      });
+    }
+
+    // Verify order belongs to user and is paid
+    const [order] = await sequelize.query(
+      `SELECT id, photo_count, payment_status, order_status
+       FROM pixlypro_orders
+       WHERE id = :orderId AND user_id = :userId`,
+      {
+        replacements: { orderId, userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    if (order.payment_status !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        error: 'Order payment not completed'
+      });
+    }
+
+    if (photos.length > order.photo_count) {
+      return res.status(400).json({
+        success: false,
+        error: `Too many photos. Order allows ${order.photo_count} photos`
+      });
+    }
+
+    const s3 = getS3Client();
+    if (!s3) {
+      return res.status(500).json({
+        success: false,
+        error: 'S3 not configured'
+      });
+    }
+
+    logger.info(`[PIXLYPRO] Processing ${photos.length} photos for order ${orderId}`);
+
+    // Update order status
+    await sequelize.query(
+      `UPDATE pixlypro_orders
+       SET order_status = 'processing',
+           updated_at = NOW()
+       WHERE id = :orderId`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    const processedPhotos = [];
+
+    for (const photo of photos) {
+      try {
+        // Step 1: Upload original to S3
+        const originalFilename = `pixlypro/originals/${orderId}/${crypto.randomBytes(16).toString('hex')}.png`;
+
+        let imageBuffer = photo.buffer;
+        if (photo.mimetype !== 'image/png') {
+          imageBuffer = await sharp(photo.buffer).png().toBuffer();
+        }
+
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: originalFilename,
+          Body: imageBuffer,
+          ContentType: 'image/png',
+          ACL: 'public-read'
+        }));
+
+        const originalUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
+
+        // Step 2: Enhance with Pixelixe AI
+        const brightnessBuffer = await pixelixeService.adjustBrightness(originalUrl, 0.15, 'png');
+
+        const brightnessFilename = `pixlypro/temp/${crypto.randomBytes(16).toString('hex')}.png`;
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: brightnessFilename,
+          Body: brightnessBuffer,
+          ContentType: 'image/png',
+          ACL: 'public-read'
+        }));
+
+        const brightnessUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
+
+        // Step 3: Apply contrast
+        const contrastBuffer = await pixelixeService.adjustContrast(brightnessUrl, 0.20, 'png');
+
+        const enhancedFilename = `pixlypro/enhanced/${orderId}/${crypto.randomBytes(16).toString('hex')}.png`;
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: enhancedFilename,
+          Body: contrastBuffer,
+          ContentType: 'image/png',
+          ACL: 'public-read'
+        }));
+
+        const enhancedUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
+
+        // Step 4: Save to database
+        await sequelize.query(
+          `INSERT INTO pixlypro_photos (order_id, original_url, enhanced_url, filename, created_at)
+           VALUES (:orderId, :originalUrl, :enhancedUrl, :filename, NOW())`,
+          {
+            replacements: {
+              orderId,
+              originalUrl,
+              enhancedUrl,
+              filename: photo.originalname
+            },
+            type: QueryTypes.INSERT
+          }
+        );
+
+        processedPhotos.push({
+          filename: photo.originalname,
+          originalUrl,
+          enhancedUrl
+        });
+
+        logger.info(`[PIXLYPRO] Enhanced photo: ${photo.originalname}`);
+
+      } catch (photoError) {
+        logger.error(`[PIXLYPRO] Error processing photo ${photo.originalname}:`, photoError);
+        // Continue with other photos
+      }
+    }
+
+    // Update order status to completed
+    await sequelize.query(
+      `UPDATE pixlypro_orders
+       SET order_status = 'completed',
+           updated_at = NOW()
+       WHERE id = :orderId`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`[PIXLYPRO] Order ${orderId} processing completed - ${processedPhotos.length} photos enhanced`);
+
+    res.json({
+      success: true,
+      processedCount: processedPhotos.length,
+      photos: processedPhotos
+    });
+
+  } catch (error) {
+    logger.error('[PIXLYPRO] Process order error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process photos'
     });
   }
 });

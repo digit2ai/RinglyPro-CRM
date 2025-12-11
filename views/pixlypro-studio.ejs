@@ -371,6 +371,26 @@
                         Choose Photos
                     </button>
                 </div>
+
+                <!-- Pricing Summary & Checkout -->
+                <div id="pricingSummary" style="display: none; margin-top: 2rem; padding: 2rem; background: #f8fafc; border-radius: 0.75rem; text-align: left;">
+                    <h3 style="color: #1e293b; margin-bottom: 1rem;">Order Summary</h3>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="color: #64748b;">Photos to enhance:</span>
+                        <strong id="photoCount" style="color: #1e293b;">0</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="color: #64748b;">Price per photo:</span>
+                        <strong style="color: #1e293b;">$0.50</strong>
+                    </div>
+                    <div style="border-top: 2px solid #e2e8f0; margin: 1rem 0; padding-top: 1rem; display: flex; justify-content: space-between;">
+                        <span style="color: #1e293b; font-size: 1.25rem; font-weight: 600;">Total:</span>
+                        <strong id="totalPrice" style="color: #3b82f6; font-size: 1.5rem;">$0.00</strong>
+                    </div>
+                    <button class="btn" id="processCheckoutBtn" onclick="processCheckout()" style="width: 100%; margin-top: 1rem; padding: 1.25rem; font-size: 1.125rem;">
+                        Process & Checkout 💳
+                    </button>
+                </div>
             </div>
 
             <!-- Gallery Section -->
@@ -451,15 +471,95 @@
                     file: file,
                     originalUrl: URL.createObjectURL(file),
                     enhancedUrl: null,
-                    status: 'uploading',
-                    progress: 0
+                    status: 'ready', // Changed from 'uploading' - no auto-enhancement
+                    progress: 100
                 };
 
                 photos.push(photo);
                 renderPhoto(photo);
+            }
 
-                // Start enhancement process
-                enhancePhoto(photo);
+            // Update pricing summary
+            updatePricingSummary();
+        }
+
+        function updatePricingSummary() {
+            const photoCount = photos.length;
+            const totalPrice = (photoCount * 0.50).toFixed(2);
+
+            document.getElementById('photoCount').textContent = photoCount;
+            document.getElementById('totalPrice').textContent = `$${totalPrice}`;
+
+            if (photoCount > 0) {
+                document.getElementById('pricingSummary').style.display = 'block';
+            } else {
+                document.getElementById('pricingSummary').style.display = 'none';
+            }
+        }
+
+        async function processCheckout() {
+            if (photos.length === 0) {
+                alert('Please upload at least one photo');
+                return;
+            }
+
+            const photoCount = photos.length;
+            const totalAmount = photoCount * 0.50;
+
+            try {
+                // Get JWT token from localStorage
+                const token = localStorage.getItem('pixlypro_token');
+                if (!token) {
+                    alert('Please log in first');
+                    window.location.href = '/pixlypro-auth';
+                    return;
+                }
+
+                // Disable checkout button
+                const btn = document.getElementById('processCheckoutBtn');
+                btn.disabled = true;
+                btn.textContent = 'Creating checkout session...';
+
+                // Create checkout session
+                const response = await fetch('/api/pixlypro/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        packageType: 'custom',
+                        photoCount: photoCount,
+                        totalAmount: totalAmount
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.sessionUrl) {
+                    // Store photos in sessionStorage to upload after payment
+                    const photosData = photos.map(p => ({
+                        id: p.id,
+                        name: p.name,
+                        originalUrl: p.originalUrl
+                    }));
+                    sessionStorage.setItem('pixlypro_pending_photos', JSON.stringify(photosData));
+                    sessionStorage.setItem('pixlypro_order_id', data.orderId);
+
+                    // Redirect to Stripe checkout
+                    window.location.href = data.sessionUrl;
+                } else {
+                    throw new Error(data.error || 'Failed to create checkout session');
+                }
+
+            } catch (error) {
+                console.error('Checkout error:', error);
+                alert('Failed to create checkout session. Please try again.');
+
+                // Re-enable button
+                const btn = document.getElementById('processCheckoutBtn');
+                btn.disabled = false;
+                btn.textContent = 'Process & Checkout 💳';
             }
         }
 
@@ -468,122 +568,18 @@
             card.className = 'photo-card';
             card.id = `photo-${photo.id}`;
 
-            let statusBadge = '';
-            if (photo.status === 'uploading') statusBadge = '<span class="status-badge status-uploading">Uploading</span>';
-            if (photo.status === 'enhancing') statusBadge = '<span class="status-badge status-enhancing">🤖 AI Enhancing</span>';
-            if (photo.status === 'ready') statusBadge = '<span class="status-badge status-ready">✨ Ready</span>';
-            if (photo.status === 'error') statusBadge = '<span class="status-badge status-error">Error</span>';
-
-            const progressBar = photo.status !== 'ready' && photo.status !== 'error' ?
-                `<div class="progress-bar"><div class="progress-fill" style="width: ${photo.progress}%"></div></div>` : '';
-
-            const actions = photo.status === 'ready' ? `
-                <div class="photo-actions">
-                    <button class="btn btn-small btn-download" onclick="downloadPhoto('${photo.id}')">Download</button>
-                    <button class="btn btn-small btn-compare" onclick="comparePhoto('${photo.id}')">Compare</button>
-                </div>
-            ` : '';
-
             card.innerHTML = `
-                <img src="${photo.enhancedUrl || photo.originalUrl}" alt="${photo.name}" class="photo-preview">
+                <img src="${photo.originalUrl}" alt="${photo.name}" class="photo-preview">
                 <div class="photo-info">
                     <div class="photo-name">${photo.name}</div>
                     <div class="photo-status">
-                        ${statusBadge}
+                        <span class="status-badge status-ready">Ready for checkout</span>
                     </div>
-                    ${progressBar}
-                    ${actions}
                 </div>
             `;
 
             gallery.appendChild(card);
         }
-
-        function updatePhoto(photoId, updates) {
-            const photo = photos.find(p => p.id === photoId);
-            if (!photo) return;
-
-            Object.assign(photo, updates);
-
-            const card = document.getElementById(`photo-${photoId}`);
-            if (card) {
-                card.remove();
-                renderPhoto(photo);
-            }
-        }
-
-        async function enhancePhoto(photo) {
-            try {
-                // Step 1: Upload to S3
-                updatePhoto(photo.id, { status: 'uploading', progress: 30 });
-
-                const formData = new FormData();
-                formData.append('photo', photo.file);
-
-                const uploadResponse = await fetch('/api/pixlypro/upload-temp', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!uploadResponse.ok) throw new Error('Upload failed');
-
-                const { imageUrl } = await uploadResponse.json();
-                updatePhoto(photo.id, { progress: 60 });
-
-                // Step 2: Enhance with AI
-                updatePhoto(photo.id, { status: 'enhancing', progress: 70 });
-
-                const enhanceResponse = await fetch('/api/pixlypro/enhance', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ imageUrl })
-                });
-
-                if (!enhanceResponse.ok) throw new Error('Enhancement failed');
-
-                const { enhancedUrl } = await enhanceResponse.json();
-
-                updatePhoto(photo.id, {
-                    status: 'ready',
-                    progress: 100,
-                    enhancedUrl: enhancedUrl
-                });
-
-            } catch (error) {
-                console.error('Enhancement error:', error);
-                updatePhoto(photo.id, { status: 'error' });
-            }
-        }
-
-        function downloadPhoto(photoId) {
-            const photo = photos.find(p => p.id === photoId);
-            if (!photo || !photo.enhancedUrl) return;
-
-            const a = document.createElement('a');
-            a.href = photo.enhancedUrl;
-            a.download = `enhanced_${photo.name}`;
-            a.click();
-        }
-
-        function comparePhoto(photoId) {
-            const photo = photos.find(p => p.id === photoId);
-            if (!photo) return;
-
-            document.getElementById('originalImage').src = photo.originalUrl;
-            document.getElementById('enhancedImage').src = photo.enhancedUrl;
-            document.getElementById('comparisonModal').classList.add('active');
-        }
-
-        function closeComparison() {
-            document.getElementById('comparisonModal').classList.remove('active');
-        }
-
-        // Close modal on outside click
-        document.getElementById('comparisonModal').addEventListener('click', (e) => {
-            if (e.target.id === 'comparisonModal') {
-                closeComparison();
-            }
-        });
     </script>
 </body>
 </html>
