@@ -332,28 +332,26 @@
 
         // Save photo to IndexedDB
         async function savePhotoToDB(photo) {
+            // IMPORTANT: Fetch the blob FIRST, before opening the transaction
+            // IndexedDB transactions auto-close during async operations
+            const response = await fetch(photo.previewUrl);
+            const blob = await response.blob();
+
+            const photoData = {
+                id: photo.id,
+                name: photo.name,
+                type: photo.type,
+                size: photo.size,
+                blob: blob,
+                createdAt: Date.now()
+            };
+
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction([STORE_NAME], 'readwrite');
                 const store = transaction.objectStore(STORE_NAME);
-
-                // Convert blob URL to actual blob for storage
-                fetch(photo.previewUrl)
-                    .then(response => response.blob())
-                    .then(blob => {
-                        const photoData = {
-                            id: photo.id,
-                            name: photo.name,
-                            type: photo.type,
-                            size: photo.size,
-                            blob: blob,
-                            createdAt: Date.now()
-                        };
-
-                        const request = store.put(photoData);
-                        request.onsuccess = () => resolve(photoData);
-                        request.onerror = () => reject(request.error);
-                    })
-                    .catch(reject);
+                const request = store.put(photoData);
+                request.onsuccess = () => resolve(photoData);
+                request.onerror = () => reject(request.error);
             });
         }
 
