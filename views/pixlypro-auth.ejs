@@ -382,7 +382,8 @@
 
                 if (response.ok && data.token) {
                     // Store auth token
-                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('pixlypro_token', data.token);
+                    localStorage.setItem('authToken', data.token); // Keep for compatibility
 
                     // Store user info (optional)
                     if (data.user) {
@@ -434,7 +435,8 @@
 
                 if (response.ok && data.token) {
                     // Store auth token
-                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('pixlypro_token', data.token);
+                    localStorage.setItem('authToken', data.token); // Keep for compatibility
 
                     // Store user info (optional)
                     if (data.user) {
