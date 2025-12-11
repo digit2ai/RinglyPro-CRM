@@ -27,10 +27,10 @@ async function adjustBrightness(imageUrl, value = 0.1, imageType = 'png') {
     throw new Error('Pixelixe API key not configured');
   }
 
-  const encodedUrl = encodeURI(imageUrl);
+  const encodedUrl = encodeURIComponent(imageUrl);
   const url = `${PIXELIXE_API_URL}/brighten/v1?imageUrl=${encodedUrl}&value=${value}&imageType=${imageType}`;
 
-  logger.info(`[PIXELIXE] Adjusting brightness: ${value}`);
+  logger.info(`[PIXELIXE] Adjusting brightness: ${value} for ${imageUrl}`);
 
   const response = await fetch(url, {
     method: 'GET',
@@ -40,10 +40,14 @@ async function adjustBrightness(imageUrl, value = 0.1, imageType = 'png') {
   });
 
   if (!response.ok) {
+    const errorText = await response.text();
+    logger.error(`[PIXELIXE] Brightness API error: ${response.status} - ${errorText}`);
     throw new Error(`Pixelixe API error: ${response.status} - ${response.statusText}`);
   }
 
-  return await response.buffer();
+  // Support both native fetch (arrayBuffer) and node-fetch (buffer)
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
 }
 
 /**
@@ -58,10 +62,10 @@ async function adjustContrast(imageUrl, value = 0.15, imageType = 'png') {
     throw new Error('Pixelixe API key not configured');
   }
 
-  const encodedUrl = encodeURI(imageUrl);
+  const encodedUrl = encodeURIComponent(imageUrl);
   const url = `${PIXELIXE_API_URL}/contrast/v1?imageUrl=${encodedUrl}&value=${value}&imageType=${imageType}`;
 
-  logger.info(`[PIXELIXE] Adjusting contrast: ${value}`);
+  logger.info(`[PIXELIXE] Adjusting contrast: ${value} for ${imageUrl}`);
 
   const response = await fetch(url, {
     method: 'GET',
@@ -71,10 +75,14 @@ async function adjustContrast(imageUrl, value = 0.15, imageType = 'png') {
   });
 
   if (!response.ok) {
+    const errorText = await response.text();
+    logger.error(`[PIXELIXE] Contrast API error: ${response.status} - ${errorText}`);
     throw new Error(`Pixelixe API error: ${response.status} - ${response.statusText}`);
   }
 
-  return await response.buffer();
+  // Support both native fetch (arrayBuffer) and node-fetch (buffer)
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
 }
 
 /**

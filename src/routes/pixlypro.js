@@ -198,10 +198,13 @@ router.post('/upload-temp-photos', authenticateToken, upload.array('photos', 100
           Bucket: TEMP_BUCKET_NAME,
           Key: filename,
           Body: imageBuffer,
-          ContentType: 'image/png'
+          ContentType: 'image/png',
+          ACL: 'public-read'  // Make publicly accessible for Pixelixe API
         }));
 
         const url = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${filename}`;
+
+        logger.info(`[PIXLYPRO] Uploaded temp photo: ${url}`);
 
         uploadedPhotos.push({
           tempId,
@@ -210,7 +213,7 @@ router.post('/upload-temp-photos', authenticateToken, upload.array('photos', 100
         });
 
       } catch (photoError) {
-        logger.error(`[PIXLYPRO] Error uploading photo ${photo.originalname}:`, photoError);
+        logger.error(`[PIXLYPRO] Error uploading photo ${photo.originalname}:`, photoError.message);
       }
     }
 
@@ -425,7 +428,8 @@ router.post('/upload-temp', upload.single('photo'), async (req, res) => {
       Bucket: BUCKET_NAME,
       Key: filename,
       Body: imageBuffer,
-      ContentType: contentType
+      ContentType: contentType,
+      ACL: 'public-read'
     }));
 
     const imageUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${filename}`;
@@ -480,7 +484,8 @@ router.post('/enhance', async (req, res) => {
       Bucket: BUCKET_NAME,
       Key: brightnessFilename,
       Body: brightnessBuffer,
-      ContentType: 'image/png'
+      ContentType: 'image/png',
+      ACL: 'public-read'
     }));
 
     const brightnessUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
@@ -494,7 +499,8 @@ router.post('/enhance', async (req, res) => {
       Bucket: BUCKET_NAME,
       Key: finalFilename,
       Body: contrastBuffer,
-      ContentType: 'image/png'
+      ContentType: 'image/png',
+      ACL: 'public-read'
     }));
 
     const enhancedUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${finalFilename}`;
@@ -935,7 +941,8 @@ router.post('/process-order', authenticateToken, upload.array('photos', 100), as
           Bucket: BUCKET_NAME,
           Key: originalFilename,
           Body: imageBuffer,
-          ContentType: 'image/png'
+          ContentType: 'image/png',
+          ACL: 'public-read'
         }));
 
         const originalUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
@@ -948,7 +955,8 @@ router.post('/process-order', authenticateToken, upload.array('photos', 100), as
           Bucket: BUCKET_NAME,
           Key: brightnessFilename,
           Body: brightnessBuffer,
-          ContentType: 'image/png'
+          ContentType: 'image/png',
+          ACL: 'public-read'
         }));
 
         const brightnessUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
@@ -961,7 +969,8 @@ router.post('/process-order', authenticateToken, upload.array('photos', 100), as
           Bucket: BUCKET_NAME,
           Key: enhancedFilename,
           Body: contrastBuffer,
-          ContentType: 'image/png'
+          ContentType: 'image/png',
+          ACL: 'public-read'
         }));
 
         const enhancedUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
@@ -1149,36 +1158,46 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
           Bucket: TEMP_BUCKET_NAME,
           Key: originalFilename,
           Body: imageBuffer,
-          ContentType: 'image/png'
+          ContentType: 'image/png',
+          ACL: 'public-read'
         }));
 
         const originalUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
+        logger.info(`[PIXLYPRO] Saved original: ${originalUrl}`);
 
         // Step 2: Enhance with Pixelixe AI
+        logger.info(`[PIXLYPRO] Calling Pixelixe brightness API...`);
         const brightnessBuffer = await pixelixeService.adjustBrightness(originalUrl, 0.15, 'png');
+        logger.info(`[PIXLYPRO] Brightness applied, buffer size: ${brightnessBuffer.length}`);
 
         const brightnessFilename = `pixlypro/temp/${crypto.randomBytes(16).toString('hex')}.png`;
         await s3.send(new PutObjectCommand({
           Bucket: TEMP_BUCKET_NAME,
           Key: brightnessFilename,
           Body: brightnessBuffer,
-          ContentType: 'image/png'
+          ContentType: 'image/png',
+          ACL: 'public-read'
         }));
 
         const brightnessUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
+        logger.info(`[PIXLYPRO] Brightness saved: ${brightnessUrl}`);
 
         // Step 3: Apply contrast
+        logger.info(`[PIXLYPRO] Calling Pixelixe contrast API...`);
         const contrastBuffer = await pixelixeService.adjustContrast(brightnessUrl, 0.20, 'png');
+        logger.info(`[PIXLYPRO] Contrast applied, buffer size: ${contrastBuffer.length}`);
 
         const enhancedFilename = `pixlypro/enhanced/${orderId}/${filename}`;
         await s3.send(new PutObjectCommand({
           Bucket: TEMP_BUCKET_NAME,
           Key: enhancedFilename,
           Body: contrastBuffer,
-          ContentType: 'image/png'
+          ContentType: 'image/png',
+          ACL: 'public-read'
         }));
 
         const enhancedUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
+        logger.info(`[PIXLYPRO] Enhanced saved: ${enhancedUrl}`);
 
         // Step 4: Save to database
         await sequelize.query(
