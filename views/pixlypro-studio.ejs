@@ -486,16 +486,22 @@
                     status: 'ready'
                 };
 
-                // Save to IndexedDB
+                photos.push(photo);
+                renderPhoto(photo);
+
+                // Save to IndexedDB and update status
                 try {
                     await savePhotoToDB(photo);
                     photo.status = 'cached';
+                    // Update the status badge in DOM
+                    const statusBadge = document.querySelector(`#card-${photoId} .status-badge`);
+                    if (statusBadge) {
+                        statusBadge.textContent = 'Saved locally';
+                        statusBadge.className = 'status-badge status-cached';
+                    }
                 } catch (error) {
                     console.error('Error saving photo to IndexedDB:', error);
                 }
-
-                photos.push(photo);
-                renderPhoto(photo);
             }
 
             updatePricingSummary();
