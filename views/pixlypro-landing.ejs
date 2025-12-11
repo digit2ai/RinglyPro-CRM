@@ -382,74 +382,7 @@
         }
 
         .pricing h2 {
-            margin-bottom: 4rem;
-        }
-
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .pricing-card {
-            background: white;
-            border-radius: 1rem;
-            padding: 2.5rem 2rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
-            border: 2px solid transparent;
-        }
-
-        .pricing-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
-        }
-
-        .pricing-card.featured {
-            border-color: #3b82f6;
-            transform: scale(1.05);
-        }
-
-        .pricing-card.featured:hover {
-            transform: scale(1.05) translateY(-8px);
-        }
-
-        .pricing-badge {
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
-            color: white;
-            padding: 0.5rem 1.5rem;
-            border-radius: 2rem;
-            font-size: 0.875rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .pricing-card h3 {
-            font-size: 1.75rem;
-            margin-bottom: 1rem;
-            color: #0a0a0a;
-        }
-
-        .pricing-price {
-            font-size: 3rem;
-            font-weight: 700;
-            color: #3b82f6;
             margin-bottom: 1.5rem;
-        }
-
-        .pricing-description {
-            font-size: 1rem;
-            color: #64748b;
-            margin-bottom: 1rem;
-            min-height: 120px;
         }
 
         /* ============================================
@@ -563,8 +496,6 @@
             .hero-content { grid-template-columns: 1fr; gap: 3rem; }
             .hero-image { height: 400px; }
             .steps-grid { grid-template-columns: repeat(2, 1fr); }
-            .pricing-grid { grid-template-columns: repeat(2, 1fr); }
-            .pricing-card.featured { transform: scale(1); }
         }
 
         @media (max-width: 768px) {
@@ -573,7 +504,6 @@
             section { padding: 3rem 0; }
             .hero { padding: 4rem 0 5rem; }
             .steps-grid { grid-template-columns: 1fr; }
-            .pricing-grid { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
@@ -827,33 +757,56 @@
         </div>
     </section>
 
-    <!-- PRICING SECTION -->
+    <!-- BOOST PRODUCTIVITY SECTION -->
     <section class="pricing" id="pricing">
         <div class="container">
-            <h2>Professional Quality at Unbeatable Prices</h2>
-            <p style="text-align: center; color: #64748b; margin-bottom: 3rem; font-size: 1.125rem;">
-                Because AI does most of the work, you get professional results at an incredible price—just $0.50 per photo enhancement
+            <h2>Boost Productivity, Scale Your Marketing</h2>
+            <p style="text-align: center; color: #64748b; margin-bottom: 4rem; font-size: 1.25rem; max-width: 800px; margin-left: auto; margin-right: auto;">
+                Create enhanced images and graphics in multiple formats instantly. Generate unlimited variations with AI-powered automation.
             </p>
 
-            <!-- $0.50 Demo Banner -->
-            <div style="max-width: 600px; margin: 0 auto 3rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 1.5rem 2rem; border-radius: 1rem; color: white; text-align: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">Try PixlyPro For Just $0.50</div>
-                <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem; font-size: 1rem;">See AI + human expertise in action with 1 photo for just $0.50</p>
-                <a href="#" onclick="handleGetStarted()" class="btn" style="background: white; color: #059669; padding: 0.75rem 2rem; font-weight: 600;">Get Your $0.50 Demo</a>
+            <!-- Laptop Showcase -->
+            <div style="max-width: 1200px; margin: 0 auto; position: relative;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 1.5rem; padding: 3rem; box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3); position: relative; overflow: hidden;">
+                    <!-- Decorative elements -->
+                    <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                    <div style="position: absolute; bottom: -30px; left: -30px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+
+                    <!-- Laptop mockup -->
+                    <div style="position: relative; z-index: 1;">
+                        <img src="https://images.unsplash.com/photo-1587614382346-4ec70e388b28?w=1200&h=700&fit=crop&q=80"
+                             alt="PixlyPro AI Photo Enhancement Dashboard"
+                             style="width: 100%; border-radius: 0.75rem; box-shadow: 0 30px 60px rgba(0,0,0,0.4); border: 8px solid #1a1a1a;">
+                    </div>
+                </div>
             </div>
 
-            <!-- Pricing Cards -->
-            <div class="pricing-grid" id="pricing-cards-container">
-                <!-- Cards will be loaded dynamically -->
+            <!-- Features Grid -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 4rem; max-width: 1100px; margin-left: auto; margin-right: auto;">
+                <div style="text-align: center; padding: 2rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
+                    <h3 style="color: #0a0a0a; margin-bottom: 0.75rem; font-size: 1.25rem;">Instant Processing</h3>
+                    <p style="color: #64748b; font-size: 1rem;">AI enhances your photos in seconds, not hours. Upload and download immediately.</p>
+                </div>
+                <div style="text-align: center; padding: 2rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🎨</div>
+                    <h3 style="color: #0a0a0a; margin-bottom: 0.75rem; font-size: 1.25rem;">Multiple Formats</h3>
+                    <p style="color: #64748b; font-size: 1rem;">Generate variations with different filters and adjustments in just one click.</p>
+                </div>
+                <div style="text-align: center; padding: 2rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📈</div>
+                    <h3 style="color: #0a0a0a; margin-bottom: 0.75rem; font-size: 1.25rem;">Scale Unlimited</h3>
+                    <p style="color: #64748b; font-size: 1rem;">Process 1 photo or 1,000 photos—our AI scales with your needs.</p>
+                </div>
             </div>
 
             <!-- CTA Button -->
             <div style="text-align: center; margin-top: 3rem;">
                 <a href="#" onclick="handleGetStarted()" class="btn btn-primary btn-large" style="font-size: 1.25rem; padding: 1.25rem 3rem;">
-                    Get Started Now
+                    Get Started - Just $0.50/Photo
                 </a>
                 <p style="margin-top: 1rem; color: #64748b; font-size: 0.875rem;">
-                    No commitment required. Start with the $0.50 demo.
+                    No subscription. No commitment. Pay only for what you enhance.
                 </p>
             </div>
         </div>
@@ -933,68 +886,9 @@
 
     <!-- SCRIPT -->
     <script>
-        let packages = null;
-
-        // Load packages on page load
-        async function loadPackages() {
-            try {
-                const response = await fetch('/api/pixlypro/packages');
-                const data = await response.json();
-
-                if (data.success) {
-                    packages = data.packages;
-                    renderPricingCards();
-                }
-            } catch (error) {
-                console.error('Failed to load packages:', error);
-            }
-        }
-
-        // Render pricing cards
-        function renderPricingCards() {
-            if (!packages) return;
-
-            const container = document.getElementById('pricing-cards-container');
-            const packageOrder = ['demo', 'starter', 'professional', 'premium'];
-
-            container.innerHTML = packageOrder.map(key => {
-                const pkg = packages[key];
-                const isFeatured = key === 'professional';
-
-                return `
-                    <div class="pricing-card ${isFeatured ? 'featured' : ''}">
-                        ${isFeatured ? '<div class="pricing-badge">Most Popular</div>' : ''}
-                        <h3>${pkg.name}</h3>
-                        <div class="pricing-price">$${pkg.price}</div>
-                        <div class="pricing-description">
-                            <p>${pkg.description}</p>
-                            <p style="margin-top: 1rem; font-weight: 600; color: #0a0a0a;">
-                                ${pkg.photos_to_receive} AI-Enhanced Photo${pkg.photos_to_receive > 1 ? 's' : ''}
-                            </p>
-                        </div>
-                        <a href="#" onclick="handleSelectPackage('${key}')" class="btn ${isFeatured ? 'btn-primary' : 'btn-secondary'}" style="width: 100%; margin-top: 1rem;">
-                            Select ${pkg.name}
-                        </a>
-                    </div>
-                `;
-            }).join('');
-        }
-
         // Handle get started - redirect to auth page
         async function handleGetStarted() {
             window.location.href = '/pixlypro-auth';
-        }
-
-        // Handle package selection
-        function handleSelectPackage(packageType) {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                alert('Please log in or create an account to continue.');
-                window.location.href = '/login';
-                return;
-            }
-
-            window.location.href = `/pixlypro-upload?package=${packageType}`;
         }
 
         // FAQ Toggle functionality
@@ -1010,11 +904,6 @@
                 faqItem.classList.add('active');
             }
         }
-
-        // Initialize
-        window.addEventListener('DOMContentLoaded', () => {
-            loadPackages();
-        });
     </script>
 </body>
 </html>
