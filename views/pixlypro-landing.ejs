@@ -452,20 +452,63 @@
         /* ============================================
            RESPONSIVE DESIGN
         ============================================ */
+
+        /* Comparison grid class */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Tools grid class */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
         @media (max-width: 1024px) {
             h1 { font-size: 2.75rem; }
             h2 { font-size: 2rem; }
+            .container { padding: 0 1.5rem; }
             .hero-content { grid-template-columns: 1fr; gap: 3rem; }
             .hero-image { height: 400px; }
             .steps-grid { grid-template-columns: repeat(2, 1fr); }
+            .comparison-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+            .tools-grid { grid-template-columns: 1fr; gap: 1.5rem; }
         }
 
         @media (max-width: 768px) {
-            h1 { font-size: 2.25rem; }
-            h2 { font-size: 1.75rem; }
-            section { padding: 3rem 0; }
-            .hero { padding: 4rem 0 5rem; }
-            .steps-grid { grid-template-columns: 1fr; }
+            h1 { font-size: 2rem; line-height: 1.2; }
+            h2 { font-size: 1.5rem; }
+            h3 { font-size: 1.25rem; }
+            .container { padding: 0 1rem; }
+            section { padding: 2.5rem 0 !important; }
+            .hero { padding: 3rem 0 4rem !important; }
+            .hero-image { height: 300px; }
+            .hero-badge { font-size: 0.75rem; padding: 0.5rem 1rem; top: 1rem; right: 1rem; }
+            .subheadline { font-size: 1rem; }
+            .btn-large { padding: 1rem 1.5rem; font-size: 1rem; }
+            .steps-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+            .comparison-grid { gap: 1rem; }
+            .tools-grid { gap: 1rem; }
+            .trust-badges { flex-direction: column; gap: 1rem; padding: 1.5rem 1rem; }
+            .trust-badge { font-size: 0.875rem; }
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 1.75rem; }
+            h2 { font-size: 1.25rem; }
+            .container { padding: 0 0.75rem; }
+            .hero { padding: 2rem 0 3rem !important; }
+            .hero-image { height: 250px; border-radius: 1rem; }
+            .hero-image img { border-radius: 1rem; }
+            .btn { padding: 0.75rem 1.25rem; font-size: 0.9rem; }
+            .btn-large { padding: 0.875rem 1.25rem; font-size: 0.95rem; }
         }
     </style>
 </head>
@@ -566,7 +609,7 @@
     <section style="padding: 5rem 0; background: white;">
         <div class="container">
             <h2 style="text-align: center; margin-bottom: 3rem;">PixlyPro vs Photo Studio: What's the Difference?</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 1000px; margin: 0 auto;">
+            <div class="comparison-grid">
                 <!-- Photo Studio -->
                 <div style="background: #f8fafc; padding: 2.5rem; border-radius: 1rem; border: 2px solid #e2e8f0;">
                     <h3 style="color: #3b82f6; margin-bottom: 1.5rem; text-align: center;">Photo Studio</h3>
@@ -633,7 +676,7 @@
                 Our AI uses Pixelixe's professional image processing tools to automatically enhance your photos
             </p>
 
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; max-width: 900px; margin: 0 auto;">
+            <div class="tools-grid">
                 <!-- Image Processing -->
                 <div style="background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
                     <h3 style="color: #3b82f6; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
