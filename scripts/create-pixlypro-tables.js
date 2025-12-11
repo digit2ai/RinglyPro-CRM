@@ -59,7 +59,14 @@ async function runMigration() {
       CREATE INDEX IF NOT EXISTS idx_pixlypro_photos_order_id ON pixlypro_photos(order_id);
     `);
     console.log('✅ Index idx_pixlypro_photos_order_id created');
-    
+
+    // Add temp_photo_ids column if it doesn't exist
+    await client.query(`
+      ALTER TABLE pixlypro_orders
+      ADD COLUMN IF NOT EXISTS temp_photo_ids TEXT;
+    `);
+    console.log('✅ temp_photo_ids column added to pixlypro_orders');
+
     console.log('\n🎉 Migration completed successfully!');
     
   } catch (error) {

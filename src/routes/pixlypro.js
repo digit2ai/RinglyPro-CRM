@@ -268,9 +268,21 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
 
     const orderId = order[0].id;
 
-    // Store temp photo IDs in session metadata
+    // Store temp photo IDs with the order
     if (tempPhotoIds && tempPhotoIds.length > 0) {
       logger.info(`[PIXLYPRO] Storing ${tempPhotoIds.length} temp photo IDs for order ${orderId}`);
+
+      // Store the temp photo IDs as JSON in the order
+      await sequelize.query(
+        `UPDATE pixlypro_orders SET temp_photo_ids = :tempPhotoIds WHERE id = :orderId`,
+        {
+          replacements: {
+            tempPhotoIds: JSON.stringify(tempPhotoIds),
+            orderId
+          },
+          type: QueryTypes.UPDATE
+        }
+      );
     }
 
     // Create Stripe checkout session
@@ -1056,9 +1068,9 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
       });
     }
 
-    // Verify order belongs to user
+    // Verify order belongs to user and get temp photo IDs
     const [order] = await sequelize.query(
-      `SELECT id, photo_count, payment_status, order_status
+      `SELECT id, photo_count, payment_status, order_status, temp_photo_ids
        FROM pixlypro_orders
        WHERE id = :orderId AND user_id = :userId`,
       {
@@ -1106,6 +1118,17 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
 
     logger.info(`[PIXLYPRO] Processing temp photos for order ${orderId}`);
 
+    // Parse stored temp photo IDs
+    let tempPhotoIds = [];
+    if (order.temp_photo_ids) {
+      try {
+        tempPhotoIds = JSON.parse(order.temp_photo_ids);
+        logger.info(`[PIXLYPRO] Found ${tempPhotoIds.length} temp photo IDs for order ${orderId}: ${tempPhotoIds.join(', ')}`);
+      } catch (e) {
+        logger.error(`[PIXLYPRO] Failed to parse temp_photo_ids: ${e.message}`);
+      }
+    }
+
     // Update order status
     await sequelize.query(
       `UPDATE pixlypro_orders
@@ -1118,13 +1141,33 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
       }
     );
 
-    // List temp photos for this user
-    const listResponse = await s3.send(new ListObjectsV2Command({
-      Bucket: TEMP_BUCKET_NAME,
-      Prefix: `pixlypro/temp/${userId}/`
-    }));
+    // If we have specific temp photo IDs, use those; otherwise fall back to listing
+    let s3Objects = [];
 
-    if (!listResponse.Contents || listResponse.Contents.length === 0) {
+    if (tempPhotoIds.length > 0) {
+      // Build S3 keys from temp photo IDs
+      for (const tempId of tempPhotoIds) {
+        s3Objects.push({
+          Key: `pixlypro/temp/${userId}/${tempId}.png`
+        });
+      }
+      logger.info(`[PIXLYPRO] Using ${s3Objects.length} specific temp photos from order`);
+    } else {
+      // Fall back to listing all temp photos for user
+      logger.info(`[PIXLYPRO] No temp_photo_ids stored, listing from S3...`);
+      const listResponse = await s3.send(new ListObjectsV2Command({
+        Bucket: TEMP_BUCKET_NAME,
+        Prefix: `pixlypro/temp/${userId}/`
+      }));
+
+      if (listResponse.Contents && listResponse.Contents.length > 0) {
+        s3Objects = listResponse.Contents;
+        logger.info(`[PIXLYPRO] Found ${s3Objects.length} photos in S3 temp folder`);
+      }
+    }
+
+    if (s3Objects.length === 0) {
+      logger.error(`[PIXLYPRO] No photos found for order ${orderId}`);
       return res.status(400).json({
         success: false,
         error: 'No photos found to process'
@@ -1134,7 +1177,7 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
     const processedPhotos = [];
 
     // Process each temp photo
-    for (const s3Object of listResponse.Contents) {
+    for (const s3Object of s3Objects) {
       try {
         const tempUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${s3Object.Key}`;
         const filename = s3Object.Key.split('/').pop();
