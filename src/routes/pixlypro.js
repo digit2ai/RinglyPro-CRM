@@ -171,7 +171,7 @@ router.post('/upload-temp-photos', authenticateToken, upload.array('photos', 100
       });
     }
 
-    const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
+    const TEMP_BUCKET_NAME = process.env.AWS_S3_BUCKET || 'ringlypro-uploads';
     const s3 = new S3Client({
       region: process.env.AWS_REGION || 'us-east-1',
       credentials: {
@@ -195,14 +195,14 @@ router.post('/upload-temp-photos', authenticateToken, upload.array('photos', 100
         }
 
         await s3.send(new PutObjectCommand({
-          Bucket: BUCKET_NAME,
+          Bucket: TEMP_BUCKET_NAME,
           Key: filename,
           Body: imageBuffer,
           ContentType: 'image/png',
           ACL: 'public-read'
         }));
 
-        const url = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${filename}`;
+        const url = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${filename}`;
 
         uploadedPhotos.push({
           tempId,
@@ -1093,7 +1093,7 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
       });
     }
 
-    const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
+    const TEMP_BUCKET_NAME = process.env.AWS_S3_BUCKET || 'ringlypro-uploads';
     const s3 = new S3Client({
       region: process.env.AWS_REGION || 'us-east-1',
       credentials: {
@@ -1118,7 +1118,7 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
 
     // List temp photos for this user
     const listResponse = await s3.send(new ListObjectsV2Command({
-      Bucket: BUCKET_NAME,
+      Bucket: TEMP_BUCKET_NAME,
       Prefix: `pixlypro/temp/${userId}/`
     }));
 
@@ -1134,7 +1134,7 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
     // Process each temp photo
     for (const s3Object of listResponse.Contents) {
       try {
-        const tempUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${s3Object.Key}`;
+        const tempUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${s3Object.Key}`;
         const filename = s3Object.Key.split('/').pop();
 
         logger.info(`[PIXLYPRO] Processing temp photo: ${tempUrl}`);
@@ -1142,7 +1142,7 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
         // Step 1: Move to originals folder
         const originalFilename = `pixlypro/originals/${orderId}/${filename}`;
         const getResponse = await s3.send(new GetObjectCommand({
-          Bucket: BUCKET_NAME,
+          Bucket: TEMP_BUCKET_NAME,
           Key: s3Object.Key
         }));
 
@@ -1153,42 +1153,42 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
         const imageBuffer = Buffer.concat(chunks);
 
         await s3.send(new PutObjectCommand({
-          Bucket: BUCKET_NAME,
+          Bucket: TEMP_BUCKET_NAME,
           Key: originalFilename,
           Body: imageBuffer,
           ContentType: 'image/png',
           ACL: 'public-read'
         }));
 
-        const originalUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
+        const originalUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
 
         // Step 2: Enhance with Pixelixe AI
         const brightnessBuffer = await pixelixeService.adjustBrightness(originalUrl, 0.15, 'png');
 
         const brightnessFilename = `pixlypro/temp/${crypto.randomBytes(16).toString('hex')}.png`;
         await s3.send(new PutObjectCommand({
-          Bucket: BUCKET_NAME,
+          Bucket: TEMP_BUCKET_NAME,
           Key: brightnessFilename,
           Body: brightnessBuffer,
           ContentType: 'image/png',
           ACL: 'public-read'
         }));
 
-        const brightnessUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
+        const brightnessUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
 
         // Step 3: Apply contrast
         const contrastBuffer = await pixelixeService.adjustContrast(brightnessUrl, 0.20, 'png');
 
         const enhancedFilename = `pixlypro/enhanced/${orderId}/${filename}`;
         await s3.send(new PutObjectCommand({
-          Bucket: BUCKET_NAME,
+          Bucket: TEMP_BUCKET_NAME,
           Key: enhancedFilename,
           Body: contrastBuffer,
           ContentType: 'image/png',
           ACL: 'public-read'
         }));
 
-        const enhancedUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
+        const enhancedUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
 
         // Step 4: Save to database
         await sequelize.query(
