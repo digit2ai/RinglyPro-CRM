@@ -644,6 +644,11 @@ router.get('/orders', authenticateToken, async (req, res) => {
       }
     );
 
+    // Convert price to number for each order
+    for (const order of orders) {
+      order.price = parseFloat(order.price);
+    }
+
     // Get photos for each order
     for (const order of orders) {
       const photos = await sequelize.query(
