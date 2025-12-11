@@ -1299,4 +1299,203 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/pixlypro/upload-and-enhance
+ * Combined endpoint: Upload photos to S3 and enhance with Pixelixe AI
+ * This is called AFTER payment is confirmed (bulletproof workflow)
+ */
+router.post('/upload-and-enhance', authenticateToken, upload.array('photos', 100), async (req, res) => {
+  const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+  const sharp = require('sharp');
+  const crypto = require('crypto');
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { orderId } = req.body;
+    const photos = req.files;
+
+    logger.info(`[PIXLYPRO] upload-and-enhance called for order ${orderId} with ${photos?.length || 0} photos`);
+
+    if (!orderId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Order ID is required'
+      });
+    }
+
+    if (!photos || photos.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No photos uploaded'
+      });
+    }
+
+    // Verify order belongs to user and payment is completed
+    const [order] = await sequelize.query(
+      `SELECT id, photo_count, payment_status, order_status
+       FROM pixlypro_orders
+       WHERE id = :orderId AND user_id = :userId`,
+      {
+        replacements: { orderId, userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    if (order.payment_status !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        error: 'Payment not completed for this order'
+      });
+    }
+
+    // Update order status to processing
+    await sequelize.query(
+      `UPDATE pixlypro_orders
+       SET order_status = 'processing',
+           updated_at = NOW()
+       WHERE id = :orderId`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    const BUCKET_NAME = process.env.AWS_S3_BUCKET || 'ringlypro-uploads';
+    const s3 = new S3Client({
+      region: process.env.AWS_REGION || 'us-east-1',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+      }
+    });
+
+    const processedPhotos = [];
+
+    // Process each photo
+    for (let i = 0; i < photos.length; i++) {
+      const photo = photos[i];
+
+      try {
+        logger.info(`[PIXLYPRO] Processing photo ${i + 1}/${photos.length}: ${photo.originalname}`);
+
+        // Convert to PNG if needed
+        let imageBuffer = photo.buffer;
+        if (photo.mimetype !== 'image/png') {
+          imageBuffer = await sharp(photo.buffer).png().toBuffer();
+        }
+
+        // Step 1: Upload original to S3
+        const originalFilename = `pixlypro/originals/${orderId}/${crypto.randomBytes(16).toString('hex')}.png`;
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: originalFilename,
+          Body: imageBuffer,
+          ContentType: 'image/png',
+          ACL: 'public-read'
+        }));
+
+        const originalUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
+        logger.info(`[PIXLYPRO] Original uploaded: ${originalUrl}`);
+
+        // Step 2: Apply brightness enhancement
+        logger.info(`[PIXLYPRO] Applying brightness...`);
+        const brightnessBuffer = await pixelixeService.adjustBrightness(originalUrl, 0.15, 'png');
+
+        // Upload brightness result
+        const brightnessFilename = `pixlypro/temp/${crypto.randomBytes(16).toString('hex')}.png`;
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: brightnessFilename,
+          Body: brightnessBuffer,
+          ContentType: 'image/png',
+          ACL: 'public-read'
+        }));
+
+        const brightnessUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
+        logger.info(`[PIXLYPRO] Brightness applied: ${brightnessUrl}`);
+
+        // Step 3: Apply contrast enhancement
+        logger.info(`[PIXLYPRO] Applying contrast...`);
+        const contrastBuffer = await pixelixeService.adjustContrast(brightnessUrl, 0.20, 'png');
+
+        // Upload final enhanced photo
+        const enhancedFilename = `pixlypro/enhanced/${orderId}/${crypto.randomBytes(16).toString('hex')}.png`;
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: enhancedFilename,
+          Body: contrastBuffer,
+          ContentType: 'image/png',
+          ACL: 'public-read'
+        }));
+
+        const enhancedUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
+        logger.info(`[PIXLYPRO] Enhanced uploaded: ${enhancedUrl}`);
+
+        // Step 4: Save to database
+        await sequelize.query(
+          `INSERT INTO pixlypro_photos (order_id, original_url, enhanced_url, filename, created_at)
+           VALUES (:orderId, :originalUrl, :enhancedUrl, :filename, NOW())`,
+          {
+            replacements: {
+              orderId,
+              originalUrl,
+              enhancedUrl,
+              filename: photo.originalname
+            },
+            type: QueryTypes.INSERT
+          }
+        );
+
+        processedPhotos.push({
+          original: originalUrl,
+          enhanced: enhancedUrl,
+          filename: photo.originalname
+        });
+
+        logger.info(`[PIXLYPRO] Successfully processed: ${photo.originalname}`);
+
+      } catch (photoError) {
+        logger.error(`[PIXLYPRO] Error processing photo ${photo.originalname}:`, photoError);
+        // Continue with other photos even if one fails
+      }
+    }
+
+    // Update order status to completed
+    await sequelize.query(
+      `UPDATE pixlypro_orders
+       SET order_status = 'completed',
+           updated_at = NOW()
+       WHERE id = :orderId`,
+      {
+        replacements: { orderId },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`[PIXLYPRO] Order ${orderId} completed with ${processedPhotos.length} photos`);
+
+    res.json({
+      success: true,
+      processedCount: processedPhotos.length,
+      photos: processedPhotos
+    });
+
+  } catch (error) {
+    logger.error('[PIXLYPRO] Upload and enhance error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process photos: ' + error.message
+    });
+  }
+});
+
 module.exports = router;

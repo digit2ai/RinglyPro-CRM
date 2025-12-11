@@ -130,6 +130,7 @@
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
+            position: relative;
         }
 
         .photo-card:hover {
@@ -174,74 +175,41 @@
             letter-spacing: 0.05em;
         }
 
-        .status-uploading {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        .status-enhancing {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
         .status-ready {
             background: #d1fae5;
             color: #065f46;
         }
 
-        .status-error {
-            background: #fee2e2;
-            color: #991b1b;
+        .status-cached {
+            background: #dbeafe;
+            color: #1e40af;
         }
 
-        .progress-bar {
-            width: 100%;
-            height: 4px;
-            background: #e2e8f0;
-            border-radius: 2px;
-            overflow: hidden;
-            margin-top: 0.5rem;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
-            transition: width 0.3s ease;
-            animation: shimmer 1.5s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
-        }
-
-        .photo-actions {
+        .remove-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 1rem;
             display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
 
-        .btn-small {
-            flex: 1;
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
+        .photo-card:hover .remove-btn {
+            opacity: 1;
         }
 
-        .btn-download {
-            background: #10b981;
-        }
-
-        .btn-download:hover {
-            background: #059669;
-        }
-
-        .btn-compare {
-            background: #3b82f6;
-        }
-
-        .btn-compare:hover {
-            background: #2563eb;
+        .remove-btn:hover {
+            background: #dc2626;
         }
 
         .empty-state {
@@ -256,96 +224,22 @@
             opacity: 0.5;
         }
 
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f4f6;
-            border-top-color: #3b82f6;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .comparison-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 1000;
-            padding: 2rem;
-            overflow: auto;
-        }
-
-        .comparison-modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .comparison-content {
-            background: white;
-            border-radius: 1rem;
-            padding: 2rem;
-            max-width: 1200px;
-            width: 100%;
-        }
-
-        .comparison-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .comparison-images {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-        }
-
-        .comparison-side {
-            text-align: center;
-        }
-
-        .comparison-side img {
-            width: 100%;
+        .warning-banner {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
             border-radius: 0.5rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 1rem;
+            margin-top: 1rem;
+            text-align: left;
         }
 
-        .comparison-label {
-            font-weight: 600;
-            font-size: 1.125rem;
-            margin-bottom: 1rem;
-            color: #1e293b;
-        }
-
-        .close-modal {
-            background: #ef4444;
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            padding: 0.5rem 1.5rem;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .close-modal:hover {
-            background: #dc2626;
+        .warning-banner p {
+            color: #92400e;
+            font-size: 0.875rem;
+            margin: 0;
         }
 
         @media (max-width: 768px) {
-            .comparison-images {
-                grid-template-columns: 1fr;
-            }
-
             .gallery {
                 grid-template-columns: 1fr;
             }
@@ -388,8 +282,11 @@
                         <strong id="totalPrice" style="color: #3b82f6; font-size: 1.5rem;">$0.00</strong>
                     </div>
                     <button class="btn" id="processCheckoutBtn" onclick="processCheckout()" style="width: 100%; margin-top: 1rem; padding: 1.25rem; font-size: 1.125rem;">
-                        Process & Checkout 💳
+                        Proceed to Payment 💳
                     </button>
+                    <div class="warning-banner">
+                        <p><strong>Note:</strong> Your photos are stored locally in your browser. They will be uploaded and enhanced after payment is confirmed. Please don't close this tab until processing is complete.</p>
+                    </div>
                 </div>
             </div>
 
@@ -404,35 +301,145 @@
         </div>
     </div>
 
-    <!-- Comparison Modal -->
-    <div class="comparison-modal" id="comparisonModal">
-        <div class="comparison-content">
-            <div class="comparison-header">
-                <h2>Before & After Comparison</h2>
-                <button class="close-modal" onclick="closeComparison()">Close</button>
-            </div>
-            <div class="comparison-images">
-                <div class="comparison-side">
-                    <div class="comparison-label">Original</div>
-                    <img id="originalImage" src="" alt="Original">
-                </div>
-                <div class="comparison-side">
-                    <div class="comparison-label">✨ AI Enhanced</div>
-                    <img id="enhancedImage" src="" alt="Enhanced">
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        let photos = [];
+        // =====================================================
+        // IndexedDB for storing photos locally until payment
+        // =====================================================
+        const DB_NAME = 'PixlyProPhotos';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'photos';
+        let db = null;
 
-        // Upload Zone Interactions
+        // Initialize IndexedDB
+        async function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+
+                request.onupgradeneeded = (event) => {
+                    const database = event.target.result;
+                    if (!database.objectStoreNames.contains(STORE_NAME)) {
+                        database.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+
+        // Save photo to IndexedDB
+        async function savePhotoToDB(photo) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+
+                // Convert blob URL to actual blob for storage
+                fetch(photo.previewUrl)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const photoData = {
+                            id: photo.id,
+                            name: photo.name,
+                            type: photo.type,
+                            size: photo.size,
+                            blob: blob,
+                            createdAt: Date.now()
+                        };
+
+                        const request = store.put(photoData);
+                        request.onsuccess = () => resolve(photoData);
+                        request.onerror = () => reject(request.error);
+                    })
+                    .catch(reject);
+            });
+        }
+
+        // Get all photos from IndexedDB
+        async function getPhotosFromDB() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Delete photo from IndexedDB
+        async function deletePhotoFromDB(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.delete(id);
+
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Clear all photos from IndexedDB
+        async function clearPhotosFromDB() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.clear();
+
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // =====================================================
+        // Main App Logic
+        // =====================================================
+        let photos = []; // In-memory photo list with preview URLs
+
         const uploadZone = document.getElementById('uploadZone');
         const fileInput = document.getElementById('fileInput');
         const gallery = document.getElementById('gallery');
 
-        uploadZone.addEventListener('click', () => fileInput.click());
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initDB();
+            await loadExistingPhotos();
+        });
+
+        // Load any existing photos from IndexedDB (in case of page refresh)
+        async function loadExistingPhotos() {
+            try {
+                const storedPhotos = await getPhotosFromDB();
+                if (storedPhotos.length > 0) {
+                    gallery.innerHTML = '';
+                    for (const storedPhoto of storedPhotos) {
+                        const previewUrl = URL.createObjectURL(storedPhoto.blob);
+                        const photo = {
+                            id: storedPhoto.id,
+                            name: storedPhoto.name,
+                            type: storedPhoto.type,
+                            size: storedPhoto.size,
+                            previewUrl: previewUrl,
+                            status: 'cached'
+                        };
+                        photos.push(photo);
+                        renderPhoto(photo);
+                    }
+                    updatePricingSummary();
+                }
+            } catch (error) {
+                console.error('Error loading photos from IndexedDB:', error);
+            }
+        }
+
+        // Upload Zone Event Listeners
+        uploadZone.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'BUTTON') {
+                fileInput.click();
+            }
+        });
 
         uploadZone.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -453,33 +460,44 @@
         fileInput.addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
             handleFiles(files);
+            fileInput.value = ''; // Reset for re-selection
         });
 
         async function handleFiles(files) {
             if (files.length === 0) return;
 
-            // Clear empty state
-            gallery.innerHTML = '';
+            // Clear empty state if this is the first photo
+            if (photos.length === 0) {
+                gallery.innerHTML = '';
+            }
 
             for (const file of files) {
                 if (!file.type.startsWith('image/')) continue;
 
-                const photoId = Date.now() + Math.random();
+                const photoId = `photo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const previewUrl = URL.createObjectURL(file);
+
                 const photo = {
                     id: photoId,
                     name: file.name,
-                    file: file,
-                    originalUrl: URL.createObjectURL(file),
-                    enhancedUrl: null,
-                    status: 'ready', // Changed from 'uploading' - no auto-enhancement
-                    progress: 100
+                    type: file.type,
+                    size: file.size,
+                    previewUrl: previewUrl,
+                    status: 'ready'
                 };
+
+                // Save to IndexedDB
+                try {
+                    await savePhotoToDB(photo);
+                    photo.status = 'cached';
+                } catch (error) {
+                    console.error('Error saving photo to IndexedDB:', error);
+                }
 
                 photos.push(photo);
                 renderPhoto(photo);
             }
 
-            // Update pricing summary
             updatePricingSummary();
         }
 
@@ -494,7 +512,37 @@
                 document.getElementById('pricingSummary').style.display = 'block';
             } else {
                 document.getElementById('pricingSummary').style.display = 'none';
+                // Show empty state
+                gallery.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🎨</div>
+                        <h3>No photos yet</h3>
+                        <p>Upload your first photo to see AI magic happen!</p>
+                    </div>
+                `;
             }
+        }
+
+        async function removePhoto(photoId) {
+            // Remove from IndexedDB
+            try {
+                await deletePhotoFromDB(photoId);
+            } catch (error) {
+                console.error('Error removing photo from IndexedDB:', error);
+            }
+
+            // Remove from memory
+            const index = photos.findIndex(p => p.id === photoId);
+            if (index > -1) {
+                URL.revokeObjectURL(photos[index].previewUrl);
+                photos.splice(index, 1);
+            }
+
+            // Remove from DOM
+            const card = document.getElementById(`card-${photoId}`);
+            if (card) card.remove();
+
+            updatePricingSummary();
         }
 
         async function processCheckout() {
@@ -518,34 +566,10 @@
                 // Disable checkout button
                 const btn = document.getElementById('processCheckoutBtn');
                 btn.disabled = true;
-                btn.textContent = 'Uploading photos...';
-
-                // Step 1: Upload photos to server BEFORE creating checkout session
-                const formData = new FormData();
-                for (const photo of photos) {
-                    // Fetch the blob and convert to file
-                    const response = await fetch(photo.originalUrl);
-                    const blob = await response.blob();
-                    formData.append('photos', blob, photo.name);
-                }
-
-                const uploadResponse = await fetch('/api/pixlypro/upload-temp-photos', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
-                });
-
-                const uploadData = await uploadResponse.json();
-
-                if (!uploadData.success) {
-                    throw new Error(uploadData.error || 'Failed to upload photos');
-                }
-
-                // Step 2: Create checkout session with uploaded photo IDs
                 btn.textContent = 'Creating checkout session...';
 
+                // Create checkout session WITHOUT uploading photos first
+                // Photos stay in IndexedDB until payment is confirmed
                 const response = await fetch('/api/pixlypro/create-checkout-session', {
                     method: 'POST',
                     headers: {
@@ -555,8 +579,8 @@
                     body: JSON.stringify({
                         packageType: 'custom',
                         photoCount: photoCount,
-                        totalAmount: totalAmount,
-                        tempPhotoIds: uploadData.photoIds
+                        totalAmount: totalAmount
+                        // NO tempPhotoIds - photos stay in browser until payment confirmed
                     })
                 });
 
@@ -579,21 +603,22 @@
                 // Re-enable button
                 const btn = document.getElementById('processCheckoutBtn');
                 btn.disabled = false;
-                btn.textContent = 'Process & Checkout 💳';
+                btn.textContent = 'Proceed to Payment 💳';
             }
         }
 
         function renderPhoto(photo) {
             const card = document.createElement('div');
             card.className = 'photo-card';
-            card.id = `photo-${photo.id}`;
+            card.id = `card-${photo.id}`;
 
             card.innerHTML = `
-                <img src="${photo.originalUrl}" alt="${photo.name}" class="photo-preview">
+                <button class="remove-btn" onclick="removePhoto('${photo.id}')" title="Remove photo">×</button>
+                <img src="${photo.previewUrl}" alt="${photo.name}" class="photo-preview">
                 <div class="photo-info">
                     <div class="photo-name">${photo.name}</div>
                     <div class="photo-status">
-                        <span class="status-badge status-ready">Ready for checkout</span>
+                        <span class="status-badge status-${photo.status}">${photo.status === 'cached' ? 'Saved locally' : 'Ready'}</span>
                     </div>
                 </div>
             `;

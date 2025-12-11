@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PixlyPro Photo Studio - Upload Your Photos</title>
+    <title>PixlyPro Photo Studio - Processing Your Photos</title>
     <style>
         * {
             margin: 0;
@@ -21,24 +21,19 @@
             padding: 2rem;
         }
 
-        .redirect-container {
+        .processing-container {
             background: white;
             border-radius: 1rem;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             padding: 3rem;
             text-align: center;
-            max-width: 500px;
+            max-width: 600px;
+            width: 100%;
         }
 
-        .success-icon {
+        .status-icon {
             font-size: 4rem;
             margin-bottom: 1.5rem;
-            animation: bounce 1s ease-in-out;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
         }
 
         h1 {
@@ -50,7 +45,7 @@
         p {
             color: #64748b;
             font-size: 1.125rem;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             line-height: 1.6;
         }
 
@@ -69,6 +64,34 @@
             to { transform: rotate(360deg); }
         }
 
+        .progress-container {
+            background: #f1f5f9;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+            transition: width 0.3s ease;
+            border-radius: 6px;
+        }
+
+        .progress-text {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
         .btn {
             display: inline-block;
             padding: 0.875rem 2rem;
@@ -81,6 +104,7 @@
             transition: all 0.3s ease;
             cursor: pointer;
             border: none;
+            margin-top: 1rem;
         }
 
         .btn:hover {
@@ -89,131 +113,251 @@
             box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
         }
 
-        .package-info {
-            background: #f8fafc;
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #ef4444;
             border-radius: 0.5rem;
             padding: 1rem;
-            margin-bottom: 2rem;
+            color: #991b1b;
+            margin: 1rem 0;
         }
 
-        .package-info strong {
-            color: #3b82f6;
-            text-transform: capitalize;
+        .warning-message {
+            background: #fffbeb;
+            border: 1px solid #f59e0b;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            color: #92400e;
+            margin: 1rem 0;
+            font-size: 0.875rem;
         }
     </style>
 </head>
 <body>
-    <div class="redirect-container">
-        <div class="success-icon">✨</div>
-        <h1>Payment Successful!</h1>
-        <div id="packageInfo" class="package-info" style="display: none;">
-            <p>Package: <strong id="packageType"></strong></p>
+    <div class="processing-container">
+        <div class="status-icon" id="statusIcon">✨</div>
+        <h1 id="statusTitle">Payment Successful!</h1>
+        <p id="statusMessage">Preparing to upload and enhance your photos...</p>
+
+        <div class="loading-spinner" id="spinner"></div>
+
+        <div class="progress-container" id="progressContainer" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div class="progress-text" id="progressText">Uploading photos...</div>
         </div>
-        <p id="message">Redirecting you to the Photo Studio...</p>
-        <div class="loading-spinner"></div>
-        <br><br>
-        <a href="/photo-studio" class="btn" id="manualLink" style="display: none;">Go to Photo Studio</a>
+
+        <div id="errorContainer" style="display: none;"></div>
+
+        <a href="/pixlypro-portal" class="btn" id="dashboardBtn" style="display: none;">Go to Dashboard</a>
     </div>
 
     <script>
-        // Get URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const packageType = urlParams.get('package');
-        const sessionId = urlParams.get('session_id');
-        const orderId = urlParams.get('order_id');
-        const canceled = urlParams.get('canceled');
+        // =====================================================
+        // IndexedDB - Same config as studio page
+        // =====================================================
+        const DB_NAME = 'PixlyProPhotos';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'photos';
+        let db = null;
 
-        // Handle canceled payment
-        if (canceled === 'true') {
-            document.querySelector('.success-icon').textContent = '⚠️';
-            document.querySelector('h1').textContent = 'Payment Canceled';
-            document.querySelector('#message').textContent = 'Your payment was canceled. You can try again from the Photo Studio.';
-            document.querySelector('.loading-spinner').style.display = 'none';
-            document.querySelector('#manualLink').style.display = 'inline-block';
-
-            // Clear sessionStorage
-            sessionStorage.removeItem('pixlypro_pending_photos');
-            sessionStorage.removeItem('pixlypro_order_id');
-
-            // Redirect after 3 seconds
-            setTimeout(() => {
-                window.location.href = '/photo-studio';
-            }, 3000);
-        } else {
-            // Show package info if available
-            if (packageType) {
-                document.getElementById('packageInfo').style.display = 'block';
-                document.getElementById('packageType').textContent = packageType;
-            }
-
-            // Process photos if available in sessionStorage
-            processPhotosAfterPayment();
+        async function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                request.onupgradeneeded = (event) => {
+                    const database = event.target.result;
+                    if (!database.objectStoreNames.contains(STORE_NAME)) {
+                        database.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+            });
         }
 
-        async function processPhotosAfterPayment() {
-            const storedOrderId = sessionStorage.getItem('pixlypro_order_id');
-            const finalOrderId = orderId || storedOrderId;
+        async function getPhotosFromDB() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
 
-            if (!finalOrderId) {
-                // No order to process, just redirect
-                document.querySelector('#message').textContent = 'Redirecting you to the customer portal...';
-                setTimeout(() => {
-                    window.location.href = '/pixlypro-portal';
-                }, 2000);
+        async function clearPhotosFromDB() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.clear();
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // =====================================================
+        // UI Helpers
+        // =====================================================
+        function updateStatus(icon, title, message) {
+            document.getElementById('statusIcon').textContent = icon;
+            document.getElementById('statusTitle').textContent = title;
+            document.getElementById('statusMessage').textContent = message;
+        }
+
+        function showProgress(percent, text) {
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('progressFill').style.width = `${percent}%`;
+            document.getElementById('progressText').textContent = text;
+        }
+
+        function hideSpinner() {
+            document.getElementById('spinner').style.display = 'none';
+        }
+
+        function showError(message) {
+            hideSpinner();
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('errorContainer').innerHTML = `<div class="error-message">${message}</div>`;
+            document.getElementById('errorContainer').style.display = 'block';
+            document.getElementById('dashboardBtn').style.display = 'inline-block';
+        }
+
+        function showSuccess() {
+            hideSpinner();
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('dashboardBtn').style.display = 'inline-block';
+        }
+
+        // =====================================================
+        // Main Processing Logic
+        // =====================================================
+        async function processAfterPayment() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session_id');
+            const orderId = urlParams.get('order_id') || sessionStorage.getItem('pixlypro_order_id');
+            const canceled = urlParams.get('canceled');
+
+            // Handle canceled payment
+            if (canceled === 'true') {
+                updateStatus('⚠️', 'Payment Canceled', 'Your payment was canceled. You can try again from the Photo Studio.');
+                hideSpinner();
+                document.getElementById('dashboardBtn').href = '/photo-studio';
+                document.getElementById('dashboardBtn').textContent = 'Back to Photo Studio';
+                document.getElementById('dashboardBtn').style.display = 'inline-block';
+                return;
+            }
+
+            if (!orderId) {
+                showError('No order found. Please try again from the Photo Studio.');
                 return;
             }
 
             try {
-                document.querySelector('#message').textContent = 'Processing your photos with AI...';
-
                 const token = localStorage.getItem('pixlypro_token');
-
                 if (!token) {
-                    throw new Error('Not authenticated');
+                    showError('Authentication required. Please log in again.');
+                    setTimeout(() => {
+                        window.location.href = '/pixlypro-auth';
+                    }, 2000);
+                    return;
                 }
 
-                // Trigger processing of already-uploaded temp photos
-                const processResponse = await fetch('/api/pixlypro/process-temp-photos', {
+                // Step 1: Verify payment with Stripe
+                updateStatus('💳', 'Verifying Payment...', 'Confirming your payment with Stripe...');
+
+                const verifyResponse = await fetch(`/api/pixlypro/verify-payment?session_id=${sessionId}&order_id=${orderId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const verifyData = await verifyResponse.json();
+
+                if (!verifyData.success) {
+                    showError('Payment verification failed. Please contact support.');
+                    return;
+                }
+
+                // Step 2: Get photos from IndexedDB
+                updateStatus('📦', 'Preparing Photos...', 'Loading your photos from browser storage...');
+
+                await initDB();
+                const storedPhotos = await getPhotosFromDB();
+
+                if (storedPhotos.length === 0) {
+                    // No photos in IndexedDB - check if they might already be processed
+                    updateStatus('⚠️', 'No Photos Found', 'No photos found in browser storage. They may have already been processed.');
+                    document.getElementById('errorContainer').innerHTML = `
+                        <div class="warning-message">
+                            If you closed your browser or cleared data before processing completed,
+                            please contact support with your Order #${orderId}.
+                        </div>
+                    `;
+                    document.getElementById('errorContainer').style.display = 'block';
+                    hideSpinner();
+                    document.getElementById('dashboardBtn').style.display = 'inline-block';
+                    return;
+                }
+
+                // Step 3: Upload photos to S3 and enhance
+                updateStatus('🚀', 'Uploading & Enhancing...', `Processing ${storedPhotos.length} photo${storedPhotos.length > 1 ? 's' : ''}...`);
+                showProgress(0, `Uploading photo 1 of ${storedPhotos.length}...`);
+
+                const formData = new FormData();
+                formData.append('orderId', orderId);
+
+                for (let i = 0; i < storedPhotos.length; i++) {
+                    const photo = storedPhotos[i];
+                    // Convert blob to File
+                    const file = new File([photo.blob], photo.name, { type: photo.type || 'image/png' });
+                    formData.append('photos', file);
+
+                    const percent = Math.round(((i + 1) / storedPhotos.length) * 30);
+                    showProgress(percent, `Preparing photo ${i + 1} of ${storedPhotos.length}...`);
+                }
+
+                showProgress(35, 'Uploading to server...');
+
+                // Upload and enhance in one call
+                const processResponse = await fetch('/api/pixlypro/upload-and-enhance', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({
-                        orderId: finalOrderId
-                    })
+                    body: formData
                 });
 
-                const result = await processResponse.json();
+                const processData = await processResponse.json();
 
-                if (result.success) {
-                    document.querySelector('.success-icon').textContent = '✅';
-                    document.querySelector('h1').textContent = 'Photos Enhanced!';
-                    document.querySelector('#message').textContent = `Successfully enhanced ${result.processedCount} photo${result.processedCount > 1 ? 's' : ''}! Redirecting to your dashboard...`;
-                    document.querySelector('.loading-spinner').style.display = 'none';
-
-                    // Clear sessionStorage
-                    sessionStorage.removeItem('pixlypro_order_id');
-
-                    // Redirect to portal
-                    setTimeout(() => {
-                        window.location.href = '/pixlypro-portal';
-                    }, 2000);
-                } else {
-                    throw new Error(result.error || 'Processing failed');
+                if (!processData.success) {
+                    throw new Error(processData.error || 'Failed to process photos');
                 }
 
+                // Step 4: Clear IndexedDB
+                showProgress(95, 'Cleaning up...');
+                await clearPhotosFromDB();
+                sessionStorage.removeItem('pixlypro_order_id');
+
+                // Step 5: Success!
+                showProgress(100, 'Complete!');
+                updateStatus('✅', 'Photos Enhanced!', `Successfully enhanced ${processData.processedCount} photo${processData.processedCount > 1 ? 's' : ''}! Your enhanced photos are ready.`);
+                showSuccess();
+
+                // Auto-redirect after 3 seconds
+                setTimeout(() => {
+                    window.location.href = '/pixlypro-portal';
+                }, 3000);
+
             } catch (error) {
-                console.error('Photo processing error:', error);
-                document.querySelector('.success-icon').textContent = '⚠️';
-                document.querySelector('h1').textContent = 'Processing Issue';
-                document.querySelector('#message').textContent = 'Payment successful, but there was an issue processing photos. Please contact support.';
-                document.querySelector('.loading-spinner').style.display = 'none';
-                document.querySelector('#manualLink').style.display = 'inline-block';
-                document.querySelector('#manualLink').href = '/pixlypro-portal';
-                document.querySelector('#manualLink').textContent = 'Go to Dashboard';
+                console.error('Processing error:', error);
+                updateStatus('❌', 'Processing Error', 'An error occurred while processing your photos.');
+                showError(error.message || 'Please contact support if this persists.');
             }
         }
+
+        // Start processing when page loads
+        document.addEventListener('DOMContentLoaded', processAfterPayment);
     </script>
 </body>
 </html>
