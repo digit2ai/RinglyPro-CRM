@@ -199,7 +199,7 @@ router.post('/upload-temp-photos', authenticateToken, upload.array('photos', 100
           Key: filename,
           Body: imageBuffer,
           ContentType: 'image/png',
-          ACL: 'public-read'  // Make publicly accessible for Pixelixe API
+          // Note: ACL removed - bucket uses bucket policy for public access
         }));
 
         const url = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${filename}`;
@@ -441,8 +441,7 @@ router.post('/upload-temp', upload.single('photo'), async (req, res) => {
       Key: filename,
       Body: imageBuffer,
       ContentType: contentType,
-      ACL: 'public-read'
-    }));
+          }));
 
     const imageUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${filename}`;
 
@@ -497,8 +496,7 @@ router.post('/enhance', async (req, res) => {
       Key: brightnessFilename,
       Body: brightnessBuffer,
       ContentType: 'image/png',
-      ACL: 'public-read'
-    }));
+          }));
 
     const brightnessUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
 
@@ -512,8 +510,7 @@ router.post('/enhance', async (req, res) => {
       Key: finalFilename,
       Body: contrastBuffer,
       ContentType: 'image/png',
-      ACL: 'public-read'
-    }));
+          }));
 
     const enhancedUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${finalFilename}`;
 
@@ -954,8 +951,7 @@ router.post('/process-order', authenticateToken, upload.array('photos', 100), as
           Key: originalFilename,
           Body: imageBuffer,
           ContentType: 'image/png',
-          ACL: 'public-read'
-        }));
+                  }));
 
         const originalUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
 
@@ -968,8 +964,7 @@ router.post('/process-order', authenticateToken, upload.array('photos', 100), as
           Key: brightnessFilename,
           Body: brightnessBuffer,
           ContentType: 'image/png',
-          ACL: 'public-read'
-        }));
+                  }));
 
         const brightnessUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
 
@@ -982,8 +977,7 @@ router.post('/process-order', authenticateToken, upload.array('photos', 100), as
           Key: enhancedFilename,
           Body: contrastBuffer,
           ContentType: 'image/png',
-          ACL: 'public-read'
-        }));
+                  }));
 
         const enhancedUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
 
@@ -1208,8 +1202,7 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
           Key: originalFilename,
           Body: imageBuffer,
           ContentType: 'image/png',
-          ACL: 'public-read'
-        }));
+                  }));
 
         const originalUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
         logger.info(`[PIXLYPRO] Saved original: ${originalUrl}`);
@@ -1225,8 +1218,7 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
           Key: brightnessFilename,
           Body: brightnessBuffer,
           ContentType: 'image/png',
-          ACL: 'public-read'
-        }));
+                  }));
 
         const brightnessUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
         logger.info(`[PIXLYPRO] Brightness saved: ${brightnessUrl}`);
@@ -1242,8 +1234,7 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
           Key: enhancedFilename,
           Body: contrastBuffer,
           ContentType: 'image/png',
-          ACL: 'public-read'
-        }));
+                  }));
 
         const enhancedUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
         logger.info(`[PIXLYPRO] Enhanced saved: ${enhancedUrl}`);
@@ -1406,8 +1397,7 @@ router.post('/upload-and-enhance', authenticateToken, upload.array('photos', 100
           Key: originalFilename,
           Body: imageBuffer,
           ContentType: 'image/png',
-          ACL: 'public-read'
-        }));
+                  }));
 
         const originalUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
         logger.info(`[PIXLYPRO] Original uploaded: ${originalUrl}`);
@@ -1423,8 +1413,7 @@ router.post('/upload-and-enhance', authenticateToken, upload.array('photos', 100
           Key: brightnessFilename,
           Body: brightnessBuffer,
           ContentType: 'image/png',
-          ACL: 'public-read'
-        }));
+                  }));
 
         const brightnessUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
         logger.info(`[PIXLYPRO] Brightness applied: ${brightnessUrl}`);
@@ -1440,8 +1429,7 @@ router.post('/upload-and-enhance', authenticateToken, upload.array('photos', 100
           Key: enhancedFilename,
           Body: contrastBuffer,
           ContentType: 'image/png',
-          ACL: 'public-read'
-        }));
+                  }));
 
         const enhancedUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
         logger.info(`[PIXLYPRO] Enhanced uploaded: ${enhancedUrl}`);
