@@ -1061,6 +1061,8 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
     const userId = req.user.userId || req.user.id;
     const { orderId } = req.body;
 
+    logger.info(`[PIXLYPRO] process-temp-photos called for order ${orderId} by user ${userId}`);
+
     if (!orderId) {
       return res.status(400).json({
         success: false,
@@ -1069,8 +1071,9 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
     }
 
     // Verify order belongs to user and get temp photo IDs
+    // Use * to handle case where temp_photo_ids column might not exist yet
     const [order] = await sequelize.query(
-      `SELECT id, photo_count, payment_status, order_status, temp_photo_ids
+      `SELECT *
        FROM pixlypro_orders
        WHERE id = :orderId AND user_id = :userId`,
       {
@@ -1078,6 +1081,8 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
         type: QueryTypes.SELECT
       }
     );
+
+    logger.info(`[PIXLYPRO] Order lookup result: ${order ? JSON.stringify(order) : 'not found'}`);
 
     if (!order) {
       return res.status(404).json({
@@ -1101,6 +1106,7 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
         }
       );
     } else if (order.payment_status !== 'completed') {
+      logger.error(`[PIXLYPRO] Order ${orderId} payment status is ${order.payment_status}, not completed`);
       return res.status(400).json({
         success: false,
         error: 'Order payment not completed'
@@ -1291,10 +1297,10 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    logger.error('[PIXLYPRO] Process temp photos error:', error);
+    logger.error('[PIXLYPRO] Process temp photos error:', error.message, error.stack);
     res.status(500).json({
       success: false,
-      error: 'Failed to process photos'
+      error: 'Failed to process photos: ' + error.message
     });
   }
 });
