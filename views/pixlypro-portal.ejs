@@ -327,12 +327,13 @@
             </div>
             <div class="comparison-modal-images">
                 <div class="comparison-modal-side">
-                    <div class="comparison-modal-label">Original</div>
+                    <div class="comparison-modal-label">BEFORE</div>
                     <img id="modalOriginal" src="" alt="Original">
                 </div>
                 <div class="comparison-modal-side">
-                    <div class="comparison-modal-label">✨ AI Enhanced</div>
+                    <div class="comparison-modal-label">ENHANCED ✨</div>
                     <img id="modalEnhanced" src="" alt="Enhanced">
+                    <a id="modalDownload" href="" download="enhanced_photo.png" class="btn btn-download" style="margin-top: 1rem; display: inline-block; width: auto;">⬇️ Download Enhanced Photo</a>
                 </div>
             </div>
         </div>
@@ -391,48 +392,80 @@
                 const date = new Date(order.order_date).toLocaleDateString();
                 const statusClass = `status-${order.order_status}`;
                 const statusText = order.order_status.replace('_', ' ').toUpperCase();
-
-                const photosHTML = order.photos && order.photos.length > 0 ? `
-                    <div class="photos-grid">
-                        ${order.photos.map(photo => `
-                            <div class="photo-comparison">
-                                <div class="comparison-images">
-                                    <div class="comparison-side">
-                                        <div class="comparison-label">Before</div>
-                                        <img src="${photo.original_url}" alt="Original">
-                                    </div>
-                                    <div class="comparison-side">
-                                        <div class="comparison-label">After ✨</div>
-                                        <img src="${photo.enhanced_url}" alt="Enhanced">
-                                    </div>
-                                </div>
-                                <div class="photo-actions">
-                                    <a href="${photo.enhanced_url}" download="enhanced_${photo.filename}" class="btn btn-small btn-download">Download</a>
-                                    <button class="btn btn-small btn-compare" onclick="showComparison('${photo.original_url}', '${photo.enhanced_url}')">Full View</button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : '<p style="color: #64748b; margin-top: 1rem;">No photos uploaded yet.</p>';
+                const photoCount = order.photos_to_upload || order.photo_count || 0;
+                const hasPhotos = order.photos && order.photos.length > 0;
 
                 return `
-                    <div class="order-card">
-                        <div class="order-header">
+                    <div class="order-card" id="order-${order.id}">
+                        <div class="order-header" onclick="toggleOrderDetails(${order.id})" style="cursor: pointer;">
                             <div class="order-info">
                                 <h3>Order #${order.id}</h3>
-                                <p>${date} • ${order.photo_count} photo${order.photo_count > 1 ? 's' : ''} • $${order.price.toFixed(2)}</p>
+                                <p>${date} • ${photoCount} photo${photoCount !== 1 ? 's' : ''} • $${parseFloat(order.price).toFixed(2)}</p>
                             </div>
-                            <span class="status-badge ${statusClass}">${statusText}</span>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                                <span class="expand-icon" id="expand-${order.id}" style="font-size: 1.5rem; transition: transform 0.3s;">▼</span>
+                            </div>
                         </div>
-                        ${photosHTML}
+                        <div class="order-details" id="details-${order.id}" style="display: none; margin-top: 1rem;">
+                            ${hasPhotos ? `
+                                <div class="photos-grid">
+                                    ${order.photos.map(photo => `
+                                        <div class="photo-comparison">
+                                            <div class="comparison-images">
+                                                <div class="comparison-side">
+                                                    <div class="comparison-label">BEFORE</div>
+                                                    <img src="${photo.original_url}" alt="Original" onerror="this.src='https://via.placeholder.com/300x200?text=Original+Not+Available'">
+                                                </div>
+                                                <div class="comparison-side">
+                                                    <div class="comparison-label">ENHANCED ✨</div>
+                                                    <img src="${photo.enhanced_url || photo.original_url}" alt="Enhanced" onerror="this.src='https://via.placeholder.com/300x200?text=Processing...'">
+                                                </div>
+                                            </div>
+                                            <div class="photo-actions">
+                                                ${photo.enhanced_url ? `
+                                                    <a href="${photo.enhanced_url}" download="enhanced_${photo.filename || 'photo.jpg'}" class="btn btn-small btn-download" onclick="event.stopPropagation();">
+                                                        ⬇️ Download Enhanced
+                                                    </a>
+                                                ` : `
+                                                    <span class="btn btn-small" style="background: #fef3c7; color: #92400e; cursor: default;">Processing...</span>
+                                                `}
+                                                <button class="btn btn-small btn-compare" onclick="event.stopPropagation(); showComparison('${photo.original_url}', '${photo.enhanced_url || photo.original_url}')">🔍 Full View</button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : `
+                                <div style="text-align: center; padding: 2rem; background: #f8fafc; border-radius: 0.5rem;">
+                                    <p style="color: #64748b; margin-bottom: 1rem;">No photos uploaded yet for this order.</p>
+                                    ${order.order_status === 'awaiting_upload' ? `
+                                        <a href="/pixlypro-studio?orderId=${order.id}" class="btn btn-small" style="background: #3b82f6; color: white;">Upload Photos Now</a>
+                                    ` : ''}
+                                </div>
+                            `}
+                        </div>
                     </div>
                 `;
             }).join('');
         }
 
+        function toggleOrderDetails(orderId) {
+            const details = document.getElementById(`details-${orderId}`);
+            const expandIcon = document.getElementById(`expand-${orderId}`);
+
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                expandIcon.style.transform = 'rotate(180deg)';
+            } else {
+                details.style.display = 'none';
+                expandIcon.style.transform = 'rotate(0deg)';
+            }
+        }
+
         function showComparison(originalUrl, enhancedUrl) {
             document.getElementById('modalOriginal').src = originalUrl;
             document.getElementById('modalEnhanced').src = enhancedUrl;
+            document.getElementById('modalDownload').href = enhancedUrl;
             document.getElementById('comparisonModal').classList.add('active');
         }
 
