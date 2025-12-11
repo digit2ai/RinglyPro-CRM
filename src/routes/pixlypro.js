@@ -198,8 +198,7 @@ router.post('/upload-temp-photos', authenticateToken, upload.array('photos', 100
           Bucket: TEMP_BUCKET_NAME,
           Key: filename,
           Body: imageBuffer,
-          ContentType: 'image/png',
-          ACL: 'public-read'
+          ContentType: 'image/png'
         }));
 
         const url = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${filename}`;
@@ -426,8 +425,7 @@ router.post('/upload-temp', upload.single('photo'), async (req, res) => {
       Bucket: BUCKET_NAME,
       Key: filename,
       Body: imageBuffer,
-      ContentType: contentType,
-      ACL: 'public-read'
+      ContentType: contentType
     }));
 
     const imageUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${filename}`;
@@ -482,8 +480,7 @@ router.post('/enhance', async (req, res) => {
       Bucket: BUCKET_NAME,
       Key: brightnessFilename,
       Body: brightnessBuffer,
-      ContentType: 'image/png',
-      ACL: 'public-read'
+      ContentType: 'image/png'
     }));
 
     const brightnessUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
@@ -497,8 +494,7 @@ router.post('/enhance', async (req, res) => {
       Bucket: BUCKET_NAME,
       Key: finalFilename,
       Body: contrastBuffer,
-      ContentType: 'image/png',
-      ACL: 'public-read'
+      ContentType: 'image/png'
     }));
 
     const enhancedUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${finalFilename}`;
@@ -939,8 +935,7 @@ router.post('/process-order', authenticateToken, upload.array('photos', 100), as
           Bucket: BUCKET_NAME,
           Key: originalFilename,
           Body: imageBuffer,
-          ContentType: 'image/png',
-          ACL: 'public-read'
+          ContentType: 'image/png'
         }));
 
         const originalUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
@@ -953,8 +948,7 @@ router.post('/process-order', authenticateToken, upload.array('photos', 100), as
           Bucket: BUCKET_NAME,
           Key: brightnessFilename,
           Body: brightnessBuffer,
-          ContentType: 'image/png',
-          ACL: 'public-read'
+          ContentType: 'image/png'
         }));
 
         const brightnessUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
@@ -967,8 +961,7 @@ router.post('/process-order', authenticateToken, upload.array('photos', 100), as
           Bucket: BUCKET_NAME,
           Key: enhancedFilename,
           Body: contrastBuffer,
-          ContentType: 'image/png',
-          ACL: 'public-read'
+          ContentType: 'image/png'
         }));
 
         const enhancedUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
@@ -1156,8 +1149,7 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
           Bucket: TEMP_BUCKET_NAME,
           Key: originalFilename,
           Body: imageBuffer,
-          ContentType: 'image/png',
-          ACL: 'public-read'
+          ContentType: 'image/png'
         }));
 
         const originalUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
@@ -1170,8 +1162,7 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
           Bucket: TEMP_BUCKET_NAME,
           Key: brightnessFilename,
           Body: brightnessBuffer,
-          ContentType: 'image/png',
-          ACL: 'public-read'
+          ContentType: 'image/png'
         }));
 
         const brightnessUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
@@ -1184,8 +1175,7 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
           Bucket: TEMP_BUCKET_NAME,
           Key: enhancedFilename,
           Body: contrastBuffer,
-          ContentType: 'image/png',
-          ACL: 'public-read'
+          ContentType: 'image/png'
         }));
 
         const enhancedUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
