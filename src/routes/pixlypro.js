@@ -1598,12 +1598,13 @@ router.post('/upload-and-enhance-direct', authenticateToken, upload.array('photo
         logger.info(`[PIXLYPRO] Presigned URL generated for Pixelixe access`);
 
         // =====================================================
-        // Professional 4-Step Enhancement Pipeline
+        // Professional 2-Step Enhancement Pipeline
+        // Note: Pixelixe only supports brighten and contrast APIs
         // =====================================================
 
-        // Step 1: Brightness (+0.25) - Professional level brightness boost
-        logger.info(`[PIXLYPRO] Step 1/4: Applying brightness (+0.25)...`);
-        const brightnessBuffer = await pixelixeService.adjustBrightness(originalPresignedUrl, 0.25, 'png');
+        // Step 1: Brightness (+0.30) - Professional level brightness boost
+        logger.info(`[PIXLYPRO] Step 1/2: Applying brightness (+0.30)...`);
+        const brightnessBuffer = await pixelixeService.adjustBrightness(originalPresignedUrl, 0.30, 'png');
 
         const brightnessFilename = `pixlypro/temp/${crypto.randomBytes(16).toString('hex')}.png`;
         await s3.send(new PutObjectCommand({
@@ -1615,39 +1616,12 @@ router.post('/upload-and-enhance-direct', authenticateToken, upload.array('photo
         const brightnessPresignedUrl = await getPresignedUrl(s3, BUCKET_NAME, brightnessFilename, 900);
         logger.info(`[PIXLYPRO] Brightness applied`);
 
-        // Step 2: Contrast (+0.30) - Enhance depth and definition
-        logger.info(`[PIXLYPRO] Step 2/4: Applying contrast (+0.30)...`);
-        const contrastBuffer = await pixelixeService.adjustContrast(brightnessPresignedUrl, 0.30, 'png');
-
-        const contrastFilename = `pixlypro/temp/${crypto.randomBytes(16).toString('hex')}.png`;
-        await s3.send(new PutObjectCommand({
-          Bucket: BUCKET_NAME,
-          Key: contrastFilename,
-          Body: contrastBuffer,
-          ContentType: 'image/png',
-        }));
-        const contrastPresignedUrl = await getPresignedUrl(s3, BUCKET_NAME, contrastFilename, 900);
+        // Step 2: Contrast (+0.35) - Enhance depth and definition
+        logger.info(`[PIXLYPRO] Step 2/2: Applying contrast (+0.35)...`);
+        const finalBuffer = await pixelixeService.adjustContrast(brightnessPresignedUrl, 0.35, 'png');
         logger.info(`[PIXLYPRO] Contrast applied`);
 
-        // Step 3: Saturation (+0.25) - Make colors pop
-        logger.info(`[PIXLYPRO] Step 3/4: Applying saturation (+0.25)...`);
-        const saturationBuffer = await pixelixeService.adjustSaturation(contrastPresignedUrl, 0.25, 'png');
-
-        const saturationFilename = `pixlypro/temp/${crypto.randomBytes(16).toString('hex')}.png`;
-        await s3.send(new PutObjectCommand({
-          Bucket: BUCKET_NAME,
-          Key: saturationFilename,
-          Body: saturationBuffer,
-          ContentType: 'image/png',
-        }));
-        const saturationPresignedUrl = await getPresignedUrl(s3, BUCKET_NAME, saturationFilename, 900);
-        logger.info(`[PIXLYPRO] Saturation applied`);
-
-        // Step 4: Sharpen (15) - Crisp details without artifacts
-        logger.info(`[PIXLYPRO] Step 4/4: Applying sharpen (15)...`);
-        const finalBuffer = await pixelixeService.adjustSharpen(saturationPresignedUrl, 15, 'png');
-
-        // Upload final enhanced photo (after all 4 steps)
+        // Upload final enhanced photo (after 2 steps)
         const enhancedFilename = `pixlypro/enhanced/${orderId}/${filename}`;
         await s3.send(new PutObjectCommand({
           Bucket: BUCKET_NAME,
