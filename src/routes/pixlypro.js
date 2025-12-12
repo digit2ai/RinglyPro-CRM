@@ -1497,7 +1497,7 @@ router.post('/upload-and-enhance', authenticateToken, upload.array('photos', 100
  * Direct upload and enhance - NO PAYMENT REQUIRED
  * Flow: Upload to S3 -> Enhance with Pixelixe -> Save to database
  */
-router.post('/upload-and-enhance-direct', authenticatePixlyProToken, upload.array('photos', 100), async (req, res) => {
+router.post('/upload-and-enhance-direct', authenticateToken, upload.array('photos', 100), async (req, res) => {
   const { sequelize } = require('../models');
   const { QueryTypes } = require('sequelize');
 
