@@ -726,6 +726,7 @@ router.post('/create-cart-checkout', authenticateToken, async (req, res) => {
 /**
  * GET /api/pixlypro/orders
  * Get user's PixlyPro orders with photos
+ * Returns presigned URLs for private S3 objects so images can be displayed
  */
 router.get('/orders', authenticateToken, async (req, res) => {
   const { sequelize } = require('../models');
@@ -754,7 +755,10 @@ router.get('/orders', authenticateToken, async (req, res) => {
       order.price = parseFloat(order.price);
     }
 
-    // Get photos for each order
+    // Get S3 client for presigned URLs
+    const s3 = getS3Client();
+
+    // Get photos for each order and generate presigned URLs
     for (const order of orders) {
       const photos = await sequelize.query(
         `SELECT id, original_url, enhanced_url, filename, created_at
@@ -766,6 +770,27 @@ router.get('/orders', authenticateToken, async (req, res) => {
           type: QueryTypes.SELECT
         }
       );
+
+      // Generate presigned URLs for each photo (1 hour expiry for viewing)
+      if (s3 && photos.length > 0) {
+        for (const photo of photos) {
+          try {
+            // Extract S3 key from the URL
+            if (photo.original_url && photo.original_url.includes('.amazonaws.com/')) {
+              const originalKey = photo.original_url.split('.amazonaws.com/')[1];
+              photo.original_url = await getPresignedUrl(s3, BUCKET_NAME, originalKey, 3600);
+            }
+            if (photo.enhanced_url && photo.enhanced_url.includes('.amazonaws.com/')) {
+              const enhancedKey = photo.enhanced_url.split('.amazonaws.com/')[1];
+              photo.enhanced_url = await getPresignedUrl(s3, BUCKET_NAME, enhancedKey, 3600);
+            }
+          } catch (presignError) {
+            logger.error(`[PIXLYPRO] Error generating presigned URL for photo ${photo.id}:`, presignError.message);
+            // Keep original URLs as fallback
+          }
+        }
+      }
+
       order.photos = photos;
     }
 
