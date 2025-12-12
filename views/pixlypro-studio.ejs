@@ -266,26 +266,21 @@
                     </button>
                 </div>
 
-                <!-- Pricing Summary & Checkout -->
+                <!-- Enhancement Summary -->
                 <div id="pricingSummary" style="display: none; margin-top: 2rem; padding: 2rem; background: #f8fafc; border-radius: 0.75rem; text-align: left;">
-                    <h3 style="color: #1e293b; margin-bottom: 1rem;">Order Summary</h3>
+                    <h3 style="color: #1e293b; margin-bottom: 1rem;">Ready to Enhance</h3>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                         <span style="color: #64748b;">Photos to enhance:</span>
                         <strong id="photoCount" style="color: #1e293b;">0</strong>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                        <span style="color: #64748b;">Price per photo:</span>
-                        <strong style="color: #1e293b;">$0.50</strong>
-                    </div>
-                    <div style="border-top: 2px solid #e2e8f0; margin: 1rem 0; padding-top: 1rem; display: flex; justify-content: space-between;">
-                        <span style="color: #1e293b; font-size: 1.25rem; font-weight: 600;">Total:</span>
-                        <strong id="totalPrice" style="color: #3b82f6; font-size: 1.5rem;">$0.00</strong>
-                    </div>
-                    <button class="btn" id="processCheckoutBtn" onclick="processCheckout()" style="width: 100%; margin-top: 1rem; padding: 1.25rem; font-size: 1.125rem;">
-                        Proceed to Payment 💳
+                    <button class="btn" id="processEnhanceBtn" onclick="processEnhance()" style="width: 100%; margin-top: 1rem; padding: 1.25rem; font-size: 1.125rem;">
+                        Enhance Photos Now ✨
                     </button>
-                    <div class="warning-banner">
-                        <p><strong>Note:</strong> Your photos are stored locally in your browser. They will be uploaded and enhanced after payment is confirmed. Please don't close this tab until processing is complete.</p>
+                    <div id="progressContainer" style="display: none; margin-top: 1rem;">
+                        <div style="background: #e2e8f0; border-radius: 0.5rem; height: 12px; overflow: hidden;">
+                            <div id="progressBar" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                        <p id="progressText" style="color: #64748b; font-size: 0.875rem; margin-top: 0.5rem; text-align: center;">Uploading photos...</p>
                     </div>
                 </div>
             </div>
@@ -507,10 +502,8 @@
 
         function updatePricingSummary() {
             const photoCount = photos.length;
-            const totalPrice = (photoCount * 0.50).toFixed(2);
 
             document.getElementById('photoCount').textContent = photoCount;
-            document.getElementById('totalPrice').textContent = `$${totalPrice}`;
 
             if (photoCount > 0) {
                 document.getElementById('pricingSummary').style.display = 'block';
@@ -549,14 +542,13 @@
             updatePricingSummary();
         }
 
-        async function processCheckout() {
+        async function processEnhance() {
             if (photos.length === 0) {
                 alert('Please upload at least one photo');
                 return;
             }
 
             const photoCount = photos.length;
-            const totalAmount = photoCount * 0.50;
 
             try {
                 // Get JWT token from localStorage
@@ -567,13 +559,20 @@
                     return;
                 }
 
-                // Disable checkout button
-                const btn = document.getElementById('processCheckoutBtn');
+                // Disable enhance button and show progress
+                const btn = document.getElementById('processEnhanceBtn');
                 btn.disabled = true;
-                btn.textContent = 'Uploading photos...';
+                btn.textContent = 'Processing...';
 
-                // Step 1: Upload photos to S3 temp folder BEFORE payment
-                // This ensures photos are available after Stripe redirect
+                const progressContainer = document.getElementById('progressContainer');
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('progressText');
+                progressContainer.style.display = 'block';
+
+                // Step 1: Get photos from IndexedDB
+                progressText.textContent = 'Preparing photos...';
+                progressBar.style.width = '10%';
+
                 const storedPhotos = await getPhotosFromDB();
                 const formData = new FormData();
 
@@ -582,9 +581,11 @@
                     formData.append('photos', file);
                 }
 
-                btn.textContent = 'Uploading to secure storage...';
+                // Step 2: Upload and enhance directly (no payment)
+                progressText.textContent = 'Uploading and enhancing with AI...';
+                progressBar.style.width = '30%';
 
-                const uploadResponse = await fetch('/api/pixlypro/upload-temp-photos', {
+                const response = await fetch('/api/pixlypro/upload-and-enhance-direct', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -592,52 +593,32 @@
                     body: formData
                 });
 
-                const uploadData = await uploadResponse.json();
-
-                if (!uploadData.success) {
-                    throw new Error(uploadData.error || 'Failed to upload photos');
-                }
-
-                const tempPhotoIds = uploadData.photoIds;
-                console.log('Uploaded temp photos:', tempPhotoIds);
-
-                btn.textContent = 'Creating checkout session...';
-
-                // Step 2: Create checkout session with temp photo IDs
-                const response = await fetch('/api/pixlypro/create-checkout-session', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        packageType: 'custom',
-                        photoCount: photoCount,
-                        totalAmount: totalAmount,
-                        tempPhotoIds: tempPhotoIds  // Store temp photo IDs with order
-                    })
-                });
-
                 const data = await response.json();
 
-                if (data.success && data.sessionUrl) {
-                    // Clear IndexedDB since photos are now on S3
-                    await clearPhotosFromDB();
-
-                    // Redirect to Stripe checkout
-                    window.location.href = data.sessionUrl;
-                } else {
-                    throw new Error(data.error || 'Failed to create checkout session');
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to enhance photos');
                 }
 
+                progressBar.style.width = '100%';
+                progressText.textContent = `Successfully enhanced ${data.processedCount} photo(s)!`;
+
+                // Clear IndexedDB
+                await clearPhotosFromDB();
+
+                // Redirect to portal after 2 seconds
+                setTimeout(() => {
+                    window.location.href = '/pixlypro-portal';
+                }, 2000);
+
             } catch (error) {
-                console.error('Checkout error:', error);
-                alert('Failed to create checkout session. Please try again.');
+                console.error('Enhancement error:', error);
+                alert('Failed to enhance photos: ' + error.message);
 
                 // Re-enable button
-                const btn = document.getElementById('processCheckoutBtn');
+                const btn = document.getElementById('processEnhanceBtn');
                 btn.disabled = false;
-                btn.textContent = 'Proceed to Payment 💳';
+                btn.textContent = 'Enhance Photos Now ✨';
+                document.getElementById('progressContainer').style.display = 'none';
             }
         }
 

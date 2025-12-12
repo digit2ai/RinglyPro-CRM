@@ -1492,4 +1492,160 @@ router.post('/upload-and-enhance', authenticateToken, upload.array('photos', 100
   }
 });
 
+/**
+ * POST /api/pixlypro/upload-and-enhance-direct
+ * Direct upload and enhance - NO PAYMENT REQUIRED
+ * Flow: Upload to S3 -> Enhance with Pixelixe -> Save to database
+ */
+router.post('/upload-and-enhance-direct', authenticatePixlyProToken, upload.array('photos', 100), async (req, res) => {
+  const { sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+
+  try {
+    const userId = req.user.userId || req.user.id;
+    const photos = req.files;
+
+    logger.info(`[PIXLYPRO] Direct upload-and-enhance called by user ${userId} with ${photos?.length || 0} photos`);
+
+    if (!photos || photos.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No photos provided'
+      });
+    }
+
+    const s3 = getS3Client();
+    if (!s3) {
+      return res.status(500).json({
+        success: false,
+        error: 'S3 not configured'
+      });
+    }
+
+    // Step 1: Create order in database (no payment required)
+    const [orderResult] = await sequelize.query(
+      `INSERT INTO pixlypro_orders (user_id, package_type, total_amount, photo_count, order_status, payment_status, created_at)
+       VALUES (:userId, 'free', 0, :photoCount, 'processing', 'completed', NOW())
+       RETURNING id`,
+      {
+        replacements: { userId, photoCount: photos.length },
+        type: QueryTypes.INSERT
+      }
+    );
+    const orderId = orderResult[0]?.id || orderResult[0];
+    logger.info(`[PIXLYPRO] Created order ${orderId} for direct enhancement`);
+
+    const processedPhotos = [];
+
+    // Step 2: Process each photo
+    for (let i = 0; i < photos.length; i++) {
+      const photo = photos[i];
+      const filename = `${crypto.randomBytes(16).toString('hex')}.png`;
+
+      try {
+        logger.info(`[PIXLYPRO] Processing photo ${i + 1}/${photos.length}: ${photo.originalname}`);
+
+        // Convert to PNG if needed
+        let imageBuffer = photo.buffer;
+        if (photo.mimetype !== 'image/png') {
+          imageBuffer = await sharp(photo.buffer).png().toBuffer();
+        }
+
+        // Upload original to S3
+        const originalFilename = `pixlypro/originals/${orderId}/${filename}`;
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: originalFilename,
+          Body: imageBuffer,
+          ContentType: 'image/png',
+        }));
+
+        const originalUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
+        logger.info(`[PIXLYPRO] Original uploaded: ${originalUrl}`);
+
+        // Apply brightness enhancement
+        logger.info(`[PIXLYPRO] Applying brightness...`);
+        const brightnessBuffer = await pixelixeService.adjustBrightness(originalUrl, 0.15, 'png');
+
+        // Upload brightness result to temp
+        const brightnessFilename = `pixlypro/temp/${crypto.randomBytes(16).toString('hex')}.png`;
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: brightnessFilename,
+          Body: brightnessBuffer,
+          ContentType: 'image/png',
+        }));
+
+        const brightnessUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
+        logger.info(`[PIXLYPRO] Brightness applied: ${brightnessUrl}`);
+
+        // Apply contrast enhancement
+        logger.info(`[PIXLYPRO] Applying contrast...`);
+        const contrastBuffer = await pixelixeService.adjustContrast(brightnessUrl, 0.20, 'png');
+
+        // Upload final enhanced photo
+        const enhancedFilename = `pixlypro/enhanced/${orderId}/${filename}`;
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: enhancedFilename,
+          Body: contrastBuffer,
+          ContentType: 'image/png',
+        }));
+
+        const enhancedUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
+        logger.info(`[PIXLYPRO] Enhanced uploaded: ${enhancedUrl}`);
+
+        // Save to database
+        await sequelize.query(
+          `INSERT INTO pixlypro_photos (order_id, original_url, enhanced_url, filename, created_at)
+           VALUES (:orderId, :originalUrl, :enhancedUrl, :filename, NOW())`,
+          {
+            replacements: {
+              orderId,
+              originalUrl,
+              enhancedUrl,
+              filename: photo.originalname || filename
+            },
+            type: QueryTypes.INSERT
+          }
+        );
+
+        processedPhotos.push({
+          originalUrl,
+          enhancedUrl,
+          filename: photo.originalname || filename
+        });
+
+        logger.info(`[PIXLYPRO] Photo ${i + 1} processed successfully`);
+
+      } catch (photoError) {
+        logger.error(`[PIXLYPRO] Error processing photo ${i + 1}:`, photoError.message);
+        // Continue with other photos
+      }
+    }
+
+    // Update order status
+    await sequelize.query(
+      `UPDATE pixlypro_orders SET order_status = 'completed', updated_at = NOW() WHERE id = :orderId`,
+      { replacements: { orderId }, type: QueryTypes.UPDATE }
+    );
+
+    logger.info(`[PIXLYPRO] Direct enhancement complete: ${processedPhotos.length} photos processed`);
+
+    res.json({
+      success: true,
+      orderId,
+      processedCount: processedPhotos.length,
+      photos: processedPhotos
+    });
+
+  } catch (error) {
+    logger.error('[PIXLYPRO] Direct upload-and-enhance error:', error.message, error.stack);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process photos: ' + error.message
+    });
+  }
+});
+
 module.exports = router;

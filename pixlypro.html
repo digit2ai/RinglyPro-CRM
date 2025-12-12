@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Studio - Turn Phone Photos Into Professional Photography | PixlyPro</title>
+    <style>
+        /* ============================================
+           RESET & BASE STYLES
+        ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background-color: #ffffff;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ============================================
+           TYPOGRAPHY
+        ============================================ */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            color: #0a0a0a;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            letter-spacing: -0.03em;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+        }
+
+        p {
+            font-size: 1.125rem;
+            line-height: 1.7;
+            color: #4a5568;
+            margin-bottom: 1rem;
+        }
+
+        .subheadline {
+            font-size: 1.25rem;
+            line-height: 1.6;
+            color: #64748b;
+            font-weight: 400;
+        }
+
+        /* ============================================
+           TESTIMONIALS SECTION
+        ============================================ */
+        .testimonials {
+            background-color: #f8fafc;
+        }
+
+        .testimonials h2 {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .testimonial-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            position: relative;
+        }
+
+        .testimonial-quote {
+            font-size: 1rem;
+            color: #1a1a1a;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .testimonial-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6 0%, #38bdf8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .testimonial-info {
+            flex: 1;
+        }
+
+        .testimonial-name {
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 0.25rem;
+        }
+
+        .testimonial-business {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .testimonial-stars {
+            color: #fbbf24;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* ============================================
+           FAQ SECTION
+        ============================================ */
+        .faq {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .faq h2 {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .faq-item {
+            background: white;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            border: 2px solid #e2e8f0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:hover {
+            border-color: #3b82f6;
+        }
+
+        .faq-question {
+            padding: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #0a0a0a;
+            user-select: none;
+        }
+
+        .faq-toggle {
+            font-size: 1.5rem;
+            color: #3b82f6;
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .faq-toggle {
+            transform: rotate(45deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding: 0 1.5rem;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .faq-answer p {
+            color: #4a5568;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* ============================================
+           TRUST BADGES
+        ============================================ */
+        .trust-badges {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+            padding: 2rem 0;
+            background: #f8fafc;
+        }
+
+        .trust-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #64748b;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .trust-badge-icon {
+            font-size: 1.5rem;
+            color: #3b82f6;
+        }
+
+        /* ============================================
+           STATS SECTION
+        ============================================ */
+        .stats {
+            background: linear-gradient(135deg, #3b82f6 0%, #38bdf8 100%);
+            color: white;
+            text-align: center;
+            padding: 4rem 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .stat-item {
+            padding: 1rem;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        /* ============================================
+           LAYOUT & CONTAINERS
+        ============================================ */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .container-wide {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        section {
+            padding: 5rem 0;
+        }
+
+        .section-alt {
+            background-color: #f8fafc;
+        }
+
+        /* ============================================
+           BUTTONS (RinglyPro Style)
+        ============================================ */
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: #3b82f6;
+            color: #ffffff;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: #3b82f6;
+            border: 2px solid #3b82f6;
+        }
+
+        .btn-secondary:hover {
+            background-color: #3b82f6;
+            color: #ffffff;
+        }
+
+        .btn-secondary:disabled {
+            color: #9ca3af;
+            border-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-large {
+            padding: 1.25rem 2.5rem;
+            font-size: 1.25rem;
+        }
+
+        .text-link {
+            display: inline-block;
+            margin-left: 1.5rem;
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.125rem;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .text-link:hover {
+            border-bottom-color: #3b82f6;
+        }
+
+        /* ============================================
+           HEADER/LOGO
+        ============================================ */
+        .header {
+            padding: 2rem 0;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-container img {
+            height: 70px;
+            width: auto;
+        }
+
+        .brand-name {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #0a0a0a;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-service {
+            font-size: 2rem;
+            font-weight: 400;
+            color: #64748b;
+            margin-left: 0.5rem;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-nav {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+        }
+
+        /* ============================================
+           HERO SECTION
+        ============================================ */
+        .hero {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            padding: 6rem 0 8rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-text h1 {
+            margin-bottom: 1.5rem;
+            color: #0a0a0a;
+        }
+
+        .hero-text .subheadline {
+            margin-bottom: 2.5rem;
+            max-width: 540px;
+        }
+
+        .hero-cta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .hero-image {
+            background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+            border-radius: 1rem;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .hero-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 1rem;
+        }
+
+        /* ============================================
+           HOW IT WORKS SECTION
+        ============================================ */
+        .how-it-works {
+            text-align: center;
+        }
+
+        .how-it-works h2 {
+            margin-bottom: 4rem;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .step {
+            padding: 2rem;
+        }
+
+        .step-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #3b82f6 0%, #38bdf8 100%);
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            font-weight: 700;
+        }
+
+        .step h3 {
+            margin-bottom: 1rem;
+            color: #0a0a0a;
+        }
+
+        .step p {
+            font-size: 1rem;
+            color: #64748b;
+        }
+
+        .step .btn {
+            margin-top: 1rem;
+        }
+
+        /* ============================================
+           BEFORE/AFTER SECTION
+        ============================================ */
+        .before-after {
+            background-color: #f8fafc;
+        }
+
+        .before-after h2 {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .comparison-item {
+            text-align: center;
+        }
+
+        .comparison-image {
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+            border-radius: 1rem;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .comparison-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 1rem;
+        }
+
+        .comparison-label {
+            font-weight: 600;
+            font-size: 1.125rem;
+            color: #1a1a1a;
+        }
+
+        .comparison-description {
+            max-width: 800px;
+            margin: 3rem auto 0;
+            text-align: center;
+        }
+
+        /* ============================================
+           WHY SECTION
+        ============================================ */
+        .why-section {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .why-section h2 {
+            margin-bottom: 2rem;
+        }
+
+        .why-section p {
+            margin-bottom: 2rem;
+        }
+
+        .benefits-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .benefits-list li {
+            display: flex;
+            align-items: flex-start;
+            padding: 1rem;
+            background-color: #f8fafc;
+            border-radius: 0.5rem;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .benefits-list li::before {
+            content: '✓';
+            color: #3b82f6;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .benefits-list li span {
+            font-size: 1.125rem;
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+
+        /* ============================================
+           PRICING SECTION
+        ============================================ */
+        .pricing {
+            background-color: #f8fafc;
+            text-align: center;
+        }
+
+        .pricing h2 {
+            margin-bottom: 4rem;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            border: 2px solid transparent;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15);
+        }
+
+        .pricing-card.featured {
+            border-color: #3b82f6;
+            transform: scale(1.05);
+        }
+
+        .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-8px);
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #3b82f6 0%, #38bdf8 100%);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .pricing-card h3 {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            color: #0a0a0a;
+        }
+
+        .pricing-price {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-description {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+            min-height: 120px;
+        }
+
+        .pricing-total {
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: #0a0a0a;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background-color: #f1f5f9;
+            border-radius: 0.5rem;
+        }
+
+        /* ============================================
+           FINAL CTA SECTION
+        ============================================ */
+        .final-cta {
+            text-align: center;
+            padding: 6rem 0;
+            background: linear-gradient(135deg, #3b82f6 0%, #38bdf8 100%);
+            color: white;
+        }
+
+        .final-cta h2 {
+            color: white;
+            margin-bottom: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .final-cta .btn-primary {
+            background-color: white;
+            color: #3b82f6;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .final-cta .btn-primary:hover {
+            background-color: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .final-cta-subtitle {
+            margin-top: 1.5rem;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+        }
+
+        /* ============================================
+           RESPONSIVE DESIGN
+        ============================================ */
+        @media (max-width: 1024px) {
+            h1 {
+                font-size: 2.75rem;
+            }
+
+            h2 {
+                font-size: 2rem;
+            }
+
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .hero-image {
+                height: 400px;
+            }
+
+            .steps-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+            }
+
+            .pricing-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+            }
+
+            .pricing-card.featured {
+                transform: scale(1);
+            }
+
+            .pricing-card.featured:hover {
+                transform: translateY(-8px);
+            }
+
+            .benefits-list {
+                grid-template-columns: 1fr;
+            }
+
+            .header-nav {
+                display: flex;
+                justify-content: center;
+                width: 100%;
+                margin-top: 1rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .btn-nav {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .brand-name {
+                font-size: 2.5rem;
+            }
+
+            .brand-service {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.25rem;
+            }
+
+            h2 {
+                font-size: 1.75rem;
+            }
+
+            p, .subheadline {
+                font-size: 1rem;
+            }
+
+            section {
+                padding: 3rem 0;
+            }
+
+            .hero {
+                padding: 4rem 0 5rem;
+            }
+
+            .hero-cta {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .text-link {
+                margin-left: 0;
+                margin-top: 0.5rem;
+                text-align: center;
+            }
+
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-image {
+                height: 300px;
+            }
+
+            .hero-image {
+                height: 300px;
+            }
+
+            .container, .container-wide {
+                padding: 0 1.5rem;
+            }
+
+            .final-cta {
+                padding: 4rem 0;
+            }
+
+            .brand-name {
+                font-size: 2rem;
+            }
+
+            .brand-service {
+                font-size: 1.25rem;
+            }
+
+            .steps-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+            }
+
+            .trust-badges {
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.875rem;
+            }
+
+            .btn {
+                padding: 0.875rem 1.5rem;
+                font-size: 1rem;
+            }
+
+            .btn-large {
+                padding: 1rem 1.75rem;
+                font-size: 1.125rem;
+            }
+
+            .pricing-price {
+                font-size: 2.5rem;
+            }
+
+            .logo-container img {
+                height: 50px;
+            }
+
+            .brand-name {
+                font-size: 1.5rem;
+            }
+
+            .brand-service {
+                display: block;
+                margin-left: 0;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/693b2839e03e9d8560eb669d.png" alt="PixlyPro Photo Studio Logo">
+                    <div>
+                        <span class="brand-name">PixlyPro</span>
+                        <span class="brand-service">Photo Studio</span>
+                    </div>
+                </div>
+                <div class="header-nav">
+                    <a href="https://aiagent.ringlypro.com/photo-studio-upload" class="btn btn-secondary btn-nav">My Orders</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>Turn Your Phone Photos Into Masterpieces</h1>
+                    <p class="subheadline">Send us the pictures you take with your phone and we'll transform them into high-quality professional images—without expensive photo shoots.</p>
+                    <div class="hero-cta">
+                        <a href="https://aiagent.ringlypro.com/photo-studio-upload" class="btn btn-primary btn-large">Start Uploading</a>
+                        <a href="#pricing" class="text-link">View Pricing</a>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69388dfbfb91d01d8d452c2f.jpeg" alt="Before and After Photo Comparison">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TRUST BADGES -->
+    <div class="trust-badges">
+        <div class="trust-badge">
+            <span class="trust-badge-icon">🔒</span>
+            <span>Secure Payment</span>
+        </div>
+        <div class="trust-badge">
+            <span class="trust-badge-icon">⚡</span>
+            <span>48-72 Hour Delivery</span>
+        </div>
+        <div class="trust-badge">
+            <span class="trust-badge-icon">✓</span>
+            <span>100% Satisfaction</span>
+        </div>
+        <div class="trust-badge">
+            <span class="trust-badge-icon">🎨</span>
+            <span>Professional Quality</span>
+        </div>
+    </div>
+
+    <!-- HOW IT WORKS SECTION -->
+    <section class="how-it-works section-alt">
+        <div class="container">
+            <h2>How It Works</h2>
+            <div class="steps-grid">
+                <div class="step">
+                    <div class="step-icon">1</div>
+                    <h3>Upload Photos</h3>
+                    <p>Select your photos and see the price update in real-time. Pay only for what you need.</p>
+                </div>
+                <div class="step">
+                    <div class="step-icon">2</div>
+                    <h3>Checkout</h3>
+                    <p>Review your cart and pay securely with your credit card. Photos upload after payment.</p>
+                </div>
+                <div class="step">
+                    <div class="step-icon">3</div>
+                    <h3>We Enhance</h3>
+                    <p>Our team transforms your photos into professional-grade images with perfect lighting and composition.</p>
+                </div>
+                <div class="step">
+                    <div class="step-icon">4</div>
+                    <h3>You Receive</h3>
+                    <p>Get your enhanced photos delivered within 48-72 hours, ready for your website and marketing.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BEFORE/AFTER SECTION -->
+    <section class="before-after">
+        <div class="container">
+            <h2>From This… To This…</h2>
+            <div class="comparison">
+                <div class="comparison-item">
+                    <div class="comparison-image">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69388e6cfb91d0127c4539be.jpeg" alt="Original Phone Photo - Before Professional Enhancement">
+                    </div>
+                    <p class="comparison-label">Original Phone Photo</p>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-image">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69388eac578cc7fd5dc2aad8.jpeg" alt="Professionally Enhanced Photo - After Enhancement">
+                    </div>
+                    <p class="comparison-label">Professionally Enhanced Photo</p>
+                </div>
+            </div>
+            <div class="comparison-description">
+                <p>Our professional team of graphic designers transforms everyday phone photos into stunning professional-quality images. We adjust lighting, enhance colors, improve composition, and perfect every detail—making your images stand out. This helps businesses and professionals shine on social media, websites, and marketing materials without the cost and hassle of traditional photography.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- WHY SECTION -->
+    <section class="why-section-wrapper">
+        <div class="container">
+            <div class="why-section">
+                <h2>Why It's Perfect for Small Businesses</h2>
+                <p>Professional photography can cost thousands of dollars and requires coordinating schedules, setting up equipment, and disrupting your operations. We've made it simple: use the phone you already have, take photos on your own time, and let our expert team of graphic designers do the heavy lifting.</p>
+                <ul class="benefits-list">
+                    <li><span>No expensive photo shoots</span></li>
+                    <li><span>Use only your existing phone</span></li>
+                    <li><span>Perfect for websites, social media, and marketing</span></li>
+                    <li><span>Consistent, high-quality visuals for your brand</span></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS SECTION -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">500+</div>
+                    <div class="stat-label">Photos Enhanced</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">48-72h</div>
+                    <div class="stat-label">Average Delivery</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Satisfaction Rate</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">$1</div>
+                    <div class="stat-label">Demo Package</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS SECTION -->
+    <section class="testimonials">
+        <div class="container">
+            <h2>What Our Customers Say</h2>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-quote">"I was skeptical at first, but the results blew me away. My food photos went from amateur to magazine-quality. This service paid for itself in the first month!"</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">S</div>
+                        <div class="testimonial-info">
+                            <div class="testimonial-name">Sarah Chen</div>
+                            <div class="testimonial-business">Sweet Treats Bakery</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-quote">"As a small café owner, I don't have time or budget for professional photography. This service is perfect - I take photos with my phone and they come back looking incredible."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">M</div>
+                        <div class="testimonial-info">
+                            <div class="testimonial-name">Marcus Johnson</div>
+                            <div class="testimonial-business">Downtown Coffee Co.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-quote">"The $1 demo convinced me immediately. I upgraded to the Pro package and now my Instagram looks professional. My engagement has doubled since using these photos!"</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">L</div>
+                        <div class="testimonial-info">
+                            <div class="testimonial-name">Lisa Martinez</div>
+                            <div class="testimonial-business">La Bonita Restaurant</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING SECTION -->
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <h2>Simple Volume Pricing</h2>
+            <p style="text-align: center; color: #64748b; margin-bottom: 3rem; font-size: 1.125rem;">
+                Upload as many photos as you need. The more you upload, the more you save per photo.
+            </p>
+
+            <!-- $1 Demo Banner -->
+            <div style="max-width: 600px; margin: 0 auto 3rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 1.5rem 2rem; border-radius: 1rem; color: white; text-align: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">Try It For Just $1</div>
+                <p style="color: rgba(255,255,255,0.9); margin-bottom: 1rem; font-size: 1rem;">Send us 1 photo and see the magic. No risk, no commitment.</p>
+                <a href="https://aiagent.ringlypro.com/photo-studio-upload?demo=true" class="btn" style="background: white; color: #059669; padding: 0.75rem 2rem; font-weight: 600;">Get Your $1 Demo</a>
+            </div>
+
+            <!-- Pricing Tiers Info -->
+            <div class="pricing-tiers-container" style="max-width: 800px; margin: 0 auto 3rem;">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                    <div class="pricing-tier-card" style="background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid #3b82f6;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6; margin-bottom: 0.5rem;">$150</div>
+                        <div style="font-weight: 600; color: #0a0a0a; margin-bottom: 0.25rem;">Base Package</div>
+                        <div style="color: #64748b; font-size: 0.875rem;">1-10 photos</div>
+                    </div>
+                    <div class="pricing-tier-card" style="background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid #38bdf8;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #38bdf8; margin-bottom: 0.5rem;">+$12/photo</div>
+                        <div style="font-weight: 600; color: #0a0a0a; margin-bottom: 0.25rem;">Photos 11-20</div>
+                        <div style="color: #64748b; font-size: 0.875rem;">Additional photos</div>
+                    </div>
+                    <div class="pricing-tier-card" style="background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid #7dd3fc;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #7dd3fc; margin-bottom: 0.5rem;">+$10/photo</div>
+                        <div style="font-weight: 600; color: #0a0a0a; margin-bottom: 0.25rem;">Photos 21-40</div>
+                        <div style="color: #64748b; font-size: 0.875rem;">Volume discount</div>
+                    </div>
+                    <div class="pricing-tier-card" style="background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid #bae6fd;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #0ea5e9; margin-bottom: 0.5rem;">+$8/photo</div>
+                        <div style="font-weight: 600; color: #0a0a0a; margin-bottom: 0.25rem;">Photos 41+</div>
+                        <div style="color: #64748b; font-size: 0.875rem;">Best value</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Price Calculator -->
+            <div style="max-width: 500px; margin: 0 auto 3rem; background: linear-gradient(135deg, #3b82f6 0%, #38bdf8 100%); padding: 2rem; border-radius: 1rem; color: white; text-align: center;">
+                <h3 style="color: white; margin-bottom: 1rem;">Quick Price Calculator</h3>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1rem;">
+                    <label style="font-size: 1rem;">How many photos?</label>
+                    <input type="number" id="photo-calculator" min="1" max="200" value="10"
+                           style="width: 80px; padding: 0.5rem; border-radius: 0.5rem; border: none; font-size: 1.125rem; text-align: center; font-weight: 600;"
+                           onchange="updatePriceCalculator()" oninput="updatePriceCalculator()">
+                </div>
+                <div id="calculated-price" style="font-size: 2.5rem; font-weight: 700;">$150</div>
+                <div id="price-per-photo" style="font-size: 0.875rem; opacity: 0.9;">$15.00 per photo</div>
+            </div>
+
+            <!-- CTA Button -->
+            <div style="text-align: center;">
+                <a href="https://aiagent.ringlypro.com/photo-studio-upload" class="btn btn-primary btn-large" style="font-size: 1.25rem; padding: 1.25rem 3rem;">
+                    Start Uploading Photos
+                </a>
+                <p style="margin-top: 1rem; color: #64748b; font-size: 0.875rem;">
+                    No commitment until you checkout. Upload and preview your cart first.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ SECTION -->
+    <section class="faq-section">
+        <div class="container">
+            <div class="faq">
+                <h2>Frequently Asked Questions</h2>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How does the photo enhancement process work?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Simply upload your phone photos through our secure portal and our professional team of graphic designers enhances them with professional-grade adjustments to lighting, color, composition, and detail. You'll receive your enhanced photos within 48-72 hours.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>What kind of photos work best?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Any photos taken with your phone camera work great! We specialize in food, product, and business photos. Just make sure your subject is well-framed and in focus. Our professional designers handle the rest - fixing lighting, enhancing colors, and perfecting the overall look.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Can I try the service before committing to a larger package?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Absolutely! That's why we offer the $1 Demo package. Send us 1 photo and see the results for yourself before upgrading to a larger package.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How long does it take to get my enhanced photos?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Most orders are delivered within 48-72 hours. You'll receive an email notification when your enhanced photos are ready for download in your customer portal.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>What file formats do you accept and deliver?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>We accept JPEG, PNG, HEIC, and WebP formats. Your enhanced photos are delivered as high-resolution JPEGs, perfect for print and digital use.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>What if I'm not satisfied with the results?</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>We stand behind our work with a 100% satisfaction guarantee. If you're not happy with your enhanced photos, contact us at support@ringlypro.com and we'll make it right.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="final-cta">
+        <div class="container">
+            <h2>Ready to upgrade your photos without hiring a photographer?</h2>
+            <a href="https://aiagent.ringlypro.com/photo-studio-upload" class="btn btn-primary btn-large">Start Uploading Now</a>
+            <p class="final-cta-subtitle">No studio. No equipment. Just your phone and our professional team.</p>
+        </div>
+    </section>
+
+    <!-- SCRIPT -->
+    <script>
+        // Price calculator function
+        function calculatePrice(photoCount) {
+            if (photoCount <= 0) return 0;
+            if (photoCount <= 10) return 150;
+
+            let price = 150;
+            let remaining = photoCount - 10;
+
+            // Photos 11-20: $12/photo
+            if (remaining > 0) {
+                const tier1 = Math.min(remaining, 10);
+                price += tier1 * 12;
+                remaining -= tier1;
+            }
+
+            // Photos 21-40: $10/photo
+            if (remaining > 0) {
+                const tier2 = Math.min(remaining, 20);
+                price += tier2 * 10;
+                remaining -= tier2;
+            }
+
+            // Photos 41+: $8/photo
+            if (remaining > 0) {
+                price += remaining * 8;
+            }
+
+            return price;
+        }
+
+        // Update price calculator display
+        function updatePriceCalculator() {
+            const input = document.getElementById('photo-calculator');
+            let count = parseInt(input.value) || 0;
+            if (count < 1) count = 1;
+            if (count > 200) count = 200;
+
+            const price = calculatePrice(count);
+            const perPhoto = (price / count).toFixed(2);
+
+            document.getElementById('calculated-price').textContent = '$' + price;
+            document.getElementById('price-per-photo').textContent = '$' + perPhoto + ' per photo';
+        }
+
+        // Initialize calculator
+        window.addEventListener('DOMContentLoaded', () => {
+            updatePriceCalculator();
+        });
+
+        // FAQ Toggle functionality
+        function toggleFaq(element) {
+            const faqItem = element.parentElement;
+            const wasActive = faqItem.classList.contains('active');
+
+            // Close all FAQ items
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Open clicked item if it wasn't already active
+            if (!wasActive) {
+                faqItem.classList.add('active');
+            }
+        }
+    </script>
+
+</body>
+</html>
