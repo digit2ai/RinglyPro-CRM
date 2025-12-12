@@ -86,6 +86,74 @@ async function adjustContrast(imageUrl, value = 0.15, imageType = 'png') {
 }
 
 /**
+ * Apply saturation adjustment to a photo
+ * @param {string} imageUrl - Source image URL
+ * @param {number} value - Saturation value (-1 to +1)
+ * @param {string} imageType - Output format (png recommended)
+ * @returns {Buffer} Raw image buffer
+ */
+async function adjustSaturation(imageUrl, value = 0.2, imageType = 'png') {
+  if (!PIXELIXE_API_KEY) {
+    throw new Error('Pixelixe API key not configured');
+  }
+
+  const encodedUrl = encodeURIComponent(imageUrl);
+  const url = `${PIXELIXE_API_URL}/saturate/v1?imageUrl=${encodedUrl}&value=${value}&imageType=${imageType}`;
+
+  logger.info(`[PIXELIXE] Adjusting saturation: ${value}`);
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${PIXELIXE_API_KEY}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    logger.error(`[PIXELIXE] Saturation API error: ${response.status} - ${errorText}`);
+    throw new Error(`Pixelixe API error: ${response.status} - ${response.statusText}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+/**
+ * Apply sharpening to a photo
+ * @param {string} imageUrl - Source image URL
+ * @param {number} value - Sharpen value (0 to 100)
+ * @param {string} imageType - Output format (png recommended)
+ * @returns {Buffer} Raw image buffer
+ */
+async function adjustSharpen(imageUrl, value = 15, imageType = 'png') {
+  if (!PIXELIXE_API_KEY) {
+    throw new Error('Pixelixe API key not configured');
+  }
+
+  const encodedUrl = encodeURIComponent(imageUrl);
+  const url = `${PIXELIXE_API_URL}/sharpen/v1?imageUrl=${encodedUrl}&value=${value}&imageType=${imageType}`;
+
+  logger.info(`[PIXELIXE] Applying sharpen: ${value}`);
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${PIXELIXE_API_KEY}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    logger.error(`[PIXELIXE] Sharpen API error: ${response.status} - ${errorText}`);
+    throw new Error(`Pixelixe API error: ${response.status} - ${response.statusText}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+/**
  * Compress image to reduce file size
  * Note: Compress API currently has bugs - use Brightness/Contrast APIs instead
  * @param {string} imageUrl - Source image URL
@@ -312,6 +380,8 @@ async function getApiStatus() {
 module.exports = {
   adjustBrightness,
   adjustContrast,
+  adjustSaturation,
+  adjustSharpen,
   compressImage,
   enhancePhoto,
   applyFilter,
