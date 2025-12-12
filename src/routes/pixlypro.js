@@ -7,7 +7,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { authenticateToken } = require('../middleware/auth');
 const logger = require('../utils/logger');
@@ -17,6 +17,12 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pixelixeService = require('../services/pixelixeService');
+
+// Helper function to generate presigned URL for S3 objects
+async function getPresignedUrl(s3Client, bucket, key, expiresIn = 900) {
+  const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+  return await getSignedUrl(s3Client, command, { expiresIn });
+}
 
 // S3 Configuration
 let s3Client = null;
@@ -1560,12 +1566,15 @@ router.post('/upload-and-enhance-direct', authenticateToken, upload.array('photo
           ContentType: 'image/png',
         }));
 
+        // Generate presigned URL for Pixelixe to access (15 min expiry)
+        const originalPresignedUrl = await getPresignedUrl(s3, BUCKET_NAME, originalFilename, 900);
         const originalUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
         logger.info(`[PIXLYPRO] Original uploaded: ${originalUrl}`);
+        logger.info(`[PIXLYPRO] Presigned URL generated for Pixelixe access`);
 
-        // Apply brightness enhancement
+        // Apply brightness enhancement using presigned URL
         logger.info(`[PIXLYPRO] Applying brightness...`);
-        const brightnessBuffer = await pixelixeService.adjustBrightness(originalUrl, 0.15, 'png');
+        const brightnessBuffer = await pixelixeService.adjustBrightness(originalPresignedUrl, 0.15, 'png');
 
         // Upload brightness result to temp
         const brightnessFilename = `pixlypro/temp/${crypto.randomBytes(16).toString('hex')}.png`;
@@ -1576,12 +1585,13 @@ router.post('/upload-and-enhance-direct', authenticateToken, upload.array('photo
           ContentType: 'image/png',
         }));
 
-        const brightnessUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
-        logger.info(`[PIXLYPRO] Brightness applied: ${brightnessUrl}`);
+        // Generate presigned URL for brightness result
+        const brightnessPresignedUrl = await getPresignedUrl(s3, BUCKET_NAME, brightnessFilename, 900);
+        logger.info(`[PIXLYPRO] Brightness applied and uploaded`);
 
-        // Apply contrast enhancement
+        // Apply contrast enhancement using presigned URL
         logger.info(`[PIXLYPRO] Applying contrast...`);
-        const contrastBuffer = await pixelixeService.adjustContrast(brightnessUrl, 0.20, 'png');
+        const contrastBuffer = await pixelixeService.adjustContrast(brightnessPresignedUrl, 0.20, 'png');
 
         // Upload final enhanced photo
         const enhancedFilename = `pixlypro/enhanced/${orderId}/${filename}`;
