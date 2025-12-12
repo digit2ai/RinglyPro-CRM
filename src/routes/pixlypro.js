@@ -1598,8 +1598,9 @@ router.post('/upload-and-enhance-direct', authenticateToken, upload.array('photo
         logger.info(`[PIXLYPRO] Presigned URL generated for Pixelixe access`);
 
         // Apply brightness enhancement using presigned URL
-        logger.info(`[PIXLYPRO] Applying brightness...`);
-        const brightnessBuffer = await pixelixeService.adjustBrightness(originalPresignedUrl, 0.15, 'png');
+        // Increased from 0.15 to 0.35 for more noticeable enhancement
+        logger.info(`[PIXLYPRO] Applying brightness (+0.35)...`);
+        const brightnessBuffer = await pixelixeService.adjustBrightness(originalPresignedUrl, 0.35, 'png');
 
         // Upload brightness result to temp
         const brightnessFilename = `pixlypro/temp/${crypto.randomBytes(16).toString('hex')}.png`;
@@ -1615,8 +1616,9 @@ router.post('/upload-and-enhance-direct', authenticateToken, upload.array('photo
         logger.info(`[PIXLYPRO] Brightness applied and uploaded`);
 
         // Apply contrast enhancement using presigned URL
-        logger.info(`[PIXLYPRO] Applying contrast...`);
-        const contrastBuffer = await pixelixeService.adjustContrast(brightnessPresignedUrl, 0.20, 'png');
+        // Increased from 0.20 to 0.40 for more noticeable enhancement
+        logger.info(`[PIXLYPRO] Applying contrast (+0.40)...`);
+        const contrastBuffer = await pixelixeService.adjustContrast(brightnessPresignedUrl, 0.40, 'png');
 
         // Upload final enhanced photo
         const enhancedFilename = `pixlypro/enhanced/${orderId}/${filename}`;
