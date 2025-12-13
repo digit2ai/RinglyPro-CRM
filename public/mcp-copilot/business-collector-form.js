@@ -382,6 +382,10 @@ async function handleBusinessCollectorSubmit(e) {
         if (data.success && data.businesses) {
             currentLeads = data.businesses;
             displayBusinessCollectorResults(data, category, location);
+        } else if (response.status === 402 || data.tokenRequired) {
+            // Insufficient tokens - show recharge prompt
+            showInsufficientTokensModal();
+            document.getElementById('bcForm').style.display = 'block';
         } else {
             alert('Error: ' + (data.error || 'Failed to collect leads'));
             document.getElementById('bcForm').style.display = 'block';
@@ -392,6 +396,116 @@ async function handleBusinessCollectorSubmit(e) {
         document.getElementById('bcForm').style.display = 'block';
     } finally {
         document.getElementById('bcLoading').style.display = 'none';
+    }
+}
+
+// Show insufficient tokens modal with recharge option
+function showInsufficientTokensModal() {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('insufficientTokensModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    const modal = document.createElement('div');
+    modal.id = 'insufficientTokensModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    `;
+
+    const clientIdParam = typeof currentClientId !== 'undefined' && currentClientId ? `?client_id=${currentClientId}` : '';
+
+    modal.innerHTML = `
+        <div style="
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        ">
+            <div style="font-size: 56px; margin-bottom: 16px;">⚠️</div>
+
+            <h2 style="
+                font-size: 22px;
+                font-weight: 700;
+                color: #111827;
+                margin-bottom: 12px;
+            ">
+                Not Enough Tokens
+            </h2>
+
+            <p style="
+                font-size: 15px;
+                color: #6b7280;
+                margin-bottom: 24px;
+                line-height: 1.6;
+            ">
+                Business Collector requires <strong style="color: #4f46e5;">20 tokens</strong> per search.
+                <br><br>
+                Please add funds to continue collecting leads.
+            </p>
+
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <a href="/purchase-tokens${clientIdParam}" style="
+                    display: inline-block;
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                    color: white;
+                    padding: 14px 28px;
+                    border-radius: 10px;
+                    font-size: 15px;
+                    font-weight: 600;
+                    text-decoration: none;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(16, 185, 129, 0.3)';"
+                   onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                    💳 Add Tokens
+                </a>
+
+                <button onclick="closeInsufficientTokensModal()" style="
+                    background: #f3f4f6;
+                    color: #374151;
+                    padding: 14px 28px;
+                    border-radius: 10px;
+                    font-size: 15px;
+                    font-weight: 600;
+                    border: none;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                " onmouseover="this.style.background='#e5e7eb';"
+                   onmouseout="this.style.background='#f3f4f6';">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeInsufficientTokensModal();
+        }
+    });
+}
+
+// Close insufficient tokens modal
+function closeInsufficientTokensModal() {
+    const modal = document.getElementById('insufficientTokensModal');
+    if (modal) {
+        modal.remove();
     }
 }
 
