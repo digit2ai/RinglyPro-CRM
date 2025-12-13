@@ -325,14 +325,39 @@ async function handleBusinessCollectorSubmit(e) {
 
     const location = city ? `${city}, ${state}` : state;
 
-    // Check if sessionId exists (from copilot.js global scope)
-    const currentSessionId = typeof sessionId !== 'undefined' ? sessionId : null;
+    // Get clientId from copilot.js global scope (for token deduction)
+    const clientIdForTokens = typeof currentClientId !== 'undefined' ? currentClientId : null;
 
-    console.log('🔍 Business Collector submit - sessionId:', currentSessionId);
+    // Check if sessionId exists (from copilot.js global scope) - but NOT required anymore
+    let currentSessionId = typeof sessionId !== 'undefined' ? sessionId : null;
 
+    console.log('🔍 Business Collector submit - sessionId:', currentSessionId, 'clientId:', clientIdForTokens);
+
+    // If no session, create a Business Collector session first
     if (!currentSessionId) {
-        alert('Not connected to CRM. Please ensure you are connected to GoHighLevel first.');
-        return;
+        console.log('📊 No session - connecting to Business Collector service...');
+        try {
+            const connectResponse = await fetch(`${API_BASE}/business-collector/connect`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const connectData = await connectResponse.json();
+            if (connectData.success && connectData.sessionId) {
+                currentSessionId = connectData.sessionId;
+                // Store in global scope for future use
+                if (typeof window !== 'undefined') {
+                    window.sessionId = currentSessionId;
+                }
+                console.log('✅ Business Collector session created:', currentSessionId);
+            } else {
+                alert('Failed to connect to Business Collector service. Please try again.');
+                return;
+            }
+        } catch (err) {
+            console.error('Failed to create Business Collector session:', err);
+            alert('Failed to connect to Business Collector service. Please try again.');
+            return;
+        }
     }
 
     // Show loading
@@ -345,6 +370,7 @@ async function handleBusinessCollectorSubmit(e) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 sessionId: currentSessionId,
+                clientId: clientIdForTokens, // For token deduction
                 category,
                 geography: location,
                 maxResults
