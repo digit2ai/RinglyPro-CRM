@@ -765,6 +765,26 @@ router.post('/voice/rachel/select-language', async (req, res) => {
         // Store language preference in session
         req.session.language = digits === '1' ? 'en' : digits === '2' ? 'es' : 'en';
 
+        // ============= DEDUCT TOKEN FOR LINA AI CALL =============
+        // Deduct 1 token when user selects a language (call is being handled)
+        const userId = req.session.user_id;
+        if (userId && !req.session.tokens_deducted) {
+            try {
+                const tokenService = require('../services/tokenService');
+                await tokenService.deductTokens(userId, 'lina_ai_receptionist', {
+                    call_sid: req.session.call_sid,
+                    caller_number: req.session.caller_number,
+                    language: req.session.language,
+                    business_name: req.session.business_name
+                });
+                req.session.tokens_deducted = true;
+                console.log(`✅ Deducted 1 token from user ${userId} for Lina AI call`);
+            } catch (tokenError) {
+                console.error(`❌ Failed to deduct token for user ${userId}:`, tokenError.message);
+                // Don't block the call if token deduction fails
+            }
+        }
+
         // Save session before redirecting to ensure persistence across language switch
         await new Promise((resolve, reject) => {
             req.session.save((err) => {

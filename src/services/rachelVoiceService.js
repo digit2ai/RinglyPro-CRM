@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require('fs').promises;
 const path = require('path');
 const ClientIdentificationService = require('./clientIdentificationService');
+const tokenService = require('./tokenService');
 
 class MultiTenantRachelService {
     constructor(databaseUrl, webhookBaseUrl, elevenlabsApiKey) {
@@ -34,8 +35,9 @@ class MultiTenantRachelService {
         console.log(`📞 Incoming call: ${fromNumber} → ${toNumber} (SID: ${callSid})`);
 
         // Identify the client by the called number (To) using Sequelize models
-        const { Client } = require('../models');
+        const { Client, User } = require('../models');
         let clientInfo = null;
+        let userId = null;
 
         try {
             const client = await Client.findOne({
@@ -58,7 +60,8 @@ class MultiTenantRachelService {
                     booking_enabled: client.booking_enabled,
                     active: client.active
                 };
-                console.log(`✅ Client found via Sequelize: ${clientInfo.business_name} (ID: ${clientInfo.client_id})`);
+                userId = client.user_id;
+                console.log(`✅ Client found via Sequelize: ${clientInfo.business_name} (ID: ${clientInfo.client_id}, User: ${userId})`);
             }
         } catch (error) {
             console.error('Error looking up client via Sequelize:', error);
@@ -75,12 +78,30 @@ class MultiTenantRachelService {
             return this.createForwardResponse(clientInfo);
         }
 
+        // ============= TOKEN CHECK =============
+        // Check if user has tokens to use Lina AI Receptionist
+        if (userId) {
+            try {
+                const hasTokens = await tokenService.hasEnoughTokens(userId, 'lina_ai_receptionist');
+                if (!hasTokens) {
+                    console.log(`⚠️ User ${userId} (${clientInfo.business_name}) has insufficient tokens for Lina AI`);
+                    return this.createNoTokensResponse(clientInfo);
+                }
+                console.log(`✅ User ${userId} has tokens available for Lina AI`);
+            } catch (tokenError) {
+                console.error(`❌ Error checking tokens for user ${userId}:`, tokenError);
+                // Continue with call if token check fails (fail open for better UX)
+            }
+        }
+
         // Store client info in session for use in subsequent requests
         session.client_id = clientInfo.client_id;
+        session.user_id = userId; // Store user_id for token deduction
         session.business_name = clientInfo.business_name;
         session.booking_url = clientInfo.booking_url;
         session.call_sid = callSid;
         session.caller_number = fromNumber;
+        session.tokens_deducted = false; // Track if tokens were deducted for this call
 
         // Save session before continuing to ensure data persists
         await new Promise((resolve, reject) => {
@@ -207,6 +228,40 @@ class MultiTenantRachelService {
         const twiml = new twilio.twiml.VoiceResponse();
         twiml.say(errorMessage, { voice: 'Polly.Joanna' });
         twiml.hangup();
+        return twiml.toString();
+    }
+
+    /**
+     * Create response when user has no tokens (Lina AI disabled)
+     * Plays a professional message explaining the service is temporarily unavailable
+     * @param {Object} clientInfo - Client information object
+     * @returns {string} TwiML response
+     */
+    createNoTokensResponse(clientInfo) {
+        const twiml = new twilio.twiml.VoiceResponse();
+
+        // Professional message explaining the AI receptionist is unavailable
+        // Don't mention tokens to the caller - just say it's temporarily unavailable
+        const message = `Thank you for calling ${clientInfo.business_name}. ` +
+            `Our automated receptionist is temporarily unavailable. ` +
+            `Please leave a message after the beep, or try calling back later. ` +
+            `We apologize for any inconvenience.`;
+
+        twiml.say(message, { voice: 'Polly.Joanna' });
+
+        // Offer voicemail option
+        twiml.say("Please leave a message after the beep.", { voice: 'Polly.Joanna' });
+        twiml.record({
+            maxLength: 120,
+            transcribe: true,
+            transcribeCallback: '/voice/rachel/voicemail-transcription',
+            action: '/voice/rachel/voicemail-complete',
+            playBeep: true
+        });
+
+        twiml.hangup();
+
+        console.log(`🚫 No tokens response played for ${clientInfo.business_name}`);
         return twiml.toString();
     }
 
