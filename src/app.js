@@ -125,6 +125,10 @@ console.log('📄 About to require auth routes...');
 const authRoutes = require('./routes/auth'); // User authentication routes
 console.log('✅ Auth routes required successfully, type:', typeof authRoutes);
 
+// Import Stripe webhook routes
+const webhookRoutes = require('./routes/webhooks'); // Stripe webhooks for subscriptions
+console.log('✅ Webhook routes loaded successfully');
+
 // Import copilot access control routes
 const copilotAccessRoutes = require('./routes/copilot-access'); // Copilot authentication
 console.log('✅ Copilot access routes loaded successfully');
@@ -157,6 +161,10 @@ console.log('✅ OrderGoPro routes loaded successfully');
 console.log('📄 About to mount auth routes...');
 app.use('/api/auth', authRoutes); // Mount user authentication routes
 console.log('✅ Auth routes mounted successfully');
+
+// Mount webhook routes (IMPORTANT: Must be mounted BEFORE body parser middleware)
+app.use('/webhooks', webhookRoutes); // Stripe webhooks for subscriptions
+console.log('✅ Webhook routes mounted at /webhooks');
 
 // Mount copilot access control routes
 app.use('/api/copilot', copilotAccessRoutes); // Copilot authentication and GHL checks
@@ -437,6 +445,11 @@ app.get('/purchase-success', (req, res) => {
     clientId: CLIENT_ID,
     sessionId: req.query.session_id || ''
   });
+});
+
+// Pricing page route - token-based pricing tiers
+app.get('/pricing', (req, res) => {
+  res.sendFile(path.join(__dirname, '../views/pricing-table.html'));
 });
 
 // Photo Studio success page route

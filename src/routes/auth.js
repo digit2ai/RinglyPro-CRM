@@ -6,6 +6,7 @@ const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { User, sequelize } = require('../models');
 const { sendPasswordResetEmail, sendWelcomeEmail } = require('../services/emailService');
 const { sendWelcomeSMS } = require('../services/appointmentNotification');
@@ -63,10 +64,15 @@ router.post('/register', async (req, res) => {
             businessHours,
             services,
             termsAccepted,
-            referralCode  // Optional: referral code from URL parameter
+            referralCode,  // Optional: referral code from URL parameter
+            // Subscription plan parameters from pricing table
+            plan,          // 'free', 'starter', 'growth', 'professional', 'enterprise'
+            amount,        // Total amount (monthly or annual)
+            tokens,        // Total tokens (monthly allocation or annual total)
+            billing        // 'monthly' or 'annual'
         } = req.body;
         
-        console.log('📝 Registration attempt:', { email, firstName, lastName, businessName, businessType, businessPhone });
+        console.log('📝 Registration attempt:', { email, firstName, lastName, businessName, businessType, businessPhone, plan, billing });
         
         // FIXED BUG #3: Validate Client model is available before proceeding
         if (!Client) {
@@ -134,7 +140,15 @@ router.post('/register', async (req, res) => {
         
         // Clean up website_url - convert empty strings to null
         const cleanWebsiteUrl = websiteUrl && websiteUrl.trim() !== '' ? websiteUrl.trim() : null;
-        
+
+        // Determine subscription plan and token allocation
+        const selectedPlan = plan || 'free';
+        const selectedBilling = billing || 'monthly';
+        const monthlyTokens = selectedBilling === 'annual' && tokens ? Math.floor(parseInt(tokens) / 12) : (tokens ? parseInt(tokens) : 100);
+
+        // Calculate trial end date (14 days from now)
+        const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+
         // Create user with all business fields - use normalized phone numbers
         const user = await User.create({
             email,
@@ -151,10 +165,18 @@ router.post('/register', async (req, res) => {
             services: services,
             terms_accepted: termsAccepted,
             free_trial_minutes: 100,
-            onboarding_completed: false
+            onboarding_completed: false,
+            // Subscription fields
+            subscription_plan: selectedPlan,
+            billing_frequency: selectedBilling,
+            subscription_status: selectedPlan === 'free' ? null : 'trialing',
+            trial_ends_at: selectedPlan === 'free' ? null : trialEndsAt,
+            monthly_token_allocation: monthlyTokens,
+            tokens_balance: monthlyTokens  // Give initial tokens during trial
         }, { transaction });
-        
+
         console.log('✅ User created successfully:', user.id);
+        console.log(`📊 Plan: ${selectedPlan}, Billing: ${selectedBilling}, Monthly Tokens: ${monthlyTokens}`);
         
         // ==================== TWILIO NUMBER PROVISIONING ====================
         console.log('📞 Provisioning Twilio number for new client...');
@@ -319,6 +341,78 @@ router.post('/register', async (req, res) => {
         await transaction.commit();
         console.log('✅ Transaction committed successfully');
 
+        // ==================== STRIPE SUBSCRIPTION CREATION ====================
+        // Create Stripe subscription for paid plans (non-blocking for free tier)
+        let stripeSessionUrl = null;
+
+        if (selectedPlan !== 'free' && amount && parseInt(amount) > 0) {
+            try {
+                console.log('💳 Creating Stripe subscription with 14-day free trial...');
+
+                const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+                const ghlBookingUrl = 'https://api.leadconnectorhq.com/widget/booking/nhKuDsn2At5csiDYc4d0';
+
+                // Create Stripe Checkout Session for recurring subscription
+                const session = await stripe.checkout.sessions.create({
+                    customer_email: email,
+                    payment_method_types: ['card'],
+                    line_items: [{
+                        price_data: {
+                            currency: 'usd',
+                            product_data: {
+                                name: `RinglyPro ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan`,
+                                description: `${monthlyTokens} tokens per ${selectedBilling === 'annual' ? 'year' : 'month'}`,
+                            },
+                            unit_amount: parseInt(amount) * 100,  // Convert to cents
+                            recurring: {
+                                interval: selectedBilling === 'annual' ? 'year' : 'month',
+                                interval_count: 1
+                            }
+                        },
+                        quantity: 1
+                    }],
+                    mode: 'subscription',
+
+                    // 14-DAY FREE TRIAL
+                    subscription_data: {
+                        trial_period_days: 14,
+                        metadata: {
+                            userId: user.id,
+                            plan: selectedPlan,
+                            monthlyTokens: monthlyTokens,
+                            billing: selectedBilling,
+                            clientId: client.id
+                        }
+                    },
+
+                    success_url: ghlBookingUrl,  // Redirect to GHL booking after payment
+                    cancel_url: `${webhookBaseUrl}/pricing`,
+
+                    metadata: {
+                        userId: user.id,
+                        plan: selectedPlan,
+                        monthlyTokens: monthlyTokens,
+                        billing: selectedBilling,
+                        clientId: client.id
+                    }
+                });
+
+                // Update user with Stripe session info (non-transactional)
+                await User.update({
+                    stripe_customer_id: session.customer || null
+                }, { where: { id: user.id } });
+
+                stripeSessionUrl = session.url;
+                console.log(`✅ Stripe subscription created with 14-day trial: ${session.id}`);
+                console.log(`💳 Trial ends: ${trialEndsAt.toISOString()}`);
+
+            } catch (stripeError) {
+                console.error('⚠️ Stripe subscription creation error (non-critical):', stripeError.message);
+                // Don't fail registration if Stripe fails - user account is already created
+                // They can subscribe later from the dashboard
+            }
+        }
+
         // Process referral if referral code provided (non-blocking)
         if (referralCode) {
             try {
@@ -398,7 +492,7 @@ router.post('/register', async (req, res) => {
         );
         
         // Send welcome response
-        res.status(201).json({
+        const responseData = {
             success: true,
             message: 'Registration successful! Welcome to RinglyPro!',
             data: {
@@ -413,7 +507,10 @@ router.post('/register', async (req, res) => {
                     phoneNumber: user.phone_number,
                     websiteUrl: user.website_url,
                     freeTrialMinutes: user.free_trial_minutes,
-                    onboardingCompleted: user.onboarding_completed
+                    onboardingCompleted: user.onboarding_completed,
+                    subscriptionPlan: selectedPlan,
+                    subscriptionStatus: selectedPlan === 'free' ? null : 'trialing',
+                    trialEndsAt: selectedPlan === 'free' ? null : trialEndsAt
                 },
                 client: {
                     id: client.id,
@@ -429,7 +526,15 @@ router.post('/register', async (req, res) => {
                     forwardingInstructions: `Forward your calls to ${twilioNumber} to activate Rachel AI`
                 }
             }
-        });
+        };
+
+        // Add Stripe redirect URL if subscription was created
+        if (stripeSessionUrl) {
+            responseData.stripeCheckoutUrl = stripeSessionUrl;
+            responseData.message = 'Registration successful! Redirecting to payment...';
+        }
+
+        res.status(201).json(responseData);
         
         console.log(`🎉 New user registered: ${firstName} ${lastName} (${businessName}) - ${email}`);
         console.log(`📞 Rachel AI Twilio number: ${twilioNumber}`);
