@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RinglyPro Pricing - Token-Based AI CRM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --secondary: #10b981;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --light-gray: #f1f5f9;
+            --white: #ffffff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem 1rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.25rem;
+            opacity: 0.95;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .billing-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            color: white;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: var(--success);
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            left: 33px;
+        }
+
+        .save-badge {
+            background: var(--warning);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 700;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .pricing-card.popular {
+            border: 3px solid var(--primary);
+            transform: scale(1.05);
+        }
+
+        .pricing-card.popular::before {
+            content: 'MOST POPULAR';
+            position: absolute;
+            top: 20px;
+            right: -35px;
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 3rem;
+            transform: rotate(45deg);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .tier-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .tier-description {
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+
+        .price-container {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .price {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .price-currency {
+            font-size: 2rem;
+            vertical-align: super;
+        }
+
+        .price-period {
+            color: var(--gray);
+            font-size: 1rem;
+            margin-left: 0.5rem;
+        }
+
+        .tokens-info {
+            background: var(--light-gray);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .tokens-amount {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .tokens-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .cost-per-token {
+            color: var(--success);
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .features-list {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .features-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--light-gray);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--dark);
+        }
+
+        .features-list li:last-child {
+            border-bottom: none;
+        }
+
+        .check-icon {
+            color: var(--success);
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .subscribe-btn {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .subscribe-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        .subscribe-btn:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .subscribe-btn.free {
+            background: var(--gray);
+        }
+
+        .subscribe-btn.free:hover {
+            background: var(--dark);
+        }
+
+        .annual-savings {
+            text-align: center;
+            color: var(--success);
+            font-weight: 600;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .comparison-table {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            margin-top: 3rem;
+        }
+
+        .comparison-table h2 {
+            text-align: center;
+            color: var(--dark);
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+
+        .comparison-grid {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--light-gray);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .feature-name {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .included {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .not-included {
+            color: var(--gray);
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-card.popular {
+                transform: scale(1);
+            }
+
+            .price {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Choose Your Plan</h1>
+            <p>Flexible token-based pricing. Pay only for what you use. No hidden fees.</p>
+        </div>
+
+        <!-- Billing Toggle -->
+        <div class="billing-toggle">
+            <span>Monthly</span>
+            <div class="toggle-switch" id="billingToggle">
+                <div class="toggle-slider"></div>
+            </div>
+            <span>Annual</span>
+            <span class="save-badge">Save 15%</span>
+        </div>
+
+        <!-- Pricing Cards -->
+        <div class="pricing-grid">
+            <!-- Free Tier -->
+            <div class="pricing-card">
+                <div class="card-header">
+                    <h3 class="tier-name">Free</h3>
+                    <p class="tier-description">Perfect for testing</p>
+                </div>
+
+                <div class="price-container">
+                    <div class="price">
+                        <span class="price-currency">$</span>0
+                        <span class="price-period">/month</span>
+                    </div>
+                </div>
+
+                <div class="tokens-info">
+                    <div class="tokens-amount">100</div>
+                    <div class="tokens-label">tokens/month</div>
+                </div>
+
+                <ul class="features-list">
+                    <li><span class="check-icon">✓</span> All services available</li>
+                    <li><span class="check-icon">✓</span> AI Copilot access</li>
+                    <li><span class="check-icon">✓</span> Basic support</li>
+                    <li><span class="check-icon">✓</span> No rollover</li>
+                </ul>
+
+                <button class="subscribe-btn free" onclick="handleSubscribe('free', 0, 100)">
+                    Get Started Free
+                </button>
+            </div>
+
+            <!-- Starter Tier -->
+            <div class="pricing-card">
+                <div class="card-header">
+                    <h3 class="tier-name">Starter</h3>
+                    <p class="tier-description">For small businesses</p>
+                </div>
+
+                <div class="price-container">
+                    <div class="price">
+                        <span class="price-currency">$</span><span class="monthly-price">33</span>
+                        <span class="price-period">/month</span>
+                    </div>
+                </div>
+
+                <div class="tokens-info">
+                    <div class="tokens-amount">500</div>
+                    <div class="tokens-label">tokens/month</div>
+                    <div class="cost-per-token">$0.066 per token</div>
+                </div>
+
+                <ul class="features-list">
+                    <li><span class="check-icon">✓</span> All services included</li>
+                    <li><span class="check-icon">✓</span> AI Copilot unlimited</li>
+                    <li><span class="check-icon">✓</span> Priority support</li>
+                    <li><span class="check-icon">✓</span> Rollover up to 1,000 tokens</li>
+                    <li><span class="check-icon">✓</span> Business Collector</li>
+                </ul>
+
+                <button class="subscribe-btn" onclick="handleSubscribe('starter', 33, 500)" data-annual-price="336">
+                    Subscribe Now
+                </button>
+                <div class="annual-savings" style="display: none;">Save $60/year</div>
+            </div>
+
+            <!-- Growth Tier (Popular) -->
+            <div class="pricing-card popular">
+                <div class="card-header">
+                    <h3 class="tier-name">Growth</h3>
+                    <p class="tier-description">For growing businesses</p>
+                </div>
+
+                <div class="price-container">
+                    <div class="price">
+                        <span class="price-currency">$</span><span class="monthly-price">113</span>
+                        <span class="price-period">/month</span>
+                    </div>
+                </div>
+
+                <div class="tokens-info">
+                    <div class="tokens-amount">2,000</div>
+                    <div class="tokens-label">tokens/month</div>
+                    <div class="cost-per-token">$0.0565 per token</div>
+                </div>
+
+                <ul class="features-list">
+                    <li><span class="check-icon">✓</span> Everything in Starter</li>
+                    <li><span class="check-icon">✓</span> Advanced analytics</li>
+                    <li><span class="check-icon">✓</span> Outbound campaigns</li>
+                    <li><span class="check-icon">✓</span> Rollover up to 5,000 tokens</li>
+                    <li><span class="check-icon">✓</span> Premium support</li>
+                    <li><span class="check-icon">✓</span> Team collaboration</li>
+                </ul>
+
+                <button class="subscribe-btn" onclick="handleSubscribe('growth', 113, 2000)" data-annual-price="1153">
+                    Subscribe Now
+                </button>
+                <div class="annual-savings" style="display: none;">Save $203/year</div>
+            </div>
+
+            <!-- Professional Tier -->
+            <div class="pricing-card">
+                <div class="card-header">
+                    <h3 class="tier-name">Professional</h3>
+                    <p class="tier-description">For enterprises</p>
+                </div>
+
+                <div class="price-container">
+                    <div class="price">
+                        <span class="price-currency">$</span><span class="monthly-price">341</span>
+                        <span class="price-period">/month</span>
+                    </div>
+                </div>
+
+                <div class="tokens-info">
+                    <div class="tokens-amount">7,500</div>
+                    <div class="tokens-label">tokens/month</div>
+                    <div class="cost-per-token">$0.0455 per token</div>
+                </div>
+
+                <ul class="features-list">
+                    <li><span class="check-icon">✓</span> Everything in Growth</li>
+                    <li><span class="check-icon">✓</span> Unlimited rollover</li>
+                    <li><span class="check-icon">✓</span> Dedicated account manager</li>
+                    <li><span class="check-icon">✓</span> Custom integrations</li>
+                    <li><span class="check-icon">✓</span> White-label options</li>
+                    <li><span class="check-icon">✓</span> 24/7 priority support</li>
+                </ul>
+
+                <button class="subscribe-btn" onclick="handleSubscribe('professional', 341, 7500)" data-annual-price="3477">
+                    Subscribe Now
+                </button>
+                <div class="annual-savings" style="display: none;">Save $615/year</div>
+            </div>
+        </div>
+
+        <!-- Feature Comparison Table -->
+        <div class="comparison-table">
+            <h2>Detailed Feature Comparison</h2>
+            <div class="comparison-grid">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Free</th>
+                            <th>Starter</th>
+                            <th>Growth</th>
+                            <th>Professional</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="feature-name">Tokens/Month</td>
+                            <td>100</td>
+                            <td>500</td>
+                            <td>2,000</td>
+                            <td>7,500</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Token Rollover</td>
+                            <td class="not-included">None</td>
+                            <td>Up to 1,000</td>
+                            <td>Up to 5,000</td>
+                            <td class="included">Unlimited</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">AI Copilot</td>
+                            <td class="included">✓</td>
+                            <td class="included">✓</td>
+                            <td class="included">✓</td>
+                            <td class="included">✓</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Business Collector</td>
+                            <td class="included">Limited</td>
+                            <td class="included">✓</td>
+                            <td class="included">✓</td>
+                            <td class="included">Unlimited</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Outbound Campaigns</td>
+                            <td class="not-included">✗</td>
+                            <td class="included">Limited</td>
+                            <td class="included">✓</td>
+                            <td class="included">Unlimited</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Voice Calling</td>
+                            <td class="included">Limited</td>
+                            <td class="included">✓</td>
+                            <td class="included">✓</td>
+                            <td class="included">✓</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">SMS/Email</td>
+                            <td class="included">Limited</td>
+                            <td class="included">✓</td>
+                            <td class="included">✓</td>
+                            <td class="included">✓</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Analytics</td>
+                            <td class="included">Basic</td>
+                            <td class="included">Standard</td>
+                            <td class="included">Advanced</td>
+                            <td class="included">Premium</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Support</td>
+                            <td>Email</td>
+                            <td>Priority Email</td>
+                            <td>Priority + Chat</td>
+                            <td>24/7 Premium</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Custom Integrations</td>
+                            <td class="not-included">✗</td>
+                            <td class="not-included">✗</td>
+                            <td class="not-included">✗</td>
+                            <td class="included">✓</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Account Manager</td>
+                            <td class="not-included">✗</td>
+                            <td class="not-included">✗</td>
+                            <td class="not-included">✗</td>
+                            <td class="included">✓</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        // =====================================================
+        // Configuration
+        // =====================================================
+        const API_BASE_URL = window.location.origin;
+        const ANNUAL_DISCOUNT = 0.15; // 15% discount
+
+        // =====================================================
+        // Billing Toggle (Monthly vs Annual)
+        // =====================================================
+        const billingToggle = document.getElementById('billingToggle');
+        const annualSavingsElements = document.querySelectorAll('.annual-savings');
+        const monthlyPriceElements = document.querySelectorAll('.monthly-price');
+        let isAnnual = false;
+
+        billingToggle.addEventListener('click', () => {
+            isAnnual = !isAnnual;
+            billingToggle.classList.toggle('active');
+
+            // Update prices and show/hide savings
+            annualSavingsElements.forEach(el => {
+                el.style.display = isAnnual ? 'block' : 'none';
+            });
+
+            // Update displayed prices
+            document.querySelectorAll('.subscribe-btn').forEach(btn => {
+                const monthlyPrice = parseInt(btn.getAttribute('onclick').match(/\d+/)[0]);
+                if (monthlyPrice > 0) {
+                    const annualPrice = Math.floor(monthlyPrice * 12 * (1 - ANNUAL_DISCOUNT));
+                    const effectiveMonthly = Math.floor(annualPrice / 12);
+
+                    const priceElement = btn.closest('.pricing-card').querySelector('.monthly-price');
+                    if (priceElement) {
+                        priceElement.textContent = isAnnual ? effectiveMonthly : monthlyPrice;
+                    }
+
+                    // Update button text
+                    if (isAnnual) {
+                        btn.innerHTML = btn.innerHTML.replace('Subscribe Now', `Pay $${annualPrice}/year`);
+                    } else {
+                        btn.innerHTML = btn.innerHTML.replace(/Pay \$\d+\/year/, 'Subscribe Now');
+                    }
+                }
+            });
+        });
+
+        // =====================================================
+        // Handle Subscription
+        // =====================================================
+        async function handleSubscribe(tier, monthlyPrice, tokens) {
+            console.log('Subscribe clicked:', { tier, monthlyPrice, tokens, isAnnual });
+
+            // Handle free tier
+            if (tier === 'free') {
+                window.location.href = '/register';
+                return;
+            }
+
+            // Calculate final amount
+            let finalAmount = monthlyPrice;
+            let finalTokens = tokens;
+
+            if (isAnnual) {
+                finalAmount = Math.floor(monthlyPrice * 12 * (1 - ANNUAL_DISCOUNT));
+                finalTokens = tokens * 12; // 12 months worth of tokens
+            }
+
+            try {
+                // Show loading
+                document.getElementById('loadingOverlay').classList.add('active');
+
+                // Get JWT token from localStorage or cookie
+                const jwtToken = localStorage.getItem('token') || getCookie('token');
+
+                if (!jwtToken) {
+                    alert('Please log in to subscribe to a plan');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // Create Stripe Checkout Session
+                const response = await fetch(`${API_BASE_URL}/api/tokens/create-checkout-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify({
+                        amount: finalAmount,
+                        tokens: finalTokens,
+                        package: tier,
+                        billing: isAnnual ? 'annual' : 'monthly'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.url) {
+                    // Redirect to Stripe Checkout
+                    window.location.href = data.url;
+                } else {
+                    throw new Error(data.error || 'Failed to create checkout session');
+                }
+
+            } catch (error) {
+                console.error('Subscription error:', error);
+                alert('Error creating checkout session: ' + error.message);
+                document.getElementById('loadingOverlay').classList.remove('active');
+            }
+        }
+
+        // =====================================================
+        // Helper: Get Cookie
+        // =====================================================
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        // =====================================================
+        // Check Login Status on Page Load
+        // =====================================================
+        window.addEventListener('DOMContentLoaded', () => {
+            const jwtToken = localStorage.getItem('token') || getCookie('token');
+
+            // Update button text if not logged in
+            if (!jwtToken) {
+                document.querySelectorAll('.subscribe-btn:not(.free)').forEach(btn => {
+                    const originalOnClick = btn.getAttribute('onclick');
+                    btn.setAttribute('onclick', `
+                        if (!localStorage.getItem('token') && !getCookie('token')) {
+                            window.location.href = '/login?redirect=/pricing';
+                        } else {
+                            ${originalOnClick}
+                        }
+                    `);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

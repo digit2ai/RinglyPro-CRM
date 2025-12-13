@@ -253,7 +253,8 @@ function createBusinessCollectorModal() {
 
                 <div class="bc-loading" id="bcLoading" style="display: none;">
                     <div class="bc-spinner"></div>
-                    <p>Collecting leads...</p>
+                    <p id="bcLoadingText">Connecting to Business Collector...</p>
+                    <p style="font-size: 12px; color: #888; margin-top: 10px;" id="bcLoadingSubtext">This may take 15-30 seconds on first search</p>
                 </div>
 
                 <div class="bc-results" id="bcResults" style="display: none;">
@@ -314,6 +315,43 @@ function populateCitiesForState() {
     console.log(`✅ Populated ${cities.length} cities for ${state}`);
 }
 
+// Loading progress messages
+let loadingProgressInterval = null;
+const loadingMessages = [
+    { text: 'Connecting to Business Collector...', subtext: 'Initializing search engine' },
+    { text: 'Waking up data sources...', subtext: 'This may take 15-30 seconds on first search' },
+    { text: 'Searching business databases...', subtext: 'Querying multiple data sources' },
+    { text: 'Gathering business information...', subtext: 'Collecting names, phones, addresses' },
+    { text: 'Cross-referencing data...', subtext: 'Validating contact information' },
+    { text: 'Removing duplicates...', subtext: 'Ensuring unique leads only' },
+    { text: 'Compiling results...', subtext: 'Almost done!' },
+    { text: 'Finalizing lead list...', subtext: 'Preparing your results' }
+];
+
+function startLoadingProgress() {
+    let messageIndex = 0;
+    const loadingText = document.getElementById('bcLoadingText');
+    const loadingSubtext = document.getElementById('bcLoadingSubtext');
+
+    // Set initial message
+    if (loadingText) loadingText.textContent = loadingMessages[0].text;
+    if (loadingSubtext) loadingSubtext.textContent = loadingMessages[0].subtext;
+
+    // Cycle through messages every 4 seconds
+    loadingProgressInterval = setInterval(() => {
+        messageIndex = (messageIndex + 1) % loadingMessages.length;
+        if (loadingText) loadingText.textContent = loadingMessages[messageIndex].text;
+        if (loadingSubtext) loadingSubtext.textContent = loadingMessages[messageIndex].subtext;
+    }, 4000);
+}
+
+function stopLoadingProgress() {
+    if (loadingProgressInterval) {
+        clearInterval(loadingProgressInterval);
+        loadingProgressInterval = null;
+    }
+}
+
 // Handle form submission
 async function handleBusinessCollectorSubmit(e) {
     e.preventDefault();
@@ -333,6 +371,11 @@ async function handleBusinessCollectorSubmit(e) {
 
     console.log('🔍 Business Collector submit - sessionId:', currentSessionId, 'clientId:', clientIdForTokens);
 
+    // Show loading immediately to give user feedback
+    document.getElementById('bcForm').style.display = 'none';
+    document.getElementById('bcLoading').style.display = 'block';
+    startLoadingProgress();
+
     // If no session, create a Business Collector session first
     if (!currentSessionId) {
         console.log('📊 No session - connecting to Business Collector service...');
@@ -350,19 +393,21 @@ async function handleBusinessCollectorSubmit(e) {
                 }
                 console.log('✅ Business Collector session created:', currentSessionId);
             } else {
+                stopLoadingProgress();
+                document.getElementById('bcLoading').style.display = 'none';
+                document.getElementById('bcForm').style.display = 'block';
                 alert('Failed to connect to Business Collector service. Please try again.');
                 return;
             }
         } catch (err) {
             console.error('Failed to create Business Collector session:', err);
+            stopLoadingProgress();
+            document.getElementById('bcLoading').style.display = 'none';
+            document.getElementById('bcForm').style.display = 'block';
             alert('Failed to connect to Business Collector service. Please try again.');
             return;
         }
     }
-
-    // Show loading
-    document.getElementById('bcForm').style.display = 'none';
-    document.getElementById('bcLoading').style.display = 'block';
 
     try {
         const response = await fetch(`${API_BASE}/business-collector/collect`, {
@@ -392,9 +437,10 @@ async function handleBusinessCollectorSubmit(e) {
         }
     } catch (error) {
         console.error('Collection error:', error);
-        alert('Failed to collect leads');
+        alert('Failed to collect leads. The service may be temporarily unavailable. Please try again in a moment.');
         document.getElementById('bcForm').style.display = 'block';
     } finally {
+        stopLoadingProgress();
         document.getElementById('bcLoading').style.display = 'none';
     }
 }

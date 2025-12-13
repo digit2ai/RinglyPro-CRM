@@ -1238,9 +1238,14 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
         const originalUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
         logger.info(`[PIXLYPRO] Saved original: ${originalUrl}`);
 
-        // Step 2: Enhance with Pixelixe AI
-        logger.info(`[PIXLYPRO] Calling Pixelixe brightness API...`);
-        const brightnessBuffer = await pixelixeService.adjustBrightness(originalUrl, 0.15, 'png');
+        // Generate presigned URL for Pixelixe to access private S3 bucket
+        const originalPresignedUrl = await getPresignedUrl(s3, TEMP_BUCKET_NAME, originalFilename, 900);
+        logger.info(`[PIXLYPRO] Generated presigned URL for Pixelixe access`);
+
+        // Step 2: Enhance with Pixelixe AI - Professional 2-Step Pipeline
+        // Step 2a: Brightness (+0.30)
+        logger.info(`[PIXLYPRO] Step 1/2: Applying brightness (+0.30)...`);
+        const brightnessBuffer = await pixelixeService.adjustBrightness(originalPresignedUrl, 0.30, 'png');
         logger.info(`[PIXLYPRO] Brightness applied, buffer size: ${brightnessBuffer.length}`);
 
         const brightnessFilename = `pixlypro/temp/${crypto.randomBytes(16).toString('hex')}.png`;
@@ -1251,12 +1256,12 @@ router.post('/process-temp-photos', authenticateToken, async (req, res) => {
           ContentType: 'image/png',
                   }));
 
-        const brightnessUrl = `https://${TEMP_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${brightnessFilename}`;
-        logger.info(`[PIXLYPRO] Brightness saved: ${brightnessUrl}`);
+        const brightnessPresignedUrl = await getPresignedUrl(s3, TEMP_BUCKET_NAME, brightnessFilename, 900);
+        logger.info(`[PIXLYPRO] Brightness saved`);
 
-        // Step 3: Apply contrast
-        logger.info(`[PIXLYPRO] Calling Pixelixe contrast API...`);
-        const contrastBuffer = await pixelixeService.adjustContrast(brightnessUrl, 0.20, 'png');
+        // Step 2b: Contrast (+0.35)
+        logger.info(`[PIXLYPRO] Step 2/2: Applying contrast (+0.35)...`);
+        const contrastBuffer = await pixelixeService.adjustContrast(brightnessPresignedUrl, 0.35, 'png');
         logger.info(`[PIXLYPRO] Contrast applied, buffer size: ${contrastBuffer.length}`);
 
         const enhancedFilename = `pixlypro/enhanced/${orderId}/${filename}`;

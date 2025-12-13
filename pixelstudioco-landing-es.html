@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelStudioCo - Crea Visuales Impresionantes. Más Rápido.</title>
+    <meta name="description" content="Mejora de fotos, diseño gráfico + 3D, contenido de video ilustrado, gráficos de videojuegos y activos de marketing—creados para negocios modernos.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0066FF;
+            --accent: #FF6B35;
+            --dark: #0F172A;
+            --gray: #64748B;
+            --light-bg: #F8FAFC;
+            --white: #FFFFFF;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.12);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            color: var(--dark);
+            line-height: 1.6;
+            background: var(--light-bg);
+            overflow-x: hidden;
+        }
+
+        /* Pixel Grid Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 102, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 102, 255, 0.02) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Navigation */
+        nav {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: var(--gray);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a:focus {
+            color: var(--primary);
+            outline: none;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 6rem 2rem 4rem;
+            background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* 3D Floating Blobs */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.6;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .blob-1 {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(135deg, #0066FF, #00C896);
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .blob-2 {
+            width: 250px;
+            height: 250px;
+            background: linear-gradient(135deg, #FF6B35, #FFB347);
+            top: 60%;
+            right: 15%;
+            animation-delay: 2s;
+        }
+
+        .blob-3 {
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(135deg, #8B5CF6, #C084FC);
+            bottom: 10%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(-30px) scale(1.1);
+            }
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .hero h1::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -10px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            animation: scanline 3s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.3;
+            }
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--gray);
+            margin-bottom: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+        }
+
+        .btn-primary:hover,
+        .btn-primary:focus {
+            background: #0052CC;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 102, 255, 0.4);
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover,
+        .btn-secondary:focus {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .trust-row {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            max-width: 700px;
+            margin: 0 auto;
+            box-shadow: var(--shadow);
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Section Styles */
+        section {
+            padding: 5rem 2rem;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-header h2::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary), var(--accent));
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .section-header p {
+            font-size: 1.125rem;
+            color: var(--gray);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Service Cards */
+        .service-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 3rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 3rem;
+            transition: all 0.3s;
+        }
+
+        .service-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-5px);
+        }
+
+        .service-card h3 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .service-card > p {
+            font-size: 1.125rem;
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+
+        .deliverables {
+            background: var(--light-bg);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .deliverables h4 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .deliverables ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .deliverables li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .deliverables li::before {
+            content: '✓';
+            color: var(--primary);
+            font-weight: 900;
+            font-size: 1.25rem;
+        }
+
+        .best-for {
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(0, 102, 255, 0.1), rgba(255, 107, 53, 0.1));
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .best-for strong {
+            color: var(--primary);
+        }
+
+        /* 3D Graphics Callout */
+        .nested-card {
+            background: linear-gradient(135deg, #F0F9FF, #E0F2FE);
+            border: 2px solid var(--primary);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .nested-card h4 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        /* Video Frame Mock */
+        .video-frame {
+            position: relative;
+            background: linear-gradient(135deg, #1E293B, #334155);
+            border-radius: 1rem;
+            padding-top: 56.25%; /* 16:9 aspect ratio */
+            margin: 2rem 0;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .video-frame::before {
+            content: 'VIDEO DEMO';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: 0.5rem;
+        }
+
+        .play-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .play-button:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            background: white;
+        }
+
+        .play-button::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 20px solid var(--primary);
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            margin-left: 5px;
+        }
+
+        .video-note {
+            text-align: center;
+            color: var(--gray);
+            font-style: italic;
+            margin-top: 1rem;
+        }
+
+        /* SVG Illustrations */
+        .illustration {
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        /* Pricing Cards */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .pricing-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-5px);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #F0F9FF, white);
+        }
+
+        .pricing-card h3 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .price {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin: 1rem 0;
+        }
+
+        .price-note {
+            font-size: 0.875rem;
+            color: var(--gray);
+            margin-bottom: 2rem;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .pricing-features li {
+            padding: 0.75rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            border-bottom: 1px solid var(--light-bg);
+        }
+
+        .pricing-features li::before {
+            content: '✓';
+            color: var(--primary);
+            font-weight: 900;
+        }
+
+        /* Process Timeline */
+        .process-timeline {
+            display: flex;
+            gap: 2rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .process-step {
+            flex: 1;
+            min-width: 250px;
+            max-width: 350px;
+            text-align: center;
+            position: relative;
+        }
+
+        .process-number {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 900;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 8px 20px rgba(0, 102, 255, 0.3);
+        }
+
+        .process-step h3 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .process-step p {
+            color: var(--gray);
+        }
+
+        /* FAQ */
+        .faq-list {
+            max-width: 900px;
+            margin: 3rem auto 0;
+        }
+
+        .faq-item {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .faq-item h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: var(--primary);
+        }
+
+        .faq-item p {
+            color: var(--gray);
+            line-height: 1.7;
+        }
+
+        /* Contact Section */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        .contact-form {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.875rem;
+            border: 2px solid #E2E8F0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .contact-info {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .contact-info h3 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+        }
+
+        .contact-item {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .contact-item:last-child {
+            border-bottom: none;
+        }
+
+        .contact-item strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.125rem;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .footer-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover,
+        .footer-links a:focus {
+            color: white;
+            outline: none;
+        }
+
+        /* WhatsApp Widget */
+        .whatsapp-widget {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+        }
+
+        .whatsapp-button {
+            width: 60px;
+            height: 60px;
+            background: #25D366;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .whatsapp-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.6);
+        }
+
+        .whatsapp-button svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .whatsapp-chat-popup {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 350px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .whatsapp-chat-popup.active {
+            display: flex;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .whatsapp-header {
+            background: #25D366;
+            color: white;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .whatsapp-header-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .whatsapp-avatar {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #25D366;
+        }
+
+        .whatsapp-info h4 {
+            font-size: 1rem;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .whatsapp-info p {
+            font-size: 0.75rem;
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        .whatsapp-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+
+        .whatsapp-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .whatsapp-body {
+            padding: 1.5rem;
+            background: #ECE5DD;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .whatsapp-welcome {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .whatsapp-welcome p {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+
+        .whatsapp-welcome strong {
+            color: var(--primary);
+        }
+
+        .whatsapp-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 1.5rem;
+            background: white;
+            border-top: 1px solid #E2E8F0;
+        }
+
+        .whatsapp-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: white;
+            border: 2px solid #25D366;
+            border-radius: 8px;
+            color: #25D366;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .whatsapp-action-btn:hover {
+            background: #25D366;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+        }
+
+        .whatsapp-action-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .whatsapp-note {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--gray);
+            padding: 0 1rem 1rem;
+            background: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .section-header h2 {
+                font-size: 2rem;
+            }
+
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .process-timeline {
+                flex-direction: column;
+            }
+
+            .blob {
+                width: 150px !important;
+                height: 150px !important;
+            }
+
+            .whatsapp-widget {
+                bottom: 20px;
+                right: 20px;
+            }
+
+            .whatsapp-chat-popup {
+                width: calc(100vw - 40px);
+                right: -15px;
+            }
+
+            .whatsapp-button {
+                width: 55px;
+                height: 55px;
+            }
+
+            .whatsapp-button svg {
+                width: 28px;
+                height: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo">PixelStudioCo</div>
+            <ul class="nav-links">
+                <li><a href="#foto">Foto</a></li>
+                <li><a href="#diseno">Diseño</a></li>
+                <li><a href="#video">Video</a></li>
+                <li><a href="#marketing">Marketing</a></li>
+                <li><a href="#paquetes">Paquetes</a></li>
+                <li><a href="#proceso">Proceso</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="#contacto">Contacto</a></li>
+                <li><a href="https://pixelstudioco.com/" style="color: var(--primary); font-weight: 700;">English</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+
+        <div class="hero-container">
+            <h1>Crea Visuales Impresionantes. Más Rápido.</h1>
+            <p>Mejora de fotos, diseño gráfico + 3D, contenido de video ilustrado, gráficos de videojuegos y activos de marketing—creados para negocios modernos.</p>
+
+            <div class="hero-buttons">
+                <a href="#contacto" class="btn btn-primary">Solicitar Cotización</a>
+                <a href="#paquetes" class="btn btn-secondary">Ver Paquetes</a>
+            </div>
+
+            <div class="trust-row">
+                <div class="trust-item">
+                    <span>⚡</span>
+                    <span>Entrega rápida</span>
+                </div>
+                <div class="trust-item">
+                    <span>✓</span>
+                    <span>Listo para uso comercial</span>
+                </div>
+                <div class="trust-item">
+                    <span>🎨</span>
+                    <span>Marca consistente</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Photo Enhancement Section -->
+    <section id="foto">
+        <div class="service-card">
+            <h3>Mejora de Fotos</h3>
+            <p>Transforma tus fotos de productos, imágenes de menú y listados con mejora profesional. Limpiamos, corregimos colores y optimizamos cada imagen para que tus productos brillen en todas las plataformas.</p>
+
+            <div class="deliverables">
+                <h4>Lo Que Obtienes:</h4>
+                <ul>
+                    <li>Corrección de color e iluminación</li>
+                    <li>Limpieza/eliminación de fondo</li>
+                    <li>Mejora de nitidez y claridad</li>
+                    <li>Redimensionar/recortar para marketplaces y redes sociales</li>
+                    <li>Mejora por lotes para catálogos</li>
+                </ul>
+            </div>
+
+            <div class="best-for">
+                <strong>Ideal para:</strong> eCommerce, marketplaces, menús, catálogos, listados
+            </div>
+
+            <a href="#contacto" class="btn btn-primary">Solicitar Mejora de Fotos</a>
+        </div>
+    </section>
+
+    <!-- Graphic Design + 3D Graphics Section -->
+    <section id="diseno">
+        <div class="service-card">
+            <h3>Diseño Gráfico + Gráficos 3D</h3>
+            <p>Desde logos hasta empaques, entregamos diseño gráfico profesional que eleva tu marca. Además, nuestras capacidades de gráficos 3D aportan profundidad y dimensión a tus materiales de marketing.</p>
+
+            <div class="deliverables">
+                <h4>Lo Que Obtienes:</h4>
+                <ul>
+                    <li>Logos y kits de marca</li>
+                    <li>Volantes, pósters, menús</li>
+                    <li>Plantillas para redes sociales</li>
+                    <li>Etiquetas de productos y empaques</li>
+                    <li>Gráficos 3D (mockups de productos, iconos, formas 3D)</li>
+                </ul>
+            </div>
+
+            <div class="nested-card">
+                <h4>Gráficos 3D</h4>
+                <p>Iconos 3D, mockups y renders para marketing. Ideal para secciones hero, anuncios e interfaces de aplicaciones. Agrega profundidad e interés visual a tus campañas con elementos 3D modernos que destacan.</p>
+            </div>
+
+            <div class="best-for">
+                <strong>Ideal para:</strong> Proyectos de branding, lanzamientos de productos, campañas en redes sociales, diseño de apps
+            </div>
+
+            <a href="#contacto" class="btn btn-primary">Solicitar Diseño / 3D</a>
+        </div>
+    </section>
+
+    <!-- Video & Content Creation Section -->
+    <section id="video">
+        <div class="service-card">
+            <h3>Video y Creación de Contenido (Ilustrado)</h3>
+            <p>Involucra a tu audiencia con videos explicativos ilustrados, contenido de formato corto para redes sociales y videos promocionales editados profesionalmente. Manejamos todo desde el concepto hasta la exportación final.</p>
+
+            <div class="illustration">
+                <svg width="400" height="200" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+                    <!-- Video Frame -->
+                    <rect x="20" y="30" width="360" height="140" rx="10" fill="#1E293B" stroke="#0066FF" stroke-width="3"/>
+
+                    <!-- Play Button -->
+                    <circle cx="200" cy="100" r="30" fill="#0066FF" opacity="0.9"/>
+                    <polygon points="190,85 190,115 215,100" fill="white"/>
+
+                    <!-- Timeline -->
+                    <rect x="40" y="155" width="320" height="6" rx="3" fill="#334155"/>
+                    <rect x="40" y="155" width="160" height="6" rx="3" fill="#0066FF"/>
+                    <circle cx="200" cy="158" r="8" fill="#0066FF" stroke="white" stroke-width="2"/>
+
+                    <!-- Motion Lines -->
+                    <line x1="250" y1="70" x2="290" y2="60" stroke="#FF6B35" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+                    <line x1="250" y1="85" x2="295" y2="80" stroke="#FF6B35" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+                    <line x1="250" y1="100" x2="290" y2="100" stroke="#FF6B35" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+                </svg>
+            </div>
+
+            <div class="deliverables">
+                <h4>Lo Que Obtienes:</h4>
+                <ul>
+                    <li>Videos explicativos ilustrados</li>
+                    <li>Reels de formato corto (IG/TikTok)</li>
+                    <li>Videos promocionales / anuncios</li>
+                    <li>Motion graphics + subtítulos</li>
+                    <li>Edición + formateo para plataformas</li>
+                </ul>
+            </div>
+
+            <div class="nested-card">
+                <h4>Animación Tradicional 2D</h4>
+                <p><strong>Tipo de animación:</strong> 2D<br>
+                <strong>Estilo:</strong> Animación tradicional<br>
+                <strong>Alcance:</strong></p>
+                <ul style="list-style: none; padding-left: 1rem; margin-top: 0.5rem;">
+                    <li>• Personajes</li>
+                    <li>• Entornos</li>
+                </ul>
+            </div>
+
+            <div class="video-frame">
+                <div class="play-button"></div>
+            </div>
+            <p class="video-note">Video demo próximamente</p>
+
+            <div class="best-for">
+                <strong>Ideal para:</strong> Marketing en redes sociales, lanzamientos de productos, contenido explicativo, anuncios
+            </div>
+
+            <a href="#contacto" class="btn btn-primary">Solicitar Contenido de Video</a>
+        </div>
+    </section>
+
+    <!-- Marketing Assets + Video Game Graphics Section -->
+    <section id="marketing">
+        <div class="service-card">
+            <h3>Activos de Marketing + Diseño de Gráficos para Videojuegos</h3>
+            <p>Servicios creativos de marketing completos más gráficos especializados para videojuegos. Desde anuncios en redes sociales hasta elementos de UI de juegos, entregamos activos que convierten e involucran.</p>
+
+            <div class="deliverables">
+                <h4>Entregables de Marketing:</h4>
+                <ul>
+                    <li>Creativos publicitarios (Meta/Google)</li>
+                    <li>Banners de encabezado para email</li>
+                    <li>Banners hero para sitios web</li>
+                    <li>Gráficos para páginas de destino</li>
+                    <li>Paquetes de contenido de marca</li>
+                </ul>
+            </div>
+
+            <div class="nested-card">
+                <h4>Gráficos para Videojuegos</h4>
+
+                <div class="illustration">
+                    <svg width="400" height="200" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+                        <!-- HUD Frame -->
+                        <rect x="10" y="10" width="120" height="40" rx="5" fill="#1E293B" stroke="#0066FF" stroke-width="2"/>
+
+                        <!-- Health Bar -->
+                        <text x="20" y="28" fill="white" font-size="10" font-weight="bold">HP</text>
+                        <rect x="20" y="32" width="100" height="8" rx="4" fill="#334155"/>
+                        <rect x="20" y="32" width="75" height="8" rx="4" fill="#10B981"/>
+
+                        <!-- Mini Map -->
+                        <rect x="270" y="10" width="120" height="120" rx="8" fill="#1E293B" stroke="#0066FF" stroke-width="2"/>
+                        <circle cx="330" cy="70" r="30" fill="#334155"/>
+                        <circle cx="320" cy="60" r="4" fill="#0066FF"/>
+                        <circle cx="340" cy="80" r="4" fill="#FF6B35"/>
+                        <polygon points="330,65 335,75 325,75" fill="#10B981"/>
+
+                        <!-- Controller Icon -->
+                        <rect x="10" y="150" width="80" height="40" rx="20" fill="#1E293B" stroke="#8B5CF6" stroke-width="2"/>
+                        <circle cx="30" cy="165" r="6" fill="#8B5CF6"/>
+                        <circle cx="45" cy="170" r="6" fill="#8B5CF6"/>
+                        <circle cx="60" cy="165" r="6" fill="#8B5CF6"/>
+                        <circle cx="75" cy="170" r="6" fill="#8B5CF6"/>
+
+                        <!-- Action Buttons -->
+                        <circle cx="150" cy="170" r="18" fill="#0066FF" stroke="white" stroke-width="2"/>
+                        <text x="145" y="177" fill="white" font-size="16" font-weight="bold">A</text>
+
+                        <circle cx="200" cy="170" r="18" fill="#FF6B35" stroke="white" stroke-width="2"/>
+                        <text x="195" y="177" fill="white" font-size="16" font-weight="bold">B</text>
+                    </svg>
+                </div>
+
+                <div class="deliverables">
+                    <h4>Entregables de Gráficos para Juegos:</h4>
+                    <ul>
+                        <li>Arte conceptual de personajes (2D)</li>
+                        <li>Elementos UI/HUD (barras de salud, botones, menús)</li>
+                        <li>Iconos y badges de juego 2D/3D</li>
+                        <li>Arte clave promocional (banners de tienda, gráficos de lanzamiento)</li>
+                        <li>Activos de marketing dentro del juego (eventos, promos de skins, paquetes de temporada)</li>
+                    </ul>
+                </div>
+
+                <div class="best-for">
+                    <strong>Ideal para:</strong> Estudios indie, juegos móviles, páginas de Steam, creativos para tiendas de apps
+                </div>
+            </div>
+
+            <a href="#contacto" class="btn btn-primary">Solicitar Marketing / Gráficos de Juego</a>
+        </div>
+    </section>
+
+    <!-- Packages Section -->
+    <section id="paquetes">
+        <div class="section-header">
+            <h2>Paquetes</h2>
+            <p>Elige un plan que se ajuste a tus necesidades creativas. Todos los paquetes incluyen licencia de uso comercial.</p>
+        </div>
+
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h3>Inicial</h3>
+                <div class="price">$499</div>
+                <p class="price-note">*El precio puede variar según el alcance del proyecto</p>
+                <ul class="pricing-features">
+                    <li>Mejora de fotos (hasta 20 imágenes)</li>
+                    <li>Diseño gráfico básico</li>
+                    <li>Plantillas para redes sociales</li>
+                    <li>2 rondas de revisión</li>
+                    <li>Entrega en 5-7 días</li>
+                </ul>
+                <a href="#contacto" class="btn btn-secondary">Elegir Plan</a>
+            </div>
+
+            <div class="pricing-card featured">
+                <h3>Crecimiento</h3>
+                <div class="price">$999</div>
+                <p class="price-note">*El precio puede variar según el alcance del proyecto</p>
+                <ul class="pricing-features">
+                    <li>Mejora de fotos (hasta 50 imágenes)</li>
+                    <li>Diseño gráfico avanzado</li>
+                    <li>Gráficos 3D / juegos disponibles</li>
+                    <li>Contenido de video de formato corto</li>
+                    <li>Paquetes de activos de marketing</li>
+                    <li>3 rondas de revisión</li>
+                    <li>Entrega en 3-5 días</li>
+                </ul>
+                <a href="#contacto" class="btn btn-primary">Elegir Plan</a>
+            </div>
+
+            <div class="pricing-card">
+                <h3>Pro</h3>
+                <div class="price">$1,999</div>
+                <p class="price-note">*El precio puede variar según el alcance del proyecto</p>
+                <ul class="pricing-features">
+                    <li>Mejora de fotos ilimitada</li>
+                    <li>Diseño de identidad de marca completa</li>
+                    <li>Gráficos 3D / juegos disponibles</li>
+                    <li>Producción de video ilustrado</li>
+                    <li>Campañas de marketing completas</li>
+                    <li>Revisiones ilimitadas</li>
+                    <li>Entrega prioritaria en 1-3 días</li>
+                    <li>Gerente de cuenta dedicado</li>
+                </ul>
+                <a href="#contacto" class="btn btn-secondary">Elegir Plan</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Process Section -->
+    <section id="proceso">
+        <div class="section-header">
+            <h2>Cómo Funciona</h2>
+            <p>Comenzar es simple. Solo tres pasos desde la solicitud hasta la entrega.</p>
+        </div>
+
+        <div class="process-timeline">
+            <div class="process-step">
+                <div class="process-number">1</div>
+                <h3>Envía tu solicitud</h3>
+                <p>Completa el formulario de contacto o envíanos un email con los detalles de tu proyecto, activos de marca y materiales de referencia.</p>
+            </div>
+
+            <div class="process-step">
+                <div class="process-number">2</div>
+                <h3>Creamos y revisamos</h3>
+                <p>Nuestro equipo da vida a tu visión. Recibirás borradores para revisión y refinamos basándonos en tus comentarios.</p>
+            </div>
+
+            <div class="process-step">
+                <div class="process-number">3</div>
+                <h3>Descarga y publica</h3>
+                <p>Recibe tus archivos finales en todos los formatos necesarios, listos para uso inmediato en cualquier plataforma.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq">
+        <div class="section-header">
+            <h2>Preguntas Frecuentes</h2>
+            <p>Todo lo que necesitas saber sobre trabajar con nosotros.</p>
+        </div>
+
+        <div class="faq-list">
+            <div class="faq-item">
+                <h3>¿Cuál es el tiempo de entrega típico?</h3>
+                <p>Depende del alcance de tu proyecto. La mejora de fotos típicamente toma 2-3 días, diseño gráfico 3-5 días, y contenido de video 5-7 días. Pedidos urgentes están disponibles por una tarifa adicional.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>¿Cuántas revisiones obtengo?</h3>
+                <p>Los paquetes Inicial incluyen 2 rondas de revisión, Crecimiento incluye 3, y Pro incluye revisiones ilimitadas. Queremos que estés 100% satisfecho con el producto final.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>¿En qué formatos de archivo recibiré los archivos?</h3>
+                <p>Recibirás archivos en todos los formatos comúnmente usados: JPG, PNG, PDF para gráficos; MP4, MOV para video; y archivos fuente (PSD, AI, AE) bajo solicitud. Entregamos todo optimizado para web e impresión.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>¿Puedo usar los activos comercialmente?</h3>
+                <p>¡Sí! Todos los entregables vienen con licencia completa de uso comercial. Eres dueño de los archivos finales y puedes usarlos en cualquier plataforma, canal de marketing o producto sin restricciones.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>¿Cómo envío los activos de marca?</h3>
+                <p>Después de enviar tu solicitud, te enviaremos un enlace seguro de carga. Puedes compartir logos, guías de marca, paletas de colores, fuentes y materiales de referencia. Si aún no tienes activos de marca, podemos crearlos para ti.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>¿Crean UI/HUD de juegos y gráficos para tiendas?</h3>
+                <p>¡Absolutamente! Nos especializamos en gráficos para videojuegos incluyendo elementos UI/HUD, arte conceptual de personajes, arte clave promocional, banners de tienda y activos de marketing dentro del juego. Entregamos archivos en formatos optimizados para Unity, Unreal Engine y principales tiendas de apps. Nuestro equipo tiene experiencia con juegos indie, juegos móviles y lanzamientos en Steam.</p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- WhatsApp Widget -->
+    <div class="whatsapp-widget">
+        <button class="whatsapp-button" id="whatsappButton" aria-label="Abrir chat de WhatsApp">
+            <svg viewBox="0 0 32 32" fill="white" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 0C7.164 0 0 7.164 0 16c0 2.828.736 5.627 2.132 8.127L.057 31.943l8.008-2.052A15.93 15.93 0 0016 32c8.836 0 16-7.164 16-16S24.836 0 16 0zm0 29.333c-2.548 0-5.05-.724-7.185-2.088l-.515-.329-5.365 1.375 1.432-5.233-.36-.534A13.286 13.286 0 012.667 16c0-7.364 5.97-13.333 13.333-13.333S29.333 8.636 29.333 16 23.364 29.333 16 29.333zm7.308-9.95c-.4-.2-2.37-1.17-2.738-1.304-.368-.133-.635-.2-.903.2-.268.4-1.037 1.304-1.271 1.571-.235.268-.47.301-.87.1-.4-.2-1.688-.622-3.216-1.984-1.189-1.06-1.992-2.368-2.226-2.768-.235-.4-.025-.617.175-.816.18-.179.4-.467.6-.701.2-.234.267-.4.4-.668.134-.267.067-.5-.033-.7-.1-.2-.903-2.177-1.238-2.978-.326-.78-.657-.674-.903-.687-.234-.012-.502-.015-.77-.015s-.703.1-1.071.5c-.368.4-1.405 1.373-1.405 3.347s1.438 3.882 1.638 4.15c.2.267 2.826 4.315 6.847 6.05.957.413 1.704.66 2.286.845.96.305 1.834.262 2.525.159.77-.115 2.37-.969 2.704-1.904.335-.936.335-1.738.235-1.905-.1-.167-.368-.267-.77-.467z"/>
+            </svg>
+        </button>
+
+        <div class="whatsapp-chat-popup" id="whatsappPopup">
+            <div class="whatsapp-header">
+                <div class="whatsapp-header-content">
+                    <div class="whatsapp-avatar">PS</div>
+                    <div class="whatsapp-info">
+                        <h4>PixelStudioCo</h4>
+                        <p>Responde al instante</p>
+                    </div>
+                </div>
+                <button class="whatsapp-close" id="whatsappClose" aria-label="Cerrar chat">
+                    ×
+                </button>
+            </div>
+
+            <div class="whatsapp-body">
+                <div class="whatsapp-welcome">
+                    <p><strong>👋 ¡Hola!</strong></p>
+                    <p>¿Cómo podemos ayudarte hoy? Haz clic abajo para iniciar una conversación en WhatsApp.</p>
+                </div>
+            </div>
+
+            <div class="whatsapp-actions">
+                <a href="https://wa.me/573167533929?text=Hola%2C%20estoy%20interesado%20en%20sus%20servicios!" class="whatsapp-action-btn" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.546 20.2l3.18-.834A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm5.849 14.025c-.242.675-1.199 1.237-1.965 1.4-.525.11-1.211.198-3.515-.753-2.948-1.215-4.848-4.191-4.996-4.386-.143-.195-1.188-1.58-1.188-3.014 0-1.435.753-2.14 1.02-2.432.267-.292.582-.365.776-.365.194 0 .388.002.558.01.179.008.42-.068.657.502.242.582.825 2.016.898 2.163.073.146.121.317.024.512-.097.195-.146.316-.29.486-.145.17-.305.38-.436.51-.145.146-.296.304-.127.596.17.292.754 1.243 1.619 2.013 1.113.992 2.054 1.301 2.346 1.448.292.146.462.122.632-.073.17-.195.73-.851.925-1.143.195-.292.39-.243.657-.146.267.097 1.701.803 1.993.949.292.146.486.22.558.34.073.122.073.705-.17 1.38z"/>
+                    </svg>
+                    Abrir WhatsApp
+                </a>
+            </div>
+
+            <p class="whatsapp-note">Responderemos lo antes posible en horario de atención</p>
+        </div>
+    </div>
+
+    <script>
+        // WhatsApp Widget functionality
+        const whatsappButton = document.getElementById('whatsappButton');
+        const whatsappPopup = document.getElementById('whatsappPopup');
+        const whatsappClose = document.getElementById('whatsappClose');
+
+        whatsappButton.addEventListener('click', function() {
+            whatsappPopup.classList.toggle('active');
+        });
+
+        whatsappClose.addEventListener('click', function(e) {
+            e.stopPropagation();
+            whatsappPopup.classList.remove('active');
+        });
+
+        // Close popup when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!whatsappPopup.contains(e.target) && !whatsappButton.contains(e.target)) {
+                whatsappPopup.classList.remove('active');
+            }
+        });
+    </script>
+
+</body>
+</html>

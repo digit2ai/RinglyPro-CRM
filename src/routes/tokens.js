@@ -168,21 +168,21 @@ router.get('/pricing', async (req, res) => {
         starter: {
           name: 'Starter Pack',
           tokens: 500,
-          price: 29,
+          price: 33,
           rollover: 1000,
           features: ['All services', 'Rollover up to 1000 tokens', 'Priority support']
         },
         growth: {
           name: 'Growth Pack',
           tokens: 2000,
-          price: 99,
+          price: 113,
           rollover: 5000,
           features: ['All services', 'Rollover up to 5000 tokens', 'Premium support']
         },
         professional: {
           name: 'Professional Pack',
           tokens: 7500,
-          price: 299,
+          price: 341,
           rollover: 'unlimited',
           features: ['All services', 'Unlimited rollover', 'Dedicated support']
         }
@@ -206,11 +206,11 @@ router.post('/purchase', authenticateToken, async (req, res) => {
     const userId = req.user.userId || req.user.id;
     const { package_name, payment_method_id } = req.body;
 
-    // Validate package
+    // Validate package (14% price increase applied)
     const packages = {
-      starter: { tokens: 500, price: 29 },
-      growth: { tokens: 2000, price: 99 },
-      professional: { tokens: 7500, price: 299 }
+      starter: { tokens: 500, price: 33 },
+      growth: { tokens: 2000, price: 113 },
+      professional: { tokens: 7500, price: 341 }
     };
 
     const selectedPackage = packages[package_name];

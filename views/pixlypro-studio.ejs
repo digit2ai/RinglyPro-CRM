@@ -266,16 +266,28 @@
                     </button>
                 </div>
 
-                <!-- Enhancement Summary -->
+                <!-- Pricing & Payment Summary -->
                 <div id="pricingSummary" style="display: none; margin-top: 2rem; padding: 2rem; background: #f8fafc; border-radius: 0.75rem; text-align: left;">
-                    <h3 style="color: #1e293b; margin-bottom: 1rem;">Ready to Enhance</h3>
+                    <h3 style="color: #1e293b; margin-bottom: 1rem;">Order Summary</h3>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                         <span style="color: #64748b;">Photos to enhance:</span>
                         <strong id="photoCount" style="color: #1e293b;">0</strong>
                     </div>
-                    <button class="btn" id="processEnhanceBtn" onclick="processEnhance()" style="width: 100%; margin-top: 1rem; padding: 1.25rem; font-size: 1.125rem;">
-                        Enhance Photos Now ✨
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="color: #64748b;">Price per photo:</span>
+                        <span style="color: #1e293b;">$0.50</span>
+                    </div>
+                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 1rem 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                        <span style="color: #1e293b; font-weight: 600; font-size: 1.125rem;">Total:</span>
+                        <strong id="totalPrice" style="color: #3b82f6; font-size: 1.25rem;">$0.00</strong>
+                    </div>
+                    <button class="btn" id="processEnhanceBtn" onclick="processPayment()" style="width: 100%; margin-top: 1rem; padding: 1.25rem; font-size: 1.125rem;">
+                        Proceed to Payment
                     </button>
+                    <p style="color: #64748b; font-size: 0.75rem; text-align: center; margin-top: 0.75rem;">
+                        Secure payment powered by Stripe
+                    </p>
                     <div id="progressContainer" style="display: none; margin-top: 1rem;">
                         <div style="background: #e2e8f0; border-radius: 0.5rem; height: 12px; overflow: hidden;">
                             <div id="progressBar" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%); height: 100%; width: 0%; transition: width 0.3s;"></div>
@@ -502,8 +514,11 @@
 
         function updatePricingSummary() {
             const photoCount = photos.length;
+            const pricePerPhoto = 0.50;
+            const totalPrice = photoCount * pricePerPhoto;
 
             document.getElementById('photoCount').textContent = photoCount;
+            document.getElementById('totalPrice').textContent = `$${totalPrice.toFixed(2)}`;
 
             if (photoCount > 0) {
                 document.getElementById('pricingSummary').style.display = 'block';
@@ -542,13 +557,14 @@
             updatePricingSummary();
         }
 
-        async function processEnhance() {
+        async function processPayment() {
             if (photos.length === 0) {
                 alert('Please upload at least one photo');
                 return;
             }
 
             const photoCount = photos.length;
+            const totalAmount = photoCount * 0.50;
 
             try {
                 // Get JWT token from localStorage
@@ -559,10 +575,10 @@
                     return;
                 }
 
-                // Disable enhance button and show progress
+                // Disable button and show progress
                 const btn = document.getElementById('processEnhanceBtn');
                 btn.disabled = true;
-                btn.textContent = 'Processing...';
+                btn.textContent = 'Preparing...';
 
                 const progressContainer = document.getElementById('progressContainer');
                 const progressBar = document.getElementById('progressBar');
@@ -581,11 +597,11 @@
                     formData.append('photos', file);
                 }
 
-                // Step 2: Upload and enhance directly (no payment)
-                progressText.textContent = 'Uploading and enhancing with AI...';
+                // Step 2: Upload photos to S3 temp folder (BEFORE payment)
+                progressText.textContent = 'Uploading photos to secure storage...';
                 progressBar.style.width = '30%';
 
-                const response = await fetch('/api/pixlypro/upload-and-enhance-direct', {
+                const uploadResponse = await fetch('/api/pixlypro/upload-temp-photos', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -593,31 +609,50 @@
                     body: formData
                 });
 
-                const data = await response.json();
+                const uploadData = await uploadResponse.json();
 
-                if (!data.success) {
-                    throw new Error(data.error || 'Failed to enhance photos');
+                if (!uploadData.success) {
+                    throw new Error(uploadData.error || 'Failed to upload photos');
                 }
 
-                progressBar.style.width = '100%';
-                progressText.textContent = `Successfully enhanced ${data.processedCount} photo(s)!`;
+                progressText.textContent = 'Creating secure checkout...';
+                progressBar.style.width = '60%';
 
-                // Clear IndexedDB
-                await clearPhotosFromDB();
+                // Step 3: Create Stripe checkout session with temp photo IDs
+                const checkoutResponse = await fetch('/api/pixlypro/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        packageType: 'custom',
+                        photoCount: photoCount,
+                        totalAmount: totalAmount,
+                        tempPhotoIds: uploadData.photoIds
+                    })
+                });
 
-                // Redirect to portal after 2 seconds
-                setTimeout(() => {
-                    window.location.href = '/pixlypro-portal';
-                }, 2000);
+                const checkoutData = await checkoutResponse.json();
+
+                if (!checkoutData.success) {
+                    throw new Error(checkoutData.error || 'Failed to create checkout session');
+                }
+
+                progressText.textContent = 'Redirecting to payment...';
+                progressBar.style.width = '90%';
+
+                // Step 4: Redirect to Stripe Checkout
+                window.location.href = checkoutData.sessionUrl;
 
             } catch (error) {
-                console.error('Enhancement error:', error);
-                alert('Failed to enhance photos: ' + error.message);
+                console.error('Payment error:', error);
+                alert('Failed to process payment: ' + error.message);
 
                 // Re-enable button
                 const btn = document.getElementById('processEnhanceBtn');
                 btn.disabled = false;
-                btn.textContent = 'Enhance Photos Now ✨';
+                btn.textContent = 'Proceed to Payment';
                 document.getElementById('progressContainer').style.display = 'none';
             }
         }

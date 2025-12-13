@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelStudioCo - Create Stunning Visuals. Faster.</title>
+    <meta name="description" content="Photo enhancement, graphic + 3D design, video & illustrated content, video game graphics, and marketing assets—built for modern businesses.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0066FF;
+            --accent: #FF6B35;
+            --dark: #0F172A;
+            --gray: #64748B;
+            --light-bg: #F8FAFC;
+            --white: #FFFFFF;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.12);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            color: var(--dark);
+            line-height: 1.6;
+            background: var(--light-bg);
+            overflow-x: hidden;
+        }
+
+        /* Pixel Grid Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 102, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 102, 255, 0.02) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Navigation */
+        nav {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: var(--gray);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a:focus {
+            color: var(--primary);
+            outline: none;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 6rem 2rem 4rem;
+            background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* 3D Floating Blobs */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.6;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .blob-1 {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(135deg, #0066FF, #00C896);
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .blob-2 {
+            width: 250px;
+            height: 250px;
+            background: linear-gradient(135deg, #FF6B35, #FFB347);
+            top: 60%;
+            right: 15%;
+            animation-delay: 2s;
+        }
+
+        .blob-3 {
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(135deg, #8B5CF6, #C084FC);
+            bottom: 10%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(-30px) scale(1.1);
+            }
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .hero h1::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -10px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            animation: scanline 3s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.3;
+            }
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--gray);
+            margin-bottom: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+        }
+
+        .btn-primary:hover,
+        .btn-primary:focus {
+            background: #0052CC;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 102, 255, 0.4);
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover,
+        .btn-secondary:focus {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .trust-row {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            max-width: 700px;
+            margin: 0 auto;
+            box-shadow: var(--shadow);
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Section Styles */
+        section {
+            padding: 5rem 2rem;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-header h2::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary), var(--accent));
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .section-header p {
+            font-size: 1.125rem;
+            color: var(--gray);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Service Cards */
+        .service-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 3rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 3rem;
+            transition: all 0.3s;
+        }
+
+        .service-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-5px);
+        }
+
+        .service-card h3 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .service-card > p {
+            font-size: 1.125rem;
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+
+        .deliverables {
+            background: var(--light-bg);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .deliverables h4 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .deliverables ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .deliverables li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .deliverables li::before {
+            content: '✓';
+            color: var(--primary);
+            font-weight: 900;
+            font-size: 1.25rem;
+        }
+
+        .best-for {
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(0, 102, 255, 0.1), rgba(255, 107, 53, 0.1));
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .best-for strong {
+            color: var(--primary);
+        }
+
+        /* 3D Graphics Callout */
+        .nested-card {
+            background: linear-gradient(135deg, #F0F9FF, #E0F2FE);
+            border: 2px solid var(--primary);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .nested-card h4 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        /* Video Frame Mock */
+        .video-frame {
+            position: relative;
+            background: linear-gradient(135deg, #1E293B, #334155);
+            border-radius: 1rem;
+            padding-top: 56.25%; /* 16:9 aspect ratio */
+            margin: 2rem 0;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .video-frame::before {
+            content: 'DEMO VIDEO';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: 0.5rem;
+        }
+
+        .play-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .play-button:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            background: white;
+        }
+
+        .play-button::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 20px solid var(--primary);
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            margin-left: 5px;
+        }
+
+        .video-note {
+            text-align: center;
+            color: var(--gray);
+            font-style: italic;
+            margin-top: 1rem;
+        }
+
+        /* SVG Illustrations */
+        .illustration {
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        /* Pricing Cards */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .pricing-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-5px);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #F0F9FF, white);
+        }
+
+        .pricing-card h3 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .price {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin: 1rem 0;
+        }
+
+        .price-note {
+            font-size: 0.875rem;
+            color: var(--gray);
+            margin-bottom: 2rem;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .pricing-features li {
+            padding: 0.75rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            border-bottom: 1px solid var(--light-bg);
+        }
+
+        .pricing-features li::before {
+            content: '✓';
+            color: var(--primary);
+            font-weight: 900;
+        }
+
+        /* Process Timeline */
+        .process-timeline {
+            display: flex;
+            gap: 2rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .process-step {
+            flex: 1;
+            min-width: 250px;
+            max-width: 350px;
+            text-align: center;
+            position: relative;
+        }
+
+        .process-number {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 900;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 8px 20px rgba(0, 102, 255, 0.3);
+        }
+
+        .process-step h3 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .process-step p {
+            color: var(--gray);
+        }
+
+        /* FAQ */
+        .faq-list {
+            max-width: 900px;
+            margin: 3rem auto 0;
+        }
+
+        .faq-item {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .faq-item h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: var(--primary);
+        }
+
+        .faq-item p {
+            color: var(--gray);
+            line-height: 1.7;
+        }
+
+        /* Contact Section */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        .contact-form {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.875rem;
+            border: 2px solid #E2E8F0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .contact-info {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .contact-info h3 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+        }
+
+        .contact-item {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .contact-item:last-child {
+            border-bottom: none;
+        }
+
+        .contact-item strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.125rem;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .footer-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover,
+        .footer-links a:focus {
+            color: white;
+            outline: none;
+        }
+
+        /* WhatsApp Widget */
+        .whatsapp-widget {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+        }
+
+        .whatsapp-button {
+            width: 60px;
+            height: 60px;
+            background: #25D366;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .whatsapp-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.6);
+        }
+
+        .whatsapp-button svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .whatsapp-chat-popup {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 350px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .whatsapp-chat-popup.active {
+            display: flex;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .whatsapp-header {
+            background: #25D366;
+            color: white;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .whatsapp-header-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .whatsapp-avatar {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #25D366;
+        }
+
+        .whatsapp-info h4 {
+            font-size: 1rem;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .whatsapp-info p {
+            font-size: 0.75rem;
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        .whatsapp-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+
+        .whatsapp-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .whatsapp-body {
+            padding: 1.5rem;
+            background: #ECE5DD;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .whatsapp-welcome {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .whatsapp-welcome p {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+
+        .whatsapp-welcome strong {
+            color: var(--primary);
+        }
+
+        .whatsapp-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 1.5rem;
+            background: white;
+            border-top: 1px solid #E2E8F0;
+        }
+
+        .whatsapp-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: white;
+            border: 2px solid #25D366;
+            border-radius: 8px;
+            color: #25D366;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .whatsapp-action-btn:hover {
+            background: #25D366;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+        }
+
+        .whatsapp-action-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .whatsapp-note {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--gray);
+            padding: 0 1rem 1rem;
+            background: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .section-header h2 {
+                font-size: 2rem;
+            }
+
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .process-timeline {
+                flex-direction: column;
+            }
+
+            .blob {
+                width: 150px !important;
+                height: 150px !important;
+            }
+
+            .whatsapp-widget {
+                bottom: 20px;
+                right: 20px;
+            }
+
+            .whatsapp-chat-popup {
+                width: calc(100vw - 40px);
+                right: -15px;
+            }
+
+            .whatsapp-button {
+                width: 55px;
+                height: 55px;
+            }
+
+            .whatsapp-button svg {
+                width: 28px;
+                height: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo">PixelStudioCo</div>
+            <ul class="nav-links">
+                <li><a href="#photo">Photo</a></li>
+                <li><a href="#design">Design</a></li>
+                <li><a href="#video">Video</a></li>
+                <li><a href="#marketing">Marketing</a></li>
+                <li><a href="#packages">Packages</a></li>
+                <li><a href="#process">Process</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="https://pixelstudioco.com/es" style="color: var(--primary); font-weight: 700;">Español</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+
+        <div class="hero-container">
+            <h1>Create Stunning Visuals. Faster.</h1>
+            <p>Photo enhancement, graphic + 3D design, video & illustrated content, video game graphics, and marketing assets—built for modern businesses.</p>
+
+            <div class="hero-buttons">
+                <a href="#contact" class="btn btn-primary">Get a Quote</a>
+                <a href="#packages" class="btn btn-secondary">View Packages</a>
+            </div>
+
+            <div class="trust-row">
+                <div class="trust-item">
+                    <span>⚡</span>
+                    <span>Fast turnaround</span>
+                </div>
+                <div class="trust-item">
+                    <span>✓</span>
+                    <span>Commercial-use ready</span>
+                </div>
+                <div class="trust-item">
+                    <span>🎨</span>
+                    <span>Consistent branding</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Photo Enhancement Section -->
+    <section id="photo">
+        <div class="service-card">
+            <h3>Photo Enhancement</h3>
+            <p>Transform your product photos, menu images, and listings with professional enhancement. We clean up, color-correct, and optimize every image to make your products shine across all platforms.</p>
+
+            <div class="deliverables">
+                <h4>What You Get:</h4>
+                <ul>
+                    <li>Color correction & lighting</li>
+                    <li>Background cleanup / removal</li>
+                    <li>Sharpness + clarity boost</li>
+                    <li>Resize/crop for marketplaces & social</li>
+                    <li>Batch enhancement for catalogs</li>
+                </ul>
+            </div>
+
+            <div class="best-for">
+                <strong>Best for:</strong> eCommerce, marketplaces, menus, catalogs, listings
+            </div>
+
+            <a href="#contact" class="btn btn-primary">Request Photo Enhancement</a>
+        </div>
+    </section>
+
+    <!-- Graphic Design + 3D Graphics Section -->
+    <section id="design">
+        <div class="service-card">
+            <h3>Graphic Design + 3D Graphics</h3>
+            <p>From logos to packaging, we deliver professional graphic design that elevates your brand. Plus, our 3D graphics capabilities bring depth and dimension to your marketing materials.</p>
+
+            <div class="deliverables">
+                <h4>What You Get:</h4>
+                <ul>
+                    <li>Logos & brand kits</li>
+                    <li>Flyers, posters, menus</li>
+                    <li>Social media templates</li>
+                    <li>Product labels & packaging</li>
+                    <li>3D graphics (product mockups, icons, 3D shapes)</li>
+                </ul>
+            </div>
+
+            <div class="nested-card">
+                <h4>3D Graphics</h4>
+                <p>3D icons, mockups, and renders for marketing. Great for hero sections, ads, and app UI. Add depth and visual interest to your campaigns with modern 3D elements that stand out.</p>
+            </div>
+
+            <div class="best-for">
+                <strong>Best for:</strong> Branding projects, product launches, social media campaigns, app design
+            </div>
+
+            <a href="#contact" class="btn btn-primary">Request Design / 3D</a>
+        </div>
+    </section>
+
+    <!-- Video & Content Creation Section -->
+    <section id="video">
+        <div class="service-card">
+            <h3>Video & Content Creation (Illustrated)</h3>
+            <p>Engage your audience with illustrated explainer videos, short-form content for social media, and professionally edited promotional videos. We handle everything from concept to final export.</p>
+
+            <div class="illustration">
+                <svg width="400" height="200" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+                    <!-- Video Frame -->
+                    <rect x="20" y="30" width="360" height="140" rx="10" fill="#1E293B" stroke="#0066FF" stroke-width="3"/>
+
+                    <!-- Play Button -->
+                    <circle cx="200" cy="100" r="30" fill="#0066FF" opacity="0.9"/>
+                    <polygon points="190,85 190,115 215,100" fill="white"/>
+
+                    <!-- Timeline -->
+                    <rect x="40" y="155" width="320" height="6" rx="3" fill="#334155"/>
+                    <rect x="40" y="155" width="160" height="6" rx="3" fill="#0066FF"/>
+                    <circle cx="200" cy="158" r="8" fill="#0066FF" stroke="white" stroke-width="2"/>
+
+                    <!-- Motion Lines -->
+                    <line x1="250" y1="70" x2="290" y2="60" stroke="#FF6B35" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+                    <line x1="250" y1="85" x2="295" y2="80" stroke="#FF6B35" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+                    <line x1="250" y1="100" x2="290" y2="100" stroke="#FF6B35" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+                </svg>
+            </div>
+
+            <div class="deliverables">
+                <h4>What You Get:</h4>
+                <ul>
+                    <li>Illustrated explainer videos</li>
+                    <li>Short-form reels (IG/TikTok)</li>
+                    <li>Promo videos / ads</li>
+                    <li>Motion graphics + subtitles</li>
+                    <li>Editing + formatting for platforms</li>
+                </ul>
+            </div>
+
+            <div class="nested-card">
+                <h4>2D Traditional Animation</h4>
+                <p><strong>Type of animation:</strong> 2D<br>
+                <strong>Style:</strong> Traditional animation<br>
+                <strong>Scope:</strong></p>
+                <ul style="list-style: none; padding-left: 1rem; margin-top: 0.5rem;">
+                    <li>• Characters</li>
+                    <li>• Environments</li>
+                </ul>
+            </div>
+
+            <div class="video-frame">
+                <div class="play-button"></div>
+            </div>
+            <p class="video-note">Demo video coming soon</p>
+
+            <div class="best-for">
+                <strong>Best for:</strong> Social media marketing, product launches, explainer content, ads
+            </div>
+
+            <a href="#contact" class="btn btn-primary">Request Video Content</a>
+        </div>
+    </section>
+
+    <!-- Marketing Assets + Video Game Graphics Section -->
+    <section id="marketing">
+        <div class="service-card">
+            <h3>Marketing Assets + Video Game Graphics Design</h3>
+            <p>Complete marketing creative services plus specialized video game graphics. From social ads to game UI elements, we deliver assets that convert and engage.</p>
+
+            <div class="deliverables">
+                <h4>Marketing Deliverables:</h4>
+                <ul>
+                    <li>Ad creatives (Meta/Google)</li>
+                    <li>Email header banners</li>
+                    <li>Website hero banners</li>
+                    <li>Landing page graphics</li>
+                    <li>Branded content packs</li>
+                </ul>
+            </div>
+
+            <div class="nested-card">
+                <h4>Video Game Graphics</h4>
+
+                <div class="illustration">
+                    <svg width="400" height="200" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+                        <!-- HUD Frame -->
+                        <rect x="10" y="10" width="120" height="40" rx="5" fill="#1E293B" stroke="#0066FF" stroke-width="2"/>
+
+                        <!-- Health Bar -->
+                        <text x="20" y="28" fill="white" font-size="10" font-weight="bold">HP</text>
+                        <rect x="20" y="32" width="100" height="8" rx="4" fill="#334155"/>
+                        <rect x="20" y="32" width="75" height="8" rx="4" fill="#10B981"/>
+
+                        <!-- Mini Map -->
+                        <rect x="270" y="10" width="120" height="120" rx="8" fill="#1E293B" stroke="#0066FF" stroke-width="2"/>
+                        <circle cx="330" cy="70" r="30" fill="#334155"/>
+                        <circle cx="320" cy="60" r="4" fill="#0066FF"/>
+                        <circle cx="340" cy="80" r="4" fill="#FF6B35"/>
+                        <polygon points="330,65 335,75 325,75" fill="#10B981"/>
+
+                        <!-- Controller Icon -->
+                        <rect x="10" y="150" width="80" height="40" rx="20" fill="#1E293B" stroke="#8B5CF6" stroke-width="2"/>
+                        <circle cx="30" cy="165" r="6" fill="#8B5CF6"/>
+                        <circle cx="45" cy="170" r="6" fill="#8B5CF6"/>
+                        <circle cx="60" cy="165" r="6" fill="#8B5CF6"/>
+                        <circle cx="75" cy="170" r="6" fill="#8B5CF6"/>
+
+                        <!-- Action Buttons -->
+                        <circle cx="150" cy="170" r="18" fill="#0066FF" stroke="white" stroke-width="2"/>
+                        <text x="145" y="177" fill="white" font-size="16" font-weight="bold">A</text>
+
+                        <circle cx="200" cy="170" r="18" fill="#FF6B35" stroke="white" stroke-width="2"/>
+                        <text x="195" y="177" fill="white" font-size="16" font-weight="bold">B</text>
+                    </svg>
+                </div>
+
+                <div class="deliverables">
+                    <h4>Game Graphics Deliverables:</h4>
+                    <ul>
+                        <li>Character concept art (2D)</li>
+                        <li>UI/HUD elements (health bars, buttons, menus)</li>
+                        <li>2D/3D game icons & badges</li>
+                        <li>Promotional key art (store banners, launch graphics)</li>
+                        <li>In-game marketing assets (events, skins promos, seasonal packs)</li>
+                    </ul>
+                </div>
+
+                <div class="best-for">
+                    <strong>Best for:</strong> Indie studios, mobile games, Steam pages, app store creatives
+                </div>
+            </div>
+
+            <a href="#contact" class="btn btn-primary">Request Marketing / Game Graphics</a>
+        </div>
+    </section>
+
+    <!-- Packages Section -->
+    <section id="packages">
+        <div class="section-header">
+            <h2>Packages</h2>
+            <p>Choose a plan that fits your creative needs. All packages include commercial-use licensing.</p>
+        </div>
+
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h3>Starter</h3>
+                <div class="price">$499</div>
+                <p class="price-note">*Pricing may vary by project scope</p>
+                <ul class="pricing-features">
+                    <li>Photo enhancement (up to 20 images)</li>
+                    <li>Basic graphic design</li>
+                    <li>Social media templates</li>
+                    <li>2 revision rounds</li>
+                    <li>5-7 day turnaround</li>
+                </ul>
+                <a href="#contact" class="btn btn-secondary">Choose Plan</a>
+            </div>
+
+            <div class="pricing-card featured">
+                <h3>Growth</h3>
+                <div class="price">$999</div>
+                <p class="price-note">*Pricing may vary by project scope</p>
+                <ul class="pricing-features">
+                    <li>Photo enhancement (up to 50 images)</li>
+                    <li>Advanced graphic design</li>
+                    <li>3D / game graphics available</li>
+                    <li>Short-form video content</li>
+                    <li>Marketing asset packs</li>
+                    <li>3 revision rounds</li>
+                    <li>3-5 day turnaround</li>
+                </ul>
+                <a href="#contact" class="btn btn-primary">Choose Plan</a>
+            </div>
+
+            <div class="pricing-card">
+                <h3>Pro</h3>
+                <div class="price">$1,999</div>
+                <p class="price-note">*Pricing may vary by project scope</p>
+                <ul class="pricing-features">
+                    <li>Unlimited photo enhancement</li>
+                    <li>Full brand identity design</li>
+                    <li>3D / game graphics available</li>
+                    <li>Illustrated video production</li>
+                    <li>Complete marketing campaigns</li>
+                    <li>Unlimited revisions</li>
+                    <li>Priority 1-3 day turnaround</li>
+                    <li>Dedicated account manager</li>
+                </ul>
+                <a href="#contact" class="btn btn-secondary">Choose Plan</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Process Section -->
+    <section id="process">
+        <div class="section-header">
+            <h2>How It Works</h2>
+            <p>Getting started is simple. Just three steps from request to delivery.</p>
+        </div>
+
+        <div class="process-timeline">
+            <div class="process-step">
+                <div class="process-number">1</div>
+                <h3>Submit your request</h3>
+                <p>Fill out the contact form or email us with your project details, brand assets, and any reference materials.</p>
+            </div>
+
+            <div class="process-step">
+                <div class="process-number">2</div>
+                <h3>We create & revise</h3>
+                <p>Our team brings your vision to life. You'll receive drafts for review and we'll refine based on your feedback.</p>
+            </div>
+
+            <div class="process-step">
+                <div class="process-number">3</div>
+                <h3>Download and publish</h3>
+                <p>Receive your final files in all necessary formats, ready for immediate use across any platform.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq">
+        <div class="section-header">
+            <h2>Frequently Asked Questions</h2>
+            <p>Everything you need to know about working with us.</p>
+        </div>
+
+        <div class="faq-list">
+            <div class="faq-item">
+                <h3>What's the typical turnaround time?</h3>
+                <p>It depends on the scope of your project. Photo enhancement typically takes 2-3 days, graphic design 3-5 days, and video content 5-7 days. Rush orders are available for an additional fee.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>How many revisions do I get?</h3>
+                <p>Starter packages include 2 revision rounds, Growth includes 3, and Pro includes unlimited revisions. We want you to be 100% satisfied with the final product.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>What file formats will I receive?</h3>
+                <p>You'll receive files in all commonly used formats: JPG, PNG, PDF for graphics; MP4, MOV for video; and source files (PSD, AI, AE) upon request. We deliver everything optimized for web and print.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>Can I use the assets commercially?</h3>
+                <p>Yes! All deliverables come with full commercial-use licensing. You own the final files and can use them across any platform, marketing channel, or product without restrictions.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>How do I submit brand assets?</h3>
+                <p>After you submit your request, we'll send you a secure upload link. You can share logos, brand guidelines, color palettes, fonts, and any reference materials. If you don't have brand assets yet, we can create them for you.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>Do you create game UI/HUD and store graphics?</h3>
+                <p>Absolutely! We specialize in video game graphics including UI/HUD elements, character concept art, promotional key art, store banners, and in-game marketing assets. We deliver files in formats optimized for Unity, Unreal Engine, and major app stores. Our team has experience with indie games, mobile games, and Steam releases.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- WhatsApp Widget -->
+    <div class="whatsapp-widget">
+        <button class="whatsapp-button" id="whatsappButton" aria-label="Open WhatsApp chat">
+            <svg viewBox="0 0 32 32" fill="white" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 0C7.164 0 0 7.164 0 16c0 2.828.736 5.627 2.132 8.127L.057 31.943l8.008-2.052A15.93 15.93 0 0016 32c8.836 0 16-7.164 16-16S24.836 0 16 0zm0 29.333c-2.548 0-5.05-.724-7.185-2.088l-.515-.329-5.365 1.375 1.432-5.233-.36-.534A13.286 13.286 0 012.667 16c0-7.364 5.97-13.333 13.333-13.333S29.333 8.636 29.333 16 23.364 29.333 16 29.333zm7.308-9.95c-.4-.2-2.37-1.17-2.738-1.304-.368-.133-.635-.2-.903.2-.268.4-1.037 1.304-1.271 1.571-.235.268-.47.301-.87.1-.4-.2-1.688-.622-3.216-1.984-1.189-1.06-1.992-2.368-2.226-2.768-.235-.4-.025-.617.175-.816.18-.179.4-.467.6-.701.2-.234.267-.4.4-.668.134-.267.067-.5-.033-.7-.1-.2-.903-2.177-1.238-2.978-.326-.78-.657-.674-.903-.687-.234-.012-.502-.015-.77-.015s-.703.1-1.071.5c-.368.4-1.405 1.373-1.405 3.347s1.438 3.882 1.638 4.15c.2.267 2.826 4.315 6.847 6.05.957.413 1.704.66 2.286.845.96.305 1.834.262 2.525.159.77-.115 2.37-.969 2.704-1.904.335-.936.335-1.738.235-1.905-.1-.167-.368-.267-.77-.467z"/>
+            </svg>
+        </button>
+
+        <div class="whatsapp-chat-popup" id="whatsappPopup">
+            <div class="whatsapp-header">
+                <div class="whatsapp-header-content">
+                    <div class="whatsapp-avatar">PS</div>
+                    <div class="whatsapp-info">
+                        <h4>PixelStudioCo</h4>
+                        <p>Typically replies instantly</p>
+                    </div>
+                </div>
+                <button class="whatsapp-close" id="whatsappClose" aria-label="Close chat">
+                    ×
+                </button>
+            </div>
+
+            <div class="whatsapp-body">
+                <div class="whatsapp-welcome">
+                    <p><strong>👋 Hi there!</strong></p>
+                    <p>How can we help you today? Click below to start a conversation on WhatsApp.</p>
+                </div>
+            </div>
+
+            <div class="whatsapp-actions">
+                <a href="https://wa.me/573167533929?text=Hi%2C%20I'm%20interested%20in%20your%20services!" class="whatsapp-action-btn" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.546 20.2l3.18-.834A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm5.849 14.025c-.242.675-1.199 1.237-1.965 1.4-.525.11-1.211.198-3.515-.753-2.948-1.215-4.848-4.191-4.996-4.386-.143-.195-1.188-1.58-1.188-3.014 0-1.435.753-2.14 1.02-2.432.267-.292.582-.365.776-.365.194 0 .388.002.558.01.179.008.42-.068.657.502.242.582.825 2.016.898 2.163.073.146.121.317.024.512-.097.195-.146.316-.29.486-.145.17-.305.38-.436.51-.145.146-.296.304-.127.596.17.292.754 1.243 1.619 2.013 1.113.992 2.054 1.301 2.346 1.448.292.146.462.122.632-.073.17-.195.73-.851.925-1.143.195-.292.39-.243.657-.146.267.097 1.701.803 1.993.949.292.146.486.22.558.34.073.122.073.705-.17 1.38z"/>
+                    </svg>
+                    Open WhatsApp
+                </a>
+            </div>
+
+            <p class="whatsapp-note">We'll respond as soon as possible during business hours</p>
+        </div>
+    </div>
+
+    <script>
+        // WhatsApp Widget functionality
+        const whatsappButton = document.getElementById('whatsappButton');
+        const whatsappPopup = document.getElementById('whatsappPopup');
+        const whatsappClose = document.getElementById('whatsappClose');
+
+        whatsappButton.addEventListener('click', function() {
+            whatsappPopup.classList.toggle('active');
+        });
+
+        whatsappClose.addEventListener('click', function(e) {
+            e.stopPropagation();
+            whatsappPopup.classList.remove('active');
+        });
+
+        // Close popup when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!whatsappPopup.contains(e.target) && !whatsappButton.contains(e.target)) {
+                whatsappPopup.classList.remove('active');
+            }
+        });
+    </script>
+
+</body>
+</html>
