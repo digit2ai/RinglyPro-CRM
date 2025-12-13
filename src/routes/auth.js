@@ -180,9 +180,16 @@ router.post('/register', async (req, res) => {
         
         // ==================== TWILIO NUMBER PROVISIONING ====================
         console.log('📞 Provisioning Twilio number for new client...');
-        
+
         let twilioNumber, twilioSid;
-        
+
+        // TESTING MODE: Skip Twilio provisioning
+        if (process.env.SKIP_TWILIO_PROVISIONING === 'true') {
+            twilioNumber = `+1555${Math.floor(Math.random() * 10000000).toString().padStart(7, '0')}`;
+            twilioSid = `PN${Math.random().toString(36).substring(2, 15)}`;
+            console.log(`🧪 TEST MODE: Using mock Twilio number: ${twilioNumber}`);
+        } else {
+
         try {
             // Search for available US phone numbers
             const availableNumbers = await twilioClient.availablePhoneNumbers('US')
@@ -234,6 +241,7 @@ router.post('/register', async (req, res) => {
                 details: process.env.NODE_ENV === 'development' ? twilioError.message : undefined
             });
         }
+        } // End skip Twilio check
         
         // ==================== REFERRAL SYSTEM ====================
         // Generate unique referral code for new client
@@ -352,6 +360,22 @@ router.post('/register', async (req, res) => {
                 const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
                 const ghlBookingUrl = 'https://api.leadconnectorhq.com/widget/booking/nhKuDsn2At5csiDYc4d0';
 
+                // TESTING MODE: Skip Stripe checkout
+                if (process.env.SKIP_STRIPE_CHECKOUT === 'true') {
+                    console.log(`🧪 TEST MODE: Skipping Stripe checkout for ${selectedPlan} plan`);
+                    console.log(`🧪 TEST MODE: User would be charged $${amount}/${selectedBilling}`);
+                    console.log(`🧪 TEST MODE: User receives ${monthlyTokens} tokens immediately`);
+
+                    // Mock subscription ID
+                    await User.update({
+                        stripe_customer_id: `cus_test_${user.id}`,
+                        stripe_subscription_id: `sub_test_${user.id}`
+                    }, { where: { id: user.id } });
+
+                    // Don't set stripeSessionUrl, so user goes directly to dashboard
+                    stripeSessionUrl = null;
+                } else {
+
                 // Create Stripe Checkout Session for recurring subscription
                 const session = await stripe.checkout.sessions.create({
                     customer_email: email,
@@ -405,6 +429,7 @@ router.post('/register', async (req, res) => {
                 stripeSessionUrl = session.url;
                 console.log(`✅ Stripe subscription created with 14-day trial: ${session.id}`);
                 console.log(`💳 Trial ends: ${trialEndsAt.toISOString()}`);
+                } // End skip Stripe check
 
             } catch (stripeError) {
                 console.error('⚠️ Stripe subscription creation error (non-critical):', stripeError.message);
