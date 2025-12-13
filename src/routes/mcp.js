@@ -5,6 +5,7 @@ const path = require('path');
 const axios = require('axios');
 const sequelize = require('../config/database');
 const { QueryTypes } = require('sequelize');
+const tokenService = require('../services/tokenService');
 
 // Import MCP services - using absolute path from project root
 const projectRoot = path.join(__dirname, '../..');
@@ -1204,7 +1205,7 @@ router.post('/business-collector/connect', async (req, res) => {
 // Business Collector - Full collection
 router.post('/business-collector/collect', async (req, res) => {
   console.log('📊 Business Collector collection request received');
-  const { sessionId, category, geography, maxResults } = req.body;
+  const { sessionId, category, geography, maxResults, clientId } = req.body;
 
   if (!sessionId) {
     return res.status(400).json({ success: false, error: 'Session ID required' });
@@ -1213,7 +1214,7 @@ router.post('/business-collector/collect', async (req, res) => {
   const session = sessions.get(sessionId);
   if (!session) {
     console.error(`❌ No session found for sessionId: ${sessionId}`);
-    return res.status(401).json({ success: false, error: 'Invalid session - please reconnect to GoHighLevel' });
+    return res.status(401).json({ success: false, error: 'Invalid session - please reconnect' });
   }
 
   // Business Collector now works with any valid session (GoHighLevel, HubSpot, etc.)
@@ -1228,6 +1229,47 @@ router.post('/business-collector/collect', async (req, res) => {
       success: false,
       error: 'Category and geography are required'
     });
+  }
+
+  // TOKEN DEDUCTION: Get userId from clientId for token deduction
+  let userId = null;
+  if (clientId) {
+    try {
+      const userResult = await sequelize.query(
+        'SELECT user_id FROM clients WHERE id = :clientId',
+        { replacements: { clientId: parseInt(clientId) }, type: QueryTypes.SELECT }
+      );
+      if (userResult[0]?.user_id) {
+        userId = userResult[0].user_id;
+        console.log(`💰 Token deduction: Found userId ${userId} for clientId ${clientId}`);
+      }
+    } catch (err) {
+      console.warn('⚠️ Could not look up userId for token deduction:', err.message);
+    }
+  }
+
+  // Deduct tokens before collection (20 tokens per 100 leads collected)
+  if (userId) {
+    try {
+      await tokenService.deductTokens(
+        userId,
+        'business_collector_100',
+        {
+          category,
+          geography,
+          maxResults: maxResults || 100
+        }
+      );
+      console.log(`✅ Deducted 20 tokens from user ${userId} for Business Collector`);
+    } catch (error) {
+      console.error(`❌ Token deduction failed for user ${userId}:`, error.message);
+      return res.status(402).json({
+        success: false,
+        error: 'Insufficient tokens',
+        message: error.message,
+        tokenRequired: true
+      });
+    }
   }
 
   try {
@@ -1254,7 +1296,8 @@ router.post('/business-collector/collect', async (req, res) => {
       success: true,
       summary: result.summary,
       businesses: result.businesses,
-      displayText
+      displayText,
+      tokensDeducted: userId ? 20 : 0
     });
   } catch (error) {
     console.error('❌ Business collection error:', error);
@@ -1268,13 +1311,54 @@ router.post('/business-collector/collect', async (req, res) => {
 // Business Collector - Quick collection (no session required)
 router.get('/business-collector/quick', async (req, res) => {
   console.log('⚡ Quick business collection request received');
-  const { category, geography, max } = req.query;
+  const { category, geography, max, client_id } = req.query;
 
   if (!category || !geography) {
     return res.status(400).json({
       success: false,
       error: 'Category and geography query parameters are required'
     });
+  }
+
+  // TOKEN DEDUCTION: Get userId from clientId for token deduction
+  let userId = null;
+  if (client_id) {
+    try {
+      const userResult = await sequelize.query(
+        'SELECT user_id FROM clients WHERE id = :clientId',
+        { replacements: { clientId: parseInt(client_id) }, type: QueryTypes.SELECT }
+      );
+      if (userResult[0]?.user_id) {
+        userId = userResult[0].user_id;
+        console.log(`💰 Token deduction: Found userId ${userId} for clientId ${client_id}`);
+      }
+    } catch (err) {
+      console.warn('⚠️ Could not look up userId for token deduction:', err.message);
+    }
+  }
+
+  // Deduct tokens before collection (20 tokens per 100 leads collected)
+  if (userId) {
+    try {
+      await tokenService.deductTokens(
+        userId,
+        'business_collector_100',
+        {
+          category,
+          geography,
+          maxResults: parseInt(max) || 50
+        }
+      );
+      console.log(`✅ Deducted 20 tokens from user ${userId} for Business Collector`);
+    } catch (error) {
+      console.error(`❌ Token deduction failed for user ${userId}:`, error.message);
+      return res.status(402).json({
+        success: false,
+        error: 'Insufficient tokens',
+        message: error.message,
+        tokenRequired: true
+      });
+    }
   }
 
   try {
@@ -1285,7 +1369,8 @@ router.get('/business-collector/quick', async (req, res) => {
       success: true,
       summary: result.summary,
       businesses: result.businesses,
-      displayText: proxy.formatForDisplay(result.businesses)
+      displayText: proxy.formatForDisplay(result.businesses),
+      tokensDeducted: userId ? 20 : 0
     });
   } catch (error) {
     console.error('❌ Quick collection error:', error);

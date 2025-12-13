@@ -301,6 +301,16 @@
             console.log('Referral code detected:', referralCode);
         }
 
+        // Extract subscription plan parameters from URL
+        const planFromUrl = urlParams.get('plan');
+        const amountFromUrl = urlParams.get('amount');
+        const tokensFromUrl = urlParams.get('tokens');
+        const billingFromUrl = urlParams.get('billing');
+
+        if (planFromUrl) {
+            console.log('Plan parameters detected:', { plan: planFromUrl, amount: amountFromUrl, tokens: tokensFromUrl, billing: billingFromUrl });
+        }
+
         function nextStep() {
             if (!validateCurrentStep()) return;
 
@@ -408,8 +418,15 @@
                 },
                 services: document.getElementById('services').value,
                 termsAccepted: document.getElementById('termsAccepted').checked,
-                referralCode: referralCode || null  // Include referral code if present in URL
+                referralCode: referralCode || null,  // Include referral code if present in URL
+                // Subscription plan parameters from URL
+                plan: planFromUrl || 'free',
+                amount: amountFromUrl || '0',
+                tokens: tokensFromUrl || '100',
+                billing: billingFromUrl || 'monthly'
             };
+
+            console.log('📊 Submitting with plan:', registrationData.plan, 'tokens:', registrationData.tokens);
 
             if (!registrationData.termsAccepted) {
                 alert('Please accept the Terms of Service and Privacy Policy');

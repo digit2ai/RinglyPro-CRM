@@ -166,6 +166,73 @@ function disableAllButtons() {
     console.log(`🔒 GHL-dependent buttons require upgrade - ${lockReason} (Business tools remain available)`);
 }
 
+// Enable only token-based features (Business Collector, Outbound Caller, Prospect Manager)
+// These DO NOT require GHL, only tokens
+function enableTokenBasedFeatures() {
+    const buttons = document.querySelectorAll('.action-btn');
+    buttons.forEach(button => {
+        // Enable Business Collector, Prospect Manager, and Outbound Call
+        if (button.classList.contains('btn-business') ||
+            button.classList.contains('btn-prospects') ||
+            button.classList.contains('btn-call')) {
+            button.disabled = false;
+            button.classList.remove('disabled', 'requires-ghl');
+            button.style.opacity = '';
+            button.style.cursor = '';
+            button.style.textDecoration = '';
+            button.style.pointerEvents = '';
+
+            // Restore original onclick if it was saved
+            const originalOnclick = button.getAttribute('data-original-onclick');
+            if (originalOnclick) {
+                button.setAttribute('onclick', originalOnclick);
+                button.removeAttribute('data-original-onclick');
+            }
+
+            // Remove lock emoji from button text
+            const buttonText = button.querySelector('div:last-child');
+            if (buttonText && buttonText.textContent.includes('🔒 ')) {
+                buttonText.textContent = buttonText.textContent.replace('🔒 ', '');
+            }
+        } else {
+            // Disable GHL-dependent features (CRM AI Agent, Social Media, Email Marketing)
+            button.classList.add('requires-ghl');
+            button.style.textDecoration = 'line-through';
+            button.style.cursor = 'pointer';
+
+            // Add lock emoji if not there
+            const buttonText = button.querySelector('div:last-child');
+            if (buttonText && !buttonText.textContent.includes('🔒')) {
+                buttonText.textContent = '🔒 ' + buttonText.textContent;
+            }
+
+            // Override onclick to show GHL upgrade prompt
+            const originalOnclick = button.getAttribute('onclick');
+            if (originalOnclick && !button.getAttribute('data-original-onclick')) {
+                button.setAttribute('data-original-onclick', originalOnclick);
+            }
+            button.setAttribute('onclick', 'showGHLUpgradePrompt()');
+        }
+    });
+
+    // Keep chat disabled (requires GHL for AI responses)
+    const messageInput = document.getElementById('messageInput');
+    if (messageInput) {
+        messageInput.disabled = true;
+        messageInput.placeholder = 'Configure GoHighLevel to use AI chat features';
+    }
+
+    const sendButton = document.querySelector('button[onclick="sendMessage()"]');
+    if (sendButton) {
+        sendButton.disabled = true;
+        sendButton.style.opacity = '0.4';
+        sendButton.style.cursor = 'not-allowed';
+    }
+
+    console.log('✅ Token-based features enabled (Business Collector, Outbound Caller, Prospect Manager)');
+    console.log('🔒 GHL-dependent features locked (AI Chat, Social Media, Email Marketing)');
+}
+
 // Enable all feature buttons
 function enableAllButtons() {
     const buttons = document.querySelectorAll('.action-btn');
@@ -400,35 +467,31 @@ async function checkGHLConfiguration() {
         const hasTokens = await checkTokenBalance();
         console.log(`💰 Token check result: ${hasTokens ? '✅ Has tokens' : '❌ No tokens'}`);
 
-        // Enable or disable buttons based on BOTH GHL configuration AND token balance
+        // Enable or disable buttons based on configuration
+        // Business Collector, Outbound Caller, and Prospect Manager only need TOKENS (no GHL required)
+        // CRM AI Agent, Social Media, Email Marketing need BOTH GHL AND tokens
         console.log(`🎯 Final decision: ghlConfigured=${ghlConfigured}, hasTokens=${hasTokens}`);
-        if (ghlConfigured && hasTokens) {
-            console.log('✅ ENABLING all buttons');
-            enableAllButtons();
-            // Update connection status to show success
-            updateConnectionStatus('Connected to GoHighLevel', 'success');
-        } else {
-            console.log(`❌ DISABLING all buttons (GHL: ${ghlConfigured}, Tokens: ${hasTokens})`);
-            disableAllButtons();
 
-            // Update connection status based on what's missing
-            if (!hasTokens) {
-                updateConnectionStatus('Insufficient tokens', 'error');
-                // Token balance is zero - will show popup on button click
-                console.log('⚠️ Token balance is zero - popup will show on button click');
-            } else if (!ghlConfigured) {
-                updateConnectionStatus('Not configured', 'error');
-                // GHL not configured - show upgrade prompt automatically
-                console.log('⚠️ GHL not configured - showing upgrade prompt');
-                setTimeout(() => {
-                    if (window.ghlUpgrade && window.ghlUpgrade.show) {
-                        window.ghlUpgrade.show();
-                    }
-                }, 500); // Small delay to ensure DOM is ready
+        if (hasTokens) {
+            // Has tokens - enable token-based features (Business Collector, Outbound, Prospects)
+            // GHL-dependent features will be controlled separately
+            if (ghlConfigured) {
+                console.log('✅ ENABLING all buttons (GHL + Tokens)');
+                enableAllButtons();
+                updateConnectionStatus('Connected to GoHighLevel', 'success');
+            } else {
+                console.log('✅ ENABLING token-based features only (No GHL)');
+                enableTokenBasedFeatures();
+                updateConnectionStatus('Business tools ready (GHL not configured)', 'warning');
             }
+        } else {
+            console.log(`❌ DISABLING all buttons (No tokens: ${tokenBalance})`);
+            disableAllButtons();
+            updateConnectionStatus('Insufficient tokens', 'error');
+            console.log('⚠️ Token balance is zero - popup will show on button click');
         }
 
-        return ghlConfigured && hasTokens;
+        return hasTokens; // Return true if user can use token-based features
     } catch (error) {
         console.error('❌ Error checking GHL configuration:', error);
         console.error('❌ Error details:', {
