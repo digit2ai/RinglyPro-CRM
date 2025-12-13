@@ -1248,27 +1248,20 @@ router.post('/business-collector/collect', async (req, res) => {
     }
   }
 
-  // Deduct tokens before collection (20 tokens per 100 leads collected)
+  // Check token balance BEFORE collection (but don't deduct yet)
   if (userId) {
     try {
-      await tokenService.deductTokens(
-        userId,
-        'business_collector_100',
-        {
-          category,
-          geography,
-          maxResults: maxResults || 100
-        }
-      );
-      console.log(`✅ Deducted 20 tokens from user ${userId} for Business Collector`);
+      const hasTokens = await tokenService.hasEnoughTokens(userId, 'business_collector_100');
+      if (!hasTokens) {
+        return res.status(402).json({
+          success: false,
+          error: 'Insufficient tokens',
+          message: 'You need at least 20 tokens to use Business Collector',
+          tokenRequired: true
+        });
+      }
     } catch (error) {
-      console.error(`❌ Token deduction failed for user ${userId}:`, error.message);
-      return res.status(402).json({
-        success: false,
-        error: 'Insufficient tokens',
-        message: error.message,
-        tokenRequired: true
-      });
+      console.error(`❌ Token check failed for user ${userId}:`, error.message);
     }
   }
 
@@ -1290,6 +1283,27 @@ router.post('/business-collector/collect', async (req, res) => {
       });
     }
 
+    // Deduct tokens AFTER successful collection only
+    let tokensDeducted = 0;
+    if (userId) {
+      try {
+        await tokenService.deductTokens(
+          userId,
+          'business_collector_100',
+          {
+            category,
+            geography,
+            leadsCollected: result.businesses?.length || 0
+          }
+        );
+        tokensDeducted = 20;
+        console.log(`✅ Deducted 20 tokens from user ${userId} for Business Collector (${result.businesses?.length || 0} leads)`);
+      } catch (error) {
+        console.error(`❌ Token deduction failed for user ${userId}:`, error.message);
+        // Don't fail the request - leads were already collected
+      }
+    }
+
     const displayText = session.businessCollectorProxy.formatForDisplay(result.businesses);
 
     res.json({
@@ -1297,7 +1311,7 @@ router.post('/business-collector/collect', async (req, res) => {
       summary: result.summary,
       businesses: result.businesses,
       displayText,
-      tokensDeducted: userId ? 20 : 0
+      tokensDeducted
     });
   } catch (error) {
     console.error('❌ Business collection error:', error);
@@ -1337,27 +1351,20 @@ router.get('/business-collector/quick', async (req, res) => {
     }
   }
 
-  // Deduct tokens before collection (20 tokens per 100 leads collected)
+  // Check token balance BEFORE collection (but don't deduct yet)
   if (userId) {
     try {
-      await tokenService.deductTokens(
-        userId,
-        'business_collector_100',
-        {
-          category,
-          geography,
-          maxResults: parseInt(max) || 50
-        }
-      );
-      console.log(`✅ Deducted 20 tokens from user ${userId} for Business Collector`);
+      const hasTokens = await tokenService.hasEnoughTokens(userId, 'business_collector_100');
+      if (!hasTokens) {
+        return res.status(402).json({
+          success: false,
+          error: 'Insufficient tokens',
+          message: 'You need at least 20 tokens to use Business Collector',
+          tokenRequired: true
+        });
+      }
     } catch (error) {
-      console.error(`❌ Token deduction failed for user ${userId}:`, error.message);
-      return res.status(402).json({
-        success: false,
-        error: 'Insufficient tokens',
-        message: error.message,
-        tokenRequired: true
-      });
+      console.error(`❌ Token check failed for user ${userId}:`, error.message);
     }
   }
 
@@ -1365,12 +1372,32 @@ router.get('/business-collector/quick', async (req, res) => {
     const proxy = new BusinessCollectorMCPProxy();
     const result = await proxy.quickCollect(category, geography, parseInt(max) || 50);
 
+    // Deduct tokens AFTER successful collection only
+    let tokensDeducted = 0;
+    if (userId && result.businesses?.length > 0) {
+      try {
+        await tokenService.deductTokens(
+          userId,
+          'business_collector_100',
+          {
+            category,
+            geography,
+            leadsCollected: result.businesses.length
+          }
+        );
+        tokensDeducted = 20;
+        console.log(`✅ Deducted 20 tokens from user ${userId} for Business Collector (${result.businesses.length} leads)`);
+      } catch (error) {
+        console.error(`❌ Token deduction failed for user ${userId}:`, error.message);
+      }
+    }
+
     res.json({
       success: true,
       summary: result.summary,
       businesses: result.businesses,
       displayText: proxy.formatForDisplay(result.businesses),
-      tokensDeducted: userId ? 20 : 0
+      tokensDeducted
     });
   } catch (error) {
     console.error('❌ Quick collection error:', error);
