@@ -10,25 +10,33 @@ const logger = require('../utils/logger');
 class TokenService {
   constructor() {
     // Token costs for each service
+    // Based on official pricing: https://aiagent.ringlypro.com/pricing
     this.serviceCosts = {
-      // Business Collector
-      'business_collector_100': 20,      // Collect 100 leads
-      'business_collector_csv': 5,        // Export to CSV
-      'outbound_campaign_100': 50,        // Auto-call 100 leads
-      'outbound_call_single': 1,          // Single outbound call
+      // Voice & Calling
+      'lina_ai_receptionist': 1,          // Lina AI Receptionist - 1 token/call
+      'outbound_call_single': 1,          // Single outbound call - 1 token
+      'outbound_campaign_100': 50,        // Outbound Campaign (100 calls) - 50 tokens
 
-      // AI Copilot
-      'ai_chat_message': 1,               // MCP chat message
-      'ghl_query': 2,                     // GoHighLevel query
-      'data_analysis': 5,                 // Complex analysis
+      // AI & Chat
+      'ai_chat_message': 1,               // AI Chat Message - 1 token
+      'ghl_query': 2,                     // GoHighLevel Query - 2 tokens
+      'data_analysis': 5,                 // Data Analysis - 5 tokens
 
-      // Marketing (future)
-      'email_sent': 2,                    // Send single email
-      'sms_sent': 3,                      // Send single SMS
-      'social_post': 10,                  // Create social media post
-      'email_campaign': 50,               // Email campaign (up to 1000)
+      // Communication
+      'email_sent': 2,                    // Email Sent - 2 tokens
+      'sms_sent': 3,                      // SMS Sent - 3 tokens
+      'email_campaign': 50,               // Email Campaign (up to 1000) - 50 tokens
 
-      // CRM (future)
+      // Business Collector & Export
+      'business_collector_100': 20,       // Business Collector (100 leads) - 20 tokens
+      'csv_export': 5,                    // CSV Export - 5 tokens
+      'business_collector_csv': 5,        // Legacy alias for CSV export
+
+      // Social Media
+      'social_post': 10,                  // Social Media Post - 10 tokens
+      'social_media_post': 10,            // Alias for social post
+
+      // CRM Operations (future)
       'appointment_booking': 2,           // Book appointment
       'contact_create': 1,                // Create contact
       'contact_update': 1,                // Update contact
