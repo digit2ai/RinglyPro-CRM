@@ -38,6 +38,14 @@ async function startServer() {
         } catch (error) {
           console.log('⚠️ Email events auto-migration skipped:', error.message);
         }
+
+        // AUTO-MIGRATE PROJECT TRACKER TABLES
+        try {
+          const { autoMigrateProjects } = require('../scripts/auto-migrate-projects');
+          await autoMigrateProjects();
+        } catch (error) {
+          console.log('⚠️ Project Tracker auto-migration skipped:', error.message);
+        }
       } else {
         console.log('⚠️ No DATABASE_URL provided, running without database');
       }
