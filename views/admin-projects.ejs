@@ -593,7 +593,7 @@
 
     <!-- New Project Modal -->
     <div class="modal" id="newProjectModal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 700px;">
             <div class="modal-header">
                 <h2>Create New Project</h2>
                 <button class="modal-close" onclick="closeModal('newProjectModal')">&times;</button>
@@ -626,6 +626,31 @@
                     <div class="form-group">
                         <label>Estimated Completion</label>
                         <input type="date" id="projectEstimatedCompletion">
+                    </div>
+
+                    <!-- AI Milestones Generator -->
+                    <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <span style="font-size: 20px;">🤖</span>
+                            <label style="font-weight: 600; color: #e94560; font-size: 14px;">AI Milestone Generator</label>
+                        </div>
+                        <div class="form-group">
+                            <label>Describe what you want to build (AI will generate milestones)</label>
+                            <textarea id="aiPrompt" rows="4" placeholder="Example: Build a CRM integration that syncs contacts from GoHighLevel, includes a webhook endpoint, dashboard to view sync status, and email notifications when sync fails..."></textarea>
+                        </div>
+                        <button type="button" class="btn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; width: 100%;" onclick="generateMilestonesWithAI()">
+                            <span id="aiButtonText">✨ Generate Milestones with AI</span>
+                            <span id="aiButtonLoading" style="display: none;">
+                                <span class="spinner" style="width: 16px; height: 16px; border-width: 2px; display: inline-block; vertical-align: middle; margin-right: 8px;"></span>
+                                Generating...
+                            </span>
+                        </button>
+
+                        <!-- Generated Milestones Preview -->
+                        <div id="generatedMilestonesPreview" style="display: none; margin-top: 16px;">
+                            <label style="display: block; margin-bottom: 8px; font-size: 13px; color: #9ca3af;">Generated Milestones (will be added after project creation):</label>
+                            <div id="generatedMilestonesList" style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 16px; max-height: 200px; overflow-y: auto;"></div>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -1194,6 +1219,161 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // Store generated milestones
+        let generatedMilestones = [];
+
+        // Generate milestones with AI
+        async function generateMilestonesWithAI() {
+            const prompt = document.getElementById('aiPrompt').value.trim();
+            const projectTitle = document.getElementById('projectTitle').value.trim();
+
+            if (!prompt) {
+                alert('Please enter a description of what you want to build');
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('aiButtonText').style.display = 'none';
+            document.getElementById('aiButtonLoading').style.display = 'inline';
+
+            const token = getToken();
+
+            try {
+                const response = await fetch('/api/admin/projects/generate-milestones', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        projectTitle: projectTitle || 'New Project'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.milestones) {
+                    generatedMilestones = result.milestones;
+                    displayGeneratedMilestones(result.milestones);
+                } else {
+                    alert('Failed to generate milestones: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error generating milestones:', error);
+                alert('Failed to generate milestones. Please try again.');
+            }
+
+            // Reset button state
+            document.getElementById('aiButtonText').style.display = 'inline';
+            document.getElementById('aiButtonLoading').style.display = 'none';
+        }
+
+        // Display generated milestones preview
+        function displayGeneratedMilestones(milestones) {
+            const preview = document.getElementById('generatedMilestonesPreview');
+            const list = document.getElementById('generatedMilestonesList');
+
+            if (!milestones || milestones.length === 0) {
+                preview.style.display = 'none';
+                return;
+            }
+
+            list.innerHTML = milestones.map((m, i) => `
+                <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <span style="width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #e94560, #c23a51); display: flex; align-items: center; justify-content: center; font-size: 11px; color: white; flex-shrink: 0;">${i + 1}</span>
+                    <div style="flex: 1;">
+                        <div style="color: white; font-weight: 500; font-size: 13px;">${escapeHtml(m.title)}</div>
+                        <div style="color: #9ca3af; font-size: 12px; margin-top: 4px;">${escapeHtml(m.description || '')}</div>
+                    </div>
+                    <button type="button" onclick="removeGeneratedMilestone(${i})" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">✕</button>
+                </div>
+            `).join('');
+
+            preview.style.display = 'block';
+        }
+
+        // Remove a generated milestone from preview
+        function removeGeneratedMilestone(index) {
+            generatedMilestones.splice(index, 1);
+            displayGeneratedMilestones(generatedMilestones);
+        }
+
+        // Updated createProject to include generated milestones
+        async function createProjectWithMilestones() {
+            const token = getToken();
+
+            const data = {
+                user_id: document.getElementById('projectUserId').value,
+                title: document.getElementById('projectTitle').value,
+                description: document.getElementById('projectDescription').value,
+                priority: document.getElementById('projectPriority').value,
+                estimated_completion: document.getElementById('projectEstimatedCompletion').value || null,
+                milestones: generatedMilestones
+            };
+
+            if (!data.user_id || !data.title) {
+                alert('Please select a client and enter a title');
+                return;
+            }
+
+            try {
+                // First create the project
+                const response = await fetch('/api/admin/projects', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // If we have generated milestones, add them
+                    if (generatedMilestones.length > 0) {
+                        for (let i = 0; i < generatedMilestones.length; i++) {
+                            const milestone = generatedMilestones[i];
+                            await fetch(`/api/admin/projects/${result.project.id}/milestones`, {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    title: milestone.title,
+                                    description: milestone.description,
+                                    admin_notes: milestone.admin_notes || ''
+                                })
+                            });
+                        }
+                    }
+
+                    closeModal('newProjectModal');
+                    document.getElementById('newProjectForm').reset();
+                    generatedMilestones = [];
+                    document.getElementById('generatedMilestonesPreview').style.display = 'none';
+                    loadProjects();
+
+                    // Open the project to show milestones
+                    if (generatedMilestones.length > 0) {
+                        viewProject(result.project.id);
+                    }
+                } else {
+                    alert('Failed to create project: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error creating project:', error);
+                alert('Failed to create project');
+            }
+        }
+
+        // Override the original createProject
+        async function createProject() {
+            await createProjectWithMilestones();
         }
 
         // Initialize

@@ -588,4 +588,117 @@ router.get('/stats/unread', authenticateToken, requireAdmin, async (req, res) =>
     }
 });
 
+// ============================================
+// POST /api/admin/projects/generate-milestones - Generate milestones with AI
+// ============================================
+router.post('/generate-milestones', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { prompt, projectTitle } = req.body;
+
+        if (!prompt) {
+            return res.status(400).json({
+                success: false,
+                error: 'Prompt is required'
+            });
+        }
+
+        // Check for OpenAI API key
+        const openaiKey = process.env.OPENAI_API_KEY;
+        if (!openaiKey) {
+            return res.status(500).json({
+                success: false,
+                error: 'OpenAI API key not configured'
+            });
+        }
+
+        console.log(`🤖 Generating milestones for project: ${projectTitle}`);
+
+        // Call OpenAI API
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${openaiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                    {
+                        role: 'system',
+                        content: `You are a project manager assistant that creates detailed project milestones.
+Given a project description, generate a list of milestones that break down the work into manageable phases.
+Each milestone should have a clear title and description.
+Return your response as a JSON array with this exact structure:
+[
+  {
+    "title": "Milestone title",
+    "description": "Brief description of what this milestone involves"
+  }
+]
+Generate between 4-8 milestones depending on project complexity.
+Focus on actionable, clear milestones that help track progress.
+Always start with a planning/requirements phase and end with testing/deployment.`
+                    },
+                    {
+                        role: 'user',
+                        content: `Project Title: ${projectTitle || 'New Project'}
+
+Project Description:
+${prompt}
+
+Generate milestones for this project as a JSON array.`
+                    }
+                ],
+                temperature: 0.7,
+                max_tokens: 1500
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('OpenAI API error:', errorText);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to generate milestones from AI'
+            });
+        }
+
+        const data = await response.json();
+        const content = data.choices[0]?.message?.content || '';
+
+        // Parse the JSON from the response
+        let milestones = [];
+        try {
+            // Try to extract JSON from the response (it might be wrapped in markdown code blocks)
+            const jsonMatch = content.match(/\[[\s\S]*\]/);
+            if (jsonMatch) {
+                milestones = JSON.parse(jsonMatch[0]);
+            } else {
+                milestones = JSON.parse(content);
+            }
+        } catch (parseError) {
+            console.error('Error parsing AI response:', parseError);
+            console.log('Raw AI response:', content);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to parse AI response'
+            });
+        }
+
+        console.log(`✅ Generated ${milestones.length} milestones`);
+
+        res.json({
+            success: true,
+            milestones: milestones
+        });
+
+    } catch (error) {
+        console.error('Error generating milestones:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to generate milestones'
+        });
+    }
+});
+
 module.exports = router;
