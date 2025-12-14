@@ -2697,6 +2697,7 @@
             loadCreditsBalance();
             loadMessages(); // Load messages independently (fixes loading issue)
             loadReferralStats(); // Load referral statistics
+            loadProjectsCount(); // Load active projects count
             setupTabSwitching();
             setupRachelToggle();
 
@@ -3317,6 +3318,46 @@
                 const countBadge = document.getElementById('referralCount');
                 if (countBadge) {
                     countBadge.textContent = '0';
+                }
+            }
+        }
+
+        // ==================== PROJECTS COUNT ====================
+
+        // Load active projects count
+        async function loadProjectsCount() {
+            try {
+                const response = await authenticatedFetch('/api/projects');
+                if (!response) {
+                    console.log('No response from projects API');
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data.success && data.projects) {
+                    // Count projects that are in progress (not completed or cancelled)
+                    const activeCount = data.projects.filter(p =>
+                        p.status === 'pending' || p.status === 'in_progress'
+                    ).length;
+
+                    const countBadge = document.getElementById('projectsCount');
+                    if (countBadge) {
+                        countBadge.textContent = activeCount;
+                        // Change color based on count
+                        if (activeCount > 0) {
+                            countBadge.style.background = '#7c3aed'; // Purple for active projects
+                        } else {
+                            countBadge.style.background = '#6b7280'; // Gray for no projects
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading projects count:', error);
+                const countBadge = document.getElementById('projectsCount');
+                if (countBadge) {
+                    countBadge.textContent = '0';
+                    countBadge.style.background = '#6b7280';
                 }
             }
         }
