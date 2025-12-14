@@ -1226,11 +1226,44 @@
             }
         }
 
+        // Load active projects count for admin dashboard
+        async function loadAdminProjectsCount() {
+            try {
+                const response = await fetch('/api/admin/projects', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.projects) {
+                        // Count projects in progress
+                        const inProgressCount = data.projects.filter(p =>
+                            p.status === 'pending' || p.status === 'in_progress'
+                        ).length;
+
+                        const countEl = document.getElementById('projectUnreadCount');
+                        if (countEl) {
+                            if (inProgressCount > 0) {
+                                countEl.textContent = `${inProgressCount} Active`;
+                            } else {
+                                countEl.textContent = 'Open';
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading projects count:', error);
+            }
+        }
+
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {
             if (checkAuth()) {
                 loadOverview();
                 loadClients();
+                loadAdminProjectsCount();
             }
         });
 
