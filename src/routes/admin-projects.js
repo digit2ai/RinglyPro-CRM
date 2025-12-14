@@ -194,43 +194,52 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
 router.get('/:projectId', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { projectId } = req.params;
+        console.log(`📋 Fetching project ${projectId} for admin view`);
 
+        // First fetch the project with owner
         const project = await Project.findByPk(projectId, {
             include: [
                 {
                     model: User,
                     as: 'owner',
                     attributes: ['id', 'email', 'first_name', 'last_name', 'business_name']
-                },
-                {
-                    model: ProjectMilestone,
-                    as: 'milestones',
-                    include: [{
-                        model: ProjectMessage,
-                        as: 'messages',
-                        include: [{
-                            model: User,
-                            as: 'author',
-                            attributes: ['id', 'first_name', 'last_name', 'isAdmin']
-                        }]
-                    }]
                 }
-            ],
-            order: [
-                [{ model: ProjectMilestone, as: 'milestones' }, 'order', 'ASC'],
-                [{ model: ProjectMilestone, as: 'milestones' }, { model: ProjectMessage, as: 'messages' }, 'created_at', 'ASC']
             ]
         });
 
         if (!project) {
+            console.log(`❌ Project ${projectId} not found`);
             return res.status(404).json({
                 success: false,
                 error: 'Project not found'
             });
         }
 
+        // Fetch milestones separately with proper ordering
+        const milestones = await ProjectMilestone.findAll({
+            where: { project_id: projectId },
+            order: [['order', 'ASC']],
+            include: [{
+                model: ProjectMessage,
+                as: 'messages',
+                include: [{
+                    model: User,
+                    as: 'author',
+                    attributes: ['id', 'first_name', 'last_name', 'isAdmin']
+                }],
+                order: [['created_at', 'ASC']]
+            }]
+        });
+
+        // Sort messages within each milestone
+        for (const milestone of milestones) {
+            if (milestone.messages) {
+                milestone.messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            }
+        }
+
         // Mark client messages as read
-        for (const milestone of project.milestones || []) {
+        for (const milestone of milestones) {
             await ProjectMessage.update(
                 { read_at: new Date() },
                 {
@@ -244,14 +253,16 @@ router.get('/:projectId', authenticateToken, requireAdmin, async (req, res) => {
         }
 
         // Calculate progress
-        const milestones = project.milestones || [];
         const completed = milestones.filter(m => m.status === 'completed').length;
         const progress = milestones.length > 0 ? Math.round((completed / milestones.length) * 100) : 0;
+
+        console.log(`✅ Project ${projectId} loaded with ${milestones.length} milestones`);
 
         res.json({
             success: true,
             project: {
                 ...project.toJSON(),
+                milestones: milestones.map(m => m.toJSON()),
                 progress,
                 totalMilestones: milestones.length,
                 completedMilestones: completed
@@ -260,9 +271,10 @@ router.get('/:projectId', authenticateToken, requireAdmin, async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching project:', error);
+        console.error('Error details:', error.message);
         res.status(500).json({
             success: false,
-            error: 'Failed to fetch project'
+            error: 'Failed to fetch project: ' + error.message
         });
     }
 });
