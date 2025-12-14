@@ -897,13 +897,16 @@
                             Client: ${escapeHtml(project.owner?.business_name || project.owner?.email || 'Unknown')}
                         </p>
                     </div>
-                    <div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
                         <select onchange="updateProjectStatus(${project.id}, this.value)" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px 12px; border-radius: 8px;">
                             <option value="pending" ${project.status === 'pending' ? 'selected' : ''}>Pending</option>
                             <option value="in_progress" ${project.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
                             <option value="on_hold" ${project.status === 'on_hold' ? 'selected' : ''}>On Hold</option>
                             <option value="completed" ${project.status === 'completed' ? 'selected' : ''}>Completed</option>
                         </select>
+                        <button onclick="deleteProject(${project.id})" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px;" title="Delete Project">
+                            🗑️ Delete
+                        </button>
                     </div>
                 </div>
                 <div class="progress-bar" style="margin-top: 16px;">
@@ -1130,6 +1133,40 @@
                 });
             } catch (error) {
                 console.error('Error updating project:', error);
+            }
+        }
+
+        // Delete project
+        async function deleteProject(projectId) {
+            const projectTitle = currentProject?.title || 'this project';
+
+            if (!confirm(`Are you sure you want to delete "${projectTitle}"?\n\nThis will permanently delete all milestones and messages associated with this project. This action cannot be undone.`)) {
+                return;
+            }
+
+            const token = getToken();
+
+            try {
+                const response = await fetch(`/api/admin/projects/${projectId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Project deleted successfully');
+                    currentProject = null;
+                    backToList();
+                    loadProjects();
+                } else {
+                    alert('Failed to delete project: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error deleting project:', error);
+                alert('Failed to delete project');
             }
         }
 
