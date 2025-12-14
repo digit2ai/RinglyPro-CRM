@@ -840,6 +840,10 @@
                     <value>${client.owner_email}</value>
                 </div>
                 <div class="info-item">
+                    <label>Website URL</label>
+                    <value>${client.website_url ? `<a href="${client.website_url}" target="_blank" style="color: #e94560; text-decoration: none;">${client.website_url}</a>` : 'Not provided'}</value>
+                </div>
+                <div class="info-item">
                     <label>RinglyPro Number</label>
                     <value>${client.ringlypro_number}</value>
                 </div>

@@ -46,6 +46,16 @@ async function startServer() {
         } catch (error) {
           console.log('⚠️ Project Tracker auto-migration skipped:', error.message);
         }
+
+        // AUTO-MIGRATE WEBSITE_URL COLUMN
+        try {
+          await sequelize.query(`
+            ALTER TABLE clients ADD COLUMN IF NOT EXISTS website_url VARCHAR(500)
+          `);
+          console.log('✅ website_url column ready');
+        } catch (error) {
+          console.log('⚠️ website_url migration skipped:', error.message);
+        }
       } else {
         console.log('⚠️ No DATABASE_URL provided, running without database');
       }

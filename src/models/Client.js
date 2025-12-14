@@ -46,6 +46,11 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING(255),
             allowNull: false
         },
+        website_url: {
+            type: DataTypes.STRING(500),
+            allowNull: true,
+            comment: 'Client business website URL'
+        },
         custom_greeting: {
             type: DataTypes.TEXT,
             defaultValue: 'Thank you for calling. I\'m Rachel, your virtual assistant.'
