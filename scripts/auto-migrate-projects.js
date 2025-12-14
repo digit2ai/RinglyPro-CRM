@@ -22,6 +22,32 @@ async function autoMigrateProjects() {
 
         if (projectsExists[0].exists) {
             console.log('✅ Project Tracker tables already exist');
+
+            // Check for missing columns and add them
+            try {
+                // Check if attachment_url column exists in project_messages
+                const [attachmentUrlExists] = await sequelize.query(`
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                        AND table_name = 'project_messages'
+                        AND column_name = 'attachment_url'
+                    );
+                `);
+
+                if (!attachmentUrlExists[0].exists) {
+                    console.log('🔄 Adding attachment columns to project_messages...');
+                    await sequelize.query(`
+                        ALTER TABLE project_messages
+                        ADD COLUMN IF NOT EXISTS attachment_url VARCHAR(500),
+                        ADD COLUMN IF NOT EXISTS attachment_name VARCHAR(255);
+                    `);
+                    console.log('✅ Attachment columns added');
+                }
+            } catch (alterError) {
+                console.log('⚠️ Could not add attachment columns:', alterError.message);
+            }
+
             return;
         }
 
@@ -81,6 +107,8 @@ async function autoMigrateProjects() {
                 user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 is_admin BOOLEAN DEFAULT false,
                 message TEXT NOT NULL,
+                attachment_url VARCHAR(500),
+                attachment_name VARCHAR(255),
                 read_at TIMESTAMP WITH TIME ZONE,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
                 updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
