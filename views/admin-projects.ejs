@@ -853,7 +853,14 @@
 
         // View project detail
         async function viewProject(projectId) {
+            console.log('viewProject called with ID:', projectId);
             const token = getToken();
+
+            if (!token) {
+                alert('Not authenticated. Please log in again.');
+                window.location.href = '/admin/login';
+                return;
+            }
 
             try {
                 const response = await fetch(`/api/admin/projects/${projectId}`, {
@@ -861,13 +868,18 @@
                 });
 
                 const data = await response.json();
+                console.log('Project data received:', data);
 
                 if (data.success) {
                     currentProject = data.project;
                     renderProjectDetail();
+                } else {
+                    console.error('API returned error:', data.error);
+                    alert('Failed to load project: ' + (data.error || 'Unknown error'));
                 }
             } catch (error) {
                 console.error('Error loading project:', error);
+                alert('Error loading project. Check console for details.');
             }
         }
 
