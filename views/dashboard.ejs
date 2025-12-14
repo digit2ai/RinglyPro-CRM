@@ -369,6 +369,14 @@
             background: #0891b2;
         }
 
+        .btn-projects {
+            background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+        }
+
+        .btn-projects:hover {
+            background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%);
+        }
+
         .credit-amount {
             font-size: 0.875rem;
             font-weight: 600;
@@ -1922,6 +1930,13 @@
                 </svg>
                 IVR
                 <div class="credit-amount" id="ivrStatus" style="background: #6b7280;">OFF</div>
+            </button>
+            <button class="action-btn btn-projects" onclick="window.location.href='/project-tracker'">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                </svg>
+                Projects
+                <div class="credit-amount" id="projectsCount" style="background: #10b981;">0</div>
             </button>
         </div>
     </div>

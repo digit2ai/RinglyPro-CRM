@@ -157,6 +157,11 @@ console.log('✅ Storefront routes loaded successfully');
 const ordergoProRoutes = require('./routes/ordergopro'); // OrderGoPro SaaS platform
 console.log('✅ OrderGoPro routes loaded successfully');
 
+// Import Project Tracker routes
+const projectRoutes = require('./routes/projects'); // Client project tracker
+const adminProjectRoutes = require('./routes/admin-projects'); // Admin project tracker
+console.log('✅ Project Tracker routes loaded successfully');
+
 // API Routes - Organized by functionality
 console.log('📄 About to mount auth routes...');
 app.use('/api/auth', authRoutes); // Mount user authentication routes
@@ -234,6 +239,11 @@ app.use('/api/mobile', mobileRoutes);
 const adminRoutes = require('./routes/admin');
 app.use('/api/admin', adminRoutes);
 console.log('👑 Admin portal API routes mounted at /api/admin');
+
+// Project Tracker API routes
+app.use('/api/projects', projectRoutes); // Client project tracker API
+app.use('/api/admin/projects', adminProjectRoutes); // Admin project tracker API
+console.log('📋 Project Tracker routes mounted at /api/projects and /api/admin/projects');
 
 // Call forwarding API routes
 app.use('/api/call-forwarding', callForwardingRoutes);
@@ -586,6 +596,24 @@ app.get('/ordergopro/login', (req, res) => {
 app.get('/ordergopro/dashboard', (req, res) => {
   res.render('ordergopro-dashboard', {
     title: 'Dashboard - OrderGoPro'
+  });
+});
+
+// =====================================================
+// PROJECT TRACKER ROUTES
+// =====================================================
+
+// Client Project Tracker page
+app.get('/project-tracker', (req, res) => {
+  res.render('project-tracker', {
+    title: 'Project Tracker - RinglyPro'
+  });
+});
+
+// Admin Project Tracker page
+app.get('/admin/projects', (req, res) => {
+  res.render('admin-projects', {
+    title: 'Project Tracker - Admin Portal'
   });
 });
 

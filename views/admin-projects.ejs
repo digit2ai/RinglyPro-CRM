@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Tracker - Admin - RinglyPro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #1a1a2e;
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+            padding: 20px 30px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #e94560, #c23a51);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(233, 69, 96, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #e94560;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        /* Client Groups */
+        .client-group {
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .client-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            background: rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+
+        .client-header:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .client-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .client-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e94560, #c23a51);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .client-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .client-email {
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .client-projects-count {
+            background: rgba(233, 69, 96, 0.2);
+            color: #e94560;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .client-projects {
+            padding: 0 24px 24px;
+        }
+
+        /* Project Cards */
+        .project-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .project-card:hover {
+            background: rgba(0, 0, 0, 0.3);
+            border-color: rgba(233, 69, 96, 0.3);
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .project-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .project-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+        .status-in_progress { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .status-completed { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .status-on_hold { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e94560, #c23a51);
+            border-radius: 3px;
+        }
+
+        .project-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #16213e;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            color: white;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #9ca3af;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 20px 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Project Detail View */
+        .project-detail-view {
+            display: none;
+        }
+
+        .project-detail-view.active {
+            display: block;
+        }
+
+        .detail-header {
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .milestones-container {
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .milestones-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .milestone {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+        }
+
+        .milestone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            cursor: pointer;
+        }
+
+        .milestone-header:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .milestone-title-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .milestone-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .milestone-actions button {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .milestone-content {
+            display: none;
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .milestone.expanded .milestone-content {
+            display: block;
+        }
+
+        .admin-notes-input {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .admin-notes-input textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #fbbf24;
+            resize: none;
+        }
+
+        .admin-notes-input textarea:focus {
+            outline: none;
+        }
+
+        .messages-section {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 20px;
+        }
+
+        .messages-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 12px;
+        }
+
+        .message.from-admin {
+            justify-content: flex-end;
+        }
+
+        .message.from-client {
+            justify-content: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .message.from-admin .message-bubble {
+            background: linear-gradient(135deg, #e94560, #c23a51);
+            color: white;
+        }
+
+        .message.from-client .message-bubble {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .message-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: white;
+            resize: none;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(233, 69, 96, 0.3);
+            border-top-color: #e94560;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Priority */
+        .priority-badge {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .priority-low { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .priority-medium { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .priority-high { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+        .priority-urgent { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #9ca3af;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📋 Project Tracker - Admin</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openNewProjectModal()">
+                    + New Project
+                </button>
+                <a href="/admin" class="btn btn-secondary">← Back to Admin</a>
+            </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-card">
+                <div class="stat-value" id="totalProjects">0</div>
+                <div class="stat-label">Total Projects</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeProjects">0</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="completedProjects">0</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="unreadMessages">0</div>
+                <div class="stat-label">Unread Messages</div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loadingState">
+            <div class="spinner"></div>
+            <p>Loading projects...</p>
+        </div>
+
+        <!-- Projects List View -->
+        <div id="projectsListView"></div>
+
+        <!-- Project Detail View -->
+        <div class="project-detail-view" id="projectDetailView">
+            <div class="detail-header" id="detailHeader"></div>
+            <div class="milestones-container">
+                <div class="milestones-header">
+                    <h3>🎯 Milestones</h3>
+                    <button class="btn btn-primary" onclick="openAddMilestoneModal()">+ Add Milestone</button>
+                </div>
+                <div id="milestonesList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div class="modal" id="newProjectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Project</h2>
+                <button class="modal-close" onclick="closeModal('newProjectModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="newProjectForm">
+                    <div class="form-group">
+                        <label>Client *</label>
+                        <select id="projectUserId" required>
+                            <option value="">Select a client...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Project Title *</label>
+                        <input type="text" id="projectTitle" required placeholder="e.g., Custom IVR Integration">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="projectDescription" rows="3" placeholder="Describe the project requirements..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="projectPriority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Estimated Completion</label>
+                        <input type="date" id="projectEstimatedCompletion">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('newProjectModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createProject()">Create Project</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Milestone Modal -->
+    <div class="modal" id="addMilestoneModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Milestone</h2>
+                <button class="modal-close" onclick="closeModal('addMilestoneModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addMilestoneForm">
+                    <div class="form-group">
+                        <label>Milestone Title *</label>
+                        <input type="text" id="milestoneTitle" required placeholder="e.g., Requirements Gathering">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="milestoneDescription" rows="3" placeholder="Describe this milestone..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Due Date</label>
+                        <input type="date" id="milestoneDueDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Admin Notes (visible to client)</label>
+                        <textarea id="milestoneAdminNotes" rows="2" placeholder="Notes for the client..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('addMilestoneModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="addMilestone()">Add Milestone</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let projectsByUser = [];
+        let users = [];
+        let currentProject = null;
+
+        // Get auth token
+        function getToken() {
+            return localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken') ||
+                   localStorage.getItem('token') || sessionStorage.getItem('token');
+        }
+
+        // Format date
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            return new Date(dateStr).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        // Load projects
+        async function loadProjects() {
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/admin/login';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/projects', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    projectsByUser = data.projectsByUser;
+                    updateStats(data);
+                    renderProjectsList();
+                } else {
+                    console.error('Failed to load projects:', data.error);
+                    if (response.status === 403) {
+                        window.location.href = '/admin/login';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading projects:', error);
+            }
+
+            document.getElementById('loadingState').style.display = 'none';
+        }
+
+        // Load users
+        async function loadUsers() {
+            const token = getToken();
+
+            try {
+                const response = await fetch('/api/admin/projects/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    users = data.users;
+                    populateUserSelect();
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        // Update stats
+        function updateStats(data) {
+            let total = 0, active = 0, completed = 0;
+
+            for (const group of data.projectsByUser) {
+                for (const project of group.projects) {
+                    total++;
+                    if (project.status === 'in_progress') active++;
+                    if (project.status === 'completed') completed++;
+                }
+            }
+
+            document.getElementById('totalProjects').textContent = total;
+            document.getElementById('activeProjects').textContent = active;
+            document.getElementById('completedProjects').textContent = completed;
+            document.getElementById('unreadMessages').textContent = data.unreadMessages || 0;
+        }
+
+        // Render projects list
+        function renderProjectsList() {
+            const container = document.getElementById('projectsListView');
+
+            if (projectsByUser.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>No Projects Yet</h3>
+                        <p>Click "New Project" to create your first project.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = projectsByUser.map(group => `
+                <div class="client-group">
+                    <div class="client-header">
+                        <div class="client-info">
+                            <div class="client-avatar">
+                                ${getInitials(group.user)}
+                            </div>
+                            <div>
+                                <div class="client-name">${escapeHtml(group.user.business_name || group.user.email)}</div>
+                                <div class="client-email">${escapeHtml(group.user.email)}</div>
+                            </div>
+                        </div>
+                        <span class="client-projects-count">${group.projects.length} project(s)</span>
+                    </div>
+                    <div class="client-projects">
+                        ${group.projects.map(project => `
+                            <div class="project-card" onclick="viewProject(${project.id})">
+                                <div class="project-header">
+                                    <div class="project-title">
+                                        ${escapeHtml(project.title)}
+                                        <span class="priority-badge priority-${project.priority}">${project.priority}</span>
+                                    </div>
+                                    <span class="project-status status-${project.status}">${project.status.replace('_', ' ')}</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${project.progress}%"></div>
+                                </div>
+                                <div class="project-meta">
+                                    <span>📊 ${project.progress}% complete</span>
+                                    <span>🎯 ${project.completedMilestones}/${project.totalMilestones} milestones</span>
+                                    <span>📅 ${formatDate(project.created_at)}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('projectDetailView').classList.remove('active');
+        }
+
+        // Get initials
+        function getInitials(user) {
+            if (user.first_name && user.last_name) {
+                return (user.first_name[0] + user.last_name[0]).toUpperCase();
+            }
+            return user.email[0].toUpperCase();
+        }
+
+        // View project detail
+        async function viewProject(projectId) {
+            const token = getToken();
+
+            try {
+                const response = await fetch(`/api/admin/projects/${projectId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentProject = data.project;
+                    renderProjectDetail();
+                }
+            } catch (error) {
+                console.error('Error loading project:', error);
+            }
+        }
+
+        // Render project detail
+        function renderProjectDetail() {
+            const project = currentProject;
+
+            document.getElementById('detailHeader').innerHTML = `
+                <button class="btn btn-secondary" onclick="backToList()" style="margin-bottom: 16px;">← Back to Projects</button>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h2 style="color: white; margin-bottom: 8px;">${escapeHtml(project.title)}</h2>
+                        <p style="color: #9ca3af;">${escapeHtml(project.description || 'No description')}</p>
+                        <p style="color: #6b7280; font-size: 13px; margin-top: 8px;">
+                            Client: ${escapeHtml(project.owner?.business_name || project.owner?.email || 'Unknown')}
+                        </p>
+                    </div>
+                    <div>
+                        <select onchange="updateProjectStatus(${project.id}, this.value)" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px 12px; border-radius: 8px;">
+                            <option value="pending" ${project.status === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="in_progress" ${project.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="on_hold" ${project.status === 'on_hold' ? 'selected' : ''}>On Hold</option>
+                            <option value="completed" ${project.status === 'completed' ? 'selected' : ''}>Completed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="progress-bar" style="margin-top: 16px;">
+                    <div class="progress-fill" style="width: ${project.progress}%"></div>
+                </div>
+                <p style="color: #9ca3af; font-size: 12px; margin-top: 8px;">
+                    ${project.progress}% Complete • ${project.completedMilestones}/${project.totalMilestones} milestones
+                </p>
+            `;
+
+            const milestonesList = document.getElementById('milestonesList');
+
+            if (!project.milestones || project.milestones.length === 0) {
+                milestonesList.innerHTML = `<p style="color: #9ca3af; text-align: center; padding: 40px;">No milestones yet. Add one to get started!</p>`;
+            } else {
+                milestonesList.innerHTML = project.milestones.map((milestone, index) => `
+                    <div class="milestone" id="milestone-${milestone.id}">
+                        <div class="milestone-header" onclick="toggleMilestone(${milestone.id})">
+                            <div class="milestone-title-row">
+                                <span style="width: 32px; height: 32px; border-radius: 50%; background: ${getStatusColor(milestone.status)}; display: flex; align-items: center; justify-content: center; font-size: 12px; color: white;">
+                                    ${milestone.status === 'completed' ? '✓' : index + 1}
+                                </span>
+                                <span style="color: white; font-weight: 500;">${escapeHtml(milestone.title)}</span>
+                                <span class="project-status status-${milestone.status}" style="font-size: 10px; padding: 3px 8px;">
+                                    ${milestone.status.replace('_', ' ')}
+                                </span>
+                            </div>
+                            <div class="milestone-actions">
+                                <select onclick="event.stopPropagation()" onchange="updateMilestoneStatus(${milestone.id}, this.value)" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px;">
+                                    <option value="pending" ${milestone.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="in_progress" ${milestone.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                                    <option value="blocked" ${milestone.status === 'blocked' ? 'selected' : ''}>Blocked</option>
+                                    <option value="completed" ${milestone.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="milestone-content">
+                            ${milestone.description ? `<p style="color: #9ca3af; margin-bottom: 12px;">${escapeHtml(milestone.description)}</p>` : ''}
+                            ${milestone.due_date ? `<p style="color: #6b7280; font-size: 12px; margin-bottom: 12px;">📅 Due: ${formatDate(milestone.due_date)}</p>` : ''}
+
+                            <div class="admin-notes-input">
+                                <label style="font-size: 11px; color: #fbbf24; display: block; margin-bottom: 4px;">📌 Admin Notes (visible to client)</label>
+                                <textarea id="notes-${milestone.id}" rows="2" placeholder="Add notes for the client..." onblur="saveAdminNotes(${milestone.id})">${escapeHtml(milestone.admin_notes || '')}</textarea>
+                            </div>
+
+                            <div class="messages-section">
+                                <div style="font-size: 14px; font-weight: 500; color: #9ca3af; margin-bottom: 12px;">💬 Discussion</div>
+                                <div class="messages-list" id="messages-${milestone.id}">
+                                    ${renderMessages(milestone.messages || [])}
+                                </div>
+                                <form class="message-form" onsubmit="sendAdminMessage(event, ${milestone.id})">
+                                    <textarea class="message-input" id="input-${milestone.id}" placeholder="Type your message..." rows="2"></textarea>
+                                    <button type="submit" class="btn btn-primary">Send</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('projectsListView').style.display = 'none';
+            document.getElementById('projectDetailView').classList.add('active');
+        }
+
+        // Get status color
+        function getStatusColor(status) {
+            const colors = {
+                pending: '#fbbf24',
+                in_progress: '#3b82f6',
+                completed: '#22c55e',
+                blocked: '#ef4444'
+            };
+            return colors[status] || '#6b7280';
+        }
+
+        // Render messages
+        function renderMessages(messages) {
+            if (!messages || messages.length === 0) {
+                return '<p style="color: #6b7280; text-align: center; padding: 20px;">No messages yet.</p>';
+            }
+
+            return messages.map(msg => `
+                <div class="message ${msg.is_admin ? 'from-admin' : 'from-client'}">
+                    <div class="message-bubble">
+                        <div>${escapeHtml(msg.message)}</div>
+                        <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">
+                            ${msg.author?.first_name || (msg.is_admin ? 'Admin' : 'Client')} • ${formatDate(msg.created_at)}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Toggle milestone
+        function toggleMilestone(milestoneId) {
+            document.getElementById(`milestone-${milestoneId}`).classList.toggle('expanded');
+        }
+
+        // Back to list
+        function backToList() {
+            document.getElementById('projectDetailView').classList.remove('active');
+            document.getElementById('projectsListView').style.display = 'block';
+            currentProject = null;
+            loadProjects();
+        }
+
+        // Populate user select
+        function populateUserSelect() {
+            const select = document.getElementById('projectUserId');
+            select.innerHTML = '<option value="">Select a client...</option>' +
+                users.map(user => `<option value="${user.id}">${escapeHtml(user.business_name || user.email)} (${escapeHtml(user.email)})</option>`).join('');
+        }
+
+        // Modal functions
+        function openNewProjectModal() {
+            document.getElementById('newProjectModal').classList.add('active');
+        }
+
+        function openAddMilestoneModal() {
+            document.getElementById('addMilestoneModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Create project
+        async function createProject() {
+            const token = getToken();
+
+            const data = {
+                user_id: document.getElementById('projectUserId').value,
+                title: document.getElementById('projectTitle').value,
+                description: document.getElementById('projectDescription').value,
+                priority: document.getElementById('projectPriority').value,
+                estimated_completion: document.getElementById('projectEstimatedCompletion').value || null
+            };
+
+            if (!data.user_id || !data.title) {
+                alert('Please select a client and enter a title');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/projects', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    closeModal('newProjectModal');
+                    document.getElementById('newProjectForm').reset();
+                    loadProjects();
+                } else {
+                    alert('Failed to create project: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error creating project:', error);
+                alert('Failed to create project');
+            }
+        }
+
+        // Add milestone
+        async function addMilestone() {
+            if (!currentProject) return;
+
+            const token = getToken();
+
+            const data = {
+                title: document.getElementById('milestoneTitle').value,
+                description: document.getElementById('milestoneDescription').value,
+                due_date: document.getElementById('milestoneDueDate').value || null,
+                admin_notes: document.getElementById('milestoneAdminNotes').value
+            };
+
+            if (!data.title) {
+                alert('Please enter a title');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/admin/projects/${currentProject.id}/milestones`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    closeModal('addMilestoneModal');
+                    document.getElementById('addMilestoneForm').reset();
+                    viewProject(currentProject.id);
+                } else {
+                    alert('Failed to add milestone: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error adding milestone:', error);
+                alert('Failed to add milestone');
+            }
+        }
+
+        // Update project status
+        async function updateProjectStatus(projectId, status) {
+            const token = getToken();
+
+            try {
+                await fetch(`/api/admin/projects/${projectId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status })
+                });
+            } catch (error) {
+                console.error('Error updating project:', error);
+            }
+        }
+
+        // Update milestone status
+        async function updateMilestoneStatus(milestoneId, status) {
+            if (!currentProject) return;
+
+            const token = getToken();
+
+            try {
+                await fetch(`/api/admin/projects/${currentProject.id}/milestones/${milestoneId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status })
+                });
+
+                viewProject(currentProject.id);
+            } catch (error) {
+                console.error('Error updating milestone:', error);
+            }
+        }
+
+        // Save admin notes
+        async function saveAdminNotes(milestoneId) {
+            if (!currentProject) return;
+
+            const token = getToken();
+            const notes = document.getElementById(`notes-${milestoneId}`).value;
+
+            try {
+                await fetch(`/api/admin/projects/${currentProject.id}/milestones/${milestoneId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ admin_notes: notes })
+                });
+            } catch (error) {
+                console.error('Error saving notes:', error);
+            }
+        }
+
+        // Send admin message
+        async function sendAdminMessage(event, milestoneId) {
+            event.preventDefault();
+
+            if (!currentProject) return;
+
+            const token = getToken();
+            const input = document.getElementById(`input-${milestoneId}`);
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            try {
+                const response = await fetch(`/api/admin/projects/${currentProject.id}/milestones/${milestoneId}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const messagesList = document.getElementById(`messages-${milestoneId}`);
+                    const newHtml = `
+                        <div class="message from-admin">
+                            <div class="message-bubble">
+                                <div>${escapeHtml(result.message.message)}</div>
+                                <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">Admin • Just now</div>
+                            </div>
+                        </div>
+                    `;
+
+                    if (messagesList.innerHTML.includes('No messages yet')) {
+                        messagesList.innerHTML = newHtml;
+                    } else {
+                        messagesList.innerHTML += newHtml;
+                    }
+
+                    messagesList.scrollTop = messagesList.scrollHeight;
+                    input.value = '';
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+            }
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProjects();
+            loadUsers();
+        });
+    </script>
+</body>
+</html>

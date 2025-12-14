@@ -81,6 +81,35 @@ try {
   console.log('Note: AdminNote model needed for admin portal');
 }
 
+// Import Project Tracker models
+let Project;
+let ProjectMilestone;
+let ProjectMessage;
+
+try {
+  Project = require('./Project');
+  Project.init(sequelize);
+  console.log('Project model imported successfully');
+} catch (error) {
+  console.log('Project model not found:', error.message);
+}
+
+try {
+  ProjectMilestone = require('./ProjectMilestone');
+  ProjectMilestone.init(sequelize);
+  console.log('ProjectMilestone model imported successfully');
+} catch (error) {
+  console.log('ProjectMilestone model not found:', error.message);
+}
+
+try {
+  ProjectMessage = require('./ProjectMessage');
+  ProjectMessage.init(sequelize);
+  console.log('ProjectMessage model imported successfully');
+} catch (error) {
+  console.log('ProjectMessage model not found:', error.message);
+}
+
 // Initialize models object
 const models = {
   sequelize
@@ -96,6 +125,9 @@ if (Client) models.Client = Client;
 if (CreditAccount) models.CreditAccount = CreditAccount;
 if (AdminCommunication) models.AdminCommunication = AdminCommunication;
 if (AdminNote) models.AdminNote = AdminNote;
+if (Project) models.Project = Project;
+if (ProjectMilestone) models.ProjectMilestone = ProjectMilestone;
+if (ProjectMessage) models.ProjectMessage = ProjectMessage;
 
 // Set up associations if models exist
 if (Contact && Message) {
@@ -263,6 +295,84 @@ if (Client && AdminNote) {
     console.log('Client-AdminNote associations configured');
   } catch (error) {
     console.log('Could not set up Client-AdminNote associations:', error.message);
+  }
+}
+
+// Project Tracker associations
+if (User && Project) {
+  try {
+    User.hasMany(Project, {
+      foreignKey: 'user_id',
+      as: 'projects'
+    });
+
+    Project.belongsTo(User, {
+      foreignKey: 'user_id',
+      as: 'owner'
+    });
+
+    Project.belongsTo(User, {
+      foreignKey: 'created_by_admin',
+      as: 'creator'
+    });
+
+    console.log('User-Project associations configured');
+  } catch (error) {
+    console.log('Could not set up User-Project associations:', error.message);
+  }
+}
+
+if (Project && ProjectMilestone) {
+  try {
+    Project.hasMany(ProjectMilestone, {
+      foreignKey: 'project_id',
+      as: 'milestones'
+    });
+
+    ProjectMilestone.belongsTo(Project, {
+      foreignKey: 'project_id',
+      as: 'project'
+    });
+
+    console.log('Project-ProjectMilestone associations configured');
+  } catch (error) {
+    console.log('Could not set up Project-ProjectMilestone associations:', error.message);
+  }
+}
+
+if (ProjectMilestone && ProjectMessage) {
+  try {
+    ProjectMilestone.hasMany(ProjectMessage, {
+      foreignKey: 'milestone_id',
+      as: 'messages'
+    });
+
+    ProjectMessage.belongsTo(ProjectMilestone, {
+      foreignKey: 'milestone_id',
+      as: 'milestone'
+    });
+
+    console.log('ProjectMilestone-ProjectMessage associations configured');
+  } catch (error) {
+    console.log('Could not set up ProjectMilestone-ProjectMessage associations:', error.message);
+  }
+}
+
+if (User && ProjectMessage) {
+  try {
+    User.hasMany(ProjectMessage, {
+      foreignKey: 'user_id',
+      as: 'projectMessages'
+    });
+
+    ProjectMessage.belongsTo(User, {
+      foreignKey: 'user_id',
+      as: 'author'
+    });
+
+    console.log('User-ProjectMessage associations configured');
+  } catch (error) {
+    console.log('Could not set up User-ProjectMessage associations:', error.message);
   }
 }
 
@@ -605,6 +715,11 @@ module.exports.Client = Client;
 module.exports.CreditAccount = CreditAccount;
 module.exports.AdminCommunication = AdminCommunication;
 module.exports.AdminNote = AdminNote;
+
+// Export Project Tracker models
+module.exports.Project = Project;
+module.exports.ProjectMilestone = ProjectMilestone;
+module.exports.ProjectMessage = ProjectMessage;
 
 // Export AI services
 module.exports.BusinessAICustomizer = BusinessAICustomizer;
