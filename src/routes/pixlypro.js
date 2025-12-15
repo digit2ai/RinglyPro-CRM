@@ -1,7 +1,7 @@
 // =====================================================
 // PixlyPro API Routes
 // File: src/routes/pixlypro.js
-// Purpose: AI-Assisted Photo Enhancement Service
+// Purpose: AI-Assisted Photo Enhancement Service using OpenAI
 // =====================================================
 
 const express = require('express');
@@ -16,7 +16,7 @@ const crypto = require('crypto');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const pixelixeService = require('../services/pixelixeService');
+const openaiImageService = require('../services/openaiImageService');
 
 // Helper function to generate presigned URL for S3 objects
 async function getPresignedUrl(s3Client, bucket, key, expiresIn = 900) {
@@ -104,13 +104,15 @@ const PIXLYPRO_PACKAGES = {
 /**
  * GET /api/pixlypro/packages
  * Get available PixlyPro packages
+ * Note: Payment system removed - enhancement is now free
  */
 router.get('/packages', async (req, res) => {
   try {
     res.json({
       success: true,
       packages: PIXLYPRO_PACKAGES,
-      ai_powered: pixelixeService.isConfigured()
+      ai_powered: openaiImageService.isConfigured(),
+      payment_required: false // Payment system removed
     });
   } catch (error) {
     logger.error('[PIXLYPRO] Get packages error:', error);
@@ -1531,7 +1533,11 @@ router.post('/upload-and-enhance', authenticateToken, upload.array('photos', 100
 /**
  * POST /api/pixlypro/upload-and-enhance-direct
  * Direct upload and enhance - NO PAYMENT REQUIRED
- * Flow: Upload to S3 -> Enhance with Pixelixe -> Save to database
+ * Flow: Upload to S3 -> Enhance with OpenAI Vision -> Save to database
+ *
+ * Uses professional enhancement prompt (hidden from customer):
+ * "I am a professional graphic designer. My role is to enhance this image to a high-end commercial,
+ * professional grade while preserving the original look, composition, and authenticity..."
  */
 router.post('/upload-and-enhance-direct', authenticateToken, upload.array('photos', 100), async (req, res) => {
   const { sequelize } = require('../models');
@@ -1573,7 +1579,7 @@ router.post('/upload-and-enhance-direct', authenticateToken, upload.array('photo
 
     const processedPhotos = [];
 
-    // Step 2: Process each photo
+    // Step 2: Process each photo with OpenAI-powered enhancement
     for (let i = 0; i < photos.length; i++) {
       const photo = photos[i];
       const filename = `${crypto.randomBytes(16).toString('hex')}.png`;
@@ -1596,47 +1602,43 @@ router.post('/upload-and-enhance-direct', authenticateToken, upload.array('photo
           ContentType: 'image/png',
         }));
 
-        // Generate presigned URL for Pixelixe to access (15 min expiry)
-        const originalPresignedUrl = await getPresignedUrl(s3, BUCKET_NAME, originalFilename, 900);
         const originalUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`;
         logger.info(`[PIXLYPRO] Original uploaded: ${originalUrl}`);
-        logger.info(`[PIXLYPRO] Presigned URL generated for Pixelixe access`);
 
         // =====================================================
-        // Professional 2-Step Enhancement Pipeline
-        // Note: Pixelixe only supports brighten and contrast APIs
+        // OpenAI-Powered Professional Enhancement
+        // The professional prompt is applied in the backend:
+        // - Improves color balance, brightness, contrast, sharpness
+        // - Enhances details naturally without over-processing
+        // - Corrects lighting, reduces noise, ensures crisp edges
+        // - Preserves original composition and visual intent
         // =====================================================
 
-        // Step 1: Brightness (+0.30) - Professional level brightness boost
-        logger.info(`[PIXLYPRO] Step 1/2: Applying brightness (+0.30)...`);
-        const brightnessBuffer = await pixelixeService.adjustBrightness(originalPresignedUrl, 0.30, 'png');
+        logger.info(`[PIXLYPRO] Applying AI professional enhancement...`);
+        let enhancedBuffer;
 
-        const brightnessFilename = `pixlypro/temp/${crypto.randomBytes(16).toString('hex')}.png`;
-        await s3.send(new PutObjectCommand({
-          Bucket: BUCKET_NAME,
-          Key: brightnessFilename,
-          Body: brightnessBuffer,
-          ContentType: 'image/png',
-        }));
-        const brightnessPresignedUrl = await getPresignedUrl(s3, BUCKET_NAME, brightnessFilename, 900);
-        logger.info(`[PIXLYPRO] Brightness applied`);
+        if (openaiImageService.isConfigured()) {
+          // Use OpenAI Vision for smart enhancement recommendations
+          enhancedBuffer = await openaiImageService.enhanceWithVision(imageBuffer, photo.originalname);
+        } else {
+          // Fallback to local professional enhancement
+          logger.info(`[PIXLYPRO] OpenAI not configured, using local enhancement`);
+          enhancedBuffer = await openaiImageService.localEnhancement(imageBuffer);
+        }
 
-        // Step 2: Contrast (+0.35) - Enhance depth and definition
-        logger.info(`[PIXLYPRO] Step 2/2: Applying contrast (+0.35)...`);
-        const finalBuffer = await pixelixeService.adjustContrast(brightnessPresignedUrl, 0.35, 'png');
-        logger.info(`[PIXLYPRO] Contrast applied`);
+        logger.info(`[PIXLYPRO] Enhancement complete`);
 
-        // Upload final enhanced photo (after 2 steps)
+        // Upload enhanced photo
         const enhancedFilename = `pixlypro/enhanced/${orderId}/${filename}`;
         await s3.send(new PutObjectCommand({
           Bucket: BUCKET_NAME,
           Key: enhancedFilename,
-          Body: finalBuffer,
+          Body: enhancedBuffer,
           ContentType: 'image/png',
         }));
 
         const enhancedUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
-        logger.info(`[PIXLYPRO] Enhancement complete (4 steps): ${enhancedUrl}`);
+        logger.info(`[PIXLYPRO] Enhanced photo saved: ${enhancedUrl}`);
 
         // Save to database
         await sequelize.query(

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PixlyPro Photo Studio - Instant Photo Enhancement</title>
+    <title>PixlyPro Photo Studio - AI Photo Enhancement</title>
     <style>
         * {
             margin: 0;
@@ -71,6 +71,11 @@
             border-color: #1d4ed8;
         }
 
+        .upload-zone.processing {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
         .upload-icon {
             font-size: 4rem;
             margin-bottom: 1rem;
@@ -115,6 +120,66 @@
             background: #94a3b8;
             cursor: not-allowed;
             transform: none;
+        }
+
+        .btn-success {
+            background: #10b981;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        /* Progress Section */
+        .progress-section {
+            display: none;
+            padding: 2rem 3rem;
+            background: #f8fafc;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .progress-section.active {
+            display: block;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .progress-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .progress-count {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .progress-bar-container {
+            background: #e2e8f0;
+            border-radius: 0.5rem;
+            height: 12px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 0.5rem;
+        }
+
+        .progress-status {
+            color: #64748b;
+            font-size: 0.875rem;
+            text-align: center;
         }
 
         .gallery {
@@ -175,41 +240,43 @@
             letter-spacing: 0.05em;
         }
 
-        .status-ready {
+        .status-processing {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-enhanced {
             background: #d1fae5;
             color: #065f46;
         }
 
-        .status-cached {
-            background: #dbeafe;
-            color: #1e40af;
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
         }
 
-        .remove-btn {
+        .download-btn {
             position: absolute;
             top: 0.5rem;
             right: 0.5rem;
-            background: #ef4444;
+            background: #10b981;
             color: white;
             border: none;
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
             cursor: pointer;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
             opacity: 0;
             transition: opacity 0.2s;
         }
 
-        .photo-card:hover .remove-btn {
+        .photo-card:hover .download-btn {
             opacity: 1;
         }
 
-        .remove-btn:hover {
-            background: #dc2626;
+        .download-btn:hover {
+            background: #059669;
         }
 
         .empty-state {
@@ -224,24 +291,37 @@
             opacity: 0.5;
         }
 
-        .warning-banner {
-            background: #fef3c7;
-            border: 1px solid #f59e0b;
+        .info-banner {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
             border-radius: 0.5rem;
             padding: 1rem;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
             text-align: left;
         }
 
-        .warning-banner p {
-            color: #92400e;
+        .info-banner p {
+            color: #1e40af;
             font-size: 0.875rem;
             margin: 0;
+        }
+
+        .info-banner strong {
+            display: block;
+            margin-bottom: 0.25rem;
         }
 
         @media (max-width: 768px) {
             .gallery {
                 grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .upload-section {
+                padding: 2rem 1rem;
             }
         }
     </style>
@@ -250,7 +330,7 @@
     <div class="container">
         <div class="header">
             <h1>PixlyPro Photo Studio</h1>
-            <p>Upload your photos and watch AI enhance them instantly</p>
+            <p>Upload your photos and watch AI enhance them to professional quality</p>
         </div>
 
         <div class="studio-card">
@@ -259,42 +339,31 @@
                 <div class="upload-zone" id="uploadZone">
                     <div class="upload-icon">📸</div>
                     <div class="upload-text">Drag & Drop Photos Here</div>
-                    <div class="upload-hint">or click to browse (supports JPG, PNG, HEIC)</div>
+                    <div class="upload-hint">or click to browse (supports JPG, PNG, HEIC, WebP)</div>
                     <input type="file" id="fileInput" class="file-input" accept="image/*" multiple>
-                    <button class="btn" onclick="document.getElementById('fileInput').click()">
+                    <button class="btn" id="selectBtn" onclick="document.getElementById('fileInput').click()">
                         Choose Photos
                     </button>
                 </div>
 
-                <!-- Pricing & Payment Summary -->
-                <div id="pricingSummary" style="display: none; margin-top: 2rem; padding: 2rem; background: #f8fafc; border-radius: 0.75rem; text-align: left;">
-                    <h3 style="color: #1e293b; margin-bottom: 1rem;">Order Summary</h3>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                        <span style="color: #64748b;">Photos to enhance:</span>
-                        <strong id="photoCount" style="color: #1e293b;">0</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                        <span style="color: #64748b;">Price per photo:</span>
-                        <span style="color: #1e293b;">$0.50</span>
-                    </div>
-                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 1rem 0;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                        <span style="color: #1e293b; font-weight: 600; font-size: 1.125rem;">Total:</span>
-                        <strong id="totalPrice" style="color: #3b82f6; font-size: 1.25rem;">$0.00</strong>
-                    </div>
-                    <button class="btn" id="processEnhanceBtn" onclick="processPayment()" style="width: 100%; margin-top: 1rem; padding: 1.25rem; font-size: 1.125rem;">
-                        Proceed to Payment
-                    </button>
-                    <p style="color: #64748b; font-size: 0.75rem; text-align: center; margin-top: 0.75rem;">
-                        Secure payment powered by Stripe
+                <div class="info-banner">
+                    <p>
+                        <strong>AI-Powered Enhancement</strong>
+                        Your photos will be automatically enhanced to professional commercial quality while preserving their original look and composition.
                     </p>
-                    <div id="progressContainer" style="display: none; margin-top: 1rem;">
-                        <div style="background: #e2e8f0; border-radius: 0.5rem; height: 12px; overflow: hidden;">
-                            <div id="progressBar" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%); height: 100%; width: 0%; transition: width 0.3s;"></div>
-                        </div>
-                        <p id="progressText" style="color: #64748b; font-size: 0.875rem; margin-top: 0.5rem; text-align: center;">Uploading photos...</p>
-                    </div>
                 </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div class="progress-section" id="progressSection">
+                <div class="progress-header">
+                    <span class="progress-title">Enhancing Photos</span>
+                    <span class="progress-count" id="progressCount">0 / 0</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="progress-status" id="progressStatus">Preparing...</div>
             </div>
 
             <!-- Gallery Section -->
@@ -302,7 +371,7 @@
                 <div class="empty-state">
                     <div class="empty-icon">🎨</div>
                     <h3>No photos yet</h3>
-                    <p>Upload your first photo to see AI magic happen!</p>
+                    <p>Upload your photos to see AI magic happen!</p>
                 </div>
             </div>
         </div>
@@ -310,145 +379,39 @@
 
     <script>
         // =====================================================
-        // IndexedDB for storing photos locally until payment
+        // PixlyPro Photo Studio - Direct AI Enhancement
+        // No payment required - photos are enhanced immediately
         // =====================================================
-        const DB_NAME = 'PixlyProPhotos';
-        const DB_VERSION = 1;
-        const STORE_NAME = 'photos';
-        let db = null;
-
-        // Initialize IndexedDB
-        async function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    db = request.result;
-                    resolve(db);
-                };
-
-                request.onupgradeneeded = (event) => {
-                    const database = event.target.result;
-                    if (!database.objectStoreNames.contains(STORE_NAME)) {
-                        database.createObjectStore(STORE_NAME, { keyPath: 'id' });
-                    }
-                };
-            });
-        }
-
-        // Save photo to IndexedDB
-        async function savePhotoToDB(photo) {
-            // IMPORTANT: Fetch the blob FIRST, before opening the transaction
-            // IndexedDB transactions auto-close during async operations
-            const response = await fetch(photo.previewUrl);
-            const blob = await response.blob();
-
-            const photoData = {
-                id: photo.id,
-                name: photo.name,
-                type: photo.type,
-                size: photo.size,
-                blob: blob,
-                createdAt: Date.now()
-            };
-
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readwrite');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.put(photoData);
-                request.onsuccess = () => resolve(photoData);
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        // Get all photos from IndexedDB
-        async function getPhotosFromDB() {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readonly');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.getAll();
-
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        // Delete photo from IndexedDB
-        async function deletePhotoFromDB(id) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readwrite');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.delete(id);
-
-                request.onsuccess = () => resolve();
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        // Clear all photos from IndexedDB
-        async function clearPhotosFromDB() {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readwrite');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.clear();
-
-                request.onsuccess = () => resolve();
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        // =====================================================
-        // Main App Logic
-        // =====================================================
-        let photos = []; // In-memory photo list with preview URLs
 
         const uploadZone = document.getElementById('uploadZone');
         const fileInput = document.getElementById('fileInput');
         const gallery = document.getElementById('gallery');
+        const progressSection = document.getElementById('progressSection');
+        const progressBar = document.getElementById('progressBar');
+        const progressCount = document.getElementById('progressCount');
+        const progressStatus = document.getElementById('progressStatus');
+        const selectBtn = document.getElementById('selectBtn');
 
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', async () => {
-            await initDB();
-            await loadExistingPhotos();
-        });
+        let enhancedPhotos = [];
+        let isProcessing = false;
 
-        // Load any existing photos from IndexedDB (in case of page refresh)
-        async function loadExistingPhotos() {
-            try {
-                const storedPhotos = await getPhotosFromDB();
-                if (storedPhotos.length > 0) {
-                    gallery.innerHTML = '';
-                    for (const storedPhoto of storedPhotos) {
-                        const previewUrl = URL.createObjectURL(storedPhoto.blob);
-                        const photo = {
-                            id: storedPhoto.id,
-                            name: storedPhoto.name,
-                            type: storedPhoto.type,
-                            size: storedPhoto.size,
-                            previewUrl: previewUrl,
-                            status: 'cached'
-                        };
-                        photos.push(photo);
-                        renderPhoto(photo);
-                    }
-                    updatePricingSummary();
-                }
-            } catch (error) {
-                console.error('Error loading photos from IndexedDB:', error);
-            }
+        // Get auth token
+        function getToken() {
+            return localStorage.getItem('pixlypro_token') || localStorage.getItem('token');
         }
 
         // Upload Zone Event Listeners
         uploadZone.addEventListener('click', (e) => {
-            if (e.target.tagName !== 'BUTTON') {
+            if (e.target.tagName !== 'BUTTON' && !isProcessing) {
                 fileInput.click();
             }
         });
 
         uploadZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            uploadZone.classList.add('dragover');
+            if (!isProcessing) {
+                uploadZone.classList.add('dragover');
+            }
         });
 
         uploadZone.addEventListener('dragleave', () => {
@@ -458,223 +421,196 @@
         uploadZone.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadZone.classList.remove('dragover');
-            const files = Array.from(e.dataTransfer.files);
-            handleFiles(files);
+            if (!isProcessing) {
+                const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                if (files.length > 0) {
+                    processFiles(files);
+                }
+            }
         });
 
         fileInput.addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
-            handleFiles(files);
+            if (files.length > 0) {
+                processFiles(files);
+            }
             fileInput.value = ''; // Reset for re-selection
         });
 
-        async function handleFiles(files) {
-            if (files.length === 0) return;
-
-            // Clear empty state if this is the first photo
-            if (photos.length === 0) {
-                gallery.innerHTML = '';
-            }
-
-            for (const file of files) {
-                if (!file.type.startsWith('image/')) continue;
-
-                const photoId = `photo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                const previewUrl = URL.createObjectURL(file);
-
-                const photo = {
-                    id: photoId,
-                    name: file.name,
-                    type: file.type,
-                    size: file.size,
-                    previewUrl: previewUrl,
-                    status: 'ready'
-                };
-
-                photos.push(photo);
-                renderPhoto(photo);
-
-                // Save to IndexedDB and update status
-                try {
-                    await savePhotoToDB(photo);
-                    photo.status = 'cached';
-                    // Update the status badge in DOM
-                    const statusBadge = document.querySelector(`#card-${photoId} .status-badge`);
-                    if (statusBadge) {
-                        statusBadge.textContent = 'Saved locally';
-                        statusBadge.className = 'status-badge status-cached';
-                    }
-                } catch (error) {
-                    console.error('Error saving photo to IndexedDB:', error);
-                }
-            }
-
-            updatePricingSummary();
-        }
-
-        function updatePricingSummary() {
-            const photoCount = photos.length;
-            const pricePerPhoto = 0.50;
-            const totalPrice = photoCount * pricePerPhoto;
-
-            document.getElementById('photoCount').textContent = photoCount;
-            document.getElementById('totalPrice').textContent = `$${totalPrice.toFixed(2)}`;
-
-            if (photoCount > 0) {
-                document.getElementById('pricingSummary').style.display = 'block';
-            } else {
-                document.getElementById('pricingSummary').style.display = 'none';
-                // Show empty state
-                gallery.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">🎨</div>
-                        <h3>No photos yet</h3>
-                        <p>Upload your first photo to see AI magic happen!</p>
-                    </div>
-                `;
-            }
-        }
-
-        async function removePhoto(photoId) {
-            // Remove from IndexedDB
-            try {
-                await deletePhotoFromDB(photoId);
-            } catch (error) {
-                console.error('Error removing photo from IndexedDB:', error);
-            }
-
-            // Remove from memory
-            const index = photos.findIndex(p => p.id === photoId);
-            if (index > -1) {
-                URL.revokeObjectURL(photos[index].previewUrl);
-                photos.splice(index, 1);
-            }
-
-            // Remove from DOM
-            const card = document.getElementById(`card-${photoId}`);
-            if (card) card.remove();
-
-            updatePricingSummary();
-        }
-
-        async function processPayment() {
-            if (photos.length === 0) {
-                alert('Please upload at least one photo');
+        async function processFiles(files) {
+            const token = getToken();
+            if (!token) {
+                alert('Please log in first');
+                window.location.href = '/pixlypro-auth';
                 return;
             }
 
-            const photoCount = photos.length;
-            const totalAmount = photoCount * 0.50;
+            if (isProcessing) return;
+            isProcessing = true;
 
-            try {
-                // Get JWT token from localStorage
-                const token = localStorage.getItem('pixlypro_token');
-                if (!token) {
-                    alert('Please log in first');
-                    window.location.href = '/pixlypro-auth';
-                    return;
-                }
+            // Update UI
+            uploadZone.classList.add('processing');
+            selectBtn.disabled = true;
+            selectBtn.textContent = 'Processing...';
+            progressSection.classList.add('active');
 
-                // Disable button and show progress
-                const btn = document.getElementById('processEnhanceBtn');
-                btn.disabled = true;
-                btn.textContent = 'Preparing...';
-
-                const progressContainer = document.getElementById('progressContainer');
-                const progressBar = document.getElementById('progressBar');
-                const progressText = document.getElementById('progressText');
-                progressContainer.style.display = 'block';
-
-                // Step 1: Get photos from IndexedDB
-                progressText.textContent = 'Preparing photos...';
-                progressBar.style.width = '10%';
-
-                const storedPhotos = await getPhotosFromDB();
-                const formData = new FormData();
-
-                for (const photo of storedPhotos) {
-                    const file = new File([photo.blob], photo.name, { type: photo.type || 'image/png' });
-                    formData.append('photos', file);
-                }
-
-                // Step 2: Upload photos to S3 temp folder (BEFORE payment)
-                progressText.textContent = 'Uploading photos to secure storage...';
-                progressBar.style.width = '30%';
-
-                const uploadResponse = await fetch('/api/pixlypro/upload-temp-photos', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
-                });
-
-                const uploadData = await uploadResponse.json();
-
-                if (!uploadData.success) {
-                    throw new Error(uploadData.error || 'Failed to upload photos');
-                }
-
-                progressText.textContent = 'Creating secure checkout...';
-                progressBar.style.width = '60%';
-
-                // Step 3: Create Stripe checkout session with temp photo IDs
-                const checkoutResponse = await fetch('/api/pixlypro/create-checkout-session', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        packageType: 'custom',
-                        photoCount: photoCount,
-                        totalAmount: totalAmount,
-                        tempPhotoIds: uploadData.photoIds
-                    })
-                });
-
-                const checkoutData = await checkoutResponse.json();
-
-                if (!checkoutData.success) {
-                    throw new Error(checkoutData.error || 'Failed to create checkout session');
-                }
-
-                progressText.textContent = 'Redirecting to payment...';
-                progressBar.style.width = '90%';
-
-                // Step 4: Redirect to Stripe Checkout
-                window.location.href = checkoutData.sessionUrl;
-
-            } catch (error) {
-                console.error('Payment error:', error);
-                alert('Failed to process payment: ' + error.message);
-
-                // Re-enable button
-                const btn = document.getElementById('processEnhanceBtn');
-                btn.disabled = false;
-                btn.textContent = 'Proceed to Payment';
-                document.getElementById('progressContainer').style.display = 'none';
+            // Clear empty state if this is the first upload
+            if (enhancedPhotos.length === 0) {
+                gallery.innerHTML = '';
             }
+
+            const totalFiles = files.length;
+            let processedCount = 0;
+
+            progressCount.textContent = `0 / ${totalFiles}`;
+            progressBar.style.width = '0%';
+
+            for (const file of files) {
+                try {
+                    progressStatus.textContent = `Enhancing: ${file.name}...`;
+
+                    // Create preview card first
+                    const cardId = `card_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    const previewUrl = URL.createObjectURL(file);
+                    addPhotoCard(cardId, file.name, previewUrl, 'processing');
+
+                    // Create FormData and upload
+                    const formData = new FormData();
+                    formData.append('photos', file);
+
+                    const response = await fetch('/api/pixlypro/upload-and-enhance-direct', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success && data.photos && data.photos.length > 0) {
+                        const photo = data.photos[0];
+                        // Update card with enhanced result
+                        updatePhotoCard(cardId, photo.enhancedUrl, 'enhanced');
+                        enhancedPhotos.push({
+                            id: cardId,
+                            name: file.name,
+                            originalUrl: photo.originalUrl,
+                            enhancedUrl: photo.enhancedUrl
+                        });
+                    } else {
+                        updatePhotoCard(cardId, previewUrl, 'error');
+                        console.error('Enhancement failed:', data.error);
+                    }
+
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                }
+
+                processedCount++;
+                const progress = (processedCount / totalFiles) * 100;
+                progressBar.style.width = `${progress}%`;
+                progressCount.textContent = `${processedCount} / ${totalFiles}`;
+            }
+
+            // Complete
+            progressStatus.textContent = `Complete! ${processedCount} photo${processedCount > 1 ? 's' : ''} enhanced.`;
+
+            setTimeout(() => {
+                progressSection.classList.remove('active');
+                uploadZone.classList.remove('processing');
+                selectBtn.disabled = false;
+                selectBtn.textContent = 'Choose More Photos';
+                isProcessing = false;
+            }, 2000);
         }
 
-        function renderPhoto(photo) {
+        function addPhotoCard(cardId, name, imageUrl, status) {
             const card = document.createElement('div');
             card.className = 'photo-card';
-            card.id = `card-${photo.id}`;
+            card.id = cardId;
 
             card.innerHTML = `
-                <button class="remove-btn" onclick="removePhoto('${photo.id}')" title="Remove photo">×</button>
-                <img src="${photo.previewUrl}" alt="${photo.name}" class="photo-preview">
+                <img src="${imageUrl}" alt="${name}" class="photo-preview">
                 <div class="photo-info">
-                    <div class="photo-name">${photo.name}</div>
+                    <div class="photo-name">${name}</div>
                     <div class="photo-status">
-                        <span class="status-badge status-${photo.status}">${photo.status === 'cached' ? 'Saved locally' : 'Ready'}</span>
+                        <span class="status-badge status-${status}">${getStatusText(status)}</span>
                     </div>
                 </div>
             `;
 
             gallery.appendChild(card);
         }
+
+        function updatePhotoCard(cardId, imageUrl, status) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+
+            const img = card.querySelector('.photo-preview');
+            const badge = card.querySelector('.status-badge');
+
+            if (img && status === 'enhanced') {
+                img.src = imageUrl;
+            }
+
+            if (badge) {
+                badge.className = `status-badge status-${status}`;
+                badge.textContent = getStatusText(status);
+            }
+
+            // Add download button for enhanced photos
+            if (status === 'enhanced') {
+                const existingBtn = card.querySelector('.download-btn');
+                if (!existingBtn) {
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.className = 'download-btn';
+                    downloadBtn.textContent = 'Download';
+                    downloadBtn.onclick = () => downloadImage(imageUrl, cardId);
+                    card.appendChild(downloadBtn);
+                }
+            }
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'processing': return 'Enhancing...';
+                case 'enhanced': return 'Enhanced';
+                case 'error': return 'Error';
+                default: return status;
+            }
+        }
+
+        async function downloadImage(url, cardId) {
+            try {
+                const photo = enhancedPhotos.find(p => p.id === cardId);
+                const filename = photo ? `enhanced_${photo.name}` : 'enhanced_photo.png';
+
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const downloadUrl = URL.createObjectURL(blob);
+
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                URL.revokeObjectURL(downloadUrl);
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Failed to download image');
+            }
+        }
+
+        // Check authentication on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/pixlypro-auth';
+            }
+        });
     </script>
 </body>
 </html>
