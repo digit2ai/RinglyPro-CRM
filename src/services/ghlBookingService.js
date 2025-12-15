@@ -381,11 +381,59 @@ class GHLBookingService {
         };
       }
 
+      // Step 3: Save appointment locally to RinglyPro database for dashboard display
+      let localAppointment = null;
+      try {
+        const confirmationCode = `GHL${Date.now().toString().slice(-6).toUpperCase()}`;
+        const result = await sequelize.query(
+          `INSERT INTO appointments (
+            client_id, customer_name, customer_phone, customer_email,
+            appointment_date, appointment_time, duration, purpose,
+            status, source, confirmation_code, reminder_sent, confirmation_sent,
+            notes, ghl_appointment_id, ghl_contact_id,
+            created_at, updated_at
+          ) VALUES (
+            :clientId, :customerName, :customerPhone, :customerEmail,
+            :appointmentDate, :appointmentTime, :duration, :purpose,
+            :status, :source, :confirmationCode, :reminderSent, :confirmationSent,
+            :notes, :ghlAppointmentId, :ghlContactId,
+            NOW(), NOW()
+          ) RETURNING *`,
+          {
+            replacements: {
+              clientId: clientId,
+              customerName: customerName,
+              customerPhone: customerPhone,
+              customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@whatsapp.ringlypro.com`,
+              appointmentDate: date,
+              appointmentTime: time,
+              duration: 60,
+              purpose: service || 'WhatsApp Appointment',
+              status: 'confirmed',
+              source: 'whatsapp_ghl',
+              confirmationCode: confirmationCode,
+              reminderSent: false,
+              confirmationSent: false,
+              notes: notes || `Booked via WhatsApp - GHL\nCustomer: ${customerName}\nPhone: ${customerPhone}`,
+              ghlAppointmentId: appointmentResult.appointment?.id || null,
+              ghlContactId: contactResult.contact?.id || null
+            },
+            type: QueryTypes.INSERT
+          }
+        );
+        localAppointment = result[0]?.[0];
+        logger.info(`[GHL] Local appointment saved: ${localAppointment?.id}`);
+      } catch (localError) {
+        // Log but don't fail - GHL booking succeeded
+        logger.warn('[GHL] Failed to save local appointment:', localError.message);
+      }
+
       return {
         success: true,
         contact: contactResult.contact,
         contactIsNew: contactResult.isNew,
         appointment: appointmentResult.appointment,
+        localAppointment: localAppointment,
         message: 'Appointment booked successfully!'
       };
 

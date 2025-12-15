@@ -181,6 +181,25 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
     let responseText;
     let requiresHuman = false;
 
+    // Helper function to check for menu selection
+    const getMenuSelection = (msg) => {
+      const trimmed = msg.trim().toLowerCase();
+      // Check for number selection (1, 2, 3, 4) or emoji numbers
+      if (trimmed === '1' || trimmed === '1️⃣' || trimmed.includes('book') || trimmed.includes('agendar') || trimmed.includes('cita') || trimmed.includes('appointment')) {
+        return 'appointment';
+      }
+      if (trimmed === '2' || trimmed === '2️⃣') {
+        return 'zelle';
+      }
+      if (trimmed === '3' || trimmed === '3️⃣' || trimmed.includes('service') || trimmed.includes('servicio') || trimmed.includes('price') || trimmed.includes('precio')) {
+        return 'services';
+      }
+      if (trimmed === '4' || trimmed === '4️⃣' || trimmed.includes('agent') || trimmed.includes('agente') || trimmed.includes('human') || trimmed.includes('persona')) {
+        return 'human';
+      }
+      return null;
+    };
+
     // Helper function to check for payment-related keywords (including typos)
     const isPaymentRelated = (msg) => {
       const lowerMsg = msg.toLowerCase();
@@ -195,6 +214,91 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
       ];
       return paymentKeywords.some(keyword => lowerMsg.includes(keyword));
     };
+
+    // PRIORITY 0: Check for menu selection (after greeting was shown)
+    const menuSelection = getMenuSelection(customerMessage);
+    if (menuSelection && conversationContext.messageCount > 1) {
+      if (menuSelection === 'appointment') {
+        // Redirect to appointment booking
+        responseText = await handleAppointmentIntent(customerMessage, conversationContext, clientConfig);
+        return {
+          success: true,
+          response: responseText,
+          intent: { intent: 'appointment' },
+          language: detectedLanguage,
+          requiresHuman: false,
+          context: conversationContext
+        };
+      }
+      if (menuSelection === 'zelle') {
+        // Show Zelle info
+        if (zelle?.enabled && zelle?.email) {
+          const depositAmount = deposit?.type !== 'none' && deposit?.value
+            ? (deposit.type === 'fixed' ? `$${deposit.value}` : `${deposit.value}%`)
+            : (zelle.defaultAmount ? `$${zelle.defaultAmount}` : '');
+
+          responseText = zelle.depositMessage || (detectedLanguage === 'es'
+            ? `Para asegurar tu cita, envía un depósito${depositAmount ? ` de ${depositAmount}` : ''} por Zelle a: ${zelle.email}`
+            : `To secure your appointment, please send a deposit${depositAmount ? ` of ${depositAmount}` : ''} via Zelle to: ${zelle.email}`);
+
+          if (zelle.qrCodeUrl) {
+            responseText += detectedLanguage === 'es'
+              ? '\n\n📲 Te envío nuestro código QR para facilitar el pago.'
+              : '\n\n📲 Here is our QR code for easy payment.';
+          }
+        } else {
+          responseText = detectedLanguage === 'es'
+            ? 'El pago por Zelle no está configurado actualmente. Por favor contacta a un agente. 📞'
+            : 'Zelle payment is not currently configured. Please contact an agent. 📞';
+        }
+        return {
+          success: true,
+          response: responseText,
+          intent: { intent: 'payment' },
+          language: detectedLanguage,
+          requiresHuman: false,
+          context: conversationContext
+        };
+      }
+      if (menuSelection === 'services') {
+        // Show services list
+        if (services.length > 0) {
+          const servicesList = services.slice(0, 6).map((s, i) =>
+            `${i + 1}. ${s.name}${s.price ? ` - $${s.price}` : ''}${s.duration ? ` (${s.duration} min)` : ''}`
+          ).join('\n');
+
+          responseText = detectedLanguage === 'es'
+            ? `¡Claro! Aquí están nuestros servicios:\n\n${servicesList}\n\n¿Cuál te interesa? Responde con el número o el nombre del servicio para agendar.`
+            : `Of course! Here are our services:\n\n${servicesList}\n\nWhich one interests you? Reply with the number or service name to book.`;
+        } else {
+          responseText = detectedLanguage === 'es'
+            ? `¿Qué servicio te interesa? Puedo darte información sobre precios y disponibilidad.`
+            : `What service are you interested in? I can give you pricing and availability information.`;
+        }
+        return {
+          success: true,
+          response: responseText,
+          intent: { intent: 'services' },
+          language: detectedLanguage,
+          requiresHuman: false,
+          context: conversationContext
+        };
+      }
+      if (menuSelection === 'human') {
+        // Request human agent
+        responseText = detectedLanguage === 'es'
+          ? `Entendido. Un miembro de nuestro equipo te contactará pronto. 📞\n\nMientras tanto, ¿hay algo más en lo que pueda ayudarte?`
+          : `Got it. A team member will contact you shortly. 📞\n\nIn the meantime, is there anything else I can help you with?`;
+        return {
+          success: true,
+          response: responseText,
+          intent: { intent: 'human_request' },
+          language: detectedLanguage,
+          requiresHuman: true,
+          context: conversationContext
+        };
+      }
+    }
 
     // PRIORITY 1: Check for payment intent FIRST (before human escalation)
     if (isPaymentRelated(customerMessage)) {
@@ -229,10 +333,25 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
     }
     // Handle based on intent
     else if (intent.intent === 'greeting' && conversationContext.messageCount === 1) {
-      // First message greeting
+      // First message greeting - show menu with options
+      const hasZelle = zelle?.enabled && zelle?.email;
+      const hasBooking = booking?.system !== 'none' || vagaroEnabled;
+
+      let menuOptions = [];
+      if (hasBooking) {
+        menuOptions.push(detectedLanguage === 'es' ? '1️⃣ Agendar una cita' : '1️⃣ Book an Appointment');
+      }
+      if (hasZelle) {
+        menuOptions.push(detectedLanguage === 'es' ? '2️⃣ Hacer un depósito con Zelle' : '2️⃣ Make a Zelle Deposit');
+      }
+      menuOptions.push(detectedLanguage === 'es' ? '3️⃣ Información de servicios' : '3️⃣ Service Information');
+      menuOptions.push(detectedLanguage === 'es' ? '4️⃣ Hablar con un agente' : '4️⃣ Speak with an Agent');
+
+      const menuText = menuOptions.join('\n');
+
       responseText = detectedLanguage === 'es'
-        ? `¡Hola! 👋 Soy Lina, asistente virtual de ${businessName}. ¿En qué puedo ayudarte hoy?`
-        : `Hi! 👋 I'm Rachel, the virtual assistant for ${businessName}. How can I help you today?`;
+        ? `¡Hola! 👋 Soy Lina, asistente virtual de ${businessName}.\n\n¿En qué puedo ayudarte hoy?\n\n${menuText}\n\nResponde con el número o escribe tu consulta.`
+        : `Hi! 👋 I'm Rachel, the virtual assistant for ${businessName}.\n\nHow can I help you today?\n\n${menuText}\n\nReply with the number or type your question.`;
     }
     else if (intent.intent === 'appointment') {
       // Appointment booking intent
