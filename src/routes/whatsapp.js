@@ -28,7 +28,9 @@ async function getClientByWhatsAppNumber(whatsappNumber) {
     const normalizedNumber = whatsappNumber.replace(/^whatsapp:/i, '');
 
     const [client] = await sequelize.query(
-      `SELECT id, business_name, settings, whatsapp_business_number, ringlypro_number
+      `SELECT id, business_name, whatsapp_business_number, ringlypro_number,
+              business_hours_start, business_hours_end, timezone, booking_url,
+              rachel_enabled, booking_enabled
        FROM clients
        WHERE whatsapp_business_number = :number
           OR ringlypro_number = :number
@@ -38,6 +40,21 @@ async function getClientByWhatsAppNumber(whatsappNumber) {
         type: QueryTypes.SELECT
       }
     );
+
+    // Build settings object from individual columns
+    if (client) {
+      client.settings = {
+        business_type: 'service business',
+        services: [],
+        business_hours: client.business_hours_start && client.business_hours_end ? {
+          start: client.business_hours_start,
+          end: client.business_hours_end
+        } : null,
+        integration: {
+          vagaro: { enabled: false }
+        }
+      };
+    }
 
     return client || null;
   } catch (error) {
@@ -705,7 +722,7 @@ router.get('/config-status', authenticateToken, async (req, res) => {
 
     // Get client settings
     const [client] = await sequelize.query(
-      `SELECT id, business_name, whatsapp_business_number, settings
+      `SELECT id, business_name, whatsapp_business_number
        FROM clients WHERE id = :clientId`,
       {
         replacements: { clientId: user.client_id },
