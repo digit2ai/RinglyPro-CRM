@@ -447,7 +447,8 @@
     </div>
 
     <script>
-        const token = localStorage.getItem('authToken');
+        // Get auth token (stored as 'token' from login)
+        const token = localStorage.getItem('token');
         if (!token) {
             window.location.href = '/login';
         }
