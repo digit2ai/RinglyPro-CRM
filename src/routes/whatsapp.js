@@ -122,10 +122,10 @@ async function findOrCreateContact(clientId, phoneNumber, profileName = null) {
 
     // Try to find existing contact
     const [existingContact] = await sequelize.query(
-      `SELECT id, first_name, last_name, phone_number
+      `SELECT id, first_name, last_name, phone
        FROM contacts
        WHERE client_id = :clientId
-         AND (phone_number = :phone OR phone_number LIKE :phoneLike)
+         AND (phone = :phone OR phone LIKE :phoneLike)
        LIMIT 1`,
       {
         replacements: {
@@ -146,9 +146,9 @@ async function findOrCreateContact(clientId, phoneNumber, profileName = null) {
     const lastName = profileName?.split(' ').slice(1).join(' ') || 'Lead';
 
     const [newContact] = await sequelize.query(
-      `INSERT INTO contacts (client_id, first_name, last_name, phone_number, lead_source, created_at, updated_at)
+      `INSERT INTO contacts (client_id, first_name, last_name, phone, source, created_at, updated_at)
        VALUES (:clientId, :firstName, :lastName, :phone, 'whatsapp', NOW(), NOW())
-       RETURNING id, first_name, last_name, phone_number`,
+       RETURNING id, first_name, last_name, phone`,
       {
         replacements: {
           clientId,
