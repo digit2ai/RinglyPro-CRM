@@ -417,6 +417,9 @@ router.post('/whatsapp', authenticateToken, async (req, res) => {
       businessType,
       defaultLanguage,
       greetingMessage,
+      services,
+      deposit,
+      booking,
       zelle
     } = req.body;
 
@@ -461,6 +464,9 @@ router.post('/whatsapp', authenticateToken, async (req, res) => {
           businessType: businessType || 'salon',
           defaultLanguage: defaultLanguage || 'auto',
           greetingMessage: greetingMessage || null,
+          services: services || [],
+          deposit: deposit || { type: 'none', value: null },
+          booking: booking || { system: 'none', url: null, ghlCalendarId: null },
           zelle: zelle || null,
           updatedAt: new Date().toISOString()
         }
@@ -545,6 +551,9 @@ router.get('/whatsapp', authenticateToken, async (req, res) => {
       businessType: 'salon',
       defaultLanguage: 'auto',
       greetingMessage: null,
+      services: [],
+      deposit: { type: 'none', value: null },
+      booking: { system: 'none', url: null, ghlCalendarId: null },
       zelle: null
     };
 

@@ -477,6 +477,82 @@
             </form>
         </div>
 
+        <!-- Services & Pricing Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Services & Pricing</div>
+            </div>
+
+            <p style="color: #6e6e73; margin-bottom: 1.5rem;">
+                Configure your services so Rachel/Lina can provide accurate pricing and help customers book.
+            </p>
+
+            <div id="servicesContainer">
+                <!-- Services will be dynamically added here -->
+            </div>
+
+            <button type="button" class="btn btn-secondary" onclick="addService()" style="margin-top: 1rem;">
+                + Add Service
+            </button>
+
+            <div class="form-group" style="margin-top: 1.5rem;">
+                <label class="form-label" for="depositRequired">Deposit Required?</label>
+                <select id="depositRequired" class="form-input" onchange="handleDepositToggle()">
+                    <option value="none">No deposit required</option>
+                    <option value="fixed">Fixed amount deposit</option>
+                    <option value="percentage">Percentage of service price</option>
+                </select>
+            </div>
+
+            <div id="depositAmountGroup" class="form-group" style="display: none;">
+                <label class="form-label" for="depositValue">Deposit Amount</label>
+                <input type="number" id="depositValue" class="form-input" placeholder="50" min="0" step="0.01">
+                <p class="form-hint" id="depositHint">Amount to collect as deposit</p>
+            </div>
+        </div>
+
+        <!-- Booking Integration Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Booking Integration</div>
+            </div>
+
+            <p style="color: #6e6e73; margin-bottom: 1.5rem;">
+                Choose where Rachel/Lina should book appointments when customers want to schedule.
+            </p>
+
+            <div class="form-group">
+                <label class="form-label" for="bookingSystem">Booking System</label>
+                <select id="bookingSystem" class="form-input" onchange="handleBookingSystemChange()">
+                    <option value="none">Manual (notify me only)</option>
+                    <option value="vagaro">Vagaro</option>
+                    <option value="ghl">GoHighLevel (GHL)</option>
+                    <option value="calendly">Calendly</option>
+                    <option value="link">Custom Booking Link</option>
+                </select>
+            </div>
+
+            <div id="bookingLinkGroup" class="form-group" style="display: none;">
+                <label class="form-label" for="bookingLink">Booking URL</label>
+                <input type="url" id="bookingLink" class="form-input" placeholder="https://calendly.com/your-business">
+                <p class="form-hint">Rachel will share this link when customers want to book</p>
+            </div>
+
+            <div id="vagaroConfigGroup" style="display: none;">
+                <div class="alert alert-info" style="display: block;">
+                    <strong>Vagaro Integration</strong><br>
+                    Configure your Vagaro API credentials in <a href="/settings/vagaro" style="color: #1e40af;">Vagaro Settings</a> to enable direct booking.
+                </div>
+            </div>
+
+            <div id="ghlConfigGroup" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label" for="ghlCalendarId">GHL Calendar ID</label>
+                    <input type="text" id="ghlCalendarId" class="form-input" placeholder="Enter your GHL Calendar ID">
+                </div>
+            </div>
+        </div>
+
         <!-- Zelle Deposit Card -->
         <div class="card">
             <div class="card-header">
@@ -597,6 +673,100 @@
         }
 
         let currentSettings = {};
+        let services = [];
+        let serviceIndex = 0;
+
+        // Service management
+        function addService(service = null) {
+            const container = document.getElementById('servicesContainer');
+            const idx = serviceIndex++;
+
+            const div = document.createElement('div');
+            div.className = 'service-item';
+            div.id = `service-${idx}`;
+            div.style.cssText = 'border: 1px solid #e5e5e7; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; position: relative;';
+
+            div.innerHTML = `
+                <button type="button" onclick="removeService(${idx})" style="position: absolute; top: 0.5rem; right: 0.5rem; background: none; border: none; cursor: pointer; font-size: 1.25rem; color: #6e6e73;">&times;</button>
+                <div class="two-col">
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                        <label class="form-label">Service Name</label>
+                        <input type="text" class="form-input service-name" placeholder="Haircut" value="${service?.name || ''}">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                        <label class="form-label">Price ($)</label>
+                        <input type="number" class="form-input service-price" placeholder="50" min="0" step="0.01" value="${service?.price || ''}">
+                    </div>
+                </div>
+                <div class="two-col">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Duration (mins)</label>
+                        <input type="number" class="form-input service-duration" placeholder="60" min="5" step="5" value="${service?.duration || ''}">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Description (optional)</label>
+                        <input type="text" class="form-input service-description" placeholder="Brief description" value="${service?.description || ''}">
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(div);
+        }
+
+        function removeService(idx) {
+            const el = document.getElementById(`service-${idx}`);
+            if (el) el.remove();
+        }
+
+        function getServices() {
+            const items = document.querySelectorAll('.service-item');
+            const services = [];
+            items.forEach(item => {
+                const name = item.querySelector('.service-name').value.trim();
+                const price = parseFloat(item.querySelector('.service-price').value) || 0;
+                const duration = parseInt(item.querySelector('.service-duration').value) || 60;
+                const description = item.querySelector('.service-description').value.trim();
+                if (name) {
+                    services.push({ name, price, duration, description });
+                }
+            });
+            return services;
+        }
+
+        function loadServices(serviceList) {
+            const container = document.getElementById('servicesContainer');
+            container.innerHTML = '';
+            serviceIndex = 0;
+            if (serviceList && serviceList.length > 0) {
+                serviceList.forEach(s => addService(s));
+            } else {
+                // Add one empty service by default
+                addService();
+            }
+        }
+
+        // Deposit toggle
+        function handleDepositToggle() {
+            const type = document.getElementById('depositRequired').value;
+            const group = document.getElementById('depositAmountGroup');
+            const hint = document.getElementById('depositHint');
+
+            if (type === 'none') {
+                group.style.display = 'none';
+            } else {
+                group.style.display = 'block';
+                hint.textContent = type === 'percentage' ? 'Percentage of service price (e.g., 25 for 25%)' : 'Fixed deposit amount in dollars';
+            }
+        }
+
+        // Booking system toggle
+        function handleBookingSystemChange() {
+            const system = document.getElementById('bookingSystem').value;
+
+            document.getElementById('bookingLinkGroup').style.display = (system === 'link' || system === 'calendly') ? 'block' : 'none';
+            document.getElementById('vagaroConfigGroup').style.display = system === 'vagaro' ? 'block' : 'none';
+            document.getElementById('ghlConfigGroup').style.display = system === 'ghl' ? 'block' : 'none';
+        }
 
         // Load current settings
         async function loadSettings() {
@@ -618,6 +788,18 @@
                     document.getElementById('defaultLanguage').value = data.whatsapp.defaultLanguage || 'auto';
                     document.getElementById('greetingMessage').value = data.whatsapp.greetingMessage || '';
 
+                    // Services & Pricing
+                    loadServices(data.whatsapp.services || []);
+                    document.getElementById('depositRequired').value = data.whatsapp.deposit?.type || 'none';
+                    document.getElementById('depositValue').value = data.whatsapp.deposit?.value || '';
+                    handleDepositToggle();
+
+                    // Booking system
+                    document.getElementById('bookingSystem').value = data.whatsapp.booking?.system || 'none';
+                    document.getElementById('bookingLink').value = data.whatsapp.booking?.url || '';
+                    document.getElementById('ghlCalendarId').value = data.whatsapp.booking?.ghlCalendarId || '';
+                    handleBookingSystemChange();
+
                     // Zelle settings
                     document.getElementById('zelleToggle').checked = data.whatsapp.zelle?.enabled || false;
                     document.getElementById('zelleEmail').value = data.whatsapp.zelle?.email || '';
@@ -631,6 +813,9 @@
                     updateStatus(data.whatsapp);
                     handleToggleChange();
                     handleZelleToggle();
+                } else {
+                    // No settings yet, add one empty service
+                    addService();
                 }
             } catch (error) {
                 console.error('Failed to load settings:', error);
@@ -669,6 +854,16 @@
                 businessType: document.getElementById('businessType').value,
                 defaultLanguage: document.getElementById('defaultLanguage').value,
                 greetingMessage: document.getElementById('greetingMessage').value,
+                services: getServices(),
+                deposit: {
+                    type: document.getElementById('depositRequired').value,
+                    value: parseFloat(document.getElementById('depositValue').value) || null
+                },
+                booking: {
+                    system: document.getElementById('bookingSystem').value,
+                    url: document.getElementById('bookingLink').value,
+                    ghlCalendarId: document.getElementById('ghlCalendarId').value
+                },
                 zelle: {
                     enabled: document.getElementById('zelleToggle').checked,
                     email: document.getElementById('zelleEmail').value,

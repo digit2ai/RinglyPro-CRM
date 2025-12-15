@@ -30,7 +30,7 @@ async function getClientByWhatsAppNumber(whatsappNumber) {
     const [client] = await sequelize.query(
       `SELECT id, business_name, whatsapp_business_number, ringlypro_number,
               business_hours_start, business_hours_end, timezone, booking_url,
-              rachel_enabled, booking_enabled
+              rachel_enabled, booking_enabled, settings
        FROM clients
        WHERE whatsapp_business_number = :number
           OR ringlypro_number = :number
@@ -41,16 +41,24 @@ async function getClientByWhatsAppNumber(whatsappNumber) {
       }
     );
 
-    // Build settings object from individual columns
+    // Parse settings from JSONB or build from individual columns
     if (client) {
+      const savedSettings = client.settings || {};
+      const whatsappSettings = savedSettings.integration?.whatsapp || {};
+
       client.settings = {
-        business_type: 'service business',
-        services: [],
+        business_type: whatsappSettings.businessType || 'service business',
+        services: whatsappSettings.services || [],
         business_hours: client.business_hours_start && client.business_hours_end ? {
           start: client.business_hours_start,
           end: client.business_hours_end
         } : null,
-        integration: {
+        deposit: whatsappSettings.deposit || { type: 'none', value: null },
+        booking: whatsappSettings.booking || { system: 'none', url: null },
+        zelle: whatsappSettings.zelle || null,
+        greetingMessage: whatsappSettings.greetingMessage || null,
+        defaultLanguage: whatsappSettings.defaultLanguage || 'auto',
+        integration: savedSettings.integration || {
           vagaro: { enabled: false }
         }
       };
@@ -282,7 +290,12 @@ router.post('/webhook', async (req, res) => {
       businessType: client.settings?.business_type || 'service business',
       services: client.settings?.services || [],
       hours: client.settings?.business_hours || null,
-      vagaroEnabled: client.settings?.integration?.vagaro?.enabled || false
+      vagaroEnabled: client.settings?.integration?.vagaro?.enabled || false,
+      deposit: client.settings?.deposit || { type: 'none', value: null },
+      booking: client.settings?.booking || { system: 'none', url: null },
+      zelle: client.settings?.zelle || null,
+      greetingMessage: client.settings?.greetingMessage || null,
+      bookingUrl: client.booking_url || null
     };
 
     // Get recent conversation history for context

@@ -150,7 +150,11 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
     services = [],
     hours = null,
     vagaroEnabled = false,
-    language = 'en'
+    language = 'en',
+    deposit = { type: 'none', value: null },
+    booking = { system: 'none', url: null },
+    zelle = null,
+    bookingUrl = null
   } = clientConfig;
 
   try {
@@ -195,10 +199,45 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
       responseText = await handleAppointmentIntent(customerMessage, conversationContext, clientConfig);
     }
     else if (intent.intent === 'pricing' || intent.intent === 'inquiry') {
-      // Pricing or general inquiry
-      responseText = detectedLanguage === 'es'
-        ? `¡Claro! ¿Qué servicio te interesa? Así puedo darte información más específica sobre precios y disponibilidad.`
-        : `Of course! Which service are you interested in? I can give you more specific information about pricing and availability.`;
+      // Pricing or general inquiry - show services with prices if available
+      if (services.length > 0) {
+        const servicesList = services.slice(0, 6).map((s, i) =>
+          `${i + 1}. ${s.name}${s.price ? ` - $${s.price}` : ''}${s.duration ? ` (${s.duration} min)` : ''}`
+        ).join('\n');
+
+        responseText = detectedLanguage === 'es'
+          ? `¡Claro! Aquí están nuestros servicios:\n\n${servicesList}\n\n¿Cuál te interesa? Responde con el número o el nombre del servicio.`
+          : `Of course! Here are our services:\n\n${servicesList}\n\nWhich one interests you? Reply with the number or service name.`;
+      } else {
+        responseText = detectedLanguage === 'es'
+          ? `¡Claro! ¿Qué servicio te interesa? Así puedo darte información más específica sobre precios y disponibilidad.`
+          : `Of course! Which service are you interested in? I can give you more specific information about pricing and availability.`;
+      }
+    }
+    else if (intent.intent === 'payment' || intent.intent === 'deposit' ||
+             customerMessage.toLowerCase().includes('deposit') || customerMessage.toLowerCase().includes('pay') ||
+             customerMessage.toLowerCase().includes('pago') || customerMessage.toLowerCase().includes('depósito')) {
+      // Payment/deposit request - send Zelle info if configured
+      if (zelle?.enabled && zelle?.email) {
+        const depositAmount = deposit?.type !== 'none' && deposit?.value
+          ? (deposit.type === 'fixed' ? `$${deposit.value}` : `${deposit.value}%`)
+          : (zelle.defaultAmount ? `$${zelle.defaultAmount}` : '');
+
+        const zelleMsg = zelle.depositMessage || (detectedLanguage === 'es'
+          ? `Para asegurar tu cita, envía un depósito${depositAmount ? ` de ${depositAmount}` : ''} por Zelle a: ${zelle.email}`
+          : `To secure your appointment, please send a deposit${depositAmount ? ` of ${depositAmount}` : ''} via Zelle to: ${zelle.email}`);
+
+        responseText = zelleMsg;
+        if (zelle.qrCodeUrl) {
+          responseText += detectedLanguage === 'es'
+            ? '\n\n📲 Te envío nuestro código QR para facilitar el pago.'
+            : '\n\n📲 Here is our QR code for easy payment.';
+        }
+      } else {
+        responseText = detectedLanguage === 'es'
+          ? 'Para información sobre pagos y depósitos, un miembro de nuestro equipo te contactará pronto. 📞'
+          : 'For payment and deposit information, a team member will contact you shortly. 📞';
+      }
     }
     else if (intent.intent === 'hours') {
       // Business hours inquiry
@@ -274,7 +313,13 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
  */
 async function handleAppointmentIntent(message, context, clientConfig) {
   const { language, customerName, businessName, vagaroEnabled } = context;
-  const { services = [] } = clientConfig;
+  const {
+    services = [],
+    booking = { system: 'none', url: null },
+    deposit = { type: 'none', value: null },
+    zelle = null,
+    bookingUrl = null
+  } = clientConfig;
 
   // Try to extract appointment details
   let appointmentDetails = {};
@@ -300,25 +345,57 @@ async function handleAppointmentIntent(message, context, clientConfig) {
   // Build response based on what's missing
   const missing = appointmentDetails.missingFields || [];
 
+  // Check if we have a booking link to provide
+  const effectiveBookingUrl = booking?.url || bookingUrl;
+  const hasBookingLink = booking?.system === 'link' || booking?.system === 'calendly' || effectiveBookingUrl;
+
+  // If booking system is configured with a link, provide it
+  if (hasBookingLink && effectiveBookingUrl) {
+    let response = language === 'es'
+      ? `¡Perfecto! Puedes agendar tu cita directamente aquí:\n\n📅 ${effectiveBookingUrl}`
+      : `Perfect! You can book your appointment directly here:\n\n📅 ${effectiveBookingUrl}`;
+
+    // Add deposit info if required
+    if (deposit?.type !== 'none' && deposit?.value && zelle?.enabled) {
+      const depositAmount = deposit.type === 'fixed' ? `$${deposit.value}` : `${deposit.value}%`;
+      response += language === 'es'
+        ? `\n\n💰 Se requiere un depósito de ${depositAmount} para confirmar.`
+        : `\n\n💰 A ${depositAmount} deposit is required to confirm.`;
+    }
+
+    return response;
+  }
+
   if (missing.length === 0 && appointmentDetails.date && appointmentDetails.time) {
     // All details captured - confirm
+    let confirmMsg;
     if (language === 'es') {
-      return `Perfecto, voy a confirmar tu cita:
+      confirmMsg = `Perfecto, voy a confirmar tu cita:
 📅 Fecha: ${appointmentDetails.date}
 🕐 Hora: ${appointmentDetails.time}
 📍 Servicio: ${appointmentDetails.service || 'Consulta'}
-${customerName ? `👤 Nombre: ${customerName}` : ''}
-
-¿Es correcto? Responde SÍ para confirmar.`;
+${customerName ? `👤 Nombre: ${customerName}` : ''}`;
     } else {
-      return `Perfect, I'm confirming your appointment:
+      confirmMsg = `Perfect, I'm confirming your appointment:
 📅 Date: ${appointmentDetails.date}
 🕐 Time: ${appointmentDetails.time}
 📍 Service: ${appointmentDetails.service || 'Consultation'}
-${customerName ? `👤 Name: ${customerName}` : ''}
-
-Is this correct? Reply YES to confirm.`;
+${customerName ? `👤 Name: ${customerName}` : ''}`;
     }
+
+    // Add deposit info if required
+    if (deposit?.type !== 'none' && deposit?.value && zelle?.enabled) {
+      const depositAmount = deposit.type === 'fixed' ? `$${deposit.value}` : `${deposit.value}%`;
+      confirmMsg += language === 'es'
+        ? `\n\n💰 Depósito requerido: ${depositAmount}\n📲 Zelle: ${zelle.email}`
+        : `\n\n💰 Deposit required: ${depositAmount}\n📲 Zelle: ${zelle.email}`;
+    }
+
+    confirmMsg += language === 'es'
+      ? '\n\n¿Es correcto? Responde SÍ para confirmar.'
+      : '\n\nIs this correct? Reply YES to confirm.';
+
+    return confirmMsg;
   }
 
   // Ask for missing information

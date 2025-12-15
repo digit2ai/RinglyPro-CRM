@@ -23,7 +23,10 @@ function getLeadResponsePrompt(options = {}) {
     businessType = 'service business',
     services = [],
     hours = null,
-    vagaroEnabled = false
+    vagaroEnabled = false,
+    deposit = null,
+    zelle = null,
+    booking = null
   } = options;
 
   if (language === 'es') {
@@ -38,7 +41,7 @@ function getLeadResponsePrompt(options = {}) {
  */
 function getSpanishPrompt({ businessName, businessType, services, hours, vagaroEnabled }) {
   const servicesList = services.length > 0
-    ? services.map(s => `- ${s.name}: ${s.description || ''}`).join('\n')
+    ? services.map(s => `- ${s.name}${s.price ? ` ($${s.price})` : ''}${s.duration ? ` - ${s.duration} min` : ''}${s.description ? `: ${s.description}` : ''}`).join('\n')
     : '- Consultar servicios disponibles';
 
   const hoursText = hours
@@ -134,7 +137,7 @@ Si el cliente pide hablar con un humano o tienes dudas:
  */
 function getEnglishPrompt({ businessName, businessType, services, hours, vagaroEnabled }) {
   const servicesList = services.length > 0
-    ? services.map(s => `- ${s.name}: ${s.description || ''}`).join('\n')
+    ? services.map(s => `- ${s.name}${s.price ? ` ($${s.price})` : ''}${s.duration ? ` - ${s.duration} min` : ''}${s.description ? `: ${s.description}` : ''}`).join('\n')
     : '- Contact us for available services';
 
   const hoursText = hours
