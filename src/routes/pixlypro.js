@@ -1637,27 +1637,34 @@ router.post('/upload-and-enhance-direct', authenticateToken, upload.array('photo
           ContentType: 'image/png',
         }));
 
-        const enhancedUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
-        logger.info(`[PIXLYPRO] Enhanced photo saved: ${enhancedUrl}`);
+        // Store the S3 key for database (permanent reference)
+        const enhancedS3Url = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${enhancedFilename}`;
+        logger.info(`[PIXLYPRO] Enhanced photo saved: ${enhancedS3Url}`);
 
-        // Save to database
+        // Generate presigned URLs for immediate access (1 hour expiry)
+        const enhancedPresignedUrl = await getPresignedUrl(s3, BUCKET_NAME, enhancedFilename, 3600);
+        const originalPresignedUrl = await getPresignedUrl(s3, BUCKET_NAME, originalFilename, 3600);
+        logger.info(`[PIXLYPRO] Generated presigned URLs for download`);
+
+        // Save to database (store the S3 URLs, not presigned)
         await sequelize.query(
           `INSERT INTO pixlypro_photos (order_id, original_url, enhanced_url, filename, created_at)
            VALUES (:orderId, :originalUrl, :enhancedUrl, :filename, NOW())`,
           {
             replacements: {
               orderId,
-              originalUrl,
-              enhancedUrl,
+              originalUrl: `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${originalFilename}`,
+              enhancedUrl: enhancedS3Url,
               filename: photo.originalname || filename
             },
             type: QueryTypes.INSERT
           }
         );
 
+        // Return presigned URLs for immediate display/download
         processedPhotos.push({
-          originalUrl,
-          enhancedUrl,
+          originalUrl: originalPresignedUrl,
+          enhancedUrl: enhancedPresignedUrl,
           filename: photo.originalname || filename
         });
 
