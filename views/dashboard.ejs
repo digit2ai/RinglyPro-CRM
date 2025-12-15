@@ -2137,121 +2137,8 @@
                 <!-- CRM Integrations Tab -->
                 <div class="settings-tab-content" id="crmTabContent">
                     <form id="crmSettingsForm">
-                        <!-- GoHighLevel Section -->
-                        <div class="crm-section">
-                            <h4>
-                                <span class="crm-logo">🚀</span>
-                                GoHighLevel
-                            </h4>
-
-                            <div class="form-group">
-                                <label for="ghlApiKey">GoHighLevel API Key</label>
-                                <input
-                                    type="password"
-                                    id="ghlApiKey"
-                                    name="ghl_api_key"
-                                    placeholder="pit-xxxx... or eyJhbGciOiJIUzI1NiIs..."
-                                    autocomplete="off"
-                                >
-                                <span class="form-hint">Your GoHighLevel API Key (Private Integration Token or JWT)</span>
-                                <div id="ghlApiKeyStatus" class="key-status not-configured" style="display: none;">
-                                    <span>●</span>
-                                    <span id="ghlApiKeyStatusText">Not configured</span>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="ghlLocationId">Location ID</label>
-                                <input
-                                    type="text"
-                                    id="ghlLocationId"
-                                    name="ghl_location_id"
-                                    placeholder="3lSeAHXNU9t09Hhp9oai"
-                                    autocomplete="off"
-                                >
-                                <span class="form-hint">Your GoHighLevel Location ID (20 characters)</span>
-                            </div>
-
-                            <p style="font-size: 0.75rem; color: #6b7280; margin-top: 1rem; line-height: 1.5;">
-                                <strong>How to find these:</strong><br>
-                                1. Go to GoHighLevel Settings → Integrations<br>
-                                2. Create a Private Integration<br>
-                                3. Copy the Private Integration Token (API Key)<br>
-                                4. Find your Location ID in the URL or Settings
-                            </p>
-                        </div>
-
-                        <!-- SendGrid Email Marketing Section -->
-                        <div class="crm-section" style="margin-top: 2rem;">
-                            <h4>
-                                <span class="crm-logo">📧</span>
-                                SendGrid Email Marketing
-                            </h4>
-
-                            <div class="form-group">
-                                <label for="sendgridApiKey">SendGrid API Key</label>
-                                <input
-                                    type="password"
-                                    id="sendgridApiKey"
-                                    name="sendgrid_api_key"
-                                    placeholder="SG.xxxxxxxxxxxxxxxxxxxxx"
-                                    autocomplete="off"
-                                >
-                                <span class="form-hint">Your SendGrid API Key (Full Access or Mail Send)</span>
-                                <div id="sendgridApiKeyStatus" class="key-status not-configured" style="display: none;">
-                                    <span>●</span>
-                                    <span id="sendgridApiKeyStatusText">Not configured</span>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="sendgridFromEmail">From Email Address</label>
-                                <input
-                                    type="email"
-                                    id="sendgridFromEmail"
-                                    name="sendgrid_from_email"
-                                    placeholder="notify@yourdomain.com"
-                                    autocomplete="off"
-                                >
-                                <span class="form-hint">Verified sender email address (must be authenticated in SendGrid)</span>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="sendgridFromName">From Name</label>
-                                <input
-                                    type="text"
-                                    id="sendgridFromName"
-                                    name="sendgrid_from_name"
-                                    placeholder="Your Business Name"
-                                    autocomplete="off"
-                                >
-                                <span class="form-hint">The name that appears as the email sender</span>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="sendgridReplyTo">Reply-To Email (Optional)</label>
-                                <input
-                                    type="email"
-                                    id="sendgridReplyTo"
-                                    name="sendgrid_reply_to"
-                                    placeholder="info@yourdomain.com"
-                                    autocomplete="off"
-                                >
-                                <span class="form-hint">Where replies should be sent (defaults to From Email)</span>
-                            </div>
-
-                            <p style="font-size: 0.75rem; color: #6b7280; margin-top: 1rem; line-height: 1.5;">
-                                <strong>How to get these:</strong><br>
-                                1. Go to <a href="https://app.sendgrid.com/settings/api_keys" target="_blank" style="color: #1e40af;">SendGrid → Settings → API Keys</a><br>
-                                2. Click "Create API Key" with Full Access or Mail Send permissions<br>
-                                3. Copy the API Key (starts with "SG.")<br>
-                                4. Authenticate your domain in Settings → Sender Authentication<br>
-                                5. Use an authenticated email address as your From Email
-                            </p>
-                        </div>
-
                         <!-- Outbound Voicemail Section -->
-                        <div class="crm-section" style="margin-top: 2rem;">
+                        <div class="crm-section">
                             <h4>
                                 <span class="crm-logo">🎙️</span>
                                 Outbound Voicemail Message
@@ -4534,45 +4421,8 @@
         }
 
         function renderCRMSettings(settings) {
-            // GoHighLevel settings
-            if (settings.ghl_api_key_set) {
-                document.getElementById('ghlApiKey').placeholder = settings.ghl_api_key || '••••••••••••';
-                document.getElementById('ghlApiKeyStatus').style.display = 'inline-flex';
-                document.getElementById('ghlApiKeyStatus').className = 'key-status configured';
-                document.getElementById('ghlApiKeyStatusText').textContent = 'Configured';
-            } else {
-                document.getElementById('ghlApiKeyStatus').style.display = 'inline-flex';
-                document.getElementById('ghlApiKeyStatus').className = 'key-status not-configured';
-                document.getElementById('ghlApiKeyStatusText').textContent = 'Not configured';
-            }
-
-            if (settings.ghl_location_id) {
-                document.getElementById('ghlLocationId').value = settings.ghl_location_id;
-            }
-
-            // SendGrid settings
-            if (settings.sendgrid_api_key_set) {
-                document.getElementById('sendgridApiKey').placeholder = '••••••••••••';
-                document.getElementById('sendgridApiKeyStatus').style.display = 'inline-flex';
-                document.getElementById('sendgridApiKeyStatus').className = 'key-status configured';
-                document.getElementById('sendgridApiKeyStatusText').textContent = 'Configured';
-            } else {
-                document.getElementById('sendgridApiKeyStatus').style.display = 'inline-flex';
-                document.getElementById('sendgridApiKeyStatus').className = 'key-status not-configured';
-                document.getElementById('sendgridApiKeyStatusText').textContent = 'Not configured';
-            }
-
-            if (settings.sendgrid_from_email) {
-                document.getElementById('sendgridFromEmail').value = settings.sendgrid_from_email;
-            }
-
-            if (settings.sendgrid_from_name) {
-                document.getElementById('sendgridFromName').value = settings.sendgrid_from_name;
-            }
-
-            if (settings.sendgrid_reply_to) {
-                document.getElementById('sendgridReplyTo').value = settings.sendgrid_reply_to;
-            }
+            // Note: GHL and SendGrid settings are now in separate settings pages
+            // This function only handles the voicemail message now
 
             // Outbound voicemail message
             if (settings.outbound_voicemail_message) {
@@ -4585,54 +4435,7 @@
         async function saveCRMSettings(e) {
             e.preventDefault();
 
-            const ghlApiKey = document.getElementById('ghlApiKey').value.trim();
-            const ghlLocationId = document.getElementById('ghlLocationId').value.trim();
-            const sendgridApiKey = document.getElementById('sendgridApiKey').value.trim();
-            const sendgridFromEmail = document.getElementById('sendgridFromEmail').value.trim();
-            const sendgridFromName = document.getElementById('sendgridFromName').value.trim();
-            const sendgridReplyTo = document.getElementById('sendgridReplyTo').value.trim();
             const outboundVoicemailMessage = document.getElementById('outboundVoicemailMessage').value.trim();
-
-            // Validate GoHighLevel fields
-            // API Key can be either PIT (starts with "pit-") or JWT token format
-            if (ghlApiKey && ghlApiKey.length < 10) {
-                alert('GoHighLevel API Key appears to be too short. Please check your key.');
-                return;
-            }
-
-            if (ghlLocationId && ghlLocationId.length !== 20) {
-                alert('GoHighLevel Location ID must be exactly 20 characters');
-                return;
-            }
-
-            // Validate SendGrid fields
-            if (sendgridApiKey && !sendgridApiKey.startsWith('SG.')) {
-                alert('SendGrid API Key must start with "SG."');
-                return;
-            }
-
-            if (sendgridApiKey && sendgridApiKey.length < 20) {
-                alert('SendGrid API Key appears to be too short. Please check your key.');
-                return;
-            }
-
-            // If SendGrid API key is provided, require from email
-            if (sendgridApiKey && !sendgridFromEmail) {
-                alert('Please provide a From Email Address for SendGrid');
-                return;
-            }
-
-            // Validate email format
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (sendgridFromEmail && !emailRegex.test(sendgridFromEmail)) {
-                alert('Please provide a valid From Email Address');
-                return;
-            }
-
-            if (sendgridReplyTo && !emailRegex.test(sendgridReplyTo)) {
-                alert('Please provide a valid Reply-To Email Address');
-                return;
-            }
 
             // Validate outbound voicemail message length
             if (outboundVoicemailMessage && outboundVoicemailMessage.length > 1000) {
@@ -4656,22 +4459,11 @@
                 }
             }
 
-            // Prepare data (only include fields that were filled)
-            const updateData = {};
-            if (ghlApiKey) updateData.ghl_api_key = ghlApiKey;
-            if (ghlLocationId) updateData.ghl_location_id = ghlLocationId;
-            if (sendgridApiKey) updateData.sendgrid_api_key = sendgridApiKey;
-            if (sendgridFromEmail) updateData.sendgrid_from_email = sendgridFromEmail;
-            if (sendgridFromName) updateData.sendgrid_from_name = sendgridFromName;
-            if (sendgridReplyTo) updateData.sendgrid_reply_to = sendgridReplyTo;
-            // Always include voicemail message (even if empty, to allow clearing it)
-            updateData.outbound_voicemail_message = outboundVoicemailMessage || null;
-
-            // If no fields filled, just close
-            if (Object.keys(updateData).length === 0) {
-                closeSettings();
-                return;
-            }
+            // Prepare data - only voicemail message now (GHL and SendGrid are in separate settings pages)
+            const updateData = {
+                // Always include voicemail message (even if empty, to allow clearing it)
+                outbound_voicemail_message: outboundVoicemailMessage || null
+            };
 
             const saveBtn = document.getElementById('saveCrmBtn');
             saveBtn.disabled = true;
