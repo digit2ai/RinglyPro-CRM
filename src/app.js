@@ -565,6 +565,20 @@ app.get('/settings/whatsapp', (req, res) => {
   });
 });
 
+// GoHighLevel Integration Settings
+app.get('/settings/ghl', (req, res) => {
+  res.render('settings-ghl', {
+    title: 'GoHighLevel Integration - RinglyPro Settings'
+  });
+});
+
+// SendGrid Email Marketing Settings
+app.get('/settings/sendgrid', (req, res) => {
+  res.render('settings-sendgrid', {
+    title: 'SendGrid Email Marketing - RinglyPro Settings'
+  });
+});
+
 // PixlyPro admin dashboard
 app.get('/pixlypro-admin-dashboard', (req, res) => {
   res.render('pixlypro-admin-dashboard', {

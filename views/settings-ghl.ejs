@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoHighLevel Integration - RinglyPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header p {
+            color: #6e6e73;
+            font-size: 1rem;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e5e7;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 51px;
+            height: 31px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 31px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 23px;
+            width: 23px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #34c759;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            font-size: 1rem;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #ff6b35;
+        }
+
+        .form-hint {
+            color: #6e6e73;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #ff6b35;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #e55a2b;
+        }
+
+        .btn-secondary {
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8ed;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .alert-info {
+            background: #fff7ed;
+            color: #9a3412;
+            border: 1px solid #fed7aa;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f5f5f7;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .setup-steps {
+            background: #fff7ed;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+        }
+
+        .setup-steps ol {
+            padding-left: 1.5rem;
+        }
+
+        .setup-steps li {
+            margin-bottom: 0.75rem;
+            color: #1d1d1f;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #ff6b35;
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        #alert-container .alert {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/settings" class="back-link">
+            ← Back to Settings
+        </a>
+
+        <div class="header">
+            <h1>GoHighLevel Integration</h1>
+            <p>Connect your GoHighLevel CRM to sync contacts, calendar, and automations</p>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <!-- Status Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Integration Status</div>
+                <div id="status-badge" class="status-badge status-disconnected">
+                    <span>●</span>
+                    <span>Not configured</span>
+                </div>
+            </div>
+
+            <ul class="feature-list">
+                <li>
+                    <span>📅</span>
+                    <span>Calendar sync - Book appointments directly</span>
+                </li>
+                <li>
+                    <span>👥</span>
+                    <span>Contact sync - Auto-create contacts from WhatsApp leads</span>
+                </li>
+                <li>
+                    <span>🔄</span>
+                    <span>Workflow triggers - Fire automations from conversations</span>
+                </li>
+                <li>
+                    <span>📊</span>
+                    <span>Pipeline integration - Move deals based on conversation status</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Configuration Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">API Configuration</div>
+                <label class="toggle">
+                    <input type="checkbox" id="enableToggle" onchange="handleToggleChange()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <form id="ghlForm" onsubmit="handleSaveSettings(event)">
+                <div class="form-group">
+                    <label class="form-label" for="apiKey">GoHighLevel API Key</label>
+                    <input type="password"
+                           id="apiKey"
+                           class="form-input"
+                           placeholder="pit-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                           autocomplete="off">
+                    <p class="form-hint">Your GoHighLevel API Key (Private Integration Token or JWT)</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="locationId">Location ID</label>
+                    <input type="text"
+                           id="locationId"
+                           class="form-input"
+                           placeholder="3lSeAHXNU9t09Hhp9oai"
+                           autocomplete="off">
+                    <p class="form-hint">Your GoHighLevel Location ID (20 characters)</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="calendarId">Default Calendar ID (Optional)</label>
+                    <input type="text"
+                           id="calendarId"
+                           class="form-input"
+                           placeholder="calendar_xxxxxxxxxx"
+                           autocomplete="off">
+                    <p class="form-hint">Calendar to use for booking appointments via WhatsApp</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="pipelineId">Default Pipeline ID (Optional)</label>
+                    <input type="text"
+                           id="pipelineId"
+                           class="form-input"
+                           placeholder="pipeline_xxxxxxxxxx"
+                           autocomplete="off">
+                    <p class="form-hint">Pipeline to add new leads from WhatsApp conversations</p>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                    <button type="button" class="btn btn-secondary" onclick="testConnection()">Test Connection</button>
+                </div>
+            </form>
+
+            <div class="setup-steps">
+                <strong>How to find these:</strong>
+                <ol>
+                    <li>Go to GoHighLevel Settings → Integrations</li>
+                    <li>Create a <strong>Private Integration</strong></li>
+                    <li>Copy the <strong>Private Integration Token</strong> (API Key)</li>
+                    <li>Find your <strong>Location ID</strong> in the URL or Settings → Business Info</li>
+                    <li>For Calendar ID, go to Settings → Calendars and click on a calendar</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Sync Options Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Sync Options</div>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                    <input type="checkbox" id="syncContacts" checked style="width: 18px; height: 18px;">
+                    <span><strong>Sync Contacts</strong> - Create contacts in GHL from WhatsApp leads</span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                    <input type="checkbox" id="syncCalendar" checked style="width: 18px; height: 18px;">
+                    <span><strong>Sync Calendar</strong> - Book appointments directly in GHL calendar</span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                    <input type="checkbox" id="triggerWorkflows" style="width: 18px; height: 18px;">
+                    <span><strong>Trigger Workflows</strong> - Fire GHL automations from WhatsApp events</span>
+                </label>
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="saveSyncOptions()">Save Sync Options</button>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        let currentSettings = {};
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/client-settings/ghl', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success && data.ghl) {
+                    currentSettings = data.ghl;
+
+                    document.getElementById('enableToggle').checked = data.ghl.enabled || false;
+                    document.getElementById('apiKey').value = data.ghl.apiKey ? '••••••••••••' : '';
+                    document.getElementById('locationId').value = data.ghl.locationId || '';
+                    document.getElementById('calendarId').value = data.ghl.calendarId || '';
+                    document.getElementById('pipelineId').value = data.ghl.pipelineId || '';
+
+                    document.getElementById('syncContacts').checked = data.ghl.syncContacts !== false;
+                    document.getElementById('syncCalendar').checked = data.ghl.syncCalendar !== false;
+                    document.getElementById('triggerWorkflows').checked = data.ghl.triggerWorkflows || false;
+
+                    updateStatus(data.ghl);
+                    handleToggleChange();
+                }
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+                showAlert('Failed to load settings', 'error');
+            }
+        }
+
+        function handleToggleChange() {
+            const enabled = document.getElementById('enableToggle').checked;
+            const inputs = document.querySelectorAll('#ghlForm .form-input');
+            inputs.forEach(input => {
+                input.disabled = !enabled;
+            });
+        }
+
+        async function handleSaveSettings(event) {
+            event.preventDefault();
+
+            const apiKeyValue = document.getElementById('apiKey').value;
+            const settings = {
+                enabled: document.getElementById('enableToggle').checked,
+                apiKey: apiKeyValue.includes('••••') ? currentSettings.apiKey : apiKeyValue,
+                locationId: document.getElementById('locationId').value,
+                calendarId: document.getElementById('calendarId').value,
+                pipelineId: document.getElementById('pipelineId').value,
+                syncContacts: document.getElementById('syncContacts').checked,
+                syncCalendar: document.getElementById('syncCalendar').checked,
+                triggerWorkflows: document.getElementById('triggerWorkflows').checked
+            };
+
+            try {
+                const response = await fetch('/api/client-settings/ghl', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentSettings = { ...currentSettings, ...settings };
+                    showAlert('GoHighLevel settings saved successfully!', 'success');
+                    updateStatus(settings);
+                } else {
+                    showAlert(data.error || 'Failed to save settings', 'error');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showAlert('Failed to save settings', 'error');
+            }
+        }
+
+        async function saveSyncOptions() {
+            const settings = {
+                ...currentSettings,
+                syncContacts: document.getElementById('syncContacts').checked,
+                syncCalendar: document.getElementById('syncCalendar').checked,
+                triggerWorkflows: document.getElementById('triggerWorkflows').checked
+            };
+
+            try {
+                const response = await fetch('/api/client-settings/ghl', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Sync options saved!', 'success');
+                } else {
+                    showAlert(data.error || 'Failed to save', 'error');
+                }
+            } catch (error) {
+                showAlert('Failed to save sync options', 'error');
+            }
+        }
+
+        async function testConnection() {
+            showAlert('Testing connection...', 'info');
+
+            try {
+                const response = await fetch('/api/client-settings/ghl/test', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Connection successful! GoHighLevel is connected.', 'success');
+                } else {
+                    showAlert(data.error || 'Connection failed. Please check your credentials.', 'error');
+                }
+            } catch (error) {
+                showAlert('Connection test failed', 'error');
+            }
+        }
+
+        function updateStatus(settings) {
+            const badge = document.getElementById('status-badge');
+            const isConfigured = settings.enabled && settings.apiKey && settings.locationId;
+
+            if (isConfigured) {
+                badge.className = 'status-badge status-connected';
+                badge.innerHTML = '<span>●</span><span>Connected</span>';
+            } else {
+                badge.className = 'status-badge status-disconnected';
+                badge.innerHTML = '<span>●</span><span>Not configured</span>';
+            }
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('alert-container');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        loadSettings();
+    </script>
+</body>
+</html>

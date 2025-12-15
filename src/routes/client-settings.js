@@ -673,4 +673,558 @@ router.post('/whatsapp/qr-upload', authenticateToken, async (req, res, next) => 
   }
 });
 
+// =====================================================
+// GOHIGHLEVEL SETTINGS
+// =====================================================
+
+/**
+ * GET /api/client-settings/ghl
+ * Get GoHighLevel integration settings
+ */
+router.get('/ghl', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user?.client_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client not found for user'
+      });
+    }
+
+    const [client] = await sequelize.query(
+      'SELECT settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: user.client_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const ghlSettings = client?.settings?.integration?.ghl || {
+      enabled: false,
+      apiKey: null,
+      locationId: null,
+      calendarId: null,
+      pipelineId: null,
+      syncContacts: true,
+      syncCalendar: true,
+      triggerWorkflows: false
+    };
+
+    // Mask API key for display
+    if (ghlSettings.apiKey) {
+      ghlSettings.apiKeyMasked = true;
+    }
+
+    res.json({
+      success: true,
+      ghl: ghlSettings
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Get GHL settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get GoHighLevel settings'
+    });
+  }
+});
+
+/**
+ * POST /api/client-settings/ghl
+ * Update GoHighLevel integration settings
+ */
+router.post('/ghl', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const {
+      enabled,
+      apiKey,
+      locationId,
+      calendarId,
+      pipelineId,
+      syncContacts,
+      syncCalendar,
+      triggerWorkflows
+    } = req.body;
+
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user?.client_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client not found for user'
+      });
+    }
+
+    const [client] = await sequelize.query(
+      'SELECT settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: user.client_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const currentSettings = client?.settings || {};
+
+    const updatedSettings = {
+      ...currentSettings,
+      integration: {
+        ...(currentSettings.integration || {}),
+        ghl: {
+          enabled: enabled === true,
+          apiKey: apiKey || null,
+          locationId: locationId || null,
+          calendarId: calendarId || null,
+          pipelineId: pipelineId || null,
+          syncContacts: syncContacts !== false,
+          syncCalendar: syncCalendar !== false,
+          triggerWorkflows: triggerWorkflows === true,
+          updatedAt: new Date().toISOString()
+        }
+      }
+    };
+
+    await sequelize.query(
+      `UPDATE clients SET settings = :settings WHERE id = :clientId`,
+      {
+        replacements: {
+          settings: JSON.stringify(updatedSettings),
+          clientId: user.client_id
+        },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`[CLIENT SETTINGS] Updated GHL settings for client ${user.client_id}`);
+
+    res.json({
+      success: true,
+      message: 'GoHighLevel settings saved'
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Update GHL settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to save GoHighLevel settings'
+    });
+  }
+});
+
+/**
+ * POST /api/client-settings/ghl/test
+ * Test GoHighLevel connection
+ */
+router.post('/ghl/test', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user?.client_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    const [client] = await sequelize.query(
+      'SELECT settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: user.client_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const ghlSettings = client?.settings?.integration?.ghl;
+
+    if (!ghlSettings?.apiKey || !ghlSettings?.locationId) {
+      return res.json({
+        success: false,
+        error: 'API Key and Location ID are required'
+      });
+    }
+
+    // Test GHL API connection
+    const fetch = require('node-fetch');
+    const response = await fetch(`https://services.leadconnectorhq.com/locations/${ghlSettings.locationId}`, {
+      headers: {
+        'Authorization': `Bearer ${ghlSettings.apiKey}`,
+        'Version': '2021-07-28'
+      }
+    });
+
+    if (response.ok) {
+      res.json({
+        success: true,
+        message: 'Connection successful'
+      });
+    } else {
+      const error = await response.json();
+      res.json({
+        success: false,
+        error: error.message || 'Connection failed'
+      });
+    }
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] GHL test error:', error);
+    res.json({
+      success: false,
+      error: 'Connection test failed'
+    });
+  }
+});
+
+// =====================================================
+// SENDGRID SETTINGS
+// =====================================================
+
+/**
+ * GET /api/client-settings/sendgrid
+ * Get SendGrid integration settings
+ */
+router.get('/sendgrid', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user?.client_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client not found for user'
+      });
+    }
+
+    const [client] = await sequelize.query(
+      'SELECT settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: user.client_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const sendgridSettings = client?.settings?.integration?.sendgrid || {
+      enabled: false,
+      apiKey: null,
+      fromEmail: null,
+      fromName: null,
+      replyTo: null,
+      confirmationEmails: true,
+      reminderEmails: true,
+      depositEmails: false,
+      welcomeEmails: false
+    };
+
+    // Mask API key for display
+    if (sendgridSettings.apiKey) {
+      sendgridSettings.apiKeyMasked = true;
+    }
+
+    res.json({
+      success: true,
+      sendgrid: sendgridSettings
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Get SendGrid settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get SendGrid settings'
+    });
+  }
+});
+
+/**
+ * POST /api/client-settings/sendgrid
+ * Update SendGrid integration settings
+ */
+router.post('/sendgrid', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const {
+      enabled,
+      apiKey,
+      fromEmail,
+      fromName,
+      replyTo,
+      confirmationEmails,
+      reminderEmails,
+      depositEmails,
+      welcomeEmails
+    } = req.body;
+
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user?.client_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client not found for user'
+      });
+    }
+
+    const [client] = await sequelize.query(
+      'SELECT settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: user.client_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const currentSettings = client?.settings || {};
+
+    const updatedSettings = {
+      ...currentSettings,
+      integration: {
+        ...(currentSettings.integration || {}),
+        sendgrid: {
+          enabled: enabled === true,
+          apiKey: apiKey || null,
+          fromEmail: fromEmail || null,
+          fromName: fromName || null,
+          replyTo: replyTo || null,
+          confirmationEmails: confirmationEmails !== false,
+          reminderEmails: reminderEmails !== false,
+          depositEmails: depositEmails === true,
+          welcomeEmails: welcomeEmails === true,
+          updatedAt: new Date().toISOString()
+        }
+      }
+    };
+
+    await sequelize.query(
+      `UPDATE clients SET settings = :settings WHERE id = :clientId`,
+      {
+        replacements: {
+          settings: JSON.stringify(updatedSettings),
+          clientId: user.client_id
+        },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`[CLIENT SETTINGS] Updated SendGrid settings for client ${user.client_id}`);
+
+    res.json({
+      success: true,
+      message: 'SendGrid settings saved'
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Update SendGrid settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to save SendGrid settings'
+    });
+  }
+});
+
+/**
+ * POST /api/client-settings/sendgrid/test
+ * Test SendGrid API connection
+ */
+router.post('/sendgrid/test', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user?.client_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    const [client] = await sequelize.query(
+      'SELECT settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: user.client_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const sendgridSettings = client?.settings?.integration?.sendgrid;
+
+    if (!sendgridSettings?.apiKey) {
+      return res.json({
+        success: false,
+        error: 'API Key is required'
+      });
+    }
+
+    // Test SendGrid API connection
+    const fetch = require('node-fetch');
+    const response = await fetch('https://api.sendgrid.com/v3/user/profile', {
+      headers: {
+        'Authorization': `Bearer ${sendgridSettings.apiKey}`
+      }
+    });
+
+    if (response.ok) {
+      res.json({
+        success: true,
+        message: 'API key verified'
+      });
+    } else {
+      res.json({
+        success: false,
+        error: 'Invalid API key'
+      });
+    }
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] SendGrid test error:', error);
+    res.json({
+      success: false,
+      error: 'Verification failed'
+    });
+  }
+});
+
+/**
+ * POST /api/client-settings/sendgrid/test-email
+ * Send a test email via SendGrid
+ */
+router.post('/sendgrid/test-email', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email address is required'
+      });
+    }
+
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user?.client_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    const [client] = await sequelize.query(
+      'SELECT settings, business_name FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: user.client_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const sendgridSettings = client?.settings?.integration?.sendgrid;
+
+    if (!sendgridSettings?.apiKey || !sendgridSettings?.fromEmail) {
+      return res.json({
+        success: false,
+        error: 'SendGrid is not fully configured'
+      });
+    }
+
+    // Send test email via SendGrid
+    const fetch = require('node-fetch');
+    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${sendgridSettings.apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        personalizations: [{
+          to: [{ email }]
+        }],
+        from: {
+          email: sendgridSettings.fromEmail,
+          name: sendgridSettings.fromName || client?.business_name || 'RinglyPro'
+        },
+        subject: 'Test Email from RinglyPro',
+        content: [{
+          type: 'text/html',
+          value: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #1d1d1f;">SendGrid Test Email</h2>
+              <p>This is a test email from your RinglyPro integration.</p>
+              <p>If you received this email, your SendGrid configuration is working correctly!</p>
+              <hr style="border: none; border-top: 1px solid #e5e5e7; margin: 20px 0;">
+              <p style="color: #6e6e73; font-size: 12px;">
+                Sent via RinglyPro CRM<br>
+                ${client?.business_name || 'Your Business'}
+              </p>
+            </div>
+          `
+        }]
+      })
+    });
+
+    if (response.ok || response.status === 202) {
+      res.json({
+        success: true,
+        message: 'Test email sent'
+      });
+    } else {
+      const error = await response.json();
+      res.json({
+        success: false,
+        error: error.errors?.[0]?.message || 'Failed to send email'
+      });
+    }
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] SendGrid test email error:', error);
+    res.json({
+      success: false,
+      error: 'Failed to send test email'
+    });
+  }
+});
+
 module.exports = router;

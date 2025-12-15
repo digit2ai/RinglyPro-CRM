@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SendGrid Email Marketing - RinglyPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header p {
+            color: #6e6e73;
+            font-size: 1rem;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e5e7;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 51px;
+            height: 31px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 31px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 23px;
+            width: 23px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #34c759;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            font-size: 1rem;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #1a82e2;
+        }
+
+        .form-hint {
+            color: #6e6e73;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #1a82e2;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1571c8;
+        }
+
+        .btn-secondary {
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8ed;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f5f5f7;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .setup-steps {
+            background: #dbeafe;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+        }
+
+        .setup-steps ol {
+            padding-left: 1.5rem;
+        }
+
+        .setup-steps li {
+            margin-bottom: 0.75rem;
+            color: #1d1d1f;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #1a82e2;
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        #alert-container .alert {
+            display: block;
+        }
+
+        .test-email-section {
+            background: #f9fafb;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/settings" class="back-link">
+            ← Back to Settings
+        </a>
+
+        <div class="header">
+            <h1>SendGrid Email Marketing</h1>
+            <p>Configure email marketing and transactional emails for your business</p>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <!-- Status Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Integration Status</div>
+                <div id="status-badge" class="status-badge status-disconnected">
+                    <span>●</span>
+                    <span>Not configured</span>
+                </div>
+            </div>
+
+            <ul class="feature-list">
+                <li>
+                    <span>📧</span>
+                    <span>Appointment confirmations - Auto-send confirmation emails</span>
+                </li>
+                <li>
+                    <span>🔔</span>
+                    <span>Reminder emails - Send appointment reminders</span>
+                </li>
+                <li>
+                    <span>📣</span>
+                    <span>Marketing campaigns - Send promotional emails to contacts</span>
+                </li>
+                <li>
+                    <span>📋</span>
+                    <span>Receipt emails - Send payment/deposit confirmations</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Configuration Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">API Configuration</div>
+                <label class="toggle">
+                    <input type="checkbox" id="enableToggle" onchange="handleToggleChange()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <form id="sendgridForm" onsubmit="handleSaveSettings(event)">
+                <div class="form-group">
+                    <label class="form-label" for="apiKey">SendGrid API Key</label>
+                    <input type="password"
+                           id="apiKey"
+                           class="form-input"
+                           placeholder="SG.xxxxxxxxxxxxxxxxxxxxx"
+                           autocomplete="off">
+                    <p class="form-hint">Your SendGrid API Key (Full Access or Mail Send)</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="fromEmail">From Email Address</label>
+                    <input type="email"
+                           id="fromEmail"
+                           class="form-input"
+                           placeholder="noreply@yourdomain.com"
+                           autocomplete="off">
+                    <p class="form-hint">Verified sender email address (must be authenticated in SendGrid)</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="fromName">From Name</label>
+                    <input type="text"
+                           id="fromName"
+                           class="form-input"
+                           placeholder="Your Business Name"
+                           autocomplete="off">
+                    <p class="form-hint">The name that appears as the email sender</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="replyTo">Reply-To Email (Optional)</label>
+                    <input type="email"
+                           id="replyTo"
+                           class="form-input"
+                           placeholder="info@yourdomain.com"
+                           autocomplete="off">
+                    <p class="form-hint">Where replies should be sent (defaults to From Email)</p>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                    <button type="button" class="btn btn-secondary" onclick="testConnection()">Verify API Key</button>
+                </div>
+            </form>
+
+            <div class="setup-steps">
+                <strong>How to get these:</strong>
+                <ol>
+                    <li>Go to <a href="https://app.sendgrid.com" target="_blank" style="color: #1a82e2;">SendGrid</a> → Settings → API Keys</li>
+                    <li>Click "<strong>Create API Key</strong>" with Full Access or Mail Send permissions</li>
+                    <li>Copy the API Key (starts with "SG.")</li>
+                    <li>Authenticate your domain in Settings → Sender Authentication</li>
+                    <li>Use an authenticated email address as your From Email</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Email Options Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Email Notifications</div>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                    <input type="checkbox" id="confirmationEmails" checked style="width: 18px; height: 18px;">
+                    <span><strong>Appointment Confirmations</strong> - Send confirmation when appointment is booked</span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                    <input type="checkbox" id="reminderEmails" checked style="width: 18px; height: 18px;">
+                    <span><strong>Appointment Reminders</strong> - Send reminder 24 hours before appointment</span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                    <input type="checkbox" id="depositEmails" style="width: 18px; height: 18px;">
+                    <span><strong>Deposit Receipts</strong> - Send receipt when deposit is received</span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                    <input type="checkbox" id="welcomeEmails" style="width: 18px; height: 18px;">
+                    <span><strong>Welcome Emails</strong> - Send welcome email to new contacts</span>
+                </label>
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="saveEmailOptions()">Save Email Options</button>
+        </div>
+
+        <!-- Test Email Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Send Test Email</div>
+            </div>
+
+            <div class="test-email-section">
+                <div class="form-group">
+                    <label class="form-label" for="testEmail">Test Email Address</label>
+                    <input type="email"
+                           id="testEmail"
+                           class="form-input"
+                           placeholder="your@email.com"
+                           autocomplete="off">
+                </div>
+
+                <button type="button" class="btn btn-secondary" onclick="sendTestEmail()">Send Test Email</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        let currentSettings = {};
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/client-settings/sendgrid', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success && data.sendgrid) {
+                    currentSettings = data.sendgrid;
+
+                    document.getElementById('enableToggle').checked = data.sendgrid.enabled || false;
+                    document.getElementById('apiKey').value = data.sendgrid.apiKey ? '••••••••••••' : '';
+                    document.getElementById('fromEmail').value = data.sendgrid.fromEmail || '';
+                    document.getElementById('fromName').value = data.sendgrid.fromName || '';
+                    document.getElementById('replyTo').value = data.sendgrid.replyTo || '';
+
+                    document.getElementById('confirmationEmails').checked = data.sendgrid.confirmationEmails !== false;
+                    document.getElementById('reminderEmails').checked = data.sendgrid.reminderEmails !== false;
+                    document.getElementById('depositEmails').checked = data.sendgrid.depositEmails || false;
+                    document.getElementById('welcomeEmails').checked = data.sendgrid.welcomeEmails || false;
+
+                    updateStatus(data.sendgrid);
+                    handleToggleChange();
+                }
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+                showAlert('Failed to load settings', 'error');
+            }
+        }
+
+        function handleToggleChange() {
+            const enabled = document.getElementById('enableToggle').checked;
+            const inputs = document.querySelectorAll('#sendgridForm .form-input');
+            inputs.forEach(input => {
+                input.disabled = !enabled;
+            });
+        }
+
+        async function handleSaveSettings(event) {
+            event.preventDefault();
+
+            const apiKeyValue = document.getElementById('apiKey').value;
+            const settings = {
+                enabled: document.getElementById('enableToggle').checked,
+                apiKey: apiKeyValue.includes('••••') ? currentSettings.apiKey : apiKeyValue,
+                fromEmail: document.getElementById('fromEmail').value,
+                fromName: document.getElementById('fromName').value,
+                replyTo: document.getElementById('replyTo').value,
+                confirmationEmails: document.getElementById('confirmationEmails').checked,
+                reminderEmails: document.getElementById('reminderEmails').checked,
+                depositEmails: document.getElementById('depositEmails').checked,
+                welcomeEmails: document.getElementById('welcomeEmails').checked
+            };
+
+            try {
+                const response = await fetch('/api/client-settings/sendgrid', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentSettings = { ...currentSettings, ...settings };
+                    showAlert('SendGrid settings saved successfully!', 'success');
+                    updateStatus(settings);
+                } else {
+                    showAlert(data.error || 'Failed to save settings', 'error');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showAlert('Failed to save settings', 'error');
+            }
+        }
+
+        async function saveEmailOptions() {
+            const settings = {
+                ...currentSettings,
+                confirmationEmails: document.getElementById('confirmationEmails').checked,
+                reminderEmails: document.getElementById('reminderEmails').checked,
+                depositEmails: document.getElementById('depositEmails').checked,
+                welcomeEmails: document.getElementById('welcomeEmails').checked
+            };
+
+            try {
+                const response = await fetch('/api/client-settings/sendgrid', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Email options saved!', 'success');
+                } else {
+                    showAlert(data.error || 'Failed to save', 'error');
+                }
+            } catch (error) {
+                showAlert('Failed to save email options', 'error');
+            }
+        }
+
+        async function testConnection() {
+            showAlert('Verifying API key...', 'info');
+
+            try {
+                const response = await fetch('/api/client-settings/sendgrid/test', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('API key verified! SendGrid is connected.', 'success');
+                } else {
+                    showAlert(data.error || 'Verification failed. Please check your API key.', 'error');
+                }
+            } catch (error) {
+                showAlert('Verification failed', 'error');
+            }
+        }
+
+        async function sendTestEmail() {
+            const testEmail = document.getElementById('testEmail').value;
+            if (!testEmail) {
+                showAlert('Please enter a test email address', 'error');
+                return;
+            }
+
+            showAlert('Sending test email...', 'info');
+
+            try {
+                const response = await fetch('/api/client-settings/sendgrid/test-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ email: testEmail })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Test email sent! Check your inbox.', 'success');
+                } else {
+                    showAlert(data.error || 'Failed to send test email', 'error');
+                }
+            } catch (error) {
+                showAlert('Failed to send test email', 'error');
+            }
+        }
+
+        function updateStatus(settings) {
+            const badge = document.getElementById('status-badge');
+            const isConfigured = settings.enabled && settings.apiKey && settings.fromEmail;
+
+            if (isConfigured) {
+                badge.className = 'status-badge status-connected';
+                badge.innerHTML = '<span>●</span><span>Connected</span>';
+            } else {
+                badge.className = 'status-badge status-disconnected';
+                badge.innerHTML = '<span>●</span><span>Not configured</span>';
+            }
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('alert-container');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        loadSettings();
+    </script>
+</body>
+</html>
