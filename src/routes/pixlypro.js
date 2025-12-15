@@ -1618,8 +1618,8 @@ router.post('/upload-and-enhance-direct', authenticateToken, upload.array('photo
         let enhancedBuffer;
 
         if (openaiImageService.isConfigured()) {
-          // Use OpenAI Vision for smart enhancement recommendations
-          enhancedBuffer = await openaiImageService.enhanceWithVision(imageBuffer, photo.originalname);
+          // Use OpenAI gpt-image-1 for commercial-grade enhancement (same as ChatGPT)
+          enhancedBuffer = await openaiImageService.enhanceImage(imageBuffer, photo.originalname);
         } else {
           // Fallback to local professional enhancement
           logger.info(`[PIXLYPRO] OpenAI not configured, using local enhancement`);

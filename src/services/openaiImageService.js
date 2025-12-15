@@ -1,18 +1,32 @@
 /**
  * OpenAI Image Enhancement Service
  * File: src/services/openaiImageService.js
- * Purpose: AI-powered professional photo enhancement using OpenAI's image API
+ * Purpose: AI-powered professional photo enhancement using OpenAI's gpt-image-1 API
+ *
+ * Uses gpt-image-1 (the same model ChatGPT uses) for superior quality image editing
  */
 
 const OpenAI = require('openai');
 const logger = require('../utils/logger');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
 // Professional enhancement prompt (hidden from customers)
-const ENHANCEMENT_PROMPT = `I am a professional graphic designer. My role is to enhance this image to a high-end commercial, professional grade while preserving the original look, composition, and authenticity of the uploaded image.
+// This prompt is used with gpt-image-1 to achieve commercial-grade results
+const ENHANCEMENT_PROMPT = `Enhance this photo to high-end commercial, professional grade quality while preserving the original look, composition, and authenticity.
 
-Improve overall color balance, brightness, contrast, sharpness, and clarity. Enhance details naturally without over-processing. Correct lighting, reduce noise if present, and ensure clean, crisp edges.
+Apply professional-level improvements:
+- Perfect color balance and white balance correction
+- Optimal brightness and exposure adjustment
+- Rich contrast with preserved shadow and highlight details
+- Enhanced color vibrancy and saturation without oversaturation
+- Professional sharpening for crisp, clean details
+- Noise reduction while maintaining texture
+- Lighting correction and enhancement
+- Clean, polished finish ready for commercial use
 
-The final result should look polished, realistic, and ready for commercial use (website, menu, social media, or marketing materials), while fully conserving the original aspects, proportions, and visual intent of the image.`;
+The result should look like it was professionally retouched by an expert photo editor - polished, realistic, and ready for website, menu, social media, or marketing materials. Preserve the original subject, composition, and visual intent completely.`;
 
 let openai = null;
 
@@ -36,7 +50,8 @@ function isConfigured() {
 }
 
 /**
- * Enhance an image using OpenAI's image editing API
+ * Enhance an image using OpenAI's gpt-image-1 model (same as ChatGPT uses)
+ * This produces commercial-grade professional results
  * @param {Buffer} imageBuffer - The image buffer to enhance
  * @param {string} filename - Original filename for logging
  * @returns {Promise<Buffer>} - Enhanced image buffer
@@ -48,40 +63,69 @@ async function enhanceImage(imageBuffer, filename = 'image.png') {
         throw new Error('OpenAI API key not configured');
     }
 
-    logger.info(`[OPENAI-IMAGE] Starting enhancement for: ${filename}`);
+    logger.info(`[OPENAI-IMAGE] Starting gpt-image-1 enhancement for: ${filename}`);
+
+    // Write buffer to temp file (required for OpenAI's images.edit API)
+    const tempDir = os.tmpdir();
+    const tempFilePath = path.join(tempDir, `pixlypro_${Date.now()}_${filename}`);
 
     try {
-        // Convert buffer to base64
-        const base64Image = imageBuffer.toString('base64');
+        // Ensure we have a PNG file for the API
+        const sharp = require('sharp');
+        const pngBuffer = await sharp(imageBuffer)
+            .png()
+            .toBuffer();
 
-        // Use OpenAI's image edit/variation API
-        // Note: OpenAI's DALL-E doesn't directly enhance images, so we use the
-        // gpt-4-vision model to analyze and then generate an enhanced version
+        fs.writeFileSync(tempFilePath, pngBuffer);
 
+        logger.info(`[OPENAI-IMAGE] Calling gpt-image-1 images.edit API...`);
+
+        // Use gpt-image-1 for superior quality (same model ChatGPT uses)
         const response = await client.images.edit({
-            model: "dall-e-2",
-            image: imageBuffer,
+            model: "gpt-image-1",
+            image: fs.createReadStream(tempFilePath),
             prompt: ENHANCEMENT_PROMPT,
-            n: 1,
-            size: "1024x1024",
-            response_format: "b64_json"
+            size: "1024x1024"
         });
 
-        if (response.data && response.data[0] && response.data[0].b64_json) {
-            const enhancedBuffer = Buffer.from(response.data[0].b64_json, 'base64');
-            logger.info(`[OPENAI-IMAGE] Enhancement complete for: ${filename}`);
-            return enhancedBuffer;
+        // Clean up temp file
+        try { fs.unlinkSync(tempFilePath); } catch (e) {}
+
+        if (response.data && response.data[0]) {
+            let enhancedBuffer;
+
+            if (response.data[0].b64_json) {
+                enhancedBuffer = Buffer.from(response.data[0].b64_json, 'base64');
+            } else if (response.data[0].url) {
+                // If URL is returned, fetch the image
+                const fetch = require('node-fetch');
+                const imageResponse = await fetch(response.data[0].url);
+                enhancedBuffer = Buffer.from(await imageResponse.arrayBuffer());
+            }
+
+            if (enhancedBuffer) {
+                logger.info(`[OPENAI-IMAGE] gpt-image-1 enhancement complete for: ${filename}`);
+                return enhancedBuffer;
+            }
         }
 
         throw new Error('No image data in response');
 
     } catch (error) {
-        logger.error(`[OPENAI-IMAGE] Enhancement error for ${filename}:`, error.message);
+        // Clean up temp file on error
+        try { fs.unlinkSync(tempFilePath); } catch (e) {}
 
-        // If DALL-E edit fails, try using GPT-4 Vision to analyze and describe enhancements
-        // then return the original with basic sharp enhancements as fallback
-        logger.info(`[OPENAI-IMAGE] Falling back to local enhancement for: ${filename}`);
-        return await localEnhancement(imageBuffer);
+        logger.error(`[OPENAI-IMAGE] gpt-image-1 error for ${filename}:`, error.message);
+
+        // Check if this is an access error (gpt-image-1 requires verification)
+        if (error.message.includes('access') || error.message.includes('permission') || error.message.includes('not available')) {
+            logger.warn(`[OPENAI-IMAGE] gpt-image-1 may require API verification. Falling back to vision analysis.`);
+            return await enhanceWithVision(imageBuffer, filename);
+        }
+
+        // Fall back to vision-based enhancement
+        logger.info(`[OPENAI-IMAGE] Falling back to vision-based enhancement for: ${filename}`);
+        return await enhanceWithVision(imageBuffer, filename);
     }
 }
 
