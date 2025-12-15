@@ -70,9 +70,8 @@ async function enhanceImage(imageBuffer, filename = 'image.png') {
 
     // Write buffer to temp file (required for OpenAI's images.edit API)
     const tempDir = os.tmpdir();
-    // Sanitize filename to remove special characters that cause issues
-    const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const tempFilePath = path.join(tempDir, `pixlypro_${Date.now()}_${safeFilename}`);
+    // IMPORTANT: File MUST have .png extension for OpenAI to detect MIME type correctly
+    const tempFilePath = path.join(tempDir, `pixlypro_${Date.now()}.png`);
 
     try {
         // Ensure we have a PNG file for the API
@@ -84,6 +83,7 @@ async function enhanceImage(imageBuffer, filename = 'image.png') {
         fs.writeFileSync(tempFilePath, pngBuffer);
 
         logger.info(`[OPENAI-IMAGE] Calling gpt-image-1 images.edit API...`);
+        logger.info(`[OPENAI-IMAGE] Temp file: ${tempFilePath}, size: ${pngBuffer.length} bytes`);
 
         // Use gpt-image-1 for superior quality (same model ChatGPT uses)
         // OpenAI's AI analyzes the image and decides ALL adjustments
