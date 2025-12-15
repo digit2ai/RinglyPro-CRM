@@ -8,10 +8,8 @@
  */
 
 const OpenAI = require('openai');
+const { toFile } = require('openai');
 const logger = require('../utils/logger');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
 
 // Professional enhancement prompt (hidden from customers)
 // This prompt tells OpenAI exactly how to enhance the image - AI decides everything
@@ -68,11 +66,6 @@ async function enhanceImage(imageBuffer, filename = 'image.png') {
 
     logger.info(`[OPENAI-IMAGE] Starting gpt-image-1 enhancement for: ${filename}`);
 
-    // Write buffer to temp file (required for OpenAI's images.edit API)
-    const tempDir = os.tmpdir();
-    // IMPORTANT: File MUST have .png extension for OpenAI to detect MIME type correctly
-    const tempFilePath = path.join(tempDir, `pixlypro_${Date.now()}.png`);
-
     try {
         // Ensure we have a PNG file for the API
         const sharp = require('sharp');
@@ -80,22 +73,21 @@ async function enhanceImage(imageBuffer, filename = 'image.png') {
             .png()
             .toBuffer();
 
-        fs.writeFileSync(tempFilePath, pngBuffer);
-
         logger.info(`[OPENAI-IMAGE] Calling gpt-image-1 images.edit API...`);
-        logger.info(`[OPENAI-IMAGE] Temp file: ${tempFilePath}, size: ${pngBuffer.length} bytes`);
+        logger.info(`[OPENAI-IMAGE] Image size: ${pngBuffer.length} bytes`);
+
+        // Use toFile helper to explicitly set MIME type (fixes application/octet-stream error)
+        // See: https://github.com/openai/openai-node/issues/1468
+        const imageFile = await toFile(pngBuffer, 'image.png', { type: 'image/png' });
 
         // Use gpt-image-1 for superior quality (same model ChatGPT uses)
         // OpenAI's AI analyzes the image and decides ALL adjustments
         const response = await client.images.edit({
             model: "gpt-image-1",
-            image: fs.createReadStream(tempFilePath),
+            image: imageFile,
             prompt: ENHANCEMENT_PROMPT,
             size: "1024x1024"
         });
-
-        // Clean up temp file
-        try { fs.unlinkSync(tempFilePath); } catch (e) {}
 
         if (response.data && response.data[0]) {
             let enhancedBuffer;
@@ -119,9 +111,6 @@ async function enhanceImage(imageBuffer, filename = 'image.png') {
         throw new Error('No image data in response');
 
     } catch (error) {
-        // Clean up temp file on error
-        try { fs.unlinkSync(tempFilePath); } catch (e) {}
-
         logger.error(`[OPENAI-IMAGE] gpt-image-1 error for ${filename}:`, error.message);
 
         // Re-throw the error - no fallback to manual adjustments
