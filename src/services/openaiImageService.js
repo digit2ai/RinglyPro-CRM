@@ -105,19 +105,29 @@ async function enhanceWithVision(imageBuffer, filename = 'image.png') {
         const mimeType = 'image/png';
 
         // Use GPT-4 Vision to analyze the image and get enhancement recommendations
+        // The AI acts as a professional graphic designer analyzing the specific image
         const analysisResponse = await client.chat.completions.create({
             model: "gpt-4o",
             messages: [
+                {
+                    role: "system",
+                    content: ENHANCEMENT_PROMPT
+                },
                 {
                     role: "user",
                     content: [
                         {
                             type: "text",
-                            text: `Analyze this image and provide specific numeric adjustments for professional enhancement.
+                            text: `Analyze this specific image and determine the exact adjustments needed to enhance it to high-end commercial, professional grade.
 
-Consider: brightness (-1 to 1), contrast (0.5 to 2), saturation (0.5 to 2), and sharpness (0 to 2).
+Based on what you see in THIS image, provide specific numeric adjustments:
+- brightness: (-1 to 1) - adjust based on current lighting
+- contrast: (0.5 to 2) - enhance depth and definition as needed
+- saturation: (0.5 to 2) - improve color vibrancy if needed
+- sharpness: (0 to 2) - enhance clarity and crisp edges
 
-The goal is to make it look polished, professional, and ready for commercial use while preserving the original composition.
+Consider the image's current state: Is it too dark? Too flat? Colors dull? Details soft?
+Make adjustments that will make it polished and commercial-ready while preserving its authenticity.
 
 Respond ONLY with a JSON object like:
 {"brightness": 0.1, "contrast": 1.2, "saturation": 1.1, "sharpness": 1.3}
