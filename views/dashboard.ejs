@@ -2196,13 +2196,14 @@
                     </form>
 
                     <!-- Integration Links (outside form to prevent form interference) -->
-                    <div style="border-top: 1px solid #e5e7eb; margin-top: 1.5rem; padding-top: 1.5rem;">
+                    <div style="border-top: 1px solid #e5e7eb; margin-top: 1.5rem; padding-top: 1.5rem; position: relative; z-index: 100;">
                         <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1.5rem; color: #1f2937;">Integration Settings</h4>
+                        <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem;">Click any card to configure that integration:</p>
 
                         <!-- Integration Grid -->
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; position: relative; z-index: 101;">
                             <!-- WhatsApp -->
-                            <a href="/settings/whatsapp" style="display: block; padding: 1rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem; text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;">
+                            <a href="/settings/whatsapp" target="_self" style="display: block; padding: 1rem; background: #f0fdf4; border: 2px solid #25D366; border-radius: 0.5rem; text-decoration: none; cursor: pointer; position: relative; z-index: 102;">
                                 <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
                                     <span style="font-size: 1.5rem;">💬</span>
                                     <span style="font-weight: 600; color: #166534;">WhatsApp</span>
@@ -2211,7 +2212,7 @@
                             </a>
 
                             <!-- Vagaro -->
-                            <a href="/settings/vagaro" style="display: block; padding: 1rem; background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 0.5rem; text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;">
+                            <a href="/settings/vagaro" target="_self" style="display: block; padding: 1rem; background: #faf5ff; border: 2px solid #7c3aed; border-radius: 0.5rem; text-decoration: none; cursor: pointer; position: relative; z-index: 102;">
                                 <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
                                     <span style="font-size: 1.5rem;">📅</span>
                                     <span style="font-weight: 600; color: #7c3aed;">Vagaro</span>
@@ -2220,7 +2221,7 @@
                             </a>
 
                             <!-- GoHighLevel -->
-                            <a href="/settings/ghl" style="display: block; padding: 1rem; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 0.5rem; text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;">
+                            <a href="/settings/ghl" target="_self" style="display: block; padding: 1rem; background: #fff7ed; border: 2px solid #ff6b35; border-radius: 0.5rem; text-decoration: none; cursor: pointer; position: relative; z-index: 102;">
                                 <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
                                     <span style="font-size: 1.5rem;">🚀</span>
                                     <span style="font-weight: 600; color: #ea580c;">GoHighLevel</span>
@@ -2229,7 +2230,7 @@
                             </a>
 
                             <!-- SendGrid -->
-                            <a href="/settings/sendgrid" style="display: block; padding: 1rem; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.5rem; text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;">
+                            <a href="/settings/sendgrid" target="_self" style="display: block; padding: 1rem; background: #eff6ff; border: 2px solid #1a82e2; border-radius: 0.5rem; text-decoration: none; cursor: pointer; position: relative; z-index: 102;">
                                 <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
                                     <span style="font-size: 1.5rem;">📧</span>
                                     <span style="font-weight: 600; color: #1d4ed8;">SendGrid</span>
@@ -2238,7 +2239,7 @@
                             </a>
 
                             <!-- Zelle -->
-                            <a href="/settings/zelle" style="display: block; padding: 1rem; background: #faf5ff; border: 1px solid #d8b4fe; border-radius: 0.5rem; text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;">
+                            <a href="/settings/zelle" target="_self" style="display: block; padding: 1rem; background: #faf5ff; border: 2px solid #6d1ed4; border-radius: 0.5rem; text-decoration: none; cursor: pointer; position: relative; z-index: 102;">
                                 <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
                                     <span style="font-size: 1.5rem;">💵</span>
                                     <span style="font-weight: 600; color: #7c3aed;">Zelle</span>
