@@ -1,5 +1,5 @@
 // RinglyPro Service Worker
-const CACHE_NAME = 'ringlypro-v3';
+const CACHE_NAME = 'ringlypro-v4';
 const urlsToCache = [
   '/manifest.json'
 ];
@@ -52,9 +52,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Skip caching for authenticated routes
+  // Skip caching for authenticated routes and settings pages
   if (url.pathname.startsWith('/api') ||
       url.pathname.startsWith('/dashboard') ||
+      url.pathname.startsWith('/settings') ||
       url.pathname === '/') {
     // Network-only for dynamic content
     event.respondWith(fetch(event.request));
