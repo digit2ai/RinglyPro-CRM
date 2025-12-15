@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zelle Deposit Collection - RinglyPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header p {
+            color: #6e6e73;
+            font-size: 1rem;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e5e7;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 51px;
+            height: 31px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 31px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 23px;
+            width: 23px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #6d1ed4;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            font-size: 1rem;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #6d1ed4;
+        }
+
+        .form-hint {
+            color: #6e6e73;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #6d1ed4;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a18b0;
+        }
+
+        .btn-secondary {
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8ed;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .alert-info {
+            background: #f3e8ff;
+            color: #6b21a8;
+            border: 1px solid #c4b5fd;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f5f5f7;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6d1ed4;
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .qr-upload-area {
+            border: 2px dashed #d2d2d7;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 1rem;
+        }
+
+        .qr-upload-area:hover {
+            border-color: #6d1ed4;
+            background: #faf5ff;
+        }
+
+        .qr-upload-area.has-image {
+            border-style: solid;
+            border-color: #6d1ed4;
+        }
+
+        .qr-preview {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .qr-upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        #alert-container .alert {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/settings" class="back-link">
+            ← Back to Settings
+        </a>
+
+        <div class="header">
+            <h1>💵 Zelle Deposit Collection</h1>
+            <p>Configure Zelle payments to collect deposits for appointments via WhatsApp and voice</p>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <!-- Status Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Collection Status</div>
+                <div id="status-badge" class="status-badge status-disconnected">
+                    <span>●</span>
+                    <span>Not configured</span>
+                </div>
+            </div>
+
+            <ul class="feature-list">
+                <li>
+                    <span>💬</span>
+                    <span>WhatsApp integration - Send Zelle info when customers ask about payments</span>
+                </li>
+                <li>
+                    <span>📱</span>
+                    <span>QR Code support - Upload your Zelle QR for easy customer payments</span>
+                </li>
+                <li>
+                    <span>🎙️</span>
+                    <span>Voice AI - Rachel/Lina can mention Zelle deposits during calls</span>
+                </li>
+                <li>
+                    <span>🔄</span>
+                    <span>Auto-detect - AI recognizes payment-related messages (including typos!)</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Configuration Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Zelle Configuration</div>
+                <label class="toggle">
+                    <input type="checkbox" id="enableToggle" onchange="handleToggleChange()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <form id="zelleForm" onsubmit="handleSaveSettings(event)">
+                <div class="form-group">
+                    <label class="form-label" for="zelleEmail">Zelle Email or Phone</label>
+                    <input type="text"
+                           id="zelleEmail"
+                           class="form-input"
+                           placeholder="payments@yourbusiness.com or (555) 123-4567"
+                           autocomplete="off">
+                    <p class="form-hint">The email or phone number registered with your Zelle account</p>
+                </div>
+
+                <div class="two-col">
+                    <div class="form-group">
+                        <label class="form-label" for="defaultAmount">Default Deposit Amount ($)</label>
+                        <input type="number"
+                               id="defaultAmount"
+                               class="form-input"
+                               placeholder="50"
+                               min="0"
+                               step="0.01">
+                        <p class="form-hint">Standard deposit amount to request</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="depositType">Deposit Type</label>
+                        <select id="depositType" class="form-input">
+                            <option value="fixed">Fixed Amount</option>
+                            <option value="percentage">Percentage of Service</option>
+                        </select>
+                        <p class="form-hint">How deposit is calculated</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="depositMessage">Custom Deposit Message</label>
+                    <textarea id="depositMessage"
+                              class="form-input"
+                              rows="3"
+                              placeholder="To secure your appointment, please send a $50 deposit via Zelle to payments@yourbusiness.com"></textarea>
+                    <p class="form-hint">Message sent when customers ask about payments (leave blank for auto-generated)</p>
+                </div>
+
+                <!-- QR Code Upload -->
+                <div class="form-group">
+                    <label class="form-label">Zelle QR Code</label>
+                    <div id="qrUploadArea" class="qr-upload-area" onclick="document.getElementById('qrInput').click()">
+                        <div class="qr-upload-icon">📷</div>
+                        <p><strong>Click to upload</strong> your Zelle QR code</p>
+                        <p style="font-size: 0.875rem; color: #6e6e73; margin-top: 0.5rem;">PNG, JPG up to 2MB</p>
+                        <img id="qrPreview" class="qr-preview" style="display: none;">
+                    </div>
+                    <input type="file" id="qrInput" accept="image/*" style="display: none;" onchange="handleQRUpload(event)">
+                    <p class="form-hint">Customers can scan this to pay you directly</p>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary">Save Zelle Settings</button>
+                    <button type="button" class="btn btn-secondary" onclick="testZelleMessage()">Preview Message</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- How It Works Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">How It Works</div>
+            </div>
+
+            <div class="alert alert-info" style="display: block; margin-bottom: 1rem;">
+                <strong>Smart Payment Detection</strong><br>
+                When customers send messages like "payment", "pyment", "zelle", "deposit", "pago", etc., the AI automatically responds with your Zelle information and QR code.
+            </div>
+
+            <ol style="padding-left: 1.5rem; color: #1d1d1f;">
+                <li style="margin-bottom: 0.75rem;">Customer asks about payment via WhatsApp or mentions deposit during call</li>
+                <li style="margin-bottom: 0.75rem;">AI detects payment intent (works with typos and Spanish!)</li>
+                <li style="margin-bottom: 0.75rem;">Your custom message and QR code are sent automatically</li>
+                <li style="margin-bottom: 0.75rem;">Customer pays via Zelle - appointment secured!</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        let currentSettings = {};
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/client-settings/zelle', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success && data.zelle) {
+                    currentSettings = data.zelle;
+
+                    document.getElementById('enableToggle').checked = data.zelle.enabled || false;
+                    document.getElementById('zelleEmail').value = data.zelle.email || '';
+                    document.getElementById('defaultAmount').value = data.zelle.defaultAmount || '';
+                    document.getElementById('depositType').value = data.zelle.depositType || 'fixed';
+                    document.getElementById('depositMessage').value = data.zelle.depositMessage || '';
+
+                    if (data.zelle.qrCodeUrl) {
+                        showQRPreview(data.zelle.qrCodeUrl);
+                    }
+
+                    updateStatus(data.zelle);
+                    handleToggleChange();
+                }
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+                showAlert('Failed to load settings', 'error');
+            }
+        }
+
+        function handleToggleChange() {
+            const enabled = document.getElementById('enableToggle').checked;
+            const inputs = document.querySelectorAll('#zelleForm .form-input');
+            inputs.forEach(input => {
+                input.disabled = !enabled;
+            });
+            document.getElementById('qrUploadArea').style.opacity = enabled ? '1' : '0.5';
+            document.getElementById('qrUploadArea').style.pointerEvents = enabled ? 'auto' : 'none';
+        }
+
+        async function handleSaveSettings(event) {
+            event.preventDefault();
+
+            const settings = {
+                enabled: document.getElementById('enableToggle').checked,
+                email: document.getElementById('zelleEmail').value,
+                defaultAmount: parseFloat(document.getElementById('defaultAmount').value) || null,
+                depositType: document.getElementById('depositType').value,
+                depositMessage: document.getElementById('depositMessage').value,
+                qrCodeUrl: currentSettings.qrCodeUrl || null
+            };
+
+            try {
+                const response = await fetch('/api/client-settings/zelle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentSettings = { ...currentSettings, ...settings };
+                    showAlert('Zelle settings saved successfully!', 'success');
+                    updateStatus(settings);
+                } else {
+                    showAlert(data.error || 'Failed to save settings', 'error');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showAlert('Failed to save settings', 'error');
+            }
+        }
+
+        async function handleQRUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 2 * 1024 * 1024) {
+                showAlert('File size must be less than 2MB', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('qrCode', file);
+
+            try {
+                showAlert('Uploading QR code...', 'info');
+
+                const response = await fetch('/api/client-settings/zelle/upload-qr', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentSettings.qrCodeUrl = data.qrCodeUrl;
+                    showQRPreview(data.qrCodeUrl);
+                    showAlert('QR code uploaded successfully!', 'success');
+                } else {
+                    showAlert(data.error || 'Failed to upload QR code', 'error');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                showAlert('Failed to upload QR code', 'error');
+            }
+        }
+
+        function showQRPreview(url) {
+            const preview = document.getElementById('qrPreview');
+            const uploadArea = document.getElementById('qrUploadArea');
+
+            preview.src = url;
+            preview.style.display = 'block';
+            uploadArea.classList.add('has-image');
+
+            // Update upload area text
+            uploadArea.querySelector('p').innerHTML = '<strong>Click to change</strong> QR code';
+        }
+
+        function testZelleMessage() {
+            const email = document.getElementById('zelleEmail').value;
+            const amount = document.getElementById('defaultAmount').value;
+            const customMessage = document.getElementById('depositMessage').value;
+
+            if (!email) {
+                showAlert('Please enter your Zelle email or phone first', 'error');
+                return;
+            }
+
+            let message;
+            if (customMessage) {
+                message = customMessage;
+            } else {
+                const amountText = amount ? ` of $${amount}` : '';
+                message = `To secure your appointment, please send a deposit${amountText} via Zelle to: ${email}`;
+            }
+
+            if (currentSettings.qrCodeUrl) {
+                message += '\n\n📲 Here is our QR code for easy payment.';
+            }
+
+            alert('Preview of message customers will receive:\n\n' + message);
+        }
+
+        function updateStatus(settings) {
+            const badge = document.getElementById('status-badge');
+            const isConfigured = settings.enabled && settings.email;
+
+            if (isConfigured) {
+                badge.className = 'status-badge status-connected';
+                badge.innerHTML = '<span>●</span><span>Active</span>';
+            } else {
+                badge.className = 'status-badge status-disconnected';
+                badge.innerHTML = '<span>●</span><span>Not configured</span>';
+            }
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('alert-container');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        loadSettings();
+    </script>
+</body>
+</html>

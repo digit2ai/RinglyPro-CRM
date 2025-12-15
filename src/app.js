@@ -579,6 +579,13 @@ app.get('/settings/sendgrid', (req, res) => {
   });
 });
 
+// Zelle Deposit Collection Settings
+app.get('/settings/zelle', (req, res) => {
+  res.render('settings-zelle', {
+    title: 'Zelle Deposit Collection - RinglyPro Settings'
+  });
+});
+
 // PixlyPro admin dashboard
 app.get('/pixlypro-admin-dashboard', (req, res) => {
   res.render('pixlypro-admin-dashboard', {
