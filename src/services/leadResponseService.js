@@ -332,8 +332,8 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
         : `I understand your concern. Let me transfer your inquiry to one of our team members who can better assist you. They'll contact you shortly. 📞`;
     }
     // Handle based on intent
-    else if (intent.intent === 'greeting' && conversationContext.messageCount === 1) {
-      // First message greeting - show menu with options
+    else if (intent.intent === 'greeting') {
+      // Greeting - ALWAYS show menu with options
       const hasZelle = zelle?.enabled && zelle?.email;
       const hasBooking = booking?.system !== 'none' || vagaroEnabled;
 
