@@ -4172,15 +4172,19 @@
         }
 
         // Tab Switching
-        function switchSettingsTab(tabName) {
+        function switchSettingsTab(tabName, evt) {
             currentSettingsTab = tabName;
 
             // Update tab buttons
             const tabs = document.querySelectorAll('.settings-tab');
             tabs.forEach(tab => {
                 tab.classList.remove('active');
+                // Mark the correct tab as active based on tabName
+                if ((tabName === 'calendar' && tab.textContent.includes('Calendar')) ||
+                    (tabName === 'crm' && tab.textContent.includes('Integrations'))) {
+                    tab.classList.add('active');
+                }
             });
-            event.currentTarget.classList.add('active');
 
             // Update tab content
             const contents = document.querySelectorAll('.settings-tab-content');
