@@ -185,7 +185,7 @@
         .gallery {
             padding: 2rem 3rem 3rem;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
             gap: 2rem;
         }
 
@@ -201,6 +201,41 @@
         .photo-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        /* Before/After comparison container */
+        .comparison-container {
+            display: flex;
+            gap: 0;
+        }
+
+        .comparison-side {
+            flex: 1;
+            position: relative;
+        }
+
+        .comparison-side.before {
+            border-right: 2px solid #e2e8f0;
+        }
+
+        .comparison-label {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            z-index: 10;
+        }
+
+        .comparison-label.after {
+            left: auto;
+            right: 0.5rem;
+            background: #10b981;
         }
 
         .photo-preview {
@@ -314,6 +349,21 @@
         @media (max-width: 768px) {
             .gallery {
                 grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+
+            /* Stack before/after vertically on mobile */
+            .comparison-container {
+                flex-direction: column;
+            }
+
+            .comparison-side.before {
+                border-right: none;
+                border-bottom: 2px solid #e2e8f0;
+            }
+
+            .photo-preview {
+                height: 200px;
             }
 
             .header h1 {
@@ -490,8 +540,8 @@
 
                     if (data.success && data.photos && data.photos.length > 0) {
                         const photo = data.photos[0];
-                        // Update card with enhanced result
-                        updatePhotoCard(cardId, photo.enhancedUrl, 'enhanced');
+                        // Update card with enhanced result - show before/after comparison
+                        updatePhotoCard(cardId, photo.enhancedUrl, 'enhanced', photo.originalUrl);
                         enhancedPhotos.push({
                             id: cardId,
                             name: file.name,
@@ -499,7 +549,7 @@
                             enhancedUrl: photo.enhancedUrl
                         });
                     } else {
-                        updatePhotoCard(cardId, previewUrl, 'error');
+                        updatePhotoCard(cardId, previewUrl, 'error', previewUrl);
                         console.error('Enhancement failed:', data.error);
                     }
 
@@ -525,13 +575,23 @@
             }, 2000);
         }
 
-        function addPhotoCard(cardId, name, imageUrl, status) {
+        function addPhotoCard(cardId, name, originalImageUrl, status) {
             const card = document.createElement('div');
             card.className = 'photo-card';
             card.id = cardId;
 
+            // Show before/after comparison layout
             card.innerHTML = `
-                <img src="${imageUrl}" alt="${name}" class="photo-preview">
+                <div class="comparison-container">
+                    <div class="comparison-side before">
+                        <span class="comparison-label">Before</span>
+                        <img src="${originalImageUrl}" alt="Original ${name}" class="photo-preview original-img">
+                    </div>
+                    <div class="comparison-side after">
+                        <span class="comparison-label after">${status === 'processing' ? 'Processing...' : 'After'}</span>
+                        <img src="${originalImageUrl}" alt="Enhanced ${name}" class="photo-preview enhanced-img" style="${status === 'processing' ? 'filter: blur(3px); opacity: 0.7;' : ''}">
+                    </div>
+                </div>
                 <div class="photo-info">
                     <div class="photo-name">${name}</div>
                     <div class="photo-status">
@@ -543,15 +603,28 @@
             gallery.appendChild(card);
         }
 
-        function updatePhotoCard(cardId, imageUrl, status) {
+        function updatePhotoCard(cardId, enhancedImageUrl, status, originalImageUrl) {
             const card = document.getElementById(cardId);
             if (!card) return;
 
-            const img = card.querySelector('.photo-preview');
+            const originalImg = card.querySelector('.original-img');
+            const enhancedImg = card.querySelector('.enhanced-img');
+            const afterLabel = card.querySelector('.comparison-label.after');
             const badge = card.querySelector('.status-badge');
 
-            if (img && status === 'enhanced') {
-                img.src = imageUrl;
+            // Update original image to use server URL (better quality)
+            if (originalImg && originalImageUrl && status === 'enhanced') {
+                originalImg.src = originalImageUrl;
+            }
+
+            if (enhancedImg && status === 'enhanced') {
+                enhancedImg.src = enhancedImageUrl;
+                enhancedImg.style.filter = 'none';
+                enhancedImg.style.opacity = '1';
+            }
+
+            if (afterLabel) {
+                afterLabel.textContent = status === 'enhanced' ? 'After' : (status === 'error' ? 'Error' : 'Processing...');
             }
 
             if (badge) {
@@ -565,8 +638,8 @@
                 if (!existingBtn) {
                     const downloadBtn = document.createElement('button');
                     downloadBtn.className = 'download-btn';
-                    downloadBtn.textContent = 'Download';
-                    downloadBtn.onclick = () => downloadImage(imageUrl, cardId);
+                    downloadBtn.textContent = 'Download Enhanced';
+                    downloadBtn.onclick = () => downloadImage(enhancedImageUrl, cardId);
                     card.appendChild(downloadBtn);
                 }
             }

@@ -1615,16 +1615,14 @@ router.post('/upload-and-enhance-direct', authenticateToken, upload.array('photo
         // =====================================================
 
         logger.info(`[PIXLYPRO] Applying AI professional enhancement...`);
-        let enhancedBuffer;
 
-        if (openaiImageService.isConfigured()) {
-          // Use OpenAI gpt-image-1 for commercial-grade enhancement (same as ChatGPT)
-          enhancedBuffer = await openaiImageService.enhanceImage(imageBuffer, photo.originalname);
-        } else {
-          // Fallback to local professional enhancement
-          logger.info(`[PIXLYPRO] OpenAI not configured, using local enhancement`);
-          enhancedBuffer = await openaiImageService.localEnhancement(imageBuffer);
+        if (!openaiImageService.isConfigured()) {
+          throw new Error('OpenAI API key not configured - cannot enhance images');
         }
+
+        // Use OpenAI gpt-image-1 for commercial-grade enhancement (same as ChatGPT)
+        // NO fallbacks - only AI-enhanced images are delivered
+        const enhancedBuffer = await openaiImageService.enhanceImage(imageBuffer, photo.originalname);
 
         logger.info(`[PIXLYPRO] Enhancement complete`);
 
