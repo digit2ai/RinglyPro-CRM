@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Integration Settings - RinglyPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #6e6e73;
+            font-size: 1rem;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e5e7;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 51px;
+            height: 31px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 31px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 23px;
+            width: 23px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #25D366;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            font-size: 1rem;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #25D366;
+        }
+
+        .form-input:disabled {
+            background: #f5f5f7;
+            cursor: not-allowed;
+        }
+
+        .form-hint {
+            color: #6e6e73;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-disabled {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .status-sandbox {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #25D366;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #128C7E;
+        }
+
+        .btn-secondary {
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8ed;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+            display: block;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+            display: block;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+            display: block;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+            display: block;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f5f5f7;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .icon {
+            font-size: 1.25rem;
+        }
+
+        .setup-steps {
+            background: #f5f5f7;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+        }
+
+        .setup-steps ol {
+            padding-left: 1.5rem;
+        }
+
+        .setup-steps li {
+            margin-bottom: 0.75rem;
+            color: #1d1d1f;
+        }
+
+        .webhook-url {
+            background: #f5f5f7;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.875rem;
+            word-break: break-all;
+            margin-top: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .copy-btn {
+            background: #e8e8ed;
+            border: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .copy-btn:hover {
+            background: #d2d2d7;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #25D366;
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .qr-upload {
+            border: 2px dashed #d2d2d7;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .qr-upload:hover {
+            border-color: #25D366;
+        }
+
+        .qr-upload.has-image {
+            border-style: solid;
+            border-color: #25D366;
+        }
+
+        .qr-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin: 1rem auto;
+            display: none;
+        }
+
+        .qr-preview.visible {
+            display: block;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/settings" class="back-link">
+            <- Back to Settings
+        </a>
+
+        <div class="header">
+            <h1>WhatsApp Business Integration</h1>
+            <p>Connect your WhatsApp Business account to receive leads and automate responses</p>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <!-- Status Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Integration Status</div>
+                <div id="status-badge" class="status-badge status-disabled">
+                    <span>*</span>
+                    <span>Disabled</span>
+                </div>
+            </div>
+
+            <ul class="feature-list">
+                <li>
+                    <span class="icon">💬</span>
+                    <span>Bilingual AI assistant (English & Spanish)</span>
+                </li>
+                <li>
+                    <span class="icon">📅</span>
+                    <span>Appointment booking via WhatsApp</span>
+                </li>
+                <li>
+                    <span class="icon">🤖</span>
+                    <span>24/7 automated lead response</span>
+                </li>
+                <li>
+                    <span class="icon">💳</span>
+                    <span>Zelle deposit collection with QR code</span>
+                </li>
+                <li>
+                    <span class="icon">📊</span>
+                    <span>Lead qualification & scoring</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Configuration Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">WhatsApp Configuration</div>
+                <label class="toggle">
+                    <input type="checkbox" id="enableToggle" onchange="handleToggleChange()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <form id="whatsappForm" onsubmit="handleSaveSettings(event)">
+                <div class="form-group">
+                    <label class="form-label" for="whatsappNumber">WhatsApp Business Number</label>
+                    <input type="tel"
+                           id="whatsappNumber"
+                           class="form-input"
+                           placeholder="+1 (555) 123-4567"
+                           autocomplete="off">
+                    <p class="form-hint">Your WhatsApp Business phone number (include country code)</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="displayName">Business Display Name</label>
+                    <input type="text"
+                           id="displayName"
+                           class="form-input"
+                           placeholder="Your Business Name"
+                           autocomplete="off">
+                    <p class="form-hint">Name shown to customers in WhatsApp conversations</p>
+                </div>
+
+                <div class="two-col">
+                    <div class="form-group">
+                        <label class="form-label" for="businessType">Business Type</label>
+                        <select id="businessType" class="form-input">
+                            <option value="salon">Salon / Spa</option>
+                            <option value="clinic">Medical / Dental Clinic</option>
+                            <option value="restaurant">Restaurant</option>
+                            <option value="fitness">Fitness / Gym</option>
+                            <option value="professional">Professional Services</option>
+                            <option value="retail">Retail Store</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="defaultLanguage">Default Language</label>
+                        <select id="defaultLanguage" class="form-input">
+                            <option value="auto">Auto-detect</option>
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="greetingMessage">Custom Greeting Message (Optional)</label>
+                    <textarea id="greetingMessage"
+                              class="form-input"
+                              rows="3"
+                              placeholder="Hi! Thanks for contacting us. How can we help you today?"></textarea>
+                    <p class="form-hint">Leave blank to use the default AI greeting</p>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                    <button type="button" class="btn btn-secondary" onclick="testWhatsApp()">Send Test Message</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Zelle Deposit Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Zelle Deposit Collection</div>
+                <label class="toggle">
+                    <input type="checkbox" id="zelleToggle" onchange="handleZelleToggle()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <p style="color: #6e6e73; margin-bottom: 1.5rem;">
+                Enable customers to send deposits via Zelle. The AI will share your QR code when a deposit is requested.
+            </p>
+
+            <div class="form-group">
+                <label class="form-label" for="zelleEmail">Zelle Email or Phone</label>
+                <input type="text"
+                       id="zelleEmail"
+                       class="form-input"
+                       placeholder="payments@yourbusiness.com"
+                       autocomplete="off">
+                <p class="form-hint">The email or phone number registered with Zelle</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Zelle QR Code</label>
+                <div class="qr-upload" id="qrUpload" onclick="document.getElementById('qrInput').click()">
+                    <input type="file" id="qrInput" accept="image/*" style="display: none" onchange="handleQRUpload(event)">
+                    <img id="qrPreview" class="qr-preview" src="" alt="Zelle QR Code">
+                    <p id="qrText">Click or drag to upload your Zelle QR code</p>
+                </div>
+                <p class="form-hint">Upload a screenshot of your Zelle QR code from your banking app</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="depositAmount">Default Deposit Amount</label>
+                <input type="number"
+                       id="depositAmount"
+                       class="form-input"
+                       placeholder="50"
+                       min="0"
+                       step="0.01"
+                       autocomplete="off">
+                <p class="form-hint">Suggested deposit amount (customers can send different amounts)</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="depositMessage">Deposit Request Message</label>
+                <textarea id="depositMessage"
+                          class="form-input"
+                          rows="3"
+                          placeholder="To secure your appointment, please send a $50 deposit via Zelle. Here's our QR code:"></textarea>
+            </div>
+        </div>
+
+        <!-- Webhook Configuration Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Webhook URLs</div>
+            </div>
+
+            <p style="color: #6e6e73; margin-bottom: 1.5rem;">
+                Configure these URLs in your Twilio WhatsApp Sandbox or Meta Business settings.
+            </p>
+
+            <div class="form-group">
+                <label class="form-label">Incoming Messages Webhook</label>
+                <div class="webhook-url">
+                    <span id="webhookUrl"><%= APP_URL || 'https://aiagent.ringlypro.com' %>/api/whatsapp/webhook</span>
+                    <button type="button" class="copy-btn" onclick="copyToClipboard('webhookUrl')">Copy</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Status Callback URL</label>
+                <div class="webhook-url">
+                    <span id="statusUrl"><%= APP_URL || 'https://aiagent.ringlypro.com' %>/api/whatsapp/status</span>
+                    <button type="button" class="copy-btn" onclick="copyToClipboard('statusUrl')">Copy</button>
+                </div>
+            </div>
+
+            <div class="setup-steps">
+                <strong>Twilio Sandbox Setup:</strong>
+                <ol>
+                    <li>Go to Twilio Console -> Messaging -> Try it out -> Send a WhatsApp message</li>
+                    <li>Click "Sandbox Settings"</li>
+                    <li>Paste the webhook URLs above</li>
+                    <li>Save your changes</li>
+                    <li>Join the sandbox by sending "join [your-code]" to +1 415 523 8886</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Help Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Need Help?</div>
+            </div>
+
+            <div class="alert alert-info" style="display: block;">
+                <strong>Sandbox Mode:</strong> You're currently using the Twilio WhatsApp Sandbox for testing.
+                For production, you'll need to apply for a WhatsApp Business Account through Meta.
+            </div>
+
+            <p style="color: #6e6e73; margin-top: 1rem;">
+                <a href="https://www.twilio.com/docs/whatsapp" target="_blank" style="color: #25D366; text-decoration: none;">
+                    Twilio WhatsApp Documentation ->
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Get auth token
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        let currentSettings = {};
+
+        // Load current settings
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/client-settings/whatsapp', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success && data.whatsapp) {
+                    currentSettings = data.whatsapp;
+
+                    document.getElementById('enableToggle').checked = data.whatsapp.enabled || false;
+                    document.getElementById('whatsappNumber').value = data.whatsapp.phoneNumber || '';
+                    document.getElementById('displayName').value = data.whatsapp.displayName || '';
+                    document.getElementById('businessType').value = data.whatsapp.businessType || 'salon';
+                    document.getElementById('defaultLanguage').value = data.whatsapp.defaultLanguage || 'auto';
+                    document.getElementById('greetingMessage').value = data.whatsapp.greetingMessage || '';
+
+                    // Zelle settings
+                    document.getElementById('zelleToggle').checked = data.whatsapp.zelle?.enabled || false;
+                    document.getElementById('zelleEmail').value = data.whatsapp.zelle?.email || '';
+                    document.getElementById('depositAmount').value = data.whatsapp.zelle?.defaultAmount || '';
+                    document.getElementById('depositMessage').value = data.whatsapp.zelle?.depositMessage || '';
+
+                    if (data.whatsapp.zelle?.qrCodeUrl) {
+                        showQRPreview(data.whatsapp.zelle.qrCodeUrl);
+                    }
+
+                    updateStatus(data.whatsapp);
+                    handleToggleChange();
+                    handleZelleToggle();
+                }
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+                showAlert('Failed to load settings', 'error');
+            }
+        }
+
+        // Handle main toggle change
+        function handleToggleChange() {
+            const enabled = document.getElementById('enableToggle').checked;
+            const inputs = document.querySelectorAll('#whatsappForm .form-input');
+
+            inputs.forEach(input => {
+                input.disabled = !enabled;
+            });
+        }
+
+        // Handle Zelle toggle
+        function handleZelleToggle() {
+            const enabled = document.getElementById('zelleToggle').checked;
+            document.getElementById('zelleEmail').disabled = !enabled;
+            document.getElementById('depositAmount').disabled = !enabled;
+            document.getElementById('depositMessage').disabled = !enabled;
+            document.getElementById('qrUpload').style.opacity = enabled ? '1' : '0.5';
+            document.getElementById('qrUpload').style.pointerEvents = enabled ? 'auto' : 'none';
+        }
+
+        // Save settings
+        async function handleSaveSettings(event) {
+            event.preventDefault();
+
+            const settings = {
+                enabled: document.getElementById('enableToggle').checked,
+                phoneNumber: document.getElementById('whatsappNumber').value,
+                displayName: document.getElementById('displayName').value,
+                businessType: document.getElementById('businessType').value,
+                defaultLanguage: document.getElementById('defaultLanguage').value,
+                greetingMessage: document.getElementById('greetingMessage').value,
+                zelle: {
+                    enabled: document.getElementById('zelleToggle').checked,
+                    email: document.getElementById('zelleEmail').value,
+                    defaultAmount: parseFloat(document.getElementById('depositAmount').value) || null,
+                    depositMessage: document.getElementById('depositMessage').value,
+                    qrCodeUrl: currentSettings.zelle?.qrCodeUrl || null
+                }
+            };
+
+            try {
+                const response = await fetch('/api/client-settings/whatsapp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Settings saved successfully!', 'success');
+                    updateStatus(settings);
+                } else {
+                    showAlert(data.error || 'Failed to save settings', 'error');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showAlert('Failed to save settings', 'error');
+            }
+        }
+
+        // Handle QR code upload
+        async function handleQRUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('qrCode', file);
+
+            try {
+                const response = await fetch('/api/client-settings/whatsapp/qr-upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showQRPreview(data.url);
+                    currentSettings.zelle = currentSettings.zelle || {};
+                    currentSettings.zelle.qrCodeUrl = data.url;
+                    showAlert('QR code uploaded successfully!', 'success');
+                } else {
+                    showAlert(data.error || 'Failed to upload QR code', 'error');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                showAlert('Failed to upload QR code', 'error');
+            }
+        }
+
+        function showQRPreview(url) {
+            const preview = document.getElementById('qrPreview');
+            const text = document.getElementById('qrText');
+            const upload = document.getElementById('qrUpload');
+
+            preview.src = url;
+            preview.classList.add('visible');
+            text.textContent = 'Click to change QR code';
+            upload.classList.add('has-image');
+        }
+
+        // Test WhatsApp
+        async function testWhatsApp() {
+            const phone = document.getElementById('whatsappNumber').value;
+            if (!phone) {
+                showAlert('Please enter a WhatsApp number first', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/whatsapp/test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ phone })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Test message sent! Check your WhatsApp.', 'success');
+                } else {
+                    showAlert(data.error || 'Failed to send test message', 'error');
+                }
+            } catch (error) {
+                console.error('Test error:', error);
+                showAlert('Failed to send test message', 'error');
+            }
+        }
+
+        // Update status badge
+        function updateStatus(settings) {
+            const badge = document.getElementById('status-badge');
+            const enabled = settings.enabled;
+            const configured = !!settings.phoneNumber;
+
+            if (enabled && configured) {
+                badge.className = 'status-badge status-connected';
+                badge.innerHTML = '<span>*</span><span>Connected</span>';
+            } else if (enabled && !configured) {
+                badge.className = 'status-badge status-disconnected';
+                badge.innerHTML = '<span>*</span><span>Needs Configuration</span>';
+            } else {
+                badge.className = 'status-badge status-disabled';
+                badge.innerHTML = '<span>*</span><span>Disabled</span>';
+            }
+        }
+
+        // Copy to clipboard
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('Copied to clipboard!', 'success');
+            });
+        }
+
+        // Show alert
+        function showAlert(message, type) {
+            const container = document.getElementById('alert-container');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Initialize
+        loadSettings();
+    </script>
+</body>
+</html>

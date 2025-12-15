@@ -557,6 +557,14 @@ app.get('/settings/vagaro', (req, res) => {
   });
 });
 
+// WhatsApp Integration Settings
+app.get('/settings/whatsapp', (req, res) => {
+  res.render('settings-whatsapp', {
+    title: 'WhatsApp Integration - RinglyPro Settings',
+    APP_URL: process.env.APP_URL || process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'
+  });
+});
+
 // PixlyPro admin dashboard
 app.get('/pixlypro-admin-dashboard', (req, res) => {
   res.render('pixlypro-admin-dashboard', {

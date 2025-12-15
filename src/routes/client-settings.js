@@ -5,6 +5,38 @@ const { sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 const voicemailAudioService = require('../services/voicemailAudioService');
 const { authenticateToken } = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Configure multer for QR code uploads
+const qrStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../../public/uploads/qr-codes');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const clientId = req.clientId || 'unknown';
+    const ext = path.extname(file.originalname);
+    cb(null, `zelle-qr-${clientId}-${Date.now()}${ext}`);
+  }
+});
+
+const qrUpload = multer({
+  storage: qrStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only images are allowed.'));
+    }
+  }
+});
 
 /**
  * GET /api/client-settings/:clientId/voicemail-message
@@ -363,6 +395,271 @@ router.get('/vagaro', authenticateToken, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to get Vagaro settings'
+    });
+  }
+});
+
+// =====================================================
+// WhatsApp Integration Settings
+// =====================================================
+
+/**
+ * POST /api/client-settings/whatsapp
+ * Update WhatsApp integration settings
+ */
+router.post('/whatsapp', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const {
+      enabled,
+      phoneNumber,
+      displayName,
+      businessType,
+      defaultLanguage,
+      greetingMessage,
+      zelle
+    } = req.body;
+
+    // Get user's client ID
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user || !user.client_id) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    const clientId = user.client_id;
+
+    // Get current settings
+    const [client] = await sequelize.query(
+      'SELECT settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const currentSettings = client?.settings || {};
+
+    // Update WhatsApp settings
+    const updatedSettings = {
+      ...currentSettings,
+      integration: {
+        ...(currentSettings.integration || {}),
+        whatsapp: {
+          enabled: enabled === true,
+          phoneNumber: phoneNumber || null,
+          displayName: displayName || null,
+          businessType: businessType || 'salon',
+          defaultLanguage: defaultLanguage || 'auto',
+          greetingMessage: greetingMessage || null,
+          zelle: zelle || null,
+          updatedAt: new Date().toISOString()
+        }
+      }
+    };
+
+    // Also update the dedicated whatsapp_business_number column
+    const normalizedPhone = phoneNumber ? phoneNumber.replace(/[^\d+]/g, '') : null;
+
+    await sequelize.query(
+      `UPDATE clients
+       SET settings = :settings,
+           whatsapp_business_number = :whatsappNumber,
+           whatsapp_display_name = :displayName,
+           updated_at = NOW()
+       WHERE id = :clientId`,
+      {
+        replacements: {
+          settings: JSON.stringify(updatedSettings),
+          whatsappNumber: normalizedPhone,
+          displayName: displayName || null,
+          clientId
+        },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`[CLIENT SETTINGS] Updated WhatsApp settings for client ${clientId}`);
+
+    res.json({
+      success: true,
+      message: 'WhatsApp settings updated successfully',
+      settings: updatedSettings.integration.whatsapp
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Update WhatsApp settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update settings'
+    });
+  }
+});
+
+/**
+ * GET /api/client-settings/whatsapp
+ * Get WhatsApp integration settings
+ */
+router.get('/whatsapp', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+
+    // Get user's client ID
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user || !user.client_id) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    // Get client settings
+    const [client] = await sequelize.query(
+      'SELECT settings, whatsapp_business_number, whatsapp_display_name FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: user.client_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const whatsappSettings = client?.settings?.integration?.whatsapp || {
+      enabled: false,
+      phoneNumber: client?.whatsapp_business_number || null,
+      displayName: client?.whatsapp_display_name || null,
+      businessType: 'salon',
+      defaultLanguage: 'auto',
+      greetingMessage: null,
+      zelle: null
+    };
+
+    res.json({
+      success: true,
+      whatsapp: whatsappSettings
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Get WhatsApp settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get WhatsApp settings'
+    });
+  }
+});
+
+/**
+ * POST /api/client-settings/whatsapp/qr-upload
+ * Upload Zelle QR code image
+ */
+router.post('/whatsapp/qr-upload', authenticateToken, async (req, res, next) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+
+    // Get user's client ID first
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user || !user.client_id) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    // Store clientId for multer filename
+    req.clientId = user.client_id;
+
+    // Handle file upload
+    qrUpload.single('qrCode')(req, res, async (err) => {
+      if (err) {
+        logger.error('[CLIENT SETTINGS] QR upload error:', err);
+        return res.status(400).json({
+          success: false,
+          error: err.message
+        });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'No file uploaded'
+        });
+      }
+
+      // Generate public URL
+      const qrUrl = `/uploads/qr-codes/${req.file.filename}`;
+
+      // Update settings with QR URL
+      const [client] = await sequelize.query(
+        'SELECT settings FROM clients WHERE id = :clientId',
+        {
+          replacements: { clientId: user.client_id },
+          type: QueryTypes.SELECT
+        }
+      );
+
+      const currentSettings = client?.settings || {};
+      const whatsappSettings = currentSettings.integration?.whatsapp || {};
+
+      const updatedSettings = {
+        ...currentSettings,
+        integration: {
+          ...(currentSettings.integration || {}),
+          whatsapp: {
+            ...whatsappSettings,
+            zelle: {
+              ...(whatsappSettings.zelle || {}),
+              qrCodeUrl: qrUrl
+            }
+          }
+        }
+      };
+
+      await sequelize.query(
+        'UPDATE clients SET settings = :settings, updated_at = NOW() WHERE id = :clientId',
+        {
+          replacements: {
+            settings: JSON.stringify(updatedSettings),
+            clientId: user.client_id
+          },
+          type: QueryTypes.UPDATE
+        }
+      );
+
+      logger.info(`[CLIENT SETTINGS] Uploaded Zelle QR for client ${user.client_id}: ${qrUrl}`);
+
+      res.json({
+        success: true,
+        url: qrUrl,
+        message: 'QR code uploaded successfully'
+      });
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] QR upload error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to upload QR code'
     });
   }
 });
