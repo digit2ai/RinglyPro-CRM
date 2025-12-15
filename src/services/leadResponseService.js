@@ -9,6 +9,7 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const logger = require('../utils/logger');
 const whatsappService = require('./whatsappService');
+const ghlBookingService = require('./ghlBookingService');
 const {
   getLeadResponsePrompt,
   getIntentClassificationPrompt,
@@ -326,7 +327,7 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
  * @returns {Promise<string>} Response text
  */
 async function handleAppointmentIntent(message, context, clientConfig) {
-  const { language, customerName, businessName, vagaroEnabled } = context;
+  const { language, customerName, customerPhone, businessName, vagaroEnabled, clientId } = context;
   const {
     services = [],
     booking = { system: 'none', url: null },
@@ -380,8 +381,58 @@ async function handleAppointmentIntent(message, context, clientConfig) {
     return response;
   }
 
+  // GHL Direct Booking - if system is 'ghl' and we have all required details
+  if (booking?.system === 'ghl' && clientId) {
+    // Check if we have enough info to book
+    const hasRequiredInfo = appointmentDetails.date && appointmentDetails.time && (customerName || appointmentDetails.customerName);
+
+    if (hasRequiredInfo) {
+      try {
+        logger.info('[LEAD-RESPONSE] Attempting GHL booking...', { clientId, appointmentDetails });
+
+        const ghlResult = await ghlBookingService.bookFromWhatsApp(clientId, {
+          customerName: customerName || appointmentDetails.customerName || 'WhatsApp Customer',
+          customerPhone: customerPhone,
+          date: appointmentDetails.date,
+          time: appointmentDetails.time,
+          service: appointmentDetails.service || 'Appointment',
+          calendarId: booking.ghlCalendarId,
+          notes: `Booked via WhatsApp\nService: ${appointmentDetails.service || 'General'}`
+        });
+
+        if (ghlResult.success) {
+          logger.info('[LEAD-RESPONSE] GHL booking successful!', ghlResult);
+
+          let successMsg = language === 'es'
+            ? `✅ ¡Tu cita ha sido confirmada!\n\n📅 Fecha: ${appointmentDetails.date}\n🕐 Hora: ${appointmentDetails.time}\n📍 Servicio: ${appointmentDetails.service || 'Cita'}`
+            : `✅ Your appointment has been confirmed!\n\n📅 Date: ${appointmentDetails.date}\n🕐 Time: ${appointmentDetails.time}\n📍 Service: ${appointmentDetails.service || 'Appointment'}`;
+
+          // Add deposit info if required
+          if (deposit?.type !== 'none' && deposit?.value && zelle?.enabled) {
+            const depositAmount = deposit.type === 'fixed' ? `$${deposit.value}` : `${deposit.value}%`;
+            successMsg += language === 'es'
+              ? `\n\n💰 Para confirmar, envía un depósito de ${depositAmount} por Zelle a: ${zelle.email}`
+              : `\n\n💰 To confirm, please send a ${depositAmount} deposit via Zelle to: ${zelle.email}`;
+          }
+
+          successMsg += language === 'es'
+            ? '\n\n¡Gracias! Te esperamos. 🙌'
+            : '\n\nThank you! We look forward to seeing you. 🙌';
+
+          return successMsg;
+        } else {
+          logger.warn('[LEAD-RESPONSE] GHL booking failed:', ghlResult.error);
+          // Fall through to manual confirmation
+        }
+      } catch (ghlError) {
+        logger.error('[LEAD-RESPONSE] GHL booking error:', ghlError.message);
+        // Fall through to manual confirmation
+      }
+    }
+  }
+
   if (missing.length === 0 && appointmentDetails.date && appointmentDetails.time) {
-    // All details captured - confirm
+    // All details captured - confirm (fallback when GHL not available or failed)
     let confirmMsg;
     if (language === 'es') {
       confirmMsg = `Perfecto, voy a confirmar tu cita:
