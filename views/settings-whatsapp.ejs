@@ -509,6 +509,10 @@
                 <input type="number" id="depositValue" class="form-input" placeholder="50" min="0" step="0.01">
                 <p class="form-hint" id="depositHint">Amount to collect as deposit</p>
             </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-primary" onclick="saveServicesSettings()">Save Services & Pricing</button>
+            </div>
         </div>
 
         <!-- Booking Integration Card -->
@@ -550,6 +554,10 @@
                     <label class="form-label" for="ghlCalendarId">GHL Calendar ID</label>
                     <input type="text" id="ghlCalendarId" class="form-input" placeholder="Enter your GHL Calendar ID">
                 </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-primary" onclick="saveBookingSettings()">Save Booking Settings</button>
             </div>
         </div>
 
@@ -605,6 +613,10 @@
                           class="form-input"
                           rows="3"
                           placeholder="To secure your appointment, please send a $50 deposit via Zelle. Here's our QR code:"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-primary" onclick="saveZelleSettings()">Save Zelle Settings</button>
             </div>
         </div>
 
@@ -768,6 +780,118 @@
             document.getElementById('ghlConfigGroup').style.display = system === 'ghl' ? 'block' : 'none';
         }
 
+        // Save Services & Pricing settings
+        async function saveServicesSettings() {
+            const servicesData = getServices();
+            const depositData = {
+                type: document.getElementById('depositRequired').value,
+                value: parseFloat(document.getElementById('depositValue').value) || null
+            };
+
+            // Build full settings object
+            const settings = {
+                enabled: document.getElementById('enableToggle').checked,
+                phoneNumber: document.getElementById('whatsappNumber').value,
+                displayName: document.getElementById('displayName').value,
+                businessType: document.getElementById('businessType').value,
+                defaultLanguage: document.getElementById('defaultLanguage').value,
+                greetingMessage: document.getElementById('greetingMessage').value,
+                services: servicesData,
+                deposit: depositData,
+                booking: currentSettings.booking || {
+                    system: document.getElementById('bookingSystem').value,
+                    url: document.getElementById('bookingLink').value,
+                    ghlCalendarId: document.getElementById('ghlCalendarId').value
+                },
+                zelle: currentSettings.zelle || {
+                    enabled: document.getElementById('zelleToggle').checked,
+                    email: document.getElementById('zelleEmail').value,
+                    defaultAmount: parseFloat(document.getElementById('depositAmount').value) || null,
+                    depositMessage: document.getElementById('depositMessage').value,
+                    qrCodeUrl: null
+                }
+            };
+
+            try {
+                const response = await fetch('/api/client-settings/whatsapp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentSettings.services = servicesData;
+                    currentSettings.deposit = depositData;
+                    showAlert('Services & Pricing saved successfully!', 'success');
+                } else {
+                    showAlert(data.error || 'Failed to save settings', 'error');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showAlert('Failed to save settings', 'error');
+            }
+        }
+
+        // Save Booking settings
+        async function saveBookingSettings() {
+            const bookingData = {
+                system: document.getElementById('bookingSystem').value,
+                url: document.getElementById('bookingLink').value,
+                ghlCalendarId: document.getElementById('ghlCalendarId').value
+            };
+
+            // Build full settings object
+            const settings = {
+                enabled: document.getElementById('enableToggle').checked,
+                phoneNumber: document.getElementById('whatsappNumber').value,
+                displayName: document.getElementById('displayName').value,
+                businessType: document.getElementById('businessType').value,
+                defaultLanguage: document.getElementById('defaultLanguage').value,
+                greetingMessage: document.getElementById('greetingMessage').value,
+                services: currentSettings.services || getServices(),
+                deposit: currentSettings.deposit || {
+                    type: document.getElementById('depositRequired').value,
+                    value: parseFloat(document.getElementById('depositValue').value) || null
+                },
+                booking: bookingData,
+                zelle: currentSettings.zelle || {
+                    enabled: document.getElementById('zelleToggle').checked,
+                    email: document.getElementById('zelleEmail').value,
+                    defaultAmount: parseFloat(document.getElementById('depositAmount').value) || null,
+                    depositMessage: document.getElementById('depositMessage').value,
+                    qrCodeUrl: null
+                }
+            };
+
+            try {
+                const response = await fetch('/api/client-settings/whatsapp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentSettings.booking = bookingData;
+                    showAlert('Booking settings saved successfully!', 'success');
+                } else {
+                    showAlert(data.error || 'Failed to save settings', 'error');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showAlert('Failed to save settings', 'error');
+            }
+        }
+
         // Load current settings
         async function loadSettings() {
             try {
@@ -841,6 +965,61 @@
             document.getElementById('depositMessage').disabled = !enabled;
             document.getElementById('qrUpload').style.opacity = enabled ? '1' : '0.5';
             document.getElementById('qrUpload').style.pointerEvents = enabled ? 'auto' : 'none';
+        }
+
+        // Save only Zelle settings
+        async function saveZelleSettings() {
+            const zelleSettings = {
+                enabled: document.getElementById('zelleToggle').checked,
+                email: document.getElementById('zelleEmail').value,
+                defaultAmount: parseFloat(document.getElementById('depositAmount').value) || null,
+                depositMessage: document.getElementById('depositMessage').value,
+                qrCodeUrl: currentSettings.zelle?.qrCodeUrl || null
+            };
+
+            // Build full settings object with current values
+            const settings = {
+                enabled: document.getElementById('enableToggle').checked,
+                phoneNumber: document.getElementById('whatsappNumber').value,
+                displayName: document.getElementById('displayName').value,
+                businessType: document.getElementById('businessType').value,
+                defaultLanguage: document.getElementById('defaultLanguage').value,
+                greetingMessage: document.getElementById('greetingMessage').value,
+                services: currentSettings.services || getServices(),
+                deposit: currentSettings.deposit || {
+                    type: document.getElementById('depositRequired').value,
+                    value: parseFloat(document.getElementById('depositValue').value) || null
+                },
+                booking: currentSettings.booking || {
+                    system: document.getElementById('bookingSystem').value,
+                    url: document.getElementById('bookingLink').value,
+                    ghlCalendarId: document.getElementById('ghlCalendarId').value
+                },
+                zelle: zelleSettings
+            };
+
+            try {
+                const response = await fetch('/api/client-settings/whatsapp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentSettings.zelle = zelleSettings;
+                    showAlert('Zelle settings saved successfully!', 'success');
+                } else {
+                    showAlert(data.error || 'Failed to save Zelle settings', 'error');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showAlert('Failed to save Zelle settings', 'error');
+            }
         }
 
         // Save settings
