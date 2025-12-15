@@ -180,8 +180,47 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
     let responseText;
     let requiresHuman = false;
 
+    // Helper function to check for payment-related keywords (including typos)
+    const isPaymentRelated = (msg) => {
+      const lowerMsg = msg.toLowerCase();
+      const paymentKeywords = [
+        'payment', 'pay', 'pyment', 'paymnt', 'payement',  // English + typos
+        'deposit', 'deposito', 'depósito', 'deposite',     // Deposit variations
+        'zelle', 'zel', 'zell',                             // Zelle variations
+        'pago', 'pagar', 'pagos',                           // Spanish
+        'send money', 'enviar dinero', 'transfer',
+        'how do i pay', 'como pago', 'quiero pagar',
+        'want to pay', 'ready to pay', 'listo para pagar'
+      ];
+      return paymentKeywords.some(keyword => lowerMsg.includes(keyword));
+    };
+
+    // PRIORITY 1: Check for payment intent FIRST (before human escalation)
+    if (isPaymentRelated(customerMessage)) {
+      // Payment/deposit request - send Zelle info if configured
+      if (zelle?.enabled && zelle?.email) {
+        const depositAmount = deposit?.type !== 'none' && deposit?.value
+          ? (deposit.type === 'fixed' ? `$${deposit.value}` : `${deposit.value}%`)
+          : (zelle.defaultAmount ? `$${zelle.defaultAmount}` : '');
+
+        const zelleMsg = zelle.depositMessage || (detectedLanguage === 'es'
+          ? `Para asegurar tu cita, envía un depósito${depositAmount ? ` de ${depositAmount}` : ''} por Zelle a: ${zelle.email}`
+          : `To secure your appointment, please send a deposit${depositAmount ? ` of ${depositAmount}` : ''} via Zelle to: ${zelle.email}`);
+
+        responseText = zelleMsg;
+        if (zelle.qrCodeUrl) {
+          responseText += detectedLanguage === 'es'
+            ? '\n\n📲 Te envío nuestro código QR para facilitar el pago.'
+            : '\n\n📲 Here is our QR code for easy payment.';
+        }
+      } else {
+        responseText = detectedLanguage === 'es'
+          ? 'Para información sobre pagos y depósitos, un miembro de nuestro equipo te contactará pronto. 📞'
+          : 'For payment and deposit information, a team member will contact you shortly. 📞';
+      }
+    }
     // Check if human escalation is needed
-    if (intent.requires_human || intent.intent === 'complaint') {
+    else if (intent.requires_human || intent.intent === 'complaint') {
       requiresHuman = true;
       responseText = detectedLanguage === 'es'
         ? `Entiendo tu preocupación. Voy a transferir tu consulta a uno de nuestros agentes que podrá ayudarte mejor. Te contactarán pronto. 📞`
@@ -212,31 +251,6 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
         responseText = detectedLanguage === 'es'
           ? `¡Claro! ¿Qué servicio te interesa? Así puedo darte información más específica sobre precios y disponibilidad.`
           : `Of course! Which service are you interested in? I can give you more specific information about pricing and availability.`;
-      }
-    }
-    else if (intent.intent === 'payment' || intent.intent === 'deposit' ||
-             customerMessage.toLowerCase().includes('deposit') || customerMessage.toLowerCase().includes('pay') ||
-             customerMessage.toLowerCase().includes('pago') || customerMessage.toLowerCase().includes('depósito')) {
-      // Payment/deposit request - send Zelle info if configured
-      if (zelle?.enabled && zelle?.email) {
-        const depositAmount = deposit?.type !== 'none' && deposit?.value
-          ? (deposit.type === 'fixed' ? `$${deposit.value}` : `${deposit.value}%`)
-          : (zelle.defaultAmount ? `$${zelle.defaultAmount}` : '');
-
-        const zelleMsg = zelle.depositMessage || (detectedLanguage === 'es'
-          ? `Para asegurar tu cita, envía un depósito${depositAmount ? ` de ${depositAmount}` : ''} por Zelle a: ${zelle.email}`
-          : `To secure your appointment, please send a deposit${depositAmount ? ` of ${depositAmount}` : ''} via Zelle to: ${zelle.email}`);
-
-        responseText = zelleMsg;
-        if (zelle.qrCodeUrl) {
-          responseText += detectedLanguage === 'es'
-            ? '\n\n📲 Te envío nuestro código QR para facilitar el pago.'
-            : '\n\n📲 Here is our QR code for easy payment.';
-        }
-      } else {
-        responseText = detectedLanguage === 'es'
-          ? 'Para información sobre pagos y depósitos, un miembro de nuestro equipo te contactará pronto. 📞'
-          : 'For payment and deposit information, a team member will contact you shortly. 📞';
       }
     }
     else if (intent.intent === 'hours') {
