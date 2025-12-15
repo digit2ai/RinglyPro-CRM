@@ -148,7 +148,9 @@ console.log('✅ Photo Upload routes loaded successfully');
 // Import PixlyPro routes
 const pixlyproRoutes = require('./routes/pixlypro'); // PixlyPro AI-assisted photo enhancement
 const vagaroRoutes = require('./routes/vagaro'); // Vagaro salon/spa scheduling integration
+const whatsappRoutes = require('./routes/whatsapp'); // WhatsApp Business integration
 console.log('✅ PixlyPro routes loaded successfully');
+console.log('✅ WhatsApp routes loaded successfully');
 
 // Import Storefront routes
 const storefrontRoutes = require('./routes/storefront'); // Online storefront & menu system
@@ -189,6 +191,9 @@ console.log('✅ PixlyPro routes mounted at /api/pixlypro');
 
 app.use('/api/vagaro', vagaroRoutes); // Vagaro salon/spa scheduling integration
 console.log('✅ Vagaro routes mounted at /api/vagaro');
+
+app.use('/api/whatsapp', whatsappRoutes); // WhatsApp Business bilingual AI assistant
+console.log('✅ WhatsApp routes mounted at /api/whatsapp');
 
 // Mount Photo Upload routes
 app.use('/api/photo-uploads', photoUploadRoutes); // Photo upload handling for all services

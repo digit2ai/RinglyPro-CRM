@@ -48,7 +48,13 @@ class TokenService {
       'voice_outbound_minute': 5,         // Outbound call per minute
       'voicemail_transcription': 3,       // Voicemail transcription
       'call_forward': 2,                  // Call forwarding
-      'ivr_interaction': 1                // IVR menu interaction
+      'ivr_interaction': 1,               // IVR menu interaction
+
+      // WhatsApp Business (bilingual AI assistant)
+      'whatsapp_template_sent': 2,        // Business-initiated template message
+      'whatsapp_session_message': 1,      // Reply within 24hr window (FREE from Meta)
+      'whatsapp_media_sent': 3,           // Send image/file/video
+      'whatsapp_ai_response': 1           // AI-generated response in session
     };
   }
 
