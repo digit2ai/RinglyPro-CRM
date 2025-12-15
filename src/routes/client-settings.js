@@ -1384,17 +1384,11 @@ router.post('/zelle', authenticateToken, async (req, res) => {
  * POST /api/client-settings/zelle/upload-qr
  * Upload Zelle QR code image
  */
-router.post('/zelle/upload-qr', authenticateToken, upload.single('qrCode'), async (req, res) => {
+router.post('/zelle/upload-qr', authenticateToken, async (req, res, next) => {
   try {
     const userId = req.user.userId || req.user.id;
 
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        error: 'No file uploaded'
-      });
-    }
-
+    // Get user's client ID first
     const [user] = await sequelize.query(
       'SELECT client_id FROM users WHERE id = :userId',
       {
@@ -1410,64 +1404,80 @@ router.post('/zelle/upload-qr', authenticateToken, upload.single('qrCode'), asyn
       });
     }
 
-    // Save the file and get URL
-    const fileName = `zelle-qr-${user.client_id}-${Date.now()}${path.extname(req.file.originalname)}`;
-    const uploadPath = path.join(__dirname, '../../public/uploads/qr-codes');
+    // Store clientId for multer filename
+    req.clientId = user.client_id;
 
-    // Ensure directory exists
-    const fs = require('fs');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-
-    const filePath = path.join(uploadPath, fileName);
-    fs.writeFileSync(filePath, req.file.buffer);
-
-    const qrCodeUrl = `/uploads/qr-codes/${fileName}`;
-
-    // Update client settings with QR URL
-    const [client] = await sequelize.query(
-      'SELECT settings FROM clients WHERE id = :clientId',
-      {
-        replacements: { clientId: user.client_id },
-        type: QueryTypes.SELECT
+    // Handle file upload using qrUpload middleware
+    qrUpload.single('qrCode')(req, res, async (err) => {
+      if (err) {
+        logger.error('[CLIENT SETTINGS] Zelle QR upload error:', err);
+        return res.status(400).json({
+          success: false,
+          error: err.message || 'Upload failed'
+        });
       }
-    );
 
-    const currentSettings = client?.settings || {};
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'No file uploaded'
+        });
+      }
 
-    const updatedSettings = {
-      ...currentSettings,
-      integration: {
-        ...(currentSettings.integration || {}),
-        zelle: {
-          ...(currentSettings.integration?.zelle || {}),
-          qrCodeUrl: qrCodeUrl
+      const qrCodeUrl = `/uploads/qr-codes/${req.file.filename}`;
+
+      try {
+        // Update client settings with QR URL
+        const [client] = await sequelize.query(
+          'SELECT settings FROM clients WHERE id = :clientId',
+          {
+            replacements: { clientId: user.client_id },
+            type: QueryTypes.SELECT
+          }
+        );
+
+        const currentSettings = client?.settings || {};
+
+        const updatedSettings = {
+          ...currentSettings,
+          integration: {
+            ...(currentSettings.integration || {}),
+            zelle: {
+              ...(currentSettings.integration?.zelle || {}),
+              qrCodeUrl: qrCodeUrl
+            }
+          }
+        };
+
+        // Also update WhatsApp zelle settings for backwards compatibility
+        if (updatedSettings.integration?.whatsapp?.zelle) {
+          updatedSettings.integration.whatsapp.zelle.qrCodeUrl = qrCodeUrl;
         }
+
+        await sequelize.query(
+          `UPDATE clients SET settings = :settings WHERE id = :clientId`,
+          {
+            replacements: {
+              settings: JSON.stringify(updatedSettings),
+              clientId: user.client_id
+            },
+            type: QueryTypes.UPDATE
+          }
+        );
+
+        logger.info(`[CLIENT SETTINGS] Uploaded Zelle QR for client ${user.client_id}`);
+
+        res.json({
+          success: true,
+          qrCodeUrl: qrCodeUrl
+        });
+      } catch (dbError) {
+        logger.error('[CLIENT SETTINGS] Zelle QR DB update error:', dbError);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to save QR code'
+        });
       }
-    };
-
-    // Also update WhatsApp zelle settings for backwards compatibility
-    if (updatedSettings.integration?.whatsapp?.zelle) {
-      updatedSettings.integration.whatsapp.zelle.qrCodeUrl = qrCodeUrl;
-    }
-
-    await sequelize.query(
-      `UPDATE clients SET settings = :settings WHERE id = :clientId`,
-      {
-        replacements: {
-          settings: JSON.stringify(updatedSettings),
-          clientId: user.client_id
-        },
-        type: QueryTypes.UPDATE
-      }
-    );
-
-    logger.info(`[CLIENT SETTINGS] Uploaded Zelle QR for client ${user.client_id}`);
-
-    res.json({
-      success: true,
-      qrCodeUrl: qrCodeUrl
     });
 
   } catch (error) {
