@@ -20,6 +20,18 @@ const {
 } = require('../prompts/whatsapp-lead-response');
 
 /**
+ * Check if a QR code URL is valid (not undefined, null, or invalid path)
+ * @param {string} url - The URL to check
+ * @returns {boolean} Whether the URL is valid
+ */
+function isValidQrCodeUrl(url) {
+  if (!url) return false;
+  if (url === 'undefined' || url === 'null') return false;
+  if (url.includes('/undefined') || url.includes('/null')) return false;
+  return true;
+}
+
+/**
  * Get accessible URL for Zelle QR code
  * - If stored in S3, fetches a presigned URL that Twilio can access
  * - If local path, converts to full URL
@@ -28,7 +40,7 @@ const {
  * @returns {Promise<string|null>} Accessible URL or null
  */
 async function getAccessibleQrCodeUrl(qrCodeUrl, clientId) {
-  if (!qrCodeUrl) return null;
+  if (!isValidQrCodeUrl(qrCodeUrl)) return null;
 
   try {
     // If it's an S3 URL, get a presigned URL for Twilio to access
@@ -348,21 +360,23 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
             ? `Para asegurar tu cita, envía un depósito${depositAmount ? ` de ${depositAmount}` : ''} por Zelle a: ${zelle.email}`
             : `To secure your appointment, please send a deposit${depositAmount ? ` of ${depositAmount}` : ''} via Zelle to: ${zelle.email}`);
 
-          if (zelle.qrCodeUrl) {
+          if (isValidQrCodeUrl(zelle.qrCodeUrl)) {
             responseText += detectedLanguage === 'es'
               ? '\n\n📲 Te envío nuestro código QR para facilitar el pago.'
               : '\n\n📲 Here is our QR code for easy payment.';
             // Include QR code image in response
             const accessibleUrl = await getAccessibleQrCodeUrl(zelle.qrCodeUrl, clientId);
-            return {
-              success: true,
-              response: responseText,
-              mediaUrl: accessibleUrl,
-              intent: { intent: 'payment' },
-              language: detectedLanguage,
-              requiresHuman: false,
-              context: conversationContext
-            };
+            if (accessibleUrl) {
+              return {
+                success: true,
+                response: responseText,
+                mediaUrl: accessibleUrl,
+                intent: { intent: 'payment' },
+                language: detectedLanguage,
+                requiresHuman: false,
+                context: conversationContext
+              };
+            }
           }
         } else {
           responseText = detectedLanguage === 'es'
@@ -431,21 +445,23 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
           : `To secure your appointment, please send a deposit${depositAmount ? ` of ${depositAmount}` : ''} via Zelle to: ${zelle.email}`);
 
         responseText = zelleMsg;
-        if (zelle.qrCodeUrl) {
+        if (isValidQrCodeUrl(zelle.qrCodeUrl)) {
           responseText += detectedLanguage === 'es'
             ? '\n\n📲 Te envío nuestro código QR para facilitar el pago.'
             : '\n\n📲 Here is our QR code for easy payment.';
           // Return immediately with QR code media
           const accessibleUrl = await getAccessibleQrCodeUrl(zelle.qrCodeUrl, clientId);
-          return {
-            success: true,
-            response: responseText,
-            mediaUrl: accessibleUrl,
-            intent: { intent: 'payment' },
-            language: detectedLanguage,
-            requiresHuman: false,
-            context: conversationContext
-          };
+          if (accessibleUrl) {
+            return {
+              success: true,
+              response: responseText,
+              mediaUrl: accessibleUrl,
+              intent: { intent: 'payment' },
+              language: detectedLanguage,
+              requiresHuman: false,
+              context: conversationContext
+            };
+          }
         }
       } else {
         responseText = detectedLanguage === 'es'
@@ -866,7 +882,7 @@ async function handleAppointmentIntent(message, context, clientConfig) {
               ? `\n\n💰 Para asegurar tu cita, envía un depósito${depositAmount ? ` de ${depositAmount}` : ''} por Zelle a:\n📧 ${zelle.email}`
               : `\n\n💰 To secure your appointment, please send a deposit${depositAmount ? ` of ${depositAmount}` : ''} via Zelle to:\n📧 ${zelle.email}`;
 
-            if (zelle.qrCodeUrl) {
+            if (isValidQrCodeUrl(zelle.qrCodeUrl)) {
               qrCodeUrl = zelle.qrCodeUrl;
               successMsg += language === 'es'
                 ? '\n\n📲 Te envío el código QR para facilitar el pago.'
@@ -882,8 +898,10 @@ async function handleAppointmentIntent(message, context, clientConfig) {
           if (qrCodeUrl) {
             // Get accessible URL (presigned if S3, full URL if local)
             const accessibleUrl = await getAccessibleQrCodeUrl(qrCodeUrl, clientId);
-            logger.info(`[LEAD-RESPONSE] Using accessible QR URL: ${accessibleUrl}`);
-            return { text: successMsg, mediaUrl: accessibleUrl };
+            if (accessibleUrl) {
+              logger.info(`[LEAD-RESPONSE] Using accessible QR URL: ${accessibleUrl}`);
+              return { text: successMsg, mediaUrl: accessibleUrl };
+            }
           }
           return successMsg;
         }
@@ -912,7 +930,7 @@ async function handleAppointmentIntent(message, context, clientConfig) {
         ? `\n\n💰 Para asegurar tu cita, envía un depósito${depositAmount ? ` de ${depositAmount}` : ''} por Zelle a:\n📧 ${zelle.email}`
         : `\n\n💰 To secure your appointment, please send a deposit${depositAmount ? ` of ${depositAmount}` : ''} via Zelle to:\n📧 ${zelle.email}`;
 
-      if (zelle.qrCodeUrl) {
+      if (isValidQrCodeUrl(zelle.qrCodeUrl)) {
         qrCodeUrl = zelle.qrCodeUrl;
         fallbackMsg += language === 'es'
           ? '\n\n📲 Te envío el código QR para facilitar el pago.'
@@ -925,12 +943,14 @@ async function handleAppointmentIntent(message, context, clientConfig) {
       : '\n\nA team member will confirm your appointment shortly. Thank you! 🙌';
 
     // Return structured response with QR code URL if available
-    logger.info(`[LEAD-RESPONSE] STEP 5 fallback: qrCodeUrl=${qrCodeUrl}`);
-    if (qrCodeUrl) {
+    logger.info(`[LEAD-RESPONSE] STEP 5 fallback: qrCodeUrl=${qrCodeUrl}, isValid=${isValidQrCodeUrl(qrCodeUrl)}`);
+    if (qrCodeUrl && isValidQrCodeUrl(qrCodeUrl)) {
       // Get accessible URL (presigned if S3, full URL if local)
       const accessibleUrl = await getAccessibleQrCodeUrl(qrCodeUrl, clientId);
-      logger.info(`[LEAD-RESPONSE] Returning structured response with QR code: ${accessibleUrl}`);
-      return { text: fallbackMsg, mediaUrl: accessibleUrl };
+      if (accessibleUrl) {
+        logger.info(`[LEAD-RESPONSE] Returning structured response with QR code: ${accessibleUrl}`);
+        return { text: fallbackMsg, mediaUrl: accessibleUrl };
+      }
     }
     return fallbackMsg;
   }

@@ -411,7 +411,22 @@ class GHLBookingService {
       }
 
       // Step 2: Book appointment
-      const startTime = new Date(`${date}T${time}`);
+      // Handle timezone properly - GHL calendar is in America/New_York (EST/ET) timezone
+      // The time parameter is in 24h format like "17:00" and represents local business time
+      // We need to convert this to UTC for GHL API
+
+      // Check if date is in DST (roughly Mar-Nov) for ET timezone
+      const month = parseInt(date.split('-')[1]);
+      const day = parseInt(date.split('-')[2]);
+      // DST starts 2nd Sunday of March, ends 1st Sunday of November (approximate)
+      const isDST = (month > 3 && month < 11) || (month === 3 && day > 14) || (month === 11 && day < 7);
+      const etOffset = isDST ? '-04:00' : '-05:00';
+
+      // Build ISO string with ET timezone - this ensures GHL interprets it correctly
+      const startTimeISO = `${date}T${time}:00${etOffset}`;
+      const startTime = new Date(startTimeISO);
+
+      logger.info(`[GHL] Booking time conversion: input=${date}T${time}, isDST=${isDST}, ET offset=${etOffset}, ISO=${startTime.toISOString()}`);
 
       const appointmentResult = await this.bookAppointment(clientId, {
         contactId: contactResult.contact.id,
