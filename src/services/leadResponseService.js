@@ -228,10 +228,18 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
     // This handles: user provided name, user selecting time slot, etc.
     if (lastIntent === 'appointment' || (menuSelection === 'appointment')) {
       // User is in booking flow OR just started it
-      responseText = await handleAppointmentIntent(customerMessage, conversationContext, clientConfig);
+      // Pass conversationHistory to handleAppointmentIntent for data extraction
+      const appointmentContext = { ...conversationContext, conversationHistory };
+      const appointmentResult = await handleAppointmentIntent(customerMessage, appointmentContext, clientConfig);
+
+      // handleAppointmentIntent may return a string or an object with {text, mediaUrl}
+      const isStructured = typeof appointmentResult === 'object' && appointmentResult.text;
+      responseText = isStructured ? appointmentResult.text : appointmentResult;
+
       return {
         success: true,
         response: responseText,
+        mediaUrl: isStructured ? appointmentResult.mediaUrl : null,
         intent: { intent: 'appointment' },
         language: detectedLanguage,
         requiresHuman: false,
@@ -366,7 +374,8 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
     }
     else if (intent.intent === 'appointment') {
       // Appointment booking intent
-      responseText = await handleAppointmentIntent(customerMessage, conversationContext, clientConfig);
+      const appointmentContext = { ...conversationContext, conversationHistory };
+      responseText = await handleAppointmentIntent(customerMessage, appointmentContext, clientConfig);
     }
     else if (intent.intent === 'pricing' || intent.intent === 'inquiry') {
       // Pricing or general inquiry - show services with prices if available
@@ -457,7 +466,7 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
  * @returns {Promise<string>} Response text
  */
 async function handleAppointmentIntent(message, context, clientConfig) {
-  const { language, customerName, customerPhone, businessName, vagaroEnabled, clientId, lastIntent } = context;
+  const { language, customerName, customerPhone, businessName, vagaroEnabled, clientId, conversationHistory = [] } = context;
   const {
     services = [],
     booking = { system: 'none', url: null },
@@ -467,30 +476,15 @@ async function handleAppointmentIntent(message, context, clientConfig) {
   } = clientConfig;
 
   logger.info('[LEAD-RESPONSE] handleAppointmentIntent called', {
-    customerName, customerPhone, bookingSystem: booking?.system, lastIntent
+    customerName, customerPhone, bookingSystem: booking?.system, historyLength: conversationHistory.length
   });
 
-  // Try to extract appointment details from the message
-  let appointmentDetails = {};
-
-  if (isConfigured()) {
-    try {
-      const extractPrompt = getAppointmentExtractionPrompt(message, language);
-      const extractResponse = await callClaude(
-        'You are an appointment detail extractor. Respond only with valid JSON.',
-        extractPrompt,
-        { maxTokens: 300 }
-      );
-
-      const jsonMatch = extractResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        appointmentDetails = JSON.parse(jsonMatch[0]);
-        logger.info('[LEAD-RESPONSE] Extracted details:', appointmentDetails);
-      }
-    } catch (e) {
-      logger.warn('[LEAD-RESPONSE] Appointment extraction failed:', e.message);
-    }
-  }
+  // ============================================
+  // EXTRACT BOOKING DATA FROM CONVERSATION HISTORY
+  // Look through previous messages to find name, phone, email
+  // ============================================
+  const extractedData = extractBookingDataFromHistory(conversationHistory, message);
+  logger.info('[LEAD-RESPONSE] Extracted booking data:', extractedData);
 
   // Check if we have a booking link to provide (Calendly, custom link)
   const effectiveBookingUrl = booking?.url || bookingUrl;
@@ -512,111 +506,114 @@ async function handleAppointmentIntent(message, context, clientConfig) {
 
   // ============================================
   // CONVERSATIONAL BOOKING FLOW
-  // Step 1: Ask for name (if not known)
-  // Step 2: Phone already known from WhatsApp
-  // Step 3: Fetch availability & offer 3 slots
-  // Step 4: Book when user selects a slot
+  // Step 1: Ask for name
+  // Step 2: Ask for phone number
+  // Step 3: Ask for email
+  // Step 4: Fetch availability & offer 3 slots
+  // Step 5: Book when user selects a slot
+  // Step 6: Include Zelle QR code in confirmation
   // ============================================
 
-  // STEP 1: Check if we have customer name
-  const effectiveName = customerName || appointmentDetails.customerName;
+  const msgTrimmed = message.trim();
+  const msgLower = msgTrimmed.toLowerCase();
 
-  // If this is the first message in booking flow (user just selected "1"), ask for name
-  if (!effectiveName && message.trim() === '1') {
+  // Detect what the current message looks like
+  const looksLikeName = msgTrimmed.length > 2 &&
+    !/^\d+$/.test(msgTrimmed) &&
+    !msgTrimmed.includes('@') &&
+    !/^\+?\d{10,}$/.test(msgTrimmed.replace(/[\s\-\(\)]/g, '')) &&
+    !/^\d{3}[-.\s]?\d{3}[-.\s]?\d{4}$/.test(msgTrimmed);
+  const looksLikePhone = /^\+?\d{10,}$/.test(msgTrimmed.replace(/[\s\-\(\)]/g, '')) ||
+    /^\d{3}[-.\s]?\d{3}[-.\s]?\d{4}$/.test(msgTrimmed);
+  const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(msgTrimmed);
+  const isSlotSelection = ['1', '2', '3'].includes(msgTrimmed);
+
+  // STEP 1: User just selected "1" to book OR this is start of booking flow - ask for name
+  if ((msgTrimmed === '1' || msgLower.includes('book') || msgLower.includes('appointment') || msgLower.includes('cita') || msgLower.includes('agendar')) &&
+      !extractedData.name && !extractedData.phone && !extractedData.email) {
     return language === 'es'
       ? '¡Perfecto! 📅 Vamos a agendar tu cita.\n\n¿Cuál es tu nombre completo?'
       : 'Perfect! 📅 Let\'s schedule your appointment.\n\nWhat is your full name?';
   }
 
-  // Check if the message looks like a name (not a number, not too short)
-  const looksLikeName = message.length > 2 && !/^\d+$/.test(message.trim()) && !message.includes('@');
+  // STEP 2: We have a name from history but no phone - current message should be a name, ask for phone
+  if (looksLikeName && !extractedData.name && !extractedData.phone && !extractedData.email) {
+    // User just provided their name
+    return language === 'es'
+      ? `¡Gracias ${msgTrimmed}! 📱\n\n¿Cuál es el mejor número de teléfono para contactarte?`
+      : `Thanks ${msgTrimmed}! 📱\n\nWhat's the best phone number to reach you?`;
+  }
 
-  // If we don't have a name and message looks like a name, this IS the name
-  if (!effectiveName && looksLikeName && lastIntent === 'appointment') {
-    // User just provided their name, now fetch availability
-    const providedName = message.trim();
+  // STEP 3: We have name, user is providing phone - ask for email
+  if (looksLikePhone && extractedData.name && !extractedData.phone) {
+    return language === 'es'
+      ? '¡Perfecto! 📧\n\n¿Cuál es tu dirección de correo electrónico?'
+      : 'Perfect! 📧\n\nWhat is your email address?';
+  }
 
-    // For GHL booking - fetch available slots
+  // STEP 4: We have name and phone, user is providing email - show available time slots
+  if (looksLikeEmail && extractedData.name && extractedData.phone && !extractedData.email) {
+    // Store email from current message
+    const userEmail = msgTrimmed;
+
+    // Now show available time slots
+    const formatDate = (d) => d.toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+
+    // For GHL booking - try to fetch available slots
     if (booking?.system === 'ghl' && clientId) {
       try {
-        // Get next 3 available days
         const today = new Date();
         const slots = [];
 
         for (let i = 1; i <= 7 && slots.length < 3; i++) {
           const checkDate = new Date(today);
           checkDate.setDate(today.getDate() + i);
-
-          // Skip weekends for simplicity (can be customized per client)
           if (checkDate.getDay() === 0 || checkDate.getDay() === 6) continue;
 
           const dateStr = checkDate.toISOString().split('T')[0];
-          const dayName = checkDate.toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+          const dayName = formatDate(checkDate);
 
-          // Try to get slots from GHL
           const ghlSlots = await ghlBookingService.getAvailableSlots(clientId, booking.ghlCalendarId, dateStr);
 
           if (ghlSlots.success && ghlSlots.slots?.length > 0) {
-            // Pick a reasonable time slot (morning, afternoon options)
             const morning = ghlSlots.slots.find(s => s.includes('10:') || s.includes('11:'));
-            const afternoon = ghlSlots.slots.find(s => s.includes('14:') || s.includes('15:') || s.includes('2:') || s.includes('3:'));
+            const afternoon = ghlSlots.slots.find(s => s.includes('14:') || s.includes('15:'));
             const selectedTime = morning || afternoon || ghlSlots.slots[0];
-
-            slots.push({
-              date: dateStr,
-              time: selectedTime,
-              display: `${dayName} @ ${formatTime(selectedTime)}`
-            });
+            slots.push({ date: dateStr, time: selectedTime, display: `${dayName} @ ${formatTime(selectedTime)}` });
           } else {
-            // Fallback: offer standard times
-            slots.push({
-              date: dateStr,
-              time: '10:00',
-              display: `${dayName} @ 10:00 AM`
-            });
+            slots.push({ date: dateStr, time: '10:00', display: `${dayName} @ 10:00 AM` });
           }
         }
 
-        // If we got slots, offer them
         if (slots.length > 0) {
           const slotOptions = slots.map((s, i) => `${i + 1}️⃣ ${s.display}`).join('\n');
-
-          // Store the slots in context for later (we'll need to parse the response)
-          // For now, return a formatted message
           return language === 'es'
-            ? `¡Gracias ${providedName}! 😊\n\nAquí tienes nuestros próximos horarios disponibles:\n\n${slotOptions}\n\nResponde con el número (1, 2, o 3) para confirmar tu cita.`
-            : `Thanks ${providedName}! 😊\n\nHere are our next available times:\n\n${slotOptions}\n\nReply with the number (1, 2, or 3) to confirm your appointment.`;
+            ? `¡Excelente ${extractedData.name}! 📅\n\nAquí tienes nuestros próximos horarios disponibles:\n\n${slotOptions}\n\nResponde con el número (1, 2, o 3) para confirmar tu cita.`
+            : `Excellent ${extractedData.name}! 📅\n\nHere are our next available times:\n\n${slotOptions}\n\nReply with the number (1, 2, or 3) to confirm your appointment.`;
         }
       } catch (ghlError) {
         logger.error('[LEAD-RESPONSE] Error fetching GHL availability:', ghlError.message);
       }
     }
 
-    // Fallback: offer generic time options
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const dayAfter = new Date();
-    dayAfter.setDate(dayAfter.getDate() + 2);
-    const dayAfter2 = new Date();
-    dayAfter2.setDate(dayAfter2.getDate() + 3);
-
-    const formatDate = (d) => d.toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    // Fallback time slots
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfter = new Date(); dayAfter.setDate(dayAfter.getDate() + 2);
+    const dayAfter2 = new Date(); dayAfter2.setDate(dayAfter2.getDate() + 3);
 
     return language === 'es'
-      ? `¡Gracias ${providedName}! 😊\n\nAquí tienes nuestros próximos horarios disponibles:\n\n1️⃣ ${formatDate(tomorrow)} @ 10:00 AM\n2️⃣ ${formatDate(dayAfter)} @ 2:00 PM\n3️⃣ ${formatDate(dayAfter2)} @ 11:00 AM\n\nResponde con el número (1, 2, o 3) para confirmar tu cita.`
-      : `Thanks ${providedName}! 😊\n\nHere are our next available times:\n\n1️⃣ ${formatDate(tomorrow)} @ 10:00 AM\n2️⃣ ${formatDate(dayAfter)} @ 2:00 PM\n3️⃣ ${formatDate(dayAfter2)} @ 11:00 AM\n\nReply with the number (1, 2, or 3) to confirm your appointment.`;
+      ? `¡Excelente ${extractedData.name}! 📅\n\nAquí tienes nuestros próximos horarios disponibles:\n\n1️⃣ ${formatDate(tomorrow)} @ 10:00 AM\n2️⃣ ${formatDate(dayAfter)} @ 2:00 PM\n3️⃣ ${formatDate(dayAfter2)} @ 11:00 AM\n\nResponde con el número (1, 2, o 3) para confirmar tu cita.`
+      : `Excellent ${extractedData.name}! 📅\n\nHere are our next available times:\n\n1️⃣ ${formatDate(tomorrow)} @ 10:00 AM\n2️⃣ ${formatDate(dayAfter)} @ 2:00 PM\n3️⃣ ${formatDate(dayAfter2)} @ 11:00 AM\n\nReply with the number (1, 2, or 3) to confirm your appointment.`;
   }
 
-  // STEP 3: Check if user is selecting a time slot (1, 2, or 3 after seeing options)
-  const slotSelection = message.trim();
-  if ((slotSelection === '1' || slotSelection === '2' || slotSelection === '3') && lastIntent === 'appointment') {
-    // User selected a slot - book the appointment
-    const slotIndex = parseInt(slotSelection) - 1;
+  // STEP 5: User selecting a time slot (1, 2, or 3) - we should have name, phone, email in history
+  if (isSlotSelection && extractedData.name && extractedData.phone && extractedData.email) {
+    const slotIndex = parseInt(msgTrimmed) - 1;
 
     // Calculate the date/time based on selection
     const today = new Date();
     const selectedDate = new Date(today);
-    selectedDate.setDate(today.getDate() + slotIndex + 1); // +1, +2, or +3 days
+    selectedDate.setDate(today.getDate() + slotIndex + 1);
 
     // Skip weekends
     while (selectedDate.getDay() === 0 || selectedDate.getDay() === 6) {
@@ -627,40 +624,58 @@ async function handleAppointmentIntent(message, context, clientConfig) {
     const selectedTime = times[slotIndex] || '10:00';
     const dateStr = selectedDate.toISOString().split('T')[0];
 
+    const formattedDate = selectedDate.toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', {
+      weekday: 'long', month: 'long', day: 'numeric'
+    });
+    const formattedTime = formatTime(selectedTime);
+
     // Try to book via GHL
     if (booking?.system === 'ghl' && clientId) {
       try {
         const ghlResult = await ghlBookingService.bookFromWhatsApp(clientId, {
-          customerName: effectiveName || 'WhatsApp Customer',
-          customerPhone: customerPhone,
+          customerName: extractedData.name,
+          customerPhone: extractedData.phone || customerPhone,
+          customerEmail: extractedData.email,
           date: dateStr,
           time: selectedTime,
           service: 'Appointment',
           calendarId: booking.ghlCalendarId,
-          notes: `Booked via WhatsApp\nCustomer: ${effectiveName}\nPhone: ${customerPhone}`
+          notes: `Booked via WhatsApp\nCustomer: ${extractedData.name}\nPhone: ${extractedData.phone}\nEmail: ${extractedData.email}`
         });
 
         if (ghlResult.success) {
-          const formattedDate = selectedDate.toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', {
-            weekday: 'long', month: 'long', day: 'numeric'
-          });
-          const formattedTime = formatTime(selectedTime);
-
           let successMsg = language === 'es'
-            ? `✅ ¡Tu cita ha sido confirmada!\n\n📅 ${formattedDate}\n🕐 ${formattedTime}\n👤 ${effectiveName || 'Cliente'}`
-            : `✅ Your appointment has been confirmed!\n\n📅 ${formattedDate}\n🕐 ${formattedTime}\n👤 ${effectiveName || 'Customer'}`;
+            ? `✅ ¡Tu cita ha sido confirmada!\n\n📅 ${formattedDate}\n🕐 ${formattedTime}\n👤 ${extractedData.name}\n📱 ${extractedData.phone}\n📧 ${extractedData.email}`
+            : `✅ Your appointment has been confirmed!\n\n📅 ${formattedDate}\n🕐 ${formattedTime}\n👤 ${extractedData.name}\n📱 ${extractedData.phone}\n📧 ${extractedData.email}`;
 
-          if (deposit?.type !== 'none' && deposit?.value && zelle?.enabled) {
-            const depositAmount = deposit.type === 'fixed' ? `$${deposit.value}` : `${deposit.value}%`;
+          let qrCodeUrl = null;
+
+          // Add Zelle deposit information
+          if (zelle?.enabled && zelle?.email) {
+            const depositAmount = (deposit?.type !== 'none' && deposit?.value)
+              ? (deposit.type === 'fixed' ? `$${deposit.value}` : `${deposit.value}%`)
+              : (zelle.defaultAmount ? `$${zelle.defaultAmount}` : '');
+
             successMsg += language === 'es'
-              ? `\n\n💰 Para confirmar, envía un depósito de ${depositAmount} por Zelle a: ${zelle.email}`
-              : `\n\n💰 To confirm, please send a ${depositAmount} deposit via Zelle to: ${zelle.email}`;
+              ? `\n\n💰 Para asegurar tu cita, envía un depósito${depositAmount ? ` de ${depositAmount}` : ''} por Zelle a:\n📧 ${zelle.email}`
+              : `\n\n💰 To secure your appointment, please send a deposit${depositAmount ? ` of ${depositAmount}` : ''} via Zelle to:\n📧 ${zelle.email}`;
+
+            if (zelle.qrCodeUrl) {
+              qrCodeUrl = zelle.qrCodeUrl;
+              successMsg += language === 'es'
+                ? '\n\n📲 Te envío el código QR para facilitar el pago.'
+                : '\n\n📲 Here is our QR code for easy payment.';
+            }
           }
 
           successMsg += language === 'es'
             ? '\n\n¡Gracias! Te esperamos. 🙌'
             : '\n\nThank you! We look forward to seeing you. 🙌';
 
+          // Return structured response with QR code URL if available
+          if (qrCodeUrl) {
+            return { text: successMsg, mediaUrl: qrCodeUrl };
+          }
           return successMsg;
         }
       } catch (ghlError) {
@@ -669,53 +684,103 @@ async function handleAppointmentIntent(message, context, clientConfig) {
     }
 
     // Fallback confirmation (manual process)
-    const formattedDate = selectedDate.toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', {
-      weekday: 'long', month: 'long', day: 'numeric'
-    });
+    let fallbackMsg = language === 'es'
+      ? `✅ ¡Excelente elección!\n\n📅 ${formattedDate} @ ${formattedTime}\n👤 ${extractedData.name}\n📱 ${extractedData.phone}\n📧 ${extractedData.email}`
+      : `✅ Excellent choice!\n\n📅 ${formattedDate} @ ${formattedTime}\n👤 ${extractedData.name}\n📱 ${extractedData.phone}\n📧 ${extractedData.email}`;
 
-    return language === 'es'
-      ? `✅ ¡Excelente elección!\n\n📅 ${formattedDate} @ ${formatTime(selectedTime)}\n\nUn miembro de nuestro equipo confirmará tu cita pronto. ¡Gracias! 🙌`
-      : `✅ Excellent choice!\n\n📅 ${formattedDate} @ ${formatTime(selectedTime)}\n\nA team member will confirm your appointment shortly. Thank you! 🙌`;
-  }
+    let qrCodeUrl = null;
 
-  // If we have date/time from natural language, try to book directly
-  if (appointmentDetails.date && appointmentDetails.time && effectiveName) {
-    if (booking?.system === 'ghl' && clientId) {
-      try {
-        const ghlResult = await ghlBookingService.bookFromWhatsApp(clientId, {
-          customerName: effectiveName,
-          customerPhone: customerPhone,
-          date: appointmentDetails.date,
-          time: appointmentDetails.time,
-          service: appointmentDetails.service || 'Appointment',
-          calendarId: booking.ghlCalendarId,
-          notes: `Booked via WhatsApp\nCustomer: ${effectiveName}`
-        });
+    // Add Zelle deposit information for fallback too
+    if (zelle?.enabled && zelle?.email) {
+      const depositAmount = (deposit?.type !== 'none' && deposit?.value)
+        ? (deposit.type === 'fixed' ? `$${deposit.value}` : `${deposit.value}%`)
+        : (zelle.defaultAmount ? `$${zelle.defaultAmount}` : '');
 
-        if (ghlResult.success) {
-          let successMsg = language === 'es'
-            ? `✅ ¡Tu cita ha sido confirmada!\n\n📅 Fecha: ${appointmentDetails.date}\n🕐 Hora: ${appointmentDetails.time}`
-            : `✅ Your appointment has been confirmed!\n\n📅 Date: ${appointmentDetails.date}\n🕐 Time: ${appointmentDetails.time}`;
+      fallbackMsg += language === 'es'
+        ? `\n\n💰 Para asegurar tu cita, envía un depósito${depositAmount ? ` de ${depositAmount}` : ''} por Zelle a:\n📧 ${zelle.email}`
+        : `\n\n💰 To secure your appointment, please send a deposit${depositAmount ? ` of ${depositAmount}` : ''} via Zelle to:\n📧 ${zelle.email}`;
 
-          if (deposit?.type !== 'none' && deposit?.value && zelle?.enabled) {
-            const depositAmount = deposit.type === 'fixed' ? `$${deposit.value}` : `${deposit.value}%`;
-            successMsg += language === 'es'
-              ? `\n\n💰 Depósito de ${depositAmount} por Zelle a: ${zelle.email}`
-              : `\n\n💰 ${depositAmount} deposit via Zelle to: ${zelle.email}`;
-          }
-
-          return successMsg + (language === 'es' ? '\n\n¡Te esperamos! 🙌' : '\n\nWe look forward to seeing you! 🙌');
-        }
-      } catch (e) {
-        logger.error('[LEAD-RESPONSE] Direct GHL booking failed:', e.message);
+      if (zelle.qrCodeUrl) {
+        qrCodeUrl = zelle.qrCodeUrl;
+        fallbackMsg += language === 'es'
+          ? '\n\n📲 Te envío el código QR para facilitar el pago.'
+          : '\n\n📲 Here is our QR code for easy payment.';
       }
     }
+
+    fallbackMsg += language === 'es'
+      ? '\n\nUn miembro de nuestro equipo confirmará tu cita pronto. ¡Gracias! 🙌'
+      : '\n\nA team member will confirm your appointment shortly. Thank you! 🙌';
+
+    // Return structured response with QR code URL if available
+    if (qrCodeUrl) {
+      return { text: fallbackMsg, mediaUrl: qrCodeUrl };
+    }
+    return fallbackMsg;
   }
 
   // Default: Ask for name to start the flow
   return language === 'es'
     ? '¡Perfecto! 📅 Vamos a agendar tu cita.\n\n¿Cuál es tu nombre completo?'
     : 'Perfect! 📅 Let\'s schedule your appointment.\n\nWhat is your full name?';
+}
+
+/**
+ * Extract booking data from conversation history
+ * Looks for name, phone, email in previous messages
+ * @param {Array} history - Conversation history
+ * @param {string} currentMessage - Current message being processed
+ * @returns {object} Extracted data {name, phone, email}
+ */
+function extractBookingDataFromHistory(history, currentMessage) {
+  const data = { name: null, phone: null, email: null };
+
+  // Patterns for detection
+  const phonePattern = /^\+?\d{10,}$|^\d{3}[-.\s]?\d{3}[-.\s]?\d{4}$/;
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  // Process all messages in history (both incoming and outgoing)
+  for (const msg of history) {
+    const body = (msg.body || '').trim();
+    const cleanBody = body.replace(/[\s\-\(\)]/g, '');
+    const direction = msg.direction;
+
+    // Only check incoming messages for user data
+    if (direction !== 'incoming') continue;
+
+    // Skip menu selections and short responses
+    if (['1', '2', '3', '4'].includes(body)) continue;
+
+    // Check for email
+    if (emailPattern.test(body) && !data.email) {
+      data.email = body;
+      continue;
+    }
+
+    // Check for phone
+    if ((phonePattern.test(cleanBody) || /^\d{3}[-.\s]?\d{3}[-.\s]?\d{4}$/.test(body)) && !data.phone) {
+      data.phone = body;
+      continue;
+    }
+
+    // Check for name (text that's not a number, email, or phone)
+    if (body.length > 2 &&
+        !/^\d+$/.test(body) &&
+        !body.includes('@') &&
+        !phonePattern.test(cleanBody) &&
+        !/^\d{3}[-.\s]?\d{3}[-.\s]?\d{4}$/.test(body) &&
+        !body.toLowerCase().includes('hi') &&
+        !body.toLowerCase().includes('hello') &&
+        !body.toLowerCase().includes('hola') &&
+        !body.toLowerCase().includes('book') &&
+        !body.toLowerCase().includes('appointment') &&
+        !body.toLowerCase().includes('cita') &&
+        !data.name) {
+      data.name = body;
+    }
+  }
+
+  return data;
 }
 
 /**

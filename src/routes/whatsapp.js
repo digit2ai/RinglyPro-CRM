@@ -340,7 +340,13 @@ router.post('/webhook', async (req, res) => {
     const twiml = new twilio.twiml.MessagingResponse();
 
     if (responseMessage) {
-      twiml.message(responseMessage);
+      const msg = twiml.message(responseMessage);
+
+      // If there's a media URL (like Zelle QR code), add it to the message
+      if (aiResult?.mediaUrl) {
+        msg.media(aiResult.mediaUrl);
+        logger.info(`[WHATSAPP] Including media in response: ${aiResult.mediaUrl}`);
+      }
 
       // Save the auto-response too
       await saveMessage({
@@ -351,7 +357,8 @@ router.post('/webhook', async (req, res) => {
         from: To,
         to: From,
         body: responseMessage,
-        status: 'sent'
+        status: 'sent',
+        mediaUrl: aiResult?.mediaUrl || null
       });
 
       // Flag for human follow-up if AI indicated it's needed
