@@ -259,13 +259,18 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
     const menuSelection = getMenuSelection(customerMessage);
     const isDirectMenuNumber = ['1', '2', '3', '4'].includes(customerMessage.trim());
 
+    // Check if current message is a greeting
+    const lowerMessage = customerMessage.trim().toLowerCase();
+    const isGreeting = ['hi', 'hello', 'hola', 'hey', 'good morning', 'buenos dias', 'buenas tardes', 'good afternoon', 'good evening'].includes(lowerMessage);
+
     // PRIORITY 0.5: Continue appointment flow if user is in the middle of booking
     // This handles: user provided name, user selecting time slot, etc.
     // Check if: starting booking (menu selection) OR continuing booking (last message was booking prompt)
+    // BUT NOT if user sends a greeting - greetings should always show the menu
     const inBookingFlow = isInBookingFlow(conversationHistory);
-    logger.info(`[LEAD-RESPONSE] Booking flow check: menuSelection=${menuSelection}, inBookingFlow=${inBookingFlow}`);
+    logger.info(`[LEAD-RESPONSE] Booking flow check: menuSelection=${menuSelection}, inBookingFlow=${inBookingFlow}, isGreeting=${isGreeting}`);
 
-    if (menuSelection === 'appointment' || inBookingFlow) {
+    if ((menuSelection === 'appointment' || inBookingFlow) && !isGreeting) {
       // User is in booking flow OR just started it
       // Pass conversationHistory to handleAppointmentIntent for data extraction
       const appointmentContext = { ...conversationContext, conversationHistory };
@@ -524,6 +529,13 @@ async function handleAppointmentIntent(message, context, clientConfig) {
   // Look through previous messages to find name, phone, email
   // ============================================
   const extractedData = extractBookingDataFromHistory(conversationHistory, message);
+
+  // Use WhatsApp profile name as fallback if no name found in history
+  if (!extractedData.name && customerName) {
+    extractedData.name = customerName;
+    logger.info(`[LEAD-RESPONSE] Using WhatsApp profile name: ${customerName}`);
+  }
+
   logger.info('[LEAD-RESPONSE] Extracted booking data:', JSON.stringify(extractedData));
 
   // Check if we have a booking link to provide (Calendly, custom link)
