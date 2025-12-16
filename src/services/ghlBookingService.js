@@ -352,15 +352,37 @@ class GHLBookingService {
       return { success: false, error: 'Contact ID is required' };
     }
 
-    // Calculate end time if not provided (default 1 hour)
-    const start = new Date(startTime);
-    const end = endTime ? new Date(endTime) : new Date(start.getTime() + 60 * 60 * 1000);
+    // Calculate end time if not provided (default 30 minutes based on GHL screenshot)
+    // If startTime is already an ISO string with timezone, use it directly
+    const isISOWithTZ = typeof startTime === 'string' && /[+-]\d{2}:\d{2}$/.test(startTime);
+    let startStr, endStr;
+
+    if (isISOWithTZ) {
+      // Already has timezone offset - use directly and calculate end time
+      startStr = startTime;
+      // Parse and add 30 minutes for end time
+      const startDate = new Date(startTime);
+      const endDate = new Date(startDate.getTime() + 30 * 60 * 1000);  // 30 min duration
+      // Extract timezone offset from start time
+      const tzOffset = startTime.slice(-6);  // e.g., "-05:00"
+      endStr = endTime || endDate.toISOString().replace('Z', tzOffset.replace(':', ''));
+      // Fix: properly format end time with same offset
+      const endISO = endDate.toISOString().slice(0, 19);  // Remove Z
+      endStr = endTime || `${endISO}${tzOffset}`;
+    } else {
+      const start = new Date(startTime);
+      const end = endTime ? new Date(endTime) : new Date(start.getTime() + 30 * 60 * 1000);
+      startStr = start.toISOString();
+      endStr = end.toISOString();
+    }
+
+    logger.info(`[GHL] Booking appointment: startTime=${startStr}, endTime=${endStr}`);
 
     const result = await this.callGHL(credentials, 'POST', '/calendars/events/appointments', {
       calendarId: effectiveCalendarId,
       contactId: contactId,
-      startTime: start.toISOString(),
-      endTime: end.toISOString(),
+      startTime: startStr,
+      endTime: endStr,
       title: title || service || 'WhatsApp Booking',
       appointmentStatus: 'confirmed',
       notes: notes || 'Booked via WhatsApp - RinglyPro'
@@ -411,27 +433,27 @@ class GHLBookingService {
       }
 
       // Step 2: Book appointment
-      // Handle timezone properly - GHL calendar is in America/New_York (EST/ET) timezone
-      // The time parameter is in 24h format like "17:00" and represents local business time
-      // We need to convert this to UTC for GHL API
+      // GHL expects startTime in ISO format with timezone offset
+      // The time parameter is in 24h format like "17:00" and represents local business time (ET)
+      // December 16 is in EST (UTC-5), not EDT
 
-      // Check if date is in DST (roughly Mar-Nov) for ET timezone
+      // Check if date is in DST for ET timezone
+      // DST 2025: Mar 9 - Nov 2 (second Sunday March to first Sunday November)
       const month = parseInt(date.split('-')[1]);
       const day = parseInt(date.split('-')[2]);
-      // DST starts 2nd Sunday of March, ends 1st Sunday of November (approximate)
-      const isDST = (month > 3 && month < 11) || (month === 3 && day > 14) || (month === 11 && day < 7);
+      const isDST = (month > 3 && month < 11) || (month === 3 && day >= 9) || (month === 11 && day < 2);
       const etOffset = isDST ? '-04:00' : '-05:00';
 
-      // Build ISO string with ET timezone - this ensures GHL interprets it correctly
+      // Build ISO string with ET timezone offset - send this directly to GHL
+      // GHL API accepts ISO 8601 format: "2025-12-22T17:00:00-05:00"
       const startTimeISO = `${date}T${time}:00${etOffset}`;
-      const startTime = new Date(startTimeISO);
 
-      logger.info(`[GHL] Booking time conversion: input=${date}T${time}, isDST=${isDST}, ET offset=${etOffset}, ISO=${startTime.toISOString()}`);
+      logger.info(`[GHL] Booking time: ${startTimeISO} (isDST=${isDST})`);
 
       const appointmentResult = await this.bookAppointment(clientId, {
         contactId: contactResult.contact.id,
         calendarId: calendarId,
-        startTime: startTime.toISOString(),
+        startTime: startTimeISO,  // Send ISO with timezone, not UTC
         title: service || 'WhatsApp Appointment',
         service: service,
         notes: notes || `Booked via WhatsApp\nCustomer: ${customerName}\nPhone: ${customerPhone}`

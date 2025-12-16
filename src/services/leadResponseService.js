@@ -977,24 +977,25 @@ function extractBookingDataFromHistory(history, currentMessage) {
 
   logger.info(`[LEAD-RESPONSE] extractBookingData: history has ${history.length} messages`);
 
-  // IMPORTANT: Only look at messages AFTER the booking flow started
-  // Find the index where user selected "1" (booking) or where Rachel asked for name
+  // IMPORTANT: Only look at messages AFTER the FIRST booking flow started
+  // Find the FIRST index where user selected "1" (booking) or where Rachel asked for name
+  // We use the FIRST occurrence to avoid resetting when user sends "1" again to select a slot
   let bookingStartIndex = -1;
   for (let i = 0; i < history.length; i++) {
     const msg = history[i];
     const body = (msg.body || '').trim().toLowerCase();
     const direction = msg.direction;
 
-    // Check if this is where user started booking (selected "1")
-    if ((direction === 'incoming' || direction === 'inbound') && body === '1') {
+    // Check if this is where user started booking (selected "1") - only use FIRST occurrence
+    if (bookingStartIndex === -1 && (direction === 'incoming' || direction === 'inbound') && body === '1') {
       bookingStartIndex = i;
-      logger.info(`[LEAD-RESPONSE] extractBookingData: Found booking start at index ${i}`);
+      logger.info(`[LEAD-RESPONSE] extractBookingData: Found FIRST booking start at index ${i}`);
     }
-    // Or if Rachel asked for name (outgoing message with "full name" or "nombre completo")
-    if ((direction === 'outgoing' || direction === 'outbound') &&
+    // Or if Rachel asked for name (outgoing message with "full name" or "nombre completo") - only use FIRST
+    if (bookingStartIndex === -1 && (direction === 'outgoing' || direction === 'outbound') &&
         (body.includes('full name') || body.includes('nombre completo'))) {
       bookingStartIndex = i;
-      logger.info(`[LEAD-RESPONSE] extractBookingData: Found name prompt at index ${i}`);
+      logger.info(`[LEAD-RESPONSE] extractBookingData: Found FIRST name prompt at index ${i}`);
     }
   }
 
