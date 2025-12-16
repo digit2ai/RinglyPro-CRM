@@ -223,19 +223,24 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
     // Works on any message that looks like a menu selection (1, 2, 3, 4 or keywords)
     const menuSelection = getMenuSelection(customerMessage);
     const isDirectMenuNumber = ['1', '2', '3', '4'].includes(customerMessage.trim());
+
+    // PRIORITY 0.5: Continue appointment flow if user is in the middle of booking
+    // This handles: user provided name, user selecting time slot, etc.
+    if (lastIntent === 'appointment' || (menuSelection === 'appointment')) {
+      // User is in booking flow OR just started it
+      responseText = await handleAppointmentIntent(customerMessage, conversationContext, clientConfig);
+      return {
+        success: true,
+        response: responseText,
+        intent: { intent: 'appointment' },
+        language: detectedLanguage,
+        requiresHuman: false,
+        context: conversationContext
+      };
+    }
+
     if (menuSelection && (isDirectMenuNumber || conversationContext.messageCount > 1)) {
-      if (menuSelection === 'appointment') {
-        // Redirect to appointment booking
-        responseText = await handleAppointmentIntent(customerMessage, conversationContext, clientConfig);
-        return {
-          success: true,
-          response: responseText,
-          intent: { intent: 'appointment' },
-          language: detectedLanguage,
-          requiresHuman: false,
-          context: conversationContext
-        };
-      }
+      // Menu selection handled above for appointment, handle others here
       if (menuSelection === 'zelle') {
         // Show Zelle info
         if (zelle?.enabled && zelle?.email) {
