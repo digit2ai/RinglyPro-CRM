@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Tracker - Admin - RinglyPro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
     <style>
         * {
             margin: 0;
@@ -616,7 +617,7 @@
                     </div>
                     <div class="form-group">
                         <label>Client Requirements</label>
-                        <textarea id="projectClientRequirements" rows="5" placeholder="Enter detailed client requirements, specifications, and notes..."></textarea>
+                        <textarea id="projectClientRequirements"></textarea>
                     </div>
                     <div class="form-group">
                         <label>Priority</label>
@@ -902,7 +903,7 @@
                         </p>
                         <div style="margin-top: 16px; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 10px; border-left: 3px solid #e94560;">
                             <div style="font-size: 12px; color: #e94560; font-weight: 600; margin-bottom: 8px;">📋 Client Requirements</div>
-                            <textarea id="projectClientRequirementsEdit" rows="5" onblur="saveClientRequirements(${project.id})" placeholder="Enter client requirements, specifications, and notes..." style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #d1d5db; font-size: 14px; padding: 12px; resize: vertical;">${escapeHtml(project.client_requirements || '')}</textarea>
+                            <textarea id="projectClientRequirementsEdit">${project.client_requirements || ''}</textarea>
                         </div>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
@@ -977,6 +978,9 @@
 
             document.getElementById('projectsListView').style.display = 'none';
             document.getElementById('projectDetailView').classList.add('active');
+
+            // Initialize TinyMCE for client requirements editor
+            setTimeout(() => initDetailEditor(project.id), 100);
         }
 
         // Get status color
@@ -1203,7 +1207,8 @@
         // Save client requirements
         async function saveClientRequirements(projectId) {
             const token = getToken();
-            const requirements = document.getElementById('projectClientRequirementsEdit').value;
+            const editor = tinymce.get('projectClientRequirementsEdit');
+            const requirements = editor ? editor.getContent() : '';
 
             try {
                 await fetch(`/api/admin/projects/${projectId}`, {
@@ -1381,11 +1386,12 @@
         async function createProjectWithMilestones() {
             const token = getToken();
 
+            const editor = tinymce.get('projectClientRequirements');
             const data = {
                 user_id: document.getElementById('projectUserId').value,
                 title: document.getElementById('projectTitle').value,
                 description: document.getElementById('projectDescription').value,
-                client_requirements: document.getElementById('projectClientRequirements').value,
+                client_requirements: editor ? editor.getContent() : '',
                 priority: document.getElementById('projectPriority').value,
                 estimated_completion: document.getElementById('projectEstimatedCompletion').value || null,
                 milestones: generatedMilestones
@@ -1431,6 +1437,9 @@
 
                     closeModal('newProjectModal');
                     document.getElementById('newProjectForm').reset();
+                    // Clear TinyMCE editor
+                    const editor = tinymce.get('projectClientRequirements');
+                    if (editor) editor.setContent('');
                     generatedMilestones = [];
                     document.getElementById('generatedMilestonesPreview').style.display = 'none';
                     loadProjects();
@@ -1453,10 +1462,59 @@
             await createProjectWithMilestones();
         }
 
+        // Initialize TinyMCE for new project modal
+        function initNewProjectEditor() {
+            tinymce.init({
+                selector: '#projectClientRequirements',
+                height: 200,
+                menubar: false,
+                plugins: 'lists link',
+                toolbar: 'undo redo | bold italic underline | bullist numlist | link',
+                skin: 'oxide-dark',
+                content_css: 'dark',
+                content_style: 'body { font-family: Inter, sans-serif; font-size: 14px; color: #d1d5db; background: #1a1a2e; }',
+                setup: function(editor) {
+                    editor.on('init', function() {
+                        editor.getContainer().style.borderRadius = '10px';
+                        editor.getContainer().style.border = '1px solid rgba(255,255,255,0.1)';
+                    });
+                }
+            });
+        }
+
+        // Initialize TinyMCE for project detail view
+        function initDetailEditor(projectId) {
+            // Remove existing editor if any
+            if (tinymce.get('projectClientRequirementsEdit')) {
+                tinymce.get('projectClientRequirementsEdit').remove();
+            }
+
+            tinymce.init({
+                selector: '#projectClientRequirementsEdit',
+                height: 250,
+                menubar: false,
+                plugins: 'lists link',
+                toolbar: 'undo redo | bold italic underline | bullist numlist | link',
+                skin: 'oxide-dark',
+                content_css: 'dark',
+                content_style: 'body { font-family: Inter, sans-serif; font-size: 14px; color: #d1d5db; background: #1a1a2e; }',
+                setup: function(editor) {
+                    editor.on('init', function() {
+                        editor.getContainer().style.borderRadius = '10px';
+                        editor.getContainer().style.border = '1px solid rgba(255,255,255,0.1)';
+                    });
+                    editor.on('blur', function() {
+                        saveClientRequirements(projectId);
+                    });
+                }
+            });
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadProjects();
             loadUsers();
+            initNewProjectEditor();
         });
     </script>
 </body>
