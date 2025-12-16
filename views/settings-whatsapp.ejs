@@ -317,35 +317,6 @@
             text-decoration: underline;
         }
 
-        .qr-upload {
-            border: 2px dashed #d2d2d7;
-            border-radius: 8px;
-            padding: 2rem;
-            text-align: center;
-            cursor: pointer;
-            transition: border-color 0.2s;
-        }
-
-        .qr-upload:hover {
-            border-color: #25D366;
-        }
-
-        .qr-upload.has-image {
-            border-style: solid;
-            border-color: #25D366;
-        }
-
-        .qr-preview {
-            max-width: 200px;
-            max-height: 200px;
-            margin: 1rem auto;
-            display: none;
-        }
-
-        .qr-preview.visible {
-            display: block;
-        }
-
         .two-col {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -558,65 +529,6 @@
 
             <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                 <button type="button" class="btn btn-primary" onclick="saveBookingSettings()">Save Booking Settings</button>
-            </div>
-        </div>
-
-        <!-- Zelle Deposit Card -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">Zelle Deposit Collection</div>
-                <label class="toggle">
-                    <input type="checkbox" id="zelleToggle" onchange="handleZelleToggle()">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <p style="color: #6e6e73; margin-bottom: 1.5rem;">
-                Enable customers to send deposits via Zelle. The AI will share your QR code when a deposit is requested.
-            </p>
-
-            <div class="form-group">
-                <label class="form-label" for="zelleEmail">Zelle Email or Phone</label>
-                <input type="text"
-                       id="zelleEmail"
-                       class="form-input"
-                       placeholder="payments@yourbusiness.com"
-                       autocomplete="off">
-                <p class="form-hint">The email or phone number registered with Zelle</p>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Zelle QR Code</label>
-                <div class="qr-upload" id="qrUpload" onclick="document.getElementById('qrInput').click()">
-                    <input type="file" id="qrInput" accept="image/*" style="display: none" onchange="handleQRUpload(event)">
-                    <img id="qrPreview" class="qr-preview" src="" alt="Zelle QR Code">
-                    <p id="qrText">Click or drag to upload your Zelle QR code</p>
-                </div>
-                <p class="form-hint">Upload a screenshot of your Zelle QR code from your banking app</p>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="depositAmount">Default Deposit Amount</label>
-                <input type="number"
-                       id="depositAmount"
-                       class="form-input"
-                       placeholder="50"
-                       min="0"
-                       step="0.01"
-                       autocomplete="off">
-                <p class="form-hint">Suggested deposit amount (customers can send different amounts)</p>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="depositMessage">Deposit Request Message</label>
-                <textarea id="depositMessage"
-                          class="form-input"
-                          rows="3"
-                          placeholder="To secure your appointment, please send a $50 deposit via Zelle. Here's our QR code:"></textarea>
-            </div>
-
-            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                <button type="button" class="btn btn-primary" onclick="saveZelleSettings()">Save Zelle Settings</button>
             </div>
         </div>
 
@@ -924,19 +836,8 @@
                     document.getElementById('ghlCalendarId').value = data.whatsapp.booking?.ghlCalendarId || '';
                     handleBookingSystemChange();
 
-                    // Zelle settings
-                    document.getElementById('zelleToggle').checked = data.whatsapp.zelle?.enabled || false;
-                    document.getElementById('zelleEmail').value = data.whatsapp.zelle?.email || '';
-                    document.getElementById('depositAmount').value = data.whatsapp.zelle?.defaultAmount || '';
-                    document.getElementById('depositMessage').value = data.whatsapp.zelle?.depositMessage || '';
-
-                    if (data.whatsapp.zelle?.qrCodeUrl) {
-                        showQRPreview(data.whatsapp.zelle.qrCodeUrl);
-                    }
-
                     updateStatus(data.whatsapp);
                     handleToggleChange();
-                    handleZelleToggle();
                 } else {
                     // No settings yet, add one empty service
                     addService();
@@ -955,71 +856,6 @@
             inputs.forEach(input => {
                 input.disabled = !enabled;
             });
-        }
-
-        // Handle Zelle toggle
-        function handleZelleToggle() {
-            const enabled = document.getElementById('zelleToggle').checked;
-            document.getElementById('zelleEmail').disabled = !enabled;
-            document.getElementById('depositAmount').disabled = !enabled;
-            document.getElementById('depositMessage').disabled = !enabled;
-            document.getElementById('qrUpload').style.opacity = enabled ? '1' : '0.5';
-            document.getElementById('qrUpload').style.pointerEvents = enabled ? 'auto' : 'none';
-        }
-
-        // Save only Zelle settings
-        async function saveZelleSettings() {
-            const zelleSettings = {
-                enabled: document.getElementById('zelleToggle').checked,
-                email: document.getElementById('zelleEmail').value,
-                defaultAmount: parseFloat(document.getElementById('depositAmount').value) || null,
-                depositMessage: document.getElementById('depositMessage').value,
-                qrCodeUrl: currentSettings.zelle?.qrCodeUrl || null
-            };
-
-            // Build full settings object with current values
-            const settings = {
-                enabled: document.getElementById('enableToggle').checked,
-                phoneNumber: document.getElementById('whatsappNumber').value,
-                displayName: document.getElementById('displayName').value,
-                businessType: document.getElementById('businessType').value,
-                defaultLanguage: document.getElementById('defaultLanguage').value,
-                greetingMessage: document.getElementById('greetingMessage').value,
-                services: currentSettings.services || getServices(),
-                deposit: currentSettings.deposit || {
-                    type: document.getElementById('depositRequired').value,
-                    value: parseFloat(document.getElementById('depositValue').value) || null
-                },
-                booking: currentSettings.booking || {
-                    system: document.getElementById('bookingSystem').value,
-                    url: document.getElementById('bookingLink').value,
-                    ghlCalendarId: document.getElementById('ghlCalendarId').value
-                },
-                zelle: zelleSettings
-            };
-
-            try {
-                const response = await fetch('/api/client-settings/whatsapp', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(settings)
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    currentSettings.zelle = zelleSettings;
-                    showAlert('Zelle settings saved successfully!', 'success');
-                } else {
-                    showAlert(data.error || 'Failed to save Zelle settings', 'error');
-                }
-            } catch (error) {
-                console.error('Save error:', error);
-                showAlert('Failed to save Zelle settings', 'error');
-            }
         }
 
         // Save settings
@@ -1043,13 +879,7 @@
                     url: document.getElementById('bookingLink').value,
                     ghlCalendarId: document.getElementById('ghlCalendarId').value
                 },
-                zelle: {
-                    enabled: document.getElementById('zelleToggle').checked,
-                    email: document.getElementById('zelleEmail').value,
-                    defaultAmount: parseFloat(document.getElementById('depositAmount').value) || null,
-                    depositMessage: document.getElementById('depositMessage').value,
-                    qrCodeUrl: currentSettings.zelle?.qrCodeUrl || null
-                }
+                zelle: currentSettings.zelle || null
             };
 
             try {
@@ -1074,50 +904,6 @@
                 console.error('Save error:', error);
                 showAlert('Failed to save settings', 'error');
             }
-        }
-
-        // Handle QR code upload
-        async function handleQRUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const formData = new FormData();
-            formData.append('qrCode', file);
-
-            try {
-                const response = await fetch('/api/client-settings/whatsapp/qr-upload', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showQRPreview(data.url);
-                    currentSettings.zelle = currentSettings.zelle || {};
-                    currentSettings.zelle.qrCodeUrl = data.url;
-                    showAlert('QR code uploaded successfully!', 'success');
-                } else {
-                    showAlert(data.error || 'Failed to upload QR code', 'error');
-                }
-            } catch (error) {
-                console.error('Upload error:', error);
-                showAlert('Failed to upload QR code', 'error');
-            }
-        }
-
-        function showQRPreview(url) {
-            const preview = document.getElementById('qrPreview');
-            const text = document.getElementById('qrText');
-            const upload = document.getElementById('qrUpload');
-
-            preview.src = url;
-            preview.classList.add('visible');
-            text.textContent = 'Click to change QR code';
-            upload.classList.add('has-image');
         }
 
         // Test WhatsApp
