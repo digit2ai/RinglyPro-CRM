@@ -8,25 +8,28 @@ const { authenticateToken } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 
-// Configure multer for QR code uploads
-const qrStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../public/uploads/qr-codes');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const clientId = req.clientId || 'unknown';
-    const ext = path.extname(file.originalname);
-    cb(null, `zelle-qr-${clientId}-${Date.now()}${ext}`);
+// Initialize S3 client for QR code uploads (persistent storage)
+let s3Client = null;
+const BUCKET_NAME = process.env.AWS_S3_BUCKET || 'ringlypro-uploads';
+
+function getS3Client() {
+  if (!s3Client && process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+    s3Client = new S3Client({
+      region: process.env.AWS_REGION || 'us-east-1',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+      }
+    });
   }
-});
+  return s3Client;
+}
 
+// Configure multer for QR code uploads (memory storage for S3)
 const qrUpload = multer({
-  storage: qrStorage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -1382,7 +1385,7 @@ router.post('/zelle', authenticateToken, async (req, res) => {
 
 /**
  * POST /api/client-settings/zelle/upload-qr
- * Upload Zelle QR code image
+ * Upload Zelle QR code image to S3 for persistent storage
  */
 router.post('/zelle/upload-qr', authenticateToken, async (req, res, next) => {
   try {
@@ -1424,19 +1427,49 @@ router.post('/zelle/upload-qr', authenticateToken, async (req, res, next) => {
         });
       }
 
-      const qrCodeUrl = `/uploads/qr-codes/${req.file.filename}`;
+      let qrCodeUrl;
+      const clientId = user.client_id;
+      const ext = path.extname(req.file.originalname) || '.jpg';
+      const filename = `zelle-qr-${clientId}-${Date.now()}${ext}`;
 
       try {
+        // Try S3 upload first (persistent storage)
+        const client = getS3Client();
+        if (client) {
+          const s3Key = `qr-codes/${filename}`;
+          const uploadParams = {
+            Bucket: BUCKET_NAME,
+            Key: s3Key,
+            Body: req.file.buffer,
+            ContentType: req.file.mimetype,
+            ACL: 'public-read'
+          };
+
+          await client.send(new PutObjectCommand(uploadParams));
+          qrCodeUrl = `https://${BUCKET_NAME}.s3.amazonaws.com/${s3Key}`;
+          logger.info(`[CLIENT SETTINGS] Uploaded Zelle QR to S3: ${qrCodeUrl}`);
+        } else {
+          // Fallback to local storage (will be lost on redeploy)
+          const uploadDir = path.join(__dirname, '../../public/uploads/qr-codes');
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          const localPath = path.join(uploadDir, filename);
+          fs.writeFileSync(localPath, req.file.buffer);
+          qrCodeUrl = `/uploads/qr-codes/${filename}`;
+          logger.warn(`[CLIENT SETTINGS] S3 not configured, using local storage (ephemeral): ${qrCodeUrl}`);
+        }
+
         // Update client settings with QR URL
-        const [client] = await sequelize.query(
+        const [clientData] = await sequelize.query(
           'SELECT settings FROM clients WHERE id = :clientId',
           {
-            replacements: { clientId: user.client_id },
+            replacements: { clientId },
             type: QueryTypes.SELECT
           }
         );
 
-        const currentSettings = client?.settings || {};
+        const currentSettings = clientData?.settings || {};
 
         const updatedSettings = {
           ...currentSettings,
@@ -1459,20 +1492,20 @@ router.post('/zelle/upload-qr', authenticateToken, async (req, res, next) => {
           {
             replacements: {
               settings: JSON.stringify(updatedSettings),
-              clientId: user.client_id
+              clientId
             },
             type: QueryTypes.UPDATE
           }
         );
 
-        logger.info(`[CLIENT SETTINGS] Uploaded Zelle QR for client ${user.client_id}`);
+        logger.info(`[CLIENT SETTINGS] Saved Zelle QR URL for client ${clientId}: ${qrCodeUrl}`);
 
         res.json({
           success: true,
           qrCodeUrl: qrCodeUrl
         });
-      } catch (dbError) {
-        logger.error('[CLIENT SETTINGS] Zelle QR DB update error:', dbError);
+      } catch (uploadError) {
+        logger.error('[CLIENT SETTINGS] Zelle QR upload/save error:', uploadError);
         res.status(500).json({
           success: false,
           error: 'Failed to save QR code'
