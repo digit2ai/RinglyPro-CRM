@@ -1434,22 +1434,40 @@ router.post('/zelle/upload-qr', authenticateToken, async (req, res, next) => {
 
       try {
         // Try S3 upload first (persistent storage)
-        const client = getS3Client();
-        if (client) {
+        const s3Client = getS3Client();
+        let useLocalFallback = !s3Client;
+
+        if (s3Client) {
           const s3Key = `qr-codes/${filename}`;
+          const s3Region = process.env.AWS_REGION || 'us-east-1';
           const uploadParams = {
             Bucket: BUCKET_NAME,
             Key: s3Key,
             Body: req.file.buffer,
-            ContentType: req.file.mimetype,
-            ACL: 'public-read'
+            ContentType: req.file.mimetype
+            // Note: ACL removed - bucket should have public access policy or use presigned URLs
           };
 
-          await client.send(new PutObjectCommand(uploadParams));
-          qrCodeUrl = `https://${BUCKET_NAME}.s3.amazonaws.com/${s3Key}`;
-          logger.info(`[CLIENT SETTINGS] Uploaded Zelle QR to S3: ${qrCodeUrl}`);
-        } else {
-          // Fallback to local storage (will be lost on redeploy)
+          logger.info(`[CLIENT SETTINGS] Uploading to S3: bucket=${BUCKET_NAME}, key=${s3Key}, region=${s3Region}`);
+
+          try {
+            await s3Client.send(new PutObjectCommand(uploadParams));
+            // Use regional S3 URL format for better reliability
+            qrCodeUrl = `https://${BUCKET_NAME}.s3.${s3Region}.amazonaws.com/${s3Key}`;
+            logger.info(`[CLIENT SETTINGS] Uploaded Zelle QR to S3: ${qrCodeUrl}`);
+          } catch (s3Error) {
+            logger.error(`[CLIENT SETTINGS] S3 upload failed: ${s3Error.message}`, {
+              bucket: BUCKET_NAME,
+              key: s3Key,
+              error: s3Error.name,
+              code: s3Error.Code || s3Error.$metadata?.httpStatusCode
+            });
+            useLocalFallback = true; // Fall back to local storage
+          }
+        }
+
+        // Fallback to local storage if S3 not configured or upload failed
+        if (useLocalFallback) {
           const uploadDir = path.join(__dirname, '../../public/uploads/qr-codes');
           if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
@@ -1457,7 +1475,7 @@ router.post('/zelle/upload-qr', authenticateToken, async (req, res, next) => {
           const localPath = path.join(uploadDir, filename);
           fs.writeFileSync(localPath, req.file.buffer);
           qrCodeUrl = `/uploads/qr-codes/${filename}`;
-          logger.warn(`[CLIENT SETTINGS] S3 not configured, using local storage (ephemeral): ${qrCodeUrl}`);
+          logger.warn(`[CLIENT SETTINGS] Using local storage (ephemeral on Render): ${qrCodeUrl}`);
         }
 
         // Update client settings with QR URL
