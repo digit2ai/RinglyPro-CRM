@@ -207,25 +207,36 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
     // Helper function to detect if we're in booking flow from conversation history
     // Checks if Rachel/Lina's last message was asking for booking info
     const isInBookingFlow = (history) => {
-      if (!history || history.length === 0) return false;
+      if (!history || history.length === 0) {
+        logger.info('[LEAD-RESPONSE] isInBookingFlow: No history');
+        return false;
+      }
 
       // Find the last outgoing message (Rachel's response)
       const lastOutgoing = [...history].reverse().find(m => m.direction === 'outgoing');
-      if (!lastOutgoing) return false;
+      if (!lastOutgoing) {
+        logger.info('[LEAD-RESPONSE] isInBookingFlow: No outgoing message in history');
+        return false;
+      }
 
       const body = (lastOutgoing.body || '').toLowerCase();
+      logger.info(`[LEAD-RESPONSE] isInBookingFlow: Last outgoing body starts with: "${body.substring(0, 80)}..."`);
 
       // Check if last response was asking for booking info
       const bookingPrompts = [
         'full name', 'nombre completo',                    // Step 1: asking for name
-        'phone number', 'teléfono', 'número',             // Step 2: asking for phone
+        'phone number', 'teléfono', 'número de teléfono', // Step 2: asking for phone
+        'phone', 'telefono',                               // More phone variations
         'email', 'correo',                                 // Step 3: asking for email
         'available times', 'horarios disponibles',         // Step 4: showing time slots
         'reply with the number', 'responde con el número', // Asking for slot selection
-        'schedule your appointment', 'agendar tu cita'     // Starting booking flow
+        'schedule your appointment', 'agendar tu cita',    // Starting booking flow
+        'let\'s schedule', 'vamos a agendar'               // More start phrases
       ];
 
-      return bookingPrompts.some(prompt => body.includes(prompt));
+      const found = bookingPrompts.some(prompt => body.includes(prompt));
+      logger.info(`[LEAD-RESPONSE] isInBookingFlow: Found booking prompt? ${found}`);
+      return found;
     };
 
     // Helper function to check for payment-related keywords (including typos)
@@ -504,7 +515,8 @@ async function handleAppointmentIntent(message, context, clientConfig) {
   } = clientConfig;
 
   logger.info('[LEAD-RESPONSE] handleAppointmentIntent called', {
-    customerName, customerPhone, bookingSystem: booking?.system, historyLength: conversationHistory.length
+    customerName, customerPhone, bookingSystem: booking?.system, historyLength: conversationHistory.length,
+    message: message.substring(0, 50)
   });
 
   // ============================================
@@ -512,7 +524,7 @@ async function handleAppointmentIntent(message, context, clientConfig) {
   // Look through previous messages to find name, phone, email
   // ============================================
   const extractedData = extractBookingDataFromHistory(conversationHistory, message);
-  logger.info('[LEAD-RESPONSE] Extracted booking data:', extractedData);
+  logger.info('[LEAD-RESPONSE] Extracted booking data:', JSON.stringify(extractedData));
 
   // Check if we have a booking link to provide (Calendly, custom link)
   const effectiveBookingUrl = booking?.url || bookingUrl;
@@ -767,6 +779,8 @@ function extractBookingDataFromHistory(history, currentMessage) {
   const phonePattern = /^\+?\d{10,}$|^\d{3}[-.\s]?\d{3}[-.\s]?\d{4}$/;
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+  logger.info(`[LEAD-RESPONSE] extractBookingData: history has ${history.length} messages`);
+
   // Process all messages in history (both incoming and outgoing)
   for (const msg of history) {
     const body = (msg.body || '').trim();
@@ -779,15 +793,24 @@ function extractBookingDataFromHistory(history, currentMessage) {
     // Skip menu selections and short responses
     if (['1', '2', '3', '4'].includes(body)) continue;
 
+    // Skip greetings
+    const lowerBody = body.toLowerCase();
+    if (lowerBody === 'hi' || lowerBody === 'hello' || lowerBody === 'hola' ||
+        lowerBody === 'hey' || lowerBody === 'good morning' || lowerBody === 'buenos dias') continue;
+
+    logger.info(`[LEAD-RESPONSE] extractBookingData: Checking incoming message: "${body}"`);
+
     // Check for email
     if (emailPattern.test(body) && !data.email) {
       data.email = body;
+      logger.info(`[LEAD-RESPONSE] extractBookingData: Found email: ${body}`);
       continue;
     }
 
     // Check for phone
     if ((phonePattern.test(cleanBody) || /^\d{3}[-.\s]?\d{3}[-.\s]?\d{4}$/.test(body)) && !data.phone) {
       data.phone = body;
+      logger.info(`[LEAD-RESPONSE] extractBookingData: Found phone: ${body}`);
       continue;
     }
 
@@ -797,14 +820,13 @@ function extractBookingDataFromHistory(history, currentMessage) {
         !body.includes('@') &&
         !phonePattern.test(cleanBody) &&
         !/^\d{3}[-.\s]?\d{3}[-.\s]?\d{4}$/.test(body) &&
-        !body.toLowerCase().includes('hi') &&
-        !body.toLowerCase().includes('hello') &&
-        !body.toLowerCase().includes('hola') &&
-        !body.toLowerCase().includes('book') &&
-        !body.toLowerCase().includes('appointment') &&
-        !body.toLowerCase().includes('cita') &&
+        !lowerBody.includes('book') &&
+        !lowerBody.includes('appointment') &&
+        !lowerBody.includes('cita') &&
+        !lowerBody.includes('agendar') &&
         !data.name) {
       data.name = body;
+      logger.info(`[LEAD-RESPONSE] extractBookingData: Found name: ${body}`);
     }
   }
 
