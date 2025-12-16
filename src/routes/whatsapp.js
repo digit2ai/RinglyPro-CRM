@@ -128,12 +128,12 @@ async function findOrCreateContact(clientId, phoneNumber, profileName = null) {
   try {
     const normalizedPhone = phoneNumber.replace(/^whatsapp:/i, '');
 
-    // Try to find existing contact
+    // Try to find existing contact - first by client_id, then globally (phone is unique)
     const [existingContact] = await sequelize.query(
-      `SELECT id, first_name, last_name, phone
+      `SELECT id, first_name, last_name, phone, client_id
        FROM contacts
-       WHERE client_id = :clientId
-         AND (phone = :phone OR phone LIKE :phoneLike)
+       WHERE (phone = :phone OR phone LIKE :phoneLike)
+       ORDER BY CASE WHEN client_id = :clientId THEN 0 ELSE 1 END
        LIMIT 1`,
       {
         replacements: {
@@ -158,6 +158,7 @@ async function findOrCreateContact(clientId, phoneNumber, profileName = null) {
     const [newContact] = await sequelize.query(
       `INSERT INTO contacts (client_id, first_name, last_name, phone, email, source, created_at, updated_at)
        VALUES (:clientId, :firstName, :lastName, :phone, :email, 'whatsapp', NOW(), NOW())
+       ON CONFLICT (phone) DO UPDATE SET updated_at = NOW()
        RETURNING id, first_name, last_name, phone, email`,
       {
         replacements: {
@@ -171,7 +172,7 @@ async function findOrCreateContact(clientId, phoneNumber, profileName = null) {
       }
     );
 
-    logger.info(`[WHATSAPP] Created new contact from WhatsApp: ${newContact[0]?.id}`);
+    logger.info(`[WHATSAPP] Created/updated contact from WhatsApp: ${newContact[0]?.id}`);
     return newContact[0];
 
   } catch (error) {
@@ -357,8 +358,15 @@ router.post('/webhook', async (req, res) => {
 
       // If there's a media URL (like Zelle QR code), add it to the message
       if (aiResult?.mediaUrl) {
-        msg.media(aiResult.mediaUrl);
-        logger.info(`[WHATSAPP] Including media in response: ${aiResult.mediaUrl}`);
+        // Twilio requires a full public URL for media, not a relative path
+        let fullMediaUrl = aiResult.mediaUrl;
+        if (aiResult.mediaUrl.startsWith('/')) {
+          // Convert relative path to full URL
+          const baseUrl = process.env.BASE_URL || 'https://aiagent.ringlypro.com';
+          fullMediaUrl = `${baseUrl}${aiResult.mediaUrl}`;
+        }
+        msg.media(fullMediaUrl);
+        logger.info(`[WHATSAPP] Including media in response: ${fullMediaUrl}`);
       }
 
       // Save the auto-response too

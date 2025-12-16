@@ -207,15 +207,16 @@ class GHLBookingService {
       return { success: false, error: 'GHL not configured' };
     }
 
-    // Format date for GHL API
+    // Format date for GHL API - must be Unix timestamp in milliseconds
     const startTime = new Date(date);
     startTime.setHours(0, 0, 0, 0);
     const endTime = new Date(date);
     endTime.setHours(23, 59, 59, 999);
 
-    const result = await this.callGHL(credentials, 'GET', `/calendars/${calendarId}/free-slots`, {
-      startDate: startTime.toISOString(),
-      endDate: endTime.toISOString()
+    // GHL free-slots endpoint requires timestamps, not locationId
+    const result = await this.callGHLWithoutLocation(credentials, 'GET', `/calendars/${calendarId}/free-slots`, {
+      startDate: startTime.getTime(),  // Unix timestamp in ms
+      endDate: endTime.getTime()       // Unix timestamp in ms
     });
 
     if (result.success) {
@@ -225,6 +226,41 @@ class GHLBookingService {
       };
     }
     return result;
+  }
+
+  /**
+   * Make GHL API call without locationId (for endpoints that don't need it)
+   */
+  async callGHLWithoutLocation(credentials, method, endpoint, data = null) {
+    try {
+      const config = {
+        method,
+        url: `${GHL_BASE_URL}${endpoint}`,
+        headers: {
+          'Authorization': `Bearer ${credentials.apiKey}`,
+          'Version': GHL_API_VERSION,
+          'Content-Type': 'application/json'
+        }
+      };
+
+      if (data && method !== 'GET') {
+        config.data = data;
+      }
+
+      if (method === 'GET' && data) {
+        config.params = data;
+      }
+
+      const response = await axios(config);
+      return { success: true, data: response.data };
+    } catch (error) {
+      logger.error('[GHL] API Error:', error.response?.data || error.message);
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message,
+        status: error.response?.status
+      };
+    }
   }
 
   /**
