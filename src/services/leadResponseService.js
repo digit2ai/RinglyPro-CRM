@@ -616,26 +616,41 @@ async function handleAppointmentIntent(message, context, clientConfig) {
     // For GHL booking - try to fetch available slots
     if (booking?.system === 'ghl' && clientId) {
       try {
+        logger.info(`[LEAD-RESPONSE] STEP 4: Fetching GHL slots for client ${clientId}, calendar ${booking.ghlCalendarId}`);
         const today = new Date();
         const slots = [];
 
-        for (let i = 1; i <= 7 && slots.length < 3; i++) {
+        for (let i = 1; i <= 14 && slots.length < 3; i++) {
           const checkDate = new Date(today);
           checkDate.setDate(today.getDate() + i);
-          if (checkDate.getDay() === 0 || checkDate.getDay() === 6) continue;
+          // Don't skip weekends - let GHL calendar determine availability
 
           const dateStr = checkDate.toISOString().split('T')[0];
           const dayName = formatDate(checkDate);
 
           const ghlSlots = await ghlBookingService.getAvailableSlots(clientId, booking.ghlCalendarId, dateStr);
+          logger.info(`[LEAD-RESPONSE] GHL slots for ${dateStr}: ${ghlSlots.success ? ghlSlots.slots?.length : 'error'}`);
 
           if (ghlSlots.success && ghlSlots.slots?.length > 0) {
-            const morning = ghlSlots.slots.find(s => s.includes('10:') || s.includes('11:'));
-            const afternoon = ghlSlots.slots.find(s => s.includes('14:') || s.includes('15:'));
-            const selectedTime = morning || afternoon || ghlSlots.slots[0];
-            slots.push({ date: dateStr, time: selectedTime, display: `${dayName} @ ${formatTime(selectedTime)}` });
-          } else {
-            slots.push({ date: dateStr, time: '10:00', display: `${dayName} @ 10:00 AM` });
+            // GHL slots are ISO strings like "2025-12-18T08:00:00-05:00"
+            // Pick a good time from available slots
+            const firstSlot = ghlSlots.slots[0];
+
+            // Extract time from ISO string and format for display
+            const slotDate = new Date(firstSlot);
+            const hour = slotDate.getHours();
+            const minute = slotDate.getMinutes().toString().padStart(2, '0');
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const hour12 = hour % 12 || 12;
+            const displayTime = `${hour12}:${minute} ${ampm}`;
+            const time24 = `${hour.toString().padStart(2, '0')}:${minute}`;
+
+            slots.push({
+              date: dateStr,
+              time: time24,
+              display: `${dayName} @ ${displayTime}`
+            });
+            logger.info(`[LEAD-RESPONSE] Added GHL slot: ${dateStr} @ ${displayTime}`);
           }
         }
 
@@ -644,6 +659,8 @@ async function handleAppointmentIntent(message, context, clientConfig) {
           return language === 'es'
             ? `¡Excelente ${extractedData.name}! 📅\n\nAquí tienes nuestros próximos horarios disponibles:\n\n${slotOptions}\n\nResponde con el número (1, 2, o 3) para confirmar tu cita.`
             : `Excellent ${extractedData.name}! 📅\n\nHere are our next available times:\n\n${slotOptions}\n\nReply with the number (1, 2, or 3) to confirm your appointment.`;
+        } else {
+          logger.warn('[LEAD-RESPONSE] No GHL slots found in next 14 days');
         }
       } catch (ghlError) {
         logger.error('[LEAD-RESPONSE] Error fetching GHL availability:', ghlError.message);
@@ -666,19 +683,79 @@ async function handleAppointmentIntent(message, context, clientConfig) {
   if (isSlotSelection && extractedData.name && extractedData.phone && extractedData.email) {
     const slotIndex = parseInt(msgTrimmed) - 1;
 
-    // Calculate the date/time based on selection
-    const today = new Date();
-    const selectedDate = new Date(today);
-    selectedDate.setDate(today.getDate() + slotIndex + 1);
+    // Try to extract actual slot info from Rachel's previous message in history
+    let selectedDate = null;
+    let selectedTime = '10:00';
+    let dateStr = null;
 
-    // Skip weekends
-    while (selectedDate.getDay() === 0 || selectedDate.getDay() === 6) {
-      selectedDate.setDate(selectedDate.getDate() + 1);
+    // Look for Rachel's slot offering message in history to get actual times
+    const slotOfferingMsg = history.slice(-10).find(m =>
+      m.direction === 'outbound' &&
+      (m.body?.includes('available times') || m.body?.includes('horarios disponibles'))
+    );
+
+    if (slotOfferingMsg) {
+      logger.info(`[LEAD-RESPONSE] Found slot offering message: ${slotOfferingMsg.body?.substring(0, 100)}`);
+      // Parse slot options from the message
+      // Format: "1️⃣ Thursday, Dec 18 @ 10:00 AM" or similar
+      const slotPattern = new RegExp(`${slotIndex + 1}️⃣\\s*([^@\\n]+)\\s*@\\s*([0-9]+:[0-9]+\\s*(?:AM|PM|am|pm)?)`, 'i');
+      const match = slotOfferingMsg.body?.match(slotPattern);
+
+      if (match) {
+        const dateText = match[1].trim();
+        const timeText = match[2].trim();
+        logger.info(`[LEAD-RESPONSE] Parsed slot ${slotIndex + 1}: date="${dateText}" time="${timeText}"`);
+
+        // Convert time to 24h format for GHL
+        const timeParts = timeText.match(/(\d+):(\d+)\s*(AM|PM|am|pm)?/i);
+        if (timeParts) {
+          let hour = parseInt(timeParts[1]);
+          const minute = timeParts[2];
+          const ampm = timeParts[3]?.toUpperCase();
+          if (ampm === 'PM' && hour < 12) hour += 12;
+          if (ampm === 'AM' && hour === 12) hour = 0;
+          selectedTime = `${hour.toString().padStart(2, '0')}:${minute}`;
+        }
+
+        // Try to parse the date from the text
+        const dateMatch = dateText.match(/(\w+),?\s*(\w+)\s*(\d+)/);
+        if (dateMatch) {
+          const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+          const monthName = dateMatch[2].toLowerCase().substring(0, 3);
+          const day = parseInt(dateMatch[3]);
+          const month = months[monthName];
+          if (month !== undefined) {
+            selectedDate = new Date();
+            selectedDate.setMonth(month);
+            selectedDate.setDate(day);
+            // Handle year rollover
+            if (selectedDate < new Date()) {
+              selectedDate.setFullYear(selectedDate.getFullYear() + 1);
+            }
+            dateStr = selectedDate.toISOString().split('T')[0];
+            logger.info(`[LEAD-RESPONSE] Parsed date: ${dateStr}, time: ${selectedTime}`);
+          }
+        }
+      }
     }
 
-    const times = ['10:00', '14:00', '11:00'];
-    const selectedTime = times[slotIndex] || '10:00';
-    const dateStr = selectedDate.toISOString().split('T')[0];
+    // Fallback: calculate date/time if not extracted from history
+    if (!selectedDate) {
+      const today = new Date();
+      selectedDate = new Date(today);
+      selectedDate.setDate(today.getDate() + slotIndex + 1);
+
+      // Skip weekends
+      while (selectedDate.getDay() === 0 || selectedDate.getDay() === 6) {
+        selectedDate.setDate(selectedDate.getDate() + 1);
+      }
+
+      // Use fallback times
+      const times = ['10:00', '14:00', '11:00'];
+      selectedTime = times[slotIndex] || '10:00';
+      dateStr = selectedDate.toISOString().split('T')[0];
+      logger.info(`[LEAD-RESPONSE] Using fallback date/time: ${dateStr} ${selectedTime}`);
+    }
 
     const formattedDate = selectedDate.toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', {
       weekday: 'long', month: 'long', day: 'numeric'

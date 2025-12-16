@@ -220,9 +220,22 @@ class GHLBookingService {
     });
 
     if (result.success) {
+      // GHL returns format: {"2025-12-18": {"slots": ["2025-12-18T08:00:00-05:00", ...]}}
+      // Extract slots from the date-keyed response
+      const data = result.data;
+      let allSlots = [];
+
+      // Iterate through date keys (excluding traceId)
+      for (const key of Object.keys(data)) {
+        if (key !== 'traceId' && data[key]?.slots) {
+          allSlots = allSlots.concat(data[key].slots);
+        }
+      }
+
+      logger.info(`[GHL] Found ${allSlots.length} available slots for ${date}`);
       return {
         success: true,
-        slots: result.data.slots || result.data || []
+        slots: allSlots
       };
     }
     return result;
