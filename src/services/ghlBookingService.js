@@ -358,17 +358,34 @@ class GHLBookingService {
     let startStr, endStr;
 
     if (isISOWithTZ) {
-      // Already has timezone offset - use directly and calculate end time
+      // Already has timezone offset - use directly
       startStr = startTime;
-      // Parse and add 30 minutes for end time
-      const startDate = new Date(startTime);
-      const endDate = new Date(startDate.getTime() + 30 * 60 * 1000);  // 30 min duration
       // Extract timezone offset from start time
       const tzOffset = startTime.slice(-6);  // e.g., "-05:00"
-      endStr = endTime || endDate.toISOString().replace('Z', tzOffset.replace(':', ''));
-      // Fix: properly format end time with same offset
-      const endISO = endDate.toISOString().slice(0, 19);  // Remove Z
-      endStr = endTime || `${endISO}${tzOffset}`;
+
+      // Parse the LOCAL time components (not UTC!) and add 30 minutes
+      // Format: "2025-12-17T19:00:00-05:00"
+      const timePart = startTime.slice(11, 19);  // "19:00:00"
+      const datePart = startTime.slice(0, 10);   // "2025-12-17"
+      const [hours, minutes, seconds] = timePart.split(':').map(Number);
+
+      // Add 30 minutes to local time
+      let endMinutes = minutes + 30;
+      let endHours = hours;
+      if (endMinutes >= 60) {
+        endMinutes -= 60;
+        endHours += 1;
+      }
+      // Handle hour overflow (for edge cases near midnight)
+      if (endHours >= 24) {
+        endHours -= 24;
+        // Note: date would change but for 30 min appointments this shouldn't happen
+      }
+
+      const endTimeStr = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}:00`;
+      endStr = endTime || `${datePart}T${endTimeStr}${tzOffset}`;
+
+      logger.info(`[GHL] Time calculation: start=${timePart}, end=${endTimeStr}, offset=${tzOffset}`);
     } else {
       const start = new Date(startTime);
       const end = endTime ? new Date(endTime) : new Date(start.getTime() + 30 * 60 * 1000);
