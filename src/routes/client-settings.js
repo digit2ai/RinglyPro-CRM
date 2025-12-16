@@ -8,7 +8,8 @@ const { authenticateToken } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 // Initialize S3 client for QR code uploads (persistent storage)
 let s3Client = null;
@@ -25,6 +26,14 @@ function getS3Client() {
     });
   }
   return s3Client;
+}
+
+// Helper to generate presigned URL for S3 objects (for private bucket access)
+async function getPresignedUrl(bucket, key, expiresIn = 3600) {
+  const client = getS3Client();
+  if (!client) return null;
+  const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+  return await getSignedUrl(client, command, { expiresIn });
 }
 
 // Configure multer for QR code uploads (memory storage for S3)
@@ -1537,6 +1546,64 @@ router.post('/zelle/upload-qr', authenticateToken, async (req, res, next) => {
       success: false,
       error: 'Failed to upload QR code'
     });
+  }
+});
+
+/**
+ * GET /api/client-settings/zelle/qr/:clientId
+ * Get Zelle QR code URL for a client (returns presigned URL if S3, or local path)
+ * This endpoint is used by WhatsApp to include QR in messages (Twilio needs accessible URL)
+ */
+router.get('/zelle/qr/:clientId', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+
+    const [clientData] = await sequelize.query(
+      'SELECT settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: parseInt(clientId) },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!clientData) {
+      return res.status(404).json({ success: false, error: 'Client not found' });
+    }
+
+    // Check both locations for QR URL
+    const settings = clientData.settings || {};
+    let qrCodeUrl = settings.integration?.zelle?.qrCodeUrl ||
+                    settings.integration?.whatsapp?.zelle?.qrCodeUrl;
+
+    if (!qrCodeUrl) {
+      return res.status(404).json({ success: false, error: 'No QR code configured' });
+    }
+
+    // If it's an S3 URL, generate a presigned URL for access
+    if (qrCodeUrl.includes('.s3.') && qrCodeUrl.includes('.amazonaws.com')) {
+      // Extract S3 key from URL: https://bucket.s3.region.amazonaws.com/path/to/file
+      const urlParts = new URL(qrCodeUrl);
+      const s3Key = urlParts.pathname.substring(1); // Remove leading /
+
+      const presignedUrl = await getPresignedUrl(BUCKET_NAME, s3Key, 3600);
+      if (presignedUrl) {
+        return res.json({
+          success: true,
+          qrCodeUrl: presignedUrl,
+          expires: '1 hour'
+        });
+      }
+    }
+
+    // Return the stored URL (local path or direct S3 URL if bucket is public)
+    res.json({
+      success: true,
+      qrCodeUrl: qrCodeUrl
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Error getting Zelle QR:', error);
+    res.status(500).json({ success: false, error: 'Failed to get QR code' });
   }
 });
 

@@ -7,6 +7,7 @@
 // =====================================================
 
 const Anthropic = require('@anthropic-ai/sdk');
+const axios = require('axios');
 const logger = require('../utils/logger');
 const whatsappService = require('./whatsappService');
 const ghlBookingService = require('./ghlBookingService');
@@ -17,6 +18,49 @@ const {
   getAppointmentExtractionPrompt,
   getLeadQualificationPrompt
 } = require('../prompts/whatsapp-lead-response');
+
+/**
+ * Get accessible URL for Zelle QR code
+ * - If stored in S3, fetches a presigned URL that Twilio can access
+ * - If local path, converts to full URL
+ * @param {string} qrCodeUrl - The stored QR code URL
+ * @param {number} clientId - Client ID for API call
+ * @returns {Promise<string|null>} Accessible URL or null
+ */
+async function getAccessibleQrCodeUrl(qrCodeUrl, clientId) {
+  if (!qrCodeUrl) return null;
+
+  try {
+    // If it's an S3 URL, get a presigned URL for Twilio to access
+    if (qrCodeUrl.includes('.s3.') && qrCodeUrl.includes('.amazonaws.com')) {
+      // Call the internal endpoint to get presigned URL
+      const baseUrl = process.env.APP_URL || 'https://aiagent.ringlypro.com';
+      const response = await axios.get(`${baseUrl}/api/client-settings/zelle/qr/${clientId}`, {
+        timeout: 5000
+      });
+
+      if (response.data.success && response.data.qrCodeUrl) {
+        logger.info(`[LEAD-RESPONSE] Got presigned QR URL for client ${clientId}`);
+        return response.data.qrCodeUrl;
+      }
+    }
+
+    // If it's a local path, convert to full URL
+    if (qrCodeUrl.startsWith('/')) {
+      const baseUrl = process.env.APP_URL || 'https://aiagent.ringlypro.com';
+      return `${baseUrl}${qrCodeUrl}`;
+    }
+
+    // Return as-is if already a full URL
+    return qrCodeUrl;
+  } catch (error) {
+    logger.error(`[LEAD-RESPONSE] Error getting accessible QR URL: ${error.message}`);
+    // Fall back to original URL
+    return qrCodeUrl.startsWith('/')
+      ? `${process.env.APP_URL || 'https://aiagent.ringlypro.com'}${qrCodeUrl}`
+      : qrCodeUrl;
+  }
+}
 
 // Claude client (lazy initialization)
 let anthropicClient = null;
@@ -308,6 +352,17 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
             responseText += detectedLanguage === 'es'
               ? '\n\n📲 Te envío nuestro código QR para facilitar el pago.'
               : '\n\n📲 Here is our QR code for easy payment.';
+            // Include QR code image in response
+            const accessibleUrl = await getAccessibleQrCodeUrl(zelle.qrCodeUrl, clientId);
+            return {
+              success: true,
+              response: responseText,
+              mediaUrl: accessibleUrl,
+              intent: { intent: 'payment' },
+              language: detectedLanguage,
+              requiresHuman: false,
+              context: conversationContext
+            };
           }
         } else {
           responseText = detectedLanguage === 'es'
@@ -380,6 +435,17 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
           responseText += detectedLanguage === 'es'
             ? '\n\n📲 Te envío nuestro código QR para facilitar el pago.'
             : '\n\n📲 Here is our QR code for easy payment.';
+          // Return immediately with QR code media
+          const accessibleUrl = await getAccessibleQrCodeUrl(zelle.qrCodeUrl, clientId);
+          return {
+            success: true,
+            response: responseText,
+            mediaUrl: accessibleUrl,
+            intent: { intent: 'payment' },
+            language: detectedLanguage,
+            requiresHuman: false,
+            context: conversationContext
+          };
         }
       } else {
         responseText = detectedLanguage === 'es'
@@ -814,7 +880,10 @@ async function handleAppointmentIntent(message, context, clientConfig) {
 
           // Return structured response with QR code URL if available
           if (qrCodeUrl) {
-            return { text: successMsg, mediaUrl: qrCodeUrl };
+            // Get accessible URL (presigned if S3, full URL if local)
+            const accessibleUrl = await getAccessibleQrCodeUrl(qrCodeUrl, clientId);
+            logger.info(`[LEAD-RESPONSE] Using accessible QR URL: ${accessibleUrl}`);
+            return { text: successMsg, mediaUrl: accessibleUrl };
           }
           return successMsg;
         }
@@ -858,8 +927,10 @@ async function handleAppointmentIntent(message, context, clientConfig) {
     // Return structured response with QR code URL if available
     logger.info(`[LEAD-RESPONSE] STEP 5 fallback: qrCodeUrl=${qrCodeUrl}`);
     if (qrCodeUrl) {
-      logger.info(`[LEAD-RESPONSE] Returning structured response with QR code`);
-      return { text: fallbackMsg, mediaUrl: qrCodeUrl };
+      // Get accessible URL (presigned if S3, full URL if local)
+      const accessibleUrl = await getAccessibleQrCodeUrl(qrCodeUrl, clientId);
+      logger.info(`[LEAD-RESPONSE] Returning structured response with QR code: ${accessibleUrl}`);
+      return { text: fallbackMsg, mediaUrl: accessibleUrl };
     }
     return fallbackMsg;
   }
