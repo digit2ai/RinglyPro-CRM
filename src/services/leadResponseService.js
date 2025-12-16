@@ -988,6 +988,7 @@ async function processIncomingMessage({
     return {
       success: true,
       response: result.response,
+      mediaUrl: result.mediaUrl,  // Pass through QR code URL for WhatsApp
       intent: result.intent,
       language,
       requiresHuman: result.requiresHuman,
