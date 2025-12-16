@@ -767,8 +767,10 @@ async function handleAppointmentIntent(message, context, clientConfig) {
     const formattedTime = formatTime(selectedTime);
 
     // Try to book via GHL
+    logger.info(`[LEAD-RESPONSE] STEP 5 GHL check: booking.system=${booking?.system}, clientId=${clientId}`);
     if (booking?.system === 'ghl' && clientId) {
       try {
+        logger.info(`[LEAD-RESPONSE] STEP 5 calling GHL bookFromWhatsApp with: name=${extractedData.name}, phone=${extractedData.phone || customerPhone}, email=${extractedData.email}, date=${dateStr}, time=${selectedTime}, calendarId=${booking.ghlCalendarId}`);
         const ghlResult = await ghlBookingService.bookFromWhatsApp(clientId, {
           customerName: extractedData.name,
           customerPhone: extractedData.phone || customerPhone,
@@ -780,6 +782,7 @@ async function handleAppointmentIntent(message, context, clientConfig) {
           notes: `Booked via WhatsApp\nCustomer: ${extractedData.name}\nPhone: ${extractedData.phone}\nEmail: ${extractedData.email}`
         });
 
+        logger.info(`[LEAD-RESPONSE] STEP 5 GHL result: success=${ghlResult.success}, error=${ghlResult.error || 'none'}`);
         if (ghlResult.success) {
           let successMsg = language === 'es'
             ? `✅ ¡Tu cita ha sido confirmada!\n\n📅 ${formattedDate}\n🕐 ${formattedTime}\n👤 ${extractedData.name}\n📱 ${extractedData.phone}\n📧 ${extractedData.email}`
@@ -816,11 +819,14 @@ async function handleAppointmentIntent(message, context, clientConfig) {
           return successMsg;
         }
       } catch (ghlError) {
-        logger.error('[LEAD-RESPONSE] GHL booking error:', ghlError.message);
+        logger.error('[LEAD-RESPONSE] GHL booking exception:', ghlError.message, ghlError.stack);
       }
+    } else {
+      logger.warn(`[LEAD-RESPONSE] STEP 5 skipping GHL booking: booking.system=${booking?.system}, clientId=${clientId}`);
     }
 
     // Fallback confirmation (manual process)
+    logger.info('[LEAD-RESPONSE] STEP 5 using FALLBACK confirmation (GHL booking did not succeed)');
     let fallbackMsg = language === 'es'
       ? `✅ ¡Excelente elección!\n\n📅 ${formattedDate} @ ${formattedTime}\n👤 ${extractedData.name}\n📱 ${extractedData.phone}\n📧 ${extractedData.email}`
       : `✅ Excellent choice!\n\n📅 ${formattedDate} @ ${formattedTime}\n👤 ${extractedData.name}\n📱 ${extractedData.phone}\n📧 ${extractedData.email}`;
@@ -880,8 +886,34 @@ function extractBookingDataFromHistory(history, currentMessage) {
 
   logger.info(`[LEAD-RESPONSE] extractBookingData: history has ${history.length} messages`);
 
-  // Process all messages in history (both incoming and outgoing)
-  for (const msg of history) {
+  // IMPORTANT: Only look at messages AFTER the booking flow started
+  // Find the index where user selected "1" (booking) or where Rachel asked for name
+  let bookingStartIndex = -1;
+  for (let i = 0; i < history.length; i++) {
+    const msg = history[i];
+    const body = (msg.body || '').trim().toLowerCase();
+    const direction = msg.direction;
+
+    // Check if this is where user started booking (selected "1")
+    if ((direction === 'incoming' || direction === 'inbound') && body === '1') {
+      bookingStartIndex = i;
+      logger.info(`[LEAD-RESPONSE] extractBookingData: Found booking start at index ${i}`);
+    }
+    // Or if Rachel asked for name (outgoing message with "full name" or "nombre completo")
+    if ((direction === 'outgoing' || direction === 'outbound') &&
+        (body.includes('full name') || body.includes('nombre completo'))) {
+      bookingStartIndex = i;
+      logger.info(`[LEAD-RESPONSE] extractBookingData: Found name prompt at index ${i}`);
+    }
+  }
+
+  // If we found a booking start, only look at messages after that point
+  const startIndex = bookingStartIndex >= 0 ? bookingStartIndex : 0;
+  logger.info(`[LEAD-RESPONSE] extractBookingData: Processing from index ${startIndex}`);
+
+  // Process messages from booking start onwards
+  for (let i = startIndex; i < history.length; i++) {
+    const msg = history[i];
     const body = (msg.body || '').trim();
     const cleanBody = body.replace(/[\s\-\(\)]/g, '');
     const direction = msg.direction;
