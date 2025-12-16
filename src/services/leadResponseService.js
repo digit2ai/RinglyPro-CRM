@@ -278,6 +278,21 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
       const body = (lastOutgoing.body || '').toLowerCase();
       logger.info(`[LEAD-RESPONSE] isInBookingFlow: Last outgoing body starts with: "${body.substring(0, 80)}..."`);
 
+      // IMPORTANT: Check if booking was COMPLETED - if so, we're NOT in booking flow anymore
+      // This prevents the loop where user sends "thank you" after booking and system restarts flow
+      const bookingCompletedIndicators = [
+        'appointment has been confirmed', 'cita ha sido confirmada',  // GHL success
+        'excellent choice', 'excelente elección',                      // Fallback confirmation
+        'we look forward to seeing you', 'te esperamos',               // Final thank you
+        'a team member will confirm', 'un miembro de nuestro equipo confirmará' // Manual confirmation
+      ];
+
+      const isBookingComplete = bookingCompletedIndicators.some(indicator => body.includes(indicator));
+      if (isBookingComplete) {
+        logger.info('[LEAD-RESPONSE] isInBookingFlow: Booking COMPLETED - not in flow anymore');
+        return false;
+      }
+
       // Check if last response was asking for booking info
       const bookingPrompts = [
         'full name', 'nombre completo',                    // Step 1: asking for name
