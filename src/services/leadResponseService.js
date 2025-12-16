@@ -204,6 +204,30 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
       return null;
     };
 
+    // Helper function to detect if we're in booking flow from conversation history
+    // Checks if Rachel/Lina's last message was asking for booking info
+    const isInBookingFlow = (history) => {
+      if (!history || history.length === 0) return false;
+
+      // Find the last outgoing message (Rachel's response)
+      const lastOutgoing = [...history].reverse().find(m => m.direction === 'outgoing');
+      if (!lastOutgoing) return false;
+
+      const body = (lastOutgoing.body || '').toLowerCase();
+
+      // Check if last response was asking for booking info
+      const bookingPrompts = [
+        'full name', 'nombre completo',                    // Step 1: asking for name
+        'phone number', 'teléfono', 'número',             // Step 2: asking for phone
+        'email', 'correo',                                 // Step 3: asking for email
+        'available times', 'horarios disponibles',         // Step 4: showing time slots
+        'reply with the number', 'responde con el número', // Asking for slot selection
+        'schedule your appointment', 'agendar tu cita'     // Starting booking flow
+      ];
+
+      return bookingPrompts.some(prompt => body.includes(prompt));
+    };
+
     // Helper function to check for payment-related keywords (including typos)
     const isPaymentRelated = (msg) => {
       const lowerMsg = msg.toLowerCase();
@@ -226,7 +250,11 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
 
     // PRIORITY 0.5: Continue appointment flow if user is in the middle of booking
     // This handles: user provided name, user selecting time slot, etc.
-    if (lastIntent === 'appointment' || (menuSelection === 'appointment')) {
+    // Check if: starting booking (menu selection) OR continuing booking (last message was booking prompt)
+    const inBookingFlow = isInBookingFlow(conversationHistory);
+    logger.info(`[LEAD-RESPONSE] Booking flow check: menuSelection=${menuSelection}, inBookingFlow=${inBookingFlow}`);
+
+    if (menuSelection === 'appointment' || inBookingFlow) {
       // User is in booking flow OR just started it
       // Pass conversationHistory to handleAppointmentIntent for data extraction
       const appointmentContext = { ...conversationContext, conversationHistory };
