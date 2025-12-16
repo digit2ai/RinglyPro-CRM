@@ -215,9 +215,11 @@ async function generateResponse(customerMessage, context = {}, clientConfig = {}
       return paymentKeywords.some(keyword => lowerMsg.includes(keyword));
     };
 
-    // PRIORITY 0: Check for menu selection (after greeting was shown)
+    // PRIORITY 0: Check for menu selection
+    // Works on any message that looks like a menu selection (1, 2, 3, 4 or keywords)
     const menuSelection = getMenuSelection(customerMessage);
-    if (menuSelection && conversationContext.messageCount > 1) {
+    const isDirectMenuNumber = ['1', '2', '3', '4'].includes(customerMessage.trim());
+    if (menuSelection && (isDirectMenuNumber || conversationContext.messageCount > 1)) {
       if (menuSelection === 'appointment') {
         // Redirect to appointment booking
         responseText = await handleAppointmentIntent(customerMessage, conversationContext, clientConfig);

@@ -152,17 +152,20 @@ async function findOrCreateContact(clientId, phoneNumber, profileName = null) {
     // Create new contact if not found
     const firstName = profileName?.split(' ')[0] || 'WhatsApp';
     const lastName = profileName?.split(' ').slice(1).join(' ') || 'Lead';
+    // Generate placeholder email for WhatsApp contacts (required by DB constraint)
+    const placeholderEmail = `${normalizedPhone.replace(/\D/g, '')}@whatsapp.ringlypro.com`;
 
     const [newContact] = await sequelize.query(
-      `INSERT INTO contacts (client_id, first_name, last_name, phone, source, created_at, updated_at)
-       VALUES (:clientId, :firstName, :lastName, :phone, 'whatsapp', NOW(), NOW())
-       RETURNING id, first_name, last_name, phone`,
+      `INSERT INTO contacts (client_id, first_name, last_name, phone, email, source, created_at, updated_at)
+       VALUES (:clientId, :firstName, :lastName, :phone, :email, 'whatsapp', NOW(), NOW())
+       RETURNING id, first_name, last_name, phone, email`,
       {
         replacements: {
           clientId,
           firstName,
           lastName,
-          phone: normalizedPhone
+          phone: normalizedPhone,
+          email: placeholderEmail
         },
         type: QueryTypes.INSERT
       }
