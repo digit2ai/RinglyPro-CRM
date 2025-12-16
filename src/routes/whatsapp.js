@@ -302,16 +302,21 @@ router.post('/webhook', async (req, res) => {
     };
 
     // Get recent conversation history for context
-    const conversationHistory = await getConversationHistory(client.id, From, 10);
+    // Use 20 messages to ensure full booking flow data is captured
+    const conversationHistory = await getConversationHistory(client.id, From, 20);
 
     // Use AI-powered lead response service
     let responseMessage = null;
     let aiResult = null;
 
     try {
+      // Get customer name from WhatsApp profile or contact record
+      const customerName = ProfileName || (contact ? `${contact.first_name || ''} ${contact.last_name || ''}`.trim() : null);
+
       aiResult = await leadResponseService.processIncomingMessage({
         message: Body || '',
         customerPhone: From,
+        customerName: customerName,
         clientId: client.id,
         clientConfig,
         conversationHistory

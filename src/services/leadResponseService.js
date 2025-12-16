@@ -661,6 +661,7 @@ async function handleAppointmentIntent(message, context, clientConfig) {
   }
 
   // STEP 5: User selecting a time slot (1, 2, or 3) - we should have name, phone, email in history
+  logger.info(`[LEAD-RESPONSE] STEP 5 check: isSlotSelection=${isSlotSelection}, name=${extractedData.name}, phone=${extractedData.phone}, email=${extractedData.email}`);
   if (isSlotSelection && extractedData.name && extractedData.phone && extractedData.email) {
     const slotIndex = parseInt(msgTrimmed) - 1;
 
@@ -927,6 +928,7 @@ async function qualifyLead(leadData, language = 'en') {
 async function processIncomingMessage({
   message,
   customerPhone,
+  customerName: passedCustomerName = null,
   clientId,
   clientConfig = {},
   conversationHistory = []
@@ -938,9 +940,13 @@ async function processIncomingMessage({
     const language = whatsappService.detectLanguage(message);
 
     // Step 2: Get previous context from conversation history
-    const lastMessages = conversationHistory.slice(-5);
-    const customerName = extractCustomerName(lastMessages);
+    // Use more messages to ensure we capture full booking flow data (name, phone, email)
+    const lastMessages = conversationHistory.slice(-15);
+    // Use passed customer name (from WhatsApp profile) or try to extract from messages
+    const customerName = passedCustomerName || extractCustomerName(lastMessages);
     const lastIntent = lastMessages.length > 0 ? lastMessages[lastMessages.length - 1].intent : null;
+
+    logger.info(`[LEAD-RESPONSE] History: ${lastMessages.length} messages, customerName: ${customerName}`);
 
     // Step 3: Generate AI response
     const result = await generateResponse(
