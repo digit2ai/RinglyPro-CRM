@@ -693,7 +693,7 @@ async function handleAppointmentIntent(message, context, clientConfig) {
 
     // Look for Rachel's slot offering message in history to get actual times
     // Note: direction can be 'outbound' or 'outgoing' depending on source
-    const slotOfferingMsg = history.slice(-10).find(m =>
+    const slotOfferingMsg = conversationHistory.slice(-10).find(m =>
       (m.direction === 'outbound' || m.direction === 'outgoing') &&
       (m.body?.includes('available times') || m.body?.includes('horarios disponibles'))
     );
