@@ -636,21 +636,24 @@ async function handleAppointmentIntent(message, context, clientConfig) {
             // Pick a good time from available slots
             const firstSlot = ghlSlots.slots[0];
 
-            // Extract time from ISO string and format for display
-            const slotDate = new Date(firstSlot);
-            const hour = slotDate.getHours();
-            const minute = slotDate.getMinutes().toString().padStart(2, '0');
-            const ampm = hour >= 12 ? 'PM' : 'AM';
-            const hour12 = hour % 12 || 12;
-            const displayTime = `${hour12}:${minute} ${ampm}`;
-            const time24 = `${hour.toString().padStart(2, '0')}:${minute}`;
+            // Extract time directly from ISO string to avoid timezone conversion issues
+            // Format: "2025-12-18T08:00:00-05:00" - the time is already in local timezone
+            const timeMatch = firstSlot.match(/T(\d{2}):(\d{2})/);
+            if (timeMatch) {
+              const hour = parseInt(timeMatch[1]);
+              const minute = timeMatch[2];
+              const ampm = hour >= 12 ? 'PM' : 'AM';
+              const hour12 = hour % 12 || 12;
+              const displayTime = `${hour12}:${minute} ${ampm}`;
+              const time24 = `${hour.toString().padStart(2, '0')}:${minute}`;
 
-            slots.push({
-              date: dateStr,
-              time: time24,
-              display: `${dayName} @ ${displayTime}`
-            });
-            logger.info(`[LEAD-RESPONSE] Added GHL slot: ${dateStr} @ ${displayTime}`);
+              slots.push({
+                date: dateStr,
+                time: time24,
+                display: `${dayName} @ ${displayTime}`
+              });
+              logger.info(`[LEAD-RESPONSE] Added GHL slot: ${dateStr} @ ${displayTime} (raw: ${firstSlot})`);
+            }
           }
         }
 
@@ -689,8 +692,9 @@ async function handleAppointmentIntent(message, context, clientConfig) {
     let dateStr = null;
 
     // Look for Rachel's slot offering message in history to get actual times
+    // Note: direction can be 'outbound' or 'outgoing' depending on source
     const slotOfferingMsg = history.slice(-10).find(m =>
-      m.direction === 'outbound' &&
+      (m.direction === 'outbound' || m.direction === 'outgoing') &&
       (m.body?.includes('available times') || m.body?.includes('horarios disponibles'))
     );
 
@@ -883,7 +887,8 @@ function extractBookingDataFromHistory(history, currentMessage) {
     const direction = msg.direction;
 
     // Only check incoming messages for user data
-    if (direction !== 'incoming') continue;
+    // Note: direction can be 'incoming' or 'inbound' depending on source
+    if (direction !== 'incoming' && direction !== 'inbound') continue;
 
     // Skip menu selections and short responses
     if (['1', '2', '3', '4'].includes(body)) continue;
