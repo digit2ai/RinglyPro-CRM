@@ -662,6 +662,7 @@ async function handleAppointmentIntent(message, context, clientConfig) {
 
   // STEP 5: User selecting a time slot (1, 2, or 3) - we should have name, phone, email in history
   logger.info(`[LEAD-RESPONSE] STEP 5 check: isSlotSelection=${isSlotSelection}, name=${extractedData.name}, phone=${extractedData.phone}, email=${extractedData.email}`);
+  logger.info(`[LEAD-RESPONSE] STEP 5 config: booking.system=${booking?.system}, clientId=${clientId}, zelle.enabled=${zelle?.enabled}, zelle.qrCodeUrl=${zelle?.qrCodeUrl}`);
   if (isSlotSelection && extractedData.name && extractedData.phone && extractedData.email) {
     const slotIndex = parseInt(msgTrimmed) - 1;
 
@@ -768,7 +769,9 @@ async function handleAppointmentIntent(message, context, clientConfig) {
       : '\n\nA team member will confirm your appointment shortly. Thank you! 🙌';
 
     // Return structured response with QR code URL if available
+    logger.info(`[LEAD-RESPONSE] STEP 5 fallback: qrCodeUrl=${qrCodeUrl}`);
     if (qrCodeUrl) {
+      logger.info(`[LEAD-RESPONSE] Returning structured response with QR code`);
       return { text: fallbackMsg, mediaUrl: qrCodeUrl };
     }
     return fallbackMsg;

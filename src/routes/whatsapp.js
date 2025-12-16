@@ -288,6 +288,14 @@ router.post('/webhook', async (req, res) => {
     });
 
     // Get client configuration for AI responses
+    // Check multiple possible locations for zelle config due to settings structure variations
+    const zelleConfig = client.settings?.zelle ||
+                        client.settings?.integration?.zelle ||
+                        client.settings?.integration?.whatsapp?.zelle ||
+                        null;
+
+    logger.info(`[WHATSAPP] Zelle config found: enabled=${zelleConfig?.enabled}, email=${zelleConfig?.email}, qrCodeUrl=${zelleConfig?.qrCodeUrl}`);
+
     const clientConfig = {
       businessName: client.business_name || 'our business',
       businessType: client.settings?.business_type || 'service business',
@@ -296,7 +304,7 @@ router.post('/webhook', async (req, res) => {
       vagaroEnabled: client.settings?.integration?.vagaro?.enabled || false,
       deposit: client.settings?.deposit || { type: 'none', value: null },
       booking: client.settings?.booking || { system: 'none', url: null },
-      zelle: client.settings?.zelle || null,
+      zelle: zelleConfig,
       greetingMessage: client.settings?.greetingMessage || null,
       bookingUrl: client.booking_url || null
     };
