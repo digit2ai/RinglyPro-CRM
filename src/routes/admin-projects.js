@@ -137,7 +137,7 @@ router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
 // ============================================
 router.post('/', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        const { user_id, title, description, priority, estimated_completion } = req.body;
+        const { user_id, title, description, priority, estimated_completion, client_requirements } = req.body;
 
         if (!user_id || !title) {
             return res.status(400).json({
@@ -161,6 +161,7 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
             description: description || null,
             priority: priority || 'medium',
             estimated_completion: estimated_completion || null,
+            client_requirements: client_requirements || null,
             created_by_admin: req.adminUser.id,
             status: 'pending'
         });
@@ -285,7 +286,7 @@ router.get('/:projectId', authenticateToken, requireAdmin, async (req, res) => {
 router.put('/:projectId', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { projectId } = req.params;
-        const { title, description, status, priority, estimated_completion } = req.body;
+        const { title, description, status, priority, estimated_completion, client_requirements } = req.body;
 
         const project = await Project.findByPk(projectId);
         if (!project) {
@@ -301,6 +302,7 @@ router.put('/:projectId', authenticateToken, requireAdmin, async (req, res) => {
         if (status) project.status = status;
         if (priority) project.priority = priority;
         if (estimated_completion !== undefined) project.estimated_completion = estimated_completion;
+        if (client_requirements !== undefined) project.client_requirements = client_requirements;
 
         // Set completion date if status is completed
         if (status === 'completed' && !project.actual_completion) {

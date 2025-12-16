@@ -53,6 +53,11 @@ class Project extends Model {
                 allowNull: true,
                 comment: 'Actual completion date'
             },
+            client_requirements: {
+                type: DataTypes.TEXT,
+                allowNull: true,
+                comment: 'Client requirements and specifications'
+            },
             created_by_admin: {
                 type: DataTypes.INTEGER,
                 allowNull: true,
