@@ -576,23 +576,25 @@ async function handleAppointmentIntent(message, context, clientConfig) {
       : 'Perfect! 📅 Let\'s schedule your appointment.\n\nWhat is your full name?';
   }
 
-  // STEP 2: We have a name from history but no phone - current message should be a name, ask for phone
-  if (looksLikeName && !extractedData.name && !extractedData.phone && !extractedData.email) {
-    // User just provided their name
+  // STEP 2: We have name (from history or current message) but no phone - ask for phone
+  // Current message looks like a name OR we already have name in history, but no phone yet
+  if (extractedData.name && !extractedData.phone && !extractedData.email) {
+    // User has provided name, now ask for phone
+    const nameToUse = extractedData.name;
     return language === 'es'
-      ? `¡Gracias ${msgTrimmed}! 📱\n\n¿Cuál es el mejor número de teléfono para contactarte?`
-      : `Thanks ${msgTrimmed}! 📱\n\nWhat's the best phone number to reach you?`;
+      ? `¡Gracias ${nameToUse}! 📱\n\n¿Cuál es el mejor número de teléfono para contactarte?`
+      : `Thanks ${nameToUse}! 📱\n\nWhat's the best phone number to reach you?`;
   }
 
-  // STEP 3: We have name, user is providing phone - ask for email
-  if (looksLikePhone && extractedData.name && !extractedData.phone) {
+  // STEP 3: We have name, current message is phone - ask for email
+  if (looksLikePhone && extractedData.name) {
     return language === 'es'
       ? '¡Perfecto! 📧\n\n¿Cuál es tu dirección de correo electrónico?'
       : 'Perfect! 📧\n\nWhat is your email address?';
   }
 
-  // STEP 4: We have name and phone, user is providing email - show available time slots
-  if (looksLikeEmail && extractedData.name && extractedData.phone && !extractedData.email) {
+  // STEP 4: We have name and phone, current message is email - show available time slots
+  if (looksLikeEmail && extractedData.name && extractedData.phone) {
     // Store email from current message
     const userEmail = msgTrimmed;
 
