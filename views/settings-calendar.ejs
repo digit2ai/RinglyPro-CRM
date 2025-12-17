@@ -370,26 +370,26 @@
         let calendarSettingsData = null;
         let clientId = null;
 
-        // Load current user info to get client ID
-        async function loadUserInfo() {
-            try {
-                const response = await fetch('/api/auth/me', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const data = await response.json();
-                if (data.success && data.user) {
-                    clientId = data.user.id;
-                    await loadCalendarSettings();
-                } else {
-                    throw new Error('Failed to get user info');
-                }
-            } catch (error) {
-                console.error('Failed to load user info:', error);
-                showAlert('Failed to load user info. Please try again.', 'error');
+        // Extract CLIENT_ID from JWT token (same as dashboard)
+        function getClientIdFromToken() {
+            if (!token) {
+                window.location.href = '/login';
+                return null;
             }
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                return payload.clientId;
+            } catch (error) {
+                console.error('Invalid token:', error);
+                window.location.href = '/login';
+                return null;
+            }
+        }
+
+        // Initialize clientId from token
+        clientId = getClientIdFromToken();
+        if (!clientId) {
+            showAlert('Failed to load user info. Please login again.', 'error');
         }
 
         // Load calendar settings
@@ -571,7 +571,11 @@
 
         // Initialize
         document.getElementById('calendarSettingsForm').addEventListener('submit', saveCalendarSettings);
-        loadUserInfo();
+
+        // Load calendar settings if clientId is available
+        if (clientId) {
+            loadCalendarSettings();
+        }
     </script>
 </body>
 </html>
