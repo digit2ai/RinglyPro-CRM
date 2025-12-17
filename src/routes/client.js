@@ -697,14 +697,19 @@ router.put('/crm-settings/:client_id', async (req, res) => {
 });
 
 // GET /api/client/crm-credentials/:client_id - Get full CRM credentials (for MCP Copilot auto-load)
+// Returns credentials for ALL supported CRMs: GoHighLevel, HubSpot, Vagaro
 router.get('/crm-credentials/:client_id', async (req, res) => {
     try {
         const { client_id } = req.params;
         const { sequelize } = require('../models');
 
-        // Use raw SQL to query CRM fields directly
+        // Query ALL CRM fields - GHL, HubSpot, and Vagaro settings
         const result = await sequelize.query(
-            'SELECT id, business_name, ghl_api_key, ghl_location_id FROM clients WHERE id = :client_id',
+            `SELECT id, business_name,
+                    ghl_api_key, ghl_location_id,
+                    hubspot_api_key, hubspot_meeting_slug,
+                    settings
+             FROM clients WHERE id = :client_id`,
             {
                 replacements: { client_id },
                 type: sequelize.QueryTypes.SELECT
@@ -720,14 +725,41 @@ router.get('/crm-credentials/:client_id', async (req, res) => {
             });
         }
 
-        // Return full credentials (not masked) for MCP Copilot auto-load
+        // Parse Vagaro settings from JSONB
+        const vagaroSettings = client.settings?.integration?.vagaro || {};
+        const vagaroConfigured = !!(vagaroSettings.enabled && vagaroSettings.merchantId);
+
+        // Determine which CRM is configured (priority: GHL > HubSpot > Vagaro)
+        const ghlConfigured = !!(client.ghl_api_key && client.ghl_location_id);
+        const hubspotConfigured = !!client.hubspot_api_key;
+
+        let activeCRM = 'none';
+        if (ghlConfigured) activeCRM = 'ghl';
+        else if (hubspotConfigured) activeCRM = 'hubspot';
+        else if (vagaroConfigured) activeCRM = 'vagaro';
+
+        // Return full credentials for all CRMs
+        // CRM AI Agent uses this to auto-connect to the appropriate CRM
         res.json({
             success: true,
+            activeCRM,
             credentials: {
+                // GoHighLevel - requires BOTH api_key AND location_id
                 gohighlevel: {
                     api_key: client.ghl_api_key || null,
                     location_id: client.ghl_location_id || null,
-                    configured: !!(client.ghl_api_key && client.ghl_location_id)
+                    configured: ghlConfigured
+                },
+                // HubSpot - requires ONLY access_token (NO location needed!)
+                hubspot: {
+                    access_token: client.hubspot_api_key || null,
+                    meeting_slug: client.hubspot_meeting_slug || null,
+                    configured: hubspotConfigured
+                },
+                // Vagaro - stored in settings JSONB
+                vagaro: {
+                    merchant_id: vagaroSettings.merchantId || null,
+                    configured: vagaroConfigured
                 }
             }
         });
@@ -740,12 +772,11 @@ router.get('/crm-credentials/:client_id', async (req, res) => {
             console.log('⚠️ CRM columns not yet created - migration needed');
             return res.json({
                 success: true,
+                activeCRM: 'none',
                 credentials: {
-                    gohighlevel: {
-                        api_key: null,
-                        location_id: null,
-                        configured: false
-                    }
+                    gohighlevel: { api_key: null, location_id: null, configured: false },
+                    hubspot: { access_token: null, meeting_slug: null, configured: false },
+                    vagaro: { merchant_id: null, configured: false }
                 }
             });
         }

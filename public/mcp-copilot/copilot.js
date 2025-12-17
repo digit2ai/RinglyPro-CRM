@@ -1,4 +1,4 @@
-const COPILOT_VERSION = 'v126';
+const COPILOT_VERSION = 'v127';
 console.log(`🚀 MCP Copilot ${COPILOT_VERSION} loaded`);
 
 let sessionId = null;
@@ -716,8 +716,6 @@ function disconnectBusinessCollector() {
 async function autoLoadCredentials(clientId) {
     try {
         console.log('🔄 Auto-loading credentials for client:', clientId);
-        // DON'T update status here - checkGHLConfiguration() already set it
-        // updateConnectionStatus('Loading...', 'loading');
 
         const url = `${window.location.origin}/api/client/crm-credentials/${clientId}`;
         console.log('📡 Fetching from:', url);
@@ -730,34 +728,55 @@ async function autoLoadCredentials(clientId) {
 
         if (data.success && data.credentials) {
             console.log('✅ CRM credentials loaded:', data.credentials);
+            console.log('🎯 Active CRM:', data.activeCRM);
 
-            // Auto-connect to GoHighLevel if configured
-            if (data.credentials.gohighlevel && data.credentials.gohighlevel.configured) {
+            // Auto-connect based on which CRM is configured (priority: GHL > HubSpot > Vagaro)
+
+            // 1. GoHighLevel - requires api_key AND location_id
+            if (data.credentials.gohighlevel?.configured) {
                 console.log('🔗 GoHighLevel configured, auto-connecting...');
 
-                // Store credentials for connection
                 window.ghlCredentials = {
                     apiKey: data.credentials.gohighlevel.api_key,
                     locationId: data.credentials.gohighlevel.location_id
                 };
 
-                // Save to localStorage for chat page auto-connect
                 localStorage.setItem('ghl_apiKey', data.credentials.gohighlevel.api_key);
                 localStorage.setItem('ghl_locationId', data.credentials.gohighlevel.location_id);
 
-                console.log('💾 Stored credentials:', window.ghlCredentials);
-
-                // Auto-connect silently (no chat message)
+                console.log('💾 Stored GHL credentials');
                 await connectGoHighLevel();
                 return;
-            } else {
-                console.log('⚠️ GoHighLevel not configured:', data.credentials.gohighlevel);
             }
 
-            // If no GHL CRM configured (HubSpot/Vagaro may still work)
-            // DON'T update status - checkGHLConfiguration() already handled this
-            // updateConnectionStatus('Not configured', 'error');
-            // Only show message if no CRM is configured at all
+            // 2. HubSpot - requires ONLY access_token (NO location needed!)
+            if (data.credentials.hubspot?.configured) {
+                console.log('🔗 HubSpot configured, auto-connecting...');
+                console.log('📝 Note: HubSpot does NOT require location ID - only access token');
+
+                window.hubspotCredentials = {
+                    accessToken: data.credentials.hubspot.access_token,
+                    meetingSlug: data.credentials.hubspot.meeting_slug
+                };
+
+                localStorage.setItem('hubspot_accessToken', data.credentials.hubspot.access_token);
+
+                console.log('💾 Stored HubSpot credentials');
+                await connectHubSpot();
+                return;
+            }
+
+            // 3. Vagaro - requires merchant_id from settings
+            if (data.credentials.vagaro?.configured) {
+                console.log('🔗 Vagaro configured');
+                console.log('📝 Note: Vagaro uses settings-based configuration');
+                // Vagaro doesn't have a direct MCP connection like GHL/HubSpot
+                // It works through the booking service
+                updateConnectionStatus('Connected to Vagaro', 'success');
+                return;
+            }
+
+            // No CRM configured
             if (!crmConfigured) {
                 addMessage('system', '⚠️ No CRM credentials found. Please configure GoHighLevel, HubSpot, or Vagaro in Settings.');
             }
@@ -766,9 +785,56 @@ async function autoLoadCredentials(clientId) {
         }
     } catch (error) {
         console.error('❌ Failed to load CRM credentials:', error);
-        // DON'T update status - checkGHLConfiguration() already handled this
-        // updateConnectionStatus('Connection failed', 'error');
         addMessage('system', '⚠️ Could not load saved credentials. Please configure in Settings.');
+    }
+}
+
+// Connect to HubSpot CRM (no location ID required!)
+async function connectHubSpot() {
+    const accessToken = window.hubspotCredentials?.accessToken;
+
+    console.log('🔗 connectHubSpot called');
+    console.log('📋 currentClientId:', currentClientId);
+
+    if (!accessToken) {
+        updateConnectionStatus('Not configured', 'error');
+        addMessage('error', '❌ HubSpot credentials not configured. Please go to Settings in the dashboard.');
+        return;
+    }
+
+    if (!currentClientId) {
+        updateConnectionStatus('Configuration error', 'error');
+        addMessage('error', '❌ Client ID not found. Please open the copilot from the dashboard.');
+        return;
+    }
+
+    try {
+        console.log('📤 Connecting to HubSpot...');
+        const response = await fetch(`${API_BASE}/hubspot/connect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                accessToken,
+                clientId: currentClientId
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            sessionId = result.sessionId;
+            crmType = 'hubspot';
+            console.log('✅ HubSpot connected, session:', sessionId);
+            updateConnectionStatus('Connected to HubSpot', 'success');
+        } else {
+            console.error('❌ HubSpot connection failed:', result.error);
+            updateConnectionStatus('Connection failed', 'error');
+            addMessage('error', `❌ HubSpot connection failed: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('❌ HubSpot connection error:', error);
+        updateConnectionStatus('Connection error', 'error');
+        addMessage('error', `❌ HubSpot connection error: ${error.message}`);
     }
 }
 

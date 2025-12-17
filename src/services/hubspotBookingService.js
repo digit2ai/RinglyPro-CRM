@@ -243,8 +243,78 @@ class HubSpotBookingService {
   }
 
   /**
+   * Get existing meetings for a date range
+   * Used to filter out booked times from available slots
+   * @param {object} credentials - HubSpot credentials
+   * @param {string} startDate - Start date ISO string
+   * @param {string} endDate - End date ISO string
+   * @returns {Promise<Array>} Array of existing meeting times
+   */
+  async getExistingMeetings(credentials, startDate, endDate) {
+    try {
+      // Query HubSpot CRM for existing meetings in the date range
+      const result = await this.callHubSpot(
+        credentials,
+        'POST',
+        '/crm/v3/objects/meetings/search',
+        {
+          filterGroups: [{
+            filters: [{
+              propertyName: 'hs_meeting_start_time',
+              operator: 'GTE',
+              value: new Date(startDate).getTime()
+            }, {
+              propertyName: 'hs_meeting_start_time',
+              operator: 'LTE',
+              value: new Date(endDate).getTime()
+            }]
+          }],
+          properties: ['hs_meeting_start_time', 'hs_meeting_end_time', 'hs_meeting_title', 'hs_meeting_outcome'],
+          limit: 100
+        }
+      );
+
+      if (result.success && result.data.results) {
+        const meetings = result.data.results
+          .filter(m => m.properties.hs_meeting_outcome !== 'CANCELED')
+          .map(m => ({
+            startTime: parseInt(m.properties.hs_meeting_start_time),
+            endTime: parseInt(m.properties.hs_meeting_end_time) || (parseInt(m.properties.hs_meeting_start_time) + 30 * 60 * 1000),
+            title: m.properties.hs_meeting_title
+          }));
+        logger.info(`[HubSpot] Found ${meetings.length} existing meetings for ${startDate.split('T')[0]}`);
+        return meetings;
+      }
+      return [];
+    } catch (error) {
+      logger.warn(`[HubSpot] Could not fetch existing meetings: ${error.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * Check if a time slot conflicts with existing meetings
+   * @param {number} slotTime - Slot time in milliseconds
+   * @param {Array} existingMeetings - Array of existing meetings
+   * @param {number} duration - Slot duration in minutes
+   * @returns {boolean} True if there's a conflict
+   */
+  hasTimeConflict(slotTime, existingMeetings, duration = 30) {
+    const slotEnd = slotTime + duration * 60 * 1000;
+
+    for (const meeting of existingMeetings) {
+      // Check if slot overlaps with any existing meeting
+      if (slotTime < meeting.endTime && slotEnd > meeting.startTime) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Get available time slots
    * Since HubSpot Scheduler API may not be available, generate slots based on business hours
+   * IMPORTANT: Checks existing meetings to avoid double-booking
    * @param {number} clientId - Client ID
    * @param {string} date - Date in YYYY-MM-DD format
    * @returns {Promise<object>} Available slots
@@ -294,7 +364,7 @@ class HubSpotBookingService {
     }
 
     // Fallback: Generate standard business hour slots
-    // Similar to GHL fallback behavior
+    // IMPORTANT: Check existing meetings to avoid double-booking
     const businessHours = [
       '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
       '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'
@@ -308,16 +378,39 @@ class HubSpotBookingService {
     const isDST = (month > 3 && month < 11) || (month === 3 && day >= 9) || (month === 11 && day < 2);
     const tzOffset = timezone === 'America/New_York' ? (isDST ? '-04:00' : '-05:00') : '-05:00';
 
-    const slots = businessHours.map(time => ({
-      startTime: `${date}T${time}:00${tzOffset}`,
-      endTime: null, // Will be calculated at booking time
-      timezone,
-      time24: time,
-      isoString: `${date}T${time}:00${tzOffset}`
-    }));
+    // Get existing meetings for this date to avoid double-booking
+    const startOfDay = `${date}T00:00:00${tzOffset}`;
+    const endOfDay = `${date}T23:59:59${tzOffset}`;
+    const existingMeetings = await this.getExistingMeetings(credentials, startOfDay, endOfDay);
 
-    logger.info(`[HubSpot] Generated ${slots.length} fallback slots for ${date}`);
-    return { success: true, slots, isFallback: true };
+    // Generate slots and filter out booked times
+    const allSlots = businessHours.map(time => {
+      const isoString = `${date}T${time}:00${tzOffset}`;
+      const slotTime = new Date(isoString).getTime();
+      return {
+        startTime: isoString,
+        endTime: null,
+        timezone,
+        time24: time,
+        isoString,
+        slotTimeMs: slotTime
+      };
+    });
+
+    // Filter out slots that conflict with existing meetings
+    const availableSlots = allSlots.filter(slot => {
+      const hasConflict = this.hasTimeConflict(slot.slotTimeMs, existingMeetings);
+      if (hasConflict) {
+        logger.info(`[HubSpot] Slot ${slot.time24} on ${date} conflicts with existing meeting`);
+      }
+      return !hasConflict;
+    });
+
+    // Remove the temporary slotTimeMs property
+    availableSlots.forEach(slot => delete slot.slotTimeMs);
+
+    logger.info(`[HubSpot] Generated ${availableSlots.length}/${allSlots.length} available fallback slots for ${date} (${existingMeetings.length} meetings blocked)`);
+    return { success: true, slots: availableSlots, isFallback: true };
   }
 
   /**
