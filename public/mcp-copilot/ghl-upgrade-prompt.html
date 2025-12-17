@@ -1,10 +1,11 @@
 <!-- =====================================================
-     GHL Upgrade Prompt Component
-     Shown when user tries to use features without GHL configured
+     CRM Integration Prompt Component
+     Shown when user tries to use features without any CRM configured
+     Supports: GoHighLevel, HubSpot, Vagaro, or Ringly Pro Calendar
      ===================================================== -->
 
 <style>
-.ghl-upgrade-overlay {
+.crm-upgrade-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -18,15 +19,17 @@
     backdrop-filter: blur(8px);
 }
 
-.ghl-upgrade-modal {
+.crm-upgrade-modal {
     background: white;
     border-radius: 20px;
     padding: 3rem 2.5rem;
-    max-width: 600px;
+    max-width: 650px;
     width: 90%;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     text-align: center;
     animation: slideUp 0.3s ease-out;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 @keyframes slideUp {
@@ -40,7 +43,7 @@
     }
 }
 
-.ghl-upgrade-icon {
+.crm-upgrade-icon {
     width: 80px;
     height: 80px;
     margin: 0 auto 1.5rem;
@@ -52,21 +55,67 @@
     font-size: 2.5rem;
 }
 
-.ghl-upgrade-title {
+.crm-upgrade-title {
     font-size: 1.75rem;
     font-weight: 700;
     color: #1f2937;
     margin-bottom: 1rem;
 }
 
-.ghl-upgrade-message {
+.crm-upgrade-message {
     font-size: 1.1rem;
     color: #6b7280;
     margin-bottom: 2rem;
     line-height: 1.6;
 }
 
-.ghl-upgrade-benefits {
+.crm-upgrade-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 600px) {
+    .crm-upgrade-options {
+        grid-template-columns: 1fr;
+    }
+}
+
+.crm-option {
+    background: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.crm-option:hover {
+    border-color: #667eea;
+    background: #f3f4ff;
+    transform: translateY(-2px);
+}
+
+.crm-option-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.crm-option-name {
+    font-weight: 600;
+    color: #374151;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.crm-option-desc {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.crm-upgrade-benefits {
     background: #f9fafb;
     border-radius: 12px;
     padding: 1.5rem;
@@ -74,7 +123,7 @@
     text-align: left;
 }
 
-.ghl-upgrade-benefits h4 {
+.crm-upgrade-benefits h4 {
     font-size: 1rem;
     font-weight: 600;
     color: #374151;
@@ -82,13 +131,13 @@
     text-align: center;
 }
 
-.ghl-upgrade-benefits ul {
+.crm-upgrade-benefits ul {
     list-style: none;
     padding: 0;
     margin: 0;
 }
 
-.ghl-upgrade-benefits li {
+.crm-upgrade-benefits li {
     padding: 0.5rem 0;
     color: #4b5563;
     display: flex;
@@ -96,7 +145,7 @@
     gap: 0.75rem;
 }
 
-.ghl-upgrade-benefits li::before {
+.crm-upgrade-benefits li::before {
     content: "✓";
     display: inline-flex;
     align-items: center;
@@ -111,13 +160,13 @@
     flex-shrink: 0;
 }
 
-.ghl-upgrade-buttons {
+.crm-upgrade-buttons {
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-.ghl-upgrade-btn {
+.crm-upgrade-btn {
     padding: 1rem 2rem;
     border-radius: 12px;
     font-size: 1.1rem;
@@ -129,97 +178,119 @@
     display: inline-block;
 }
 
-.ghl-upgrade-btn-primary {
+.crm-upgrade-btn-primary {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
-.ghl-upgrade-btn-primary:hover {
+.crm-upgrade-btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
 }
 
-.ghl-upgrade-btn-secondary {
+.crm-upgrade-btn-secondary {
     background: #f3f4f6;
     color: #374151;
 }
 
-.ghl-upgrade-btn-secondary:hover {
+.crm-upgrade-btn-secondary:hover {
     background: #e5e7eb;
 }
 
-.ghl-upgrade-btn-signup {
+.crm-upgrade-btn-signup {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white;
     box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
 }
 
-.ghl-upgrade-btn-signup:hover {
+.crm-upgrade-btn-signup:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
 }
 
-.ghl-upgrade-note {
+.crm-upgrade-note {
     margin-top: 1.5rem;
     font-size: 0.875rem;
     color: #9ca3af;
 }
 
-.ghl-upgrade-note a {
+.crm-upgrade-note a {
     color: #667eea;
     text-decoration: none;
     font-weight: 500;
 }
 
-.ghl-upgrade-note a:hover {
+.crm-upgrade-note a:hover {
     text-decoration: underline;
 }
+
+/* Legacy class names for backwards compatibility */
+.ghl-upgrade-overlay { display: none; }
 </style>
 
-<div id="ghlUpgradePrompt" class="ghl-upgrade-overlay" style="display: none;">
-    <div class="ghl-upgrade-modal">
-        <div class="ghl-upgrade-icon">
+<div id="ghlUpgradePrompt" class="crm-upgrade-overlay" style="display: none;">
+    <div class="crm-upgrade-modal">
+        <div class="crm-upgrade-icon">
             🚀
         </div>
 
-        <h2 class="ghl-upgrade-title">
-            CRM Copilot Requires GoHighLevel Integration
+        <h2 class="crm-upgrade-title">
+            CRM Integration Required
         </h2>
 
-        <p class="ghl-upgrade-message">
-            The AI CRM Copilot works with GoHighLevel integration. Please add your GHL API Key and Location ID in the Settings tab, or sign up for a new GoHighLevel account.
+        <p class="crm-upgrade-message">
+            Connect your preferred CRM to unlock AI-powered contact management, automated bookings, and smart workflows. Ringly Pro works with multiple CRM platforms.
         </p>
 
-        <div class="ghl-upgrade-benefits">
-            <h4>Why GoHighLevel + RinglyPro?</h4>
+        <div class="crm-upgrade-options">
+            <div class="crm-option" onclick="selectCRM('ghl')">
+                <div class="crm-option-icon">📊</div>
+                <div class="crm-option-name">GoHighLevel</div>
+                <div class="crm-option-desc">Full CRM & Marketing</div>
+            </div>
+            <div class="crm-option" onclick="selectCRM('hubspot')">
+                <div class="crm-option-icon">🔶</div>
+                <div class="crm-option-name">HubSpot</div>
+                <div class="crm-option-desc">CRM & Meeting Links</div>
+            </div>
+            <div class="crm-option" onclick="selectCRM('vagaro')">
+                <div class="crm-option-icon">💅</div>
+                <div class="crm-option-name">Vagaro</div>
+                <div class="crm-option-desc">Salon & Spa Booking</div>
+            </div>
+            <div class="crm-option" onclick="selectCRM('ringlypro')">
+                <div class="crm-option-icon">📅</div>
+                <div class="crm-option-name">Ringly Pro Calendar</div>
+                <div class="crm-option-desc">Built-in Scheduling</div>
+            </div>
+        </div>
+
+        <div class="crm-upgrade-benefits">
+            <h4>Why Connect a CRM with Ringly Pro?</h4>
             <ul>
                 <li>AI-Powered Contact & Lead Management</li>
-                <li>Automated Social Media Content</li>
+                <li>Automated Appointment Booking via Voice & WhatsApp</li>
                 <li>Business Lead Collector & Auto-Caller</li>
                 <li>Smart Outbound Calling Campaigns</li>
                 <li>Advanced Prospect Manager with AI</li>
-                <li>All-in-One CRM Platform</li>
+                <li>Unified Dashboard for All Interactions</li>
             </ul>
         </div>
 
-        <div class="ghl-upgrade-buttons">
-            <button class="ghl-upgrade-btn ghl-upgrade-btn-primary" onclick="goToSettings()">
-                ⚙️ Add GHL API in Settings
+        <div class="crm-upgrade-buttons">
+            <button class="crm-upgrade-btn crm-upgrade-btn-primary" onclick="goToSettings()">
+                ⚙️ Configure CRM in Settings
             </button>
 
-            <button class="ghl-upgrade-btn ghl-upgrade-btn-signup" onclick="openGHLSignup()">
-                🚀 Sign Up for GoHighLevel (Get Started)
-            </button>
-
-            <button class="ghl-upgrade-btn ghl-upgrade-btn-secondary" onclick="closeUpgradePrompt()">
+            <button class="crm-upgrade-btn crm-upgrade-btn-secondary" onclick="closeUpgradePrompt()">
                 Maybe Later
             </button>
         </div>
 
-        <p class="ghl-upgrade-note">
-            Already have GoHighLevel? Just enter your API Key and Location ID in
-            <a href="#" onclick="goToSettings(); return false;">Settings</a>.
+        <p class="crm-upgrade-note">
+            Already have a CRM? Enter your API credentials in
+            <a href="#" onclick="goToSettings(); return false;">Settings → Integrations</a>.
         </p>
     </div>
 </div>
@@ -233,41 +304,63 @@ function closeUpgradePrompt() {
     document.getElementById('ghlUpgradePrompt').style.display = 'none';
 }
 
+function selectCRM(crmType) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientId = urlParams.get('client_id');
+
+    let settingsUrl = '/settings/integrations';
+
+    switch(crmType) {
+        case 'ghl':
+            settingsUrl = clientId ? `/settings/ghl?client_id=${clientId}` : '/settings/ghl';
+            break;
+        case 'hubspot':
+            settingsUrl = clientId ? `/settings/hubspot?client_id=${clientId}` : '/settings/hubspot';
+            break;
+        case 'vagaro':
+            settingsUrl = clientId ? `/settings/whatsapp?client_id=${clientId}#booking` : '/settings/whatsapp#booking';
+            break;
+        case 'ringlypro':
+            settingsUrl = clientId ? `/settings/calendar?client_id=${clientId}` : '/settings/calendar';
+            break;
+    }
+
+    window.location.href = settingsUrl;
+}
+
 function goToSettings() {
     // Get client_id from URL
     const urlParams = new URLSearchParams(window.location.search);
     const clientId = urlParams.get('client_id');
 
     if (clientId) {
-        // Redirect to dashboard settings tab
-        window.location.href = `/dashboard?client_id=${clientId}#settings`;
+        // Redirect to integrations settings
+        window.location.href = `/settings/integrations?client_id=${clientId}`;
     } else {
-        window.location.href = '/dashboard#settings';
+        window.location.href = '/settings/integrations';
     }
 }
 
 function openGHLSignup() {
-    // Get client_id from URL
+    // Legacy function for backwards compatibility
     const urlParams = new URLSearchParams(window.location.search);
     const clientId = urlParams.get('client_id');
 
-    // Redirect to GHL signup page (full window)
     const ghlSignupUrl = clientId
         ? `https://aiagent.ringlypro.com/ghl-signup?client_id=${clientId}`
         : `https://aiagent.ringlypro.com/ghl-signup`;
 
-    // Navigate to signup page
     window.location.href = ghlSignupUrl;
 }
 
-// Check GHL status on page load
-async function checkGHLStatus() {
+// Check CRM status on page load (supports any CRM)
+async function checkCRMStatus() {
     const urlParams = new URLSearchParams(window.location.search);
     const clientId = urlParams.get('client_id');
 
     if (!clientId) {
         console.log('No client ID found');
-        return { configured: false };
+        return { configured: false, activeCRM: null };
     }
 
     try {
@@ -275,19 +368,29 @@ async function checkGHLStatus() {
         const data = await response.json();
 
         return {
-            configured: data.ghl_configured || false,
+            configured: data.crm_configured || data.ghl_configured || false,
+            activeCRM: data.active_crm || null,
+            integrations: data.integrations || {},
             features: data.features_available || []
         };
     } catch (error) {
-        console.error('Error checking GHL status:', error);
-        return { configured: false };
+        console.error('Error checking CRM status:', error);
+        return { configured: false, activeCRM: null };
     }
+}
+
+// Legacy function name for backwards compatibility
+async function checkGHLStatus() {
+    return await checkCRMStatus();
 }
 
 // Export for use in other scripts
 window.ghlUpgrade = {
     show: showUpgradePrompt,
     close: closeUpgradePrompt,
-    checkStatus: checkGHLStatus
+    checkStatus: checkCRMStatus
 };
+
+// Also export as crmUpgrade for new code
+window.crmUpgrade = window.ghlUpgrade;
 </script>
