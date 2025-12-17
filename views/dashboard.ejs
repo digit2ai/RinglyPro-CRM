@@ -3511,6 +3511,40 @@
                 const status = apt.status || 'confirmed';
                 const source = apt.source || 'voice_booking';
                 const ghlAppointmentId = apt.ghlAppointmentId || apt.ghl_appointment_id;
+                const hubspotMeetingId = apt.hubspotMeetingId || apt.hubspot_meeting_id;
+
+                // Determine source tag based on appointment source
+                const getSourceTag = () => {
+                    // HubSpot sources
+                    if (source === 'whatsapp_hubspot' || hubspotMeetingId) {
+                        return '<span style="background: #fff0e5; color: #ff5c35; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">HubSpot</span>';
+                    }
+                    // GHL sources
+                    if (source === 'ghl_sync' || source === 'whatsapp_ghl' || ghlAppointmentId) {
+                        return '<span style="background: #f3e5ff; color: #7e22ce; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">GHL</span>';
+                    }
+                    // Vagaro sources
+                    if (source === 'whatsapp_vagaro') {
+                        return '<span style="background: #e5f5ff; color: #0077cc; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">Vagaro</span>';
+                    }
+                    // WhatsApp (manual/fallback)
+                    if (source === 'whatsapp') {
+                        return '<span style="background: #e5ffe5; color: #25d366; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">WhatsApp</span>';
+                    }
+                    // Voice booking (Rachel AI)
+                    if (source === 'voice_booking') {
+                        return '<span style="background: #e5f0ff; color: #3b82f6; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">Voice AI</span>';
+                    }
+                    // Online booking
+                    if (source === 'online') {
+                        return '<span style="background: #f0f0f0; color: #666; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">Online</span>';
+                    }
+                    // Manual entry
+                    if (source === 'manual' || source === 'walk-in') {
+                        return '<span style="background: #f5f5f5; color: #888; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">Manual</span>';
+                    }
+                    return '';
+                };
 
                 return `
                 <div class="appointment-card">
@@ -3519,7 +3553,7 @@
                             <h3>
                                 ${name}
                                 ${status === 'confirmed' ? '<svg style="width: 1rem; height: 1rem; color: #10b981;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' : ''}
-                                ${source === 'ghl_sync' || ghlAppointmentId ? '<span style="background: #f3e5ff; color: #7e22ce; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">GHL</span>' : ''}
+                                ${getSourceTag()}
                             </h3>
                             <p style="font-weight: 600; color: #3b82f6; font-size: 0.875rem;">${date} at ${time}</p>
                             <p>${notes}</p>
