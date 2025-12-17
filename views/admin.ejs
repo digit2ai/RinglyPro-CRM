@@ -511,6 +511,7 @@
 
                 <!-- Tab Contents -->
                 <div id="tab-info" class="tab-content active">
+                    <button onclick="openEditClientModal()" style="margin-bottom: 20px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Edit Client Info</button>
                     <div class="info-grid" id="clientInfo">Loading...</div>
                 </div>
 
@@ -548,6 +549,52 @@
                     <div id="activityList">
                         <div class="loading">Loading activity...</div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Client Modal -->
+    <div class="modal" id="editClientModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Edit Client Info</h2>
+                <button class="close-modal" onclick="closeEditClientModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Business Name</label>
+                    <input type="text" id="editBusinessName"
+                           style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 14px;">
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Owner Name</label>
+                    <input type="text" id="editOwnerName"
+                           style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 14px;">
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Owner Email</label>
+                    <input type="email" id="editOwnerEmail"
+                           style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 14px;">
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Owner Phone</label>
+                    <input type="tel" id="editOwnerPhone"
+                           style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 14px;">
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="saveClientInfo()"
+                            style="flex: 1; padding: 14px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                        Save Changes
+                    </button>
+                    <button onclick="closeEditClientModal()"
+                            style="padding: 14px 24px; background: #6c757d; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                        Cancel
+                    </button>
                 </div>
             </div>
         </div>
@@ -1226,6 +1273,109 @@
             }
         }
 
+// Store current client data for editing
+        let currentClientData = null;
+
+        // Open Edit Client Modal
+        async function openEditClientModal() {
+            if (!currentClient) return;
+
+            // Fetch fresh client data
+            try {
+                const response = await authenticatedFetch(`/api/admin/clients/${currentClient}`);
+                if (!response) return;
+
+                const data = await response.json();
+                if (data.success) {
+                    currentClientData = data.client;
+
+                    // Populate form fields
+                    document.getElementById('editBusinessName').value = currentClientData.business_name || '';
+                    document.getElementById('editOwnerName').value = currentClientData.owner_name || '';
+                    document.getElementById('editOwnerEmail').value = currentClientData.owner_email || '';
+                    document.getElementById('editOwnerPhone').value = currentClientData.owner_phone || '';
+
+                    // Show modal
+                    document.getElementById('editClientModal').classList.add('active');
+                }
+            } catch (error) {
+                console.error('Error loading client data for edit:', error);
+                alert('Failed to load client data');
+            }
+        }
+
+        // Close Edit Client Modal
+        function closeEditClientModal() {
+            document.getElementById('editClientModal').classList.remove('active');
+            currentClientData = null;
+        }
+
+        // Save Client Info
+        async function saveClientInfo() {
+            if (!currentClient) return;
+
+            const business_name = document.getElementById('editBusinessName').value.trim();
+            const owner_name = document.getElementById('editOwnerName').value.trim();
+            const owner_email = document.getElementById('editOwnerEmail').value.trim();
+            const owner_phone = document.getElementById('editOwnerPhone').value.trim();
+
+            // Validation
+            if (!business_name) {
+                alert('Business name is required');
+                return;
+            }
+            if (!owner_name) {
+                alert('Owner name is required');
+                return;
+            }
+            if (!owner_email) {
+                alert('Owner email is required');
+                return;
+            }
+            if (!owner_phone) {
+                alert('Owner phone is required');
+                return;
+            }
+
+            try {
+                const response = await authenticatedFetch(`/api/admin/clients/${currentClient}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        business_name,
+                        owner_name,
+                        owner_email,
+                        owner_phone
+                    })
+                });
+
+                if (!response) return;
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Client info updated successfully!');
+                    closeEditClientModal();
+
+                    // Refresh client profile
+                    const profileResponse = await authenticatedFetch(`/api/admin/clients/${currentClient}`);
+                    if (profileResponse) {
+                        const data = await profileResponse.json();
+                        if (data.success) {
+                            renderClientInfo(data.client);
+                        }
+                    }
+
+                    // Refresh clients list
+                    loadClients();
+                } else {
+                    alert('Failed to update client: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error updating client:', error);
+                alert('Failed to update client');
+            }
+        }
+
         // Load active projects count for admin dashboard
         async function loadAdminProjectsCount() {
             try {
@@ -1278,6 +1428,13 @@
         document.getElementById('giftTokensModal').addEventListener('click', (e) => {
             if (e.target.id === 'giftTokensModal') {
                 closeGiftTokensModal();
+            }
+        });
+
+        // Close edit client modal when clicking outside
+        document.getElementById('editClientModal').addEventListener('click', (e) => {
+            if (e.target.id === 'editClientModal') {
+                closeEditClientModal();
             }
         });
     </script>

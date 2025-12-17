@@ -547,6 +547,54 @@ router.get('/clients/:client_id/sms-history', async (req, res) => {
     }
 });
 
+// ============= EDIT CLIENT INFO =============
+
+router.put('/clients/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { business_name, owner_name, owner_email, owner_phone } = req.body;
+
+        console.log(`✏️ Admin editing client: ${client_id}`);
+
+        const client = await Client.findByPk(parseInt(client_id));
+        if (!client) {
+            return res.status(404).json({
+                success: false,
+                error: 'Client not found'
+            });
+        }
+
+        // Update allowed fields
+        if (business_name !== undefined) client.business_name = business_name;
+        if (owner_name !== undefined) client.owner_name = owner_name;
+        if (owner_email !== undefined) client.owner_email = owner_email;
+        if (owner_phone !== undefined) client.owner_phone = owner_phone;
+
+        await client.save();
+
+        console.log(`✅ Admin updated client: ${client.business_name}`);
+
+        res.json({
+            success: true,
+            client: {
+                id: client.id,
+                business_name: client.business_name,
+                owner_name: client.owner_name,
+                owner_email: client.owner_email,
+                owner_phone: client.owner_phone
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Admin edit client error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update client',
+            details: error.message
+        });
+    }
+});
+
 // ============= ADD ADMIN NOTE =============
 
 router.post('/clients/:client_id/notes', async (req, res) => {
