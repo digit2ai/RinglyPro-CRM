@@ -518,6 +518,16 @@ class HubSpotBookingService {
           logger.debug('[HubSpot] Columns may already exist:', alterError.message);
         }
 
+        // Add whatsapp_hubspot to source enum if it doesn't exist
+        try {
+          await sequelize.query(`
+            ALTER TYPE enum_appointments_source ADD VALUE IF NOT EXISTS 'whatsapp_hubspot'
+          `);
+        } catch (enumError) {
+          // Ignore if value already exists
+          logger.debug('[HubSpot] Enum value may already exist:', enumError.message);
+        }
+
         const result = await sequelize.query(
           `INSERT INTO appointments (
             client_id, customer_name, customer_phone, customer_email,
