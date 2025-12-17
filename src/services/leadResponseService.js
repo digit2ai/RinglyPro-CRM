@@ -992,31 +992,55 @@ function extractBookingDataFromHistory(history, currentMessage) {
 
   logger.info(`[LEAD-RESPONSE] extractBookingData: history has ${history.length} messages`);
 
-  // IMPORTANT: Only look at messages AFTER the FIRST booking flow started
-  // Find the FIRST index where user selected "1" (booking) or where Rachel asked for name
-  // We use the FIRST occurrence to avoid resetting when user sends "1" again to select a slot
+  // STEP 1: Find the LAST booking completion in history
+  // This ensures we don't reuse data from a previous booking session
+  let lastCompletionIndex = -1;
+  const completionIndicators = [
+    'appointment has been confirmed', 'cita ha sido confirmada',
+    'excellent choice', 'excelente elección',
+    'we look forward to seeing you', 'te esperamos',
+    'a team member will confirm', 'un miembro de nuestro equipo confirmará'
+  ];
+
+  for (let i = history.length - 1; i >= 0; i--) {
+    const msg = history[i];
+    const body = (msg.body || '').toLowerCase();
+    const direction = msg.direction;
+
+    if ((direction === 'outgoing' || direction === 'outbound') &&
+        completionIndicators.some(indicator => body.includes(indicator))) {
+      lastCompletionIndex = i;
+      logger.info(`[LEAD-RESPONSE] extractBookingData: Found booking completion at index ${i}`);
+      break;
+    }
+  }
+
+  // STEP 2: Find booking start AFTER the last completion
+  // Start searching from after the completion (or from beginning if no completion)
+  const searchStart = lastCompletionIndex >= 0 ? lastCompletionIndex + 1 : 0;
   let bookingStartIndex = -1;
-  for (let i = 0; i < history.length; i++) {
+
+  for (let i = searchStart; i < history.length; i++) {
     const msg = history[i];
     const body = (msg.body || '').trim().toLowerCase();
     const direction = msg.direction;
 
-    // Check if this is where user started booking (selected "1") - only use FIRST occurrence
+    // Check if this is where user started booking (selected "1") - only use FIRST occurrence after completion
     if (bookingStartIndex === -1 && (direction === 'incoming' || direction === 'inbound') && body === '1') {
       bookingStartIndex = i;
-      logger.info(`[LEAD-RESPONSE] extractBookingData: Found FIRST booking start at index ${i}`);
+      logger.info(`[LEAD-RESPONSE] extractBookingData: Found booking start at index ${i} (after completion at ${lastCompletionIndex})`);
     }
-    // Or if Rachel asked for name (outgoing message with "full name" or "nombre completo") - only use FIRST
+    // Or if Rachel asked for name
     if (bookingStartIndex === -1 && (direction === 'outgoing' || direction === 'outbound') &&
         (body.includes('full name') || body.includes('nombre completo'))) {
       bookingStartIndex = i;
-      logger.info(`[LEAD-RESPONSE] extractBookingData: Found FIRST name prompt at index ${i}`);
+      logger.info(`[LEAD-RESPONSE] extractBookingData: Found name prompt at index ${i}`);
     }
   }
 
-  // If we found a booking start, only look at messages after that point
-  const startIndex = bookingStartIndex >= 0 ? bookingStartIndex : 0;
-  logger.info(`[LEAD-RESPONSE] extractBookingData: Processing from index ${startIndex}`);
+  // If we found a booking start after completion, use that; otherwise start from after completion
+  const startIndex = bookingStartIndex >= 0 ? bookingStartIndex : searchStart;
+  logger.info(`[LEAD-RESPONSE] extractBookingData: Processing from index ${startIndex} (lastCompletion=${lastCompletionIndex})`);
 
   // Process messages from booking start onwards
   for (let i = startIndex; i < history.length; i++) {
