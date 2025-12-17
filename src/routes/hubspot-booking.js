@@ -433,7 +433,7 @@ router.post('/setup', async (req, res) => {
 
     // Step 2: Configure client if clientId provided
     if (clientId) {
-      const effectiveApiKey = apiKey || process.env.HUBSPOT_API_KEY;
+      const effectiveApiKey = apiKey || process.env.HUBSPOT_API_KEY || process.env.HUBSPOT_ACCESS_TOKEN;
 
       if (!effectiveApiKey) {
         return res.status(400).json({
@@ -515,7 +515,7 @@ router.get('/status', async (req, res) => {
         success: true,
         configured: false,
         message: 'No client ID provided',
-        envKeySet: !!process.env.HUBSPOT_API_KEY
+        envKeySet: !!(process.env.HUBSPOT_API_KEY || process.env.HUBSPOT_ACCESS_TOKEN)
       });
     }
 
