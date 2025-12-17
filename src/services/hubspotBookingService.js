@@ -396,25 +396,64 @@ class HubSpotBookingService {
       hs_timestamp: startMs
     };
 
+    logger.info(`[HubSpot] Creating meeting engagement for contact ${contactId}:`, {
+      title: meetingProperties.hs_meeting_title,
+      startTime: new Date(startMs).toISOString(),
+      endTime: new Date(endMs).toISOString()
+    });
+
+    // First create the meeting without associations
     const result = await this.callHubSpot(credentials, 'POST', '/crm/v3/objects/meetings', {
-      properties: meetingProperties,
-      associations: [{
-        to: { id: contactId },
-        types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 200 }]
-      }]
+      properties: meetingProperties
     });
 
     if (result.success) {
-      logger.info(`[HubSpot] Meeting engagement created: ${result.data.id}`);
+      const meetingId = result.data.id;
+      logger.info(`[HubSpot] Meeting created: ${meetingId}, now associating with contact ${contactId}`);
+
+      // Then associate meeting with contact using the associations API
+      // Meeting to Contact association type ID is 200 (meeting_to_contact)
+      const assocResult = await this.callHubSpot(
+        credentials,
+        'PUT',
+        `/crm/v3/objects/meetings/${meetingId}/associations/contacts/${contactId}/meeting_to_contact`,
+        {}
+      );
+
+      if (!assocResult.success) {
+        // Try alternative association method
+        logger.warn(`[HubSpot] Primary association failed, trying batch API: ${assocResult.error}`);
+        const batchAssocResult = await this.callHubSpot(
+          credentials,
+          'POST',
+          '/crm/v4/associations/meetings/contacts/batch/create',
+          {
+            inputs: [{
+              from: { id: meetingId },
+              to: { id: contactId },
+              types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 200 }]
+            }]
+          }
+        );
+        if (!batchAssocResult.success) {
+          logger.error(`[HubSpot] Association also failed: ${batchAssocResult.error}`);
+        } else {
+          logger.info(`[HubSpot] Meeting associated via batch API`);
+        }
+      } else {
+        logger.info(`[HubSpot] Meeting successfully associated with contact`);
+      }
+
       return {
         success: true,
         meeting: result.data,
-        meetingId: result.data.id,
+        meetingId: meetingId,
         meetingLink: null,
         source: 'crm_engagement'
       };
     }
 
+    logger.error(`[HubSpot] Failed to create meeting: ${result.error}`, result);
     return result;
   }
 
@@ -483,6 +522,7 @@ class HubSpotBookingService {
       logger.info(`[HubSpot] Booking time: ${startTimeISO} (isDST=${isDST})`);
 
       // Step 3: Book appointment
+      logger.info(`[HubSpot] Step 3: Calling bookAppointment with contactId=${contactResult.contact.id}`);
       const appointmentResult = await this.bookAppointment(clientId, {
         contactId: contactResult.contact.id,
         startTime: startTimeISO,
@@ -492,7 +532,15 @@ class HubSpotBookingService {
         attendeeEmail: customerEmail
       });
 
+      logger.info(`[HubSpot] Step 3 result:`, {
+        success: appointmentResult.success,
+        meetingId: appointmentResult.meetingId,
+        source: appointmentResult.source,
+        error: appointmentResult.error || 'none'
+      });
+
       if (!appointmentResult.success) {
+        logger.error(`[HubSpot] APPOINTMENT CREATION FAILED:`, appointmentResult);
         return {
           success: false,
           error: `Contact created but appointment failed: ${appointmentResult.error}`,
