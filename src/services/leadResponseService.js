@@ -758,8 +758,8 @@ async function handleAppointmentIntent(message, context, clientConfig) {
         if (slots.length > 0) {
           const slotOptions = slots.map((s, i) => `${i + 1}️⃣ ${s.display}`).join('\n');
           return language === 'es'
-            ? `¡Excelente ${extractedData.name}! 📅\n\nAquí tienes nuestros próximos horarios disponibles:\n\n${slotOptions}\n\nResponde con el número (1, 2, o 3) para confirmar tu cita.`
-            : `Excellent ${extractedData.name}! 📅\n\nHere are our next available times:\n\n${slotOptions}\n\nReply with the number (1, 2, or 3) to confirm your appointment.`;
+            ? `¡Excelente ${extractedData.name}! 📅 (GHL)\n\nAquí tienes nuestros próximos horarios disponibles:\n\n${slotOptions}\n\nResponde con el número (1, 2, o 3) para confirmar tu cita.`
+            : `Excellent ${extractedData.name}! 📅 (GHL)\n\nHere are our next available times:\n\n${slotOptions}\n\nReply with the number (1, 2, or 3) to confirm your appointment.`;
         } else {
           logger.warn('[LEAD-RESPONSE] No GHL slots found in next 14 days');
         }
@@ -806,8 +806,8 @@ async function handleAppointmentIntent(message, context, clientConfig) {
         if (slots.length > 0) {
           const slotOptions = slots.map((s, i) => `${i + 1}️⃣ ${s.display}`).join('\n');
           return language === 'es'
-            ? `¡Excelente ${extractedData.name}! 📅\n\nAquí tienes nuestros próximos horarios disponibles:\n\n${slotOptions}\n\nResponde con el número (1, 2, o 3) para confirmar tu cita.`
-            : `Excellent ${extractedData.name}! 📅\n\nHere are our next available times:\n\n${slotOptions}\n\nReply with the number (1, 2, or 3) to confirm your appointment.`;
+            ? `¡Excelente ${extractedData.name}! 📅 (HubSpot)\n\nAquí tienes nuestros próximos horarios disponibles:\n\n${slotOptions}\n\nResponde con el número (1, 2, o 3) para confirmar tu cita.`
+            : `Excellent ${extractedData.name}! 📅 (HubSpot)\n\nHere are our next available times:\n\n${slotOptions}\n\nReply with the number (1, 2, or 3) to confirm your appointment.`;
         } else {
           logger.warn('[LEAD-RESPONSE] No HubSpot slots found in next 14 days');
         }
@@ -822,8 +822,8 @@ async function handleAppointmentIntent(message, context, clientConfig) {
     const dayAfter2 = new Date(); dayAfter2.setDate(dayAfter2.getDate() + 3);
 
     return language === 'es'
-      ? `¡Excelente ${extractedData.name}! 📅\n\nAquí tienes nuestros próximos horarios disponibles:\n\n1️⃣ ${formatDate(tomorrow)} @ 10:00 AM\n2️⃣ ${formatDate(dayAfter)} @ 2:00 PM\n3️⃣ ${formatDate(dayAfter2)} @ 11:00 AM\n\nResponde con el número (1, 2, o 3) para confirmar tu cita.`
-      : `Excellent ${extractedData.name}! 📅\n\nHere are our next available times:\n\n1️⃣ ${formatDate(tomorrow)} @ 10:00 AM\n2️⃣ ${formatDate(dayAfter)} @ 2:00 PM\n3️⃣ ${formatDate(dayAfter2)} @ 11:00 AM\n\nReply with the number (1, 2, or 3) to confirm your appointment.`;
+      ? `¡Excelente ${extractedData.name}! 📅 (Manual)\n\nAquí tienes nuestros próximos horarios disponibles:\n\n1️⃣ ${formatDate(tomorrow)} @ 10:00 AM\n2️⃣ ${formatDate(dayAfter)} @ 2:00 PM\n3️⃣ ${formatDate(dayAfter2)} @ 11:00 AM\n\nResponde con el número (1, 2, o 3) para confirmar tu cita.`
+      : `Excellent ${extractedData.name}! 📅 (Manual)\n\nHere are our next available times:\n\n1️⃣ ${formatDate(tomorrow)} @ 10:00 AM\n2️⃣ ${formatDate(dayAfter)} @ 2:00 PM\n3️⃣ ${formatDate(dayAfter2)} @ 11:00 AM\n\nReply with the number (1, 2, or 3) to confirm your appointment.`;
   }
 
   // STEP 5: User selecting a time slot (1, 2, or 3) - we should have name, phone, email in history
