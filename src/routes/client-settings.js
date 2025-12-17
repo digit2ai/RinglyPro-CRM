@@ -1607,4 +1607,246 @@ router.get('/zelle/qr/:clientId', async (req, res) => {
   }
 });
 
+// =====================================================
+// HUBSPOT INTEGRATION SETTINGS
+// =====================================================
+
+/**
+ * GET /api/client-settings/hubspot
+ * Get HubSpot integration settings
+ */
+router.get('/hubspot', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user?.client_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client not found for user'
+      });
+    }
+
+    // Get both settings JSONB and direct hubspot columns
+    const [client] = await sequelize.query(
+      `SELECT settings, hubspot_api_key, hubspot_meeting_slug, hubspot_timezone, booking_system
+       FROM clients WHERE id = :clientId`,
+      {
+        replacements: { clientId: user.client_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    // Merge settings from both sources
+    const hubspotSettings = {
+      enabled: !!client?.hubspot_api_key || client?.settings?.integration?.hubspot?.enabled || false,
+      apiKey: client?.hubspot_api_key ? true : null, // Don't expose actual key, just indicate if set
+      meetingSlug: client?.hubspot_meeting_slug || client?.settings?.integration?.hubspot?.meetingSlug || null,
+      timezone: client?.hubspot_timezone || client?.settings?.integration?.hubspot?.timezone || 'America/New_York',
+      syncContacts: client?.settings?.integration?.hubspot?.syncContacts !== false,
+      syncCalendar: client?.settings?.integration?.hubspot?.syncCalendar !== false,
+      saveLocal: client?.settings?.integration?.hubspot?.saveLocal !== false,
+      bookingSystem: client?.booking_system
+    };
+
+    // Mask API key for display
+    if (client?.hubspot_api_key) {
+      hubspotSettings.apiKeyMasked = true;
+    }
+
+    res.json({
+      success: true,
+      hubspot: hubspotSettings
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Get HubSpot settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get HubSpot settings'
+    });
+  }
+});
+
+/**
+ * POST /api/client-settings/hubspot
+ * Update HubSpot integration settings
+ */
+router.post('/hubspot', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const {
+      enabled,
+      apiKey,
+      meetingSlug,
+      timezone,
+      syncContacts,
+      syncCalendar,
+      saveLocal
+    } = req.body;
+
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user?.client_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client not found for user'
+      });
+    }
+
+    const clientId = user.client_id;
+
+    // Get current settings
+    const [client] = await sequelize.query(
+      'SELECT settings, hubspot_api_key FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const currentSettings = client?.settings || {};
+
+    // Update settings JSONB
+    const updatedSettings = {
+      ...currentSettings,
+      integration: {
+        ...(currentSettings.integration || {}),
+        hubspot: {
+          enabled: enabled === true,
+          meetingSlug: meetingSlug || null,
+          timezone: timezone || 'America/New_York',
+          syncContacts: syncContacts !== false,
+          syncCalendar: syncCalendar !== false,
+          saveLocal: saveLocal !== false,
+          updatedAt: new Date().toISOString()
+        }
+      }
+    };
+
+    // Determine the actual API key to save
+    // If apiKey contains bullets (masked), keep the existing key
+    const actualApiKey = apiKey && !apiKey.includes('••••') ? apiKey : client?.hubspot_api_key;
+
+    // Update both settings JSONB and direct columns
+    await sequelize.query(
+      `UPDATE clients SET
+        settings = :settings,
+        hubspot_api_key = :hubspotApiKey,
+        hubspot_meeting_slug = :meetingSlug,
+        hubspot_timezone = :timezone,
+        booking_system = CASE WHEN :enabled THEN 'hubspot' ELSE booking_system END,
+        updated_at = NOW()
+       WHERE id = :clientId`,
+      {
+        replacements: {
+          settings: JSON.stringify(updatedSettings),
+          hubspotApiKey: actualApiKey || null,
+          meetingSlug: meetingSlug || null,
+          timezone: timezone || 'America/New_York',
+          enabled: enabled === true,
+          clientId
+        },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`[CLIENT SETTINGS] Updated HubSpot settings for client ${clientId}`);
+
+    res.json({
+      success: true,
+      message: 'HubSpot settings saved'
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Update HubSpot settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to save HubSpot settings'
+    });
+  }
+});
+
+/**
+ * POST /api/client-settings/hubspot/test
+ * Test HubSpot connection
+ */
+router.post('/hubspot/test', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+
+    const [user] = await sequelize.query(
+      'SELECT client_id FROM users WHERE id = :userId',
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!user?.client_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    const [client] = await sequelize.query(
+      'SELECT hubspot_api_key FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: user.client_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!client?.hubspot_api_key) {
+      return res.json({
+        success: false,
+        error: 'HubSpot API key is required'
+      });
+    }
+
+    // Test HubSpot API connection
+    const fetch = require('node-fetch');
+    const response = await fetch('https://api.hubapi.com/crm/v3/objects/contacts?limit=1', {
+      headers: {
+        'Authorization': `Bearer ${client.hubspot_api_key}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      res.json({
+        success: true,
+        message: 'Connection successful'
+      });
+    } else {
+      const error = await response.json();
+      res.json({
+        success: false,
+        error: error.message || 'Connection failed - check your API key'
+      });
+    }
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] HubSpot test error:', error);
+    res.json({
+      success: false,
+      error: 'Connection test failed'
+    });
+  }
+});
+
 module.exports = router;

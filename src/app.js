@@ -582,6 +582,13 @@ app.get('/settings/ghl', (req, res) => {
   });
 });
 
+// HubSpot Integration Settings
+app.get('/settings/hubspot', (req, res) => {
+  res.render('settings-hubspot', {
+    title: 'HubSpot Integration - RinglyPro Settings'
+  });
+});
+
 // SendGrid Email Marketing Settings
 app.get('/settings/sendgrid', (req, res) => {
   res.render('settings-sendgrid', {
