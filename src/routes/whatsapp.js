@@ -30,7 +30,7 @@ async function getClientByWhatsAppNumber(whatsappNumber) {
     const [client] = await sequelize.query(
       `SELECT id, business_name, whatsapp_business_number, ringlypro_number,
               business_hours_start, business_hours_end, timezone, booking_url,
-              rachel_enabled, booking_enabled, settings
+              rachel_enabled, booking_enabled, settings, booking_system
        FROM clients
        WHERE whatsapp_business_number = :number
           OR ringlypro_number = :number
@@ -297,6 +297,26 @@ router.post('/webhook', async (req, res) => {
 
     logger.info(`[WHATSAPP] Zelle config found: enabled=${zelleConfig?.enabled}, email=${zelleConfig?.email}, qrCodeUrl=${zelleConfig?.qrCodeUrl}`);
 
+    // Get booking config - check WhatsApp settings first, then fallback to root settings
+    // WhatsApp settings page saves to: settings.integration.whatsapp.booking
+    // Also check booking_system column for HubSpot integration
+    const whatsappBooking = client.settings?.integration?.whatsapp?.booking;
+    const rootBooking = client.settings?.booking;
+
+    // Determine booking system - prioritize explicit settings, then check booking_system column
+    let bookingConfig = whatsappBooking || rootBooking || { system: 'none', url: null };
+
+    // If booking_system column is set (e.g., 'hubspot' from HubSpot settings page), use it
+    if (client.booking_system && client.booking_system !== 'none') {
+      bookingConfig = {
+        ...bookingConfig,
+        system: client.booking_system
+      };
+      logger.info(`[WHATSAPP] Using booking_system from column: ${client.booking_system}`);
+    }
+
+    logger.info(`[WHATSAPP] Booking config resolved: system=${bookingConfig.system}, source=${whatsappBooking ? 'whatsapp' : (rootBooking ? 'root' : 'default')}`);
+
     const clientConfig = {
       businessName: client.business_name || 'our business',
       businessType: client.settings?.business_type || 'service business',
@@ -304,7 +324,7 @@ router.post('/webhook', async (req, res) => {
       hours: client.settings?.business_hours || null,
       vagaroEnabled: client.settings?.integration?.vagaro?.enabled || false,
       deposit: client.settings?.deposit || { type: 'none', value: null },
-      booking: client.settings?.booking || { system: 'none', url: null },
+      booking: bookingConfig,
       zelle: zelleConfig,
       greetingMessage: client.settings?.greetingMessage || null,
       bookingUrl: client.booking_url || null
