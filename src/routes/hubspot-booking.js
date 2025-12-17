@@ -506,11 +506,11 @@ router.post('/setup', async (req, res) => {
  */
 router.get('/status', async (req, res) => {
   try {
-    const clientId = req.query.clientId || req.session?.client_id;
+    const clientIdParam = req.query.clientId || req.session?.client_id;
     const { sequelize } = require('../models');
     const { QueryTypes } = require('sequelize');
 
-    if (!clientId) {
+    if (!clientIdParam) {
       return res.json({
         success: true,
         configured: false,
@@ -518,6 +518,9 @@ router.get('/status', async (req, res) => {
         envKeySet: !!(process.env.HUBSPOT_API_KEY || process.env.HUBSPOT_ACCESS_TOKEN)
       });
     }
+
+    // Ensure clientId is a number
+    const clientId = parseInt(clientIdParam, 10);
 
     const result = await sequelize.query(
       `SELECT id, hubspot_meeting_slug, hubspot_timezone, booking_system,
@@ -551,6 +554,40 @@ router.get('/status', async (req, res) => {
       success: false,
       error: error.message
     });
+  }
+});
+
+/**
+ * GET /api/integrations/hubspot/debug/clients
+ * Debug endpoint to list all clients and their HubSpot status
+ */
+router.get('/debug/clients', async (req, res) => {
+  try {
+    const adminKey = req.headers['x-admin-key'] || req.headers['x-test-api-key'];
+    if (!adminKey && process.env.NODE_ENV !== 'development') {
+      return res.status(401).json({ success: false, error: 'Admin key required' });
+    }
+
+    const { sequelize } = require('../models');
+    const { QueryTypes } = require('sequelize');
+
+    const clients = await sequelize.query(
+      `SELECT id, business_name, timezone, booking_system,
+              hubspot_meeting_slug, hubspot_timezone,
+              CASE WHEN hubspot_api_key IS NOT NULL THEN true ELSE false END as has_hubspot_key,
+              CASE WHEN ghl_api_key IS NOT NULL THEN true ELSE false END as has_ghl_key
+       FROM clients ORDER BY id`,
+      { type: QueryTypes.SELECT }
+    );
+
+    res.json({
+      success: true,
+      count: clients.length,
+      clients
+    });
+  } catch (error) {
+    console.error('[HubSpot Debug] Error:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
