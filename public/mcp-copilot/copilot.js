@@ -1,4 +1,4 @@
-const COPILOT_VERSION = 'v127';
+const COPILOT_VERSION = 'v128';
 console.log(`🚀 MCP Copilot ${COPILOT_VERSION} loaded`);
 
 let sessionId = null;
@@ -1022,6 +1022,7 @@ function updateConnectionStatus(message, status, force = false) {
 
     const statusDiv = document.getElementById('connectionStatus');
     const statusDot = document.getElementById('statusDot');
+    const crmNameEl = document.getElementById('crmName');
 
     if (!statusDiv || !statusDot) {
         console.warn('⚠️ Connection status elements not found');
@@ -1030,6 +1031,13 @@ function updateConnectionStatus(message, status, force = false) {
 
     console.log(`📊 Updating connection status: ${message} (${status})`);
     statusDiv.textContent = message;
+
+    // Update CRM name header based on active CRM
+    if (crmNameEl && activeCRM) {
+        const crmDisplayName = getCRMDisplayName(activeCRM);
+        crmNameEl.textContent = crmDisplayName;
+        console.log(`📊 Updated CRM name to: ${crmDisplayName}`);
+    }
 
     // Update status dot (red/green indicator)
     if (status === 'success') {

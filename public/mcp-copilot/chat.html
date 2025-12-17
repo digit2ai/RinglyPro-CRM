@@ -397,19 +397,37 @@
                 };
                 const crmDisplayName = crmNames[activeCRM] || 'CRM';
 
-                // Try to connect based on active CRM
-                let connectEndpoint = `${API_BASE}/gohighlevel/connect`;
+                console.log('🔗 Active CRM:', activeCRM);
+
+                // Connect based on active CRM type - each has different requirements!
+                let connectEndpoint;
                 let connectBody = { clientId: currentClientId };
 
-                // For GHL, also include localStorage credentials for backwards compatibility
-                if (activeCRM === 'ghl') {
+                if (activeCRM === 'hubspot') {
+                    // HubSpot - requires ONLY access token (NO location!)
+                    connectEndpoint = `${API_BASE}/hubspot/connect`;
+                    const accessToken = localStorage.getItem('hubspot_accessToken');
+                    if (accessToken) {
+                        connectBody.accessToken = accessToken;
+                    }
+                    console.log('📝 HubSpot connection - no location ID needed');
+                } else if (activeCRM === 'vagaro') {
+                    // Vagaro - uses settings-based auth
+                    connectEndpoint = `${API_BASE}/vagaro/connect`;
+                    console.log('📝 Vagaro connection');
+                } else {
+                    // GoHighLevel - requires api_key AND location_id
+                    connectEndpoint = `${API_BASE}/gohighlevel/connect`;
                     const apiKey = localStorage.getItem('ghl_apiKey');
                     const locationId = localStorage.getItem('ghl_locationId');
                     if (apiKey && locationId) {
                         connectBody.apiKey = apiKey;
                         connectBody.locationId = locationId;
                     }
+                    console.log('📝 GHL connection - requires both API key and location ID');
                 }
+
+                console.log('📡 Connecting to:', connectEndpoint);
 
                 const response = await fetch(connectEndpoint, {
                     method: 'POST',
