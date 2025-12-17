@@ -372,31 +372,61 @@
 
         async function connectToCRM() {
             try {
-                // Get saved credentials from localStorage
-                const apiKey = localStorage.getItem('ghl_apiKey');
-                const locationId = localStorage.getItem('ghl_locationId');
-
-                if (!apiKey || !locationId) {
-                    addMessage('system', '⚠️ Please connect to GoHighLevel from the main page first.');
+                // Check CRM configuration status from server
+                if (!currentClientId) {
+                    addMessage('system', '⚠️ No client ID detected. Please access this page from the main dashboard.');
                     return;
                 }
 
-                const response = await fetch(`${API_BASE}/gohighlevel/connect`, {
+                // First check what CRM is configured for this client
+                const statusResponse = await fetch(`/api/copilot/check-access/${currentClientId}`);
+                const statusData = await statusResponse.json();
+
+                if (!statusData.crm_configured && !statusData.ghl_configured) {
+                    // No CRM configured - show generic message
+                    addMessage('system', '⚠️ Please configure a CRM integration (GoHighLevel, HubSpot, or Vagaro) from the Settings page first.');
+                    return;
+                }
+
+                // Get CRM type and display name
+                const activeCRM = statusData.active_crm || 'ghl';
+                const crmNames = {
+                    'ghl': 'GoHighLevel',
+                    'hubspot': 'HubSpot',
+                    'vagaro': 'Vagaro'
+                };
+                const crmDisplayName = crmNames[activeCRM] || 'CRM';
+
+                // Try to connect based on active CRM
+                let connectEndpoint = `${API_BASE}/gohighlevel/connect`;
+                let connectBody = { clientId: currentClientId };
+
+                // For GHL, also include localStorage credentials for backwards compatibility
+                if (activeCRM === 'ghl') {
+                    const apiKey = localStorage.getItem('ghl_apiKey');
+                    const locationId = localStorage.getItem('ghl_locationId');
+                    if (apiKey && locationId) {
+                        connectBody.apiKey = apiKey;
+                        connectBody.locationId = locationId;
+                    }
+                }
+
+                const response = await fetch(connectEndpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ apiKey, locationId, clientId: currentClientId })
+                    body: JSON.stringify(connectBody)
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
                     sessionId = data.sessionId;
-                    addMessage('assistant', '👋 Hi! I\'m your AI assistant. I can help you create contacts, search contacts, send SMS, and more.\n\nWhat would you like to do?');
+                    addMessage('assistant', `👋 Hi! I'm your AI assistant connected to ${crmDisplayName}. I can help you create contacts, search contacts, send SMS, and more.\n\nWhat would you like to do?`);
                 } else {
                     throw new Error(data.error || 'Connection failed');
                 }
             } catch (error) {
-                addMessage('system', `❌ Connection failed: ${error.message}\n\nPlease go back and reconnect.`);
+                addMessage('system', `❌ Connection failed: ${error.message}\n\nPlease go back and ensure your CRM is properly configured in Settings.`);
             }
         }
 
