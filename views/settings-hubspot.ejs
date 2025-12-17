@@ -338,13 +338,13 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="meetingSlug">Default Meeting Link Slug (Optional)</label>
+                    <label class="form-label" for="meetingSlug">Default Meeting Link (Optional)</label>
                     <input type="text"
                            id="meetingSlug"
                            class="form-input"
-                           placeholder="john-smith"
+                           placeholder="https://meetings.hubspot.com/your-slug or just your-slug"
                            autocomplete="off">
-                    <p class="form-hint">Your HubSpot meeting link slug (e.g., meetings.hubspot.com/<strong>john-smith</strong>)</p>
+                    <p class="form-hint">Paste your full HubSpot meeting URL or just the slug (e.g., <strong>ringlypro</strong>)</p>
                 </div>
 
                 <div class="form-group">
@@ -465,14 +465,34 @@
             });
         }
 
+        // Extract meeting slug from URL or return as-is if already a slug
+        function extractMeetingSlug(input) {
+            if (!input) return null;
+            input = input.trim();
+
+            // If it's a full URL, extract the slug
+            // Handles: https://meetings.hubspot.com/john-smith
+            //          https://meetings-na2.hubspot.com/ringlypro
+            //          meetings.hubspot.com/john-smith
+            const urlPattern = /(?:https?:\/\/)?meetings(?:-[a-z0-9]+)?\.hubspot\.com\/([^\/\?\s]+)/i;
+            const match = input.match(urlPattern);
+            if (match) {
+                return match[1];
+            }
+
+            // Otherwise, assume it's already just the slug
+            return input;
+        }
+
         async function handleSaveSettings(event) {
             event.preventDefault();
 
             const apiKeyValue = document.getElementById('apiKey').value;
+            const meetingSlugInput = document.getElementById('meetingSlug').value;
             const settings = {
                 enabled: document.getElementById('enableToggle').checked,
                 apiKey: apiKeyValue.includes('••••') ? currentSettings.apiKey : apiKeyValue,
-                meetingSlug: document.getElementById('meetingSlug').value,
+                meetingSlug: extractMeetingSlug(meetingSlugInput),
                 timezone: document.getElementById('timezone').value,
                 syncContacts: document.getElementById('syncContacts').checked,
                 syncCalendar: document.getElementById('syncCalendar').checked,
