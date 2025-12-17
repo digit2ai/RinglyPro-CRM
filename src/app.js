@@ -603,6 +603,13 @@ app.get('/settings/zelle', (req, res) => {
   });
 });
 
+// RinglyPro Calendar Settings
+app.get('/settings/calendar', (req, res) => {
+  res.render('settings-calendar', {
+    title: 'RinglyPro Calendar - RinglyPro Settings'
+  });
+});
+
 // PixlyPro admin dashboard
 app.get('/pixlypro-admin-dashboard', (req, res) => {
   res.render('pixlypro-admin-dashboard', {

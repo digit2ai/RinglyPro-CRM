@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RinglyPro Calendar Settings</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header h1 img {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+        }
+
+        .header p {
+            color: #6e6e73;
+            font-size: 1rem;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e5e7;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 51px;
+            height: 31px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 31px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 23px;
+            width: 23px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #34c759;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #e94560;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #d13a54;
+        }
+
+        .btn-secondary {
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8ed;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #e94560;
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Day Settings */
+        .day-setting {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .day-name {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 1rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .time-inputs {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .time-group {
+            flex: 1;
+        }
+
+        .time-group label {
+            display: block;
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .time-group input[type="time"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .time-group input[type="time"]:disabled {
+            background: #e5e7eb;
+            cursor: not-allowed;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f5f5f7;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .icon {
+            font-size: 1.25rem;
+        }
+
+        .section-heading {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 1rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">
+            ← Back to Dashboard
+        </a>
+
+        <div class="header">
+            <h1>
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1d01be1be509a4f79755b.png" alt="RinglyPro">
+                RinglyPro Calendar
+            </h1>
+            <p>Configure your appointment booking schedule and availability</p>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <!-- Features Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Calendar Features</div>
+            </div>
+
+            <ul class="feature-list">
+                <li>
+                    <span class="icon">📞</span>
+                    <span>Voice AI appointment booking via phone calls</span>
+                </li>
+                <li>
+                    <span class="icon">📅</span>
+                    <span>Customizable weekly availability schedule</span>
+                </li>
+                <li>
+                    <span class="icon">🤖</span>
+                    <span>Lina & Rachel AI assistants handle booking automatically</span>
+                </li>
+                <li>
+                    <span class="icon">📱</span>
+                    <span>SMS confirmation sent to customers</span>
+                </li>
+                <li>
+                    <span class="icon">🔗</span>
+                    <span>Syncs with GoHighLevel, Vagaro, and HubSpot</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Configuration Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Booking Settings</div>
+                <label class="toggle">
+                    <input type="checkbox" id="bookingEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <p style="color: #6b7280; margin-bottom: 1rem; font-size: 0.875rem;">
+                When enabled, customers can book appointments via phone with Lina or Rachel AI.
+            </p>
+
+            <form id="calendarSettingsForm">
+                <h4 class="section-heading">Weekly Schedule</h4>
+
+                <div id="daySettingsList">
+                    <!-- Days will be rendered here by JavaScript -->
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/'">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveCalendarBtn">Save Calendar Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Get auth token
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        let calendarSettingsData = null;
+        let clientId = null;
+
+        // Load current user info to get client ID
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success && data.user) {
+                    clientId = data.user.id;
+                    await loadCalendarSettings();
+                } else {
+                    throw new Error('Failed to get user info');
+                }
+            } catch (error) {
+                console.error('Failed to load user info:', error);
+                showAlert('Failed to load user info. Please try again.', 'error');
+            }
+        }
+
+        // Load calendar settings
+        async function loadCalendarSettings() {
+            try {
+                const response = await fetch(`/api/client/calendar-settings/${clientId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    calendarSettingsData = data.settings;
+                    renderCalendarSettings(data.settings);
+                }
+            } catch (error) {
+                console.error('Error loading calendar settings:', error);
+                showAlert('Failed to load calendar settings. Please try again.', 'error');
+            }
+        }
+
+        // Render calendar settings
+        function renderCalendarSettings(settings) {
+            // Set booking enabled toggle
+            document.getElementById('bookingEnabled').checked = settings.booking_enabled;
+
+            // Render day settings
+            const daysContainer = document.getElementById('daySettingsList');
+            const days = [
+                { key: 'monday', label: 'Monday' },
+                { key: 'tuesday', label: 'Tuesday' },
+                { key: 'wednesday', label: 'Wednesday' },
+                { key: 'thursday', label: 'Thursday' },
+                { key: 'friday', label: 'Friday' },
+                { key: 'saturday', label: 'Saturday' },
+                { key: 'sunday', label: 'Sunday' }
+            ];
+
+            daysContainer.innerHTML = days.map(day => {
+                const dayConfig = settings.calendar_settings[day.key];
+                const isEnabled = dayConfig && dayConfig.enabled;
+                const allDayOff = !isEnabled;
+                const start = dayConfig && dayConfig.start ? dayConfig.start : '09:00';
+                const end = dayConfig && dayConfig.end ? dayConfig.end : '17:00';
+
+                return `
+                    <div class="day-setting">
+                        <div class="day-header">
+                            <div class="day-name">${day.label}</div>
+                            <div class="day-controls">
+                                <label class="checkbox-label">
+                                    <input type="checkbox"
+                                           id="allDayOff_${day.key}"
+                                           ${allDayOff ? 'checked' : ''}
+                                           onchange="toggleDayOff('${day.key}')">
+                                    <span>All Day Off</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="time-inputs" id="timeInputs_${day.key}">
+                            <div class="time-group">
+                                <label>Start Time</label>
+                                <input type="time"
+                                       id="start_${day.key}"
+                                       value="${start}"
+                                       ${allDayOff ? 'disabled' : ''}>
+                            </div>
+                            <div class="time-group">
+                                <label>End Time</label>
+                                <input type="time"
+                                       id="end_${day.key}"
+                                       value="${end}"
+                                       ${allDayOff ? 'disabled' : ''}>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Toggle day off
+        function toggleDayOff(dayKey) {
+            const checkbox = document.getElementById(`allDayOff_${dayKey}`);
+            const startInput = document.getElementById(`start_${dayKey}`);
+            const endInput = document.getElementById(`end_${dayKey}`);
+
+            if (checkbox.checked) {
+                startInput.disabled = true;
+                endInput.disabled = true;
+            } else {
+                startInput.disabled = false;
+                endInput.disabled = false;
+            }
+        }
+
+        // Save calendar settings
+        async function saveCalendarSettings(event) {
+            event.preventDefault();
+
+            const bookingEnabled = document.getElementById('bookingEnabled').checked;
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+            const calendarSettings = {};
+
+            for (const day of days) {
+                const allDayOff = document.getElementById(`allDayOff_${day}`).checked;
+
+                if (allDayOff) {
+                    calendarSettings[day] = { enabled: false };
+                } else {
+                    const start = document.getElementById(`start_${day}`).value;
+                    const end = document.getElementById(`end_${day}`).value;
+
+                    if (!start || !end) {
+                        showAlert(`Please set start and end times for ${day.charAt(0).toUpperCase() + day.slice(1)}`, 'error');
+                        return;
+                    }
+
+                    if (start >= end) {
+                        showAlert(`End time must be after start time for ${day.charAt(0).toUpperCase() + day.slice(1)}`, 'error');
+                        return;
+                    }
+
+                    calendarSettings[day] = {
+                        enabled: true,
+                        start: start,
+                        end: end
+                    };
+                }
+            }
+
+            const saveBtn = document.getElementById('saveCalendarBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                const response = await fetch(`/api/client/calendar-settings/${clientId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        booking_enabled: bookingEnabled,
+                        calendar_settings: calendarSettings,
+                        appointment_duration: calendarSettingsData.appointment_duration
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Calendar settings saved successfully!', 'success');
+                } else {
+                    throw new Error(data.error || 'Failed to save settings');
+                }
+            } catch (error) {
+                console.error('Error saving calendar settings:', error);
+                showAlert(`Failed to save calendar settings: ${error.message}`, 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Calendar Settings';
+            }
+        }
+
+        // Show alert
+        function showAlert(message, type) {
+            const container = document.getElementById('alert-container');
+            container.innerHTML = `<div class="alert alert-${type}" style="display: block;">${message}</div>`;
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    container.innerHTML = '';
+                }, 5000);
+            }
+        }
+
+        // Initialize
+        document.getElementById('calendarSettingsForm').addEventListener('submit', saveCalendarSettings);
+        loadUserInfo();
+    </script>
+</body>
+</html>

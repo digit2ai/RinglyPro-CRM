@@ -2092,50 +2092,8 @@
                 <button class="close-modal" onclick="closeSettings()">×</button>
             </div>
             <div class="modal-body" style="flex: 1; overflow-y: auto;">
-                <!-- Settings Tabs -->
-                <div class="settings-tabs">
-                    <button class="settings-tab active" onclick="switchSettingsTab('calendar')">
-                        📅 Calendar
-                    </button>
-                    <button class="settings-tab" onclick="switchSettingsTab('crm')">
-                        🔗 Integrations
-                    </button>
-                </div>
-
-                <!-- Calendar Settings Tab -->
-                <div class="settings-tab-content active" id="calendarTabContent">
-                    <form id="calendarSettingsForm">
-                    <!-- Global Enable/Disable Toggle -->
-                    <div class="setting-row">
-                        <label class="setting-label">
-                            <span class="setting-title">Enable Appointment Booking</span>
-                            <span class="setting-description">Allow customers to book appointments via phone</span>
-                        </label>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="bookingEnabled">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="divider"></div>
-
-                    <!-- Day-by-Day Settings -->
-                    <h4 class="section-heading">Weekly Schedule</h4>
-
-                    <div id="daySettingsList">
-                        <!-- Days will be rendered here by JavaScript -->
-                    </div>
-
-                    <!-- Save Button -->
-                    <div class="modal-actions">
-                        <button type="button" class="btn-cancel" onclick="closeSettings()">Cancel</button>
-                        <button type="submit" class="btn-save" id="saveCalendarBtn">Save Calendar Settings</button>
-                    </div>
-                </form>
-                </div>
-
-                <!-- CRM Integrations Tab -->
-                <div class="settings-tab-content" id="crmTabContent">
+                <!-- Integrations Content -->
+                <div id="crmTabContent">
                     <!-- Integration Links (at top for easy access) -->
                     <div style="position: relative; z-index: 100;">
                         <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1.5rem; color: #1f2937;">Integration Settings</h4>
@@ -2143,6 +2101,16 @@
 
                         <!-- Integration Grid -->
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <!-- RinglyPro Calendar -->
+                            <a href="/settings/calendar" target="_blank" rel="noopener" style="display: block; padding: 1rem; background: #fef2f2; border: 2px solid #e94560; border-radius: 0.5rem; text-decoration: none; cursor: pointer;">
+                                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                                    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1d01be1be509a4f79755b.png" alt="RinglyPro" width="24" height="24" style="border-radius: 4px;">
+                                    <span style="font-weight: 600; color: #e94560;">RinglyPro Calendar</span>
+                                    <span style="font-size: 0.75rem; color: #9ca3af;">↗</span>
+                                </div>
+                                <p style="font-size: 0.75rem; color: #6b7280; margin: 0;">Appointment booking schedule</p>
+                            </a>
+
                             <!-- WhatsApp -->
                             <a href="/settings/whatsapp" target="_blank" rel="noopener" style="display: block; padding: 1rem; background: #f0fdf4; border: 2px solid #25D366; border-radius: 0.5rem; text-decoration: none; cursor: pointer;">
                                 <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
@@ -4136,21 +4104,15 @@
         }
 
         // =====================================================
-        // SETTINGS MODAL FUNCTIONS (Calendar + CRM)
+        // SETTINGS MODAL FUNCTIONS (Integrations)
         // =====================================================
 
-        let calendarSettingsData = null;
         let crmSettingsData = null;
-        let currentSettingsTab = 'calendar';
 
         // Main Settings Modal Functions
         async function openSettings() {
             document.getElementById('calendarModal').classList.add('active');
-            // Load both calendar and CRM settings
-            await loadCalendarSettings();
             await loadCRMSettings();
-            // Default to calendar tab
-            switchSettingsTab('calendar');
         }
 
         function closeSettings() {
@@ -4166,206 +4128,8 @@
             closeSettings();
         }
 
-        // Tab Switching
-        function switchSettingsTab(tabName, evt) {
-            currentSettingsTab = tabName;
-
-            // Update tab buttons
-            const tabs = document.querySelectorAll('.settings-tab');
-            tabs.forEach(tab => {
-                tab.classList.remove('active');
-                // Mark the correct tab as active based on tabName
-                if ((tabName === 'calendar' && tab.textContent.includes('Calendar')) ||
-                    (tabName === 'crm' && tab.textContent.includes('Integrations'))) {
-                    tab.classList.add('active');
-                }
-            });
-
-            // Update tab content
-            const contents = document.querySelectorAll('.settings-tab-content');
-            contents.forEach(content => {
-                content.classList.remove('active');
-            });
-
-            if (tabName === 'calendar') {
-                document.getElementById('calendarTabContent').classList.add('active');
-            } else if (tabName === 'crm') {
-                document.getElementById('crmTabContent').classList.add('active');
-            }
-        }
-
-        async function loadCalendarSettings() {
-            try {
-                const response = await authenticatedFetch(`/api/client/calendar-settings/${CLIENT_ID}`);
-                if (!response) return;
-
-                const data = await response.json();
-
-                if (data.success) {
-                    calendarSettingsData = data.settings;
-                    renderCalendarSettings(data.settings);
-                }
-            } catch (error) {
-                console.error('Error loading calendar settings:', error);
-                alert('Failed to load calendar settings. Please try again.');
-            }
-        }
-
-        function renderCalendarSettings(settings) {
-            // Set booking enabled toggle
-            document.getElementById('bookingEnabled').checked = settings.booking_enabled;
-
-            // Render day settings
-            const daysContainer = document.getElementById('daySettingsList');
-            const days = [
-                { key: 'monday', label: 'Monday' },
-                { key: 'tuesday', label: 'Tuesday' },
-                { key: 'wednesday', label: 'Wednesday' },
-                { key: 'thursday', label: 'Thursday' },
-                { key: 'friday', label: 'Friday' },
-                { key: 'saturday', label: 'Saturday' },
-                { key: 'sunday', label: 'Sunday' }
-            ];
-
-            daysContainer.innerHTML = days.map(day => {
-                const dayConfig = settings.calendar_settings[day.key];
-                const isEnabled = dayConfig && dayConfig.enabled;
-                const allDayOff = !isEnabled;
-                const start = dayConfig && dayConfig.start ? dayConfig.start : '09:00';
-                const end = dayConfig && dayConfig.end ? dayConfig.end : '17:00';
-
-                return `
-                    <div class="day-setting">
-                        <div class="day-header">
-                            <div class="day-name">${day.label}</div>
-                            <div class="day-controls">
-                                <label class="checkbox-label">
-                                    <input type="checkbox"
-                                           id="allDayOff_${day.key}"
-                                           ${allDayOff ? 'checked' : ''}
-                                           onchange="toggleDayOff('${day.key}')">
-                                    <span>All Day Off</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="time-inputs" id="timeInputs_${day.key}">
-                            <div class="time-group">
-                                <label>Start Time</label>
-                                <input type="time"
-                                       id="start_${day.key}"
-                                       value="${start}"
-                                       ${allDayOff ? 'disabled' : ''}>
-                            </div>
-                            <div class="time-group">
-                                <label>End Time</label>
-                                <input type="time"
-                                       id="end_${day.key}"
-                                       value="${end}"
-                                       ${allDayOff ? 'disabled' : ''}>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function toggleDayOff(dayKey) {
-            const checkbox = document.getElementById(`allDayOff_${dayKey}`);
-            const startInput = document.getElementById(`start_${dayKey}`);
-            const endInput = document.getElementById(`end_${dayKey}`);
-
-            if (checkbox.checked) {
-                // All day off - disable time inputs
-                startInput.disabled = true;
-                endInput.disabled = true;
-            } else {
-                // Day is enabled - enable time inputs
-                startInput.disabled = false;
-                endInput.disabled = false;
-            }
-        }
-
-        async function saveCalendarSettings(event) {
-            event.preventDefault();
-
-            const bookingEnabled = document.getElementById('bookingEnabled').checked;
-            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-
-            const calendarSettings = {};
-
-            for (const day of days) {
-                const allDayOff = document.getElementById(`allDayOff_${day}`).checked;
-
-                if (allDayOff) {
-                    calendarSettings[day] = { enabled: false };
-                } else {
-                    const start = document.getElementById(`start_${day}`).value;
-                    const end = document.getElementById(`end_${day}`).value;
-
-                    if (!start || !end) {
-                        alert(`Please set start and end times for ${day.charAt(0).toUpperCase() + day.slice(1)}`);
-                        return;
-                    }
-
-                    if (start >= end) {
-                        alert(`End time must be after start time for ${day.charAt(0).toUpperCase() + day.slice(1)}`);
-                        return;
-                    }
-
-                    calendarSettings[day] = {
-                        enabled: true,
-                        start: start,
-                        end: end
-                    };
-                }
-            }
-
-            // Save to API
-            const saveBtn = document.getElementById('saveCalendarBtn');
-            saveBtn.disabled = true;
-            saveBtn.textContent = 'Saving...';
-
-            try {
-                const response = await authenticatedFetch(`/api/client/calendar-settings/${CLIENT_ID}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        booking_enabled: bookingEnabled,
-                        calendar_settings: calendarSettings,
-                        appointment_duration: calendarSettingsData.appointment_duration
-                    })
-                });
-
-                if (!response) {
-                    throw new Error('No response from server');
-                }
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert('Calendar settings saved successfully!');
-                    closeCalendarSettings();
-                } else {
-                    throw new Error(data.error || 'Failed to save settings');
-                }
-            } catch (error) {
-                console.error('Error saving calendar settings:', error);
-                alert(`Failed to save calendar settings: ${error.message}`);
-            } finally {
-                saveBtn.disabled = false;
-                saveBtn.textContent = 'Save Settings';
-            }
-        }
-
         // Attach form submit handler
         document.addEventListener('DOMContentLoaded', () => {
-            const calendarForm = document.getElementById('calendarSettingsForm');
-            if (calendarForm) {
-                calendarForm.addEventListener('submit', saveCalendarSettings);
-            }
-
             // CRM Settings form submit handler
             const crmForm = document.getElementById('crmSettingsForm');
             if (crmForm) {
