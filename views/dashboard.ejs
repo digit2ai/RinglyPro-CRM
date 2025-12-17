@@ -2136,67 +2136,8 @@
 
                 <!-- CRM Integrations Tab -->
                 <div class="settings-tab-content" id="crmTabContent">
-                    <form id="crmSettingsForm">
-                        <!-- Outbound Voicemail Section -->
-                        <div class="crm-section">
-                            <h4>
-                                <span class="crm-logo">🎙️</span>
-                                Outbound Voicemail Message
-                            </h4>
-
-                            <div class="form-group">
-                                <label for="outboundVoicemailMessage">Custom Voicemail Message</label>
-                                <textarea
-                                    id="outboundVoicemailMessage"
-                                    name="outbound_voicemail_message"
-                                    rows="6"
-                                    maxlength="1000"
-                                    placeholder="Enter your custom voicemail message here... Leave blank to use the default RinglyPro message."
-                                    style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-family: inherit; font-size: 0.875rem; resize: vertical; min-height: 150px;"
-                                ></textarea>
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
-                                    <span class="form-hint">Message that plays when calling leads from Business Collector (max 1000 characters)</span>
-                                    <span id="voicemailCharCount" style="font-size: 0.75rem; color: #6b7280;">0 / 1000</span>
-                                </div>
-                            </div>
-
-                            <!-- TCPA Compliance Warning -->
-                            <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 0.5rem; padding: 1rem; margin-top: 1rem;">
-                                <p style="font-size: 0.75rem; color: #92400e; margin: 0 0 0.5rem 0; font-weight: 700;">
-                                    ⚠️ TCPA COMPLIANCE REQUIRED
-                                </p>
-                                <p style="font-size: 0.75rem; color: #78350f; margin: 0; line-height: 1.6;">
-                                    Your custom message <strong>MUST include</strong> the phrase:<br>
-                                    <span style="background: #fff; padding: 0.25rem 0.5rem; border-radius: 0.25rem; display: inline-block; margin-top: 0.5rem; font-weight: 600;">
-                                        "This message is for informational purposes only"
-                                    </span>
-                                    <br><br>
-                                    This is required by the Telephone Consumer Protection Act (TCPA) for cold calling compliance. Without this phrase, your message will not be saved.
-                                </p>
-                            </div>
-
-                            <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-top: 1rem;">
-                                <p style="font-size: 0.75rem; color: #374151; margin: 0 0 0.5rem 0; font-weight: 600;">
-                                    Default Message:
-                                </p>
-                                <p style="font-size: 0.75rem; color: #6b7280; margin: 0; line-height: 1.5; font-style: italic;">
-                                    "Hi, this is Lina from RinglyPro.com, calling with a quick business update. RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send automatic follow-ups — so you never miss a lead, even after hours. <strong style="color: #374151;">This message is for informational purposes only</strong>, and there's no obligation or payment required. If you'd like to learn more, you can visit RinglyPro.com or call us back at 813-212-4888. If you'd prefer not to receive future informational updates, you can reply stop or call the same number and we'll remove you. Thanks for your time, and have a great day."
-                                </p>
-                            </div>
-
-                            <p style="font-size: 0.75rem; color: #6b7280; margin-top: 1rem; line-height: 1.5;">
-                                <strong>Note:</strong> Custom messages use Twilio Polly voice. Default message uses ElevenLabs Rachel Premium voice.
-                            </p>
-
-                            <!-- Save Button for Voicemail -->
-                            <div class="modal-actions" style="margin-top: 1.5rem;">
-                                <button type="submit" class="btn-save" id="saveCrmBtn">Save Voicemail Message</button>
-                            </div>
-                        </div>
-                    </form>
-
-                    <!-- Integration Links (outside form to prevent form interference) -->
-                    <div style="border-top: 1px solid #e5e7eb; margin-top: 1.5rem; padding-top: 1.5rem; position: relative; z-index: 100;">
+                    <!-- Integration Links (at top for easy access) -->
+                    <div style="position: relative; z-index: 100;">
                         <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1.5rem; color: #1f2937;">Integration Settings</h4>
                         <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem;">Click any card to configure that integration:</p>
 
@@ -2262,11 +2203,70 @@
                                 <p style="font-size: 0.75rem; color: #6b7280; margin: 0;">Deposit collection</p>
                             </a>
                         </div>
+                    </div>
 
-                        <!-- Close Button -->
-                        <div class="modal-actions" style="margin-top: 1.5rem;">
-                            <button type="button" class="btn-cancel" onclick="closeSettings()">Close</button>
+                    <!-- Outbound Voicemail Section (below integrations) -->
+                    <form id="crmSettingsForm">
+                        <div class="crm-section" style="border-top: 1px solid #e5e7eb; margin-top: 1.5rem; padding-top: 1.5rem;">
+                            <h4>
+                                <span class="crm-logo">🎙️</span>
+                                Outbound Voicemail Message
+                            </h4>
+
+                            <div class="form-group">
+                                <label for="outboundVoicemailMessage">Custom Voicemail Message</label>
+                                <textarea
+                                    id="outboundVoicemailMessage"
+                                    name="outbound_voicemail_message"
+                                    rows="6"
+                                    maxlength="1000"
+                                    placeholder="Enter your custom voicemail message here... Leave blank to use the default RinglyPro message."
+                                    style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-family: inherit; font-size: 0.875rem; resize: vertical; min-height: 150px;"
+                                ></textarea>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                                    <span class="form-hint">Message that plays when calling leads from Business Collector (max 1000 characters)</span>
+                                    <span id="voicemailCharCount" style="font-size: 0.75rem; color: #6b7280;">0 / 1000</span>
+                                </div>
+                            </div>
+
+                            <!-- TCPA Compliance Warning -->
+                            <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 0.5rem; padding: 1rem; margin-top: 1rem;">
+                                <p style="font-size: 0.75rem; color: #92400e; margin: 0 0 0.5rem 0; font-weight: 700;">
+                                    ⚠️ TCPA COMPLIANCE REQUIRED
+                                </p>
+                                <p style="font-size: 0.75rem; color: #78350f; margin: 0; line-height: 1.6;">
+                                    Your custom message <strong>MUST include</strong> the phrase:<br>
+                                    <span style="background: #fff; padding: 0.25rem 0.5rem; border-radius: 0.25rem; display: inline-block; margin-top: 0.5rem; font-weight: 600;">
+                                        "This message is for informational purposes only"
+                                    </span>
+                                    <br><br>
+                                    This is required by the Telephone Consumer Protection Act (TCPA) for cold calling compliance. Without this phrase, your message will not be saved.
+                                </p>
+                            </div>
+
+                            <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-top: 1rem;">
+                                <p style="font-size: 0.75rem; color: #374151; margin: 0 0 0.5rem 0; font-weight: 600;">
+                                    Default Message:
+                                </p>
+                                <p style="font-size: 0.75rem; color: #6b7280; margin: 0; line-height: 1.5; font-style: italic;">
+                                    "Hi, this is Lina from RinglyPro.com, calling with a quick business update. RinglyPro offers a free AI receptionist that helps small businesses answer calls, book appointments, and send automatic follow-ups — so you never miss a lead, even after hours. <strong style="color: #374151;">This message is for informational purposes only</strong>, and there's no obligation or payment required. If you'd like to learn more, you can visit RinglyPro.com or call us back at 813-212-4888. If you'd prefer not to receive future informational updates, you can reply stop or call the same number and we'll remove you. Thanks for your time, and have a great day."
+                                </p>
+                            </div>
+
+                            <p style="font-size: 0.75rem; color: #6b7280; margin-top: 1rem; line-height: 1.5;">
+                                <strong>Note:</strong> Custom messages use Twilio Polly voice. Default message uses ElevenLabs Rachel Premium voice.
+                            </p>
+
+                            <!-- Save Button for Voicemail -->
+                            <div class="modal-actions" style="margin-top: 1.5rem;">
+                                <button type="submit" class="btn-save" id="saveCrmBtn">Save Voicemail Message</button>
+                            </div>
                         </div>
+                    </form>
+
+                    <!-- Close Button -->
+                    <div class="modal-actions" style="margin-top: 1.5rem;">
+                        <button type="button" class="btn-cancel" onclick="closeSettings()">Close</button>
                     </div>
                 </div>
             </div>
