@@ -372,4 +372,186 @@ function formatSlotDisplay(date, slot) {
   return `${dayName} @ ${displayTime}`;
 }
 
+/**
+ * POST /api/integrations/hubspot/setup
+ * Admin endpoint to run migration and configure HubSpot for a client
+ * Body: { clientId, apiKey?, meetingSlug?, timezone?, runMigration? }
+ * If apiKey not provided, uses HUBSPOT_API_KEY env var
+ */
+router.post('/setup', async (req, res) => {
+  try {
+    // Simple admin check - only allow in development or with API key
+    const adminKey = req.headers['x-admin-key'] || req.headers['x-test-api-key'];
+    const isDevEnv = process.env.NODE_ENV === 'development';
+
+    if (!adminKey && !isDevEnv) {
+      return res.status(401).json({
+        success: false,
+        error: 'Admin authentication required',
+        code: 'AUTH_REQUIRED'
+      });
+    }
+
+    const { clientId, apiKey, meetingSlug, timezone, runMigration } = req.body;
+    const { sequelize } = require('../models');
+    const { QueryTypes } = require('sequelize');
+
+    // Step 1: Run migration if requested
+    if (runMigration) {
+      console.log('[HubSpot Setup] Running database migration...');
+
+      try {
+        // Check if columns already exist
+        const [columns] = await sequelize.query(
+          `SELECT column_name FROM information_schema.columns
+           WHERE table_name = 'clients' AND column_name = 'hubspot_api_key'`
+        );
+
+        if (columns.length === 0) {
+          // Add HubSpot columns
+          await sequelize.query(`
+            ALTER TABLE clients
+            ADD COLUMN IF NOT EXISTS hubspot_api_key VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS hubspot_meeting_slug VARCHAR(100),
+            ADD COLUMN IF NOT EXISTS hubspot_timezone VARCHAR(50),
+            ADD COLUMN IF NOT EXISTS booking_system VARCHAR(20),
+            ADD COLUMN IF NOT EXISTS settings JSONB
+          `);
+          console.log('[HubSpot Setup] Migration completed - columns added');
+        } else {
+          console.log('[HubSpot Setup] Columns already exist - skipping migration');
+        }
+      } catch (migrationError) {
+        console.error('[HubSpot Setup] Migration error:', migrationError);
+        return res.status(500).json({
+          success: false,
+          error: 'Migration failed: ' + migrationError.message,
+          code: 'MIGRATION_FAILED'
+        });
+      }
+    }
+
+    // Step 2: Configure client if clientId provided
+    if (clientId) {
+      const effectiveApiKey = apiKey || process.env.HUBSPOT_API_KEY;
+
+      if (!effectiveApiKey) {
+        return res.status(400).json({
+          success: false,
+          error: 'HubSpot API key required (provide in body or set HUBSPOT_API_KEY env)',
+          code: 'MISSING_API_KEY'
+        });
+      }
+
+      console.log(`[HubSpot Setup] Configuring client ${clientId}...`);
+
+      // Update client with HubSpot credentials
+      const updateFields = [];
+      const replacements = { clientId };
+
+      updateFields.push('hubspot_api_key = :apiKey');
+      replacements.apiKey = effectiveApiKey;
+
+      if (meetingSlug) {
+        updateFields.push('hubspot_meeting_slug = :meetingSlug');
+        replacements.meetingSlug = meetingSlug;
+      }
+
+      if (timezone) {
+        updateFields.push('hubspot_timezone = :timezone');
+        replacements.timezone = timezone;
+      }
+
+      // Set booking_system to hubspot
+      updateFields.push("booking_system = 'hubspot'");
+
+      await sequelize.query(
+        `UPDATE clients SET ${updateFields.join(', ')} WHERE id = :clientId`,
+        { replacements, type: QueryTypes.UPDATE }
+      );
+
+      console.log(`[HubSpot Setup] Client ${clientId} configured successfully`);
+
+      // Test the connection
+      const testResult = await hubspotBookingService.testConnection(clientId);
+
+      return res.json({
+        success: true,
+        message: `Client ${clientId} configured for HubSpot`,
+        clientId,
+        connectionTest: testResult
+      });
+    }
+
+    // Just ran migration without client config
+    res.json({
+      success: true,
+      message: 'Migration completed (no client configured)',
+      runMigration: !!runMigration
+    });
+
+  } catch (error) {
+    console.error('[HubSpot Setup] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: HUBSPOT_ERRORS.API_ERROR
+    });
+  }
+});
+
+/**
+ * GET /api/integrations/hubspot/status
+ * Get HubSpot configuration status (without exposing API key)
+ */
+router.get('/status', async (req, res) => {
+  try {
+    const clientId = req.query.clientId || req.session?.client_id;
+    const { sequelize } = require('../models');
+    const { QueryTypes } = require('sequelize');
+
+    if (!clientId) {
+      return res.json({
+        success: true,
+        configured: false,
+        message: 'No client ID provided',
+        envKeySet: !!process.env.HUBSPOT_API_KEY
+      });
+    }
+
+    const result = await sequelize.query(
+      `SELECT id, hubspot_meeting_slug, hubspot_timezone, booking_system,
+              CASE WHEN hubspot_api_key IS NOT NULL THEN true ELSE false END as has_api_key
+       FROM clients WHERE id = :clientId`,
+      { replacements: { clientId }, type: QueryTypes.SELECT }
+    );
+
+    if (result.length === 0) {
+      return res.json({
+        success: false,
+        error: 'Client not found',
+        clientId
+      });
+    }
+
+    const client = result[0];
+    res.json({
+      success: true,
+      clientId,
+      configured: client.has_api_key,
+      meetingSlug: client.hubspot_meeting_slug,
+      timezone: client.hubspot_timezone,
+      bookingSystem: client.booking_system,
+      envKeySet: !!process.env.HUBSPOT_API_KEY
+    });
+
+  } catch (error) {
+    console.error('[HubSpot Status] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
