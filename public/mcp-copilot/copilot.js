@@ -1,12 +1,14 @@
-const COPILOT_VERSION = 'v125';
+const COPILOT_VERSION = 'v126';
 console.log(`🚀 MCP Copilot ${COPILOT_VERSION} loaded`);
 
 let sessionId = null;
 let crmType = null;
 // API_BASE is defined globally in index.html
 let currentClientId = null;
-let ghlConfigured = false; // Track if GHL is configured
-let ghlCheckComplete = false; // Track if we've checked GHL status
+let crmConfigured = false; // Track if ANY CRM is configured (GHL, HubSpot, or Vagaro)
+let activeCRM = null; // Track which CRM is active ('ghl', 'hubspot', 'vagaro', or null)
+let ghlConfigured = false; // Track if GHL is configured (backwards compatibility)
+let ghlCheckComplete = false; // Track if we've checked CRM status
 let tokenBalance = 100; // Track current token balance
 let featuresDisabled = false; // Track if features are disabled due to zero balance
 let connectionStatusLocked = false; // Prevent status updates after initial check (Safari fix)
@@ -162,12 +164,12 @@ function disableAllButtons() {
 
     const lockReason = (featuresDisabled || tokenBalance <= 0)
         ? `Zero token balance (${tokenBalance} tokens)`
-        : 'GHL not configured';
-    console.log(`🔒 GHL-dependent buttons require upgrade - ${lockReason} (Business tools remain available)`);
+        : 'CRM not configured';
+    console.log(`🔒 CRM-dependent buttons require upgrade - ${lockReason} (Business tools remain available)`);
 }
 
 // Enable only token-based features (Business Collector, Outbound Caller, Prospect Manager)
-// These DO NOT require GHL, only tokens
+// These DO NOT require CRM, only tokens
 function enableTokenBasedFeatures() {
     const buttons = document.querySelectorAll('.action-btn');
     buttons.forEach(button => {
@@ -176,7 +178,7 @@ function enableTokenBasedFeatures() {
             button.classList.contains('btn-prospects') ||
             button.classList.contains('btn-call')) {
             button.disabled = false;
-            button.classList.remove('disabled', 'requires-ghl');
+            button.classList.remove('disabled', 'requires-ghl', 'requires-crm');
             button.style.opacity = '';
             button.style.cursor = '';
             button.style.textDecoration = '';
@@ -195,8 +197,8 @@ function enableTokenBasedFeatures() {
                 buttonText.textContent = buttonText.textContent.replace('🔒 ', '');
             }
         } else {
-            // Disable GHL-dependent features (CRM AI Agent, Social Media, Email Marketing)
-            button.classList.add('requires-ghl');
+            // Disable CRM-dependent features (CRM AI Agent, Social Media, Email Marketing)
+            button.classList.add('requires-crm');
             button.style.textDecoration = 'line-through';
             button.style.cursor = 'pointer';
 
@@ -206,20 +208,20 @@ function enableTokenBasedFeatures() {
                 buttonText.textContent = '🔒 ' + buttonText.textContent;
             }
 
-            // Override onclick to show GHL upgrade prompt
+            // Override onclick to show CRM upgrade prompt
             const originalOnclick = button.getAttribute('onclick');
             if (originalOnclick && !button.getAttribute('data-original-onclick')) {
                 button.setAttribute('data-original-onclick', originalOnclick);
             }
-            button.setAttribute('onclick', 'showGHLUpgradePrompt()');
+            button.setAttribute('onclick', 'showCRMUpgradePrompt()');
         }
     });
 
-    // Keep chat disabled (requires GHL for AI responses)
+    // Keep chat disabled (requires CRM for AI responses)
     const messageInput = document.getElementById('messageInput');
     if (messageInput) {
         messageInput.disabled = true;
-        messageInput.placeholder = 'Configure GoHighLevel to use AI chat features';
+        messageInput.placeholder = 'Configure a CRM (GHL, HubSpot, or Vagaro) to use AI chat features';
     }
 
     const sendButton = document.querySelector('button[onclick="sendMessage()"]');
@@ -230,7 +232,7 @@ function enableTokenBasedFeatures() {
     }
 
     console.log('✅ Token-based features enabled (Business Collector, Outbound Caller, Prospect Manager)');
-    console.log('🔒 GHL-dependent features locked (AI Chat, Social Media, Email Marketing)');
+    console.log('🔒 CRM-dependent features locked (AI Chat, Social Media, Email Marketing)');
 }
 
 // Enable all feature buttons
@@ -238,7 +240,7 @@ function enableAllButtons() {
     const buttons = document.querySelectorAll('.action-btn');
     buttons.forEach(button => {
         button.disabled = false;
-        button.classList.remove('disabled', 'requires-ghl');
+        button.classList.remove('disabled', 'requires-ghl', 'requires-crm');
         button.style.opacity = '';
         button.style.cursor = '';
         button.style.textDecoration = '';
@@ -272,7 +274,7 @@ function enableAllButtons() {
         sendButton.style.cursor = '';
     }
 
-    console.log('✅ All buttons enabled - GHL configured');
+    console.log('✅ All buttons enabled - CRM configured');
 }
 
 // Check token balance and disable buttons if zero
@@ -433,34 +435,40 @@ function closeTokenPurchasePopup() {
     }
 }
 
-// Check GHL configuration status
+// Check CRM configuration status (GHL, HubSpot, or Vagaro)
 async function checkGHLConfiguration() {
-    console.log(`🔍 checkGHLConfiguration() called for client: ${currentClientId}`);
+    console.log(`🔍 checkCRMConfiguration() called for client: ${currentClientId}`);
 
     if (!currentClientId) {
-        console.log('⚠️ No client ID - cannot check GHL status');
+        console.log('⚠️ No client ID - cannot check CRM status');
         disableAllButtons();
         return false;
     }
 
     try {
         const apiUrl = `${window.location.origin}/api/copilot/check-access/${currentClientId}`;
-        console.log(`📡 Calling GHL check API: ${apiUrl}`);
+        console.log(`📡 Calling CRM check API: ${apiUrl}`);
 
         const response = await fetch(apiUrl);
-        console.log(`📡 GHL check response status: ${response.status} ${response.statusText}`);
+        console.log(`📡 CRM check response status: ${response.status} ${response.statusText}`);
 
         if (!response.ok) {
             throw new Error(`API returned ${response.status}: ${response.statusText}`);
         }
 
         const data = await response.json();
-        console.log(`📦 GHL check response:`, data);
+        console.log(`📦 CRM check response:`, data);
 
-        ghlConfigured = data.ghl_configured || false;
+        // Multi-CRM support: check for any configured CRM
+        crmConfigured = data.crm_configured || data.ghl_configured || false;
+        activeCRM = data.active_crm || null;
+        ghlConfigured = data.ghl_configured || false; // Backwards compatibility
         ghlCheckComplete = true;
 
-        console.log(`🔍 GHL Configuration Status:`, ghlConfigured ? '✅ Configured' : '❌ Not Configured');
+        console.log(`🔍 CRM Configuration Status:`, crmConfigured ? `✅ Configured (${activeCRM})` : '❌ Not Configured');
+        if (data.integrations) {
+            console.log(`📊 Available integrations:`, data.integrations);
+        }
 
         // Also check token balance
         console.log(`💰 Checking token balance...`);
@@ -468,21 +476,23 @@ async function checkGHLConfiguration() {
         console.log(`💰 Token check result: ${hasTokens ? '✅ Has tokens' : '❌ No tokens'}`);
 
         // Enable or disable buttons based on configuration
-        // Business Collector, Outbound Caller, and Prospect Manager only need TOKENS (no GHL required)
-        // CRM AI Agent, Social Media, Email Marketing need BOTH GHL AND tokens
-        console.log(`🎯 Final decision: ghlConfigured=${ghlConfigured}, hasTokens=${hasTokens}`);
+        // Business Collector, Outbound Caller, and Prospect Manager only need TOKENS (no CRM required)
+        // CRM AI Agent, Social Media, Email Marketing need BOTH CRM AND tokens
+        console.log(`🎯 Final decision: crmConfigured=${crmConfigured}, activeCRM=${activeCRM}, hasTokens=${hasTokens}`);
 
         if (hasTokens) {
             // Has tokens - enable token-based features (Business Collector, Outbound, Prospects)
-            // GHL-dependent features will be controlled separately
-            if (ghlConfigured) {
-                console.log('✅ ENABLING all buttons (GHL + Tokens)');
+            // CRM-dependent features will be controlled separately
+            if (crmConfigured) {
+                console.log(`✅ ENABLING all buttons (${activeCRM} + Tokens)`);
                 enableAllButtons();
-                updateConnectionStatus('Connected to GoHighLevel', 'success');
+                // Show which CRM is connected
+                const crmDisplayName = getCRMDisplayName(activeCRM);
+                updateConnectionStatus(`Connected to ${crmDisplayName}`, 'success');
             } else {
-                console.log('✅ ENABLING token-based features only (No GHL)');
+                console.log('✅ ENABLING token-based features only (No CRM)');
                 enableTokenBasedFeatures();
-                updateConnectionStatus('Business tools ready (GHL not configured)', 'warning');
+                updateConnectionStatus('Business tools ready (CRM not configured)', 'warning');
             }
         } else {
             console.log(`❌ DISABLING all buttons (No tokens: ${tokenBalance})`);
@@ -493,7 +503,7 @@ async function checkGHLConfiguration() {
 
         return hasTokens; // Return true if user can use token-based features
     } catch (error) {
-        console.error('❌ Error checking GHL configuration:', error);
+        console.error('❌ Error checking CRM configuration:', error);
         console.error('❌ Error details:', {
             message: error.message,
             stack: error.stack
@@ -505,10 +515,24 @@ async function checkGHLConfiguration() {
     }
 }
 
-// Check if feature requires GHL and tokens
+// Get display name for CRM type
+function getCRMDisplayName(crm) {
+    switch (crm) {
+        case 'ghl':
+            return 'GoHighLevel';
+        case 'hubspot':
+            return 'HubSpot';
+        case 'vagaro':
+            return 'Vagaro';
+        default:
+            return crm || 'CRM';
+    }
+}
+
+// Check if feature requires CRM and tokens
 function requireGHL(featureName) {
     if (!ghlCheckComplete) {
-        console.log('⏳ GHL check not complete yet');
+        console.log('⏳ CRM check not complete yet');
         return false;
     }
 
@@ -519,13 +543,13 @@ function requireGHL(featureName) {
         return false;
     }
 
-    // Then check GHL configuration
-    if (!ghlConfigured) {
-        console.log(`⚠️ ${featureName} requires GHL configuration`);
+    // Then check CRM configuration (any of GHL, HubSpot, or Vagaro)
+    if (!crmConfigured) {
+        console.log(`⚠️ ${featureName} requires CRM configuration (GHL, HubSpot, or Vagaro)`);
         if (window.ghlUpgrade && window.ghlUpgrade.show) {
             window.ghlUpgrade.show();
         } else {
-            alert('You must configure GoHighLevel in Settings to use this feature.');
+            alert('You must configure a CRM (GoHighLevel, HubSpot, or Vagaro) in Settings to use this feature.');
         }
         return false;
     }
@@ -533,18 +557,28 @@ function requireGHL(featureName) {
     return true;
 }
 
-// Show GHL upgrade prompt when locked features are clicked
+// Alias for backwards compatibility
+function requireCRM(featureName) {
+    return requireGHL(featureName);
+}
+
+// Show CRM upgrade prompt when locked features are clicked
 function showGHLUpgradePrompt() {
-    console.log('🔒 User clicked GHL-required feature - showing upgrade prompt');
+    showCRMUpgradePrompt();
+}
+
+// Show CRM integration prompt (supports GHL, HubSpot, Vagaro)
+function showCRMUpgradePrompt() {
+    console.log('🔒 User clicked CRM-required feature - showing integration prompt');
     if (window.ghlUpgrade && window.ghlUpgrade.show) {
         window.ghlUpgrade.show();
     } else {
         // Fallback if upgrade modal not loaded
-        const ghlSignupUrl = currentClientId
-            ? `https://aiagent.ringlypro.com/ghl-signup?client_id=${currentClientId}`
-            : 'https://aiagent.ringlypro.com/ghl-signup';
-        if (confirm('This feature requires GoHighLevel integration.\n\nWould you like to upgrade now?')) {
-            window.open(ghlSignupUrl, '_blank');
+        const settingsUrl = currentClientId
+            ? `${window.location.origin}/settings?client_id=${currentClientId}`
+            : `${window.location.origin}/settings`;
+        if (confirm('This feature requires a CRM integration (GoHighLevel, HubSpot, or Vagaro).\n\nWould you like to configure your CRM in Settings?')) {
+            window.open(settingsUrl, '_blank');
         }
     }
 }
@@ -720,10 +754,13 @@ async function autoLoadCredentials(clientId) {
                 console.log('⚠️ GoHighLevel not configured:', data.credentials.gohighlevel);
             }
 
-            // If no CRM configured
+            // If no GHL CRM configured (HubSpot/Vagaro may still work)
             // DON'T update status - checkGHLConfiguration() already handled this
             // updateConnectionStatus('Not configured', 'error');
-            addMessage('system', '⚠️ No GoHighLevel credentials found. Please configure in Settings.');
+            // Only show message if no CRM is configured at all
+            if (!crmConfigured) {
+                addMessage('system', '⚠️ No CRM credentials found. Please configure GoHighLevel, HubSpot, or Vagaro in Settings.');
+            }
         } else {
             console.log('❌ Invalid response:', data);
         }
@@ -784,13 +821,13 @@ async function sendMessage() {
 
     if (!message) return;
 
-    // Check GHL requirement for CRM AI Agent chat
+    // Check CRM requirement for CRM AI Agent chat (GHL, HubSpot, or Vagaro)
     if (!requireGHL('CRM AI Agent')) {
         return;
     }
 
     if (!sessionId) {
-        alert('Please connect to a CRM first');
+        alert('Please connect to a CRM (GoHighLevel, HubSpot, or Vagaro) first');
         return;
     }
 
