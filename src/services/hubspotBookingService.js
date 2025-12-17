@@ -505,17 +505,30 @@ class HubSpotBookingService {
       let localAppointment = null;
       try {
         const confirmationCode = `HS${Date.now().toString().slice(-6).toUpperCase()}`;
+
+        // First, add HubSpot columns if they don't exist (idempotent migration)
+        try {
+          await sequelize.query(`
+            ALTER TABLE appointments
+            ADD COLUMN IF NOT EXISTS hubspot_meeting_id VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS hubspot_contact_id VARCHAR(255)
+          `);
+        } catch (alterError) {
+          // Ignore if columns already exist
+          logger.debug('[HubSpot] Columns may already exist:', alterError.message);
+        }
+
         const result = await sequelize.query(
           `INSERT INTO appointments (
             client_id, customer_name, customer_phone, customer_email,
             appointment_date, appointment_time, duration, purpose,
-            status, source, confirmation_code, reminder_sent, confirmation_sent,
-            notes, "hubspotMeetingId", "hubspotContactId",
+            status, source, confirmation_code,
+            notes, hubspot_meeting_id, hubspot_contact_id,
             created_at, updated_at
           ) VALUES (
             :clientId, :customerName, :customerPhone, :customerEmail,
             :appointmentDate, :appointmentTime, :duration, :purpose,
-            :status, :source, :confirmationCode, :reminderSent, :confirmationSent,
+            :status, :source, :confirmationCode,
             :notes, :hubspotMeetingId, :hubspotContactId,
             NOW(), NOW()
           ) RETURNING *`,
@@ -532,8 +545,6 @@ class HubSpotBookingService {
               status: 'confirmed',
               source: 'whatsapp_hubspot',
               confirmationCode: confirmationCode,
-              reminderSent: false,
-              confirmationSent: false,
               notes: notes || `Booked via WhatsApp - HubSpot\nCustomer: ${customerName}\nEmail: ${customerEmail}`,
               hubspotMeetingId: appointmentResult.meetingId || null,
               hubspotContactId: contactResult.contact?.id || null
@@ -545,7 +556,8 @@ class HubSpotBookingService {
         logger.info(`[HubSpot] Local appointment saved: ${localAppointment?.id}`);
       } catch (localError) {
         // Log but don't fail - HubSpot booking succeeded
-        logger.warn('[HubSpot] Failed to save local appointment:', localError.message);
+        logger.error('[HubSpot] Failed to save local appointment:', localError.message);
+        logger.error('[HubSpot] Error details:', localError);
       }
 
       return {

@@ -89,7 +89,7 @@ const Appointment = sequelize.define('Appointment', {
     type: DataTypes.STRING,
     defaultValue: 'voice_booking',
     validate: {
-      isIn: [['voice_booking', 'online', 'manual', 'walk-in', 'ghl_sync', 'whatsapp_ghl', 'whatsapp_vagaro', 'whatsapp']]
+      isIn: [['voice_booking', 'online', 'manual', 'walk-in', 'ghl_sync', 'whatsapp_ghl', 'whatsapp_vagaro', 'whatsapp', 'whatsapp_hubspot']]
     }
   },
   ghlAppointmentId: {
@@ -115,6 +115,19 @@ const Appointment = sequelize.define('Appointment', {
     allowNull: true,
     field: 'ghl_synced_at',
     comment: 'Last time this appointment was synced from GHL'
+  },
+  // HubSpot integration fields
+  hubspotMeetingId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'hubspot_meeting_id',
+    comment: 'HubSpot meeting/engagement ID for synced appointments'
+  },
+  hubspotContactId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'hubspot_contact_id',
+    comment: 'HubSpot contact ID associated with this appointment'
   }
 }, {
   tableName: 'appointments',
