@@ -27,8 +27,11 @@
     "normalize-phones": "node scripts/normalize-all-phone-numbers.js",
     "drop-old-constraint": "node scripts/drop-old-unique-time-slot-constraint.js",
     "migrate:crm-integration": "node scripts/run-crm-integration-migration.js",
+    "migrate:hubspot": "node scripts/run-hubspot-integration-migration.js",
     "migrate:sendgrid": "node scripts/migrate-sendgrid-columns.js",
-    "migrate:email-events": "node scripts/create-email-events-table.js"
+    "migrate:email-events": "node scripts/create-email-events-table.js",
+    "test:e2e": "node scripts/run-e2e-test.js",
+    "test:e2e:healing": "node scripts/run-e2e-test.js --healing"
   },
   "keywords": [
     "ringlypro",

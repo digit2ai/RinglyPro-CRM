@@ -11,6 +11,7 @@ const axios = require('axios');
 const logger = require('../utils/logger');
 const whatsappService = require('./whatsappService');
 const ghlBookingService = require('./ghlBookingService');
+const hubspotBookingService = require('./hubspotBookingService'); // HubSpot booking (isolated from GHL)
 const {
   getLeadResponsePrompt,
   getIntentClassificationPrompt,
@@ -767,6 +768,54 @@ async function handleAppointmentIntent(message, context, clientConfig) {
       }
     }
 
+    // For HubSpot booking - try to fetch available slots (ISOLATED from GHL)
+    if (booking?.system === 'hubspot' && clientId) {
+      try {
+        logger.info(`[LEAD-RESPONSE] STEP 4: Fetching HubSpot slots for client ${clientId}`);
+        const today = new Date();
+        const slots = [];
+
+        for (let i = 1; i <= 14 && slots.length < 3; i++) {
+          const checkDate = new Date(today);
+          checkDate.setDate(today.getDate() + i);
+
+          const dateStr = checkDate.toISOString().split('T')[0];
+          const dayName = formatDate(checkDate);
+
+          const hubspotSlots = await hubspotBookingService.getAvailableSlots(clientId, dateStr);
+          logger.info(`[LEAD-RESPONSE] HubSpot slots for ${dateStr}: ${hubspotSlots.success ? hubspotSlots.slots?.length : 'error'}`);
+
+          if (hubspotSlots.success && hubspotSlots.slots?.length > 0) {
+            const firstSlot = hubspotSlots.slots[0];
+            const time24 = firstSlot.time24 || firstSlot.startTime?.slice(11, 16) || '10:00';
+            const [hours, minutes] = time24.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const hour12 = hour % 12 || 12;
+            const displayTime = `${hour12}:${minutes} ${ampm}`;
+
+            slots.push({
+              date: dateStr,
+              time: time24,
+              display: `${dayName} @ ${displayTime}`
+            });
+            logger.info(`[LEAD-RESPONSE] Added HubSpot slot: ${dateStr} @ ${displayTime}`);
+          }
+        }
+
+        if (slots.length > 0) {
+          const slotOptions = slots.map((s, i) => `${i + 1}️⃣ ${s.display}`).join('\n');
+          return language === 'es'
+            ? `¡Excelente ${extractedData.name}! 📅\n\nAquí tienes nuestros próximos horarios disponibles:\n\n${slotOptions}\n\nResponde con el número (1, 2, o 3) para confirmar tu cita.`
+            : `Excellent ${extractedData.name}! 📅\n\nHere are our next available times:\n\n${slotOptions}\n\nReply with the number (1, 2, or 3) to confirm your appointment.`;
+        } else {
+          logger.warn('[LEAD-RESPONSE] No HubSpot slots found in next 14 days');
+        }
+      } catch (hubspotError) {
+        logger.error('[LEAD-RESPONSE] Error fetching HubSpot availability:', hubspotError.message);
+      }
+    }
+
     // Fallback time slots
     const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
     const dayAfter = new Date(); dayAfter.setDate(dayAfter.getDate() + 2);
@@ -923,12 +972,81 @@ async function handleAppointmentIntent(message, context, clientConfig) {
       } catch (ghlError) {
         logger.error('[LEAD-RESPONSE] GHL booking exception:', ghlError.message, ghlError.stack);
       }
-    } else {
-      logger.warn(`[LEAD-RESPONSE] STEP 5 skipping GHL booking: booking.system=${booking?.system}, clientId=${clientId}`);
     }
 
-    // Fallback confirmation (manual process)
-    logger.info('[LEAD-RESPONSE] STEP 5 using FALLBACK confirmation (GHL booking did not succeed)');
+    // Try to book via HubSpot (ISOLATED from GHL)
+    if (booking?.system === 'hubspot' && clientId) {
+      try {
+        logger.info(`[LEAD-RESPONSE] STEP 5 calling HubSpot bookFromWhatsApp with: name=${extractedData.name}, phone=${extractedData.phone || customerPhone}, email=${extractedData.email}, date=${dateStr}, time=${selectedTime}`);
+        const hubspotResult = await hubspotBookingService.bookFromWhatsApp(clientId, {
+          customerName: extractedData.name,
+          customerPhone: extractedData.phone || customerPhone,
+          customerEmail: extractedData.email,
+          date: dateStr,
+          time: selectedTime,
+          service: 'Appointment',
+          notes: `Booked via WhatsApp\nCustomer: ${extractedData.name}\nPhone: ${extractedData.phone}\nEmail: ${extractedData.email}`
+        });
+
+        logger.info(`[LEAD-RESPONSE] STEP 5 HubSpot result: success=${hubspotResult.success}, error=${hubspotResult.error || 'none'}`);
+        if (hubspotResult.success) {
+          let successMsg = language === 'es'
+            ? `✅ ¡Tu cita ha sido confirmada!\n\n📅 ${formattedDate}\n🕐 ${formattedTime}\n👤 ${extractedData.name}\n📱 ${extractedData.phone}\n📧 ${extractedData.email}`
+            : `✅ Your appointment has been confirmed!\n\n📅 ${formattedDate}\n🕐 ${formattedTime}\n👤 ${extractedData.name}\n📱 ${extractedData.phone}\n📧 ${extractedData.email}`;
+
+          // Add meeting link if available from HubSpot
+          if (hubspotResult.meetingLink) {
+            successMsg += language === 'es'
+              ? `\n\n🔗 Enlace de la reunión: ${hubspotResult.meetingLink}`
+              : `\n\n🔗 Meeting link: ${hubspotResult.meetingLink}`;
+          }
+
+          let qrCodeUrl = null;
+
+          // Add Zelle deposit information
+          if (zelle?.enabled && zelle?.email) {
+            const depositAmount = (deposit?.type !== 'none' && deposit?.value)
+              ? (deposit.type === 'fixed' ? `$${deposit.value}` : `${deposit.value}%`)
+              : (zelle.defaultAmount ? `$${zelle.defaultAmount}` : '');
+
+            successMsg += language === 'es'
+              ? `\n\n💰 Para asegurar tu cita, envía un depósito${depositAmount ? ` de ${depositAmount}` : ''} por Zelle a:\n📧 ${zelle.email}`
+              : `\n\n💰 To secure your appointment, please send a deposit${depositAmount ? ` of ${depositAmount}` : ''} via Zelle to:\n📧 ${zelle.email}`;
+
+            if (isValidQrCodeUrl(zelle.qrCodeUrl)) {
+              qrCodeUrl = zelle.qrCodeUrl;
+              successMsg += language === 'es'
+                ? '\n\n📲 Te envío el código QR para facilitar el pago.'
+                : '\n\n📲 Here is our QR code for easy payment.';
+            }
+          }
+
+          successMsg += language === 'es'
+            ? '\n\n¡Gracias! Te esperamos. 🙌'
+            : '\n\nThank you! We look forward to seeing you. 🙌';
+
+          // Return structured response with QR code URL if available
+          if (qrCodeUrl) {
+            const accessibleUrl = await getAccessibleQrCodeUrl(qrCodeUrl, clientId);
+            if (accessibleUrl) {
+              logger.info(`[LEAD-RESPONSE] Using accessible QR URL: ${accessibleUrl}`);
+              return { text: successMsg, mediaUrl: accessibleUrl };
+            }
+          }
+          return successMsg;
+        }
+      } catch (hubspotError) {
+        logger.error('[LEAD-RESPONSE] HubSpot booking exception:', hubspotError.message, hubspotError.stack);
+      }
+    }
+
+    // Log if no booking system matched
+    if (booking?.system !== 'ghl' && booking?.system !== 'hubspot') {
+      logger.warn(`[LEAD-RESPONSE] STEP 5 no booking system matched: booking.system=${booking?.system}, clientId=${clientId}`);
+    }
+
+    // Fallback confirmation (manual process - no booking system succeeded)
+    logger.info('[LEAD-RESPONSE] STEP 5 using FALLBACK confirmation (no booking system succeeded)');
     let fallbackMsg = language === 'es'
       ? `✅ ¡Excelente elección!\n\n📅 ${formattedDate} @ ${formattedTime}\n👤 ${extractedData.name}\n📱 ${extractedData.phone}\n📧 ${extractedData.email}`
       : `✅ Excellent choice!\n\n📅 ${formattedDate} @ ${formattedTime}\n👤 ${extractedData.name}\n📱 ${extractedData.phone}\n📧 ${extractedData.email}`;

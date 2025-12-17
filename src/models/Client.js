@@ -97,7 +97,7 @@ module.exports = (sequelize) => {
             defaultValue: null,
             comment: 'Per-day calendar configuration: {monday: {enabled: true, start: "09:00", end: "17:00"}, ...}'
         },
-        // NOTE: Fields exist in DB but temporarily disabled in model to prevent breaking queries
+        // NOTE: GHL fields exist in DB but temporarily disabled in model to prevent breaking queries
         // The API endpoints handle these fields directly without using the model
         // ghl_api_key: {
         //     type: DataTypes.STRING(255),
@@ -109,6 +109,35 @@ module.exports = (sequelize) => {
         //     allowNull: true,
         //     comment: 'GoHighLevel Location ID for MCP integration (20 characters)'
         // },
+
+        // HubSpot Integration Fields (separate from GHL)
+        hubspot_api_key: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+            comment: 'HubSpot Private App Access Token'
+        },
+        hubspot_meeting_slug: {
+            type: DataTypes.STRING(100),
+            allowNull: true,
+            comment: 'HubSpot default meeting link slug (e.g., "john-smith")'
+        },
+        hubspot_timezone: {
+            type: DataTypes.STRING(50),
+            allowNull: true,
+            comment: 'HubSpot timezone override (falls back to client timezone)'
+        },
+        booking_system: {
+            type: DataTypes.STRING(20),
+            allowNull: true,
+            defaultValue: null,
+            comment: 'Active booking system: "ghl", "hubspot", or null (use first available)'
+        },
+        settings: {
+            type: DataTypes.JSONB,
+            allowNull: true,
+            defaultValue: null,
+            comment: 'Extended settings JSONB: { integration: { hubspot: {...}, ghl: {...} } }'
+        },
         sms_notifications: {
             type: DataTypes.BOOLEAN,
             defaultValue: true

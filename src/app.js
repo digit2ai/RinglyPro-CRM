@@ -149,8 +149,12 @@ console.log('✅ Photo Upload routes loaded successfully');
 const pixlyproRoutes = require('./routes/pixlypro'); // PixlyPro AI-assisted photo enhancement
 const vagaroRoutes = require('./routes/vagaro'); // Vagaro salon/spa scheduling integration
 const whatsappRoutes = require('./routes/whatsapp'); // WhatsApp Business integration
+const hubspotBookingRoutes = require('./routes/hubspot-booking'); // HubSpot booking integration (isolated)
+const e2eTestRoutes = require('./routes/e2e-test'); // E2E testing with self-healing
 console.log('✅ PixlyPro routes loaded successfully');
 console.log('✅ WhatsApp routes loaded successfully');
+console.log('✅ HubSpot Booking routes loaded successfully');
+console.log('✅ E2E Test routes loaded successfully');
 
 // Import Storefront routes
 const storefrontRoutes = require('./routes/storefront'); // Online storefront & menu system
@@ -194,6 +198,12 @@ console.log('✅ Vagaro routes mounted at /api/vagaro');
 
 app.use('/api/whatsapp', whatsappRoutes); // WhatsApp Business bilingual AI assistant
 console.log('✅ WhatsApp routes mounted at /api/whatsapp');
+
+app.use('/api/integrations/hubspot', hubspotBookingRoutes); // HubSpot booking integration (isolated from GHL)
+console.log('✅ HubSpot Booking routes mounted at /api/integrations/hubspot');
+
+app.use('/api/e2e-test', e2eTestRoutes); // E2E testing with self-healing (admin only)
+console.log('🧪 E2E Test routes mounted at /api/e2e-test');
 
 // Mount Photo Upload routes
 app.use('/api/photo-uploads', photoUploadRoutes); // Photo upload handling for all services
