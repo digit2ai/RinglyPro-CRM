@@ -558,6 +558,52 @@ router.get('/status', async (req, res) => {
 });
 
 /**
+ * GET /api/integrations/hubspot/debug/appointments
+ * Debug endpoint to check recent HubSpot appointments
+ */
+router.get('/debug/appointments', async (req, res) => {
+  try {
+    const adminKey = req.headers['x-admin-key'] || req.headers['x-test-api-key'];
+    if (!adminKey && process.env.NODE_ENV !== 'development') {
+      return res.status(401).json({ success: false, error: 'Admin key required' });
+    }
+
+    const clientId = req.query.clientId;
+    const { sequelize } = require('../models');
+    const { QueryTypes } = require('sequelize');
+
+    let whereClause = "source = 'whatsapp_hubspot'";
+    const replacements = {};
+
+    if (clientId) {
+      whereClause += " AND client_id = :clientId";
+      replacements.clientId = parseInt(clientId, 10);
+    }
+
+    const appointments = await sequelize.query(
+      `SELECT id, client_id, customer_name, customer_email, customer_phone,
+              appointment_date, appointment_time, status, source,
+              confirmation_code, hubspot_meeting_id, hubspot_contact_id,
+              created_at
+       FROM appointments
+       WHERE ${whereClause}
+       ORDER BY created_at DESC
+       LIMIT 20`,
+      { replacements, type: QueryTypes.SELECT }
+    );
+
+    res.json({
+      success: true,
+      count: appointments.length,
+      appointments
+    });
+  } catch (error) {
+    console.error('[HubSpot Debug] Appointments error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
  * GET /api/integrations/hubspot/debug/clients
  * Debug endpoint to list all clients and their HubSpot status
  */
