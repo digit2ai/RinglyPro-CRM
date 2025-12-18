@@ -199,16 +199,16 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
 
-        // Generate datetime prompt with Rachel's premium voice
-        const datetimePrompt = `Perfect ${prospectName || 'there'}. <break time="0.5s"/> Now tell me what date and time you prefer for your appointment. <break time="0.5s"/> For example you can say tomorrow at 10 AM or Friday at 2 PM`;
-        console.log(`🎙️ Generating Rachel premium voice for datetime collection`);
+        // NEW FLOW: Ask for date only, then we'll offer available time slots
+        const datePrompt = `Perfect ${prospectName || 'there'}. <break time="0.5s"/> What date would you like to schedule your appointment? <break time="0.5s"/> For example, you can say tomorrow, or Friday, or December 20th.`;
+        console.log(`🎙️ Generating Rachel premium voice for date collection`);
 
-        const audioUrl = await rachelService.generateRachelAudio(datetimePrompt);
+        const audioUrl = await rachelService.generateRachelAudio(datePrompt);
 
         if (audioUrl) {
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-datetime" method="POST" language="en-US">
+    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-date" method="POST" language="en-US">
         <Play>${audioUrl}</Play>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
@@ -221,8 +221,8 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
             // Fallback to Polly
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-datetime" method="POST" language="en-US">
-        <Say voice="Polly.Joanna">Perfect ${escapedName}. Now tell me what date and time you prefer for your appointment. For example you can say tomorrow at 10 AM or Friday at 2 PM</Say>
+    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-date" method="POST" language="en-US">
+        <Say voice="Polly.Joanna">Perfect ${escapedName}. What date would you like to schedule your appointment? For example, you can say tomorrow, or Friday, or December 20th.</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
     <Redirect>/voice/rachel/collect-phone</Redirect>
@@ -249,7 +249,396 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
 });
 
 /**
+ * NEW FLOW: Collect date only (not time)
+ * After getting date, we check availability and offer time slots
+ */
+router.post('/voice/rachel/collect-date', async (req, res) => {
+    try {
+        const dateInput = req.body.SpeechResult || '';
+        const clientId = req.session.client_id;
+        const prospectName = req.session.prospect_name;
+        const businessName = req.session.business_name || 'this business';
+
+        console.log(`📅 [SLOT-FLOW] Date input for client ${clientId}: "${dateInput}"`);
+
+        // Parse the date from speech
+        const moment = require('moment-timezone');
+        const now = moment().tz('America/New_York');
+        let appointmentDate;
+
+        const lowerInput = dateInput.toLowerCase();
+
+        if (lowerInput.includes('tomorrow')) {
+            appointmentDate = now.clone().add(1, 'day').format('YYYY-MM-DD');
+        } else if (lowerInput.includes('today')) {
+            appointmentDate = now.format('YYYY-MM-DD');
+        } else if (lowerInput.includes('monday')) {
+            appointmentDate = now.clone().day(1 + (now.day() >= 1 ? 7 : 0)).format('YYYY-MM-DD');
+        } else if (lowerInput.includes('tuesday')) {
+            appointmentDate = now.clone().day(2 + (now.day() >= 2 ? 7 : 0)).format('YYYY-MM-DD');
+        } else if (lowerInput.includes('wednesday')) {
+            appointmentDate = now.clone().day(3 + (now.day() >= 3 ? 7 : 0)).format('YYYY-MM-DD');
+        } else if (lowerInput.includes('thursday')) {
+            appointmentDate = now.clone().day(4 + (now.day() >= 4 ? 7 : 0)).format('YYYY-MM-DD');
+        } else if (lowerInput.includes('friday')) {
+            appointmentDate = now.clone().day(5 + (now.day() >= 5 ? 7 : 0)).format('YYYY-MM-DD');
+        } else if (lowerInput.includes('saturday')) {
+            appointmentDate = now.clone().day(6 + (now.day() >= 6 ? 7 : 0)).format('YYYY-MM-DD');
+        } else if (lowerInput.includes('sunday')) {
+            appointmentDate = now.clone().day(0 + (now.day() >= 0 ? 7 : 0)).format('YYYY-MM-DD');
+        } else {
+            // Try to parse as a date (e.g., "December 20th", "January 5")
+            const parsedDate = moment(dateInput, ['MMMM Do', 'MMMM D', 'MMM Do', 'MMM D', 'M/D', 'MM/DD']);
+            if (parsedDate.isValid()) {
+                // Set to current year, or next year if date has passed
+                parsedDate.year(now.year());
+                if (parsedDate.isBefore(now, 'day')) {
+                    parsedDate.add(1, 'year');
+                }
+                appointmentDate = parsedDate.format('YYYY-MM-DD');
+            } else {
+                // Default to tomorrow if we can't parse
+                appointmentDate = now.clone().add(1, 'day').format('YYYY-MM-DD');
+                console.log(`⚠️ [SLOT-FLOW] Could not parse date "${dateInput}", defaulting to tomorrow`);
+            }
+        }
+
+        console.log(`📆 [SLOT-FLOW] Parsed date: ${appointmentDate}`);
+
+        // Store date in session
+        req.session.appointment_date = appointmentDate;
+        req.session.slot_offset = 0;  // Start showing from first available slot
+
+        // Save session
+        await new Promise((resolve, reject) => {
+            req.session.save((err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+
+        // Redirect to offer-slots which will check availability and offer times
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">Let me check our available times for ${dateInput}.</Say>
+    <Redirect>/voice/rachel/offer-slots</Redirect>
+</Response>`;
+
+        res.set('Content-Type', 'text/xml; charset=utf-8');
+        res.send(twiml);
+
+    } catch (error) {
+        console.error('[SLOT-FLOW] Error collecting date:', error);
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">I'm sorry, I had trouble understanding the date. Let me try again.</Say>
+    <Redirect>/voice/rachel/collect-phone</Redirect>
+</Response>`;
+        res.type('text/xml');
+        res.send(twiml);
+    }
+});
+
+/**
+ * NEW FLOW: Offer available time slots from CRM
+ * Checks availability and offers 3 options via DTMF
+ */
+router.post('/voice/rachel/offer-slots', async (req, res) => {
+    try {
+        const clientId = req.session.client_id;
+        const prospectName = req.session.prospect_name;
+        const appointmentDate = req.session.appointment_date;
+        const slotOffset = req.session.slot_offset || 0;
+        const businessName = req.session.business_name || 'this business';
+
+        console.log(`🔍 [SLOT-FLOW] Checking availability for client ${clientId}, date ${appointmentDate}, offset ${slotOffset}`);
+
+        // Get available slots from unified booking service (same as WhatsApp)
+        const unifiedBookingService = require('../services/unifiedBookingService');
+        const availabilityResult = await unifiedBookingService.getAvailableSlots(clientId, appointmentDate);
+
+        console.log(`📋 [SLOT-FLOW] Availability: source=${availabilityResult.source}, total=${availabilityResult.slots?.length || 0}`);
+
+        const allSlots = availabilityResult.slots || [];
+
+        // Get 3 slots starting from offset
+        const slotsToOffer = allSlots.slice(slotOffset, slotOffset + 3);
+
+        console.log(`📋 [SLOT-FLOW] Offering slots ${slotOffset + 1}-${slotOffset + slotsToOffer.length} of ${allSlots.length}`);
+
+        // Format time for speech
+        const formatTimeForSpeech = (timeStr) => {
+            const [hours, minutes] = timeStr.split(':');
+            let hour = parseInt(hours);
+            const isPM = hour >= 12;
+            if (hour > 12) hour -= 12;
+            if (hour === 0) hour = 12;
+            const period = isPM ? 'PM' : 'AM';
+            return minutes === '00' ? `${hour} ${period}` : `${hour}:${minutes} ${period}`;
+        };
+
+        const escapedName = (prospectName || 'there')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+
+        // Store offered slots in session for selection
+        const offeredSlots = slotsToOffer.map(slot => slot.time24 || slot.startTime?.substring(11, 16));
+        req.session.offered_slots = offeredSlots;
+        req.session.has_more_slots = (slotOffset + 3) < allSlots.length;
+
+        await new Promise((resolve, reject) => {
+            req.session.save((err) => err ? reject(err) : resolve());
+        });
+
+        let twiml;
+
+        if (slotsToOffer.length === 0) {
+            // No slots available for this date
+            if (slotOffset === 0) {
+                // First try - no availability at all for this date
+                console.log(`❌ [SLOT-FLOW] No availability for ${appointmentDate}`);
+                twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/rachel/collect-date" method="POST" language="en-US">
+        <Say voice="Polly.Joanna">I'm sorry ${escapedName}, we don't have any available appointments for that date. Would you like to try a different date? Please tell me another date you'd prefer.</Say>
+    </Gather>
+    <Say voice="Polly.Joanna">I didn't hear a response. Let me transfer you to a specialist who can help.</Say>
+    <Redirect>/voice/rachel/transfer-specialist</Redirect>
+</Response>`;
+            } else {
+                // We've shown all slots and user rejected them all
+                console.log(`❌ [SLOT-FLOW] No more slots to offer`);
+                twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">I'm sorry ${escapedName}, those were all our available times for that day. Let me transfer you to a specialist who can check other options for you.</Say>
+    <Redirect>/voice/rachel/transfer-specialist</Redirect>
+</Response>`;
+            }
+        } else {
+            // Build the slot options speech
+            const slot1 = formatTimeForSpeech(offeredSlots[0]);
+            const slot2 = offeredSlots[1] ? formatTimeForSpeech(offeredSlots[1]) : null;
+            const slot3 = offeredSlots[2] ? formatTimeForSpeech(offeredSlots[2]) : null;
+
+            let optionsSpeech = `For ${slot1}, press 1. `;
+            if (slot2) optionsSpeech += `For ${slot2}, press 2. `;
+            if (slot3) optionsSpeech += `For ${slot3}, press 3. `;
+
+            // Add option to hear more slots or transfer
+            if (req.session.has_more_slots) {
+                optionsSpeech += `To hear more times, press 4. `;
+            }
+            optionsSpeech += `Or press 0 to speak with a specialist.`;
+
+            console.log(`🎙️ [SLOT-FLOW] Offering: ${offeredSlots.join(', ')}`);
+
+            twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="dtmf" numDigits="1" timeout="10" action="/voice/rachel/select-slot" method="POST">
+        <Say voice="Polly.Joanna">${escapedName}, I have the following times available. ${optionsSpeech}</Say>
+    </Gather>
+    <Say voice="Polly.Joanna">I didn't receive a selection. Let me repeat the options.</Say>
+    <Redirect>/voice/rachel/offer-slots</Redirect>
+</Response>`;
+        }
+
+        res.set('Content-Type', 'text/xml; charset=utf-8');
+        res.send(twiml);
+
+    } catch (error) {
+        console.error('[SLOT-FLOW] Error offering slots:', error);
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">I'm sorry, there was an error checking availability. Let me transfer you to a specialist.</Say>
+    <Redirect>/voice/rachel/transfer-specialist</Redirect>
+</Response>`;
+        res.type('text/xml');
+        res.send(twiml);
+    }
+});
+
+// Handle both GET and POST for offer-slots (for redirects)
+router.get('/voice/rachel/offer-slots', (req, res) => {
+    // Redirect GET to POST handler
+    res.redirect(307, '/voice/rachel/offer-slots');
+});
+
+/**
+ * NEW FLOW: Handle slot selection via DTMF
+ */
+router.post('/voice/rachel/select-slot', async (req, res) => {
+    try {
+        const digit = req.body.Digits || '';
+        const clientId = req.session.client_id;
+        const prospectName = req.session.prospect_name;
+        const prospectPhone = req.session.prospect_phone;
+        const appointmentDate = req.session.appointment_date;
+        const offeredSlots = req.session.offered_slots || [];
+        const businessName = req.session.business_name || 'this business';
+
+        console.log(`🔢 [SLOT-FLOW] Slot selection: digit=${digit}, offered=${offeredSlots.join(',')}`);
+
+        const escapedName = (prospectName || 'there')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+
+        let twiml;
+
+        if (digit === '0') {
+            // Transfer to specialist
+            console.log(`📞 [SLOT-FLOW] User requested specialist transfer`);
+            twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Redirect>/voice/rachel/transfer-specialist</Redirect>
+</Response>`;
+        } else if (digit === '4' && req.session.has_more_slots) {
+            // Show more slots
+            console.log(`➡️ [SLOT-FLOW] User requested more slots`);
+            req.session.slot_offset = (req.session.slot_offset || 0) + 3;
+            await new Promise((resolve, reject) => {
+                req.session.save((err) => err ? reject(err) : resolve());
+            });
+            twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Redirect>/voice/rachel/offer-slots</Redirect>
+</Response>`;
+        } else if (['1', '2', '3'].includes(digit)) {
+            const slotIndex = parseInt(digit) - 1;
+            const selectedTime = offeredSlots[slotIndex];
+
+            if (!selectedTime) {
+                console.log(`❌ [SLOT-FLOW] Invalid slot index ${slotIndex}`);
+                twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">I'm sorry, that option is not available. Let me repeat the times.</Say>
+    <Redirect>/voice/rachel/offer-slots</Redirect>
+</Response>`;
+            } else {
+                console.log(`✅ [SLOT-FLOW] User selected slot: ${selectedTime}`);
+
+                // Store selected time in session
+                req.session.appointment_time = selectedTime;
+                req.session.appointment_datetime = `${appointmentDate} at ${selectedTime}`;
+
+                await new Promise((resolve, reject) => {
+                    req.session.save((err) => err ? reject(err) : resolve());
+                });
+
+                // Format time for confirmation
+                const formatTimeForSpeech = (timeStr) => {
+                    const [hours, minutes] = timeStr.split(':');
+                    let hour = parseInt(hours);
+                    const isPM = hour >= 12;
+                    if (hour > 12) hour -= 12;
+                    if (hour === 0) hour = 12;
+                    const period = isPM ? 'PM' : 'AM';
+                    return minutes === '00' ? `${hour} ${period}` : `${hour}:${minutes} ${period}`;
+                };
+
+                const timeForSpeech = formatTimeForSpeech(selectedTime);
+                const moment = require('moment-timezone');
+                const dateForSpeech = moment(appointmentDate).format('dddd, MMMM Do');
+
+                // Proceed directly to booking
+                twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">Perfect! You've selected ${timeForSpeech} on ${dateForSpeech}. Please hold while I confirm your booking.</Say>
+    <Redirect>/voice/rachel/book-appointment</Redirect>
+</Response>`;
+            }
+        } else {
+            // Invalid input
+            console.log(`❓ [SLOT-FLOW] Invalid digit: ${digit}`);
+            twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">I didn't understand that selection. Let me repeat the options.</Say>
+    <Redirect>/voice/rachel/offer-slots</Redirect>
+</Response>`;
+        }
+
+        res.set('Content-Type', 'text/xml; charset=utf-8');
+        res.send(twiml);
+
+    } catch (error) {
+        console.error('[SLOT-FLOW] Error selecting slot:', error);
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">I'm sorry, there was an error. Let me transfer you to a specialist.</Say>
+    <Redirect>/voice/rachel/transfer-specialist</Redirect>
+</Response>`;
+        res.type('text/xml');
+        res.send(twiml);
+    }
+});
+
+/**
+ * NEW FLOW: Transfer to specialist when no slots work
+ */
+router.post('/voice/rachel/transfer-specialist', async (req, res) => {
+    try {
+        const clientId = req.session.client_id;
+        const prospectName = req.session.prospect_name;
+        const businessName = req.session.business_name || 'this business';
+
+        console.log(`📞 [SLOT-FLOW] Transferring to specialist for client ${clientId}`);
+
+        // Get client's transfer number from database
+        const { Client } = require('../models');
+        const client = await Client.findByPk(clientId);
+
+        let twiml;
+
+        if (client && client.forward_number) {
+            // Transfer to the business's forwarding number
+            console.log(`📞 [SLOT-FLOW] Transferring to ${client.forward_number}`);
+            twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">Please hold while I transfer you to a scheduling specialist.</Say>
+    <Dial timeout="30" callerId="${client.ringlypro_number || ''}">
+        <Number>${client.forward_number}</Number>
+    </Dial>
+    <Say voice="Polly.Joanna">I'm sorry, the transfer was unsuccessful. Please call back during business hours or leave a voicemail.</Say>
+    <Redirect>/voice/rachel/voicemail</Redirect>
+</Response>`;
+        } else {
+            // No transfer number - offer voicemail
+            console.log(`⚠️ [SLOT-FLOW] No transfer number for client ${clientId}, offering voicemail`);
+            twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">I'm sorry, our scheduling specialists are not available right now. Would you like to leave a voicemail and we'll call you back?</Say>
+    <Redirect>/voice/rachel/voicemail</Redirect>
+</Response>`;
+        }
+
+        res.set('Content-Type', 'text/xml; charset=utf-8');
+        res.send(twiml);
+
+    } catch (error) {
+        console.error('[SLOT-FLOW] Error transferring to specialist:', error);
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Joanna">I'm sorry, there was an error. Please call back later. Thank you.</Say>
+    <Hangup/>
+</Response>`;
+        res.type('text/xml');
+        res.send(twiml);
+    }
+});
+
+// Handle GET for transfer-specialist (for redirects)
+router.get('/voice/rachel/transfer-specialist', (req, res) => {
+    res.redirect(307, '/voice/rachel/transfer-specialist');
+});
+
+/**
  * Collect date/time for appointment booking (English)
+ * LEGACY: Kept for backwards compatibility, but new flow uses collect-date -> offer-slots
  */
 router.post('/voice/rachel/collect-datetime', async (req, res) => {
     try {
@@ -338,141 +727,109 @@ router.post('/voice/rachel/collect-datetime', async (req, res) => {
  *
  * KEY PRINCIPLE: Uses same booking logic as WhatsApp (unifiedBookingService)
  * Handle both GET (from redirects) and POST
+ *
+ * NEW FLOW: Date and time come from session (pre-selected via offer-slots)
+ * - appointment_date: YYYY-MM-DD format
+ * - appointment_time: HH:mm format (already validated as available)
  */
 const handleBookAppointment = async (req, res) => {
     try {
         const clientId = req.session.client_id;
         const prospectName = req.session.prospect_name;
         const prospectPhone = req.session.prospect_phone;
-        const appointmentDateTime = req.session.appointment_datetime || 'the requested time';
         const businessName = req.session.business_name || 'this business';
-
-        console.log(`📅 [RACHEL-CRM-BOOKING] Booking appointment for client ${clientId}: ${prospectName} (${prospectPhone}) at ${appointmentDateTime}`);
 
         // Import unified booking service (same as WhatsApp uses)
         const unifiedBookingService = require('../services/unifiedBookingService');
-
-        // Parse date and time from appointmentDateTime
-        // Expected format: "tomorrow at 2pm" or "November 10th at 3pm"
         const moment = require('moment-timezone');
 
         let appointmentDate, appointmentTime;
 
-        // Parse the date/time - handle common formats
-        const now = moment().tz('America/New_York');
-        let parsedDateTime = now.clone();
-
-        if (appointmentDateTime.toLowerCase().includes('tomorrow')) {
-            parsedDateTime.add(1, 'day');
-        } else if (appointmentDateTime.toLowerCase().includes('today')) {
-            // Keep as today
+        // NEW FLOW: Check if date/time were pre-selected via slot selection
+        if (req.session.appointment_date && req.session.appointment_time) {
+            // New flow - time was pre-validated via offer-slots
+            appointmentDate = req.session.appointment_date;
+            appointmentTime = req.session.appointment_time;
+            console.log(`📅 [RACHEL-CRM-BOOKING] Using pre-selected slot: ${appointmentDate} ${appointmentTime}`);
         } else {
-            // Try to parse actual date
-            parsedDateTime = moment(appointmentDateTime, ['MMMM Do [at] ha', 'MMMM D [at] ha', 'MMM D [at] ha']);
-            if (!parsedDateTime.isValid()) {
-                // Default to tomorrow if can't parse
-                parsedDateTime = now.clone().add(1, 'day');
-            }
-        }
+            // Legacy flow - parse from appointment_datetime string
+            const appointmentDateTime = req.session.appointment_datetime || 'tomorrow at 2pm';
+            console.log(`📅 [RACHEL-CRM-BOOKING] Parsing datetime from: "${appointmentDateTime}"`);
 
-        // Extract time - handle various formats: "10am", "10 am", "10 a.m.", "10a.m."
-        const timeMatch = appointmentDateTime.match(/(\d{1,2})\s*(?:a\.?m\.?|p\.?m\.?)/i);
-        if (timeMatch) {
-            let hour = parseInt(timeMatch[0].match(/\d{1,2}/)[0]);
-            const isPM = /p\.?m\.?/i.test(timeMatch[0]);
-            const isAM = /a\.?m\.?/i.test(timeMatch[0]);
+            const now = moment().tz('America/New_York');
+            let parsedDateTime = now.clone();
 
-            if (isPM && hour !== 12) {
-                hour += 12;  // Convert PM to 24-hour (except 12pm stays 12)
-            } else if (isAM && hour === 12) {
-                hour = 0;  // 12am = midnight = 00:00
+            if (appointmentDateTime.toLowerCase().includes('tomorrow')) {
+                parsedDateTime.add(1, 'day');
+            } else if (appointmentDateTime.toLowerCase().includes('today')) {
+                // Keep as today
+            } else {
+                parsedDateTime = moment(appointmentDateTime, ['MMMM Do [at] ha', 'MMMM D [at] ha', 'MMM D [at] ha']);
+                if (!parsedDateTime.isValid()) {
+                    parsedDateTime = now.clone().add(1, 'day');
+                }
             }
 
-            parsedDateTime.hour(hour).minute(0).second(0);
-            console.log(`⏰ Time parsed: ${timeMatch[0]} → ${hour}:00 (isPM: ${isPM}, isAM: ${isAM})`);
-        } else {
-            // Default to 2pm if no time specified
-            parsedDateTime.hour(14).minute(0).second(0);
-            console.log(`⏰ No time found in "${appointmentDateTime}", defaulting to 2pm`);
+            const timeMatch = appointmentDateTime.match(/(\d{1,2})\s*(?:a\.?m\.?|p\.?m\.?)/i);
+            if (timeMatch) {
+                let hour = parseInt(timeMatch[0].match(/\d{1,2}/)[0]);
+                const isPM = /p\.?m\.?/i.test(timeMatch[0]);
+                const isAM = /a\.?m\.?/i.test(timeMatch[0]);
+
+                if (isPM && hour !== 12) hour += 12;
+                else if (isAM && hour === 12) hour = 0;
+
+                parsedDateTime.hour(hour).minute(0).second(0);
+            } else {
+                parsedDateTime.hour(14).minute(0).second(0);
+            }
+
+            appointmentDate = parsedDateTime.format('YYYY-MM-DD');
+            appointmentTime = parsedDateTime.format('HH:mm');
         }
 
-        appointmentDate = parsedDateTime.format('YYYY-MM-DD');
-        appointmentTime = parsedDateTime.format('HH:mm');  // HH:mm for unified service
-
-        console.log(`📆 Parsed appointment: date=${appointmentDate}, time=${appointmentTime}`);
+        console.log(`📅 [RACHEL-CRM-BOOKING] Booking: client=${clientId}, ${prospectName} (${prospectPhone}) at ${appointmentDate} ${appointmentTime}`);
 
         // Validate required data
         if (!clientId) {
             throw new Error('Missing clientId - cannot create appointment');
         }
 
-        // ============= CHECK AVAILABILITY VIA UNIFIED SERVICE =============
-        console.log(`🔍 [RACHEL-CRM-BOOKING] Checking availability via unified service...`);
-        const availabilityResult = await unifiedBookingService.getAvailableSlots(clientId, appointmentDate);
+        // For the new flow, we skip availability check since slot was pre-validated
+        // For legacy flow, we still check availability
+        const isPreValidated = !!(req.session.appointment_date && req.session.appointment_time);
 
-        console.log(`📋 [RACHEL-CRM-BOOKING] Availability check: source=${availabilityResult.source}, slots=${availabilityResult.slots?.length || 0}`);
+        if (!isPreValidated) {
+            // Legacy flow - check availability
+            console.log(`🔍 [RACHEL-CRM-BOOKING] Checking availability (legacy flow)...`);
+            const availabilityResult = await unifiedBookingService.getAvailableSlots(clientId, appointmentDate);
 
-        // Check if requested time is available
-        const requestedTimeHHmm = appointmentTime;
-        const isSlotAvailable = availabilityResult.slots?.some(slot => {
-            const slotTime = slot.time24 || slot.startTime?.substring(11, 16);
-            return slotTime === requestedTimeHHmm;
-        });
-
-        if (!isSlotAvailable && availabilityResult.slots?.length > 0) {
-            console.log(`⚠️ [RACHEL-CRM-BOOKING] Time slot ${appointmentDate} ${appointmentTime} NOT available in ${availabilityResult.source}`);
-
-            // Format available slots for speech
-            const formatTimeForSpeech = (timeStr) => {
-                const [hours, minutes] = timeStr.split(':');
-                let hour = parseInt(hours);
-                const isPM = hour >= 12;
-                if (hour > 12) hour -= 12;
-                if (hour === 0) hour = 12;
-                const period = isPM ? 'PM' : 'AM';
-                return minutes === '00' ? `${hour} ${period}` : `${hour}:${minutes} ${period}`;
-            };
-
-            const availableSlots = availabilityResult.slots.slice(0, 3).map(slot => {
-                const time = slot.time24 || slot.startTime?.substring(11, 16);
-                return formatTimeForSpeech(time);
+            const isSlotAvailable = availabilityResult.slots?.some(slot => {
+                const slotTime = slot.time24 || slot.startTime?.substring(11, 16);
+                return slotTime === appointmentTime;
             });
 
-            const escapedName = (prospectName || 'friend')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&apos;');
+            if (!isSlotAvailable && availabilityResult.slots?.length > 0) {
+                console.log(`⚠️ [RACHEL-CRM-BOOKING] Slot not available, redirecting to offer-slots`);
 
-            let errorTwiml;
-            if (availableSlots.length > 0) {
-                const suggestionText = availableSlots.length === 1
-                    ? availableSlots[0]
-                    : availableSlots.length === 2
-                    ? `${availableSlots[0]} or ${availableSlots[1]}`
-                    : `${availableSlots[0]}, ${availableSlots[1]}, or ${availableSlots[2]}`;
+                // Store date and redirect to new flow
+                req.session.appointment_date = appointmentDate;
+                req.session.slot_offset = 0;
+                await new Promise((resolve, reject) => {
+                    req.session.save((err) => err ? reject(err) : resolve());
+                });
 
-                errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+                const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="Polly.Joanna">I'm sorry ${escapedName}, that time slot is not available. We have availability at ${suggestionText}. Please call back to schedule one of these times. Thank you.</Say>
-    <Hangup/>
+    <Say voice="Polly.Joanna">I'm sorry, that time is not available. Let me show you our available times.</Say>
+    <Redirect>/voice/rachel/offer-slots</Redirect>
 </Response>`;
-            } else {
-                errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Say voice="Polly.Joanna">I'm sorry ${escapedName}, we are fully booked for that day. Please call back to schedule for another day. Thank you.</Say>
-    <Hangup/>
-</Response>`;
+                res.set('Content-Type', 'text/xml; charset=utf-8');
+                return res.send(twiml);
             }
-
-            console.log('📤 Sending SLOT UNAVAILABLE TwiML');
-            res.set('Content-Type', 'text/xml; charset=utf-8');
-            return res.send(errorTwiml);
         }
 
         // ============= BOOK VIA UNIFIED SERVICE =============
-        console.log(`✅ [RACHEL-CRM-BOOKING] Time slot available! Booking via unified service...`);
 
         const bookingResult = await unifiedBookingService.bookAppointment(clientId, {
             customerName: prospectName || 'Unknown',
