@@ -103,16 +103,16 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
 
-        // NEW FLOW: After name, go directly to date collection (phone collected later)
-        const datePrompt = `Thank you ${name}. <break time="0.5s"/> What date would you like to schedule your appointment? <break time="0.5s"/> For example, you can say tomorrow, Friday, or December 20th.`;
-        console.log(`🎙️ Generating Rachel premium voice for date collection`);
+        // CORRECT FLOW: After name, collect phone number (same as WhatsApp flow)
+        const phonePrompt = `Thank you ${name}. <break time="0.5s"/> Can you please provide your phone number so we can send you a confirmation?`;
+        console.log(`🎙️ Generating Rachel premium voice for phone collection`);
 
-        const audioUrl = await rachelService.generateRachelAudio(datePrompt);
+        const audioUrl = await rachelService.generateRachelAudio(phonePrompt);
 
         if (audioUrl) {
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-date" method="POST" language="en-US">
+    <Gather input="speech dtmf" timeout="12" speechTimeout="3" numDigits="10" action="/voice/rachel/collect-phone" method="POST" language="en-US">
         <Play>${audioUrl}</Play>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
@@ -124,8 +124,8 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
             // Fallback to Polly
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-date" method="POST" language="en-US">
-        <Say voice="Polly.Joanna">Thank you ${escapedName}. What date would you like to schedule your appointment? For example, you can say tomorrow, Friday, or December 20th.</Say>
+    <Gather input="speech dtmf" timeout="12" speechTimeout="3" numDigits="10" action="/voice/rachel/collect-phone" method="POST" language="en-US">
+        <Say voice="Polly.Joanna">Thank you ${escapedName}. Can you please provide your phone number so we can send you a confirmation?</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
     <Redirect>/voice/rachel/collect-name</Redirect>
@@ -199,9 +199,9 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
 
-        // NEW FLOW: Ask for date only, then we'll offer available time slots
-        const datePrompt = `Perfect ${prospectName || 'there'}. <break time="0.5s"/> What date would you like to schedule your appointment? <break time="0.5s"/> For example, you can say tomorrow, or Friday, or December 20th.`;
-        console.log(`🎙️ Generating Rachel premium voice for date collection`);
+        // CORRECT FLOW: Say "give me a minute to check our calendar" then ask for date
+        const datePrompt = `Perfect ${prospectName || 'there'}. <break time="0.5s"/> Give me a minute to check our calendar. <break time="1s"/> What date would you like to schedule your appointment? <break time="0.5s"/> For example, you can say tomorrow, or Friday, or December 20th.`;
+        console.log(`🎙️ Generating Rachel premium voice for calendar check + date collection`);
 
         const audioUrl = await rachelService.generateRachelAudio(datePrompt);
 
@@ -222,7 +222,7 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-date" method="POST" language="en-US">
-        <Say voice="Polly.Joanna">Perfect ${escapedName}. What date would you like to schedule your appointment? For example, you can say tomorrow, or Friday, or December 20th.</Say>
+        <Say voice="Polly.Joanna">Perfect ${escapedName}. Give me a minute to check our calendar. What date would you like to schedule your appointment? For example, you can say tomorrow, or Friday, or December 20th.</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
     <Redirect>/voice/rachel/collect-phone</Redirect>
@@ -545,14 +545,12 @@ router.post('/voice/rachel/select-slot', async (req, res) => {
                 const moment = require('moment-timezone');
                 const dateForSpeech = moment(appointmentDate).format('dddd, MMMM Do');
 
-                // NEW: Collect phone number before booking
+                // CORRECT FLOW: Phone already collected, go directly to book-appointment
+                console.log(`📞 [SLOT-FLOW] Phone already collected: ${prospectPhone}, proceeding to booking`);
                 twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech dtmf" timeout="12" speechTimeout="3" numDigits="10" action="/voice/rachel/confirm-booking" method="POST" language="en-US">
-        <Say voice="Polly.Joanna">Perfect! You've selected ${timeForSpeech} on ${dateForSpeech}. To complete your booking, please say or enter your 10 digit phone number.</Say>
-    </Gather>
-    <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
-    <Redirect>/voice/rachel/select-slot</Redirect>
+    <Say voice="Polly.Joanna">Perfect! You've selected ${timeForSpeech} on ${dateForSpeech}. Please hold while I confirm your appointment.</Say>
+    <Redirect>/voice/rachel/book-appointment</Redirect>
 </Response>`;
             }
         } else {
@@ -581,64 +579,7 @@ router.post('/voice/rachel/select-slot', async (req, res) => {
 });
 
 /**
- * NEW FLOW: Confirm booking - collect phone and proceed to book
- * Called after user selects a time slot
- */
-router.post('/voice/rachel/confirm-booking', async (req, res) => {
-    try {
-        const digits = req.body.Digits || '';
-        const speechResult = req.body.SpeechResult || '';
-        const clientId = req.session.client_id;
-        const prospectName = req.session.prospect_name;
-        const appointmentDate = req.session.appointment_date;
-        const appointmentTime = req.session.appointment_time;
-        const businessName = req.session.business_name || 'this business';
-
-        console.log(`📞 [SLOT-FLOW] Confirm booking - phone input: digits="${digits}", speech="${speechResult}"`);
-
-        // Normalize phone number
-        let normalizedPhone;
-        if (digits) {
-            normalizedPhone = normalizePhoneFromSpeech(digits);
-        } else if (speechResult) {
-            normalizedPhone = normalizePhoneFromSpeech(speechResult);
-        } else {
-            normalizedPhone = '';
-        }
-
-        console.log(`📞 [SLOT-FLOW] Normalized phone: ${normalizedPhone}`);
-
-        // Store phone in session
-        req.session.prospect_phone = normalizedPhone;
-
-        await new Promise((resolve, reject) => {
-            req.session.save((err) => err ? reject(err) : resolve());
-        });
-
-        // Proceed to booking
-        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Say voice="Polly.Joanna">Thank you. Please hold while I confirm your appointment.</Say>
-    <Redirect>/voice/rachel/book-appointment</Redirect>
-</Response>`;
-
-        res.set('Content-Type', 'text/xml; charset=utf-8');
-        res.send(twiml);
-
-    } catch (error) {
-        console.error('[SLOT-FLOW] Error confirming booking:', error);
-        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Say voice="Polly.Joanna">I'm sorry, there was an error. Let me transfer you to a specialist.</Say>
-    <Redirect>/voice/rachel/transfer-specialist</Redirect>
-</Response>`;
-        res.type('text/xml');
-        res.send(twiml);
-    }
-});
-
-/**
- * NEW FLOW: Transfer to specialist when no slots work
+ * Transfer to specialist when no slots work or user requests it
  */
 router.post('/voice/rachel/transfer-specialist', async (req, res) => {
     try {
@@ -984,7 +925,21 @@ const handleBookAppointment = async (req, res) => {
                        crmSystem === 'ghl' ? 'GoHighLevel' :
                        crmSystem === 'vagaro' ? 'Vagaro' : 'our system';
 
-        const successMessage = `Great news ${prospectName || 'there'}. <break time="0.5s"/> I've successfully booked your appointment with ${businessName || 'this business'} for ${appointmentDateTime}. <break time="0.5s"/> Your confirmation code is ${confirmationCode}. <break time="0.5s"/> You'll receive a text message confirmation shortly with all the details. <break time="0.5s"/> Thank you for calling and we look forward to seeing you.`;
+        // Format date and time for speech (moment already imported above)
+        const dateForSpeech = moment(appointmentDate).format('dddd, MMMM Do');
+        const formatTimeForSpeech = (timeStr) => {
+            const [hours, minutes] = timeStr.split(':');
+            let hour = parseInt(hours);
+            const isPM = hour >= 12;
+            if (hour > 12) hour -= 12;
+            if (hour === 0) hour = 12;
+            const period = isPM ? 'PM' : 'AM';
+            return minutes === '00' ? `${hour} ${period}` : `${hour}:${minutes} ${period}`;
+        };
+        const timeForSpeech = formatTimeForSpeech(appointmentTime);
+        const appointmentDateTimeForSpeech = `${dateForSpeech} at ${timeForSpeech}`;
+
+        const successMessage = `Great news ${prospectName || 'there'}. <break time="0.5s"/> I've successfully booked your appointment with ${businessName || 'this business'} for ${appointmentDateTimeForSpeech}. <break time="0.5s"/> Your confirmation code is ${confirmationCode}. <break time="0.5s"/> You'll receive a text message confirmation shortly with all the details. <break time="0.5s"/> Thank you for calling and we look forward to seeing you.`;
         console.log(`🎙️ Generating Rachel premium voice for success confirmation`);
         console.log(`📍 Appointment synced to: ${crmName}`);
 
@@ -1013,7 +968,7 @@ const handleBookAppointment = async (req, res) => {
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&apos;');
-            const escapedDateTime = appointmentDateTime
+            const escapedDateTime = appointmentDateTimeForSpeech
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
@@ -1351,7 +1306,52 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
                     ? `Transferring you to ${dept.name}. Please hold.`
                     : `Transfiriéndolo a ${dept.name}. Por favor espere.`;
 
-                const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+                // ============= IVR LOOP PREVENTION =============
+                // Normalize phone numbers for comparison (remove all non-digits)
+                const normalizePhone = (phone) => (phone || '').replace(/\D/g, '');
+                const destPhone = normalizePhone(dept.phone);
+                const didPhone = normalizePhone(client.ringlypro_number);
+
+                // Check if destination matches the client's DID (would cause infinite loop)
+                const isSameDID = destPhone === didPhone ||
+                                  destPhone.endsWith(didPhone) ||
+                                  didPhone.endsWith(destPhone);
+
+                let twiml;
+
+                if (isSameDID) {
+                    // LOOP PREVENTION: Forward to the client's actual forward_number instead
+                    // This bypasses the AI agent since the call is IVR-originated
+                    console.log(`⚠️ [IVR-LOOP-PREVENTION] Destination ${dept.phone} matches DID ${client.ringlypro_number}`);
+                    console.log(`📞 [IVR-LOOP-PREVENTION] Forwarding to client's forward_number: ${client.forward_number}`);
+
+                    if (client.forward_number) {
+                        // Forward to the client's configured forward number (bypasses AI)
+                        twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="${voice}">${transferMsg}</Say>
+    <Dial timeout="30" callerId="${client.ringlypro_number}">
+        <Number>${client.forward_number}</Number>
+    </Dial>
+    <Say voice="${voice}">The transfer failed. Please try again later. Goodbye.</Say>
+    <Hangup/>
+</Response>`;
+                    } else {
+                        // No forward number configured - inform the caller
+                        console.log(`❌ [IVR-LOOP-PREVENTION] No forward_number configured for client ${clientId}`);
+                        const noForwardMsg = language === 'en'
+                            ? `I'm sorry, ${dept.name} is not available at this time. Please try again later or leave a voicemail.`
+                            : `Lo siento, ${dept.name} no está disponible en este momento. Por favor intente más tarde o deje un mensaje.`;
+
+                        twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="${voice}">${noForwardMsg}</Say>
+    <Redirect method="POST">/voice/${language === 'en' ? 'rachel' : 'lina'}/voicemail</Redirect>
+</Response>`;
+                    }
+                } else {
+                    // Normal transfer - destination is different from DID
+                    twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="${voice}">${transferMsg}</Say>
     <Dial timeout="30" callerId="${client.ringlypro_number}">
@@ -1360,6 +1360,7 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
     <Say voice="${voice}">The transfer failed. Please try again later. Goodbye.</Say>
     <Hangup/>
 </Response>`;
+                }
 
                 res.type('text/xml');
                 return res.send(twiml);
