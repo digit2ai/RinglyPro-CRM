@@ -1328,45 +1328,57 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
                 const normalizePhone = (phone) => (phone || '').replace(/\D/g, '');
                 const destPhone = normalizePhone(dept.phone);
                 const didPhone = normalizePhone(client.ringlypro_number);
+                const businessPhone = normalizePhone(client.business_phone);
 
                 // Check if destination matches the client's DID (would cause infinite loop)
-                const isSameDID = destPhone === didPhone ||
-                                  destPhone.endsWith(didPhone) ||
-                                  didPhone.endsWith(destPhone);
+                const matchesDID = destPhone === didPhone ||
+                                   destPhone.endsWith(didPhone) ||
+                                   didPhone.endsWith(destPhone);
+
+                // ALSO check if destination matches business_phone
+                // Because business_phone has call forwarding TO the DID, so it will also loop!
+                const matchesBusinessPhone = destPhone === businessPhone ||
+                                              destPhone.endsWith(businessPhone) ||
+                                              businessPhone.endsWith(destPhone);
+
+                const wouldLoop = matchesDID || matchesBusinessPhone;
 
                 let twiml;
 
-                if (isSameDID) {
-                    // LOOP PREVENTION: Forward to the client's business_phone instead
-                    // This bypasses the AI agent since the call is IVR-originated
-                    console.log(`⚠️ [IVR-LOOP-PREVENTION] Destination ${dept.phone} matches DID ${client.ringlypro_number}`);
-                    console.log(`📞 [IVR-LOOP-PREVENTION] Checking business_phone: ${client.business_phone}`);
+                if (wouldLoop) {
+                    // LOOP PREVENTION: Cannot forward to DID or business_phone (both would loop)
+                    // Need to use owner_phone or show error
+                    if (matchesDID) {
+                        console.log(`⚠️ [IVR-LOOP-PREVENTION] Destination ${dept.phone} matches DID ${client.ringlypro_number}`);
+                    } else {
+                        console.log(`⚠️ [IVR-LOOP-PREVENTION] Destination ${dept.phone} matches business_phone ${client.business_phone} (which forwards to DID)`);
+                    }
 
-                    // Also check that business_phone is different from DID (prevent another loop)
-                    const businessPhone = normalizePhone(client.business_phone);
-                    const businessIsSameDID = businessPhone === didPhone ||
-                                              businessPhone.endsWith(didPhone) ||
-                                              didPhone.endsWith(businessPhone);
+                    // Try owner_phone as fallback (personal cell that doesn't forward to DID)
+                    const ownerPhone = normalizePhone(client.owner_phone);
+                    const ownerMatchesDID = ownerPhone === didPhone ||
+                                            ownerPhone.endsWith(didPhone) ||
+                                            didPhone.endsWith(ownerPhone);
+                    const ownerMatchesBusiness = ownerPhone === businessPhone ||
+                                                  ownerPhone.endsWith(businessPhone) ||
+                                                  businessPhone.endsWith(ownerPhone);
 
-                    if (client.business_phone && !businessIsSameDID) {
-                        // Forward to the client's business phone (bypasses AI)
-                        console.log(`✅ [IVR-LOOP-PREVENTION] Forwarding to safe number: ${client.business_phone}`);
+                    if (client.owner_phone && !ownerMatchesDID && !ownerMatchesBusiness) {
+                        // Forward to owner's personal phone (bypasses the forwarding loop)
+                        console.log(`✅ [IVR-LOOP-PREVENTION] Forwarding to owner_phone: ${client.owner_phone}`);
                         twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="${voice}">${transferMsg}</Say>
     <Dial timeout="30" callerId="${client.ringlypro_number}">
-        <Number>${client.business_phone}</Number>
+        <Number>${client.owner_phone}</Number>
     </Dial>
     <Say voice="${voice}">The transfer failed. Please try again later. Goodbye.</Say>
     <Hangup/>
 </Response>`;
                     } else {
-                        // No safe forward number configured - inform the caller
-                        if (businessIsSameDID) {
-                            console.log(`❌ [IVR-LOOP-PREVENTION] business_phone ${client.business_phone} also matches DID - cannot forward`);
-                        } else {
-                            console.log(`❌ [IVR-LOOP-PREVENTION] No business_phone configured for client ${clientId}`);
-                        }
+                        // No safe number available - inform the caller
+                        console.log(`❌ [IVR-LOOP-PREVENTION] No safe number available for client ${clientId}`);
+                        console.log(`   DID: ${client.ringlypro_number}, business_phone: ${client.business_phone}, owner_phone: ${client.owner_phone}`);
                         const noForwardMsg = language === 'en'
                             ? `I'm sorry, ${dept.name} is not available at this time. Please try again later or leave a voicemail.`
                             : `Lo siento, ${dept.name} no está disponible en este momento. Por favor intente más tarde o deje un mensaje.`;

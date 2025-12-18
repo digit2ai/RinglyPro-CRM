@@ -103,7 +103,7 @@ router.get('/debug/ivr/:client_id', async (req, res) => {
         const { sequelize } = require('../models');
 
         const [client] = await sequelize.query(
-            `SELECT id, business_name, ringlypro_number, business_phone,
+            `SELECT id, business_name, ringlypro_number, business_phone, owner_phone,
                     ivr_enabled, ivr_options
              FROM clients
              WHERE id = :client_id`,
@@ -121,18 +121,35 @@ router.get('/debug/ivr/:client_id', async (req, res) => {
         }
 
         // Analyze IVR options for potential loops
+        // business_phone has call forwarding TO the DID, so forwarding to it will loop!
         const normalizePhone = (phone) => (phone || '').replace(/\D/g, '');
         const didPhone = normalizePhone(client.ringlypro_number);
         const businessPhone = normalizePhone(client.business_phone);
+        const ownerPhone = normalizePhone(client.owner_phone);
 
         const ivrAnalysis = (client.ivr_options || []).map((opt, idx) => {
             const optPhone = normalizePhone(opt.phone);
+
+            // Check if matches DID
             const matchesDID = optPhone === didPhone ||
                                optPhone.endsWith(didPhone) ||
                                didPhone.endsWith(optPhone);
-            const businessMatchesDID = businessPhone === didPhone ||
-                                        businessPhone.endsWith(didPhone) ||
-                                        didPhone.endsWith(businessPhone);
+
+            // Check if matches business_phone (which forwards to DID = loop!)
+            const matchesBusinessPhone = optPhone === businessPhone ||
+                                          optPhone.endsWith(businessPhone) ||
+                                          businessPhone.endsWith(optPhone);
+
+            const wouldLoop = matchesDID || matchesBusinessPhone;
+
+            // Check if owner_phone is a safe fallback
+            const ownerMatchesDID = ownerPhone === didPhone ||
+                                    ownerPhone.endsWith(didPhone) ||
+                                    didPhone.endsWith(ownerPhone);
+            const ownerMatchesBusiness = ownerPhone === businessPhone ||
+                                          ownerPhone.endsWith(businessPhone) ||
+                                          businessPhone.endsWith(ownerPhone);
+            const ownerIsSafe = client.owner_phone && !ownerMatchesDID && !ownerMatchesBusiness;
 
             return {
                 index: idx,
@@ -141,8 +158,9 @@ router.get('/debug/ivr/:client_id', async (req, res) => {
                 enabled: opt.enabled,
                 normalized_phone: optPhone,
                 matches_did: matchesDID,
-                would_loop: matchesDID && (!client.business_phone || businessMatchesDID),
-                safe_forward: matchesDID && client.business_phone && !businessMatchesDID
+                matches_business_phone: matchesBusinessPhone,
+                would_loop: wouldLoop,
+                safe_fallback: wouldLoop ? (ownerIsSafe ? 'owner_phone' : 'none') : 'not_needed'
             };
         });
 
@@ -155,12 +173,17 @@ router.get('/debug/ivr/:client_id', async (req, res) => {
                 ringlypro_normalized: didPhone,
                 business_phone: client.business_phone,
                 business_phone_normalized: businessPhone,
+                owner_phone: client.owner_phone,
+                owner_phone_normalized: ownerPhone,
                 ivr_enabled: client.ivr_enabled
             },
             ivr_options: client.ivr_options,
             ivr_analysis: ivrAnalysis,
-            warnings: ivrAnalysis.filter(opt => opt.would_loop).map(opt =>
-                `IVR option "${opt.name}" (${opt.phone}) would cause a loop - no safe business phone available`
+            warnings: ivrAnalysis.filter(opt => opt.would_loop && opt.safe_fallback === 'none').map(opt =>
+                `IVR option "${opt.name}" (${opt.phone}) would cause a loop and NO safe fallback is available!`
+            ),
+            info: ivrAnalysis.filter(opt => opt.would_loop && opt.safe_fallback !== 'none').map(opt =>
+                `IVR option "${opt.name}" (${opt.phone}) would loop but will fallback to ${opt.safe_fallback}`
             )
         });
 
