@@ -939,7 +939,16 @@ const handleBookAppointment = async (req, res) => {
         const timeForSpeech = formatTimeForSpeech(appointmentTime);
         const appointmentDateTimeForSpeech = `${dateForSpeech} at ${timeForSpeech}`;
 
-        const successMessage = `Great news ${prospectName || 'there'}. <break time="0.5s"/> I've successfully booked your appointment with ${businessName || 'this business'} for ${appointmentDateTimeForSpeech}. <break time="0.5s"/> Your confirmation code is ${confirmationCode}. <break time="0.5s"/> You'll receive a text message confirmation shortly with all the details. <break time="0.5s"/> Thank you for calling and we look forward to seeing you.`;
+        // Client ID 32 gets a custom message about pending deposit
+        let successMessage;
+        if (clientId === 32) {
+            // Custom message for client 32 - pending deposit flow
+            successMessage = `Great news ${prospectName || 'there'}. <break time="0.5s"/> I've entered your appointment with ${businessName || 'this business'} for ${appointmentDateTimeForSpeech}. <break time="0.5s"/> Your appointment is currently pending an initial deposit. <break time="0.5s"/> A specialist will contact you shortly to provide further assistance and complete the process. <break time="0.5s"/> Thank you for calling, and we look forward to seeing you.`;
+            console.log(`🎙️ Client 32 - Using custom deposit pending message`);
+        } else {
+            // Standard message for all other clients
+            successMessage = `Great news ${prospectName || 'there'}. <break time="0.5s"/> I've successfully booked your appointment with ${businessName || 'this business'} for ${appointmentDateTimeForSpeech}. <break time="0.5s"/> Your confirmation code is ${confirmationCode}. <break time="0.5s"/> You'll receive a text message confirmation shortly with all the details. <break time="0.5s"/> Thank you for calling and we look forward to seeing you.`;
+        }
         console.log(`🎙️ Generating Rachel premium voice for success confirmation`);
         console.log(`📍 Appointment synced to: ${crmName}`);
 
@@ -975,9 +984,17 @@ const handleBookAppointment = async (req, res) => {
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&apos;');
 
+            // Client ID 32 gets custom message, others get standard message
+            let pollyMessage;
+            if (clientId === 32) {
+                pollyMessage = `Great news ${escapedName}. I've entered your appointment with ${escapedBusiness} for ${escapedDateTime}. Your appointment is currently pending an initial deposit. A specialist will contact you shortly to provide further assistance and complete the process. Thank you for calling, and we look forward to seeing you.`;
+            } else {
+                pollyMessage = `Great news ${escapedName}. I've successfully booked your appointment with ${escapedBusiness} for ${escapedDateTime}. Your confirmation code is ${confirmationCode}. You'll receive a text message confirmation shortly with all the details. Thank you for calling and we look forward to seeing you.`;
+            }
+
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="Polly.Joanna">Great news ${escapedName}. I've successfully booked your appointment with ${escapedBusiness} for ${escapedDateTime}. Your confirmation code is ${confirmationCode}. You'll receive a text message confirmation shortly with all the details. Thank you for calling and we look forward to seeing you.</Say>
+    <Say voice="Polly.Joanna">${pollyMessage}</Say>
     <Hangup/>
 </Response>`;
             console.log('📤 Sending SUCCESS TwiML (fallback to Polly) - appointment created');
