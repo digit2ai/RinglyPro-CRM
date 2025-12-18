@@ -1972,7 +1972,529 @@ router.post('/copilot/chat', async (req, res) => {
   }
 
   try {
-    console.log('🤖 Processing message for session:', sessionId);
+    console.log('🤖 Processing message for session:', sessionId, '| Type:', session.type);
+
+    // Prepare message variables for all handlers
+    const lowerMessage = message.toLowerCase();
+    let processMessage = lowerMessage; // Will be updated with correctedMessage for GHL
+
+    // =======================================================================
+    // HUBSPOT SESSION - Route BEFORE Claude AI (HubSpot has its own handlers)
+    // =======================================================================
+    if (session.type === 'hubspot') {
+      console.log('🔶 HubSpot session detected - using HubSpot-specific handlers');
+
+      // Show appointments / meetings
+      if (/show.*appointment|list.*appointment|my.*appointment|show.*meeting|list.*meeting|get.*meeting/i.test(lowerMessage)) {
+        console.log('📅 HubSpot: Getting meetings');
+        try {
+          const meetings = await session.proxy.callAPI('/crm/v3/objects/meetings', 'GET', null, {
+            limit: 20,
+            properties: 'hs_meeting_title,hs_meeting_start_time,hs_meeting_end_time,hs_meeting_outcome'
+          });
+
+          if (!meetings.results || meetings.results.length === 0) {
+            return res.json({
+              success: true,
+              response: '📭 No meetings found in HubSpot.',
+              data: []
+            });
+          }
+
+          let responseText = `📅 Found ${meetings.results.length} meeting(s) in HubSpot:\n\n`;
+          meetings.results.slice(0, 10).forEach((meeting, idx) => {
+            const props = meeting.properties;
+            const startTime = props.hs_meeting_start_time ? new Date(parseInt(props.hs_meeting_start_time)).toLocaleString() : 'TBD';
+            const title = props.hs_meeting_title || 'Untitled Meeting';
+            const status = props.hs_meeting_outcome || 'SCHEDULED';
+            responseText += `${idx + 1}. ${title}\n   📆 ${startTime}\n   Status: ${status}\n\n`;
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: meetings.results
+          });
+        } catch (error) {
+          console.error('❌ HubSpot meetings error:', error);
+          return res.json({
+            success: false,
+            response: `❌ Error fetching HubSpot meetings: ${error.message}`,
+            data: []
+          });
+        }
+      }
+
+      // Search contacts
+      if (/search.*contact|find.*contact|lookup.*contact/i.test(lowerMessage)) {
+        const queryMatch = lowerMessage.match(/(?:search|find|lookup)\s+contact[s]?\s+(?:for\s+)?(.+)/i);
+        const query = queryMatch ? queryMatch[1].trim() : '';
+
+        if (!query) {
+          return res.json({
+            success: true,
+            response: 'Please provide a search term.\n\nExample: "search contacts for john@example.com"'
+          });
+        }
+
+        try {
+          const contacts = await session.proxy.searchContacts(query, 10);
+          if (contacts.length === 0) {
+            return res.json({
+              success: true,
+              response: `No contacts found matching "${query}"`
+            });
+          }
+
+          let responseText = `Found ${contacts.length} contact(s):\n\n`;
+          contacts.forEach((contact, idx) => {
+            const props = contact.properties;
+            responseText += `${idx + 1}. ${props.firstname || ''} ${props.lastname || ''}\n`;
+            if (props.email) responseText += `   📧 ${props.email}\n`;
+            if (props.phone) responseText += `   📱 ${props.phone}\n`;
+            responseText += '\n';
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: contacts
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error searching contacts: ${error.message}`
+          });
+        }
+      }
+
+      // Create contact
+      if (/create.*contact|add.*contact|new.*contact/i.test(lowerMessage)) {
+        const emailMatch = lowerMessage.match(/[\w.-]+@[\w.-]+\.\w+/);
+        const nameMatch = lowerMessage.match(/(?:named?|called?)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)/i);
+
+        if (!emailMatch) {
+          return res.json({
+            success: true,
+            response: 'To create a HubSpot contact, I need at least an email address.\n\nExample: "create contact named John Smith email john@example.com"'
+          });
+        }
+
+        try {
+          const contactInfo = {
+            email: emailMatch[0],
+            firstName: nameMatch ? nameMatch[1].split(' ')[0] : '',
+            lastName: nameMatch ? nameMatch[1].split(' ').slice(1).join(' ') : ''
+          };
+
+          const result = await session.proxy.findOrCreateContact(contactInfo);
+          const status = result.isNew ? 'created' : 'found existing';
+
+          return res.json({
+            success: true,
+            response: `✅ Contact ${status}!\n\n👤 ${contactInfo.firstName} ${contactInfo.lastName}\n📧 ${contactInfo.email}\n🆔 ID: ${result.contact.id}`,
+            data: result.contact
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error creating contact: ${error.message}`
+          });
+        }
+      }
+
+      // Show deals
+      if (/show.*deal|list.*deal|my.*deal|show.*opportunit|list.*opportunit/i.test(lowerMessage)) {
+        try {
+          const deals = await session.proxy.getDeals();
+          if (!deals || deals.length === 0) {
+            return res.json({
+              success: true,
+              response: '📭 No deals found in HubSpot.',
+              data: []
+            });
+          }
+
+          let responseText = `💼 Found ${deals.length} deal(s):\n\n`;
+          deals.slice(0, 10).forEach((deal, idx) => {
+            const props = deal.properties;
+            responseText += `${idx + 1}. ${props.dealname || 'Untitled'}\n`;
+            if (props.amount) responseText += `   💰 $${props.amount}\n`;
+            if (props.dealstage) responseText += `   📊 Stage: ${props.dealstage}\n`;
+            responseText += '\n';
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: deals
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error fetching deals: ${error.message}`
+          });
+        }
+      }
+
+      // HubSpot help / available commands
+      if (/help|what can|commands|options/i.test(lowerMessage)) {
+        return res.json({
+          success: true,
+          response: `🔶 HubSpot CRM Commands:\n\n` +
+            `📅 **Meetings**\n` +
+            `• "Show my appointments"\n` +
+            `• "List meetings"\n\n` +
+            `👤 **Contacts**\n` +
+            `• "Search contacts for john@example.com"\n` +
+            `• "Create contact named John email john@test.com"\n` +
+            `• "Find contact by phone 555-1234"\n\n` +
+            `💼 **Deals**\n` +
+            `• "Show deals"\n` +
+            `• "List opportunities"\n\n` +
+            `Note: HubSpot uses different APIs than GoHighLevel. Some features may vary.`,
+          suggestions: [
+            'Show my appointments',
+            'Search contacts for test',
+            'Create contact email test@example.com',
+            'Show deals'
+          ]
+        });
+      }
+
+      // Default HubSpot response for unrecognized commands
+      return res.json({
+        success: true,
+        response: `I'm connected to HubSpot! Here's what I can help with:\n\n` +
+          `• Show my appointments\n` +
+          `• Search contacts for [email/name]\n` +
+          `• Create contact named [name] email [email]\n` +
+          `• Show deals\n\n` +
+          `Type "help" for more commands.`,
+        suggestions: [
+          'Show my appointments',
+          'Search contacts',
+          'Create contact',
+          'Show deals',
+          'Help'
+        ]
+      });
+    }
+
+    // =======================================================================
+    // VAGARO SESSION - Route BEFORE Claude AI (Vagaro has its own handlers)
+    // =======================================================================
+    if (session.type === 'vagaro') {
+      console.log('💜 Vagaro session detected - using Vagaro-specific handlers');
+
+      // Show appointments
+      if (/show.*appointment|list.*appointment|my.*appointment|upcoming.*appointment|today.*appointment/i.test(lowerMessage)) {
+        console.log('📅 Vagaro: Getting appointments');
+        try {
+          const appointments = await session.proxy.getAppointments();
+
+          if (!appointments || appointments.length === 0) {
+            return res.json({
+              success: true,
+              response: '📭 No upcoming appointments found in Vagaro.',
+              data: []
+            });
+          }
+
+          let responseText = `📅 Found ${appointments.length} appointment(s) in Vagaro:\n\n`;
+          appointments.slice(0, 10).forEach((appt, idx) => {
+            const date = appt.date ? new Date(appt.date).toLocaleDateString() : 'TBD';
+            const time = appt.time || appt.startTime || '';
+            const customer = appt.customer?.name || appt.customerName || 'Unknown';
+            const service = appt.service?.name || appt.serviceName || 'Service';
+            const status = appt.status || 'scheduled';
+            responseText += `${idx + 1}. ${service} - ${customer}\n`;
+            responseText += `   📆 ${date} ${time}\n`;
+            responseText += `   Status: ${status}\n\n`;
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: appointments
+          });
+        } catch (error) {
+          console.error('❌ Vagaro appointments error:', error);
+          return res.json({
+            success: false,
+            response: `❌ Error fetching Vagaro appointments: ${error.message}`,
+            data: []
+          });
+        }
+      }
+
+      // Search customers
+      if (/search.*customer|find.*customer|lookup.*customer|search.*client|find.*client/i.test(lowerMessage)) {
+        const queryMatch = lowerMessage.match(/(?:search|find|lookup)\s+(?:customer|client)[s]?\s+(?:for\s+)?(.+)/i);
+        const query = queryMatch ? queryMatch[1].trim() : '';
+
+        if (!query) {
+          return res.json({
+            success: true,
+            response: 'Please provide a search term.\n\nExample: "search customers for john@example.com" or "find client 555-1234"'
+          });
+        }
+
+        try {
+          const customers = await session.proxy.searchCustomers(query, 10);
+          if (customers.length === 0) {
+            return res.json({
+              success: true,
+              response: `No customers found matching "${query}"`
+            });
+          }
+
+          let responseText = `Found ${customers.length} customer(s):\n\n`;
+          customers.forEach((customer, idx) => {
+            const name = `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Unnamed';
+            responseText += `${idx + 1}. ${name}\n`;
+            if (customer.email) responseText += `   📧 ${customer.email}\n`;
+            if (customer.phone) responseText += `   📱 ${customer.phone}\n`;
+            responseText += '\n';
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: customers
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error searching customers: ${error.message}`
+          });
+        }
+      }
+
+      // Create customer
+      if (/create.*customer|add.*customer|new.*customer|create.*client|add.*client/i.test(lowerMessage)) {
+        const emailMatch = lowerMessage.match(/[\w.-]+@[\w.-]+\.\w+/);
+        const phoneMatch = lowerMessage.match(/\d{10}|\(\d{3}\)\s*\d{3}[-.]?\d{4}/);
+        const nameMatch = lowerMessage.match(/(?:named?|called?)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)/i);
+
+        if (!emailMatch && !phoneMatch) {
+          return res.json({
+            success: true,
+            response: 'To create a Vagaro customer, I need at least a phone number or email.\n\nExample: "create customer named John Smith phone 555-123-4567"'
+          });
+        }
+
+        try {
+          const customerData = {};
+          if (nameMatch) {
+            const fullName = nameMatch[1].trim();
+            const names = fullName.split(/\s+/);
+            customerData.firstName = names[0];
+            if (names.length > 1) customerData.lastName = names.slice(1).join(' ');
+          }
+          if (emailMatch) customerData.email = emailMatch[0];
+          if (phoneMatch) customerData.phone = phoneMatch[0].replace(/\D/g, '');
+
+          const result = await session.proxy.findOrCreateCustomer(customerData);
+          const status = result.isNew ? 'created' : 'found existing';
+
+          return res.json({
+            success: true,
+            response: `✅ Customer ${status}!\n\n👤 ${customerData.firstName || ''} ${customerData.lastName || ''}\n📧 ${customerData.email || 'N/A'}\n📱 ${customerData.phone || 'N/A'}\n🆔 ID: ${result.customer.id}`,
+            data: result.customer
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error creating customer: ${error.message}`
+          });
+        }
+      }
+
+      // Show services
+      if (/show.*service|list.*service|available.*service|what.*service/i.test(lowerMessage)) {
+        try {
+          const services = await session.proxy.getServices();
+
+          if (!services || services.length === 0) {
+            return res.json({
+              success: true,
+              response: '📭 No services found in Vagaro.',
+              data: []
+            });
+          }
+
+          let responseText = `💇 Found ${services.length} service(s):\n\n`;
+          services.slice(0, 15).forEach((service, idx) => {
+            responseText += `${idx + 1}. ${service.name || 'Unnamed Service'}\n`;
+            if (service.duration) responseText += `   ⏱️ ${service.duration} min\n`;
+            if (service.price) responseText += `   💰 $${service.price}\n`;
+            responseText += '\n';
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: services
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error fetching services: ${error.message}`
+          });
+        }
+      }
+
+      // Show employees/providers
+      if (/show.*employee|list.*employee|show.*provider|list.*provider|show.*staff|list.*staff/i.test(lowerMessage)) {
+        try {
+          const employees = await session.proxy.getEmployees();
+
+          if (!employees || employees.length === 0) {
+            return res.json({
+              success: true,
+              response: '📭 No employees/providers found in Vagaro.',
+              data: []
+            });
+          }
+
+          let responseText = `👥 Found ${employees.length} employee(s):\n\n`;
+          employees.forEach((emp, idx) => {
+            const name = emp.name || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || 'Unnamed';
+            responseText += `${idx + 1}. ${name}\n`;
+            if (emp.title || emp.role) responseText += `   💼 ${emp.title || emp.role}\n`;
+            if (emp.email) responseText += `   📧 ${emp.email}\n`;
+            responseText += '\n';
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: employees
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error fetching employees: ${error.message}`
+          });
+        }
+      }
+
+      // Show locations
+      if (/show.*location|list.*location|where.*location|business.*location/i.test(lowerMessage)) {
+        try {
+          const locations = await session.proxy.getLocations();
+
+          if (!locations || locations.length === 0) {
+            return res.json({
+              success: true,
+              response: '📭 No locations found in Vagaro.',
+              data: []
+            });
+          }
+
+          let responseText = `📍 Found ${locations.length} location(s):\n\n`;
+          locations.forEach((loc, idx) => {
+            responseText += `${idx + 1}. ${loc.name || 'Main Location'}\n`;
+            if (loc.address) responseText += `   📫 ${loc.address}\n`;
+            if (loc.phone) responseText += `   📱 ${loc.phone}\n`;
+            responseText += '\n';
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: locations
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error fetching locations: ${error.message}`
+          });
+        }
+      }
+
+      // Cancel appointment
+      if (/cancel.*appointment/i.test(lowerMessage)) {
+        const idMatch = lowerMessage.match(/(?:appointment|id)\s+(\w+)/i);
+
+        if (!idMatch) {
+          return res.json({
+            success: true,
+            response: 'Please provide the appointment ID to cancel.\n\nExample: "cancel appointment 12345"\n\nUse "show my appointments" to see appointment IDs.'
+          });
+        }
+
+        try {
+          await session.proxy.cancelAppointment(idMatch[1]);
+          return res.json({
+            success: true,
+            response: `✅ Appointment ${idMatch[1]} has been cancelled.`
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error cancelling appointment: ${error.message}`
+          });
+        }
+      }
+
+      // Vagaro help / available commands
+      if (/help|what can|commands|options/i.test(lowerMessage)) {
+        return res.json({
+          success: true,
+          response: `💜 Vagaro Salon/Spa Commands:\n\n` +
+            `📅 **Appointments**\n` +
+            `• "Show my appointments"\n` +
+            `• "List upcoming appointments"\n` +
+            `• "Cancel appointment [ID]"\n\n` +
+            `👤 **Customers**\n` +
+            `• "Search customers for john@example.com"\n` +
+            `• "Find client by phone 555-1234"\n` +
+            `• "Create customer named John phone 555-1234"\n\n` +
+            `💇 **Services**\n` +
+            `• "Show services"\n` +
+            `• "List available services"\n\n` +
+            `👥 **Staff**\n` +
+            `• "Show employees"\n` +
+            `• "List providers"\n\n` +
+            `📍 **Locations**\n` +
+            `• "Show locations"\n\n` +
+            `Note: Vagaro is designed for salon/spa scheduling. Customer = Contact in other CRMs.`,
+          suggestions: [
+            'Show my appointments',
+            'Search customers for test',
+            'Show services',
+            'Show employees',
+            'Help'
+          ]
+        });
+      }
+
+      // Default Vagaro response for unrecognized commands
+      return res.json({
+        success: true,
+        response: `I'm connected to Vagaro! Here's what I can help with:\n\n` +
+          `• Show my appointments\n` +
+          `• Search customers for [phone/email/name]\n` +
+          `• Create customer named [name] phone [number]\n` +
+          `• Show services\n` +
+          `• Show employees\n` +
+          `• Show locations\n\n` +
+          `Type "help" for more commands.`,
+        suggestions: [
+          'Show my appointments',
+          'Search customers',
+          'Show services',
+          'Show employees',
+          'Help'
+        ]
+      });
+    }
+
+    // =======================================================================
+    // GOHIGHLEVEL SESSION - Use Claude AI for intelligent conversation
+    // =======================================================================
 
     // Check if Claude AI is enabled
     const useClaudeAI = process.env.ENABLE_CLAUDE_AI === 'true';
@@ -2922,7 +3444,7 @@ No text in image.`;
     let response = "I'm here to help! Try asking me to search contacts, view deals, list calendars, or show location info.";
     let data = null;
 
-    const lowerMessage = message.toLowerCase();
+    // lowerMessage already declared at top of try block
 
     // Typo correction helper
     function levenshtein(a, b) {
@@ -2971,7 +3493,7 @@ No text in image.`;
       console.log(`🔧 Original: "${lowerMessage}"`);
       console.log(`✨ Corrected: "${correctedMessage}"`);
     }
-    const processMessage = correctedMessage;
+    processMessage = correctedMessage; // Update for GHL handlers below
 
     // Helper function to format contacts as a clean bullet list
     function formatContactsList(contacts, maxDisplay = 20) {
