@@ -333,7 +333,10 @@ router.post('/voice/rachel/collect-datetime', async (req, res) => {
 });
 
 /**
- * Book appointment endpoint - would integrate with appointment booking system
+ * Book appointment endpoint - CRM-AWARE booking
+ * Routes to HubSpot, GHL, Vagaro, or local calendar based on client config
+ *
+ * KEY PRINCIPLE: Uses same booking logic as WhatsApp (unifiedBookingService)
  * Handle both GET (from redirects) and POST
  */
 const handleBookAppointment = async (req, res) => {
@@ -344,223 +347,149 @@ const handleBookAppointment = async (req, res) => {
         const appointmentDateTime = req.session.appointment_datetime || 'the requested time';
         const businessName = req.session.business_name || 'this business';
 
-        console.log(`📅 Booking appointment for client ${clientId}: ${prospectName} (${prospectPhone}) at ${appointmentDateTime}`);
+        console.log(`📅 [RACHEL-CRM-BOOKING] Booking appointment for client ${clientId}: ${prospectName} (${prospectPhone}) at ${appointmentDateTime}`);
+
+        // Import unified booking service (same as WhatsApp uses)
+        const unifiedBookingService = require('../services/unifiedBookingService');
 
         // Parse date and time from appointmentDateTime
         // Expected format: "tomorrow at 2pm" or "November 10th at 3pm"
-        const { Appointment } = require('../models');
         const moment = require('moment-timezone');
 
         let appointmentDate, appointmentTime;
-        let confirmationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-        try {
-            // Parse the date/time - handle common formats
-            const now = moment().tz('America/New_York');
-            let parsedDateTime = now.clone();
+        // Parse the date/time - handle common formats
+        const now = moment().tz('America/New_York');
+        let parsedDateTime = now.clone();
 
-            if (appointmentDateTime.toLowerCase().includes('tomorrow')) {
-                parsedDateTime.add(1, 'day');
-            } else if (appointmentDateTime.toLowerCase().includes('today')) {
-                // Keep as today
-            } else {
-                // Try to parse actual date
-                parsedDateTime = moment(appointmentDateTime, ['MMMM Do [at] ha', 'MMMM D [at] ha', 'MMM D [at] ha']);
-                if (!parsedDateTime.isValid()) {
-                    // Default to tomorrow if can't parse
-                    parsedDateTime = now.clone().add(1, 'day');
-                }
+        if (appointmentDateTime.toLowerCase().includes('tomorrow')) {
+            parsedDateTime.add(1, 'day');
+        } else if (appointmentDateTime.toLowerCase().includes('today')) {
+            // Keep as today
+        } else {
+            // Try to parse actual date
+            parsedDateTime = moment(appointmentDateTime, ['MMMM Do [at] ha', 'MMMM D [at] ha', 'MMM D [at] ha']);
+            if (!parsedDateTime.isValid()) {
+                // Default to tomorrow if can't parse
+                parsedDateTime = now.clone().add(1, 'day');
+            }
+        }
+
+        // Extract time - handle various formats: "10am", "10 am", "10 a.m.", "10a.m."
+        const timeMatch = appointmentDateTime.match(/(\d{1,2})\s*(?:a\.?m\.?|p\.?m\.?)/i);
+        if (timeMatch) {
+            let hour = parseInt(timeMatch[0].match(/\d{1,2}/)[0]);
+            const isPM = /p\.?m\.?/i.test(timeMatch[0]);
+            const isAM = /a\.?m\.?/i.test(timeMatch[0]);
+
+            if (isPM && hour !== 12) {
+                hour += 12;  // Convert PM to 24-hour (except 12pm stays 12)
+            } else if (isAM && hour === 12) {
+                hour = 0;  // 12am = midnight = 00:00
             }
 
-            // Extract time - handle various formats: "10am", "10 am", "10 a.m.", "10a.m."
-            const timeMatch = appointmentDateTime.match(/(\d{1,2})\s*(?:a\.?m\.?|p\.?m\.?)/i);
-            if (timeMatch) {
-                let hour = parseInt(timeMatch[0].match(/\d{1,2}/)[0]);
-                const isPM = /p\.?m\.?/i.test(timeMatch[0]);
-                const isAM = /a\.?m\.?/i.test(timeMatch[0]);
+            parsedDateTime.hour(hour).minute(0).second(0);
+            console.log(`⏰ Time parsed: ${timeMatch[0]} → ${hour}:00 (isPM: ${isPM}, isAM: ${isAM})`);
+        } else {
+            // Default to 2pm if no time specified
+            parsedDateTime.hour(14).minute(0).second(0);
+            console.log(`⏰ No time found in "${appointmentDateTime}", defaulting to 2pm`);
+        }
 
-                if (isPM && hour !== 12) {
-                    hour += 12;  // Convert PM to 24-hour (except 12pm stays 12)
-                } else if (isAM && hour === 12) {
-                    hour = 0;  // 12am = midnight = 00:00
-                }
+        appointmentDate = parsedDateTime.format('YYYY-MM-DD');
+        appointmentTime = parsedDateTime.format('HH:mm');  // HH:mm for unified service
 
-                parsedDateTime.hour(hour).minute(0).second(0);
-                console.log(`⏰ Time parsed: ${timeMatch[0]} → ${hour}:00 (isPM: ${isPM}, isAM: ${isAM})`);
-            } else {
-                // Default to 2pm if no time specified
-                parsedDateTime.hour(14).minute(0).second(0);
-                console.log(`⏰ No time found in "${appointmentDateTime}", defaulting to 2pm`);
-            }
+        console.log(`📆 Parsed appointment: date=${appointmentDate}, time=${appointmentTime}`);
 
-            appointmentDate = parsedDateTime.format('YYYY-MM-DD');
-            appointmentTime = parsedDateTime.format('HH:mm:ss');
+        // Validate required data
+        if (!clientId) {
+            throw new Error('Missing clientId - cannot create appointment');
+        }
 
-            console.log(`📆 Parsed appointment: date=${appointmentDate}, time=${appointmentTime}`);
+        // ============= CHECK AVAILABILITY VIA UNIFIED SERVICE =============
+        console.log(`🔍 [RACHEL-CRM-BOOKING] Checking availability via unified service...`);
+        const availabilityResult = await unifiedBookingService.getAvailableSlots(clientId, appointmentDate);
 
-            // Validate required data
-            if (!clientId) {
-                throw new Error('Missing clientId - cannot create appointment');
-            }
+        console.log(`📋 [RACHEL-CRM-BOOKING] Availability check: source=${availabilityResult.source}, slots=${availabilityResult.slots?.length || 0}`);
 
-            // ============= CHECK AVAILABILITY FIRST =============
-            const { Op } = require('sequelize');
-            const existingAppointment = await Appointment.findOne({
-                where: {
-                    clientId: clientId,
-                    appointmentDate: appointmentDate,
-                    appointmentTime: appointmentTime,
-                    status: {
-                        [Op.in]: ['confirmed', 'pending', 'scheduled']
-                    }
-                }
+        // Check if requested time is available
+        const requestedTimeHHmm = appointmentTime;
+        const isSlotAvailable = availabilityResult.slots?.some(slot => {
+            const slotTime = slot.time24 || slot.startTime?.substring(11, 16);
+            return slotTime === requestedTimeHHmm;
+        });
+
+        if (!isSlotAvailable && availabilityResult.slots?.length > 0) {
+            console.log(`⚠️ [RACHEL-CRM-BOOKING] Time slot ${appointmentDate} ${appointmentTime} NOT available in ${availabilityResult.source}`);
+
+            // Format available slots for speech
+            const formatTimeForSpeech = (timeStr) => {
+                const [hours, minutes] = timeStr.split(':');
+                let hour = parseInt(hours);
+                const isPM = hour >= 12;
+                if (hour > 12) hour -= 12;
+                if (hour === 0) hour = 12;
+                const period = isPM ? 'PM' : 'AM';
+                return minutes === '00' ? `${hour} ${period}` : `${hour}:${minutes} ${period}`;
+            };
+
+            const availableSlots = availabilityResult.slots.slice(0, 3).map(slot => {
+                const time = slot.time24 || slot.startTime?.substring(11, 16);
+                return formatTimeForSpeech(time);
             });
 
-            if (existingAppointment) {
-                console.log(`⚠️ Time slot ${appointmentDate} ${appointmentTime} already booked!`);
+            const escapedName = (prospectName || 'friend')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
 
-                // Find available slots for the same day
-                const bookedAppointments = await Appointment.findAll({
-                    where: {
-                        clientId: clientId,
-                        appointmentDate: appointmentDate,
-                        status: {
-                            [Op.in]: ['confirmed', 'pending', 'scheduled']
-                        }
-                    },
-                    attributes: ['appointmentTime'],
-                    order: [['appointmentTime', 'ASC']]
-                });
+            let errorTwiml;
+            if (availableSlots.length > 0) {
+                const suggestionText = availableSlots.length === 1
+                    ? availableSlots[0]
+                    : availableSlots.length === 2
+                    ? `${availableSlots[0]} or ${availableSlots[1]}`
+                    : `${availableSlots[0]}, ${availableSlots[1]}, or ${availableSlots[2]}`;
 
-                const bookedTimes = bookedAppointments.map(apt => apt.appointmentTime);
-                console.log(`📋 Booked times for ${appointmentDate}:`, bookedTimes);
-
-                // Business hours - typical slots (9am-5pm, 30-min intervals)
-                const allSlots = [
-                    '09:00:00', '09:30:00', '10:00:00', '10:30:00', '11:00:00', '11:30:00',
-                    '12:00:00', '12:30:00', '13:00:00', '13:30:00', '14:00:00', '14:30:00',
-                    '15:00:00', '15:30:00', '16:00:00', '16:30:00', '17:00:00'
-                ];
-
-                const availableSlots = allSlots.filter(slot => !bookedTimes.includes(slot));
-                console.log(`✅ Available slots for ${appointmentDate}:`, availableSlots);
-
-                const escapedName = (prospectName || 'friend')
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;')
-                    .replace(/'/g, '&apos;');
-
-                let errorTwiml;
-
-                if (availableSlots.length > 0) {
-                    // Format first 3 available slots for speech
-                    const formatTimeForSpeech = (timeStr) => {
-                        const [hours, minutes] = timeStr.split(':');
-                        let hour = parseInt(hours);
-                        const isPM = hour >= 12;
-                        if (hour > 12) hour -= 12;
-                        if (hour === 0) hour = 12;
-                        const period = isPM ? 'PM' : 'AM';
-
-                        if (minutes === '00') {
-                            return `${hour} ${period}`;
-                        } else {
-                            return `${hour}:${minutes} ${period}`;
-                        }
-                    };
-
-                    const suggestions = availableSlots.slice(0, 3).map(formatTimeForSpeech);
-                    const suggestionText = suggestions.length === 1
-                        ? suggestions[0]
-                        : suggestions.length === 2
-                        ? `${suggestions[0]} or ${suggestions[1]}`
-                        : `${suggestions[0]}, ${suggestions[1]}, or ${suggestions[2]}`;
-
-                    errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+                errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="Polly.Joanna">I'm sorry ${escapedName}, that time slot is already booked. We have availability at ${suggestionText}. Please call back to schedule one of these times. Thank you.</Say>
+    <Say voice="Polly.Joanna">I'm sorry ${escapedName}, that time slot is not available. We have availability at ${suggestionText}. Please call back to schedule one of these times. Thank you.</Say>
     <Hangup/>
 </Response>`;
-                } else {
-                    errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+            } else {
+                errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="Polly.Joanna">I'm sorry ${escapedName}, that time slot is already booked and we are fully booked for that day. Please call back to schedule for another day. Thank you.</Say>
+    <Say voice="Polly.Joanna">I'm sorry ${escapedName}, we are fully booked for that day. Please call back to schedule for another day. Thank you.</Say>
     <Hangup/>
 </Response>`;
-                }
-
-                console.log('📤 Sending SLOT UNAVAILABLE TwiML (English)');
-                res.set('Content-Type', 'text/xml; charset=utf-8');
-                return res.send(errorTwiml);
             }
 
-            console.log(`✅ Time slot ${appointmentDate} ${appointmentTime} is available!`);
-            console.log(`📋 Creating appointment: clientId=${clientId}, name="${prospectName}", phone="${prospectPhone}"`);
+            console.log('📤 Sending SLOT UNAVAILABLE TwiML');
+            res.set('Content-Type', 'text/xml; charset=utf-8');
+            return res.send(errorTwiml);
+        }
 
-            // Create appointment in database
-            const appointment = await Appointment.create({
-                clientId: clientId,
-                customerName: prospectName || 'Unknown',
-                customerPhone: prospectPhone || 'Unknown',
-                appointmentDate: appointmentDate,
-                appointmentTime: appointmentTime,
-                duration: 30,
-                status: 'confirmed',
-                confirmationCode: confirmationCode,
-                source: 'voice_booking'
-            });
+        // ============= BOOK VIA UNIFIED SERVICE =============
+        console.log(`✅ [RACHEL-CRM-BOOKING] Time slot available! Booking via unified service...`);
 
-            console.log(`✅✅✅ APPOINTMENT CREATED SUCCESSFULLY! ✅✅✅`);
-            console.log(`   📌 ID: ${appointment.id}`);
-            console.log(`   🏢 Client: ${clientId}`);
-            console.log(`   👤 Customer: ${prospectName} (${prospectPhone})`);
-            console.log(`   📅 DateTime: ${appointmentDate} ${appointmentTime}`);
-            console.log(`   🔑 Confirmation: ${confirmationCode}`);
+        const bookingResult = await unifiedBookingService.bookAppointment(clientId, {
+            customerName: prospectName || 'Unknown',
+            customerPhone: prospectPhone || '',
+            customerEmail: null,
+            date: appointmentDate,
+            time: appointmentTime,
+            service: 'Voice Booking',
+            notes: `Booked via Rachel voice assistant`,
+            source: 'voice_booking'
+        });
 
-            // Send SMS confirmation
-            try {
-                const { Client } = require('../models');
-                const client = await Client.findByPk(clientId);
+        console.log(`📋 [RACHEL-CRM-BOOKING] Booking result:`, JSON.stringify(bookingResult, null, 2));
 
-                if (client && client.ringlypro_number) {
-                    console.log(`📱 Sending SMS confirmation to ${prospectPhone}`);
-
-                    const smsResult = await sendAppointmentConfirmation({
-                        customerPhone: prospectPhone,
-                        customerName: prospectName,
-                        appointmentDate: appointmentDate,
-                        appointmentTime: appointmentTime,
-                        confirmationCode: confirmationCode,
-                        businessName: businessName,
-                        fromNumber: client.ringlypro_number
-                    });
-
-                    if (smsResult.success) {
-                        console.log(`✅ SMS confirmation sent! SID: ${smsResult.messageSid}`);
-                    } else {
-                        console.error(`❌ SMS failed: ${smsResult.error}`);
-                    }
-                } else {
-                    console.warn(`⚠️  Cannot send SMS - client ${clientId} has no RinglyPro number`);
-                }
-            } catch (smsError) {
-                console.error(`❌ Error sending SMS notification:`, smsError);
-                // Don't fail the appointment if SMS fails
-            }
-
-        } catch (dbError) {
-            console.error('❌❌❌ ERROR CREATING APPOINTMENT ❌❌❌');
-            console.error(`   Error message: ${dbError.message}`);
-            console.error(`   Full error:`, dbError);
-            console.error(`   Session: clientId=${clientId}, name="${prospectName}", phone="${prospectPhone}"`);
-
-            const isDuplicateSlot = dbError.message && (
-                dbError.message.includes('unique_time_slot_per_client') ||
-                dbError.message.includes('duplicate key') ||
-                dbError.message.includes('unique constraint')
-            );
+        if (!bookingResult.success) {
+            // Booking failed
+            console.error(`❌ [RACHEL-CRM-BOOKING] Booking failed: ${bookingResult.error}`);
 
             const escapedName = (prospectName || 'there')
                 .replace(/&/g, '&amp;')
@@ -570,75 +499,12 @@ const handleBookAppointment = async (req, res) => {
                 .replace(/'/g, '&apos;');
 
             let errorTwiml;
-
-            if (isDuplicateSlot) {
-                // Try to find available slots for the same day
-                try {
-                    const { Op } = require('sequelize');
-                    const bookedAppointments = await Appointment.findAll({
-                        where: {
-                            clientId: clientId,
-                            appointmentDate: appointmentDate,
-                            status: {
-                                [Op.in]: ['confirmed', 'pending', 'scheduled']
-                            }
-                        },
-                        attributes: ['appointmentTime'],
-                        order: [['appointmentTime', 'ASC']]
-                    });
-
-                    const bookedTimes = bookedAppointments.map(apt => apt.appointmentTime);
-                    console.log(`📋 Booked times for ${appointmentDate}:`, bookedTimes);
-
-                    // Business hours - typical slots (9am-5pm, 30-min intervals)
-                    const allSlots = [
-                        '09:00:00', '09:30:00', '10:00:00', '10:30:00', '11:00:00', '11:30:00',
-                        '12:00:00', '12:30:00', '13:00:00', '13:30:00', '14:00:00', '14:30:00',
-                        '15:00:00', '15:30:00', '16:00:00', '16:30:00', '17:00:00'
-                    ];
-
-                    const availableSlots = allSlots.filter(slot => !bookedTimes.includes(slot));
-                    console.log(`✅ Available slots for ${appointmentDate}:`, availableSlots);
-
-                    if (availableSlots.length > 0) {
-                        // Format first 3 available slots for speech
-                        const formatTimeForSpeech = (timeStr) => {
-                            const [hours, minutes] = timeStr.split(':');
-                            let hour = parseInt(hours);
-                            const isPM = hour >= 12;
-                            if (hour > 12) hour -= 12;
-                            if (hour === 0) hour = 12;
-                            const period = isPM ? 'PM' : 'AM';
-                            return minutes === '00' ? `${hour} ${period}` : `${hour} ${minutes} ${period}`;
-                        };
-
-                        const suggestions = availableSlots.slice(0, 3).map(formatTimeForSpeech);
-                        const suggestionText = suggestions.length === 1
-                            ? suggestions[0]
-                            : suggestions.length === 2
-                            ? `${suggestions[0]} or ${suggestions[1]}`
-                            : `${suggestions[0]}, ${suggestions[1]}, or ${suggestions[2]}`;
-
-                        errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+            if (bookingResult.slotConflict) {
+                errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="Polly.Joanna">I'm sorry ${escapedName}, that time slot is already booked. We have availability at ${suggestionText}. Please call back to schedule one of these times. Thank you.</Say>
+    <Say voice="Polly.Joanna">I'm sorry ${escapedName}, that time slot was just booked by someone else. Please call back to schedule a different time. Thank you.</Say>
     <Hangup/>
 </Response>`;
-                    } else {
-                        errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Say voice="Polly.Joanna">I'm sorry ${escapedName}, that time slot is already booked and we're fully booked for that day. Please call back to schedule a different day. Thank you.</Say>
-    <Hangup/>
-</Response>`;
-                    }
-                } catch (slotCheckError) {
-                    console.error('Error checking available slots:', slotCheckError);
-                    errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Say voice="Polly.Joanna">I'm sorry ${escapedName}, that time slot is already booked. Please call back to schedule a different time. Thank you.</Say>
-    <Hangup/>
-</Response>`;
-                }
             } else {
                 errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -647,14 +513,63 @@ const handleBookAppointment = async (req, res) => {
 </Response>`;
             }
 
-            console.log('📤 Sending ERROR TwiML - appointment creation failed');
+            console.log('📤 Sending ERROR TwiML - booking failed');
             res.set('Content-Type', 'text/xml; charset=utf-8');
             return res.send(errorTwiml);
         }
 
+        // ============= BOOKING SUCCESS =============
+        const confirmationCode = bookingResult.confirmationCode;
+        const crmSystem = bookingResult.system;
+
+        console.log(`✅✅✅ [RACHEL-CRM-BOOKING] APPOINTMENT CREATED SUCCESSFULLY! ✅✅✅`);
+        console.log(`   🏢 Client: ${clientId}`);
+        console.log(`   👤 Customer: ${prospectName} (${prospectPhone})`);
+        console.log(`   📅 DateTime: ${appointmentDate} ${appointmentTime}`);
+        console.log(`   🔑 Confirmation: ${confirmationCode}`);
+        console.log(`   📍 CRM System: ${crmSystem}`);
+        if (bookingResult.meetingId) console.log(`   🔗 HubSpot Meeting: ${bookingResult.meetingId}`);
+        if (bookingResult.vagaroAppointmentId) console.log(`   🔗 Vagaro Appointment: ${bookingResult.vagaroAppointmentId}`);
+
+        // Send SMS confirmation
+        try {
+            const { Client } = require('../models');
+            const client = await Client.findByPk(clientId);
+
+            if (client && client.ringlypro_number && prospectPhone) {
+                console.log(`📱 Sending SMS confirmation to ${prospectPhone}`);
+
+                const smsResult = await sendAppointmentConfirmation({
+                    customerPhone: prospectPhone,
+                    customerName: prospectName,
+                    appointmentDate: appointmentDate,
+                    appointmentTime: appointmentTime,
+                    confirmationCode: confirmationCode,
+                    businessName: businessName,
+                    fromNumber: client.ringlypro_number
+                });
+
+                if (smsResult.success) {
+                    console.log(`✅ SMS confirmation sent! SID: ${smsResult.messageSid}`);
+                } else {
+                    console.error(`❌ SMS failed: ${smsResult.error}`);
+                }
+            } else {
+                console.warn(`⚠️ Cannot send SMS - missing phone or RinglyPro number`);
+            }
+        } catch (smsError) {
+            console.error(`❌ Error sending SMS notification:`, smsError);
+            // Don't fail the appointment if SMS fails
+        }
+
         // Generate success confirmation with Rachel's premium voice
+        const crmName = crmSystem === 'hubspot' ? 'HubSpot' :
+                       crmSystem === 'ghl' ? 'GoHighLevel' :
+                       crmSystem === 'vagaro' ? 'Vagaro' : 'our system';
+
         const successMessage = `Great news ${prospectName || 'there'}. <break time="0.5s"/> I've successfully booked your appointment with ${businessName || 'this business'} for ${appointmentDateTime}. <break time="0.5s"/> Your confirmation code is ${confirmationCode}. <break time="0.5s"/> You'll receive a text message confirmation shortly with all the details. <break time="0.5s"/> Thank you for calling and we look forward to seeing you.`;
         console.log(`🎙️ Generating Rachel premium voice for success confirmation`);
+        console.log(`📍 Appointment synced to: ${crmName}`);
 
         const audioUrl = await rachelService.generateRachelAudio(successMessage);
 
@@ -699,7 +614,7 @@ const handleBookAppointment = async (req, res) => {
         }
 
     } catch (error) {
-        console.error('Error booking appointment:', error);
+        console.error('[RACHEL-CRM-BOOKING] Error booking appointment:', error);
 
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
