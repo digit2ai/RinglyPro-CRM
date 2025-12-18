@@ -1323,10 +1323,17 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
                     // LOOP PREVENTION: Forward to the client's actual forward_number instead
                     // This bypasses the AI agent since the call is IVR-originated
                     console.log(`⚠️ [IVR-LOOP-PREVENTION] Destination ${dept.phone} matches DID ${client.ringlypro_number}`);
-                    console.log(`📞 [IVR-LOOP-PREVENTION] Forwarding to client's forward_number: ${client.forward_number}`);
+                    console.log(`📞 [IVR-LOOP-PREVENTION] Checking forward_number: ${client.forward_number}`);
 
-                    if (client.forward_number) {
+                    // Also check that forward_number is different from DID (prevent another loop)
+                    const forwardPhone = normalizePhone(client.forward_number);
+                    const forwardIsSameDID = forwardPhone === didPhone ||
+                                             forwardPhone.endsWith(didPhone) ||
+                                             didPhone.endsWith(forwardPhone);
+
+                    if (client.forward_number && !forwardIsSameDID) {
                         // Forward to the client's configured forward number (bypasses AI)
+                        console.log(`✅ [IVR-LOOP-PREVENTION] Forwarding to safe number: ${client.forward_number}`);
                         twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="${voice}">${transferMsg}</Say>
@@ -1337,8 +1344,12 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
     <Hangup/>
 </Response>`;
                     } else {
-                        // No forward number configured - inform the caller
-                        console.log(`❌ [IVR-LOOP-PREVENTION] No forward_number configured for client ${clientId}`);
+                        // No safe forward number configured - inform the caller
+                        if (forwardIsSameDID) {
+                            console.log(`❌ [IVR-LOOP-PREVENTION] forward_number ${client.forward_number} also matches DID - cannot forward`);
+                        } else {
+                            console.log(`❌ [IVR-LOOP-PREVENTION] No forward_number configured for client ${clientId}`);
+                        }
                         const noForwardMsg = language === 'en'
                             ? `I'm sorry, ${dept.name} is not available at this time. Please try again later or leave a voicemail.`
                             : `Lo siento, ${dept.name} no está disponible en este momento. Por favor intente más tarde o deje un mensaje.`;

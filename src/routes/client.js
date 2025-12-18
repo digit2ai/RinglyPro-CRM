@@ -96,6 +96,83 @@ router.get('/debug/ghl-credentials', async (req, res) => {
     }
 });
 
+// DEBUG: Get IVR settings for a client (for loop prevention debugging)
+router.get('/debug/ivr/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { sequelize } = require('../models');
+
+        const [client] = await sequelize.query(
+            `SELECT id, business_name, ringlypro_number, forward_number,
+                    ivr_enabled, ivr_options
+             FROM clients
+             WHERE id = :client_id`,
+            {
+                replacements: { client_id },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (!client) {
+            return res.status(404).json({
+                success: false,
+                error: `Client ${client_id} not found`
+            });
+        }
+
+        // Analyze IVR options for potential loops
+        const normalizePhone = (phone) => (phone || '').replace(/\D/g, '');
+        const didPhone = normalizePhone(client.ringlypro_number);
+        const forwardPhone = normalizePhone(client.forward_number);
+
+        const ivrAnalysis = (client.ivr_options || []).map((opt, idx) => {
+            const optPhone = normalizePhone(opt.phone);
+            const matchesDID = optPhone === didPhone ||
+                               optPhone.endsWith(didPhone) ||
+                               didPhone.endsWith(optPhone);
+            const forwardMatchesDID = forwardPhone === didPhone ||
+                                       forwardPhone.endsWith(didPhone) ||
+                                       didPhone.endsWith(forwardPhone);
+
+            return {
+                index: idx,
+                name: opt.name,
+                phone: opt.phone,
+                enabled: opt.enabled,
+                normalized_phone: optPhone,
+                matches_did: matchesDID,
+                would_loop: matchesDID && (!client.forward_number || forwardMatchesDID),
+                safe_forward: matchesDID && client.forward_number && !forwardMatchesDID
+            };
+        });
+
+        res.json({
+            success: true,
+            client: {
+                id: client.id,
+                business_name: client.business_name,
+                ringlypro_number: client.ringlypro_number,
+                ringlypro_normalized: didPhone,
+                forward_number: client.forward_number,
+                forward_normalized: forwardPhone,
+                ivr_enabled: client.ivr_enabled
+            },
+            ivr_options: client.ivr_options,
+            ivr_analysis: ivrAnalysis,
+            warnings: ivrAnalysis.filter(opt => opt.would_loop).map(opt =>
+                `IVR option "${opt.name}" (${opt.phone}) would cause a loop - no safe forward number available`
+            )
+        });
+
+    } catch (error) {
+        console.error('Debug IVR error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // DEBUG: Get appointments for a client
 router.get('/debug/appointments/:client_id', async (req, res) => {
     try {
