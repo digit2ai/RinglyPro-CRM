@@ -3235,6 +3235,209 @@ No text in image.`;
       }
     }
 
+    // HUBSPOT SESSION - Handle HubSpot-specific commands
+    // HubSpot API differs from GHL - use HubSpot-specific methods
+    if (session.type === 'hubspot') {
+      console.log('🔶 HubSpot session - routing to HubSpot handlers');
+
+      // Show appointments / meetings
+      if (/show.*appointment|list.*appointment|my.*appointment|show.*meeting|list.*meeting|get.*meeting/i.test(lowerMessage)) {
+        console.log('📅 HubSpot: Getting meetings');
+        try {
+          // HubSpot uses meetings API, not calendars
+          const meetings = await session.proxy.callAPI('/crm/v3/objects/meetings', 'GET', null, {
+            limit: 20,
+            properties: 'hs_meeting_title,hs_meeting_start_time,hs_meeting_end_time,hs_meeting_outcome'
+          });
+
+          if (!meetings.results || meetings.results.length === 0) {
+            return res.json({
+              success: true,
+              response: '📭 No meetings found in HubSpot.',
+              data: []
+            });
+          }
+
+          let responseText = `📅 Found ${meetings.results.length} meeting(s) in HubSpot:\n\n`;
+          meetings.results.slice(0, 10).forEach((meeting, idx) => {
+            const props = meeting.properties;
+            const startTime = props.hs_meeting_start_time ? new Date(parseInt(props.hs_meeting_start_time)).toLocaleString() : 'TBD';
+            const title = props.hs_meeting_title || 'Untitled Meeting';
+            const status = props.hs_meeting_outcome || 'SCHEDULED';
+            responseText += `${idx + 1}. ${title}\n   📆 ${startTime}\n   Status: ${status}\n\n`;
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: meetings.results
+          });
+        } catch (error) {
+          console.error('❌ HubSpot meetings error:', error);
+          return res.json({
+            success: false,
+            response: `❌ Error fetching HubSpot meetings: ${error.message}`,
+            data: []
+          });
+        }
+      }
+
+      // Search contacts
+      if (/search.*contact|find.*contact|lookup.*contact/i.test(lowerMessage)) {
+        const queryMatch = lowerMessage.match(/(?:search|find|lookup)\s+contact[s]?\s+(?:for\s+)?(.+)/i);
+        const query = queryMatch ? queryMatch[1].trim() : '';
+
+        if (!query) {
+          return res.json({
+            success: true,
+            response: 'Please provide a search term.\n\nExample: "search contacts for john@example.com"'
+          });
+        }
+
+        try {
+          const contacts = await session.proxy.searchContacts(query, 10);
+          if (contacts.length === 0) {
+            return res.json({
+              success: true,
+              response: `No contacts found matching "${query}"`
+            });
+          }
+
+          let responseText = `Found ${contacts.length} contact(s):\n\n`;
+          contacts.forEach((contact, idx) => {
+            const props = contact.properties;
+            responseText += `${idx + 1}. ${props.firstname || ''} ${props.lastname || ''}\n`;
+            if (props.email) responseText += `   📧 ${props.email}\n`;
+            if (props.phone) responseText += `   📱 ${props.phone}\n`;
+            responseText += '\n';
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: contacts
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error searching contacts: ${error.message}`
+          });
+        }
+      }
+
+      // Create contact
+      if (/create.*contact|add.*contact|new.*contact/i.test(lowerMessage)) {
+        const emailMatch = lowerMessage.match(/[\w.-]+@[\w.-]+\.\w+/);
+        const nameMatch = lowerMessage.match(/(?:named?|called?)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)/i);
+
+        if (!emailMatch) {
+          return res.json({
+            success: true,
+            response: 'To create a HubSpot contact, I need at least an email address.\n\nExample: "create contact named John Smith email john@example.com"'
+          });
+        }
+
+        try {
+          const contactInfo = {
+            email: emailMatch[0],
+            firstName: nameMatch ? nameMatch[1].split(' ')[0] : '',
+            lastName: nameMatch ? nameMatch[1].split(' ').slice(1).join(' ') : ''
+          };
+
+          const result = await session.proxy.findOrCreateContact(contactInfo);
+          const status = result.isNew ? 'created' : 'found existing';
+
+          return res.json({
+            success: true,
+            response: `✅ Contact ${status}!\n\n👤 ${contactInfo.firstName} ${contactInfo.lastName}\n📧 ${contactInfo.email}\n🆔 ID: ${result.contact.id}`,
+            data: result.contact
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error creating contact: ${error.message}`
+          });
+        }
+      }
+
+      // HubSpot help / available commands
+      if (/help|what can|commands|options/i.test(lowerMessage)) {
+        return res.json({
+          success: true,
+          response: `🔶 HubSpot CRM Commands:\n\n` +
+            `📅 **Meetings**\n` +
+            `• "Show my appointments"\n` +
+            `• "List meetings"\n\n` +
+            `👤 **Contacts**\n` +
+            `• "Search contacts for john@example.com"\n` +
+            `• "Create contact named John email john@test.com"\n` +
+            `• "Find contact by phone 555-1234"\n\n` +
+            `💼 **Deals**\n` +
+            `• "Show deals"\n` +
+            `• "List opportunities"\n\n` +
+            `Note: HubSpot uses different APIs than GoHighLevel. Some features may vary.`,
+          suggestions: [
+            'Show my appointments',
+            'Search contacts for test',
+            'Create contact email test@example.com',
+            'Show deals'
+          ]
+        });
+      }
+
+      // Show deals
+      if (/show.*deal|list.*deal|my.*deal|show.*opportunit|list.*opportunit/i.test(lowerMessage)) {
+        try {
+          const deals = await session.proxy.getDeals();
+          if (!deals || deals.length === 0) {
+            return res.json({
+              success: true,
+              response: '📭 No deals found in HubSpot.',
+              data: []
+            });
+          }
+
+          let responseText = `💼 Found ${deals.length} deal(s):\n\n`;
+          deals.slice(0, 10).forEach((deal, idx) => {
+            const props = deal.properties;
+            responseText += `${idx + 1}. ${props.dealname || 'Untitled'}\n`;
+            if (props.amount) responseText += `   💰 $${props.amount}\n`;
+            if (props.dealstage) responseText += `   📊 Stage: ${props.dealstage}\n`;
+            responseText += '\n';
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: deals
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error fetching deals: ${error.message}`
+          });
+        }
+      }
+
+      // Default HubSpot response for unrecognized commands
+      return res.json({
+        success: true,
+        response: `I'm connected to HubSpot! Here's what I can help with:\n\n` +
+          `• Show my appointments\n` +
+          `• Search contacts for [email/name]\n` +
+          `• Create contact named [name] email [email]\n` +
+          `• Show deals\n\n` +
+          `Type "help" for more commands.`,
+        suggestions: [
+          'Show my appointments',
+          'Search contacts',
+          'Create contact',
+          'Show deals',
+          'Help'
+        ]
+      });
+    }
+
     // CREATE NEW CONTACT - Enhanced with schema patterns
     // Patterns: "Create a new contact named {name}", "Create contact {name}"
     if ((processMessage.includes('create') && processMessage.includes('contact')) ||
