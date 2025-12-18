@@ -103,7 +103,7 @@ router.get('/debug/ivr/:client_id', async (req, res) => {
         const { sequelize } = require('../models');
 
         const [client] = await sequelize.query(
-            `SELECT id, business_name, ringlypro_number, forward_number,
+            `SELECT id, business_name, ringlypro_number, business_phone,
                     ivr_enabled, ivr_options
              FROM clients
              WHERE id = :client_id`,
@@ -123,16 +123,16 @@ router.get('/debug/ivr/:client_id', async (req, res) => {
         // Analyze IVR options for potential loops
         const normalizePhone = (phone) => (phone || '').replace(/\D/g, '');
         const didPhone = normalizePhone(client.ringlypro_number);
-        const forwardPhone = normalizePhone(client.forward_number);
+        const businessPhone = normalizePhone(client.business_phone);
 
         const ivrAnalysis = (client.ivr_options || []).map((opt, idx) => {
             const optPhone = normalizePhone(opt.phone);
             const matchesDID = optPhone === didPhone ||
                                optPhone.endsWith(didPhone) ||
                                didPhone.endsWith(optPhone);
-            const forwardMatchesDID = forwardPhone === didPhone ||
-                                       forwardPhone.endsWith(didPhone) ||
-                                       didPhone.endsWith(forwardPhone);
+            const businessMatchesDID = businessPhone === didPhone ||
+                                        businessPhone.endsWith(didPhone) ||
+                                        didPhone.endsWith(businessPhone);
 
             return {
                 index: idx,
@@ -141,8 +141,8 @@ router.get('/debug/ivr/:client_id', async (req, res) => {
                 enabled: opt.enabled,
                 normalized_phone: optPhone,
                 matches_did: matchesDID,
-                would_loop: matchesDID && (!client.forward_number || forwardMatchesDID),
-                safe_forward: matchesDID && client.forward_number && !forwardMatchesDID
+                would_loop: matchesDID && (!client.business_phone || businessMatchesDID),
+                safe_forward: matchesDID && client.business_phone && !businessMatchesDID
             };
         });
 
@@ -153,14 +153,14 @@ router.get('/debug/ivr/:client_id', async (req, res) => {
                 business_name: client.business_name,
                 ringlypro_number: client.ringlypro_number,
                 ringlypro_normalized: didPhone,
-                forward_number: client.forward_number,
-                forward_normalized: forwardPhone,
+                business_phone: client.business_phone,
+                business_phone_normalized: businessPhone,
                 ivr_enabled: client.ivr_enabled
             },
             ivr_options: client.ivr_options,
             ivr_analysis: ivrAnalysis,
             warnings: ivrAnalysis.filter(opt => opt.would_loop).map(opt =>
-                `IVR option "${opt.name}" (${opt.phone}) would cause a loop - no safe forward number available`
+                `IVR option "${opt.name}" (${opt.phone}) would cause a loop - no safe business phone available`
             )
         });
 

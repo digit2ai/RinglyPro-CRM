@@ -595,21 +595,21 @@ router.post('/voice/rachel/transfer-specialist', async (req, res) => {
 
         let twiml;
 
-        if (client && client.forward_number) {
-            // Transfer to the business's forwarding number
-            console.log(`📞 [SLOT-FLOW] Transferring to ${client.forward_number}`);
+        if (client && client.business_phone) {
+            // Transfer to the client's business phone
+            console.log(`📞 [SLOT-FLOW] Transferring to ${client.business_phone}`);
             twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="Polly.Joanna">Please hold while I transfer you to a scheduling specialist.</Say>
     <Dial timeout="30" callerId="${client.ringlypro_number || ''}">
-        <Number>${client.forward_number}</Number>
+        <Number>${client.business_phone}</Number>
     </Dial>
     <Say voice="Polly.Joanna">I'm sorry, the transfer was unsuccessful. Please call back during business hours or leave a voicemail.</Say>
     <Redirect>/voice/rachel/voicemail</Redirect>
 </Response>`;
         } else {
-            // No transfer number - offer voicemail
-            console.log(`⚠️ [SLOT-FLOW] No transfer number for client ${clientId}, offering voicemail`);
+            // No business phone configured - offer voicemail
+            console.log(`⚠️ [SLOT-FLOW] No business_phone for client ${clientId}, offering voicemail`);
             twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="Polly.Joanna">I'm sorry, our scheduling specialists are not available right now. Would you like to leave a voicemail and we'll call you back?</Say>
@@ -1320,35 +1320,35 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
                 let twiml;
 
                 if (isSameDID) {
-                    // LOOP PREVENTION: Forward to the client's actual forward_number instead
+                    // LOOP PREVENTION: Forward to the client's business_phone instead
                     // This bypasses the AI agent since the call is IVR-originated
                     console.log(`⚠️ [IVR-LOOP-PREVENTION] Destination ${dept.phone} matches DID ${client.ringlypro_number}`);
-                    console.log(`📞 [IVR-LOOP-PREVENTION] Checking forward_number: ${client.forward_number}`);
+                    console.log(`📞 [IVR-LOOP-PREVENTION] Checking business_phone: ${client.business_phone}`);
 
-                    // Also check that forward_number is different from DID (prevent another loop)
-                    const forwardPhone = normalizePhone(client.forward_number);
-                    const forwardIsSameDID = forwardPhone === didPhone ||
-                                             forwardPhone.endsWith(didPhone) ||
-                                             didPhone.endsWith(forwardPhone);
+                    // Also check that business_phone is different from DID (prevent another loop)
+                    const businessPhone = normalizePhone(client.business_phone);
+                    const businessIsSameDID = businessPhone === didPhone ||
+                                              businessPhone.endsWith(didPhone) ||
+                                              didPhone.endsWith(businessPhone);
 
-                    if (client.forward_number && !forwardIsSameDID) {
-                        // Forward to the client's configured forward number (bypasses AI)
-                        console.log(`✅ [IVR-LOOP-PREVENTION] Forwarding to safe number: ${client.forward_number}`);
+                    if (client.business_phone && !businessIsSameDID) {
+                        // Forward to the client's business phone (bypasses AI)
+                        console.log(`✅ [IVR-LOOP-PREVENTION] Forwarding to safe number: ${client.business_phone}`);
                         twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="${voice}">${transferMsg}</Say>
     <Dial timeout="30" callerId="${client.ringlypro_number}">
-        <Number>${client.forward_number}</Number>
+        <Number>${client.business_phone}</Number>
     </Dial>
     <Say voice="${voice}">The transfer failed. Please try again later. Goodbye.</Say>
     <Hangup/>
 </Response>`;
                     } else {
                         // No safe forward number configured - inform the caller
-                        if (forwardIsSameDID) {
-                            console.log(`❌ [IVR-LOOP-PREVENTION] forward_number ${client.forward_number} also matches DID - cannot forward`);
+                        if (businessIsSameDID) {
+                            console.log(`❌ [IVR-LOOP-PREVENTION] business_phone ${client.business_phone} also matches DID - cannot forward`);
                         } else {
-                            console.log(`❌ [IVR-LOOP-PREVENTION] No forward_number configured for client ${clientId}`);
+                            console.log(`❌ [IVR-LOOP-PREVENTION] No business_phone configured for client ${clientId}`);
                         }
                         const noForwardMsg = language === 'en'
                             ? `I'm sorry, ${dept.name} is not available at this time. Please try again later or leave a voicemail.`
