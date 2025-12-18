@@ -1,4 +1,4 @@
-const COPILOT_VERSION = 'v128';
+const COPILOT_VERSION = 'v129';
 console.log(`🚀 MCP Copilot ${COPILOT_VERSION} loaded`);
 
 let sessionId = null;
