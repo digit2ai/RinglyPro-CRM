@@ -756,9 +756,12 @@ router.get('/crm-credentials/:client_id', async (req, res) => {
                     meeting_slug: client.hubspot_meeting_slug || null,
                     configured: hubspotConfigured
                 },
-                // Vagaro - stored in settings JSONB
+                // Vagaro - OAuth credentials stored in settings JSONB
                 vagaro: {
-                    merchant_id: vagaroSettings.merchantId || null,
+                    clientId: vagaroSettings.clientId || null,
+                    clientSecretKey: vagaroSettings.clientSecretKey || null,
+                    merchantId: vagaroSettings.merchantId || null,
+                    region: vagaroSettings.region || 'us01',
                     configured: vagaroConfigured
                 }
             }

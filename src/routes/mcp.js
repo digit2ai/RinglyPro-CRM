@@ -11,6 +11,7 @@ const tokenService = require('../services/tokenService');
 const projectRoot = path.join(__dirname, '../..');
 const HubSpotMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/hubspot-proxy'));
 const GoHighLevelMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/gohighlevel-proxy'));
+const VagaroMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/vagaro-proxy'));
 const BusinessCollectorMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/business-collector-proxy'));
 const WebhookManager = require(path.join(projectRoot, 'mcp-integrations/webhooks/webhook-manager'));
 const WorkflowEngine = require(path.join(projectRoot, 'mcp-integrations/workflows/workflow-engine'));
@@ -1160,6 +1161,66 @@ router.post('/gohighlevel/connect', async (req, res) => {
     res.status(400).json({
       success: false,
       error: error.message || 'Failed to connect to GoHighLevel'
+    });
+  }
+});
+
+// Vagaro connection
+router.post('/vagaro/connect', async (req, res) => {
+  console.log('🔗 Vagaro connection request received');
+  const { clientId, clientSecretKey, merchantId, region } = req.body;
+
+  // DEBUG: Log what we received (mask secrets)
+  console.log('🔍 DEBUG - Vagaro Client ID:', clientId ? `${clientId.substring(0, 8)}...` : 'MISSING');
+  console.log('🔍 DEBUG - Vagaro Merchant ID:', merchantId || 'MISSING');
+  console.log('🔍 DEBUG - Vagaro Region:', region || 'us01 (default)');
+
+  if (!clientId || !clientSecretKey || !merchantId) {
+    console.error('❌ Missing Vagaro credentials');
+    return res.status(400).json({
+      success: false,
+      error: 'Vagaro OAuth credentials are required: clientId, clientSecretKey, and merchantId'
+    });
+  }
+
+  try {
+    const credentials = {
+      clientId,
+      clientSecretKey,
+      merchantId,
+      region: region || 'us01'
+    };
+
+    const proxy = new VagaroMCPProxy(credentials);
+
+    // Test connection by getting locations
+    const connectionTest = await proxy.testConnection();
+    if (!connectionTest.success) {
+      throw new Error(connectionTest.message || 'Failed to connect to Vagaro');
+    }
+
+    const sessionId = `vagaro_${Date.now()}`;
+
+    sessions.set(sessionId, {
+      type: 'vagaro',
+      proxy,
+      credentials, // Store for command handlers
+      createdAt: new Date()
+    });
+
+    console.log('✅ Vagaro connected, session:', sessionId);
+    console.log('✅ Merchant:', merchantId, '| Locations:', connectionTest.locationCount);
+
+    res.json({
+      success: true,
+      sessionId,
+      message: `Vagaro connected successfully (${connectionTest.locationCount} location(s))`
+    });
+  } catch (error) {
+    console.error('❌ Vagaro connection error:', error);
+    res.status(400).json({
+      success: false,
+      error: error.message || 'Failed to connect to Vagaro'
     });
   }
 });
@@ -3433,6 +3494,316 @@ No text in image.`;
           'Search contacts',
           'Create contact',
           'Show deals',
+          'Help'
+        ]
+      });
+    }
+
+    // VAGARO SESSION - Handle Vagaro salon/spa scheduling commands
+    // Vagaro uses OAuth 2.0 for authentication and has different entity names
+    if (session.type === 'vagaro') {
+      console.log('💜 Vagaro session - routing to Vagaro handlers');
+
+      // Show appointments
+      if (/show.*appointment|list.*appointment|my.*appointment|upcoming.*appointment|today.*appointment/i.test(lowerMessage)) {
+        console.log('📅 Vagaro: Getting appointments');
+        try {
+          const appointments = await session.proxy.getAppointments();
+
+          if (!appointments || appointments.length === 0) {
+            return res.json({
+              success: true,
+              response: '📭 No upcoming appointments found in Vagaro.',
+              data: []
+            });
+          }
+
+          let responseText = `📅 Found ${appointments.length} appointment(s) in Vagaro:\n\n`;
+          appointments.slice(0, 10).forEach((appt, idx) => {
+            const date = appt.date ? new Date(appt.date).toLocaleDateString() : 'TBD';
+            const time = appt.time || appt.startTime || '';
+            const customer = appt.customer?.name || appt.customerName || 'Unknown';
+            const service = appt.service?.name || appt.serviceName || 'Service';
+            const status = appt.status || 'scheduled';
+            responseText += `${idx + 1}. ${service} - ${customer}\n`;
+            responseText += `   📆 ${date} ${time}\n`;
+            responseText += `   Status: ${status}\n\n`;
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: appointments
+          });
+        } catch (error) {
+          console.error('❌ Vagaro appointments error:', error);
+          return res.json({
+            success: false,
+            response: `❌ Error fetching Vagaro appointments: ${error.message}`,
+            data: []
+          });
+        }
+      }
+
+      // Search customers
+      if (/search.*customer|find.*customer|lookup.*customer|search.*client|find.*client/i.test(lowerMessage)) {
+        const queryMatch = lowerMessage.match(/(?:search|find|lookup)\s+(?:customer|client)[s]?\s+(?:for\s+)?(.+)/i);
+        const query = queryMatch ? queryMatch[1].trim() : '';
+
+        if (!query) {
+          return res.json({
+            success: true,
+            response: 'Please provide a search term.\n\nExample: "search customers for john@example.com" or "find client 555-1234"'
+          });
+        }
+
+        try {
+          const customers = await session.proxy.searchCustomers(query, 10);
+          if (customers.length === 0) {
+            return res.json({
+              success: true,
+              response: `No customers found matching "${query}"`
+            });
+          }
+
+          let responseText = `Found ${customers.length} customer(s):\n\n`;
+          customers.forEach((customer, idx) => {
+            const name = `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Unnamed';
+            responseText += `${idx + 1}. ${name}\n`;
+            if (customer.email) responseText += `   📧 ${customer.email}\n`;
+            if (customer.phone) responseText += `   📱 ${customer.phone}\n`;
+            responseText += '\n';
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: customers
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error searching customers: ${error.message}`
+          });
+        }
+      }
+
+      // Create customer
+      if (/create.*customer|add.*customer|new.*customer|create.*client|add.*client/i.test(lowerMessage)) {
+        const emailMatch = lowerMessage.match(/[\w.-]+@[\w.-]+\.\w+/);
+        const phoneMatch = lowerMessage.match(/\d{10}|\(\d{3}\)\s*\d{3}[-.]?\d{4}/);
+        const nameMatch = lowerMessage.match(/(?:named?|called?)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)/i);
+
+        if (!emailMatch && !phoneMatch) {
+          return res.json({
+            success: true,
+            response: 'To create a Vagaro customer, I need at least a phone number or email.\n\nExample: "create customer named John Smith phone 555-123-4567"'
+          });
+        }
+
+        try {
+          const customerData = {};
+          if (nameMatch) {
+            const fullName = nameMatch[1].trim();
+            const names = fullName.split(/\s+/);
+            customerData.firstName = names[0];
+            if (names.length > 1) customerData.lastName = names.slice(1).join(' ');
+          }
+          if (emailMatch) customerData.email = emailMatch[0];
+          if (phoneMatch) customerData.phone = phoneMatch[0].replace(/\D/g, '');
+
+          const result = await session.proxy.findOrCreateCustomer(customerData);
+          const status = result.isNew ? 'created' : 'found existing';
+
+          return res.json({
+            success: true,
+            response: `✅ Customer ${status}!\n\n👤 ${customerData.firstName || ''} ${customerData.lastName || ''}\n📧 ${customerData.email || 'N/A'}\n📱 ${customerData.phone || 'N/A'}\n🆔 ID: ${result.customer.id}`,
+            data: result.customer
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error creating customer: ${error.message}`
+          });
+        }
+      }
+
+      // Show services
+      if (/show.*service|list.*service|available.*service|what.*service/i.test(lowerMessage)) {
+        try {
+          const services = await session.proxy.getServices();
+
+          if (!services || services.length === 0) {
+            return res.json({
+              success: true,
+              response: '📭 No services found in Vagaro.',
+              data: []
+            });
+          }
+
+          let responseText = `💇 Found ${services.length} service(s):\n\n`;
+          services.slice(0, 15).forEach((service, idx) => {
+            responseText += `${idx + 1}. ${service.name || 'Unnamed Service'}\n`;
+            if (service.duration) responseText += `   ⏱️ ${service.duration} min\n`;
+            if (service.price) responseText += `   💰 $${service.price}\n`;
+            responseText += '\n';
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: services
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error fetching services: ${error.message}`
+          });
+        }
+      }
+
+      // Show employees/providers
+      if (/show.*employee|list.*employee|show.*provider|list.*provider|show.*staff|list.*staff/i.test(lowerMessage)) {
+        try {
+          const employees = await session.proxy.getEmployees();
+
+          if (!employees || employees.length === 0) {
+            return res.json({
+              success: true,
+              response: '📭 No employees/providers found in Vagaro.',
+              data: []
+            });
+          }
+
+          let responseText = `👥 Found ${employees.length} employee(s):\n\n`;
+          employees.forEach((emp, idx) => {
+            const name = emp.name || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || 'Unnamed';
+            responseText += `${idx + 1}. ${name}\n`;
+            if (emp.title || emp.role) responseText += `   💼 ${emp.title || emp.role}\n`;
+            if (emp.email) responseText += `   📧 ${emp.email}\n`;
+            responseText += '\n';
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: employees
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error fetching employees: ${error.message}`
+          });
+        }
+      }
+
+      // Show locations
+      if (/show.*location|list.*location|where.*location|business.*location/i.test(lowerMessage)) {
+        try {
+          const locations = await session.proxy.getLocations();
+
+          if (!locations || locations.length === 0) {
+            return res.json({
+              success: true,
+              response: '📭 No locations found in Vagaro.',
+              data: []
+            });
+          }
+
+          let responseText = `📍 Found ${locations.length} location(s):\n\n`;
+          locations.forEach((loc, idx) => {
+            responseText += `${idx + 1}. ${loc.name || 'Main Location'}\n`;
+            if (loc.address) responseText += `   📫 ${loc.address}\n`;
+            if (loc.phone) responseText += `   📱 ${loc.phone}\n`;
+            responseText += '\n';
+          });
+
+          return res.json({
+            success: true,
+            response: responseText,
+            data: locations
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error fetching locations: ${error.message}`
+          });
+        }
+      }
+
+      // Cancel appointment
+      if (/cancel.*appointment/i.test(lowerMessage)) {
+        const idMatch = lowerMessage.match(/(?:appointment|id)\s+(\w+)/i);
+
+        if (!idMatch) {
+          return res.json({
+            success: true,
+            response: 'Please provide the appointment ID to cancel.\n\nExample: "cancel appointment 12345"\n\nUse "show my appointments" to see appointment IDs.'
+          });
+        }
+
+        try {
+          await session.proxy.cancelAppointment(idMatch[1]);
+          return res.json({
+            success: true,
+            response: `✅ Appointment ${idMatch[1]} has been cancelled.`
+          });
+        } catch (error) {
+          return res.json({
+            success: false,
+            response: `❌ Error cancelling appointment: ${error.message}`
+          });
+        }
+      }
+
+      // Vagaro help / available commands
+      if (/help|what can|commands|options/i.test(lowerMessage)) {
+        return res.json({
+          success: true,
+          response: `💜 Vagaro Salon/Spa Commands:\n\n` +
+            `📅 **Appointments**\n` +
+            `• "Show my appointments"\n` +
+            `• "List upcoming appointments"\n` +
+            `• "Cancel appointment [ID]"\n\n` +
+            `👤 **Customers**\n` +
+            `• "Search customers for john@example.com"\n` +
+            `• "Find client by phone 555-1234"\n` +
+            `• "Create customer named John phone 555-1234"\n\n` +
+            `💇 **Services**\n` +
+            `• "Show services"\n` +
+            `• "List available services"\n\n` +
+            `👥 **Staff**\n` +
+            `• "Show employees"\n` +
+            `• "List providers"\n\n` +
+            `📍 **Locations**\n` +
+            `• "Show locations"\n\n` +
+            `Note: Vagaro is designed for salon/spa scheduling. Customer = Contact in other CRMs.`,
+          suggestions: [
+            'Show my appointments',
+            'Search customers for test',
+            'Show services',
+            'Show employees',
+            'Help'
+          ]
+        });
+      }
+
+      // Default Vagaro response for unrecognized commands
+      return res.json({
+        success: true,
+        response: `I'm connected to Vagaro! Here's what I can help with:\n\n` +
+          `• Show my appointments\n` +
+          `• Search customers for [phone/email/name]\n` +
+          `• Create customer named [name] phone [number]\n` +
+          `• Show services\n` +
+          `• Show employees\n` +
+          `• Show locations\n\n` +
+          `Type "help" for more commands.`,
+        suggestions: [
+          'Show my appointments',
+          'Search customers',
+          'Show services',
+          'Show employees',
           'Help'
         ]
       });

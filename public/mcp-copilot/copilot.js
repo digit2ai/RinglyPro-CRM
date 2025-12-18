@@ -766,13 +766,18 @@ async function autoLoadCredentials(clientId) {
                 return;
             }
 
-            // 3. Vagaro - requires merchant_id from settings
+            // 3. Vagaro - requires OAuth credentials (clientId, clientSecretKey, merchantId)
             if (data.credentials.vagaro?.configured) {
                 console.log('🔗 Vagaro configured');
-                console.log('📝 Note: Vagaro uses settings-based configuration');
-                // Vagaro doesn't have a direct MCP connection like GHL/HubSpot
-                // It works through the booking service
-                updateConnectionStatus('Connected to Vagaro', 'success');
+                window.vagaroCredentials = {
+                    clientId: data.credentials.vagaro.clientId,
+                    clientSecretKey: data.credentials.vagaro.clientSecretKey,
+                    merchantId: data.credentials.vagaro.merchantId,
+                    region: data.credentials.vagaro.region || 'us01'
+                };
+
+                console.log('💾 Stored Vagaro credentials');
+                await connectVagaro();
                 return;
             }
 
@@ -835,6 +840,57 @@ async function connectHubSpot() {
         console.error('❌ HubSpot connection error:', error);
         updateConnectionStatus('Connection error', 'error');
         addMessage('error', `❌ HubSpot connection error: ${error.message}`);
+    }
+}
+
+// Connect to Vagaro salon/spa scheduling (OAuth credentials required)
+async function connectVagaro() {
+    const credentials = window.vagaroCredentials;
+
+    console.log('🔗 connectVagaro called');
+    console.log('📋 currentClientId:', currentClientId);
+
+    if (!credentials?.clientId || !credentials?.clientSecretKey || !credentials?.merchantId) {
+        updateConnectionStatus('Not configured', 'error');
+        addMessage('error', '❌ Vagaro credentials not configured. Please go to Settings in the dashboard.');
+        return;
+    }
+
+    if (!currentClientId) {
+        updateConnectionStatus('Configuration error', 'error');
+        addMessage('error', '❌ Client ID not found. Please open the copilot from the dashboard.');
+        return;
+    }
+
+    try {
+        console.log('📤 Connecting to Vagaro...');
+        const response = await fetch(`${API_BASE}/vagaro/connect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                clientId: credentials.clientId,
+                clientSecretKey: credentials.clientSecretKey,
+                merchantId: credentials.merchantId,
+                region: credentials.region || 'us01'
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            sessionId = result.sessionId;
+            crmType = 'vagaro';
+            console.log('✅ Vagaro connected, session:', sessionId);
+            updateConnectionStatus('Connected to Vagaro', 'success');
+        } else {
+            console.error('❌ Vagaro connection failed:', result.error);
+            updateConnectionStatus('Connection failed', 'error');
+            addMessage('error', `❌ Vagaro connection failed: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('❌ Vagaro connection error:', error);
+        updateConnectionStatus('Connection error', 'error');
+        addMessage('error', `❌ Vagaro connection error: ${error.message}`);
     }
 }
 

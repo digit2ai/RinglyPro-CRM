@@ -158,7 +158,8 @@ const checkGHLConfig = async (req, res) => {
         if (hasHubSpot) configuredIntegrations.push('hubspot');
         if (hasVagaro) configuredIntegrations.push('vagaro');
 
-        res.json({
+        // Build response object
+        const response = {
             success: true,
             clientId: client.id,
             businessName: client.business_name,
@@ -181,7 +182,21 @@ const checkGHLConfig = async (req, res) => {
                 'prospect_manager'
             ] : [],
             upgrade_needed: !hasCRM
-        });
+        };
+
+        // Include Vagaro credentials for MCP connection (if Vagaro is active)
+        // Note: These are OAuth credentials needed by the MCP proxy
+        if (hasVagaro && client.settings?.integration?.vagaro) {
+            const vagaroSettings = client.settings.integration.vagaro;
+            response.vagaro_credentials = {
+                clientId: vagaroSettings.clientId,
+                clientSecretKey: vagaroSettings.clientSecretKey,
+                merchantId: vagaroSettings.merchantId,
+                region: vagaroSettings.region || 'us01'
+            };
+        }
+
+        res.json(response);
 
     } catch (error) {
         console.error('Error checking CRM status:', error);

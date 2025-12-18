@@ -412,9 +412,15 @@
                     }
                     console.log('📝 HubSpot connection - no location ID needed');
                 } else if (activeCRM === 'vagaro') {
-                    // Vagaro - uses settings-based auth
+                    // Vagaro - requires OAuth credentials (clientId, clientSecretKey, merchantId)
                     connectEndpoint = `${API_BASE}/vagaro/connect`;
-                    console.log('📝 Vagaro connection');
+                    if (statusData.vagaro_credentials) {
+                        connectBody.clientId = statusData.vagaro_credentials.clientId;
+                        connectBody.clientSecretKey = statusData.vagaro_credentials.clientSecretKey;
+                        connectBody.merchantId = statusData.vagaro_credentials.merchantId;
+                        connectBody.region = statusData.vagaro_credentials.region || 'us01';
+                    }
+                    console.log('📝 Vagaro connection - OAuth credentials from server');
                 } else {
                     // GoHighLevel - requires api_key AND location_id
                     connectEndpoint = `${API_BASE}/gohighlevel/connect`;
