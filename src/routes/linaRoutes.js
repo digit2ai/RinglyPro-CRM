@@ -114,29 +114,67 @@ const handleSpanishIncoming = async (req, res) => {
             return res.send(twiml);
         }
 
-        // No IVR - use original personalized greeting (speech-based appointment booking)
-        console.log(`📞 No IVR for ${businessName} - using original Spanish flow`);
-        const clientInfo = {
-            client_id: clientId,
-            business_name: businessName,
-            rachel_enabled: true
-        };
+        // No IVR - use simple Spanish greeting (mirrors English Rachel flow exactly)
+        console.log(`📞 No IVR for ${businessName} - using simple Spanish greeting flow`);
 
-        const twimlResponse = await linaService.createPersonalizedGreeting(clientInfo);
+        // Get time-appropriate greeting
+        const hour = new Date().getHours();
+        let timeGreeting;
+        if (hour < 12) {
+            timeGreeting = 'Buenos días';
+        } else if (hour < 19) {
+            timeGreeting = 'Buenas tardes';
+        } else {
+            timeGreeting = 'Buenas noches';
+        }
+
+        // Simple Spanish greeting - mirrors English Rachel pattern exactly
+        const greetingText = `${timeGreeting}, gracias por llamar a ${businessName}. Mi nombre es Lina, su asistente virtual. Puedo ayudarle a agendar una cita, o si prefiere, puede dejarme un mensaje. ¿En qué puedo ayudarle hoy?`;
+
+        // Try ElevenLabs Lina voice, fallback to Polly.Lupe
+        let audioUrl = null;
+        try {
+            audioUrl = await linaService.generateLinaAudio(greetingText);
+        } catch (audioError) {
+            console.warn('⚠️ ElevenLabs audio generation failed, using Polly fallback:', audioError.message);
+        }
+
+        let twiml;
+        if (audioUrl) {
+            console.log(`✅ Using Lina ElevenLabs voice for ${businessName}`);
+            twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/lina/process-speech" method="POST" language="es-MX">
+        <Play>${audioUrl}</Play>
+    </Gather>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intentemos de nuevo.</Say>
+    <Redirect>/voice/lina/incoming</Redirect>
+</Response>`;
+        } else {
+            console.log(`⚠️ Using Polly.Lupe fallback for ${businessName}`);
+            twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/lina/process-speech" method="POST" language="es-MX">
+        <Say voice="Polly.Lupe" language="es-MX">${greetingText}</Say>
+    </Gather>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intentemos de nuevo.</Say>
+    <Redirect>/voice/lina/incoming</Redirect>
+</Response>`;
+        }
 
         res.type('text/xml');
-        res.send(twimlResponse);
+        res.send(twiml);
 
     } catch (error) {
         console.error('Error in Lina webhook:', error);
+        console.error('Error stack:', error.stack);
 
-        const twiml = `
-            <?xml version="1.0" encoding="UTF-8"?>
-            <Response>
-                <Say voice="Polly.Lupe" language="es-MX">Lo siento, hubo un error. Por favor, intente llamar de nuevo.</Say>
-                <Hangup/>
-            </Response>
-        `;
+        // Simple fallback that definitely works
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Lo siento, hubo un error técnico. Por favor, intente llamar de nuevo.</Say>
+    <Hangup/>
+</Response>`;
 
         res.type('text/xml');
         res.send(twiml);
