@@ -499,9 +499,11 @@
             event.preventDefault();
 
             const apiKeyValue = document.getElementById('apiKey').value;
+
+            // Only send apiKey if it's a new value (not masked bullets)
+            // If masked, don't send apiKey at all - backend will preserve existing key
             const settings = {
                 enabled: document.getElementById('enableToggle').checked,
-                apiKey: apiKeyValue.includes('••••') ? currentSettings.apiKey : apiKeyValue,
                 fromEmail: document.getElementById('fromEmail').value,
                 fromName: document.getElementById('fromName').value,
                 replyTo: document.getElementById('replyTo').value,
@@ -510,6 +512,11 @@
                 depositEmails: document.getElementById('depositEmails').checked,
                 welcomeEmails: document.getElementById('welcomeEmails').checked
             };
+
+            // Only include apiKey if user entered a new value (not masked)
+            if (apiKeyValue && !apiKeyValue.includes('••••')) {
+                settings.apiKey = apiKeyValue;
+            }
 
             try {
                 const response = await fetch('/api/client-settings/sendgrid', {
@@ -537,13 +544,19 @@
         }
 
         async function saveEmailOptions() {
+            // Don't spread currentSettings as it may contain apiKey as boolean
+            // Instead, only send the specific fields we want to update
             const settings = {
-                ...currentSettings,
+                enabled: document.getElementById('enableToggle').checked,
+                fromEmail: currentSettings.fromEmail || null,
+                fromName: currentSettings.fromName || null,
+                replyTo: currentSettings.replyTo || null,
                 confirmationEmails: document.getElementById('confirmationEmails').checked,
                 reminderEmails: document.getElementById('reminderEmails').checked,
                 depositEmails: document.getElementById('depositEmails').checked,
                 welcomeEmails: document.getElementById('welcomeEmails').checked
             };
+            // Don't include apiKey - backend will preserve existing key
 
             try {
                 const response = await fetch('/api/client-settings/sendgrid', {
@@ -623,11 +636,17 @@
 
         function updateStatus(settings) {
             const badge = document.getElementById('status-badge');
-            const isConfigured = settings.enabled && settings.apiKey && settings.fromEmail;
+            // Check if enabled AND has API key (apiKey or apiKeySet indicates key exists)
+            const hasApiKey = settings.apiKey || settings.apiKeySet;
+            const hasFromEmail = !!settings.fromEmail;
+            const isEnabled = settings.enabled;
 
-            if (isConfigured) {
+            if (isEnabled && hasApiKey && hasFromEmail) {
                 badge.className = 'status-badge status-connected';
                 badge.innerHTML = '<span>●</span><span>Connected</span>';
+            } else if (hasApiKey && !isEnabled) {
+                badge.className = 'status-badge status-disconnected';
+                badge.innerHTML = '<span>●</span><span>Disabled</span>';
             } else {
                 badge.className = 'status-badge status-disconnected';
                 badge.innerHTML = '<span>●</span><span>Not configured</span>';

@@ -464,9 +464,11 @@
             event.preventDefault();
 
             const apiKeyValue = document.getElementById('apiKey').value;
+
+            // Only send apiKey if it's a new value (not masked bullets)
+            // If masked, don't send apiKey at all - backend will preserve existing key
             const settings = {
                 enabled: document.getElementById('enableToggle').checked,
-                apiKey: apiKeyValue.includes('••••') ? currentSettings.apiKey : apiKeyValue,
                 locationId: document.getElementById('locationId').value,
                 calendarId: document.getElementById('calendarId').value,
                 pipelineId: document.getElementById('pipelineId').value,
@@ -474,6 +476,11 @@
                 syncCalendar: document.getElementById('syncCalendar').checked,
                 triggerWorkflows: document.getElementById('triggerWorkflows').checked
             };
+
+            // Only include apiKey if user entered a new value (not masked)
+            if (apiKeyValue && !apiKeyValue.includes('••••')) {
+                settings.apiKey = apiKeyValue;
+            }
 
             try {
                 const response = await fetch('/api/client-settings/ghl', {
@@ -501,12 +508,18 @@
         }
 
         async function saveSyncOptions() {
+            // Don't spread currentSettings as it may contain apiKey as boolean
+            // Instead, only send the specific fields we want to update
             const settings = {
-                ...currentSettings,
+                enabled: document.getElementById('enableToggle').checked,
+                locationId: currentSettings.locationId || null,
+                calendarId: currentSettings.calendarId || null,
+                pipelineId: currentSettings.pipelineId || null,
                 syncContacts: document.getElementById('syncContacts').checked,
                 syncCalendar: document.getElementById('syncCalendar').checked,
                 triggerWorkflows: document.getElementById('triggerWorkflows').checked
             };
+            // Don't include apiKey - backend will preserve existing key
 
             try {
                 const response = await fetch('/api/client-settings/ghl', {
@@ -555,11 +568,17 @@
 
         function updateStatus(settings) {
             const badge = document.getElementById('status-badge');
-            const isConfigured = settings.enabled && settings.apiKey && settings.locationId;
+            // Check if enabled AND has API key (apiKey or apiKeySet indicates key exists)
+            const hasApiKey = settings.apiKey || settings.apiKeySet;
+            const hasLocationId = !!settings.locationId;
+            const isEnabled = settings.enabled;
 
-            if (isConfigured) {
+            if (isEnabled && hasApiKey && hasLocationId) {
                 badge.className = 'status-badge status-connected';
                 badge.innerHTML = '<span>●</span><span>Connected</span>';
+            } else if (hasApiKey && !isEnabled) {
+                badge.className = 'status-badge status-disconnected';
+                badge.innerHTML = '<span>●</span><span>Disabled</span>';
             } else {
                 badge.className = 'status-badge status-disconnected';
                 badge.innerHTML = '<span>●</span><span>Not configured</span>';

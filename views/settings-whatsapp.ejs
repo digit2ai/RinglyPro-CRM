@@ -728,7 +728,7 @@
                 value: parseFloat(document.getElementById('depositValue').value) || null
             };
 
-            // Build full settings object
+            // Build full settings object - preserve existing zelle settings (configured on separate Zelle settings page)
             const settings = {
                 enabled: document.getElementById('enableToggle').checked,
                 phoneNumber: document.getElementById('whatsappNumber').value,
@@ -743,13 +743,7 @@
                     url: document.getElementById('bookingLink').value,
                     ghlCalendarId: document.getElementById('ghlCalendarId').value
                 },
-                zelle: currentSettings.zelle || {
-                    enabled: document.getElementById('zelleToggle').checked,
-                    email: document.getElementById('zelleEmail').value,
-                    defaultAmount: parseFloat(document.getElementById('depositAmount').value) || null,
-                    depositMessage: document.getElementById('depositMessage').value,
-                    qrCodeUrl: null
-                }
+                zelle: currentSettings.zelle || null
             };
 
             try {
@@ -787,7 +781,7 @@
                 googleCalendarId: document.getElementById('googleCalendarId').value
             };
 
-            // Build full settings object
+            // Build full settings object - preserve existing zelle settings (configured on separate Zelle settings page)
             const settings = {
                 enabled: document.getElementById('enableToggle').checked,
                 phoneNumber: document.getElementById('whatsappNumber').value,
@@ -801,13 +795,7 @@
                     value: parseFloat(document.getElementById('depositValue').value) || null
                 },
                 booking: bookingData,
-                zelle: currentSettings.zelle || {
-                    enabled: document.getElementById('zelleToggle').checked,
-                    email: document.getElementById('zelleEmail').value,
-                    defaultAmount: parseFloat(document.getElementById('depositAmount').value) || null,
-                    depositMessage: document.getElementById('depositMessage').value,
-                    qrCodeUrl: null
-                }
+                zelle: currentSettings.zelle || null
             };
 
             try {

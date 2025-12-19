@@ -421,13 +421,22 @@ router.get('/vagaro', authenticateToken, async (req, res) => {
       }
     );
 
-    const vagaroSettings = client?.settings?.integration?.vagaro || {
-      enabled: false,
-      clientId: null,
-      clientSecretKey: null,
-      merchantId: null,
-      webhookToken: null,
-      region: 'us01'
+    // Check if credentials exist
+    const hasCredentials = !!(client?.settings?.integration?.vagaro?.clientId &&
+                              client?.settings?.integration?.vagaro?.clientSecretKey &&
+                              client?.settings?.integration?.vagaro?.merchantId);
+    const enabledSetting = client?.settings?.integration?.vagaro?.enabled;
+    // If enabled setting exists, use it; otherwise default to true if credentials exist (backwards compatibility)
+    const isEnabled = enabledSetting !== undefined ? enabledSetting : hasCredentials;
+
+    const vagaroSettings = {
+      enabled: isEnabled && hasCredentials, // Must have credentials AND be enabled
+      clientId: client?.settings?.integration?.vagaro?.clientId || null,
+      clientSecretKey: client?.settings?.integration?.vagaro?.clientSecretKey || null,
+      merchantId: client?.settings?.integration?.vagaro?.merchantId || null,
+      webhookToken: client?.settings?.integration?.vagaro?.webhookToken || null,
+      region: client?.settings?.integration?.vagaro?.region || 'us01',
+      credentialsSet: hasCredentials // Flag for frontend
     };
 
     res.json({
@@ -585,17 +594,24 @@ router.get('/whatsapp', authenticateToken, async (req, res) => {
       }
     );
 
-    const whatsappSettings = client?.settings?.integration?.whatsapp || {
-      enabled: false,
-      phoneNumber: client?.whatsapp_business_number || null,
-      displayName: client?.whatsapp_display_name || null,
-      businessType: 'salon',
-      defaultLanguage: 'auto',
-      greetingMessage: null,
-      services: [],
-      deposit: { type: 'none', value: null },
-      booking: { system: 'none', url: null, ghlCalendarId: null },
-      zelle: null
+    // Check if phone number is configured (from either dedicated column or settings)
+    const hasPhoneNumber = !!(client?.whatsapp_business_number || client?.settings?.integration?.whatsapp?.phoneNumber);
+    const enabledSetting = client?.settings?.integration?.whatsapp?.enabled;
+    // If enabled setting exists, use it; otherwise default to true if phone number exists (backwards compatibility)
+    const isEnabled = enabledSetting !== undefined ? enabledSetting : hasPhoneNumber;
+
+    const whatsappSettings = {
+      enabled: isEnabled && hasPhoneNumber, // Must have phone number AND be enabled
+      phoneNumber: client?.whatsapp_business_number || client?.settings?.integration?.whatsapp?.phoneNumber || null,
+      displayName: client?.whatsapp_display_name || client?.settings?.integration?.whatsapp?.displayName || null,
+      businessType: client?.settings?.integration?.whatsapp?.businessType || 'salon',
+      defaultLanguage: client?.settings?.integration?.whatsapp?.defaultLanguage || 'auto',
+      greetingMessage: client?.settings?.integration?.whatsapp?.greetingMessage || null,
+      services: client?.settings?.integration?.whatsapp?.services || [],
+      deposit: client?.settings?.integration?.whatsapp?.deposit || { type: 'none', value: null },
+      booking: client?.settings?.integration?.whatsapp?.booking || { system: 'none', url: null, ghlCalendarId: null },
+      zelle: client?.settings?.integration?.whatsapp?.zelle || null,
+      phoneConfigured: hasPhoneNumber // Flag for frontend
     };
 
     res.json({
@@ -727,26 +743,34 @@ router.get('/ghl', authenticateToken, async (req, res) => {
     }
 
     const [client] = await sequelize.query(
-      'SELECT settings FROM clients WHERE id = :clientId',
+      'SELECT settings, ghl_api_key, ghl_location_id, booking_system FROM clients WHERE id = :clientId',
       {
         replacements: { clientId },
         type: QueryTypes.SELECT
       }
     );
 
-    const ghlSettings = client?.settings?.integration?.ghl || {
-      enabled: false,
-      apiKey: null,
-      locationId: null,
-      calendarId: null,
-      pipelineId: null,
-      syncContacts: true,
-      syncCalendar: true,
-      triggerWorkflows: false
+    // Check both dedicated columns and settings JSON
+    const hasApiKey = !!client?.ghl_api_key || !!client?.settings?.integration?.ghl?.apiKey;
+    const enabledSetting = client?.settings?.integration?.ghl?.enabled;
+    // If enabled setting exists, use it; otherwise default to true if API key exists (backwards compatibility)
+    const isEnabled = enabledSetting !== undefined ? enabledSetting : hasApiKey;
+
+    const ghlSettings = {
+      enabled: isEnabled && hasApiKey, // Must have API key AND be enabled
+      apiKey: hasApiKey, // Boolean indicating if API key is set (don't expose actual key)
+      apiKeySet: hasApiKey, // Explicit flag for frontend
+      locationId: client?.ghl_location_id || client?.settings?.integration?.ghl?.locationId || null,
+      calendarId: client?.settings?.integration?.ghl?.calendarId || null,
+      pipelineId: client?.settings?.integration?.ghl?.pipelineId || null,
+      syncContacts: client?.settings?.integration?.ghl?.syncContacts !== false,
+      syncCalendar: client?.settings?.integration?.ghl?.syncCalendar !== false,
+      triggerWorkflows: client?.settings?.integration?.ghl?.triggerWorkflows || false,
+      bookingSystem: client?.booking_system
     };
 
-    // Mask API key for display
-    if (ghlSettings.apiKey) {
+    // Mark as masked for display
+    if (hasApiKey) {
       ghlSettings.apiKeyMasked = true;
     }
 
@@ -792,7 +816,7 @@ router.post('/ghl', authenticateToken, async (req, res) => {
     }
 
     const [client] = await sequelize.query(
-      'SELECT settings FROM clients WHERE id = :clientId',
+      'SELECT settings, ghl_api_key, ghl_location_id FROM clients WHERE id = :clientId',
       {
         replacements: { clientId },
         type: QueryTypes.SELECT
@@ -801,13 +825,23 @@ router.post('/ghl', authenticateToken, async (req, res) => {
 
     const currentSettings = client?.settings || {};
 
+    // Determine the actual API key to save
+    // If apiKey is boolean (from frontend using apiKeySet), keep the existing key
+    // If apiKey contains bullets (masked), keep the existing key
+    // If apiKey is a new string value, use the new value
+    let actualApiKey = client?.ghl_api_key || currentSettings.integration?.ghl?.apiKey;
+    if (apiKey && typeof apiKey === 'string' && !apiKey.includes('••••')) {
+      // New API key provided
+      actualApiKey = apiKey;
+    }
+
     const updatedSettings = {
       ...currentSettings,
       integration: {
         ...(currentSettings.integration || {}),
         ghl: {
           enabled: enabled === true,
-          apiKey: apiKey || null,
+          apiKey: actualApiKey || null, // Store actual key in settings for backwards compatibility
           locationId: locationId || null,
           calendarId: calendarId || null,
           pipelineId: pipelineId || null,
@@ -824,24 +858,32 @@ router.post('/ghl', authenticateToken, async (req, res) => {
     // - MCP Copilot via /api/client/crm-credentials/:client_id
     // - Voice booking (Rachel/Lina) via client lookups
     // - WhatsApp booking service
+    // When disabling, clear booking_system if it was 'ghl'
     await sequelize.query(
       `UPDATE clients
        SET settings = :settings,
            ghl_api_key = :apiKey,
-           ghl_location_id = :locationId
+           ghl_location_id = :locationId,
+           booking_system = CASE
+             WHEN :enabled THEN 'ghl'
+             WHEN booking_system = 'ghl' THEN NULL
+             ELSE booking_system
+           END,
+           updated_at = NOW()
        WHERE id = :clientId`,
       {
         replacements: {
           settings: JSON.stringify(updatedSettings),
-          apiKey: apiKey || null,
+          apiKey: actualApiKey || null,
           locationId: locationId || null,
+          enabled: enabled === true,
           clientId
         },
         type: QueryTypes.UPDATE
       }
     );
 
-    logger.info(`[CLIENT SETTINGS] Updated GHL settings for client ${clientId} (API key and location ID synced to columns)`);
+    logger.info(`[CLIENT SETTINGS] Updated GHL settings for client ${clientId} (enabled: ${enabled})`);
 
     res.json({
       success: true,
@@ -947,20 +989,27 @@ router.get('/sendgrid', authenticateToken, async (req, res) => {
       }
     );
 
-    const sendgridSettings = client?.settings?.integration?.sendgrid || {
-      enabled: false,
-      apiKey: null,
-      fromEmail: null,
-      fromName: null,
-      replyTo: null,
-      confirmationEmails: true,
-      reminderEmails: true,
-      depositEmails: false,
-      welcomeEmails: false
+    // Check if API key exists
+    const hasApiKey = !!client?.settings?.integration?.sendgrid?.apiKey;
+    const enabledSetting = client?.settings?.integration?.sendgrid?.enabled;
+    // If enabled setting exists, use it; otherwise default to true if API key exists (backwards compatibility)
+    const isEnabled = enabledSetting !== undefined ? enabledSetting : hasApiKey;
+
+    const sendgridSettings = {
+      enabled: isEnabled && hasApiKey, // Must have API key AND be enabled
+      apiKey: hasApiKey, // Boolean indicating if API key is set (don't expose actual key)
+      apiKeySet: hasApiKey, // Explicit flag for frontend
+      fromEmail: client?.settings?.integration?.sendgrid?.fromEmail || null,
+      fromName: client?.settings?.integration?.sendgrid?.fromName || null,
+      replyTo: client?.settings?.integration?.sendgrid?.replyTo || null,
+      confirmationEmails: client?.settings?.integration?.sendgrid?.confirmationEmails !== false,
+      reminderEmails: client?.settings?.integration?.sendgrid?.reminderEmails !== false,
+      depositEmails: client?.settings?.integration?.sendgrid?.depositEmails || false,
+      welcomeEmails: client?.settings?.integration?.sendgrid?.welcomeEmails || false
     };
 
-    // Mask API key for display
-    if (sendgridSettings.apiKey) {
+    // Mark as masked for display
+    if (hasApiKey) {
       sendgridSettings.apiKeyMasked = true;
     }
 
@@ -1015,13 +1064,23 @@ router.post('/sendgrid', authenticateToken, async (req, res) => {
 
     const currentSettings = client?.settings || {};
 
+    // Determine the actual API key to save
+    // If apiKey is boolean (from frontend using apiKeySet), keep the existing key
+    // If apiKey contains bullets (masked), keep the existing key
+    // If apiKey is a new string value, use the new value
+    let actualApiKey = currentSettings.integration?.sendgrid?.apiKey;
+    if (apiKey && typeof apiKey === 'string' && !apiKey.includes('••••')) {
+      // New API key provided
+      actualApiKey = apiKey;
+    }
+
     const updatedSettings = {
       ...currentSettings,
       integration: {
         ...(currentSettings.integration || {}),
         sendgrid: {
           enabled: enabled === true,
-          apiKey: apiKey || null,
+          apiKey: actualApiKey || null,
           fromEmail: fromEmail || null,
           fromName: fromName || null,
           replyTo: replyTo || null,
@@ -1035,7 +1094,7 @@ router.post('/sendgrid', authenticateToken, async (req, res) => {
     };
 
     await sequelize.query(
-      `UPDATE clients SET settings = :settings WHERE id = :clientId`,
+      `UPDATE clients SET settings = :settings, updated_at = NOW() WHERE id = :clientId`,
       {
         replacements: {
           settings: JSON.stringify(updatedSettings),
@@ -1045,7 +1104,7 @@ router.post('/sendgrid', authenticateToken, async (req, res) => {
       }
     );
 
-    logger.info(`[CLIENT SETTINGS] Updated SendGrid settings for client ${clientId}`);
+    logger.info(`[CLIENT SETTINGS] Updated SendGrid settings for client ${clientId} (enabled: ${enabled})`);
 
     res.json({
       success: true,
@@ -1595,9 +1654,16 @@ router.get('/hubspot', authenticateToken, async (req, res) => {
     );
 
     // Merge settings from both sources
+    // enabled should be based on BOTH having an API key AND the enabled setting being true
+    const hasApiKey = !!client?.hubspot_api_key;
+    const enabledSetting = client?.settings?.integration?.hubspot?.enabled;
+    // If enabled setting exists, use it; otherwise default to true if API key exists (backwards compatibility)
+    const isEnabled = enabledSetting !== undefined ? enabledSetting : hasApiKey;
+
     const hubspotSettings = {
-      enabled: !!client?.hubspot_api_key || client?.settings?.integration?.hubspot?.enabled || false,
-      apiKey: client?.hubspot_api_key ? true : null, // Don't expose actual key, just indicate if set
+      enabled: isEnabled && hasApiKey, // Must have API key AND be enabled
+      apiKey: hasApiKey, // Boolean indicating if API key is set (don't expose actual key)
+      apiKeySet: hasApiKey, // Explicit flag for frontend to know if key exists
       meetingSlug: client?.hubspot_meeting_slug || client?.settings?.integration?.hubspot?.meetingSlug || null,
       timezone: client?.hubspot_timezone || client?.settings?.integration?.hubspot?.timezone || 'America/New_York',
       syncContacts: client?.settings?.integration?.hubspot?.syncContacts !== false,
@@ -1606,8 +1672,8 @@ router.get('/hubspot', authenticateToken, async (req, res) => {
       bookingSystem: client?.booking_system
     };
 
-    // Mask API key for display
-    if (client?.hubspot_api_key) {
+    // Mark as masked for display
+    if (hasApiKey) {
       hubspotSettings.apiKeyMasked = true;
     }
 
@@ -1680,17 +1746,29 @@ router.post('/hubspot', authenticateToken, async (req, res) => {
     };
 
     // Determine the actual API key to save
+    // If apiKey is boolean (true/false from frontend using apiKeySet), keep the existing key
     // If apiKey contains bullets (masked), keep the existing key
-    const actualApiKey = apiKey && !apiKey.includes('••••') ? apiKey : client?.hubspot_api_key;
+    // If apiKey is a new string value, use the new value
+    let actualApiKey = client?.hubspot_api_key;
+    if (apiKey && typeof apiKey === 'string' && !apiKey.includes('••••')) {
+      // New API key provided
+      actualApiKey = apiKey;
+    }
+    // If apiKey is boolean or contains bullets, keep the existing key (actualApiKey already set)
 
     // Update both settings JSONB and direct columns
+    // When disabling, clear booking_system if it was 'hubspot'
     await sequelize.query(
       `UPDATE clients SET
         settings = :settings,
         hubspot_api_key = :hubspotApiKey,
         hubspot_meeting_slug = :meetingSlug,
         hubspot_timezone = :timezone,
-        booking_system = CASE WHEN :enabled THEN 'hubspot' ELSE booking_system END,
+        booking_system = CASE
+          WHEN :enabled THEN 'hubspot'
+          WHEN booking_system = 'hubspot' THEN NULL
+          ELSE booking_system
+        END,
         updated_at = NOW()
        WHERE id = :clientId`,
       {
