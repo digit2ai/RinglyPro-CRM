@@ -1285,11 +1285,33 @@ async function createIVRMenu(client, language = 'en') {
 
 /**
  * Handle IVR menu selection
+ * Restores client context from query params since Twilio doesn't preserve sessions
  */
 router.post('/voice/rachel/ivr-selection', async (req, res) => {
     try {
         const digit = req.body.Digits || '';
         const language = req.query.lang || 'en';
+
+        // Restore client context from query params (Twilio doesn't preserve sessions)
+        const clientIdFromQuery = req.query.client_id;
+        const businessNameFromQuery = req.query.business_name;
+        const userIdFromQuery = req.query.user_id;
+
+        if (clientIdFromQuery) {
+            const parsedClientId = parseInt(clientIdFromQuery, 10);
+            if (!isNaN(parsedClientId)) {
+                req.session.client_id = parsedClientId;
+                console.log(`✅ Restored client_id from query: ${parsedClientId}`);
+            }
+        }
+        if (businessNameFromQuery) {
+            req.session.business_name = decodeURIComponent(businessNameFromQuery);
+            console.log(`✅ Restored business_name from query: ${req.session.business_name}`);
+        }
+        if (userIdFromQuery) {
+            req.session.user_id = userIdFromQuery;
+        }
+
         const clientId = req.session.client_id;
         const businessName = req.session.business_name;
 
@@ -1365,13 +1387,15 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
                 return; // Exit early since we're handling response in promise
             } else {
                 // Spanish - use Polly.Lupe for now (or can add Lina premium voice)
+                // Pass context via query params since Twilio doesn't preserve sessions
+                const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${req.session.user_id || ''}`;
                 const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/lina/collect-name" method="POST" language="es-MX">
+    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/lina/collect-name?${contextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe">${namePrompt}</Say>
     </Gather>
     <Say voice="Polly.Lupe">No escuché eso. Intentemos de nuevo.</Say>
-    <Redirect>/voice/lina/incoming?lang=es</Redirect>
+    <Redirect>/voice/lina/incoming?${contextParams}</Redirect>
 </Response>`;
                 res.type('text/xml');
                 return res.send(twiml);
@@ -1380,10 +1404,12 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
             // Voicemail
             console.log(`📬 Voicemail selected for ${businessName}`);
 
-            // Redirect to voicemail using TwiML Redirect
+            // Redirect to voicemail using TwiML Redirect with context params
+            const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${req.session.user_id || ''}`;
+            const voicePath = language === 'en' ? 'rachel' : 'lina';
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Redirect method="POST">/voice/${language === 'en' ? 'rachel' : 'lina'}/voicemail</Redirect>
+    <Redirect method="POST">/voice/${voicePath}/voicemail?${contextParams}</Redirect>
 </Response>`;
 
             res.type('text/xml');
