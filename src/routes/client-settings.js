@@ -1783,4 +1783,95 @@ router.post('/hubspot/test', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/client-settings/ghl/sync/:clientId
+ * Admin endpoint to sync GHL credentials from settings JSON to dedicated columns
+ * This fixes the mismatch between where the form saves (settings JSON) and where MCP reads (ghl_api_key column)
+ */
+router.post('/ghl/sync/:clientId', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+
+    // Get current state
+    const [client] = await sequelize.query(
+      'SELECT id, ghl_api_key, ghl_location_id, settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId: parseInt(clientId) },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    const settings = client.settings || {};
+    const ghlSettings = settings?.integration?.ghl;
+
+    if (!ghlSettings?.apiKey) {
+      return res.json({
+        success: false,
+        error: 'No GHL API key found in settings JSON',
+        current: {
+          ghl_api_key_column: client.ghl_api_key ? 'SET' : 'NULL',
+          ghl_location_id_column: client.ghl_location_id,
+          settings_api_key: 'NULL',
+          settings_location_id: ghlSettings?.locationId || 'NULL'
+        }
+      });
+    }
+
+    // Check if sync is needed
+    const needsSync = ghlSettings.apiKey !== client.ghl_api_key ||
+                      ghlSettings.locationId !== client.ghl_location_id;
+
+    if (!needsSync) {
+      return res.json({
+        success: true,
+        message: 'Credentials already in sync',
+        synced: false
+      });
+    }
+
+    // Sync the credentials
+    await sequelize.query(
+      `UPDATE clients SET ghl_api_key = :apiKey, ghl_location_id = :locationId WHERE id = :clientId`,
+      {
+        replacements: {
+          apiKey: ghlSettings.apiKey,
+          locationId: ghlSettings.locationId || null,
+          clientId: parseInt(clientId)
+        },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`[GHL SYNC] Synced GHL credentials for client ${clientId}`);
+
+    res.json({
+      success: true,
+      message: 'GHL credentials synced from settings JSON to dedicated columns',
+      synced: true,
+      before: {
+        ghl_api_key: client.ghl_api_key ? client.ghl_api_key.substring(0, 10) + '...' : 'NULL',
+        ghl_location_id: client.ghl_location_id
+      },
+      after: {
+        ghl_api_key: ghlSettings.apiKey.substring(0, 10) + '...',
+        ghl_location_id: ghlSettings.locationId
+      }
+    });
+
+  } catch (error) {
+    logger.error('[GHL SYNC] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
