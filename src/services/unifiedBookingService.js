@@ -548,8 +548,25 @@ class UnifiedBookingService {
         logger.info(`[UNIFIED-BOOKING] Client ${clientId} requires deposits - marking as pending`);
       }
 
+      // Map source values to valid PostgreSQL ENUM values
+      // The DB ENUM has: web, phone, rachel_voice_ai, manual, api, ghl_sync, hubspot_sync, vagaro_sync
+      // Our app uses: voice_booking, voice_booking_spanish, whatsapp, etc.
+      const sourceMapping = {
+        'voice_booking': 'rachel_voice_ai',
+        'voice_booking_spanish': 'rachel_voice_ai',
+        'whatsapp': 'api',
+        'whatsapp_ghl': 'ghl_sync',
+        'whatsapp_hubspot': 'hubspot_sync',
+        'whatsapp_vagaro': 'vagaro_sync',
+        'online': 'web',
+        'walk-in': 'manual'
+      };
+      const dbSource = sourceMapping[source] || source || 'manual';
+      logger.info(`[UNIFIED-BOOKING] Source mapping: ${source} -> ${dbSource}`);
+
       // Insert appointment
       // Use SELECT query type to properly get RETURNING results from PostgreSQL
+      // Note: Using 'scheduled' status (exists in original ENUM: scheduled, confirmed, completed, cancelled, no_show)
       const insertResult = await sequelize.query(
         `INSERT INTO appointments (
           client_id, customer_name, customer_phone, customer_email,
@@ -561,7 +578,7 @@ class UnifiedBookingService {
         ) VALUES (
           :clientId, :customerName, :customerPhone, :customerEmail,
           :date, :time, :duration, :purpose,
-          'pending', :source, :confirmationCode,
+          'scheduled', :source, :confirmationCode,
           :hubspotId, :ghlId, :vagaroId,
           :depositStatus,
           NOW(), NOW()
@@ -576,7 +593,7 @@ class UnifiedBookingService {
             time: normalizedTime,
             duration: 30,
             purpose: service || 'Appointment',
-            source: source || 'voice_booking',  // Use base source, don't append crmSource (validation constraint)
+            source: dbSource,  // Use mapped source that exists in PostgreSQL ENUM
             confirmationCode,
             hubspotId: crmSource === 'hubspot' ? externalId : null,
             ghlId: crmSource === 'ghl' ? externalId : null,
