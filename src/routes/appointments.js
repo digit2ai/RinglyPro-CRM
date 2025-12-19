@@ -688,6 +688,7 @@ router.post('/sync-crm', async (req, res) => {
         vagaro: crmData.sources.vagaro.appointments.length
       },
       syncResults,
+      syncErrors: syncResults.errors.length > 0 ? syncResults.errors.map(e => e.error) : [],
       integrations: crmData.integrations
     });
   } catch (error) {

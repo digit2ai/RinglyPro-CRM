@@ -230,6 +230,25 @@ function generateConfirmationCode(source) {
 }
 
 /**
+ * Ensure CRM sync columns exist in database
+ * Run on first sync to add columns if they don't exist
+ */
+async function ensureCRMColumnsExist() {
+  try {
+    await sequelize.query(`
+      ALTER TABLE appointments
+      ADD COLUMN IF NOT EXISTS vagaro_appointment_id VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS vagaro_contact_id VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS crm_last_synced_at TIMESTAMP
+    `);
+    logger.info('[CRM Sync] Ensured CRM columns exist');
+  } catch (error) {
+    // Columns might already exist or syntax error for non-PostgreSQL
+    logger.debug(`[CRM Sync] Column check: ${error.message}`);
+  }
+}
+
+/**
  * Sync CRM appointments to local database
  * Uses upsert logic based on CRM-specific IDs to avoid duplicates
  * @param {number} clientId - Client ID
@@ -242,6 +261,9 @@ async function syncToLocalDB(clientId, appointments) {
     updated: 0,
     errors: []
   };
+
+  // Ensure columns exist before syncing
+  await ensureCRMColumnsExist();
 
   for (const appt of appointments) {
     try {

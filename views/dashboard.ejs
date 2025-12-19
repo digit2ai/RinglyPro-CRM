@@ -3502,11 +3502,27 @@
                     // Show success notification
                     const totalSynced = result.syncResults.created + result.syncResults.updated;
                     const fetchedTotal = result.fetched.ghl + result.fetched.hubspot + result.fetched.vagaro;
+                    const errorCount = result.syncErrors?.length || 0;
 
-                    if (fetchedTotal > 0) {
-                        alert(`CRM Sync Complete!\n\nFetched: ${fetchedTotal} appointments\n- GHL: ${result.fetched.ghl}\n- HubSpot: ${result.fetched.hubspot}\n- Vagaro: ${result.fetched.vagaro}\n\nSynced: ${result.syncResults.created} new, ${result.syncResults.updated} updated`);
+                    let message = 'CRM Sync Complete!\n\n';
+                    message += `Fetched: ${fetchedTotal} appointments\n`;
+                    message += `- GHL: ${result.fetched.ghl}\n`;
+                    message += `- HubSpot: ${result.fetched.hubspot}\n`;
+                    message += `- Vagaro: ${result.fetched.vagaro}\n\n`;
+                    message += `Synced: ${result.syncResults.created} new, ${result.syncResults.updated} updated`;
+
+                    if (errorCount > 0) {
+                        message += `\n\n⚠️ ${errorCount} error(s):\n`;
+                        message += result.syncErrors.slice(0, 3).join('\n');
+                        if (errorCount > 3) {
+                            message += `\n...and ${errorCount - 3} more`;
+                        }
+                    }
+
+                    if (fetchedTotal > 0 || errorCount > 0) {
+                        alert(message);
                     } else {
-                        alert('CRM Sync Complete!\n\nNo new appointments found in connected CRMs.');
+                        alert('CRM Sync Complete!\n\nNo appointments found in connected CRMs.');
                     }
 
                     // Update last sync time
