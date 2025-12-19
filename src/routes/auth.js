@@ -704,6 +704,129 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// POST /api/auth/admin-impersonate - Admin login to access any client's dashboard
+// This allows administrators to access client dashboards for support purposes
+router.post('/admin-impersonate', async (req, res) => {
+    try {
+        const { adminEmail, adminPassword, clientId } = req.body;
+
+        console.log(`🔐 Admin impersonation attempt: ${adminEmail} -> Client ${clientId}`);
+
+        if (!adminEmail || !adminPassword || !clientId) {
+            return res.status(400).json({
+                error: 'Admin email, password, and client ID are required'
+            });
+        }
+
+        // Find admin user
+        const admin = await User.findOne({ where: { email: adminEmail } });
+
+        if (!admin) {
+            console.log('❌ Admin user not found');
+            return res.status(401).json({
+                error: 'Invalid admin credentials'
+            });
+        }
+
+        // Verify admin flag
+        if (!admin.is_admin) {
+            console.log(`❌ User ${adminEmail} is not an admin`);
+            return res.status(403).json({
+                error: 'Access denied. Admin privileges required.'
+            });
+        }
+
+        // Check admin password
+        const isValidPassword = await bcrypt.compare(adminPassword, admin.password_hash);
+
+        if (!isValidPassword) {
+            console.log('❌ Admin password validation failed');
+            return res.status(401).json({
+                error: 'Invalid admin credentials'
+            });
+        }
+
+        console.log(`✅ Admin ${adminEmail} authenticated successfully`);
+
+        // Find target client
+        const client = await Client.findOne({ where: { id: parseInt(clientId) } });
+
+        if (!client) {
+            return res.status(404).json({
+                error: `Client ID ${clientId} not found`
+            });
+        }
+
+        // Find user associated with client
+        let clientUser = null;
+        if (client.user_id) {
+            clientUser = await User.findByPk(client.user_id);
+        }
+
+        console.log(`📋 Impersonating Client: ${client.business_name} (ID: ${client.id})`);
+
+        // Generate JWT token for admin impersonation
+        const jwtSecret = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
+
+        const token = jwt.sign(
+            {
+                userId: clientUser ? clientUser.id : admin.id,
+                email: clientUser ? clientUser.email : admin.email,
+                businessName: client.business_name,
+                businessType: clientUser?.business_type || 'business',
+                clientId: client.id,
+                // Flag to indicate this is an admin impersonation session
+                isAdminImpersonation: true,
+                adminUserId: admin.id,
+                adminEmail: admin.email
+            },
+            jwtSecret,
+            { expiresIn: '4h' }  // Shorter expiry for impersonation sessions
+        );
+
+        console.log(`🎫 Impersonation token generated for Client ${clientId}`);
+        console.log(`📝 AUDIT: Admin ${admin.email} (ID: ${admin.id}) impersonated Client ${client.business_name} (ID: ${client.id}) at ${new Date().toISOString()}`);
+
+        res.json({
+            success: true,
+            message: `Admin impersonation successful for ${client.business_name}`,
+            token: token,
+            data: {
+                impersonation: true,
+                admin: {
+                    id: admin.id,
+                    email: admin.email,
+                    name: `${admin.first_name} ${admin.last_name}`
+                },
+                user: clientUser ? {
+                    id: clientUser.id,
+                    email: clientUser.email,
+                    firstName: clientUser.first_name,
+                    lastName: clientUser.last_name,
+                    businessName: clientUser.business_name,
+                    businessType: clientUser.business_type
+                } : null,
+                client: {
+                    id: client.id,
+                    businessName: client.business_name,
+                    rachelNumber: client.ringlypro_number,
+                    rachelEnabled: client.rachel_enabled,
+                    depositRequired: client.deposit_required,
+                    depositAmount: client.deposit_amount
+                },
+                redirectTo: '/dashboard'
+            }
+        });
+
+    } catch (error) {
+        console.error('💥 Admin impersonation error:', error);
+        res.status(500).json({
+            error: 'Impersonation failed. Please try again.',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
 // GET /api/auth/profile - Get current user profile
 router.get('/profile', async (req, res) => {
     try {
@@ -715,8 +838,8 @@ router.get('/profile', async (req, res) => {
         });
     } catch (error) {
         console.error('Profile error:', error);
-        res.status(500).json({ 
-            error: 'Failed to get profile' 
+        res.status(500).json({
+            error: 'Failed to get profile'
         });
     }
 });
