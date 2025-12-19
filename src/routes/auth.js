@@ -814,7 +814,7 @@ router.post('/admin-impersonate', async (req, res) => {
                     depositRequired: client.deposit_required,
                     depositAmount: client.deposit_amount
                 },
-                redirectTo: '/dashboard'
+                redirectTo: '/'  // Dashboard is at root
             }
         });
 

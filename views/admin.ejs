@@ -1398,7 +1398,7 @@
                     localStorage.setItem('token', result.token);
 
                     setTimeout(() => {
-                        window.location.href = '/dashboard';
+                        window.location.href = '/';  // Dashboard is at root, not /dashboard
                     }, 1500);
                 } else {
                     resultMessage.style.background = '#f8d7da';
