@@ -78,15 +78,24 @@ class UnifiedBookingService {
       let credentials = null;
 
       // If no explicit system set, detect from credentials
+      // Check both dedicated columns AND settings JSON for CRM config
       if (system === 'none' || !system) {
         if (client.hubspot_api_key) {
           system = 'hubspot';
         } else if (client.ghl_api_key && client.ghl_location_id) {
           system = 'ghl';
+        } else if (client.settings?.integration?.ghl?.enabled &&
+                   (client.settings?.integration?.ghl?.apiKey || client.settings?.integration?.ghl?.locationId)) {
+          // Fallback: Check settings JSON for GHL config (handles cases where dedicated columns not set)
+          system = 'ghl';
+          logger.info(`[UNIFIED-BOOKING] Client ${clientId} GHL detected from settings JSON`);
         } else if (client.settings?.integration?.vagaro?.enabled) {
           system = 'vagaro';
         }
       }
+
+      // Debug logging for CRM detection
+      logger.info(`[UNIFIED-BOOKING] Client ${clientId} CRM detection: booking_system=${client.booking_system || 'NULL'}, ghl_api_key=${client.ghl_api_key ? 'SET' : 'NULL'}, ghl_location_id=${client.ghl_location_id || 'NULL'}, settings.ghl.enabled=${client.settings?.integration?.ghl?.enabled || false}`);
 
       // Get credentials based on system
       if (system === 'hubspot') {
@@ -96,11 +105,15 @@ class UnifiedBookingService {
           timezone: client.hubspot_timezone || client.timezone || 'America/New_York'
         };
       } else if (system === 'ghl') {
+        // Get GHL credentials from dedicated columns OR settings JSON
+        const ghlSettings = client.settings?.integration?.ghl || {};
         credentials = {
-          apiKey: client.ghl_api_key,
-          locationId: client.ghl_location_id,
+          apiKey: client.ghl_api_key || ghlSettings.apiKey,
+          locationId: client.ghl_location_id || ghlSettings.locationId,
+          calendarId: ghlSettings.calendarId,  // Calendar ID is always in settings
           timezone: client.timezone || 'America/New_York'
         };
+        logger.info(`[UNIFIED-BOOKING] GHL credentials: apiKey=${credentials.apiKey ? 'SET' : 'NULL'}, locationId=${credentials.locationId || 'NULL'}, calendarId=${credentials.calendarId || 'NULL'}`);
       } else if (system === 'vagaro') {
         const vagaroSettings = client.settings?.integration?.vagaro || {};
         credentials = {
@@ -112,7 +125,7 @@ class UnifiedBookingService {
         };
       }
 
-      logger.info(`[UNIFIED-BOOKING] Client ${clientId} config: system=${system}, hasCredentials=${!!credentials}`);
+      logger.info(`[UNIFIED-BOOKING] Client ${clientId} final config: system=${system}, hasCredentials=${!!credentials}`);
 
       return {
         clientId,
