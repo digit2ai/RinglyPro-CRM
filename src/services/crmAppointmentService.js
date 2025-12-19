@@ -39,12 +39,14 @@ async function getEnabledIntegrations(clientId) {
 
     const client = result[0];
     const integrationSettings = client.integration_settings || {};
+    const ghlSettings = integrationSettings.ghl || {};
 
-    // Check GHL - has API key and enabled
-    const ghlEnabled = !!(
-      client.ghl_api_key &&
-      (integrationSettings.ghl?.enabled !== false)
-    );
+    // Check GHL - has API key from dedicated column OR settings JSON
+    // The API key can be stored in either location
+    const hasGhlApiKey = !!(client.ghl_api_key || ghlSettings.apiKey);
+    const ghlEnabled = hasGhlApiKey && (ghlSettings.enabled !== false);
+
+    logger.info(`[CRM Sync] Client ${clientId} GHL check: ghl_api_key=${client.ghl_api_key ? 'SET' : 'NULL'}, settings.ghl.apiKey=${ghlSettings.apiKey ? 'SET' : 'NULL'}, enabled=${ghlSettings.enabled}, result=${ghlEnabled}`);
 
     // Check HubSpot - has API key and enabled
     const hubspotEnabled = !!(
