@@ -1102,44 +1102,17 @@ router.post('/voice/rachel/select-language', async (req, res) => {
             });
         });
 
-        // Pass client context via query params since Twilio doesn't preserve cookies across redirects
-        const clientId = req.session.client_id;
-        const businessName = encodeURIComponent(req.session.business_name || '');
-        const userIdParam = req.session.user_id || '';
-        const callerNumber = encodeURIComponent(req.session.caller_number || '');
-
-        // Build query string with all necessary context
-        const contextParams = `client_id=${clientId}&business_name=${businessName}&user_id=${userIdParam}&caller=${callerNumber}`;
-
-        let redirectPath;
-        let voiceName = 'Polly.Joanna';
-        let language = 'en-US';
-
         if (digits === '1') {
             // English - Continue with Rachel
-            redirectPath = `/voice/rachel/incoming?lang=en&${contextParams}`;
+            res.redirect(307, '/voice/rachel/incoming?lang=en');
         } else if (digits === '2') {
             // Spanish - Route to Lina
-            redirectPath = `/voice/lina/incoming?lang=es&${contextParams}`;
-            voiceName = 'Polly.Lupe';
-            language = 'es-MX';
+            res.redirect(307, '/voice/lina/incoming?lang=es');
         } else {
             // Invalid input - default to English
             console.warn(`⚠️ Invalid language selection: ${digits}, defaulting to English`);
-            redirectPath = `/voice/rachel/incoming?lang=en&${contextParams}`;
+            res.redirect(307, '/voice/rachel/incoming?lang=en');
         }
-
-        console.log(`🔄 Language redirect to: ${redirectPath}`);
-
-        // Use Say + Redirect instead of just Redirect for better reliability
-        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Say voice="${voiceName}" language="${language}">One moment please.</Say>
-    <Redirect method="POST">${redirectPath}</Redirect>
-</Response>`;
-
-        res.type('text/xml');
-        res.send(twiml);
 
     } catch (error) {
         console.error('Error handling language selection:', error);
@@ -1472,24 +1445,12 @@ const handleEnglishIncoming = async (req, res) => {
     try {
         console.log('📞 English language selected - Rachel continuing');
 
-        // Restore client context from query params (Twilio doesn't preserve cookies across redirects)
-        // Only restore if query param has a valid numeric client_id
-        const queryClientId = parseInt(req.query.client_id);
-        if (queryClientId && !isNaN(queryClientId) && !req.session.client_id) {
-            req.session.client_id = queryClientId;
-            req.session.business_name = decodeURIComponent(req.query.business_name || '');
-            req.session.user_id = req.query.user_id || null;
-            req.session.caller_number = decodeURIComponent(req.query.caller || '');
-            req.session.language = 'en';
-            console.log(`✅ Restored session from query params: client_id=${req.session.client_id}, business=${req.session.business_name}`);
-        }
-
-        // Get client info from session (now populated from query params if needed)
+        // Get client info from session
         const clientId = req.session.client_id;
         const businessName = req.session.business_name;
 
         if (!clientId) {
-            console.error("❌ No client context in session or query params, query was:", req.query);
+            console.error("❌ No client context in session");
             const twiml = `
                 <?xml version="1.0" encoding="UTF-8"?>
                 <Response>
