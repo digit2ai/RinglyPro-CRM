@@ -183,6 +183,26 @@
             background: #dc2626;
         }
 
+        .training-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .training-btn:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-1px);
+        }
+
         /* Rachel Toggle Card */
         .rachel-card {
             background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
@@ -1848,6 +1868,12 @@
             <div class="header-top">
                 <div></div>
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <a href="https://api.leadconnectorhq.com/widget/bookings/missed-call-text-back-bde9451d-56fc-4189-bf4e-beb0f6661258-7e52ccdb-45c2-4ce8-99f6-a7bf13669fc4-3cc62e97-695d-4cf4-85ba-9f47ac4af26f" target="_blank" class="training-btn">
+                        <svg style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Book Free Training
+                    </a>
                     <button class="logout-btn" onclick="logout()">
                         <svg style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
