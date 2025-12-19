@@ -549,6 +549,7 @@ class UnifiedBookingService {
       }
 
       // Insert appointment
+      // Use SELECT query type to properly get RETURNING results from PostgreSQL
       const insertResult = await sequelize.query(
         `INSERT INTO appointments (
           client_id, customer_name, customer_phone, customer_email,
@@ -582,16 +583,24 @@ class UnifiedBookingService {
             vagaroId: crmSource === 'vagaro' ? externalId : null,
             depositStatus
           },
-          type: QueryTypes.INSERT
+          type: QueryTypes.SELECT  // Use SELECT to properly parse RETURNING results
         }
       );
 
-      const appointmentId = insertResult[0]?.[0]?.id;
+      // PostgreSQL RETURNING with SELECT type returns array directly
+      const appointmentId = insertResult?.[0]?.id;
       logger.info(`[UNIFIED-BOOKING] Local appointment saved: ID=${appointmentId}, code=${confirmationCode}, depositStatus=${depositStatus}`);
+      logger.info(`[UNIFIED-BOOKING] INSERT result: ${JSON.stringify(insertResult)}`);
+
+      // Even if we couldn't get the ID back (rare), the appointment was still created
+      // Return success with confirmation code which is what matters for the customer
+      if (!appointmentId) {
+        logger.warn(`[UNIFIED-BOOKING] Appointment created but ID not returned - using confirmation code ${confirmationCode}`);
+      }
 
       return {
         success: true,
-        appointmentId,
+        appointmentId: appointmentId || confirmationCode,  // Fallback to confirmation code if no ID
         confirmationCode,
         depositStatus,
         depositRequired
