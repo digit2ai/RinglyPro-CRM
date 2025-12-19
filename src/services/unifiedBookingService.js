@@ -548,25 +548,7 @@ class UnifiedBookingService {
         logger.info(`[UNIFIED-BOOKING] Client ${clientId} requires deposits - marking as pending`);
       }
 
-      // Map source values to valid PostgreSQL ENUM values
-      // The DB ENUM has: web, phone, rachel_voice_ai, manual, api, ghl_sync, hubspot_sync, vagaro_sync
-      // Our app uses: voice_booking, voice_booking_spanish, whatsapp, etc.
-      const sourceMapping = {
-        'voice_booking': 'rachel_voice_ai',
-        'voice_booking_spanish': 'rachel_voice_ai',
-        'whatsapp': 'api',
-        'whatsapp_ghl': 'ghl_sync',
-        'whatsapp_hubspot': 'hubspot_sync',
-        'whatsapp_vagaro': 'vagaro_sync',
-        'online': 'web',
-        'walk-in': 'manual'
-      };
-      const dbSource = sourceMapping[source] || source || 'manual';
-      logger.info(`[UNIFIED-BOOKING] Source mapping: ${source} -> ${dbSource}`);
-
-      // Insert appointment
-      // Use SELECT query type to properly get RETURNING results from PostgreSQL
-      // Note: Using 'scheduled' status (exists in original ENUM: scheduled, confirmed, completed, cancelled, no_show)
+      // Insert appointment - RESTORED TO WORKING VERSION from commit f7be71f
       const insertResult = await sequelize.query(
         `INSERT INTO appointments (
           client_id, customer_name, customer_phone, customer_email,
@@ -578,7 +560,7 @@ class UnifiedBookingService {
         ) VALUES (
           :clientId, :customerName, :customerPhone, :customerEmail,
           :date, :time, :duration, :purpose,
-          'scheduled', :source, :confirmationCode,
+          'confirmed', :source, :confirmationCode,
           :hubspotId, :ghlId, :vagaroId,
           :depositStatus,
           NOW(), NOW()
@@ -593,31 +575,23 @@ class UnifiedBookingService {
             time: normalizedTime,
             duration: 30,
             purpose: service || 'Appointment',
-            source: dbSource,  // Use mapped source that exists in PostgreSQL ENUM
+            source: crmSource && crmSource !== 'none' && crmSource !== 'local' ? `${source}_${crmSource}` : source,
             confirmationCode,
             hubspotId: crmSource === 'hubspot' ? externalId : null,
             ghlId: crmSource === 'ghl' ? externalId : null,
             vagaroId: crmSource === 'vagaro' ? externalId : null,
             depositStatus
           },
-          type: QueryTypes.SELECT  // Use SELECT to properly parse RETURNING results
+          type: QueryTypes.INSERT
         }
       );
 
-      // PostgreSQL RETURNING with SELECT type returns array directly
-      const appointmentId = insertResult?.[0]?.id;
+      const appointmentId = insertResult[0]?.[0]?.id;
       logger.info(`[UNIFIED-BOOKING] Local appointment saved: ID=${appointmentId}, code=${confirmationCode}, depositStatus=${depositStatus}`);
-      logger.info(`[UNIFIED-BOOKING] INSERT result: ${JSON.stringify(insertResult)}`);
-
-      // Even if we couldn't get the ID back (rare), the appointment was still created
-      // Return success with confirmation code which is what matters for the customer
-      if (!appointmentId) {
-        logger.warn(`[UNIFIED-BOOKING] Appointment created but ID not returned - using confirmation code ${confirmationCode}`);
-      }
 
       return {
         success: true,
-        appointmentId: appointmentId || confirmationCode,  // Fallback to confirmation code if no ID
+        appointmentId,
         confirmationCode,
         depositStatus,
         depositRequired

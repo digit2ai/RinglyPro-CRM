@@ -73,10 +73,9 @@ const Appointment = sequelize.define('Appointment', {
   },
   status: {
     type: DataTypes.STRING,
-    defaultValue: 'scheduled',
+    defaultValue: 'confirmed',
     validate: {
-      // Match PostgreSQL ENUM values: scheduled, confirmed, completed, cancelled, no_show
-      isIn: [['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show']]
+      isIn: [['confirmed', 'pending', 'cancelled', 'completed', 'no-show', 'scheduled']]
     }
   },
   confirmationCode: {
@@ -88,10 +87,9 @@ const Appointment = sequelize.define('Appointment', {
   },
   source: {
     type: DataTypes.STRING,
-    defaultValue: 'rachel_voice_ai',
+    defaultValue: 'voice_booking',
     validate: {
-      // Match PostgreSQL ENUM values: web, phone, rachel_voice_ai, manual, api, ghl_sync, hubspot_sync, vagaro_sync
-      isIn: [['web', 'phone', 'rachel_voice_ai', 'manual', 'api', 'ghl_sync', 'hubspot_sync', 'vagaro_sync']]
+      isIn: [['voice_booking', 'voice_booking_spanish', 'online', 'manual', 'walk-in', 'ghl_sync', 'hubspot_sync', 'vagaro_sync', 'whatsapp_ghl', 'whatsapp_vagaro', 'whatsapp', 'whatsapp_hubspot']]
     }
   },
   ghlAppointmentId: {
