@@ -121,6 +121,16 @@ class LinaSpanishVoiceService {
     }
 
     /**
+     * Build query params string for client context preservation
+     * Twilio doesn't preserve sessions between webhook calls
+     */
+    buildContextParams(session) {
+        const clientId = session.client_id || '';
+        const businessName = encodeURIComponent(session.business_name || 'nuestra empresa');
+        return `client_id=${clientId}&business_name=${businessName}`;
+    }
+
+    /**
      * Handle appointment booking request in Spanish
      * @param {string} speechResult - Original speech input
      * @param {Object} session - Express session object
@@ -129,6 +139,7 @@ class LinaSpanishVoiceService {
     async handleBookingRequest(speechResult, session) {
         const twiml = new twilio.twiml.VoiceResponse();
         const businessName = session.business_name || 'nuestra empresa';
+        const contextParams = this.buildContextParams(session);
 
         const bookingText = `
             ¡Excelente! Con mucho gusto le ayudaré a agendar una cita con ${businessName}.
@@ -139,7 +150,7 @@ class LinaSpanishVoiceService {
         const gather = twiml.gather({
             input: 'speech',
             timeout: 10,
-            action: '/voice/lina/collect-name',
+            action: `/voice/lina/collect-name?${contextParams}`,
             method: 'POST',
             speechTimeout: 'auto',
             language: 'es-MX'
@@ -163,6 +174,7 @@ class LinaSpanishVoiceService {
     async handlePricingRequest(session) {
         const twiml = new twilio.twiml.VoiceResponse();
         const businessName = session.business_name || 'nuestra empresa';
+        const contextParams = this.buildContextParams(session);
 
         const pricingText = `
             Gracias por su interés en los servicios de ${businessName}.
@@ -173,7 +185,7 @@ class LinaSpanishVoiceService {
         const gather = twiml.gather({
             input: 'speech',
             timeout: 10,
-            action: '/voice/lina/handle-pricing-response',
+            action: `/voice/lina/handle-pricing-response?${contextParams}`,
             method: 'POST',
             speechTimeout: 'auto',
             language: 'es-MX'
@@ -269,6 +281,7 @@ class LinaSpanishVoiceService {
     async handleUnknownRequest(speechResult, session) {
         const twiml = new twilio.twiml.VoiceResponse();
         const businessName = session.business_name || 'nuestra empresa';
+        const contextParams = this.buildContextParams(session);
 
         const clarificationText = `
             Lo siento, no entendí bien.
@@ -279,7 +292,7 @@ class LinaSpanishVoiceService {
         const gather = twiml.gather({
             input: 'speech',
             timeout: 10,
-            action: '/voice/lina/process-speech',
+            action: `/voice/lina/process-speech?${contextParams}`,
             method: 'POST',
             speechTimeout: 'auto',
             language: 'es-MX'

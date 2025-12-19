@@ -62,12 +62,28 @@ const handleSpanishIncoming = async (req, res) => {
     try {
         console.log('📞 Spanish language selected - Lina webhook called');
 
-        // Get client info from session
+        // Restore client context from query params if present (for TwiML redirects)
+        const clientIdFromQuery = req.query.client_id;
+        const businessNameFromQuery = req.query.business_name;
+
+        if (clientIdFromQuery) {
+            const parsedClientId = parseInt(clientIdFromQuery, 10);
+            if (!isNaN(parsedClientId)) {
+                req.session.client_id = parsedClientId;
+                console.log(`✅ Restored client_id from query: ${parsedClientId}`);
+            }
+        }
+        if (businessNameFromQuery) {
+            req.session.business_name = decodeURIComponent(businessNameFromQuery);
+            console.log(`✅ Restored business_name from query: ${req.session.business_name}`);
+        }
+
+        // Get client info from session (or restored from query)
         const clientId = req.session.client_id;
         const businessName = req.session.business_name;
 
         if (!clientId) {
-            console.error("❌ No client context in session");
+            console.error("❌ No client context in session or query params");
             const twiml = `
                 <?xml version="1.0" encoding="UTF-8"?>
                 <Response>
@@ -111,16 +127,29 @@ const handleSpanishIncoming = async (req, res) => {
         const hour = new Date().getHours();
         let timeGreeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
 
-        const greetingText = `${timeGreeting}, gracias por llamar a ${businessName}. Mi nombre es Lina, su asistente virtual. Puedo ayudarle a agendar una cita, o si prefiere, puede dejarme un mensaje. ¿En qué puedo ayudarle hoy?`;
+        // Escape business name for XML
+        const escapedBusinessName = (businessName || 'nuestra empresa')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+
+        const greetingText = `${timeGreeting}, gracias por llamar a ${escapedBusinessName}. Mi nombre es Lina, su asistente virtual. Puedo ayudarle a agendar una cita, o si prefiere, puede dejarme un mensaje. ¿En qué puedo ayudarle hoy?`;
+
+        // Pass client context via query params since Twilio doesn't preserve sessions between requests
+        // URL-encode the business name to handle special characters
+        const encodedBusinessName = encodeURIComponent(businessName || 'nuestra empresa');
+        const contextParams = `client_id=${clientId}&business_name=${encodedBusinessName}`;
 
         // Use Polly.Lupe which is reliable - skip ElevenLabs for now to ensure stability
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/lina/process-speech" method="POST" language="es-MX">
+    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/lina/process-speech?${contextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe" language="es-MX">${greetingText}</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intentemos de nuevo.</Say>
-    <Redirect>/voice/lina/incoming</Redirect>
+    <Redirect>/voice/lina/incoming?${contextParams}</Redirect>
 </Response>`;
 
         res.type('text/xml');
@@ -146,10 +175,37 @@ router.get('/voice/lina/incoming', handleSpanishIncoming);
 
 /**
  * Process Spanish speech input endpoint
+ * Restores client context from query params since Twilio doesn't preserve sessions
  */
 router.post('/voice/lina/process-speech', async (req, res) => {
     try {
         console.log('🎤 Processing Spanish speech:', req.body.SpeechResult);
+
+        // Restore client context from query params (Twilio doesn't preserve sessions)
+        const clientIdFromQuery = req.query.client_id;
+        const businessNameFromQuery = req.query.business_name;
+
+        if (clientIdFromQuery) {
+            const parsedClientId = parseInt(clientIdFromQuery, 10);
+            if (!isNaN(parsedClientId)) {
+                req.session.client_id = parsedClientId;
+                console.log(`✅ Restored client_id from query: ${parsedClientId}`);
+            }
+        }
+        if (businessNameFromQuery) {
+            req.session.business_name = decodeURIComponent(businessNameFromQuery);
+            console.log(`✅ Restored business_name from query: ${req.session.business_name}`);
+        }
+
+        // Save restored session
+        if (clientIdFromQuery || businessNameFromQuery) {
+            await new Promise((resolve, reject) => {
+                req.session.save((err) => {
+                    if (err) reject(err);
+                    else resolve();
+                });
+            });
+        }
 
         const twimlResponse = await linaService.processSpeechInput(req.body, req.session);
 
@@ -174,9 +230,24 @@ router.post('/voice/lina/process-speech', async (req, res) => {
 
 /**
  * Collect name for appointment booking (Spanish)
+ * Restores client context from query params since Twilio doesn't preserve sessions
  */
 router.post('/voice/lina/collect-name', async (req, res) => {
     try {
+        // Restore client context from query params (Twilio doesn't preserve sessions)
+        const clientIdFromQuery = req.query.client_id;
+        const businessNameFromQuery = req.query.business_name;
+
+        if (clientIdFromQuery) {
+            const parsedClientId = parseInt(clientIdFromQuery, 10);
+            if (!isNaN(parsedClientId)) {
+                req.session.client_id = parsedClientId;
+            }
+        }
+        if (businessNameFromQuery) {
+            req.session.business_name = decodeURIComponent(businessNameFromQuery);
+        }
+
         const name = req.body.SpeechResult || '';
         const clientId = req.session.client_id;
         const businessName = req.session.business_name || 'nuestra empresa';
