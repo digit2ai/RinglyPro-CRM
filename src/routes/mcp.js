@@ -782,15 +782,33 @@ async function executeCreateContact(session, state) {
     console.error('❌ Full error object:', JSON.stringify(error.response?.data || error, null, 2));
 
     // Extract detailed error message
-    let errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+    const ghlError = error.response?.data;
+    let errorMsg = ghlError?.message || error.message || 'Unknown error';
+    let helpText = '';
+
+    // Handle specific GHL error types
+    if (errorMsg.toLowerCase().includes('duplicate') ||
+        errorMsg.toLowerCase().includes('already exists') ||
+        errorMsg.toLowerCase().includes('does not allow duplicated')) {
+      // Extract which field caused the duplicate
+      const duplicateField = ghlError?.field ||
+        (errorMsg.includes('email') ? 'email' :
+         errorMsg.includes('phone') ? 'phone' : 'contact');
+
+      helpText = `\n\n💡 **What happened?**\nThis GoHighLevel location has duplicate prevention enabled. A contact with this ${duplicateField} already exists.\n\n**What to do:**\n• Search for the existing contact: "find ${state.pendingFields.email || state.pendingFields.phone || state.pendingFields.firstName}"\n• Update the existing contact instead of creating a new one`;
+    } else if (error.response?.status === 422) {
+      helpText = '\n\n💡 Check that all required fields are valid (name, phone format, email format).';
+    } else if (error.response?.status === 401 || error.response?.status === 403) {
+      helpText = '\n\n💡 Your CRM session may need to be reconnected. Please refresh the page.';
+    }
 
     // If there's additional error details, include them
-    if (error.response?.data?.errors) {
-      errorMsg += '\nDetails: ' + JSON.stringify(error.response.data.errors);
+    if (ghlError?.errors) {
+      console.error('❌ Validation errors:', ghlError.errors);
     }
 
     return {
-      response: `❌ Failed to create contact: ${errorMsg}\n\nPlease check the contact information and try again.`
+      response: `❌ Failed to create contact: ${errorMsg}${helpText}`
     };
   }
 }
@@ -1965,9 +1983,14 @@ router.post('/copilot/chat', async (req, res) => {
   const session = sessions.get(sessionId);
   if (!session) {
     console.error('❌ Invalid session:', sessionId);
+    console.log('📋 Active sessions:', Array.from(sessions.keys()).length);
+    // Return a response that tells the frontend to reconnect
+    // This can happen after server restart (in-memory sessions lost)
     return res.status(401).json({
       success: false,
-      error: 'Invalid or expired session. Please reconnect to your CRM.'
+      error: 'Invalid or expired session. Please reconnect to your CRM.',
+      shouldReconnect: true,
+      hint: 'Your session may have expired due to server maintenance. Please refresh the page to reconnect.'
     });
   }
 

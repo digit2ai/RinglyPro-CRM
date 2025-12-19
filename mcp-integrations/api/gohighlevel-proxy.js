@@ -335,15 +335,25 @@ class GoHighLevelMCPProxy {
         console.log(`🔍 Client-side filtering for: "${lowerQuery}"`);
 
         contacts = contacts.filter(contact => {
-          const name = (contact.name || contact.firstName || contact.fullName || '').toLowerCase();
+          // GHL returns 'contactName' for full name, also check 'name', 'firstName', 'fullName'
+          const firstName = (contact.firstName || '').toLowerCase();
           const lastName = (contact.lastName || '').toLowerCase();
+          const contactName = (contact.contactName || '').toLowerCase();
+          const name = (contact.name || contact.fullName || '').toLowerCase();
+          const fullName = contactName || name || `${firstName} ${lastName}`.trim();
           const email = (contact.email || '').toLowerCase();
           const phone = (contact.phone || '').replace(/\D/g, '');
           const queryPhone = lowerQuery.replace(/\D/g, '');
           const companyName = (contact.companyName || contact.businessName || '').toLowerCase();
 
-          // Match on name, email, phone, or company
-          return name.includes(lowerQuery) ||
+          // Log first contact structure for debugging
+          if (contacts.indexOf(contact) === 0) {
+            console.log(`📋 Sample contact structure: firstName=${firstName}, lastName=${lastName}, contactName=${contactName}, name=${name}`);
+          }
+
+          // Match on full name, first name, last name, email, phone, or company
+          return fullName.includes(lowerQuery) ||
+                 firstName.includes(lowerQuery) ||
                  lastName.includes(lowerQuery) ||
                  email.includes(lowerQuery) ||
                  companyName.includes(lowerQuery) ||
@@ -354,20 +364,26 @@ class GoHighLevelMCPProxy {
 
         // Sort results - exact matches first, then starts-with, then contains
         contacts.sort((a, b) => {
-          const aName = (a.name || a.firstName || a.fullName || '').toLowerCase();
-          const bName = (b.name || b.firstName || b.fullName || '').toLowerCase();
+          const aFirstName = (a.firstName || '').toLowerCase();
+          const aLastName = (a.lastName || '').toLowerCase();
+          const aContactName = (a.contactName || '').toLowerCase();
+          const aName = aContactName || a.name?.toLowerCase() || `${aFirstName} ${aLastName}`.trim();
+          const bFirstName = (b.firstName || '').toLowerCase();
+          const bLastName = (b.lastName || '').toLowerCase();
+          const bContactName = (b.contactName || '').toLowerCase();
+          const bName = bContactName || b.name?.toLowerCase() || `${bFirstName} ${bLastName}`.trim();
           const aEmail = (a.email || '').toLowerCase();
           const bEmail = (b.email || '').toLowerCase();
 
-          // Exact match priority
-          const aExact = aName === lowerQuery || aEmail === lowerQuery;
-          const bExact = bName === lowerQuery || bEmail === lowerQuery;
+          // Exact match priority (full name or first name or email)
+          const aExact = aName === lowerQuery || aFirstName === lowerQuery || aEmail === lowerQuery;
+          const bExact = bName === lowerQuery || bFirstName === lowerQuery || bEmail === lowerQuery;
           if (aExact && !bExact) return -1;
           if (!aExact && bExact) return 1;
 
           // Starts-with priority
-          const aStarts = aName.startsWith(lowerQuery) || aEmail.startsWith(lowerQuery);
-          const bStarts = bName.startsWith(lowerQuery) || bEmail.startsWith(lowerQuery);
+          const aStarts = aName.startsWith(lowerQuery) || aFirstName.startsWith(lowerQuery) || aEmail.startsWith(lowerQuery);
+          const bStarts = bName.startsWith(lowerQuery) || bFirstName.startsWith(lowerQuery) || bEmail.startsWith(lowerQuery);
           if (aStarts && !bStarts) return -1;
           if (!aStarts && bStarts) return 1;
 

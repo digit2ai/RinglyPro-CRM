@@ -491,7 +491,21 @@
                 if (data.success) {
                     addMessage('assistant', data.response);
                 } else {
-                    addMessage('system', `Error: ${data.error || 'Unknown error'}`);
+                    // Check if we need to reconnect (session expired/lost)
+                    if (data.shouldReconnect || response.status === 401) {
+                        addMessage('system', `⚠️ ${data.hint || 'Session expired. Reconnecting...'}`);
+                        sessionId = null;
+                        // Auto-reconnect
+                        setTimeout(async () => {
+                            await connectToCRM();
+                            if (sessionId) {
+                                addMessage('system', '✅ Reconnected! You can continue your conversation.');
+                            }
+                        }, 1000);
+                    } else {
+                        // Regular error - show the response message if available
+                        addMessage('system', `Error: ${data.response || data.error || 'Unknown error'}`);
+                    }
                 }
             } catch (error) {
                 showTyping(false);
