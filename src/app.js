@@ -59,7 +59,8 @@ const voiceBotRoutes = require('./routes/voiceBot');
 const creditRoutes = require('./routes/credits'); // Credit system routes
 const voiceWebhookRouter = require('./routes/voiceWebhook'); // Rachel voice routes
 const rachelRoutes = require('./routes/rachelRoutes'); // Multi-tenant Rachel routes (English)
-const linaRoutes = require('./routes/linaRoutes'); // Spanish voice routes (Lina)
+const linaRoutes = require('./routes/linaRoutes'); // Spanish voice routes (Lina) - legacy
+const linaNewRoutes = require('./routes/linaNewRoutes'); // New Spanish voice routes (stateless)
 const twilioRoutes = require('./routes/twilio');
 const twilioAdminRoutes = require('./routes/twilioAdmin'); // Twilio number management
 
@@ -341,9 +342,13 @@ app.use('/webhook', conditionalForwardRoutes);
 app.use('/', rachelRoutes);
 console.log('🎯 Multi-tenant Rachel routes mounted - Client identification active');
 
-// Lina Voice routes (ElevenLabs integration - Spanish)
+// Lina Voice routes (ElevenLabs integration - Spanish) - legacy
 app.use('/', linaRoutes);
 console.log('🇪🇸 Lina Spanish voice routes mounted - Bilingual support active');
+
+// NEW Lina Voice routes (stateless, mirrors English flow)
+app.use('/', linaNewRoutes);
+console.log('🇪🇸 Lina NEW Spanish voice routes mounted - Stateless flow active');
 
 // =====================================================
 // PROTECTED ROUTES - Require Authentication
