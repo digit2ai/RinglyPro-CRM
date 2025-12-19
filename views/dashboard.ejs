@@ -5280,7 +5280,7 @@
                     alert('Deposit confirmed! Customer has been notified via SMS and Email.');
                     closeDepositModal();
                     // Refresh appointments to show updated status
-                    loadDashboardData();
+                    loadDashboard();
                 } else {
                     alert('Error confirming deposit: ' + (data.error || 'Unknown error'));
                 }
