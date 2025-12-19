@@ -1103,11 +1103,29 @@ router.post('/voice/rachel/select-language', async (req, res) => {
         });
 
         if (digits === '1') {
-            // English - Continue with Rachel
+            // English - Continue with Rachel (redirect works, same route file)
             res.redirect(307, '/voice/rachel/incoming?lang=en');
         } else if (digits === '2') {
-            // Spanish - Route to Lina
-            res.redirect(307, '/voice/lina/incoming?lang=es');
+            // Spanish - Handle INLINE to preserve session (don't redirect to different route)
+            console.log('🇪🇸 Spanish selected - generating Spanish greeting inline');
+
+            const businessName = req.session.business_name || 'nuestra empresa';
+            const hour = new Date().getHours();
+            const timeGreeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+
+            const greetingText = `${timeGreeting}, gracias por llamar a ${businessName}. Mi nombre es Lina, su asistente virtual. Puedo ayudarle a agendar una cita, o si prefiere, puede dejarme un mensaje. ¿En qué puedo ayudarle hoy?`;
+
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/lina/process-speech" method="POST" language="es-MX">
+        <Say voice="Polly.Lupe" language="es-MX">${greetingText}</Say>
+    </Gather>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Gracias por llamar.</Say>
+    <Hangup/>
+</Response>`;
+
+            res.type('text/xml');
+            res.send(twiml);
         } else {
             // Invalid input - default to English
             console.warn(`⚠️ Invalid language selection: ${digits}, defaulting to English`);
