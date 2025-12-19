@@ -828,11 +828,10 @@
                 if (activeCRM === 'hubspot') {
                     // HubSpot - requires ONLY access token (NO location!)
                     connectEndpoint = `${API_BASE}/hubspot/connect`;
-                    const accessToken = localStorage.getItem('hubspot_accessToken');
-                    if (accessToken) {
-                        connectBody.accessToken = accessToken;
+                    if (statusData.hubspot_credentials) {
+                        connectBody.accessToken = statusData.hubspot_credentials.accessToken;
                     }
-                    console.log('📝 HubSpot connection - no location ID needed');
+                    console.log('📝 HubSpot connection - credentials from server');
                 } else if (activeCRM === 'vagaro') {
                     // Vagaro - requires OAuth credentials (clientId, clientSecretKey, merchantId)
                     connectEndpoint = `${API_BASE}/vagaro/connect`;
@@ -842,17 +841,15 @@
                         connectBody.merchantId = statusData.vagaro_credentials.merchantId;
                         connectBody.region = statusData.vagaro_credentials.region || 'us01';
                     }
-                    console.log('📝 Vagaro connection - OAuth credentials from server');
+                    console.log('📝 Vagaro connection - credentials from server');
                 } else {
                     // GoHighLevel - requires api_key AND location_id
                     connectEndpoint = `${API_BASE}/gohighlevel/connect`;
-                    const apiKey = localStorage.getItem('ghl_apiKey');
-                    const locationId = localStorage.getItem('ghl_locationId');
-                    if (apiKey && locationId) {
-                        connectBody.apiKey = apiKey;
-                        connectBody.locationId = locationId;
+                    if (statusData.ghl_credentials) {
+                        connectBody.apiKey = statusData.ghl_credentials.apiKey;
+                        connectBody.locationId = statusData.ghl_credentials.locationId;
                     }
-                    console.log('📝 GHL connection - requires both API key and location ID');
+                    console.log('📝 GHL connection - credentials from server');
                 }
 
                 console.log('📡 Connecting to:', connectEndpoint);

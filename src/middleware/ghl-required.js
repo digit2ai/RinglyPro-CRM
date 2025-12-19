@@ -184,8 +184,25 @@ const checkGHLConfig = async (req, res) => {
             upgrade_needed: !hasCRM
         };
 
-        // Include Vagaro credentials for MCP connection (if Vagaro is active)
-        // Note: These are OAuth credentials needed by the MCP proxy
+        // Include CRM credentials for MCP connection
+        // Note: These credentials are needed by the MCP proxy to connect
+
+        // GoHighLevel credentials
+        if (hasGHL) {
+            response.ghl_credentials = {
+                apiKey: client.ghl_api_key,
+                locationId: client.ghl_location_id
+            };
+        }
+
+        // HubSpot credentials
+        if (hasHubSpot) {
+            response.hubspot_credentials = {
+                accessToken: client.hubspot_api_key
+            };
+        }
+
+        // Vagaro credentials
         if (hasVagaro && client.settings?.integration?.vagaro) {
             const vagaroSettings = client.settings.integration.vagaro;
             response.vagaro_credentials = {
