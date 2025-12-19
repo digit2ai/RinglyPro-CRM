@@ -1,5 +1,5 @@
-const availabilityService = require('./availabilityService');
-const appointmentService = require('./appointmentService');
+const crmAwareAvailabilityService = require('./crmAwareAvailabilityService');
+const unifiedBookingService = require('./unifiedBookingService');
 
 class VoiceFlowHandler {
     constructor() {
@@ -196,8 +196,9 @@ class VoiceFlowHandler {
                 );
             }
 
-            // Check availability using availabilityService
-            const availableSlots = await availabilityService.getAvailableSlots(clientId, timePreference.date);
+            // Check availability using CRM-aware service (GHL, HubSpot, Vagaro, or local)
+            const availableSlots = await crmAwareAvailabilityService.getAvailableSlots(clientId, timePreference.date);
+            console.log(`📅 Availability check: source=${availableSlots.source}, slots=${availableSlots.slots?.length || 0}`);
             
             if (!availableSlots.success || availableSlots.slots.length === 0) {
                 return this.generateVoiceResponse(
@@ -238,26 +239,39 @@ class VoiceFlowHandler {
         
         if (isConfirming) {
             try {
-                // Book the appointment
-                const bookingResult = await appointmentService.bookAppointment(clientId, {
-                    customer_name: conversationState.customerData.name,
-                    customer_phone: conversationState.customerData.phone,
-                    customer_email: conversationState.customerData.email,
-                    appointment_date: conversationState.customerData.appointment_date,
-                    appointment_time: conversationState.customerData.appointment_time,
-                    duration: 30,
-                    purpose: 'Consultation scheduled via Rachel Voice AI'
+                // Book the appointment using unified CRM-aware booking service
+                // This routes to GHL, HubSpot, Vagaro, or local based on client config
+                console.log(`🎯 Booking appointment for client ${clientId} via unified service`);
+
+                const bookingResult = await unifiedBookingService.bookAppointment(clientId, {
+                    customerName: conversationState.customerData.name,
+                    customerPhone: conversationState.customerData.phone,
+                    customerEmail: conversationState.customerData.email,
+                    date: conversationState.customerData.appointment_date,
+                    time: conversationState.customerData.appointment_time,
+                    service: 'Consultation',
+                    notes: 'Booked via Rachel Voice AI',
+                    source: 'voice_booking'
                 });
+
+                console.log(`📅 Booking result: system=${bookingResult.system}, success=${bookingResult.success}`);
 
                 if (bookingResult.success) {
                     conversationState.step = 'completed';
-                    conversationState.appointmentId = bookingResult.appointment.id;
-                    
+                    conversationState.appointmentId = bookingResult.localAppointmentId || bookingResult.meetingId;
+                    conversationState.crmSystem = bookingResult.system;
+
+                    // Use confirmation code from result
+                    const confirmationCode = bookingResult.confirmationCode ||
+                                           bookingResult.localAppointment?.confirmation_code ||
+                                           Math.random().toString(36).substring(2, 8).toUpperCase();
+
                     return this.generateVoiceResponse(
-                        `Excellent! Your appointment is confirmed for ${this.formatDateForSpeech(conversationState.customerData.appointment_date)} at ${this.formatTimeForSpeech(conversationState.customerData.appointment_time)}. You'll receive a confirmation text message shortly. Your confirmation code is ${bookingResult.appointment.confirmation_code}. Is there anything else I can help you with?`,
+                        `Excellent! Your appointment is confirmed for ${this.formatDateForSpeech(conversationState.customerData.appointment_date)} at ${this.formatTimeForSpeech(conversationState.customerData.appointment_time)}. You'll receive a confirmation text message shortly. Your confirmation code is ${confirmationCode}. Is there anything else I can help you with?`,
                         'completed'
                     );
                 } else {
+                    console.error(`❌ Booking failed: ${bookingResult.error}`);
                     return this.generateErrorResponse('I\'m sorry, there was an issue booking your appointment. Let me connect you with someone who can help.');
                 }
 

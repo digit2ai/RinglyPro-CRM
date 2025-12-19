@@ -52,7 +52,7 @@ class UnifiedBookingService {
           id, business_name, booking_system, timezone,
           ghl_api_key, ghl_location_id,
           hubspot_api_key, hubspot_meeting_slug, hubspot_timezone,
-          settings
+          settings, deposit_required, deposit_amount
          FROM clients WHERE id = :clientId`,
         {
           replacements: { clientId },
@@ -120,7 +120,9 @@ class UnifiedBookingService {
         system,
         credentials,
         timezone: client.timezone || 'America/New_York',
-        settings: client.settings
+        settings: client.settings,
+        depositRequired: client.deposit_required || false,
+        depositAmount: client.deposit_amount
       };
 
     } catch (error) {
@@ -151,9 +153,20 @@ class UnifiedBookingService {
           return { ...hsSlots, source: 'hubspot' };
 
         case 'ghl':
-          // GHL booking service would go here
-          // For now, fall through to local slots
-          logger.info('[UNIFIED-BOOKING] GHL slots not implemented, using local');
+          // Get GHL calendar slots
+          try {
+            const ghlCalendarId = await this.getGHLCalendarId(clientId, config);
+            if (ghlCalendarId) {
+              const ghlSlots = await ghlBookingService.getAvailableSlots(clientId, ghlCalendarId, date);
+              if (ghlSlots.success && ghlSlots.slots?.length > 0) {
+                logger.info(`[UNIFIED-BOOKING] GHL returned ${ghlSlots.slots.length} slots for ${date}`);
+                return { ...ghlSlots, source: 'ghl' };
+              }
+            }
+            logger.info('[UNIFIED-BOOKING] GHL slots unavailable, using local');
+          } catch (ghlError) {
+            logger.warn(`[UNIFIED-BOOKING] GHL slots error: ${ghlError.message}, using local`);
+          }
           return await this.getLocalAvailableSlots(clientId, date, config.timezone);
 
         case 'vagaro':
@@ -313,9 +326,46 @@ class UnifiedBookingService {
 
         case 'ghl':
           logger.info('[UNIFIED-BOOKING] Routing to GoHighLevel...');
-          // GHL booking would go here
-          // For now, fall through to local
-          logger.info('[UNIFIED-BOOKING] GHL booking not yet implemented, using local');
+          try {
+            // Get GHL calendar ID from settings or fetch first available
+            const ghlCalendarId = await this.getGHLCalendarId(clientId, config);
+
+            if (!ghlCalendarId) {
+              logger.warn('[UNIFIED-BOOKING] No GHL calendar found, falling back to local');
+              break; // Fall through to local booking
+            }
+
+            crmResult = await ghlBookingService.bookFromWhatsApp(clientId, {
+              customerName,
+              customerPhone,
+              customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@voice.booking`,
+              date,
+              time,
+              service: service || 'Voice Booking',
+              calendarId: ghlCalendarId,
+              notes: notes || `Booked via ${source}\nCustomer: ${customerName}\nPhone: ${customerPhone}`
+            });
+
+            if (crmResult.success) {
+              logger.info(`[UNIFIED-BOOKING] GHL booking SUCCESS: appointmentId=${crmResult.appointment?.id}`);
+              // GHL bookFromWhatsApp already saves to local DB, so we don't need to save again
+              return {
+                success: true,
+                system: 'ghl',
+                appointmentId: crmResult.appointment?.id,
+                contactId: crmResult.contact?.id,
+                localAppointmentId: crmResult.localAppointment?.id,
+                confirmationCode: crmResult.localAppointment?.confirmation_code || `GHL${Date.now().toString().slice(-6).toUpperCase()}`,
+                message: 'Appointment booked in GoHighLevel'
+              };
+            } else {
+              logger.warn(`[UNIFIED-BOOKING] GHL booking FAILED: ${crmResult.error}`);
+              // Fall through to local booking
+            }
+          } catch (ghlError) {
+            logger.error('[UNIFIED-BOOKING] GHL booking error:', ghlError.message);
+            // Fall through to local booking
+          }
           break;
 
         case 'vagaro':
@@ -405,11 +455,16 @@ class UnifiedBookingService {
    * @param {object} bookingData - Booking data
    * @param {string} crmSource - CRM that was used (hubspot, ghl, vagaro, local)
    * @param {string} externalId - External CRM appointment ID
+   * @param {object} clientConfig - Client configuration (optional, will be fetched if not provided)
    * @returns {Promise<object>} Local save result
    */
-  async saveLocalAppointment(clientId, bookingData, crmSource, externalId) {
+  async saveLocalAppointment(clientId, bookingData, crmSource, externalId, clientConfig = null) {
     try {
       const confirmationCode = this.generateConfirmationCode();
+
+      // Get client config if not provided (to check deposit_required)
+      const config = clientConfig || await this.getClientBookingConfig(clientId);
+      const depositRequired = config?.depositRequired || false;
 
       const {
         customerName,
@@ -447,19 +502,27 @@ class UnifiedBookingService {
         };
       }
 
+      // Determine deposit status based on client configuration
+      const depositStatus = depositRequired ? 'pending' : 'not_required';
+      if (depositRequired) {
+        logger.info(`[UNIFIED-BOOKING] Client ${clientId} requires deposits - marking as pending`);
+      }
+
       // Insert appointment
       const insertResult = await sequelize.query(
         `INSERT INTO appointments (
           client_id, customer_name, customer_phone, customer_email,
           appointment_date, appointment_time, duration, purpose,
           status, source, confirmation_code,
-          hubspot_id, ghl_id, vagaro_id,
+          hubspot_meeting_id, ghl_appointment_id, vagaro_appointment_id,
+          deposit_status,
           created_at, updated_at
         ) VALUES (
           :clientId, :customerName, :customerPhone, :customerEmail,
           :date, :time, :duration, :purpose,
           'confirmed', :source, :confirmationCode,
           :hubspotId, :ghlId, :vagaroId,
+          :depositStatus,
           NOW(), NOW()
         ) RETURNING id, confirmation_code`,
         {
@@ -472,23 +535,26 @@ class UnifiedBookingService {
             time: normalizedTime,
             duration: 30,
             purpose: service || 'Appointment',
-            source: `${source}_${crmSource}`,
+            source: crmSource && crmSource !== 'none' ? `${source}_${crmSource}` : source,
             confirmationCode,
             hubspotId: crmSource === 'hubspot' ? externalId : null,
             ghlId: crmSource === 'ghl' ? externalId : null,
-            vagaroId: crmSource === 'vagaro' ? externalId : null
+            vagaroId: crmSource === 'vagaro' ? externalId : null,
+            depositStatus
           },
           type: QueryTypes.INSERT
         }
       );
 
       const appointmentId = insertResult[0]?.[0]?.id;
-      logger.info(`[UNIFIED-BOOKING] Local appointment saved: ID=${appointmentId}, code=${confirmationCode}`);
+      logger.info(`[UNIFIED-BOOKING] Local appointment saved: ID=${appointmentId}, code=${confirmationCode}, depositStatus=${depositStatus}`);
 
       return {
         success: true,
         appointmentId,
-        confirmationCode
+        confirmationCode,
+        depositStatus,
+        depositRequired
       };
 
     } catch (error) {
@@ -497,6 +563,45 @@ class UnifiedBookingService {
         success: false,
         error: error.message
       };
+    }
+  }
+
+  /**
+   * Get GHL calendar ID for a client
+   * Checks settings first, then fetches from GHL API
+   * @param {number} clientId - Client ID
+   * @param {object} config - Client booking config
+   * @returns {Promise<string|null>} Calendar ID or null
+   */
+  async getGHLCalendarId(clientId, config) {
+    try {
+      // Check if calendar ID is stored in settings
+      if (config?.settings?.integration?.ghl?.calendarId) {
+        logger.info(`[UNIFIED-BOOKING] Using stored GHL calendar: ${config.settings.integration.ghl.calendarId}`);
+        return config.settings.integration.ghl.calendarId;
+      }
+
+      // Try to get calendars from GHL and pick the best one
+      const calendarsResult = await ghlBookingService.getCalendars(clientId);
+
+      if (calendarsResult.success && calendarsResult.calendars?.length > 0) {
+        // Prefer calendar with "RinglyPro" or "Booking" in name
+        const preferredCalendar = calendarsResult.calendars.find(c =>
+          c.name?.toLowerCase().includes('ringlypro') ||
+          c.name?.toLowerCase().includes('booking') ||
+          c.name?.toLowerCase().includes('onboarding')
+        );
+
+        const calendarId = preferredCalendar?.id || calendarsResult.calendars[0].id;
+        logger.info(`[UNIFIED-BOOKING] Selected GHL calendar: ${calendarId} (${preferredCalendar?.name || calendarsResult.calendars[0].name})`);
+        return calendarId;
+      }
+
+      logger.warn(`[UNIFIED-BOOKING] No GHL calendars found for client ${clientId}`);
+      return null;
+    } catch (error) {
+      logger.error(`[UNIFIED-BOOKING] Error getting GHL calendar: ${error.message}`);
+      return null;
     }
   }
 
