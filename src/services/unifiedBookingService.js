@@ -561,7 +561,7 @@ class UnifiedBookingService {
         ) VALUES (
           :clientId, :customerName, :customerPhone, :customerEmail,
           :date, :time, :duration, :purpose,
-          'confirmed', :source, :confirmationCode,
+          'pending', :source, :confirmationCode,
           :hubspotId, :ghlId, :vagaroId,
           :depositStatus,
           NOW(), NOW()

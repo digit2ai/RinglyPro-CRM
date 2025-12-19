@@ -654,6 +654,20 @@
             background: #10b981;
         }
 
+        .appointment-actions .btn-confirm-apt {
+            background: #8b5cf6;
+        }
+
+        .appointment-actions .btn-confirm-apt:hover {
+            background: #7c3aed;
+        }
+
+        .appointment-actions .btn-confirm-apt.confirmed {
+            background: #d1fae5;
+            color: #065f46;
+            cursor: default;
+        }
+
         /* Communication Card */
         .comm-card {
             background: white;
@@ -3759,13 +3773,28 @@
                     return '';
                 };
 
+                // Determine if appointment needs confirmation (not yet confirmed by client)
+                const needsConfirmation = status !== 'confirmed';
+                const confirmButtonHtml = needsConfirmation
+                    ? `<button class="btn-confirm-apt" onclick="confirmAppointment(${aptId}, '${name.replace(/'/g, "\\'")}')">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Confirm
+                        </button>`
+                    : `<button class="btn-confirm-apt confirmed" disabled>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Confirmed
+                        </button>`;
+
                 return `
-                <div class="appointment-card">
+                <div class="appointment-card" id="appointment-card-${aptId}">
                     <div class="appointment-main">
                         <div class="appointment-info">
                             <h3>
                                 ${name}
-                                ${status === 'confirmed' ? '<svg style="width: 1rem; height: 1rem; color: #10b981;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' : ''}
                                 ${getSourceTag()}
                             </h3>
                             <p style="font-weight: 600; color: #3b82f6; font-size: 0.875rem;">${date} at ${time}</p>
@@ -3773,7 +3802,6 @@
                             <p style="font-size: 0.75rem;">${phone}</p>
                         </div>
                         <div class="appointment-time">
-                            <span class="status-badge status-${status}">${status}</span>
                             ${getDepositBadge()}
                         </div>
                     </div>
@@ -3790,6 +3818,7 @@
                             </svg>
                             Call
                         </button>
+                        ${confirmButtonHtml}
                     </div>
                 </div>
                 `;
@@ -4341,6 +4370,60 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+            }
+        }
+
+        // Confirm an appointment (update status to confirmed)
+        async function confirmAppointment(appointmentId, customerName) {
+            if (!confirm(`Confirm appointment for ${customerName}?`)) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    alert('Please log in again');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const response = await fetch(`/api/appointments/${appointmentId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        status: 'confirmed'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update the button in the UI to show "Confirmed"
+                    const card = document.getElementById(`appointment-card-${appointmentId}`);
+                    if (card) {
+                        const confirmBtn = card.querySelector('.btn-confirm-apt');
+                        if (confirmBtn) {
+                            confirmBtn.classList.add('confirmed');
+                            confirmBtn.disabled = true;
+                            confirmBtn.innerHTML = `
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Confirmed
+                            `;
+                        }
+                    }
+                    // Show success message
+                    alert(`Appointment for ${customerName} has been confirmed!`);
+                } else {
+                    alert('Error confirming appointment: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error confirming appointment:', error);
+                alert('Error confirming appointment. Please try again.');
             }
         }
 
