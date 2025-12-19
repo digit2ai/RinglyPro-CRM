@@ -51,6 +51,35 @@ const qrUpload = multer({
 });
 
 /**
+ * Helper function to get the client ID for the authenticated user.
+ * First tries to get it from the JWT token (req.user.clientId),
+ * then falls back to looking up the client by user_id in the database.
+ *
+ * NOTE: The relationship is Client.user_id -> User.id (not User.client_id)
+ * So we query: SELECT id FROM clients WHERE user_id = :userId
+ */
+async function getClientIdForUser(req) {
+  // First try from JWT token
+  if (req.user?.clientId) {
+    return req.user.clientId;
+  }
+
+  // Fallback: lookup client by user_id in clients table
+  const userId = req.user?.userId || req.user?.id;
+  if (!userId) return null;
+
+  const [client] = await sequelize.query(
+    'SELECT id FROM clients WHERE user_id = :userId',
+    {
+      replacements: { userId },
+      type: QueryTypes.SELECT
+    }
+  );
+
+  return client?.id || null;
+}
+
+/**
  * GET /api/client-settings/:clientId/voicemail-message
  * Get client's custom outbound voicemail message
  */
@@ -227,19 +256,25 @@ router.get('/current', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id;
 
-    // Get user's client ID
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
+    // Get client ID - first try from JWT token, then fallback to database lookup
+    let clientId = req.user.clientId;
 
-    if (!user || !user.client_id) {
+    if (!clientId) {
+      // Fallback: lookup client by user_id (clients table has user_id column)
+      const [clientLookup] = await sequelize.query(
+        'SELECT id FROM clients WHERE user_id = :userId',
+        {
+          replacements: { userId },
+          type: QueryTypes.SELECT
+        }
+      );
+      clientId = clientLookup?.id;
+    }
+
+    if (!clientId) {
       return res.status(404).json({
         success: false,
-        error: 'Client not found'
+        error: 'Client not found for user'
       });
     }
 
@@ -247,7 +282,7 @@ router.get('/current', authenticateToken, async (req, res) => {
     const [client] = await sequelize.query(
       'SELECT id, client_name, settings FROM clients WHERE id = :clientId',
       {
-        replacements: { clientId: user.client_id },
+        replacements: { clientId },
         type: QueryTypes.SELECT
       }
     );
@@ -280,21 +315,27 @@ router.get('/current', authenticateToken, async (req, res) => {
 router.post('/vagaro', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id;
-    const { enabled, clientId, clientSecretKey, merchantId, webhookToken, region } = req.body;
+    const { enabled, clientId: vagaroClientId, clientSecretKey, merchantId, webhookToken, region } = req.body;
 
-    // Get user's client ID
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
+    // Get RinglyPro client ID - first try from JWT token, then fallback to database lookup
+    let ringlyproClientId = req.user.clientId;
 
-    if (!user || !user.client_id) {
+    if (!ringlyproClientId) {
+      // Fallback: lookup client by user_id (clients table has user_id column)
+      const [clientLookup] = await sequelize.query(
+        'SELECT id FROM clients WHERE user_id = :userId',
+        {
+          replacements: { userId },
+          type: QueryTypes.SELECT
+        }
+      );
+      ringlyproClientId = clientLookup?.id;
+    }
+
+    if (!ringlyproClientId) {
       return res.status(404).json({
         success: false,
-        error: 'Client not found'
+        error: 'Client not found for user'
       });
     }
 
@@ -302,7 +343,7 @@ router.post('/vagaro', authenticateToken, async (req, res) => {
     const [client] = await sequelize.query(
       'SELECT settings FROM clients WHERE id = :clientId',
       {
-        replacements: { clientId: user.client_id },
+        replacements: { clientId: ringlyproClientId },
         type: QueryTypes.SELECT
       }
     );
@@ -316,7 +357,7 @@ router.post('/vagaro', authenticateToken, async (req, res) => {
         ...(currentSettings.integration || {}),
         vagaro: {
           enabled: enabled === true,
-          clientId: clientId || null,
+          clientId: vagaroClientId || null,
           clientSecretKey: clientSecretKey || null,
           merchantId: merchantId || null,
           webhookToken: webhookToken || null,
@@ -332,13 +373,13 @@ router.post('/vagaro', authenticateToken, async (req, res) => {
       {
         replacements: {
           settings: JSON.stringify(updatedSettings),
-          clientId: user.client_id
+          clientId: ringlyproClientId
         },
         type: QueryTypes.UPDATE
       }
     );
 
-    logger.info(`[CLIENT SETTINGS] Updated Vagaro settings for client ${user.client_id}`);
+    logger.info(`[CLIENT SETTINGS] Updated Vagaro settings for client ${ringlyproClientId}`);
 
     res.json({
       success: true,
@@ -361,21 +402,13 @@ router.post('/vagaro', authenticateToken, async (req, res) => {
  */
 router.get('/vagaro', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId || req.user.id;
+    // Get client ID using helper function
+    const clientId = await getClientIdForUser(req);
 
-    // Get user's client ID
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
-
-    if (!user || !user.client_id) {
+    if (!clientId) {
       return res.status(404).json({
         success: false,
-        error: 'Client not found'
+        error: 'Client not found for user'
       });
     }
 
@@ -383,7 +416,7 @@ router.get('/vagaro', authenticateToken, async (req, res) => {
     const [client] = await sequelize.query(
       'SELECT settings FROM clients WHERE id = :clientId',
       {
-        replacements: { clientId: user.client_id },
+        replacements: { clientId },
         type: QueryTypes.SELECT
       }
     );
@@ -435,23 +468,27 @@ router.post('/whatsapp', authenticateToken, async (req, res) => {
       zelle
     } = req.body;
 
-    // Get user's client ID
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
+    // Get client ID - first try from JWT token, then fallback to database lookup
+    let clientId = req.user.clientId;
 
-    if (!user || !user.client_id) {
-      return res.status(404).json({
-        success: false,
-        error: 'Client not found'
-      });
+    if (!clientId) {
+      // Fallback: lookup client by user_id (clients table has user_id column)
+      const [client] = await sequelize.query(
+        'SELECT id FROM clients WHERE user_id = :userId',
+        {
+          replacements: { userId },
+          type: QueryTypes.SELECT
+        }
+      );
+      clientId = client?.id;
     }
 
-    const clientId = user.client_id;
+    if (!clientId) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found for user'
+      });
+    }
 
     // Get current settings
     const [client] = await sequelize.query(
@@ -529,21 +566,13 @@ router.post('/whatsapp', authenticateToken, async (req, res) => {
  */
 router.get('/whatsapp', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId || req.user.id;
+    // Get client ID using helper function
+    const clientId = await getClientIdForUser(req);
 
-    // Get user's client ID
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
-
-    if (!user || !user.client_id) {
+    if (!clientId) {
       return res.status(404).json({
         success: false,
-        error: 'Client not found'
+        error: 'Client not found for user'
       });
     }
 
@@ -551,7 +580,7 @@ router.get('/whatsapp', authenticateToken, async (req, res) => {
     const [client] = await sequelize.query(
       'SELECT settings, whatsapp_business_number, whatsapp_display_name FROM clients WHERE id = :clientId',
       {
-        replacements: { clientId: user.client_id },
+        replacements: { clientId },
         type: QueryTypes.SELECT
       }
     );
@@ -589,26 +618,18 @@ router.get('/whatsapp', authenticateToken, async (req, res) => {
  */
 router.post('/whatsapp/qr-upload', authenticateToken, async (req, res, next) => {
   try {
-    const userId = req.user.userId || req.user.id;
+    // Get client ID using helper function
+    const clientId = await getClientIdForUser(req);
 
-    // Get user's client ID first
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
-
-    if (!user || !user.client_id) {
+    if (!clientId) {
       return res.status(404).json({
         success: false,
-        error: 'Client not found'
+        error: 'Client not found for user'
       });
     }
 
     // Store clientId for multer filename
-    req.clientId = user.client_id;
+    req.clientId = clientId;
 
     // Handle file upload
     qrUpload.single('qrCode')(req, res, async (err) => {
@@ -634,7 +655,7 @@ router.post('/whatsapp/qr-upload', authenticateToken, async (req, res, next) => 
       const [client] = await sequelize.query(
         'SELECT settings FROM clients WHERE id = :clientId',
         {
-          replacements: { clientId: user.client_id },
+          replacements: { clientId },
           type: QueryTypes.SELECT
         }
       );
@@ -661,13 +682,13 @@ router.post('/whatsapp/qr-upload', authenticateToken, async (req, res, next) => 
         {
           replacements: {
             settings: JSON.stringify(updatedSettings),
-            clientId: user.client_id
+            clientId
           },
           type: QueryTypes.UPDATE
         }
       );
 
-      logger.info(`[CLIENT SETTINGS] Uploaded Zelle QR for client ${user.client_id}: ${qrUrl}`);
+      logger.info(`[CLIENT SETTINGS] Uploaded Zelle QR for client ${clientId}: ${qrUrl}`);
 
       res.json({
         success: true,
@@ -695,17 +716,10 @@ router.post('/whatsapp/qr-upload', authenticateToken, async (req, res, next) => 
  */
 router.get('/ghl', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId || req.user.id;
+    // Get client ID using helper function
+    const clientId = await getClientIdForUser(req);
 
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
-
-    if (!user?.client_id) {
+    if (!clientId) {
       return res.status(400).json({
         success: false,
         error: 'Client not found for user'
@@ -715,7 +729,7 @@ router.get('/ghl', authenticateToken, async (req, res) => {
     const [client] = await sequelize.query(
       'SELECT settings FROM clients WHERE id = :clientId',
       {
-        replacements: { clientId: user.client_id },
+        replacements: { clientId },
         type: QueryTypes.SELECT
       }
     );
@@ -756,7 +770,6 @@ router.get('/ghl', authenticateToken, async (req, res) => {
  */
 router.post('/ghl', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId || req.user.id;
     const {
       enabled,
       apiKey,
@@ -768,15 +781,10 @@ router.post('/ghl', authenticateToken, async (req, res) => {
       triggerWorkflows
     } = req.body;
 
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
+    // Get client ID using helper function
+    const clientId = await getClientIdForUser(req);
 
-    if (!user?.client_id) {
+    if (!clientId) {
       return res.status(400).json({
         success: false,
         error: 'Client not found for user'
@@ -786,7 +794,7 @@ router.post('/ghl', authenticateToken, async (req, res) => {
     const [client] = await sequelize.query(
       'SELECT settings FROM clients WHERE id = :clientId',
       {
-        replacements: { clientId: user.client_id },
+        replacements: { clientId },
         type: QueryTypes.SELECT
       }
     );
@@ -816,13 +824,13 @@ router.post('/ghl', authenticateToken, async (req, res) => {
       {
         replacements: {
           settings: JSON.stringify(updatedSettings),
-          clientId: user.client_id
+          clientId
         },
         type: QueryTypes.UPDATE
       }
     );
 
-    logger.info(`[CLIENT SETTINGS] Updated GHL settings for client ${user.client_id}`);
+    logger.info(`[CLIENT SETTINGS] Updated GHL settings for client ${clientId}`);
 
     res.json({
       success: true,
@@ -844,17 +852,9 @@ router.post('/ghl', authenticateToken, async (req, res) => {
  */
 router.post('/ghl/test', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId || req.user.id;
+    const clientId = await getClientIdForUser(req);
 
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
-
-    if (!user?.client_id) {
+    if (!clientId) {
       return res.status(400).json({
         success: false,
         error: 'Client not found'
@@ -864,7 +864,7 @@ router.post('/ghl/test', authenticateToken, async (req, res) => {
     const [client] = await sequelize.query(
       'SELECT settings FROM clients WHERE id = :clientId',
       {
-        replacements: { clientId: user.client_id },
+        replacements: { clientId },
         type: QueryTypes.SELECT
       }
     );
@@ -919,17 +919,9 @@ router.post('/ghl/test', authenticateToken, async (req, res) => {
  */
 router.get('/sendgrid', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId || req.user.id;
+    const clientId = await getClientIdForUser(req);
 
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
-
-    if (!user?.client_id) {
+    if (!clientId) {
       return res.status(400).json({
         success: false,
         error: 'Client not found for user'
@@ -939,7 +931,7 @@ router.get('/sendgrid', authenticateToken, async (req, res) => {
     const [client] = await sequelize.query(
       'SELECT settings FROM clients WHERE id = :clientId',
       {
-        replacements: { clientId: user.client_id },
+        replacements: { clientId },
         type: QueryTypes.SELECT
       }
     );
@@ -981,7 +973,6 @@ router.get('/sendgrid', authenticateToken, async (req, res) => {
  */
 router.post('/sendgrid', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId || req.user.id;
     const {
       enabled,
       apiKey,
@@ -994,15 +985,9 @@ router.post('/sendgrid', authenticateToken, async (req, res) => {
       welcomeEmails
     } = req.body;
 
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
+    const clientId = await getClientIdForUser(req);
 
-    if (!user?.client_id) {
+    if (!clientId) {
       return res.status(400).json({
         success: false,
         error: 'Client not found for user'
@@ -1012,7 +997,7 @@ router.post('/sendgrid', authenticateToken, async (req, res) => {
     const [client] = await sequelize.query(
       'SELECT settings FROM clients WHERE id = :clientId',
       {
-        replacements: { clientId: user.client_id },
+        replacements: { clientId },
         type: QueryTypes.SELECT
       }
     );
@@ -1043,13 +1028,13 @@ router.post('/sendgrid', authenticateToken, async (req, res) => {
       {
         replacements: {
           settings: JSON.stringify(updatedSettings),
-          clientId: user.client_id
+          clientId
         },
         type: QueryTypes.UPDATE
       }
     );
 
-    logger.info(`[CLIENT SETTINGS] Updated SendGrid settings for client ${user.client_id}`);
+    logger.info(`[CLIENT SETTINGS] Updated SendGrid settings for client ${clientId}`);
 
     res.json({
       success: true,
@@ -1071,17 +1056,9 @@ router.post('/sendgrid', authenticateToken, async (req, res) => {
  */
 router.post('/sendgrid/test', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId || req.user.id;
+    const clientId = await getClientIdForUser(req);
 
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
-
-    if (!user?.client_id) {
+    if (!clientId) {
       return res.status(400).json({
         success: false,
         error: 'Client not found'
@@ -1091,7 +1068,7 @@ router.post('/sendgrid/test', authenticateToken, async (req, res) => {
     const [client] = await sequelize.query(
       'SELECT settings FROM clients WHERE id = :clientId',
       {
-        replacements: { clientId: user.client_id },
+        replacements: { clientId },
         type: QueryTypes.SELECT
       }
     );
@@ -1140,7 +1117,6 @@ router.post('/sendgrid/test', authenticateToken, async (req, res) => {
  */
 router.post('/sendgrid/test-email', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId || req.user.id;
     const { email } = req.body;
 
     if (!email) {
@@ -1150,15 +1126,9 @@ router.post('/sendgrid/test-email', authenticateToken, async (req, res) => {
       });
     }
 
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
+    const clientId = await getClientIdForUser(req);
 
-    if (!user?.client_id) {
+    if (!clientId) {
       return res.status(400).json({
         success: false,
         error: 'Client not found'
@@ -1168,7 +1138,7 @@ router.post('/sendgrid/test-email', authenticateToken, async (req, res) => {
     const [client] = await sequelize.query(
       'SELECT settings, business_name FROM clients WHERE id = :clientId',
       {
-        replacements: { clientId: user.client_id },
+        replacements: { clientId },
         type: QueryTypes.SELECT
       }
     );
@@ -1249,17 +1219,9 @@ router.post('/sendgrid/test-email', authenticateToken, async (req, res) => {
  */
 router.get('/zelle', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId || req.user.id;
+    const clientId = await getClientIdForUser(req);
 
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
-
-    if (!user?.client_id) {
+    if (!clientId) {
       return res.status(400).json({
         success: false,
         error: 'Client not found for user'
@@ -1269,7 +1231,7 @@ router.get('/zelle', authenticateToken, async (req, res) => {
     const [client] = await sequelize.query(
       'SELECT settings FROM clients WHERE id = :clientId',
       {
-        replacements: { clientId: user.client_id },
+        replacements: { clientId },
         type: QueryTypes.SELECT
       }
     );
@@ -1303,7 +1265,6 @@ router.get('/zelle', authenticateToken, async (req, res) => {
  */
 router.post('/zelle', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId || req.user.id;
     const {
       enabled,
       email,
@@ -1313,15 +1274,9 @@ router.post('/zelle', authenticateToken, async (req, res) => {
       qrCodeUrl
     } = req.body;
 
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
+    const clientId = await getClientIdForUser(req);
 
-    if (!user?.client_id) {
+    if (!clientId) {
       return res.status(400).json({
         success: false,
         error: 'Client not found for user'
@@ -1331,7 +1286,7 @@ router.post('/zelle', authenticateToken, async (req, res) => {
     const [client] = await sequelize.query(
       'SELECT settings FROM clients WHERE id = :clientId',
       {
-        replacements: { clientId: user.client_id },
+        replacements: { clientId },
         type: QueryTypes.SELECT
       }
     );
@@ -1370,13 +1325,13 @@ router.post('/zelle', authenticateToken, async (req, res) => {
       {
         replacements: {
           settings: JSON.stringify(updatedSettings),
-          clientId: user.client_id
+          clientId
         },
         type: QueryTypes.UPDATE
       }
     );
 
-    logger.info(`[CLIENT SETTINGS] Updated Zelle settings for client ${user.client_id}`);
+    logger.info(`[CLIENT SETTINGS] Updated Zelle settings for client ${clientId}`);
 
     res.json({
       success: true,
@@ -1398,18 +1353,9 @@ router.post('/zelle', authenticateToken, async (req, res) => {
  */
 router.post('/zelle/upload-qr', authenticateToken, async (req, res, next) => {
   try {
-    const userId = req.user.userId || req.user.id;
+    const clientId = await getClientIdForUser(req);
 
-    // Get user's client ID first
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
-
-    if (!user?.client_id) {
+    if (!clientId) {
       return res.status(400).json({
         success: false,
         error: 'Client not found'
@@ -1417,7 +1363,7 @@ router.post('/zelle/upload-qr', authenticateToken, async (req, res, next) => {
     }
 
     // Store clientId for multer filename
-    req.clientId = user.client_id;
+    req.clientId = clientId;
 
     // Handle file upload using qrUpload middleware
     qrUpload.single('qrCode')(req, res, async (err) => {
@@ -1437,9 +1383,9 @@ router.post('/zelle/upload-qr', authenticateToken, async (req, res, next) => {
       }
 
       let qrCodeUrl;
-      const clientId = user.client_id;
+      const uploadClientId = req.clientId;  // Use clientId stored in req
       const ext = path.extname(req.file.originalname) || '.jpg';
-      const filename = `zelle-qr-${clientId}-${Date.now()}${ext}`;
+      const filename = `zelle-qr-${uploadClientId}-${Date.now()}${ext}`;
 
       try {
         // Try S3 upload first (persistent storage)
@@ -1491,7 +1437,7 @@ router.post('/zelle/upload-qr', authenticateToken, async (req, res, next) => {
         const [clientData] = await sequelize.query(
           'SELECT settings FROM clients WHERE id = :clientId',
           {
-            replacements: { clientId },
+            replacements: { clientId: uploadClientId },
             type: QueryTypes.SELECT
           }
         );
@@ -1519,13 +1465,13 @@ router.post('/zelle/upload-qr', authenticateToken, async (req, res, next) => {
           {
             replacements: {
               settings: JSON.stringify(updatedSettings),
-              clientId
+              clientId: uploadClientId
             },
             type: QueryTypes.UPDATE
           }
         );
 
-        logger.info(`[CLIENT SETTINGS] Saved Zelle QR URL for client ${clientId}: ${qrCodeUrl}`);
+        logger.info(`[CLIENT SETTINGS] Saved Zelle QR URL for client ${uploadClientId}: ${qrCodeUrl}`);
 
         res.json({
           success: true,
@@ -1617,17 +1563,10 @@ router.get('/zelle/qr/:clientId', async (req, res) => {
  */
 router.get('/hubspot', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId || req.user.id;
+    // Get client ID using helper function
+    const clientId = await getClientIdForUser(req);
 
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
-
-    if (!user?.client_id) {
+    if (!clientId) {
       return res.status(400).json({
         success: false,
         error: 'Client not found for user'
@@ -1639,7 +1578,7 @@ router.get('/hubspot', authenticateToken, async (req, res) => {
       `SELECT settings, hubspot_api_key, hubspot_meeting_slug, hubspot_timezone, booking_system
        FROM clients WHERE id = :clientId`,
       {
-        replacements: { clientId: user.client_id },
+        replacements: { clientId },
         type: QueryTypes.SELECT
       }
     );
@@ -1681,7 +1620,6 @@ router.get('/hubspot', authenticateToken, async (req, res) => {
  */
 router.post('/hubspot', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId || req.user.id;
     const {
       enabled,
       apiKey,
@@ -1692,22 +1630,15 @@ router.post('/hubspot', authenticateToken, async (req, res) => {
       saveLocal
     } = req.body;
 
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
+    // Get client ID using helper function
+    const clientId = await getClientIdForUser(req);
 
-    if (!user?.client_id) {
+    if (!clientId) {
       return res.status(400).json({
         success: false,
         error: 'Client not found for user'
       });
     }
-
-    const clientId = user.client_id;
 
     // Get current settings
     const [client] = await sequelize.query(
@@ -1786,17 +1717,9 @@ router.post('/hubspot', authenticateToken, async (req, res) => {
  */
 router.post('/hubspot/test', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId || req.user.id;
+    const clientId = await getClientIdForUser(req);
 
-    const [user] = await sequelize.query(
-      'SELECT client_id FROM users WHERE id = :userId',
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT
-      }
-    );
-
-    if (!user?.client_id) {
+    if (!clientId) {
       return res.status(400).json({
         success: false,
         error: 'Client not found'
@@ -1806,7 +1729,7 @@ router.post('/hubspot/test', authenticateToken, async (req, res) => {
     const [client] = await sequelize.query(
       'SELECT hubspot_api_key FROM clients WHERE id = :clientId',
       {
-        replacements: { clientId: user.client_id },
+        replacements: { clientId },
         type: QueryTypes.SELECT
       }
     );
