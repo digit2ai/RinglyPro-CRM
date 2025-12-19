@@ -89,7 +89,7 @@ const Appointment = sequelize.define('Appointment', {
     type: DataTypes.STRING,
     defaultValue: 'voice_booking',
     validate: {
-      isIn: [['voice_booking', 'online', 'manual', 'walk-in', 'ghl_sync', 'hubspot_sync', 'vagaro_sync', 'whatsapp_ghl', 'whatsapp_vagaro', 'whatsapp', 'whatsapp_hubspot']]
+      isIn: [['voice_booking', 'voice_booking_spanish', 'online', 'manual', 'walk-in', 'ghl_sync', 'hubspot_sync', 'vagaro_sync', 'whatsapp_ghl', 'whatsapp_vagaro', 'whatsapp', 'whatsapp_hubspot']]
     }
   },
   ghlAppointmentId: {

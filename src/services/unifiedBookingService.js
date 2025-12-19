@@ -576,7 +576,7 @@ class UnifiedBookingService {
             time: normalizedTime,
             duration: 30,
             purpose: service || 'Appointment',
-            source: crmSource && crmSource !== 'none' ? `${source}_${crmSource}` : source,
+            source: source || 'voice_booking',  // Use base source, don't append crmSource (validation constraint)
             confirmationCode,
             hubspotId: crmSource === 'hubspot' ? externalId : null,
             ghlId: crmSource === 'ghl' ? externalId : null,
@@ -608,6 +608,8 @@ class UnifiedBookingService {
 
     } catch (error) {
       logger.error('[UNIFIED-BOOKING] Error saving local appointment:', error.message);
+      logger.error('[UNIFIED-BOOKING] Full error:', error.stack || error);
+      logger.error('[UNIFIED-BOOKING] Booking data:', JSON.stringify({ clientId, date, time, customerName, customerPhone, source, crmSource }));
       return {
         success: false,
         error: error.message
