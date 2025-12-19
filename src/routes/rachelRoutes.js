@@ -1112,12 +1112,17 @@ router.post('/voice/rachel/select-language', async (req, res) => {
         const contextParams = `client_id=${clientId}&business_name=${businessName}&user_id=${userIdParam}&caller=${callerNumber}`;
 
         let redirectPath;
+        let voiceName = 'Polly.Joanna';
+        let language = 'en-US';
+
         if (digits === '1') {
             // English - Continue with Rachel
             redirectPath = `/voice/rachel/incoming?lang=en&${contextParams}`;
         } else if (digits === '2') {
             // Spanish - Route to Lina
             redirectPath = `/voice/lina/incoming?lang=es&${contextParams}`;
+            voiceName = 'Polly.Lupe';
+            language = 'es-MX';
         } else {
             // Invalid input - default to English
             console.warn(`⚠️ Invalid language selection: ${digits}, defaulting to English`);
@@ -1126,8 +1131,10 @@ router.post('/voice/rachel/select-language', async (req, res) => {
 
         console.log(`🔄 Language redirect to: ${redirectPath}`);
 
+        // Use Say + Redirect instead of just Redirect for better reliability
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
+    <Say voice="${voiceName}" language="${language}">One moment please.</Say>
     <Redirect method="POST">${redirectPath}</Redirect>
 </Response>`;
 
@@ -1466,8 +1473,10 @@ const handleEnglishIncoming = async (req, res) => {
         console.log('📞 English language selected - Rachel continuing');
 
         // Restore client context from query params (Twilio doesn't preserve cookies across redirects)
-        if (req.query.client_id && !req.session.client_id) {
-            req.session.client_id = parseInt(req.query.client_id);
+        // Only restore if query param has a valid numeric client_id
+        const queryClientId = parseInt(req.query.client_id);
+        if (queryClientId && !isNaN(queryClientId) && !req.session.client_id) {
+            req.session.client_id = queryClientId;
             req.session.business_name = decodeURIComponent(req.query.business_name || '');
             req.session.user_id = req.query.user_id || null;
             req.session.caller_number = decodeURIComponent(req.query.caller || '');
@@ -1480,7 +1489,7 @@ const handleEnglishIncoming = async (req, res) => {
         const businessName = req.session.business_name;
 
         if (!clientId) {
-            console.error("❌ No client context in session or query params");
+            console.error("❌ No client context in session or query params, query was:", req.query);
             const twiml = `
                 <?xml version="1.0" encoding="UTF-8"?>
                 <Response>
