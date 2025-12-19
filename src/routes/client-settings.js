@@ -1952,4 +1952,145 @@ router.post('/ghl/sync/:clientId', async (req, res) => {
   }
 });
 
+// =====================================================
+// BUSINESS SETTINGS (Client Requirements)
+// =====================================================
+
+/**
+ * GET /api/client-settings/business
+ * Get client's business information and requirements
+ */
+router.get('/business', authenticateToken, async (req, res) => {
+  try {
+    const clientId = await getClientIdForUser(req);
+
+    if (!clientId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client not found for user'
+      });
+    }
+
+    const [client] = await sequelize.query(
+      `SELECT
+        business_name, business_phone, website_url,
+        owner_name, owner_phone, owner_email,
+        deposit_required, deposit_amount
+       FROM clients WHERE id = :clientId`,
+      {
+        replacements: { clientId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      settings: {
+        businessName: client.business_name,
+        businessPhone: client.business_phone,
+        websiteUrl: client.website_url,
+        ownerName: client.owner_name,
+        ownerPhone: client.owner_phone,
+        ownerEmail: client.owner_email,
+        depositRequired: client.deposit_required || false,
+        depositAmount: client.deposit_amount ? parseFloat(client.deposit_amount) : null
+      }
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Get business settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get business settings'
+    });
+  }
+});
+
+/**
+ * POST /api/client-settings/business
+ * Update client's business information and requirements
+ */
+router.post('/business', authenticateToken, async (req, res) => {
+  try {
+    const {
+      businessName,
+      businessPhone,
+      websiteUrl,
+      ownerName,
+      ownerPhone,
+      ownerEmail,
+      depositRequired,
+      depositAmount
+    } = req.body;
+
+    const clientId = await getClientIdForUser(req);
+
+    if (!clientId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client not found for user'
+      });
+    }
+
+    // Validate required fields
+    if (!businessName || !businessPhone || !ownerName || !ownerEmail) {
+      return res.status(400).json({
+        success: false,
+        error: 'Business name, phone, owner name, and owner email are required'
+      });
+    }
+
+    // Update client settings
+    await sequelize.query(
+      `UPDATE clients SET
+        business_name = :businessName,
+        business_phone = :businessPhone,
+        website_url = :websiteUrl,
+        owner_name = :ownerName,
+        owner_phone = :ownerPhone,
+        owner_email = :ownerEmail,
+        deposit_required = :depositRequired,
+        deposit_amount = :depositAmount,
+        updated_at = NOW()
+       WHERE id = :clientId`,
+      {
+        replacements: {
+          clientId,
+          businessName,
+          businessPhone,
+          websiteUrl: websiteUrl || null,
+          ownerName,
+          ownerPhone: ownerPhone || null,
+          ownerEmail,
+          depositRequired: depositRequired || false,
+          depositAmount: depositAmount || null
+        },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`[CLIENT SETTINGS] Updated business settings for client ${clientId}`);
+    logger.info(`[CLIENT SETTINGS] Deposit settings: required=${depositRequired}, amount=${depositAmount}`);
+
+    res.json({
+      success: true,
+      message: 'Business settings saved successfully'
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Update business settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update business settings'
+    });
+  }
+});
+
 module.exports = router;

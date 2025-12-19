@@ -148,6 +148,35 @@ const Appointment = sequelize.define('Appointment', {
     allowNull: true,
     field: 'crm_last_synced_at',
     comment: 'Last time this appointment was synced from any CRM'
+  },
+  // Deposit tracking fields
+  depositStatus: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    defaultValue: 'not_required',
+    field: 'deposit_status',
+    validate: {
+      isIn: [['not_required', 'pending', 'confirmed']]
+    },
+    comment: 'Deposit collection status: not_required, pending, confirmed'
+  },
+  depositConfirmedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'deposit_confirmed_at',
+    comment: 'Timestamp when deposit was confirmed'
+  },
+  depositConfirmationMethod: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    field: 'deposit_confirmation_method',
+    comment: 'Method of confirmation: manual, zelle, email, etc.'
+  },
+  depositNotes: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'deposit_notes',
+    comment: 'Additional notes about the deposit'
   }
 }, {
   tableName: 'appointments',

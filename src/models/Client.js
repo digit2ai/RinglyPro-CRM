@@ -192,6 +192,18 @@ module.exports = (sequelize) => {
                 model: 'users',
                 key: 'id'
             }
+        },
+        // Deposit requirement settings
+        deposit_required: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+            comment: 'Whether this client requires deposits for appointments'
+        },
+        deposit_amount: {
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: true,
+            comment: 'Default deposit amount for appointments'
         }
     }, {
         tableName: 'clients',

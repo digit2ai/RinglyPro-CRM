@@ -766,6 +766,234 @@ async function sendAppointmentConfirmationSMS({
   }
 }
 
+// =====================================================
+// DEPOSIT CONFIRMATION ENDPOINTS
+// =====================================================
+
+/**
+ * PUT /api/appointments/:id/deposit-status
+ * Confirm or update deposit status for an appointment
+ */
+router.put('/:id/deposit-status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, method, notes } = req.body;
+    const clientId = req.clientId;
+
+    console.log(`💰 Deposit status update request: appointment ${id}, status=${status}, method=${method}`);
+
+    // Validate status
+    const validStatuses = ['pending', 'confirmed', 'not_required'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid deposit status. Must be one of: ${validStatuses.join(', ')}`
+      });
+    }
+
+    // Get the appointment (must belong to this client - multi-tenant safety)
+    const appointment = await Appointment.findOne({
+      where: {
+        id,
+        clientId
+      }
+    });
+
+    if (!appointment) {
+      console.log(`❌ Appointment ${id} not found for client ${clientId}`);
+      return res.status(404).json({
+        success: false,
+        error: 'Appointment not found'
+      });
+    }
+
+    // Update deposit status
+    const updateData = {
+      depositStatus: status,
+      depositConfirmationMethod: method || null,
+      depositNotes: notes || null
+    };
+
+    // If confirming deposit, record timestamp
+    if (status === 'confirmed') {
+      updateData.depositConfirmedAt = new Date();
+    } else {
+      updateData.depositConfirmedAt = null;
+    }
+
+    await appointment.update(updateData);
+
+    console.log(`✅ Deposit status updated for appointment ${id}: ${status}`);
+
+    // Send notification to customer if deposit was confirmed
+    if (status === 'confirmed') {
+      try {
+        // Send SMS notification
+        await sendDepositConfirmationNotification(appointment, 'sms');
+        // Send Email notification
+        await sendDepositConfirmationNotification(appointment, 'email');
+        console.log(`📱 Deposit confirmation notifications sent to ${appointment.customerPhone}`);
+      } catch (notifyError) {
+        console.error('Error sending deposit notifications:', notifyError.message);
+        // Don't fail the request if notifications fail
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Deposit status updated to ${status}`,
+      appointment: {
+        id: appointment.id,
+        customerName: appointment.customerName,
+        appointmentDate: appointment.appointmentDate,
+        appointmentTime: appointment.appointmentTime,
+        depositStatus: status,
+        depositConfirmedAt: updateData.depositConfirmedAt,
+        depositConfirmationMethod: method
+      }
+    });
+
+  } catch (error) {
+    console.error('Error updating deposit status:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/appointments/pending-deposits
+ * Get all appointments with pending deposits for this client
+ */
+router.get('/pending-deposits', async (req, res) => {
+  try {
+    const { Op } = require('sequelize');
+    const today = new Date().toISOString().split('T')[0];
+
+    const pendingDeposits = await Appointment.findAll({
+      where: {
+        clientId: req.clientId,
+        depositStatus: 'pending',
+        appointmentDate: {
+          [Op.gte]: today  // Only future/today appointments
+        },
+        status: {
+          [Op.notIn]: ['cancelled', 'completed', 'no-show']
+        }
+      },
+      order: [['appointmentDate', 'ASC'], ['appointmentTime', 'ASC']]
+    });
+
+    console.log(`💰 Client ${req.clientId}: Found ${pendingDeposits.length} pending deposits`);
+
+    res.json({
+      success: true,
+      count: pendingDeposits.length,
+      appointments: pendingDeposits
+    });
+
+  } catch (error) {
+    console.error('Error fetching pending deposits:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Helper: Send deposit confirmation notification (SMS or Email)
+ */
+async function sendDepositConfirmationNotification(appointment, type) {
+  const fetch = require('node-fetch');
+  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+
+  // Get client info for sending notifications
+  const clientResult = await sequelize.query(
+    `SELECT business_name, ringlypro_number, sendgrid_api_key, sendgrid_from_email, owner_email
+     FROM clients WHERE id = :clientId`,
+    {
+      replacements: { clientId: appointment.clientId },
+      type: sequelize.QueryTypes.SELECT
+    }
+  );
+
+  const client = clientResult[0];
+  if (!client) return;
+
+  const formattedDate = new Date(appointment.appointmentDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const formattedTime = appointment.appointmentTime.substring(0, 5);
+  const hour = parseInt(formattedTime.split(':')[0]);
+  const minute = formattedTime.split(':')[1];
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  const timeDisplay = `${hour12}:${minute} ${ampm}`;
+
+  if (type === 'sms') {
+    // Send SMS via Twilio
+    const message = `${client.business_name}: Great news! Your deposit has been received and confirmed. Your appointment on ${formattedDate} at ${timeDisplay} is now fully confirmed. We look forward to seeing you!`;
+
+    try {
+      const response = await fetch(`${baseUrl}/api/messages/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: appointment.clientId,
+          to: appointment.customerPhone,
+          message: message
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('SMS send failed');
+      }
+      console.log(`📱 Deposit confirmation SMS sent to ${appointment.customerPhone}`);
+    } catch (smsError) {
+      console.error('SMS notification error:', smsError.message);
+    }
+  }
+
+  if (type === 'email' && appointment.customerEmail && client.sendgrid_api_key) {
+    // Send Email via SendGrid
+    const sgMail = require('@sendgrid/mail');
+    sgMail.setApiKey(client.sendgrid_api_key);
+
+    const msg = {
+      to: appointment.customerEmail,
+      from: client.sendgrid_from_email || client.owner_email,
+      subject: `Deposit Confirmed - ${client.business_name}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #10b981;">Deposit Confirmed!</h2>
+          <p>Dear ${appointment.customerName},</p>
+          <p>Great news! Your deposit has been received and confirmed.</p>
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #166534;">Appointment Details</h3>
+            <p><strong>Date:</strong> ${formattedDate}</p>
+            <p><strong>Time:</strong> ${timeDisplay}</p>
+            <p><strong>Confirmation Code:</strong> ${appointment.confirmationCode}</p>
+          </div>
+          <p>Your appointment is now fully confirmed. We look forward to seeing you!</p>
+          <p>Best regards,<br>${client.business_name}</p>
+        </div>
+      `
+    };
+
+    try {
+      await sgMail.send(msg);
+      console.log(`📧 Deposit confirmation email sent to ${appointment.customerEmail}`);
+    } catch (emailError) {
+      console.error('Email notification error:', emailError.message);
+    }
+  }
+}
+
 // Helper function to send SMS cancellation
 async function sendAppointmentCancellationSMS({
   appointmentId,

@@ -610,6 +610,13 @@ app.get('/settings/calendar', (req, res) => {
   });
 });
 
+// Business Settings (Client Requirements)
+app.get('/settings/business', (req, res) => {
+  res.render('settings-business', {
+    title: 'Business Settings - RinglyPro'
+  });
+});
+
 // PixlyPro admin dashboard
 app.get('/pixlypro-admin-dashboard', (req, res) => {
   res.render('pixlypro-admin-dashboard', {

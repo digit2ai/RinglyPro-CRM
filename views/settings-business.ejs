@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Settings - RinglyPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header p {
+            color: #6e6e73;
+            font-size: 1rem;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e5e7;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 51px;
+            height: 31px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 31px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 23px;
+            width: 23px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #34c759;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            font-size: 1rem;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .form-input:disabled {
+            background: #f5f5f7;
+            color: #6e6e73;
+        }
+
+        .form-hint {
+            color: #6e6e73;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8ed;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #3b82f6;
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .deposit-settings {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .deposit-settings.enabled {
+            background: #d1fae5;
+            border-color: #10b981;
+        }
+
+        .deposit-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .deposit-amount-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .deposit-amount-row input {
+            width: 120px;
+        }
+
+        .section-divider {
+            border-top: 1px solid #e5e5e7;
+            margin: 2rem 0;
+            padding-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">
+            ← Back to Dashboard
+        </a>
+
+        <div class="header">
+            <h1>Business Settings</h1>
+            <p>Configure your business information and client requirements</p>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <!-- Business Information Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Business Information</div>
+            </div>
+
+            <form id="businessForm" onsubmit="handleSaveSettings(event)">
+                <div class="form-group">
+                    <label class="form-label" for="businessName">Business Name</label>
+                    <input type="text"
+                           id="businessName"
+                           class="form-input"
+                           placeholder="Your Business Name"
+                           required>
+                    <p class="form-hint">This name will be used by Rachel when answering calls</p>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="businessPhone">Business Phone</label>
+                        <input type="tel"
+                               id="businessPhone"
+                               class="form-input"
+                               placeholder="+1 (555) 123-4567"
+                               required>
+                        <p class="form-hint">Your main business number</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="websiteUrl">Website URL</label>
+                        <input type="url"
+                               id="websiteUrl"
+                               class="form-input"
+                               placeholder="https://www.yourbusiness.com">
+                        <p class="form-hint">Optional - Used in confirmations</p>
+                    </div>
+                </div>
+
+                <div class="section-divider">
+                    <h3 style="font-size: 1.1rem; color: #1d1d1f; margin-bottom: 1rem;">Owner Information</h3>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="ownerName">Owner Name</label>
+                        <input type="text"
+                               id="ownerName"
+                               class="form-input"
+                               placeholder="John Smith"
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="ownerPhone">Owner Phone</label>
+                        <input type="tel"
+                               id="ownerPhone"
+                               class="form-input"
+                               placeholder="+1 (555) 987-6543">
+                        <p class="form-hint">For urgent notifications</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ownerEmail">Owner Email</label>
+                    <input type="email"
+                           id="ownerEmail"
+                           class="form-input"
+                           placeholder="owner@yourbusiness.com"
+                           required>
+                    <p class="form-hint">Primary contact email for account notifications</p>
+                </div>
+
+                <div class="section-divider">
+                    <h3 style="font-size: 1.1rem; color: #1d1d1f; margin-bottom: 1rem;">Appointment Requirements</h3>
+                </div>
+
+                <!-- Deposit Settings -->
+                <div id="depositSettingsContainer" class="deposit-settings">
+                    <div class="deposit-toggle-row">
+                        <div>
+                            <strong style="font-size: 1rem;">Require Deposit for Appointments</strong>
+                            <p style="font-size: 0.875rem; color: #6e6e73; margin-top: 0.25rem;">
+                                When enabled, new appointments will be marked as "Pending Deposit"
+                            </p>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="depositRequired" onchange="handleDepositToggle()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div id="depositAmountContainer" style="display: none;">
+                        <div class="deposit-amount-row">
+                            <label class="form-label" for="depositAmount" style="margin-bottom: 0;">Deposit Amount:</label>
+                            <span style="font-size: 1.25rem; font-weight: 600;">$</span>
+                            <input type="number"
+                                   id="depositAmount"
+                                   class="form-input"
+                                   min="0"
+                                   step="0.01"
+                                   placeholder="50.00"
+                                   style="width: 120px;">
+                        </div>
+                        <p class="form-hint" style="margin-top: 0.5rem;">
+                            Rachel will inform customers about the deposit requirement when booking appointments
+                        </p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Info Card -->
+        <div class="card" style="background: #eff6ff; border: 1px solid #93c5fd;">
+            <h4 style="color: #1e40af; margin-bottom: 0.75rem;">How Deposit Tracking Works</h4>
+            <ul style="color: #1e40af; padding-left: 1.25rem; line-height: 1.8;">
+                <li>When enabled, Rachel will mention the deposit requirement during booking</li>
+                <li>New appointments appear with a "Pending Deposit" badge in your dashboard</li>
+                <li>Click the badge to manually confirm when payment is received</li>
+                <li>Customer receives SMS + Email confirmation when you confirm the deposit</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Get auth token
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        let currentSettings = {};
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/client-settings/business', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    currentSettings = data.settings;
+
+                    // Populate form fields
+                    document.getElementById('businessName').value = data.settings.businessName || '';
+                    document.getElementById('businessPhone').value = data.settings.businessPhone || '';
+                    document.getElementById('websiteUrl').value = data.settings.websiteUrl || '';
+                    document.getElementById('ownerName').value = data.settings.ownerName || '';
+                    document.getElementById('ownerPhone').value = data.settings.ownerPhone || '';
+                    document.getElementById('ownerEmail').value = data.settings.ownerEmail || '';
+                    document.getElementById('depositRequired').checked = data.settings.depositRequired || false;
+                    document.getElementById('depositAmount').value = data.settings.depositAmount || '';
+
+                    // Update deposit UI
+                    handleDepositToggle();
+                }
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+                showAlert('Failed to load settings', 'error');
+            }
+        }
+
+        function handleDepositToggle() {
+            const depositRequired = document.getElementById('depositRequired').checked;
+            const container = document.getElementById('depositSettingsContainer');
+            const amountContainer = document.getElementById('depositAmountContainer');
+
+            if (depositRequired) {
+                container.classList.add('enabled');
+                amountContainer.style.display = 'block';
+            } else {
+                container.classList.remove('enabled');
+                amountContainer.style.display = 'none';
+            }
+        }
+
+        async function handleSaveSettings(event) {
+            event.preventDefault();
+
+            const settings = {
+                businessName: document.getElementById('businessName').value,
+                businessPhone: document.getElementById('businessPhone').value,
+                websiteUrl: document.getElementById('websiteUrl').value,
+                ownerName: document.getElementById('ownerName').value,
+                ownerPhone: document.getElementById('ownerPhone').value,
+                ownerEmail: document.getElementById('ownerEmail').value,
+                depositRequired: document.getElementById('depositRequired').checked,
+                depositAmount: document.getElementById('depositAmount').value ? parseFloat(document.getElementById('depositAmount').value) : null
+            };
+
+            try {
+                const response = await fetch('/api/client-settings/business', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentSettings = settings;
+                    showAlert('Business settings saved successfully!', 'success');
+                } else {
+                    showAlert(data.error || 'Failed to save settings', 'error');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showAlert('Failed to save settings', 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('alert-container');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Load settings on page load
+        loadSettings();
+    </script>
+</body>
+</html>

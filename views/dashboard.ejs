@@ -591,6 +591,36 @@
             color: #9a3412;
         }
 
+        /* Deposit Badge Styles */
+        .deposit-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .deposit-pending {
+            background: #fef3c7;
+            color: #b45309;
+            border: 1px solid #f59e0b;
+        }
+
+        .deposit-pending:hover {
+            background: #fcd34d;
+            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+        }
+
+        .deposit-confirmed {
+            background: #d1fae5;
+            color: #065f46;
+            cursor: default;
+        }
+
         .appointment-actions {
             background: #f9fafb;
             padding: 0.5rem 1rem;
@@ -2207,6 +2237,16 @@
                                 </div>
                                 <p style="font-size: 0.75rem; color: #6b7280; margin: 0;">Deposit collection</p>
                             </a>
+
+                            <!-- Business Settings -->
+                            <a href="/settings/business" target="_blank" rel="noopener" style="display: block; padding: 1rem; background: #f0fdf4; border: 2px solid #10b981; border-radius: 0.5rem; text-decoration: none; cursor: pointer;">
+                                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="4" fill="#10b981"/><path d="M12 4v4M12 16v4M4 12h4M16 12h4" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="3" stroke="white" stroke-width="2"/></svg>
+                                    <span style="font-weight: 600; color: #059669;">Business Settings</span>
+                                    <span style="font-size: 0.75rem; color: #9ca3af;">↗</span>
+                                </div>
+                                <p style="font-size: 0.75rem; color: #6b7280; margin: 0;">Business info & deposit requirements</p>
+                            </a>
                         </div>
                     </div>
 
@@ -3663,6 +3703,18 @@
                 const ghlAppointmentId = apt.ghlAppointmentId || apt.ghl_appointment_id;
                 const hubspotMeetingId = apt.hubspotMeetingId || apt.hubspot_meeting_id;
                 const vagaroAppointmentId = apt.vagaroAppointmentId || apt.vagaro_appointment_id;
+                const depositStatus = apt.depositStatus || apt.deposit_status || 'not_required';
+                const aptId = apt.id;
+
+                // Get deposit badge if applicable
+                const getDepositBadge = () => {
+                    if (depositStatus === 'pending') {
+                        return `<span class="deposit-badge deposit-pending" onclick="openDepositModal(${aptId}, '${name.replace(/'/g, "\\'")}', '${date}', '${time}')" title="Click to confirm deposit">Pending Deposit</span>`;
+                    } else if (depositStatus === 'confirmed') {
+                        return '<span class="deposit-badge deposit-confirmed">Deposit Confirmed</span>';
+                    }
+                    return '';
+                };
 
                 // Determine source tag based on appointment source or CRM-specific IDs
                 const getSourceTag = () => {
@@ -3722,6 +3774,7 @@
                         </div>
                         <div class="appointment-time">
                             <span class="status-badge status-${status}">${status}</span>
+                            ${getDepositBadge()}
                         </div>
                     </div>
                     <div class="appointment-actions">
@@ -5085,9 +5138,139 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeCreditsModal();
+                closeDepositModal();
+            }
+        });
+
+        // =====================================================
+        // Deposit Confirmation Modal Functions
+        // =====================================================
+        let currentDepositAppointmentId = null;
+
+        function openDepositModal(appointmentId, customerName, date, time) {
+            currentDepositAppointmentId = appointmentId;
+            document.getElementById('depositCustomerName').textContent = customerName;
+            document.getElementById('depositDateTime').textContent = `${date} at ${time}`;
+            document.getElementById('depositMethod').value = 'manual';
+            document.getElementById('depositNotes').value = '';
+            document.getElementById('depositModal').classList.add('active');
+        }
+
+        function closeDepositModal() {
+            document.getElementById('depositModal').classList.remove('active');
+            currentDepositAppointmentId = null;
+        }
+
+        async function confirmDeposit() {
+            if (!currentDepositAppointmentId) {
+                alert('No appointment selected');
+                return;
+            }
+
+            const method = document.getElementById('depositMethod').value;
+            const notes = document.getElementById('depositNotes').value;
+            const confirmBtn = document.querySelector('#depositModal .btn-confirm-deposit');
+            const originalText = confirmBtn.textContent;
+
+            try {
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = 'Confirming...';
+
+                const response = await fetch(`/api/appointments/${currentDepositAppointmentId}/deposit-status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        status: 'confirmed',
+                        method: method,
+                        notes: notes
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show success message
+                    alert('Deposit confirmed! Customer has been notified via SMS and Email.');
+                    closeDepositModal();
+                    // Refresh appointments to show updated status
+                    loadDashboardData();
+                } else {
+                    alert('Error confirming deposit: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Deposit confirmation error:', error);
+                alert('Error confirming deposit: ' + error.message);
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = originalText;
+            }
+        }
+
+        // Close deposit modal when clicking outside
+        document.getElementById('depositModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDepositModal();
             }
         });
     </script>
+
+    <!-- Deposit Confirmation Modal -->
+    <div id="depositModal" class="modal">
+        <div class="modal-overlay" onclick="closeDepositModal()"></div>
+        <div class="modal-content" style="width: 100%; max-width: 450px;">
+            <div class="modal-header">
+                <h2>Confirm Deposit</h2>
+                <button class="modal-close" onclick="closeDepositModal()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.5rem; height: 1.5rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem;">
+                    <p style="margin: 0 0 0.5rem 0; font-weight: 600; color: #166534;">Appointment Details</p>
+                    <p style="margin: 0; color: #15803d;">Customer: <strong id="depositCustomerName"></strong></p>
+                    <p style="margin: 0; color: #15803d;">Date/Time: <strong id="depositDateTime"></strong></p>
+                </div>
+
+                <div class="form-group">
+                    <label for="depositMethod">Confirmation Method</label>
+                    <select id="depositMethod" class="form-input">
+                        <option value="manual">Manual Verification</option>
+                        <option value="zelle">Zelle Receipt</option>
+                        <option value="venmo">Venmo Receipt</option>
+                        <option value="cash_app">Cash App Receipt</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="cash">Cash Payment</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="depositNotes">Notes (optional)</label>
+                    <textarea id="depositNotes" class="form-input" rows="3" placeholder="Any additional notes about the deposit..."></textarea>
+                </div>
+
+                <div style="background: #eff6ff; border: 1px solid #93c5fd; border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 1rem;">
+                    <p style="margin: 0; font-size: 0.875rem; color: #1e40af;">
+                        <strong>Note:</strong> The customer will receive both SMS and Email confirmation when you confirm this deposit.
+                    </p>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                    <button type="button" onclick="closeDepositModal()" style="padding: 0.625rem 1.25rem; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 0.5rem; font-weight: 500; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn-confirm-deposit" onclick="confirmDeposit()" style="padding: 0.625rem 1.25rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-weight: 500; cursor: pointer;">
+                        Confirm Deposit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
