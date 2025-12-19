@@ -284,13 +284,16 @@ router.post('/voice/lina/collect-name', async (req, res) => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
 
+        // Pass context via query params since Twilio doesn't preserve sessions
+        const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}`;
+
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech dtmf" timeout="10" speechTimeout="5" numDigits="10" action="/voice/lina/collect-phone" method="POST" language="es-MX">
+    <Gather input="speech dtmf" timeout="10" speechTimeout="5" numDigits="10" action="/voice/lina/collect-phone?${contextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe" language="es-MX">Gracias ${escapedName}. Ahora puede decir su número de teléfono de 10 dígitos, o marcarlo usando el teclado.</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intente de nuevo.</Say>
-    <Redirect>/voice/lina/collect-name</Redirect>
+    <Redirect>/voice/lina/collect-name?${contextParams}</Redirect>
 </Response>`;
 
         console.log('📤 Sending TwiML from collect-name:', twiml.substring(0, 200));
@@ -315,9 +318,24 @@ router.post('/voice/lina/collect-name', async (req, res) => {
 
 /**
  * Collect phone number for appointment booking (Spanish)
+ * Restores client context from query params since Twilio doesn't preserve sessions
  */
 router.post('/voice/lina/collect-phone', async (req, res) => {
     try {
+        // Restore client context from query params
+        const clientIdFromQuery = req.query.client_id;
+        const businessNameFromQuery = req.query.business_name;
+
+        if (clientIdFromQuery) {
+            const parsedClientId = parseInt(clientIdFromQuery, 10);
+            if (!isNaN(parsedClientId)) {
+                req.session.client_id = parsedClientId;
+            }
+        }
+        if (businessNameFromQuery) {
+            req.session.business_name = decodeURIComponent(businessNameFromQuery);
+        }
+
         const digits = req.body.Digits || '';  // DTMF keypad input
         const speechResult = req.body.SpeechResult || '';  // Voice input
         const clientId = req.session.client_id;
@@ -374,13 +392,16 @@ router.post('/voice/lina/collect-phone', async (req, res) => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
 
+        // Pass context via query params since Twilio doesn't preserve sessions
+        const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}`;
+
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="10" speechTimeout="5" action="/voice/lina/collect-datetime" method="POST" language="es-MX">
+    <Gather input="speech" timeout="10" speechTimeout="5" action="/voice/lina/collect-datetime?${contextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe" language="es-MX">Perfecto ${escapedName}. Ahora dígame que día y hora prefiere para su cita. Por ejemplo puede decir mañana a las 10 de la mañana o el viernes a las 2 de la tarde</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intente de nuevo.</Say>
-    <Redirect>/voice/lina/collect-phone</Redirect>
+    <Redirect>/voice/lina/collect-phone?${contextParams}</Redirect>
 </Response>`;
 
         console.log('📤 Sending TwiML from collect-phone (Spanish):', twiml.substring(0, 200));
@@ -405,9 +426,24 @@ router.post('/voice/lina/collect-phone', async (req, res) => {
 
 /**
  * Collect date/time for appointment booking (Spanish)
+ * Restores client context from query params since Twilio doesn't preserve sessions
  */
 router.post('/voice/lina/collect-datetime', async (req, res) => {
     try {
+        // Restore client context from query params
+        const clientIdFromQuery = req.query.client_id;
+        const businessNameFromQuery = req.query.business_name;
+
+        if (clientIdFromQuery) {
+            const parsedClientId = parseInt(clientIdFromQuery, 10);
+            if (!isNaN(parsedClientId)) {
+                req.session.client_id = parsedClientId;
+            }
+        }
+        if (businessNameFromQuery) {
+            req.session.business_name = decodeURIComponent(businessNameFromQuery);
+        }
+
         const datetime = req.body.SpeechResult || '';
         const clientId = req.session.client_id;
         const prospectName = req.session.prospect_name;
@@ -452,10 +488,13 @@ router.post('/voice/lina/collect-datetime', async (req, res) => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
 
+        // Pass context via query params since Twilio doesn't preserve sessions
+        const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}`;
+
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="Polly.Lupe" language="es-MX">Perfecto ${escapedName}. Déjeme confirmar su cita para ${escapedDateTime}. Por favor espere un momento mientras verifico la disponibilidad.</Say>
-    <Redirect>/voice/lina/book-appointment</Redirect>
+    <Redirect>/voice/lina/book-appointment?${contextParams}</Redirect>
 </Response>`;
 
         console.log('📤 Sending TwiML from collect-datetime (Spanish)');
@@ -482,6 +521,20 @@ router.post('/voice/lina/collect-datetime', async (req, res) => {
  */
 const handleBookAppointmentSpanish = async (req, res) => {
     try {
+        // Restore client context from query params
+        const clientIdFromQuery = req.query.client_id;
+        const businessNameFromQuery = req.query.business_name;
+
+        if (clientIdFromQuery) {
+            const parsedClientId = parseInt(clientIdFromQuery, 10);
+            if (!isNaN(parsedClientId)) {
+                req.session.client_id = parsedClientId;
+            }
+        }
+        if (businessNameFromQuery) {
+            req.session.business_name = decodeURIComponent(businessNameFromQuery);
+        }
+
         const clientId = req.session.client_id;
         const prospectName = req.session.prospect_name;
         const prospectPhone = req.session.prospect_phone;
