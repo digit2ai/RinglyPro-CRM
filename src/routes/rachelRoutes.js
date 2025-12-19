@@ -1102,17 +1102,27 @@ router.post('/voice/rachel/select-language', async (req, res) => {
             });
         });
 
+        // Use TwiML Redirect instead of HTTP redirect for proper Twilio session handling
+        let redirectPath;
         if (digits === '1') {
             // English - Continue with Rachel
-            res.redirect(307, '/voice/rachel/incoming?lang=en');
+            redirectPath = '/voice/rachel/incoming?lang=en';
         } else if (digits === '2') {
             // Spanish - Route to Lina
-            res.redirect(307, '/voice/lina/incoming?lang=es');
+            redirectPath = '/voice/lina/incoming?lang=es';
         } else {
             // Invalid input - default to English
             console.warn(`⚠️ Invalid language selection: ${digits}, defaulting to English`);
-            res.redirect(307, '/voice/rachel/incoming?lang=en');
+            redirectPath = '/voice/rachel/incoming?lang=en';
         }
+
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Redirect method="POST">${redirectPath}</Redirect>
+</Response>`;
+
+        res.type('text/xml');
+        res.send(twiml);
 
     } catch (error) {
         console.error('Error handling language selection:', error);
