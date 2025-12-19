@@ -303,7 +303,34 @@ class UnifiedBookingService {
       let crmResult = null;
       let localResult = null;
 
-      // Route to appropriate CRM
+      // ============================================================
+      // TEMPORARY: Route ALL bookings to local RinglyPro calendar
+      // CRM integrations (GHL, HubSpot, Vagaro) are temporarily disabled
+      // This will be re-enabled once CRM booking issues are resolved
+      // ============================================================
+      const USE_LOCAL_ONLY = true;
+
+      if (USE_LOCAL_ONLY) {
+        logger.info('[UNIFIED-BOOKING] 🔄 TEMPORARY: Using local RinglyPro calendar for all bookings');
+        localResult = await this.saveLocalAppointment(clientId, bookingData, 'local', null);
+
+        if (localResult?.appointmentId) {
+          return {
+            success: true,
+            system: 'local',
+            localAppointmentId: localResult.appointmentId,
+            confirmationCode: localResult.confirmationCode,
+            message: 'Appointment booked in RinglyPro Calendar'
+          };
+        } else {
+          return {
+            success: false,
+            error: 'Failed to save appointment locally'
+          };
+        }
+      }
+
+      // Route to appropriate CRM (currently disabled)
       switch (config.system) {
         case 'hubspot':
           logger.info('[UNIFIED-BOOKING] Routing to HubSpot...');

@@ -35,6 +35,18 @@ class CRMAwareAvailabilityService {
    */
   async getAvailableSlots(clientId, date, duration = 30) {
     try {
+      // ============================================================
+      // TEMPORARY: Use local RinglyPro calendar for ALL availability
+      // CRM integrations (GHL, HubSpot, Vagaro) are temporarily disabled
+      // This will be re-enabled once CRM booking issues are resolved
+      // ============================================================
+      const USE_LOCAL_ONLY = true;
+
+      if (USE_LOCAL_ONLY) {
+        logger.info(`[CRM-AVAILABILITY] 🔄 TEMPORARY: Using local RinglyPro calendar for client ${clientId}, date=${date}`);
+        return await this.getLocalSlots(clientId, date, duration);
+      }
+
       // Get client's CRM configuration
       const config = await unifiedBookingService.getClientBookingConfig(clientId);
 
@@ -45,7 +57,7 @@ class CRMAwareAvailabilityService {
 
       logger.info(`[CRM-AVAILABILITY] Getting slots for client ${clientId}, system=${config.system}, date=${date}`);
 
-      // Route to appropriate CRM
+      // Route to appropriate CRM (currently disabled)
       switch (config.system) {
         case 'ghl':
           return await this.getGHLSlots(clientId, config, date);
