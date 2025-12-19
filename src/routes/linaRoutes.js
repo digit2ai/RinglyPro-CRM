@@ -823,10 +823,25 @@ router.post('/voice/lina/webhook', async (req, res) => {
 
 /**
  * Voicemail recording endpoint (Spanish)
+ * Restores client context from query params since Twilio doesn't preserve sessions
  */
 router.post('/voice/lina/voicemail', async (req, res) => {
     try {
         console.log('📬 Spanish voicemail requested');
+
+        // Restore client context from query params
+        const clientIdFromQuery = req.query.client_id;
+        const businessNameFromQuery = req.query.business_name;
+
+        if (clientIdFromQuery) {
+            const parsedClientId = parseInt(clientIdFromQuery, 10);
+            if (!isNaN(parsedClientId)) {
+                req.session.client_id = parsedClientId;
+            }
+        }
+        if (businessNameFromQuery) {
+            req.session.business_name = decodeURIComponent(businessNameFromQuery);
+        }
 
         const twimlResponse = await linaService.handleVoicemailRequest(req.session);
 
@@ -850,6 +865,20 @@ router.post('/voice/lina/voicemail', async (req, res) => {
 router.get('/voice/lina/voicemail', async (req, res) => {
     try {
         console.log('📬 Spanish voicemail requested (GET)');
+
+        // Restore client context from query params
+        const clientIdFromQuery = req.query.client_id;
+        const businessNameFromQuery = req.query.business_name;
+
+        if (clientIdFromQuery) {
+            const parsedClientId = parseInt(clientIdFromQuery, 10);
+            if (!isNaN(parsedClientId)) {
+                req.session.client_id = parsedClientId;
+            }
+        }
+        if (businessNameFromQuery) {
+            req.session.business_name = decodeURIComponent(businessNameFromQuery);
+        }
 
         const twimlResponse = await linaService.handleVoicemailRequest(req.session);
 
