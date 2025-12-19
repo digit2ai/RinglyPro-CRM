@@ -104,29 +104,36 @@ const handleSpanishIncoming = async (req, res) => {
             return res.send(twiml);
         }
 
-        // No IVR - use original personalized greeting (speech-based appointment booking)
-        console.log(`📞 No IVR for ${businessName} - using original Spanish flow`);
-        const clientInfo = {
-            client_id: clientId,
-            business_name: businessName,
-            rachel_enabled: true
-        };
+        // No IVR - use simple Spanish greeting with Polly.Lupe (reliable fallback)
+        console.log(`📞 No IVR for ${businessName} - using Spanish greeting`);
 
-        const twimlResponse = await linaService.createPersonalizedGreeting(clientInfo);
+        // Time-appropriate greeting
+        const hour = new Date().getHours();
+        let timeGreeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+
+        const greetingText = `${timeGreeting}, gracias por llamar a ${businessName}. Mi nombre es Lina, su asistente virtual. Puedo ayudarle a agendar una cita, o si prefiere, puede dejarme un mensaje. ¿En qué puedo ayudarle hoy?`;
+
+        // Use Polly.Lupe which is reliable - skip ElevenLabs for now to ensure stability
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/lina/process-speech" method="POST" language="es-MX">
+        <Say voice="Polly.Lupe" language="es-MX">${greetingText}</Say>
+    </Gather>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intentemos de nuevo.</Say>
+    <Redirect>/voice/lina/incoming</Redirect>
+</Response>`;
 
         res.type('text/xml');
-        res.send(twimlResponse);
+        res.send(twiml);
 
     } catch (error) {
         console.error('Error in Lina webhook:', error);
 
-        const twiml = `
-            <?xml version="1.0" encoding="UTF-8"?>
-            <Response>
-                <Say voice="Polly.Lupe" language="es-MX">Lo siento, hubo un error. Por favor, intente llamar de nuevo.</Say>
-                <Hangup/>
-            </Response>
-        `;
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Lo siento, hubo un error. Por favor, intente llamar de nuevo.</Say>
+    <Hangup/>
+</Response>`;
 
         res.type('text/xml');
         res.send(twiml);
