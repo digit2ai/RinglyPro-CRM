@@ -68,15 +68,20 @@
                 <div class="text-center flex-1">
                     <p id="step3-label" class="text-xs font-medium text-gray-500">Customize</p>
                 </div>
+                <div class="text-center flex-1">
+                    <p id="step4-label" class="text-xs font-medium text-gray-500">Training</p>
+                </div>
             </div>
             <!-- Step Circles -->
             <div class="flex justify-center">
                 <div class="flex items-center">
                     <div id="step1-indicator" class="step-indicator step-active w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shadow-lg">1</div>
-                    <div class="w-12 h-1 bg-white bg-opacity-30"></div>
+                    <div class="w-8 h-1 bg-white bg-opacity-30"></div>
                     <div id="step2-indicator" class="step-indicator w-10 h-10 rounded-full bg-white bg-opacity-30 flex items-center justify-center text-sm font-bold text-white">2</div>
-                    <div class="w-12 h-1 bg-white bg-opacity-30"></div>
+                    <div class="w-8 h-1 bg-white bg-opacity-30"></div>
                     <div id="step3-indicator" class="step-indicator w-10 h-10 rounded-full bg-white bg-opacity-30 flex items-center justify-center text-sm font-bold text-white">3</div>
+                    <div class="w-8 h-1 bg-white bg-opacity-30"></div>
+                    <div id="step4-indicator" class="step-indicator w-10 h-10 rounded-full bg-white bg-opacity-30 flex items-center justify-center text-sm font-bold text-white">4</div>
                 </div>
             </div>
         </div>
@@ -261,6 +266,55 @@
                 </form>
             </div>
 
+            <!-- Step 4: Book Free Training -->
+            <div id="step4" class="form-slide hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Free Training Session</h2>
+
+                <div class="space-y-6">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-graduation-cap text-green-500 mt-1 mr-3 text-xl"></i>
+                            <div>
+                                <h4 class="font-medium text-green-800 mb-1">Get the Most Out of RinglyPro</h4>
+                                <p class="text-sm text-green-600">Book a free 15-minute training session with our team to learn how to maximize your AI phone system.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <p class="text-gray-600 mb-4">Our experts will help you:</p>
+                        <ul class="text-left text-gray-600 text-sm space-y-2 mb-6">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                Configure your AI receptionist for optimal performance
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                Set up call routing and business hours
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                Integrate with your CRM (GHL, HubSpot, Vagaro)
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                Answer any questions you have
+                            </li>
+                        </ul>
+                    </div>
+
+                    <a href="https://api.leadconnectorhq.com/widget/bookings/missed-call-text-back-bde9451d-56fc-4189-bf4e-beb0f6661258-7e52ccdb-45c2-4ce8-99f6-a7bf13669fc4-3cc62e97-695d-4cf4-85ba-9f47ac4af26f" target="_blank" class="block w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 transform hover:scale-105 text-center">
+                        <i class="fas fa-calendar-alt mr-2"></i> Book Free Training Session
+                    </a>
+
+                    <button type="button" onclick="skipTraining()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-4 rounded-lg transition duration-300 text-center">
+                        Skip for now - Go to Dashboard <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+
+                    <p class="text-xs text-gray-500 text-center">You can always book a training session later from your dashboard.</p>
+                </div>
+            </div>
+
             <!-- Loading State -->
             <div id="loadingState" class="hidden text-center py-12">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -336,7 +390,7 @@
         }
 
         function updateStepIndicators() {
-            for (let i = 1; i <= 3; i++) {
+            for (let i = 1; i <= 4; i++) {
                 const indicator = document.getElementById(`step${i}-indicator`);
                 const label = document.getElementById(`step${i}-label`);
                 indicator.className = 'step-indicator w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold';
@@ -450,14 +504,16 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    // Show success state
-                    document.getElementById('loadingState').classList.add('hidden');
-                    document.getElementById('successState').classList.remove('hidden');
-                    
                     // Store token if provided
                     if (result.token) {
                         localStorage.setItem('token', result.token);
                     }
+
+                    // Show Step 4 (Training booking)
+                    document.getElementById('loadingState').classList.add('hidden');
+                    document.getElementById('step4').classList.remove('hidden');
+                    currentStep = 4;
+                    updateStepIndicators();
                 } else {
                     throw new Error(result.error || 'Registration failed');
                 }
@@ -487,6 +543,11 @@
         }
 
         function goToDashboard() {
+            window.location.href = '/';
+        }
+
+        function skipTraining() {
+            // Go directly to dashboard
             window.location.href = '/';
         }
 
