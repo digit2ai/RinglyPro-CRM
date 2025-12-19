@@ -470,6 +470,10 @@
                 <h3>📋 Project Tracker</h3>
                 <div class="value" id="projectUnreadCount" style="color: #7c3aed; font-size: 20px;">Open</div>
             </div>
+            <div class="stat-card" style="cursor: pointer; border: 2px solid #10b981;" onclick="openImpersonateModal()">
+                <h3>🔐 Access Dashboard</h3>
+                <div class="value" style="color: #10b981; font-size: 20px;">Impersonate</div>
+            </div>
         </div>
 
         <!-- Main Panel -->
@@ -653,6 +657,49 @@
                 </div>
 
                 <div id="giftResultMessage" style="display: none; margin-top: 20px; padding: 15px; border-radius: 8px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Impersonate Client Modal -->
+    <div class="modal" id="impersonateModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>🔐 Access Client Dashboard</h2>
+                <button class="close-modal" onclick="closeImpersonateModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background: #e8f4fd; border: 2px solid #3b82f6; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <div style="font-weight: 600; color: #1e40af; margin-bottom: 5px;">ℹ️ Admin Impersonation</div>
+                    <div style="font-size: 13px; color: #1e40af;">Access a client's dashboard for support and configuration purposes. All actions are logged for security.</div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Client ID</label>
+                    <input type="number" id="impersonateClientId" placeholder="e.g., 32"
+                           style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 14px;">
+                    <small style="color: #666; display: block; margin-top: 5px;">Enter the client ID you want to access</small>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Admin Password</label>
+                    <input type="password" id="impersonatePassword" placeholder="Enter your admin password"
+                           style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 14px;">
+                    <small style="color: #666; display: block; margin-top: 5px;">Your admin password for verification</small>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="submitImpersonate()"
+                            style="flex: 1; padding: 14px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                        🔐 Access Dashboard
+                    </button>
+                    <button onclick="closeImpersonateModal()"
+                            style="padding: 14px 24px; background: #6c757d; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                        Cancel
+                    </button>
+                </div>
+
+                <div id="impersonateResultMessage" style="display: none; margin-top: 20px; padding: 15px; border-radius: 8px;"></div>
             </div>
         </div>
     </div>
@@ -1273,7 +1320,116 @@
             }
         }
 
-// Store current client data for editing
+// Impersonate Client Functions
+        function openImpersonateModal() {
+            document.getElementById('impersonateModal').classList.add('active');
+            document.getElementById('impersonateClientId').value = '';
+            document.getElementById('impersonatePassword').value = '';
+            document.getElementById('impersonateResultMessage').style.display = 'none';
+        }
+
+        function closeImpersonateModal() {
+            document.getElementById('impersonateModal').classList.remove('active');
+        }
+
+        async function submitImpersonate() {
+            const clientId = document.getElementById('impersonateClientId').value.trim();
+            const password = document.getElementById('impersonatePassword').value;
+
+            // Validation
+            if (!clientId) {
+                alert('Please enter a Client ID');
+                return;
+            }
+
+            if (!password) {
+                alert('Please enter your admin password');
+                return;
+            }
+
+            // Get admin email from token
+            let adminEmail;
+            try {
+                const payload = JSON.parse(atob(authToken.split('.')[1]));
+                adminEmail = payload.email;
+            } catch (error) {
+                alert('Session error. Please login again.');
+                window.location.href = '/admin/login';
+                return;
+            }
+
+            // Disable button during submission
+            const submitBtn = event.target;
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '⏳ Authenticating...';
+
+            const resultMessage = document.getElementById('impersonateResultMessage');
+
+            try {
+                const response = await fetch('/api/auth/admin-impersonate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        adminEmail: adminEmail,
+                        adminPassword: password,
+                        clientId: parseInt(clientId)
+                    })
+                });
+
+                const result = await response.json();
+
+                resultMessage.style.display = 'block';
+
+                if (result.success) {
+                    resultMessage.style.background = '#d4edda';
+                    resultMessage.style.border = '2px solid #28a745';
+                    resultMessage.style.color = '#155724';
+                    resultMessage.innerHTML = `
+                        <div style="font-weight: 600; margin-bottom: 5px;">✅ Access Granted!</div>
+                        <div style="font-size: 14px;">
+                            Client: ${result.data.client.businessName}<br>
+                            Rachel Enabled: ${result.data.client.rachelEnabled ? 'Yes' : 'No'}<br>
+                            Redirecting to dashboard...
+                        </div>
+                    `;
+
+                    // Store the impersonation token and redirect
+                    localStorage.setItem('token', result.token);
+
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1500);
+                } else {
+                    resultMessage.style.background = '#f8d7da';
+                    resultMessage.style.border = '2px solid #dc3545';
+                    resultMessage.style.color = '#721c24';
+                    resultMessage.innerHTML = `
+                        <div style="font-weight: 600; margin-bottom: 5px;">❌ Access Denied</div>
+                        <div style="font-size: 14px;">${result.error || 'Failed to access client dashboard'}</div>
+                    `;
+
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Impersonation error:', error);
+
+                resultMessage.style.display = 'block';
+                resultMessage.style.background = '#f8d7da';
+                resultMessage.style.border = '2px solid #dc3545';
+                resultMessage.style.color = '#721c24';
+                resultMessage.innerHTML = `
+                    <div style="font-weight: 600; margin-bottom: 5px;">❌ Error</div>
+                    <div style="font-size: 14px;">Failed to connect. Please try again.</div>
+                `;
+
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+
+        // Store current client data for editing
         let currentClientData = null;
 
         // Open Edit Client Modal
@@ -1435,6 +1591,13 @@
         document.getElementById('editClientModal').addEventListener('click', (e) => {
             if (e.target.id === 'editClientModal') {
                 closeEditClientModal();
+            }
+        });
+
+        // Close impersonate modal when clicking outside
+        document.getElementById('impersonateModal').addEventListener('click', (e) => {
+            if (e.target.id === 'impersonateModal') {
+                closeImpersonateModal();
             }
         });
     </script>
