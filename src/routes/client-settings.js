@@ -819,18 +819,29 @@ router.post('/ghl', authenticateToken, async (req, res) => {
       }
     };
 
+    // Update BOTH the settings JSON AND the dedicated GHL columns
+    // The dedicated columns (ghl_api_key, ghl_location_id) are used by:
+    // - MCP Copilot via /api/client/crm-credentials/:client_id
+    // - Voice booking (Rachel/Lina) via client lookups
+    // - WhatsApp booking service
     await sequelize.query(
-      `UPDATE clients SET settings = :settings WHERE id = :clientId`,
+      `UPDATE clients
+       SET settings = :settings,
+           ghl_api_key = :apiKey,
+           ghl_location_id = :locationId
+       WHERE id = :clientId`,
       {
         replacements: {
           settings: JSON.stringify(updatedSettings),
+          apiKey: apiKey || null,
+          locationId: locationId || null,
           clientId
         },
         type: QueryTypes.UPDATE
       }
     );
 
-    logger.info(`[CLIENT SETTINGS] Updated GHL settings for client ${clientId}`);
+    logger.info(`[CLIENT SETTINGS] Updated GHL settings for client ${clientId} (API key and location ID synced to columns)`);
 
     res.json({
       success: true,
