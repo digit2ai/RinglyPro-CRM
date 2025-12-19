@@ -2010,12 +2010,22 @@
                         <button class="filter-tab" onclick="filterAppointmentsByDays(30)" data-days="30">30 days</button>
                     </div>
                 </div>
-                <button onclick="openAppointmentModal()" class="btn-primary" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-                    </svg>
-                    New Appointment
-                </button>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <button onclick="syncCRMAppointments()" id="syncCrmBtn" class="btn-refresh" style="display: flex; align-items: center; gap: 0.5rem; background: #f0f9ff; border: 1px solid #0ea5e9; color: #0369a1;">
+                        <svg id="syncCrmIcon" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                        </svg>
+                        <span id="syncCrmText">Sync CRM</span>
+                    </button>
+                    <span id="lastSyncTime" style="font-size: 0.75rem; color: #6b7280; display: none;"></span>
+                    <button onclick="openAppointmentModal()" class="btn-primary" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                        </svg>
+                        New Appointment
+                    </button>
+                </div>
             </div>
             <div id="appointmentsList">
                 <div class="loading">
@@ -3459,6 +3469,66 @@
             }
         }
 
+        // Sync CRM Appointments
+        async function syncCRMAppointments() {
+            const syncBtn = document.getElementById('syncCrmBtn');
+            const syncIcon = document.getElementById('syncCrmIcon');
+            const syncText = document.getElementById('syncCrmText');
+            const lastSyncSpan = document.getElementById('lastSyncTime');
+
+            try {
+                // Show loading state
+                syncBtn.disabled = true;
+                syncIcon.style.animation = 'spin 1s linear infinite';
+                syncText.textContent = 'Syncing...';
+
+                console.log('🔄 Starting CRM sync...');
+
+                const response = await authenticatedFetch('/api/appointments/sync-crm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+
+                if (!response) {
+                    throw new Error('No response from sync API');
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log('✅ CRM sync complete:', result);
+
+                    // Show success notification
+                    const totalSynced = result.syncResults.created + result.syncResults.updated;
+                    const fetchedTotal = result.fetched.ghl + result.fetched.hubspot + result.fetched.vagaro;
+
+                    if (fetchedTotal > 0) {
+                        alert(`CRM Sync Complete!\n\nFetched: ${fetchedTotal} appointments\n- GHL: ${result.fetched.ghl}\n- HubSpot: ${result.fetched.hubspot}\n- Vagaro: ${result.fetched.vagaro}\n\nSynced: ${result.syncResults.created} new, ${result.syncResults.updated} updated`);
+                    } else {
+                        alert('CRM Sync Complete!\n\nNo new appointments found in connected CRMs.');
+                    }
+
+                    // Update last sync time
+                    lastSyncSpan.textContent = 'Last sync: just now';
+                    lastSyncSpan.style.display = 'inline';
+
+                    // Reload dashboard to show new appointments
+                    await loadDashboard();
+                } else {
+                    throw new Error(result.error || 'Sync failed');
+                }
+            } catch (error) {
+                console.error('❌ CRM sync error:', error);
+                alert(`CRM Sync Error: ${error.message}`);
+            } finally {
+                // Reset button state
+                syncBtn.disabled = false;
+                syncIcon.style.animation = '';
+                syncText.textContent = 'Sync CRM';
+            }
+        }
+
         // Filter appointments by date range
         function filterAppointmentsByDays(days) {
             currentDaysFilter = days;
@@ -3545,36 +3615,47 @@
                 const source = apt.source || 'voice_booking';
                 const ghlAppointmentId = apt.ghlAppointmentId || apt.ghl_appointment_id;
                 const hubspotMeetingId = apt.hubspotMeetingId || apt.hubspot_meeting_id;
+                const vagaroAppointmentId = apt.vagaroAppointmentId || apt.vagaro_appointment_id;
 
-                // Determine source tag based on appointment source
+                // Determine source tag based on appointment source or CRM-specific IDs
                 const getSourceTag = () => {
-                    // HubSpot sources
-                    if (source === 'whatsapp_hubspot' || hubspotMeetingId) {
-                        return '<span style="background: #fff0e5; color: #ff5c35; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">HubSpot</span>';
+                    // Use sourceBadge if available from API (new dashboard endpoint)
+                    if (apt.sourceBadge) {
+                        const badge = apt.sourceBadge;
+                        return `<span style="background: ${badge.bgColor}; color: ${badge.color}; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">${badge.label}</span>`;
                     }
-                    // GHL sources
+
+                    // GHL sources (green)
                     if (source === 'ghl_sync' || source === 'whatsapp_ghl' || ghlAppointmentId) {
-                        return '<span style="background: #f3e5ff; color: #7e22ce; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">GHL</span>';
+                        return '<span style="background: #d1fae5; color: #10b981; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">GHL</span>';
                     }
-                    // Vagaro sources
-                    if (source === 'whatsapp_vagaro') {
-                        return '<span style="background: #e5f5ff; color: #0077cc; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">Vagaro</span>';
+                    // HubSpot sources (orange)
+                    if (source === 'hubspot_sync' || source === 'whatsapp_hubspot' || hubspotMeetingId) {
+                        return '<span style="background: #ffe8e2; color: #ff7a59; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">HubSpot</span>';
                     }
-                    // WhatsApp (manual/fallback)
+                    // Vagaro sources (purple)
+                    if (source === 'vagaro_sync' || source === 'whatsapp_vagaro' || vagaroAppointmentId) {
+                        return '<span style="background: #ede9fe; color: #8b5cf6; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">Vagaro</span>';
+                    }
+                    // WhatsApp (green)
                     if (source === 'whatsapp') {
-                        return '<span style="background: #e5ffe5; color: #25d366; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">WhatsApp</span>';
+                        return '<span style="background: #dcfce7; color: #25D366; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">WhatsApp</span>';
                     }
-                    // Voice booking (Rachel AI)
+                    // Voice booking (blue)
                     if (source === 'voice_booking') {
-                        return '<span style="background: #e5f0ff; color: #3b82f6; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">Voice AI</span>';
+                        return '<span style="background: #dbeafe; color: #3b82f6; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">Voice</span>';
                     }
-                    // Online booking
+                    // Online booking (cyan)
                     if (source === 'online') {
-                        return '<span style="background: #f0f0f0; color: #666; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">Online</span>';
+                        return '<span style="background: #e0f2fe; color: #0ea5e9; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">Online</span>';
                     }
-                    // Manual entry
-                    if (source === 'manual' || source === 'walk-in') {
-                        return '<span style="background: #f5f5f5; color: #888; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">Manual</span>';
+                    // Manual entry (gray)
+                    if (source === 'manual') {
+                        return '<span style="background: #f3f4f6; color: #6b7280; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">Manual</span>';
+                    }
+                    // Walk-in (amber)
+                    if (source === 'walk-in') {
+                        return '<span style="background: #fef3c7; color: #f59e0b; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">Walk-in</span>';
                     }
                     return '';
                 };

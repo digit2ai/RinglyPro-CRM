@@ -775,6 +775,143 @@ class HubSpotBookingService {
   }
 
   /**
+   * Get meetings from HubSpot for a date range
+   * Used for syncing CRM appointments to dashboard
+   * @param {number} clientId - Client ID
+   * @param {string} startDate - Start date (YYYY-MM-DD)
+   * @param {string} endDate - End date (YYYY-MM-DD)
+   * @returns {Promise<object>} Meetings list
+   */
+  async getMeetings(clientId, startDate, endDate) {
+    const credentials = await this.getClientCredentials(clientId);
+    if (!credentials) {
+      return { success: false, error: 'HubSpot not configured', code: HUBSPOT_ERRORS.NOT_CONFIGURED, meetings: [] };
+    }
+
+    try {
+      const startMs = new Date(startDate).getTime();
+      const endMs = new Date(endDate + 'T23:59:59').getTime();
+
+      // Search for meetings in the date range
+      const result = await this.callHubSpot(
+        credentials,
+        'POST',
+        '/crm/v3/objects/meetings/search',
+        {
+          filterGroups: [{
+            filters: [{
+              propertyName: 'hs_meeting_start_time',
+              operator: 'GTE',
+              value: startMs
+            }, {
+              propertyName: 'hs_meeting_start_time',
+              operator: 'LTE',
+              value: endMs
+            }]
+          }],
+          properties: [
+            'hs_meeting_title',
+            'hs_meeting_body',
+            'hs_meeting_start_time',
+            'hs_meeting_end_time',
+            'hs_meeting_outcome',
+            'hs_meeting_location',
+            'hs_timestamp'
+          ],
+          limit: 100
+        }
+      );
+
+      if (!result.success) {
+        logger.warn(`[HubSpot] Failed to fetch meetings: ${result.error}`);
+        return { success: false, error: result.error, meetings: [] };
+      }
+
+      const meetings = result.data.results || [];
+
+      // For each meeting, try to get associated contact info
+      const mappedMeetings = await Promise.all(meetings.map(async (meeting) => {
+        let contactInfo = { name: 'Unknown', phone: '', email: '' };
+
+        try {
+          // Get associated contacts
+          const assocResult = await this.callHubSpot(
+            credentials,
+            'GET',
+            `/crm/v3/objects/meetings/${meeting.id}/associations/contacts`
+          );
+
+          if (assocResult.success && assocResult.data.results?.length > 0) {
+            const contactId = assocResult.data.results[0].id;
+            const contactResult = await this.callHubSpot(
+              credentials,
+              'GET',
+              `/crm/v3/objects/contacts/${contactId}`,
+              null,
+              { properties: 'firstname,lastname,phone,email' }
+            );
+
+            if (contactResult.success) {
+              const props = contactResult.data.properties;
+              contactInfo = {
+                name: `${props.firstname || ''} ${props.lastname || ''}`.trim() || 'Unknown',
+                phone: props.phone || '',
+                email: props.email || '',
+                hubspotContactId: contactId
+              };
+            }
+          }
+        } catch (e) {
+          // Continue without contact info
+          logger.debug(`[HubSpot] Could not fetch contact for meeting ${meeting.id}`);
+        }
+
+        const startTime = parseInt(meeting.properties.hs_meeting_start_time);
+        const endTime = parseInt(meeting.properties.hs_meeting_end_time) || startTime + 30 * 60 * 1000;
+        const startDate = new Date(startTime);
+
+        return {
+          id: meeting.id,
+          hubspotMeetingId: meeting.id,
+          hubspotContactId: contactInfo.hubspotContactId || null,
+          customerName: contactInfo.name,
+          customerPhone: contactInfo.phone,
+          customerEmail: contactInfo.email,
+          appointmentDate: startDate.toISOString().split('T')[0],
+          appointmentTime: startDate.toISOString().split('T')[1].substring(0, 8),
+          duration: Math.round((endTime - startTime) / 60000),
+          purpose: meeting.properties.hs_meeting_title || 'HubSpot Meeting',
+          status: this.mapHubSpotStatus(meeting.properties.hs_meeting_outcome),
+          source: 'hubspot_sync',
+          notes: meeting.properties.hs_meeting_body || ''
+        };
+      }));
+
+      logger.info(`[HubSpot] Fetched ${mappedMeetings.length} meetings for client ${clientId}`);
+      return { success: true, meetings: mappedMeetings };
+
+    } catch (error) {
+      logger.error(`[HubSpot] Error fetching meetings: ${error.message}`);
+      return { success: false, error: error.message, meetings: [] };
+    }
+  }
+
+  /**
+   * Map HubSpot meeting outcome to RinglyPro status
+   */
+  mapHubSpotStatus(outcome) {
+    const statusMap = {
+      'SCHEDULED': 'confirmed',
+      'COMPLETED': 'completed',
+      'RESCHEDULED': 'pending',
+      'NO_SHOW': 'no-show',
+      'CANCELED': 'cancelled',
+      'CANCELLED': 'cancelled'
+    };
+    return statusMap[outcome?.toUpperCase()] || 'confirmed';
+  }
+
+  /**
    * Get meeting links configured for a client
    * @param {number} clientId - Client ID
    * @returns {Promise<object>} Meeting links

@@ -89,7 +89,7 @@ const Appointment = sequelize.define('Appointment', {
     type: DataTypes.STRING,
     defaultValue: 'voice_booking',
     validate: {
-      isIn: [['voice_booking', 'online', 'manual', 'walk-in', 'ghl_sync', 'whatsapp_ghl', 'whatsapp_vagaro', 'whatsapp', 'whatsapp_hubspot']]
+      isIn: [['voice_booking', 'online', 'manual', 'walk-in', 'ghl_sync', 'hubspot_sync', 'vagaro_sync', 'whatsapp_ghl', 'whatsapp_vagaro', 'whatsapp', 'whatsapp_hubspot']]
     }
   },
   ghlAppointmentId: {
@@ -128,6 +128,26 @@ const Appointment = sequelize.define('Appointment', {
     allowNull: true,
     field: 'hubspot_contact_id',
     comment: 'HubSpot contact ID associated with this appointment'
+  },
+  // Vagaro integration fields
+  vagaroAppointmentId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'vagaro_appointment_id',
+    comment: 'Vagaro appointment ID for synced appointments'
+  },
+  vagaroContactId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'vagaro_contact_id',
+    comment: 'Vagaro customer ID associated with this appointment'
+  },
+  // CRM sync tracking
+  crmLastSyncedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'crm_last_synced_at',
+    comment: 'Last time this appointment was synced from any CRM'
   }
 }, {
   tableName: 'appointments',

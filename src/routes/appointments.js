@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const { Appointment, sequelize } = require('../models');
+const crmAppointmentService = require('../services/crmAppointmentService');
 const router = express.Router();
 
 // Middleware to extract and verify client_id from JWT token
@@ -601,6 +602,124 @@ router.get('/phone/:phone', async (req, res) => {
   } catch (error) {
     console.error('Error fetching appointments by phone:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// =====================================================
+// CRM INTEGRATION ENDPOINTS
+// =====================================================
+
+/**
+ * GET /api/appointments/dashboard
+ * Get appointments for dashboard with CRM source badges
+ * Query params:
+ *   - days: Number of days to fetch (default 14)
+ *   - refresh: If true, sync from CRMs first
+ */
+router.get('/dashboard', async (req, res) => {
+  try {
+    const days = parseInt(req.query.days) || 14;
+    const refresh = req.query.refresh === 'true';
+
+    console.log(`📊 Dashboard appointments for client ${req.clientId}: days=${days}, refresh=${refresh}`);
+
+    const result = await crmAppointmentService.getDashboardAppointments(req.clientId, {
+      days,
+      refresh
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching dashboard appointments:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/appointments/sync-crm
+ * Manually trigger CRM sync
+ * Body:
+ *   - startDate: Start date (YYYY-MM-DD)
+ *   - endDate: End date (YYYY-MM-DD)
+ *   - sources: Optional array of sources to sync ['ghl', 'hubspot', 'vagaro']
+ */
+router.post('/sync-crm', async (req, res) => {
+  try {
+    const { startDate, endDate, sources } = req.body;
+
+    // Default to next 14 days if not specified
+    const today = new Date();
+    const start = startDate || today.toISOString().split('T')[0];
+    const end = endDate || new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    console.log(`🔄 CRM sync for client ${req.clientId}: ${start} to ${end}`);
+
+    // Fetch from all CRMs
+    const crmData = await crmAppointmentService.fetchAllCRMAppointments(req.clientId, start, end);
+
+    // Filter by sources if specified
+    let appointmentsToSync = crmData.appointments;
+    if (sources && Array.isArray(sources)) {
+      const sourceMap = {
+        'ghl': ['ghl_sync', 'whatsapp_ghl'],
+        'hubspot': ['hubspot_sync', 'whatsapp_hubspot'],
+        'vagaro': ['vagaro_sync', 'whatsapp_vagaro']
+      };
+      const allowedSources = sources.flatMap(s => sourceMap[s] || []);
+      appointmentsToSync = appointmentsToSync.filter(a => allowedSources.includes(a.source));
+    }
+
+    // Sync to local database
+    let syncResults = { created: 0, updated: 0, errors: [] };
+    if (appointmentsToSync.length > 0) {
+      syncResults = await crmAppointmentService.syncToLocalDB(req.clientId, appointmentsToSync);
+    }
+
+    res.json({
+      success: true,
+      message: `Synced ${syncResults.created + syncResults.updated} appointments`,
+      dateRange: { startDate: start, endDate: end },
+      fetched: {
+        ghl: crmData.sources.ghl.appointments.length,
+        hubspot: crmData.sources.hubspot.appointments.length,
+        vagaro: crmData.sources.vagaro.appointments.length
+      },
+      syncResults,
+      integrations: crmData.integrations
+    });
+  } catch (error) {
+    console.error('Error syncing CRM appointments:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/appointments/crm-status
+ * Get status of CRM integrations
+ */
+router.get('/crm-status', async (req, res) => {
+  try {
+    const integrations = await crmAppointmentService.getEnabledIntegrations(req.clientId);
+
+    res.json({
+      success: true,
+      integrations,
+      message: Object.values(integrations).some(v => v)
+        ? 'CRM integrations are configured'
+        : 'No CRM integrations configured'
+    });
+  } catch (error) {
+    console.error('Error checking CRM status:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 

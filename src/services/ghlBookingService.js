@@ -550,6 +550,84 @@ class GHLBookingService {
   }
 
   /**
+   * Get appointments from GHL for a date range
+   * Used for syncing CRM appointments to dashboard
+   * @param {number} clientId - Client ID
+   * @param {string} startDate - Start date (YYYY-MM-DD)
+   * @param {string} endDate - End date (YYYY-MM-DD)
+   * @returns {Promise<object>} Appointments list
+   */
+  async getAppointments(clientId, startDate, endDate) {
+    const credentials = await this.getClientCredentials(clientId);
+    if (!credentials) {
+      return { success: false, error: 'GHL not configured for this client', appointments: [] };
+    }
+
+    try {
+      // Convert dates to timestamps for GHL API
+      const startTime = new Date(startDate);
+      startTime.setHours(0, 0, 0, 0);
+      const endTime = new Date(endDate);
+      endTime.setHours(23, 59, 59, 999);
+
+      // GHL uses /calendars/events endpoint to fetch appointments
+      const result = await this.callGHL(credentials, 'GET', '/calendars/events', {
+        startTime: startTime.getTime(),
+        endTime: endTime.getTime()
+      });
+
+      if (!result.success) {
+        logger.warn(`[GHL] Failed to fetch appointments: ${result.error}`);
+        return { success: false, error: result.error, appointments: [] };
+      }
+
+      const events = result.data?.events || [];
+
+      // Map GHL events to standardized format
+      const appointments = events.map(event => ({
+        id: event.id,
+        ghlAppointmentId: event.id,
+        ghlContactId: event.contactId,
+        ghlCalendarId: event.calendarId,
+        customerName: event.contact?.name || event.title || 'Unknown',
+        customerPhone: event.contact?.phone || '',
+        customerEmail: event.contact?.email || '',
+        appointmentDate: event.startTime ? new Date(event.startTime).toISOString().split('T')[0] : null,
+        appointmentTime: event.startTime ? new Date(event.startTime).toISOString().split('T')[1].substring(0, 8) : null,
+        duration: event.duration || 30,
+        purpose: event.title || 'GHL Appointment',
+        status: this.mapGHLStatus(event.appointmentStatus || event.status),
+        source: 'ghl_sync',
+        notes: event.notes || ''
+      }));
+
+      logger.info(`[GHL] Fetched ${appointments.length} appointments for client ${clientId}`);
+      return { success: true, appointments };
+
+    } catch (error) {
+      logger.error(`[GHL] Error fetching appointments: ${error.message}`);
+      return { success: false, error: error.message, appointments: [] };
+    }
+  }
+
+  /**
+   * Map GHL appointment status to RinglyPro status
+   */
+  mapGHLStatus(ghlStatus) {
+    const statusMap = {
+      'confirmed': 'confirmed',
+      'showed': 'completed',
+      'noshow': 'no-show',
+      'no_show': 'no-show',
+      'cancelled': 'cancelled',
+      'canceled': 'cancelled',
+      'new': 'pending',
+      'pending': 'pending'
+    };
+    return statusMap[ghlStatus?.toLowerCase()] || 'confirmed';
+  }
+
+  /**
    * Test GHL connection for a client
    */
   async testConnection(clientId) {
