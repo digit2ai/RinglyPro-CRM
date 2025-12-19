@@ -264,6 +264,183 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
+        /* Help button - floating */
+        .help-button {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+            transition: all 0.2s;
+        }
+
+        .help-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Help Modal */
+        .help-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .help-modal-overlay.active {
+            display: flex;
+        }
+
+        .help-modal {
+            background: white;
+            border-radius: 1rem;
+            max-width: 600px;
+            width: 100%;
+            max-height: 85vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .help-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+        }
+
+        .help-modal-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .help-modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 1.25rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .help-modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .help-modal-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .help-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .help-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .help-section h3 {
+            font-size: 1rem;
+            color: #4f46e5;
+            margin: 0 0 0.75rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+
+        .help-subsection {
+            margin-bottom: 1rem;
+        }
+
+        .help-subsection h4 {
+            font-size: 0.875rem;
+            color: #374151;
+            margin: 0 0 0.5rem 0;
+            font-weight: 600;
+        }
+
+        .help-command {
+            background: #f3f4f6;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #1f2937;
+            display: inline-block;
+            margin: 0.125rem;
+        }
+
+        .help-commands-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+
+        .help-tip {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+            font-size: 0.85rem;
+        }
+
+        .help-tip strong {
+            color: #92400e;
+        }
+
+        .help-workflow {
+            background: #ecfdf5;
+            border-left: 4px solid #10b981;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+            font-size: 0.85rem;
+        }
+
+        .help-workflow code {
+            display: block;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            margin: 0.25rem 0;
+            color: #065f46;
+        }
+
         /* Mobile optimizations */
         @media (max-width: 768px) {
             .message {
@@ -276,6 +453,27 @@
                 font-size: 0.75rem;
                 padding: 0.4rem 0.8rem;
             }
+
+            .help-button {
+                top: 0.5rem;
+                right: 0.5rem;
+                font-size: 0.75rem;
+                padding: 0.4rem 0.8rem;
+            }
+
+            .help-modal {
+                max-height: 90vh;
+                border-radius: 0.75rem;
+            }
+
+            .help-modal-content {
+                padding: 1rem;
+            }
+
+            .help-command {
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+            }
         }
     </style>
 </head>
@@ -283,6 +481,230 @@
     <div class="chat-container">
         <!-- Back button -->
         <a href="https://aiagent.ringlypro.com/" class="back-button">← Back to Dashboard</a>
+
+        <!-- Help button -->
+        <button id="helpButton" class="help-button" onclick="toggleHelpModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            Help
+        </button>
+
+        <!-- Help Modal -->
+        <div id="helpModalOverlay" class="help-modal-overlay" onclick="closeHelpModalOnOverlay(event)">
+            <div class="help-modal">
+                <div class="help-modal-header">
+                    <h2>CRM Assistant Commands</h2>
+                    <button class="help-modal-close" onclick="toggleHelpModal()" aria-label="Close help">&times;</button>
+                </div>
+                <div class="help-modal-content">
+                    <!-- Contact Management -->
+                    <div class="help-section">
+                        <h3>Contact Management</h3>
+
+                        <div class="help-subsection">
+                            <h4>Search/Find Contacts</h4>
+                            <div class="help-commands-list">
+                                <span class="help-command">find john</span>
+                                <span class="help-command">search for contacts with email @gmail.com</span>
+                                <span class="help-command">show me all contacts</span>
+                                <span class="help-command">find contact with phone 555-1234</span>
+                            </div>
+                        </div>
+
+                        <div class="help-subsection">
+                            <h4>Create Contacts</h4>
+                            <div class="help-commands-list">
+                                <span class="help-command">create contact john</span>
+                                <span class="help-command">add new contact alina 8139632589 alina@test.com</span>
+                                <span class="help-command">new contact sarah smith</span>
+                            </div>
+                        </div>
+
+                        <div class="help-subsection">
+                            <h4>Update Contacts</h4>
+                            <div class="help-commands-list">
+                                <span class="help-command">update sarah's phone to 555-9999</span>
+                                <span class="help-command">change john's email to newemail@test.com</span>
+                                <span class="help-command">update contact alina address to 123 Main St</span>
+                            </div>
+                        </div>
+
+                        <div class="help-subsection">
+                            <h4>Delete Contacts</h4>
+                            <div class="help-commands-list">
+                                <span class="help-command">delete contact john</span>
+                                <span class="help-command">remove sarah from crm</span>
+                            </div>
+                        </div>
+
+                        <div class="help-subsection">
+                            <h4>Manage Tags</h4>
+                            <div class="help-commands-list">
+                                <span class="help-command">add tag vip to john</span>
+                                <span class="help-command">tag sarah as important customer</span>
+                                <span class="help-command">remove tag vip from john</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Communication -->
+                    <div class="help-section">
+                        <h3>Communication</h3>
+
+                        <div class="help-subsection">
+                            <h4>Send SMS</h4>
+                            <div class="help-commands-list">
+                                <span class="help-command">send sms to john hey how are you</span>
+                                <span class="help-command">text sarah Meeting tomorrow at 3pm</span>
+                                <span class="help-command">message alina Thanks for signing up!</span>
+                            </div>
+                        </div>
+
+                        <div class="help-subsection">
+                            <h4>Send Email</h4>
+                            <div class="help-commands-list">
+                                <span class="help-command">send email to john subject Welcome body Thanks for joining</span>
+                                <span class="help-command">email sarah about meeting Tomorrow 3pm at office</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Opportunities & Pipelines -->
+                    <div class="help-section">
+                        <h3>Opportunities & Pipelines</h3>
+
+                        <div class="help-subsection">
+                            <h4>View Pipelines</h4>
+                            <div class="help-commands-list">
+                                <span class="help-command">show me all pipelines</span>
+                                <span class="help-command">list pipelines</span>
+                                <span class="help-command">what pipelines do we have</span>
+                            </div>
+                        </div>
+
+                        <div class="help-subsection">
+                            <h4>Create Opportunities</h4>
+                            <div class="help-commands-list">
+                                <span class="help-command">create opportunity for sarah $5000 in sales pipeline</span>
+                                <span class="help-command">add deal for john 10000 sales</span>
+                                <span class="help-command">new opportunity alina 3000 marketing</span>
+                            </div>
+                        </div>
+
+                        <div class="help-subsection">
+                            <h4>Update/View Opportunities</h4>
+                            <div class="help-commands-list">
+                                <span class="help-command">update opportunity [id] to won</span>
+                                <span class="help-command">show opportunities</span>
+                                <span class="help-command">find opportunities for sarah</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calendar & Appointments -->
+                    <div class="help-section">
+                        <h3>Calendar & Appointments</h3>
+
+                        <div class="help-subsection">
+                            <h4>View Calendars</h4>
+                            <div class="help-commands-list">
+                                <span class="help-command">show calendars</span>
+                                <span class="help-command">list available calendars</span>
+                            </div>
+                        </div>
+
+                        <div class="help-subsection">
+                            <h4>Create Appointments</h4>
+                            <div class="help-commands-list">
+                                <span class="help-command">book appointment with john tomorrow 2pm</span>
+                                <span class="help-command">schedule meeting with sarah next monday 10am</span>
+                                <span class="help-command">create appointment alina consultation tomorrow 3pm</span>
+                            </div>
+                        </div>
+
+                        <div class="help-subsection">
+                            <h4>View Appointments</h4>
+                            <div class="help-commands-list">
+                                <span class="help-command">show appointments</span>
+                                <span class="help-command">list upcoming meetings</span>
+                                <span class="help-command">what meetings do i have</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Social Media -->
+                    <div class="help-section">
+                        <h3>Social Media</h3>
+
+                        <div class="help-subsection">
+                            <h4>Schedule Posts</h4>
+                            <div class="help-commands-list">
+                                <span class="help-command">schedule social post for facebook: Check out our new product!</span>
+                                <span class="help-command">post to instagram: Grand opening today!</span>
+                                <span class="help-command">schedule facebook post tomorrow 9am: Happy Monday!</span>
+                            </div>
+                        </div>
+
+                        <div class="help-subsection">
+                            <h4>View Posts & Accounts</h4>
+                            <div class="help-commands-list">
+                                <span class="help-command">list social posts</span>
+                                <span class="help-command">show social accounts</span>
+                                <span class="help-command">what posts are scheduled</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Other -->
+                    <div class="help-section">
+                        <h3>Other Commands</h3>
+                        <div class="help-commands-list">
+                            <span class="help-command">show location info</span>
+                            <span class="help-command">what's my crm location</span>
+                            <span class="help-command">show custom fields</span>
+                            <span class="help-command">list available custom fields</span>
+                        </div>
+                    </div>
+
+                    <!-- Tips -->
+                    <div class="help-section">
+                        <h3>Tips</h3>
+
+                        <div class="help-tip">
+                            <strong>Be Natural:</strong> You can combine info in one message<br>
+                            <code class="help-command">create contact john 555-1234 john@test.com</code>
+                        </div>
+
+                        <div class="help-tip">
+                            <strong>Confirmation:</strong> The assistant will always confirm before executing actions. Just reply <code class="help-command">yes</code> or <code class="help-command">confirm</code> to proceed.
+                        </div>
+
+                        <div class="help-tip">
+                            <strong>Flexible Format:</strong> Commands work in various formats<br>
+                            <code class="help-command">find john</code> = <code class="help-command">search for john</code> = <code class="help-command">show me john</code>
+                        </div>
+
+                        <div class="help-tip">
+                            <strong>Phone Numbers:</strong> Any format works - <code class="help-command">555-1234</code>, <code class="help-command">(555) 123-4567</code>, <code class="help-command">5551234567</code>
+                        </div>
+                    </div>
+
+                    <!-- Common Workflows -->
+                    <div class="help-section">
+                        <h3>Common Workflow: New Customer Onboarding</h3>
+                        <div class="help-workflow">
+                            <code>1. create contact Sarah Smith 555-1234 sarah@email.com</code>
+                            <code>2. add tag new customer to sarah</code>
+                            <code>3. send email to sarah subject Welcome body Thanks for choosing us!</code>
+                            <code>4. create opportunity for sarah $5000 in sales pipeline</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Messages -->
         <div id="chatMessages" class="chat-messages">
@@ -652,6 +1074,36 @@
                 }
             }
         }
+
+        // Help Modal Functions
+        function toggleHelpModal() {
+            const overlay = document.getElementById('helpModalOverlay');
+            overlay.classList.toggle('active');
+
+            // Prevent body scroll when modal is open
+            if (overlay.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        }
+
+        function closeHelpModalOnOverlay(event) {
+            // Only close if clicking on the overlay itself, not the modal content
+            if (event.target.id === 'helpModalOverlay') {
+                toggleHelpModal();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                const overlay = document.getElementById('helpModalOverlay');
+                if (overlay.classList.contains('active')) {
+                    toggleHelpModal();
+                }
+            }
+        });
     </script>
 </body>
 </html>
