@@ -62,12 +62,22 @@ const handleSpanishIncoming = async (req, res) => {
     try {
         console.log('📞 Spanish language selected - Lina webhook called');
 
-        // Get client info from session
+        // Restore client context from query params (Twilio doesn't preserve cookies across redirects)
+        if (req.query.client_id && !req.session.client_id) {
+            req.session.client_id = parseInt(req.query.client_id);
+            req.session.business_name = decodeURIComponent(req.query.business_name || '');
+            req.session.user_id = req.query.user_id || null;
+            req.session.caller_number = decodeURIComponent(req.query.caller || '');
+            req.session.language = 'es';
+            console.log(`✅ Restored session from query params: client_id=${req.session.client_id}, business=${req.session.business_name}`);
+        }
+
+        // Get client info from session (now populated from query params if needed)
         const clientId = req.session.client_id;
         const businessName = req.session.business_name;
 
         if (!clientId) {
-            console.error("❌ No client context in session");
+            console.error("❌ No client context in session or query params");
             const twiml = `
                 <?xml version="1.0" encoding="UTF-8"?>
                 <Response>
