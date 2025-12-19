@@ -608,8 +608,19 @@ class UnifiedBookingService {
 
     } catch (error) {
       logger.error('[UNIFIED-BOOKING] Error saving local appointment:', error.message);
-      logger.error('[UNIFIED-BOOKING] Full error:', error.stack || error);
-      logger.error('[UNIFIED-BOOKING] Booking data:', JSON.stringify({ clientId, date, time, customerName, customerPhone, source, crmSource }));
+      logger.error('[UNIFIED-BOOKING] Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      logger.error('[UNIFIED-BOOKING] Booking data:', JSON.stringify(bookingData));
+      // Log Sequelize validation errors specifically
+      if (error.errors) {
+        error.errors.forEach(e => {
+          logger.error(`[UNIFIED-BOOKING] Validation: ${e.path} - ${e.message} (value: ${e.value})`);
+        });
+      }
+      // Log SQL error if available
+      if (error.parent) {
+        logger.error(`[UNIFIED-BOOKING] SQL Error: ${error.parent.message}`);
+        logger.error(`[UNIFIED-BOOKING] SQL Detail: ${error.parent.detail || 'none'}`);
+      }
       return {
         success: false,
         error: error.message
