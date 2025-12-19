@@ -728,8 +728,8 @@ router.post('/admin-impersonate', async (req, res) => {
             });
         }
 
-        // Verify admin flag
-        if (!admin.is_admin) {
+        // Verify admin flag (Sequelize model uses isAdmin, maps to is_admin in DB)
+        if (!admin.isAdmin) {
             console.log(`❌ User ${adminEmail} is not an admin`);
             return res.status(403).json({
                 error: 'Access denied. Admin privileges required.'
