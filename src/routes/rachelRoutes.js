@@ -1066,6 +1066,21 @@ router.post('/voice/rachel/select-language', async (req, res) => {
         const digits = req.body.Digits || '';
         console.log(`🌍 Language selected: ${digits === '1' ? 'English' : digits === '2' ? 'Spanish' : 'Unknown'}`);
 
+        // Restore context from query params (Twilio doesn't preserve sessions between webhooks)
+        const clientIdFromQuery = req.query.client_id;
+        const businessNameFromQuery = req.query.business_name;
+        if (clientIdFromQuery) {
+            const parsedClientId = parseInt(clientIdFromQuery, 10);
+            if (!isNaN(parsedClientId)) {
+                req.session.client_id = parsedClientId;
+                console.log(`🔄 Restored client_id from query: ${parsedClientId}`);
+            }
+        }
+        if (businessNameFromQuery) {
+            req.session.business_name = decodeURIComponent(businessNameFromQuery);
+            console.log(`🔄 Restored business_name from query: ${req.session.business_name}`);
+        }
+
         // Store language preference in session
         req.session.language = digits === '1' ? 'en' : digits === '2' ? 'es' : 'en';
 
@@ -1102,17 +1117,22 @@ router.post('/voice/rachel/select-language', async (req, res) => {
             });
         });
 
+        // Build context params for any redirects/callbacks
+        const clientId = req.session.client_id;
+        const businessName = req.session.business_name || '';
+        const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}`;
+
         if (digits === '1') {
-            // English - Continue with Rachel (HTTP redirect preserves session)
-            res.redirect(307, '/voice/rachel/incoming?lang=en');
+            // English - Continue with Rachel (include context params for safety)
+            res.redirect(307, `/voice/rachel/incoming?lang=en&${contextParams}`);
         } else if (digits === '2') {
             // Spanish - Generate greeting inline since session is only available in this request
             // HTTP/TwiML redirects lose session context, so we must handle it here
             console.log('🇪🇸 Spanish selected - handling inline');
 
-            const clientId = req.session.client_id;
-            const businessName = req.session.business_name || 'nuestra empresa';
             const userId = req.session.user_id;
+            // Use businessName with Spanish fallback
+            const spanishBusinessName = businessName || 'nuestra empresa';
 
             if (!clientId) {
                 console.error("❌ No client context in session for Spanish");
@@ -1131,22 +1151,22 @@ router.post('/voice/rachel/select-language', async (req, res) => {
 
             if (client && client.ivr_enabled && client.ivr_options && client.ivr_options.length > 0) {
                 // IVR enabled - show Spanish IVR menu
-                console.log(`✅ IVR enabled for ${businessName} - showing Spanish menu`);
+                console.log(`✅ IVR enabled for ${spanishBusinessName} - showing Spanish menu`);
                 const enabledDepts = (client.ivr_options || []).filter(dept => dept.enabled);
 
-                let menuText = `¡Hola! Habla Lina de ${businessName}. Estoy aquí para ayudarle. `;
+                let menuText = `¡Hola! Habla Lina de ${spanishBusinessName}. Estoy aquí para ayudarle. `;
                 menuText += `Para programar una cita, presione 1. `;
                 enabledDepts.forEach((dept, index) => {
                     menuText += `Para ${dept.name}, presione ${index + 2}. `;
                 });
                 menuText += `O, para dejar un mensaje de voz, presione 9.`;
 
-                // Pass context via query params for IVR selection
-                const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${userId || ''}`;
+                // Pass context via query params for IVR selection (use original businessName for URL encoding)
+                const ivrContextParams = `client_id=${clientId}&business_name=${encodeURIComponent(spanishBusinessName)}&user_id=${userId || ''}`;
 
                 const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf" numDigits="1" timeout="8" action="/voice/rachel/ivr-selection?lang=es&amp;${contextParams}" method="POST">
+    <Gather input="dtmf" numDigits="1" timeout="8" action="/voice/rachel/ivr-selection?lang=es&amp;${ivrContextParams}" method="POST">
         <Say voice="Polly.Lupe" language="es-MX">${menuText}</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No recibí una selección. Adiós.</Say>
@@ -1157,13 +1177,13 @@ router.post('/voice/rachel/select-language', async (req, res) => {
             }
 
             // No IVR - use simple Spanish greeting for speech-based booking
-            console.log(`📞 No IVR for ${businessName} - using Spanish speech flow`);
+            console.log(`📞 No IVR for ${spanishBusinessName} - using Spanish speech flow`);
 
             const hour = new Date().getHours();
             const timeGreeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
 
             // Escape business name for XML
-            const escapedBusinessName = (businessName || 'nuestra empresa')
+            const escapedBusinessName = spanishBusinessName
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
@@ -1173,11 +1193,11 @@ router.post('/voice/rachel/select-language', async (req, res) => {
             const greetingText = `${timeGreeting}, gracias por llamar a ${escapedBusinessName}. Mi nombre es Lina, su asistente virtual. Puedo ayudarle a agendar una cita, o si prefiere, puede dejarme un mensaje. ¿En qué puedo ayudarle hoy?`;
 
             // Pass context via query params for subsequent requests
-            const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${userId || ''}`;
+            const speechContextParams = `client_id=${clientId}&business_name=${encodeURIComponent(spanishBusinessName)}&user_id=${userId || ''}`;
 
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/lina/process-speech?${contextParams}" method="POST" language="es-MX">
+    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/lina/process-speech?${speechContextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe" language="es-MX">${greetingText}</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Gracias por llamar.</Say>
@@ -1188,17 +1208,22 @@ router.post('/voice/rachel/select-language', async (req, res) => {
         } else {
             // Invalid input - default to English
             console.warn(`⚠️ Invalid language selection: ${digits}, defaulting to English`);
-            res.redirect(307, '/voice/rachel/incoming?lang=en');
+            res.redirect(307, `/voice/rachel/incoming?lang=en&${contextParams}`);
         }
 
     } catch (error) {
         console.error('Error handling language selection:', error);
 
+        // Try to preserve context even in error case
+        const errorClientId = req.query.client_id || req.session?.client_id || '';
+        const errorBusinessName = req.query.business_name || req.session?.business_name || '';
+        const errorContextParams = `client_id=${errorClientId}&business_name=${encodeURIComponent(errorBusinessName)}`;
+
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
             <Response>
                 <Say voice="Polly.Joanna">I'm sorry, there was an error. Continuing in English.</Say>
-                <Redirect>/voice/rachel/incoming?lang=en</Redirect>
+                <Redirect>/voice/rachel/incoming?lang=en&amp;${errorContextParams}</Redirect>
             </Response>
         `;
 

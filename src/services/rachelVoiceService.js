@@ -134,13 +134,16 @@ class MultiTenantRachelService {
         // Bilingual greeting: Introduce as Lina with warm, empathetic tone
         const bilingualGreeting = `Hello! Thank you for calling ${clientInfo.business_name}. My name is Lina, and I'm here to assist you. <break time="1s"/> For English, please press 1. <break time="0.8s"/> Para español, presione 2.`;
 
+        // Build context params for Twilio callback (Twilio doesn't preserve sessions between webhooks)
+        const contextParams = `client_id=${clientInfo.client_id}&business_name=${encodeURIComponent(clientInfo.business_name || '')}`;
+
         // Create gather for language selection (DTMF keypad input)
         const gather = twiml.gather({
             input: 'dtmf',
             numDigits: 1,
             timeout: 8,  // Increased from 3 to 8 seconds to give callers more time to decide
             finishOnKey: '',  // Don't wait for # key
-            action: '/voice/rachel/select-language',
+            action: `/voice/rachel/select-language?${contextParams}`,
             method: 'POST'
         });
 
@@ -155,8 +158,8 @@ class MultiTenantRachelService {
             console.warn(`⚠️ Fallback voice for bilingual greeting - ${clientInfo.business_name}`);
         }
 
-        // If no input, default to English
-        twiml.redirect('/voice/rachel/incoming?lang=en');
+        // If no input, default to English (include context params for session restoration)
+        twiml.redirect(`/voice/rachel/incoming?lang=en&${contextParams}`);
 
         return twiml.toString();
     }
