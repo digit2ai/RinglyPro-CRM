@@ -5254,6 +5254,7 @@
             const notes = document.getElementById('depositNotes').value;
             const confirmBtn = document.querySelector('#depositModal .btn-confirm-deposit');
             const originalText = confirmBtn.textContent;
+            const token = localStorage.getItem('token');
 
             try {
                 confirmBtn.disabled = true;
