@@ -1106,10 +1106,85 @@ router.post('/voice/rachel/select-language', async (req, res) => {
             // English - Continue with Rachel (HTTP redirect preserves session)
             res.redirect(307, '/voice/rachel/incoming?lang=en');
         } else if (digits === '2') {
-            // Spanish - Use same HTTP redirect pattern as English to preserve session
-            // HTTP 307 redirect keeps the same HTTP request, so session is preserved
-            console.log('🇪🇸 Spanish selected - redirecting to Lina incoming');
-            res.redirect(307, '/voice/lina/incoming?lang=es');
+            // Spanish - Generate greeting inline since session is only available in this request
+            // HTTP/TwiML redirects lose session context, so we must handle it here
+            console.log('🇪🇸 Spanish selected - handling inline');
+
+            const clientId = req.session.client_id;
+            const businessName = req.session.business_name || 'nuestra empresa';
+            const userId = req.session.user_id;
+
+            if (!clientId) {
+                console.error("❌ No client context in session for Spanish");
+                const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">La sesión ha expirado. Por favor, llame de nuevo.</Say>
+    <Hangup/>
+</Response>`;
+                res.type('text/xml');
+                return res.send(twiml);
+            }
+
+            // Check if IVR is enabled for this client
+            const { Client } = require('../models');
+            const client = await Client.findByPk(clientId);
+
+            if (client && client.ivr_enabled && client.ivr_options && client.ivr_options.length > 0) {
+                // IVR enabled - show Spanish IVR menu
+                console.log(`✅ IVR enabled for ${businessName} - showing Spanish menu`);
+                const enabledDepts = (client.ivr_options || []).filter(dept => dept.enabled);
+
+                let menuText = `¡Hola! Habla Lina de ${businessName}. Estoy aquí para ayudarle. `;
+                menuText += `Para programar una cita, presione 1. `;
+                enabledDepts.forEach((dept, index) => {
+                    menuText += `Para ${dept.name}, presione ${index + 2}. `;
+                });
+                menuText += `O, para dejar un mensaje de voz, presione 9.`;
+
+                // Pass context via query params for IVR selection
+                const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${userId || ''}`;
+
+                const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="dtmf" numDigits="1" timeout="8" action="/voice/rachel/ivr-selection?lang=es&amp;${contextParams}" method="POST">
+        <Say voice="Polly.Lupe" language="es-MX">${menuText}</Say>
+    </Gather>
+    <Say voice="Polly.Lupe" language="es-MX">No recibí una selección. Adiós.</Say>
+    <Hangup/>
+</Response>`;
+                res.type('text/xml');
+                return res.send(twiml);
+            }
+
+            // No IVR - use simple Spanish greeting for speech-based booking
+            console.log(`📞 No IVR for ${businessName} - using Spanish speech flow`);
+
+            const hour = new Date().getHours();
+            const timeGreeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+
+            // Escape business name for XML
+            const escapedBusinessName = (businessName || 'nuestra empresa')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+
+            const greetingText = `${timeGreeting}, gracias por llamar a ${escapedBusinessName}. Mi nombre es Lina, su asistente virtual. Puedo ayudarle a agendar una cita, o si prefiere, puede dejarme un mensaje. ¿En qué puedo ayudarle hoy?`;
+
+            // Pass context via query params for subsequent requests
+            const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${userId || ''}`;
+
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/lina/process-speech?${contextParams}" method="POST" language="es-MX">
+        <Say voice="Polly.Lupe" language="es-MX">${greetingText}</Say>
+    </Gather>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Gracias por llamar.</Say>
+    <Hangup/>
+</Response>`;
+            res.type('text/xml');
+            return res.send(twiml);
         } else {
             // Invalid input - default to English
             console.warn(`⚠️ Invalid language selection: ${digits}, defaulting to English`);
