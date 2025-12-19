@@ -2610,10 +2610,10 @@
             }
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
-                
+
                 console.log('JWT Payload:', payload);
                 console.log('clientId from payload:', payload.clientId);
-                
+
                 // Display username in header
                 const usernameDisplay = document.getElementById('username-display');
                 if (usernameDisplay) {
@@ -2625,7 +2625,7 @@
                         usernameDisplay.textContent = `Welcome, ${payload.email}`;
                     }
                 }
-                
+
                 return payload.clientId;
             } catch (error) {
                 console.error('Invalid token:', error);
@@ -2634,7 +2634,24 @@
             }
         }
 
-        const CLIENT_ID = getClientIdFromToken();
+        // Fetch client ID from backend if not in JWT (for legacy tokens)
+        async function fetchClientIdFromBackend() {
+            try {
+                const response = await authenticatedFetch('/api/client/my-client');
+                const data = await response.json();
+                if (data.success && data.client && data.client.id) {
+                    console.log('Fetched clientId from backend:', data.client.id);
+                    return data.client.id;
+                }
+                console.error('Failed to fetch client ID from backend:', data.error);
+                return null;
+            } catch (error) {
+                console.error('Error fetching client ID from backend:', error);
+                return null;
+            }
+        }
+
+        let CLIENT_ID = getClientIdFromToken();
         let currentAction = '';
         let dashboardData = null;
         let authToken = localStorage.getItem('token');
@@ -2643,10 +2660,24 @@
         let currentDaysFilter = 7; // Default to 7 days
 
         // Initialize on page load
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             if (!authToken) {
                 window.location.href = '/login';
                 return;
+            }
+
+            // If CLIENT_ID is not in JWT token, fetch it from backend
+            if (!CLIENT_ID) {
+                console.log('CLIENT_ID not in JWT, fetching from backend...');
+                CLIENT_ID = await fetchClientIdFromBackend();
+                if (!CLIENT_ID) {
+                    console.error('Could not retrieve client ID. Some features may not work.');
+                    // Show warning to user
+                    const warningEl = document.createElement('div');
+                    warningEl.style.cssText = 'background: #FEF3C7; color: #92400E; padding: 10px; text-align: center; font-weight: 500;';
+                    warningEl.textContent = 'Your session may be outdated. Please log out and log back in for full functionality.';
+                    document.body.insertBefore(warningEl, document.body.firstChild);
+                }
             }
 
             loadRachelStatus();

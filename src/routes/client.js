@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { authenticateToken } = require('../middleware/auth');
 
 // DEBUG: Get all clients (temporary for debugging)
 router.get('/debug/all-clients', async (req, res) => {
@@ -934,5 +935,59 @@ function getDefaultCalendarSettings(client) {
         sunday: enabledDays.has('sunday') ? { enabled: true, start: defaultStart.substring(0, 5), end: defaultEnd.substring(0, 5) } : { enabled: false }
     };
 }
+
+// GET /api/client/my-client - Get client associated with current authenticated user
+// Used when clientId is not in JWT token (legacy tokens)
+router.get('/my-client', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.userId || req.user.id;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'User ID not found in token'
+            });
+        }
+
+        const { sequelize } = require('../models');
+
+        // Look up client by user_id (clients table has user_id column pointing to users.id)
+        const [client] = await sequelize.query(
+            'SELECT id, business_name, ringlypro_number, rachel_enabled, active FROM clients WHERE user_id = :userId',
+            {
+                replacements: { userId },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (!client) {
+            console.log(`⚠️ No client found for user ${userId}`);
+            return res.status(404).json({
+                success: false,
+                error: 'No client associated with this user account'
+            });
+        }
+
+        console.log(`✅ Found client ${client.id} (${client.business_name}) for user ${userId}`);
+
+        res.json({
+            success: true,
+            client: {
+                id: client.id,
+                businessName: client.business_name,
+                ringlyproNumber: client.ringlypro_number,
+                rachelEnabled: client.rachel_enabled,
+                active: client.active
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching client for user:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch client information'
+        });
+    }
+});
 
 module.exports = router;
