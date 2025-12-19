@@ -85,11 +85,13 @@ class CRMAwareAvailabilityService {
         return await this.getLocalSlots(clientId, date, 30);
       }
 
+      logger.info(`[CRM-AVAILABILITY] Fetching GHL slots: client=${clientId}, calendar=${calendarId}, date=${date}`);
+
       // Get slots from GHL
       const ghlResult = await ghlBookingService.getAvailableSlots(clientId, calendarId, date);
 
       if (!ghlResult.success) {
-        logger.warn(`[CRM-AVAILABILITY] GHL slots failed: ${ghlResult.error}, using local fallback`);
+        logger.warn(`[CRM-AVAILABILITY] GHL slots API failed: ${ghlResult.error}, using local fallback`);
         return await this.getLocalSlots(clientId, date, 30);
       }
 
@@ -97,6 +99,13 @@ class CRMAwareAvailabilityService {
       const standardizedSlots = this.standardizeGHLSlots(ghlResult.slots, date);
 
       logger.info(`[CRM-AVAILABILITY] GHL returned ${standardizedSlots.length} slots for ${date}`);
+
+      // If GHL returns no slots for this day, it means the calendar has no availability
+      // This could be a weekend, holiday, or day without configured hours
+      // Return the empty result - the caller should inform the user there's no availability
+      if (standardizedSlots.length === 0) {
+        logger.info(`[CRM-AVAILABILITY] GHL calendar ${calendarId} has no availability on ${date} - check calendar business hours`);
+      }
 
       return {
         success: true,

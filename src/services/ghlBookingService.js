@@ -208,10 +208,24 @@ class GHLBookingService {
     }
 
     // Format date for GHL API - must be Unix timestamp in milliseconds
-    const startTime = new Date(date);
-    startTime.setHours(0, 0, 0, 0);
-    const endTime = new Date(date);
-    endTime.setHours(23, 59, 59, 999);
+    // Important: Parse date explicitly to avoid timezone issues
+    // date format: "YYYY-MM-DD"
+    const [year, month, day] = date.split('-').map(Number);
+
+    // GHL API expects timestamps in milliseconds
+    // We want to search the full day in the calendar's timezone (typically ET)
+    // DST check: March 9 - Nov 2 for 2025
+    const isDST = (month > 3 && month < 11) || (month === 3 && day >= 9) || (month === 11 && day < 2);
+    const etOffsetHours = isDST ? 4 : 5;  // EDT = UTC-4, EST = UTC-5
+
+    // Create timestamps for the full day in ET, converted to UTC milliseconds
+    // Start: midnight ET -> add offset to get UTC
+    // End: 11:59:59 PM ET -> add offset to get UTC
+    const startTime = new Date(Date.UTC(year, month - 1, day, etOffsetHours, 0, 0, 0));
+    const endTime = new Date(Date.UTC(year, month - 1, day + 1, etOffsetHours - 1, 59, 59, 999));
+
+    logger.info(`[GHL] Fetching slots: calendar=${calendarId}, date=${date}, isDST=${isDST}`);
+    logger.info(`[GHL] Time range: ${startTime.toISOString()} to ${endTime.toISOString()}`);
 
     // GHL free-slots endpoint requires timestamps, not locationId
     const result = await this.callGHLWithoutLocation(credentials, 'GET', `/calendars/${calendarId}/free-slots`, {
@@ -225,19 +239,24 @@ class GHLBookingService {
       const data = result.data;
       let allSlots = [];
 
+      logger.info(`[GHL] Raw API response keys: ${Object.keys(data).join(', ')}`);
+
       // Iterate through date keys (excluding traceId)
       for (const key of Object.keys(data)) {
         if (key !== 'traceId' && data[key]?.slots) {
+          logger.info(`[GHL] Found ${data[key].slots.length} slots under key "${key}"`);
           allSlots = allSlots.concat(data[key].slots);
         }
       }
 
-      logger.info(`[GHL] Found ${allSlots.length} available slots for ${date}`);
+      logger.info(`[GHL] Total available slots for ${date}: ${allSlots.length}`);
       return {
         success: true,
         slots: allSlots
       };
     }
+
+    logger.warn(`[GHL] API returned error: ${result.error}`);
     return result;
   }
 
