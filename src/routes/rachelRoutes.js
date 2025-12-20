@@ -1842,4 +1842,32 @@ router.get('/voice/rachel/test-client/:number', async (req, res) => {
     }
 });
 
+/**
+ * Debug endpoint to see what TwiML the language menu generates
+ * Usage: /voice/rachel/debug-language-menu/:clientId
+ */
+router.get('/voice/rachel/debug-language-menu/:clientId', async (req, res) => {
+    try {
+        const clientId = parseInt(req.params.clientId, 10);
+        const { Client } = require('../models');
+
+        const client = await Client.findByPk(clientId);
+        if (!client) {
+            return res.status(404).json({ error: 'Client not found' });
+        }
+
+        const clientInfo = {
+            client_id: client.id,
+            business_name: client.business_name
+        };
+
+        const twiml = await rachelService.createLanguageSelectionMenu(clientInfo);
+
+        res.type('text/xml');
+        res.send(twiml);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;
