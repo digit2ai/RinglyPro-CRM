@@ -1126,9 +1126,9 @@ router.post('/voice/rachel/select-language', async (req, res) => {
             // English - Continue with Rachel (include context params for safety)
             res.redirect(307, `/voice/rachel/incoming?lang=en&${contextParams}`);
         } else if (digits === '2') {
-            // Spanish - Redirect to NEW stateless Lina flow using TwiML Redirect
-            // The new flow passes all context via query params, no session dependency
-            console.log('🇪🇸 Spanish selected - redirecting to new Lina flow');
+            // Spanish - Redirect to V2 Lina flow (rebuilt from scratch)
+            // All context via query params - NO session dependency
+            console.log('🇪🇸 Spanish selected - redirecting to Lina V2 flow');
 
             const userId = req.session.user_id || '';
             const spanishBusinessName = businessName || 'nuestra empresa';
@@ -1138,21 +1138,20 @@ router.post('/voice/rachel/select-language', async (req, res) => {
                 console.error("❌ No client context for Spanish");
                 const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="Polly.Lupe" language="es-MX">La sesión ha expirado. Por favor, llame de nuevo.</Say>
+    <Say voice="Polly.Lupe" language="es-MX">La sesion ha expirado. Por favor, llame de nuevo.</Say>
     <Hangup/>
 </Response>`;
                 res.type('text/xml');
                 return res.send(twiml);
             }
 
-            // Use TwiML Redirect to the new stateless Spanish flow
-            // This works because Twilio makes a new POST request with the context in the URL
+            // Use TwiML Redirect to V2 Spanish flow
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Redirect method="POST">/voice/lina-new/greeting?${spanishContextParams}</Redirect>
+    <Redirect method="POST">/voice/lina-v2/greeting?${spanishContextParams}</Redirect>
 </Response>`;
 
-            console.log(`✅ Redirecting to /voice/lina-new/greeting with context: client_id=${clientId}`);
+            console.log(`✅ Redirecting to /voice/lina-v2/greeting with context: client_id=${clientId}`);
             res.type('text/xml');
             return res.send(twiml);
         } else {

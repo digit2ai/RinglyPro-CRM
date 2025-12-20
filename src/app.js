@@ -61,6 +61,7 @@ const voiceWebhookRouter = require('./routes/voiceWebhook'); // Rachel voice rou
 const rachelRoutes = require('./routes/rachelRoutes'); // Multi-tenant Rachel routes (English)
 const linaRoutes = require('./routes/linaRoutes'); // Spanish voice routes (Lina) - legacy
 const linaNewRoutes = require('./routes/linaNewRoutes'); // New Spanish voice routes (stateless)
+const linaRoutesV2 = require('./routes/linaRoutesV2'); // Spanish V2 - rebuilt from scratch
 const twilioRoutes = require('./routes/twilio');
 const twilioAdminRoutes = require('./routes/twilioAdmin'); // Twilio number management
 
@@ -349,6 +350,10 @@ console.log('🇪🇸 Lina Spanish voice routes mounted - Bilingual support acti
 // NEW Lina Voice routes (stateless, mirrors English flow)
 app.use('/', linaNewRoutes);
 console.log('🇪🇸 Lina NEW Spanish voice routes mounted - Stateless flow active');
+
+// Lina V2 Voice routes - rebuilt from scratch based on Rachel
+app.use('/', linaRoutesV2);
+console.log('🇪🇸 Lina V2 Spanish voice routes mounted - Clean rebuild active');
 
 // =====================================================
 // PROTECTED ROUTES - Require Authentication
