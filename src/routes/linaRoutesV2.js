@@ -32,6 +32,12 @@ function getContext(req) {
  * Spanish greeting - entry point after language selection
  */
 router.all('/voice/lina-v2/greeting', async (req, res) => {
+    // Log immediately on entry - before any processing
+    console.log(`[LINA-V2] ========== GREETING ENDPOINT HIT ==========`);
+    console.log(`[LINA-V2] Method: ${req.method}, URL: ${req.originalUrl}`);
+    console.log(`[LINA-V2] Query params:`, JSON.stringify(req.query));
+    console.log(`[LINA-V2] Body:`, JSON.stringify(req.body || {}));
+
     try {
         const ctx = getContext(req);
         console.log(`[LINA-V2] Greeting for client ${ctx.clientId}: ${ctx.businessName}`);
