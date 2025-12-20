@@ -43,9 +43,19 @@ class LinaVoiceServiceV2 {
 
     /**
      * Build context query params for Twilio callbacks
+     * Returns raw URL params (use buildContextParamsXml for TwiML attributes)
      */
     buildContextParams(clientId, businessName, userId = '') {
         return `client_id=${clientId}&business_name=${encodeURIComponent(businessName || 'nuestra empresa')}&user_id=${userId || ''}`;
+    }
+
+    /**
+     * Build XML-safe context query params for TwiML attributes
+     * CRITICAL: & must be escaped as &amp; in XML attributes
+     */
+    buildContextParamsXml(clientId, businessName, userId = '') {
+        const params = this.buildContextParams(clientId, businessName, userId);
+        return params.replace(/&/g, '&amp;');
     }
 
     /**
@@ -95,7 +105,7 @@ class LinaVoiceServiceV2 {
      * Create Spanish greeting TwiML
      */
     async createGreeting(clientId, businessName, userId) {
-        const contextParams = this.buildContextParams(clientId, businessName, userId);
+        const contextParams = this.buildContextParamsXml(clientId, businessName, userId);
         const timeGreeting = this.getTimeGreeting();
         const escapedBusiness = this.escapeXml(businessName || 'nuestra empresa');
 
@@ -131,8 +141,7 @@ class LinaVoiceServiceV2 {
      */
     async processSpeech(speechResult, clientId, businessName, userId) {
         const speech = (speechResult || '').toLowerCase().trim();
-        const contextParams = this.buildContextParams(clientId, businessName, userId);
-
+        // Note: contextParams not used directly in this method, but kept for logging
         console.log(`Lina speech: "${speech}"`);
 
         // Booking keywords
@@ -162,7 +171,7 @@ class LinaVoiceServiceV2 {
      * Ask for customer name
      */
     async askForName(clientId, businessName, userId) {
-        const contextParams = this.buildContextParams(clientId, businessName, userId);
+        const contextParams = this.buildContextParamsXml(clientId, businessName, userId);
         const escapedBusiness = this.escapeXml(businessName || 'nuestra empresa');
 
         const text = `Excelente! Con mucho gusto le ayudare a agendar una cita con ${escapedBusiness}. Puede decirme su nombre por favor?`;
@@ -183,14 +192,14 @@ class LinaVoiceServiceV2 {
     }
 
     /**
-     * Ask for phone number after collecting name
+     * Ask for phone number after collected name
      */
     async askForPhone(name, clientId, businessName, userId) {
-        const contextParams = this.buildContextParams(clientId, businessName, userId);
+        const contextParams = this.buildContextParamsXml(clientId, businessName, userId);
         const escapedName = this.escapeXml(name);
 
-        // Include name in context for next step
-        const contextWithName = `${contextParams}&prospect_name=${encodeURIComponent(name)}`;
+        // Include name in context for next step (already XML-escaped via contextParams)
+        const contextWithName = `${contextParams}&amp;prospect_name=${encodeURIComponent(name)}`;
 
         const text = `Gracias ${escapedName}. Ahora, puede decirme su numero de telefono de 10 digitos, o marcarlo usando el teclado?`;
 
@@ -213,11 +222,11 @@ class LinaVoiceServiceV2 {
      * Ask for date/time after collecting phone
      */
     async askForDateTime(name, phone, clientId, businessName, userId) {
-        const contextParams = this.buildContextParams(clientId, businessName, userId);
+        const contextParams = this.buildContextParamsXml(clientId, businessName, userId);
         const escapedName = this.escapeXml(name);
 
-        // Include name and phone in context for next step
-        const contextWithData = `${contextParams}&prospect_name=${encodeURIComponent(name)}&prospect_phone=${encodeURIComponent(phone)}`;
+        // Include name and phone in context for next step (use &amp; for XML)
+        const contextWithData = `${contextParams}&amp;prospect_name=${encodeURIComponent(name)}&amp;prospect_phone=${encodeURIComponent(phone)}`;
 
         const text = `Perfecto ${escapedName}. Ahora digame que dia y hora prefiere para su cita. Por ejemplo, puede decir manana a las 10 de la manana, o el viernes a las 2 de la tarde.`;
 
@@ -240,12 +249,12 @@ class LinaVoiceServiceV2 {
      * Confirm booking details before finalizing
      */
     async confirmBooking(name, phone, datetime, clientId, businessName, userId) {
-        const contextParams = this.buildContextParams(clientId, businessName, userId);
+        const contextParams = this.buildContextParamsXml(clientId, businessName, userId);
         const escapedName = this.escapeXml(name);
         const escapedDateTime = this.escapeXml(datetime);
 
-        // Include all data in context for booking
-        const contextWithAll = `${contextParams}&prospect_name=${encodeURIComponent(name)}&prospect_phone=${encodeURIComponent(phone)}&datetime=${encodeURIComponent(datetime)}`;
+        // Include all data in context for booking (use &amp; for XML)
+        const contextWithAll = `${contextParams}&amp;prospect_name=${encodeURIComponent(name)}&amp;prospect_phone=${encodeURIComponent(phone)}&amp;datetime=${encodeURIComponent(datetime)}`;
 
         const text = `Perfecto ${escapedName}. Dejeme confirmar: usted desea una cita para ${escapedDateTime}. Por favor espere un momento mientras verifico la disponibilidad.`;
 
@@ -265,7 +274,7 @@ class LinaVoiceServiceV2 {
      * Start voicemail recording
      */
     async startVoicemail(clientId, businessName, userId) {
-        const contextParams = this.buildContextParams(clientId, businessName, userId);
+        const contextParams = this.buildContextParamsXml(clientId, businessName, userId);
         const escapedBusiness = this.escapeXml(businessName || 'nuestra empresa');
 
         const text = `Por supuesto, con mucho gusto tomare su mensaje para ${escapedBusiness}. Despues del tono, por favor comparta su mensaje. Puede hablar hasta por 3 minutos. Cuando termine, presione la tecla numeral o cuelgue.`;
@@ -286,7 +295,7 @@ class LinaVoiceServiceV2 {
      * Handle pricing inquiry
      */
     async handlePricing(clientId, businessName, userId) {
-        const contextParams = this.buildContextParams(clientId, businessName, userId);
+        const contextParams = this.buildContextParamsXml(clientId, businessName, userId);
         const escapedBusiness = this.escapeXml(businessName || 'nuestra empresa');
 
         const text = `Gracias por su interes en los servicios de ${escapedBusiness}. Con gusto le conectare con alguien que puede hablar sobre precios y opciones. Desea que le agende una consulta, o prefiere dejar un mensaje?`;
@@ -310,7 +319,7 @@ class LinaVoiceServiceV2 {
      * Handle unknown/unclear requests
      */
     async handleUnknown(clientId, businessName, userId) {
-        const contextParams = this.buildContextParams(clientId, businessName, userId);
+        const contextParams = this.buildContextParamsXml(clientId, businessName, userId);
 
         const text = `Lo siento, no entendi bien. Puedo ayudarle a agendar una cita o tomar un mensaje. Que le gustaria hacer?`;
 
