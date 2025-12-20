@@ -1146,12 +1146,16 @@ router.post('/voice/rachel/select-language', async (req, res) => {
             }
 
             // Use TwiML Redirect to V2 Spanish flow
+            // IMPORTANT: Twilio requires absolute URL for reliable redirects
+            const baseUrl = process.env.WEBHOOK_BASE_URL || 'https://ringlypro-crm.onrender.com';
+            const absoluteRedirectUrl = `${baseUrl}/voice/lina-v2/greeting?${spanishContextParams}`;
+
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Redirect method="POST">/voice/lina-v2/greeting?${spanishContextParams}</Redirect>
+    <Redirect method="POST">${absoluteRedirectUrl}</Redirect>
 </Response>`;
 
-            console.log(`✅ Redirecting to /voice/lina-v2/greeting with context: client_id=${clientId}`);
+            console.log(`✅ Redirecting to ${absoluteRedirectUrl}`);
             res.type('text/xml');
             return res.send(twiml);
         } else {
