@@ -549,18 +549,21 @@ class UnifiedBookingService {
       }
 
       // Insert appointment - RESTORED TO WORKING VERSION from commit f7be71f
+      // NOTE: source column is omitted to use database default value
+      // The PostgreSQL ENUM enum_appointments_source may not have all values
+      // that the application uses. Omitting it lets the DB use its default.
       const insertResult = await sequelize.query(
         `INSERT INTO appointments (
           client_id, customer_name, customer_phone, customer_email,
           appointment_date, appointment_time, duration, purpose,
-          status, source, confirmation_code,
+          status, confirmation_code,
           hubspot_meeting_id, ghl_appointment_id, vagaro_appointment_id,
           deposit_status,
           created_at, updated_at
         ) VALUES (
           :clientId, :customerName, :customerPhone, :customerEmail,
           :date, :time, :duration, :purpose,
-          'confirmed', :source, :confirmationCode,
+          'confirmed', :confirmationCode,
           :hubspotId, :ghlId, :vagaroId,
           :depositStatus,
           NOW(), NOW()
@@ -575,7 +578,6 @@ class UnifiedBookingService {
             time: normalizedTime,
             duration: 30,
             purpose: service || 'Appointment',
-            source: crmSource && crmSource !== 'none' && crmSource !== 'local' ? `${source}_${crmSource}` : source,
             confirmationCode,
             hubspotId: crmSource === 'hubspot' ? externalId : null,
             ghlId: crmSource === 'ghl' ? externalId : null,
