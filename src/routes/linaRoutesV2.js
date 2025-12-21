@@ -254,9 +254,25 @@ router.all('/voice/lina-v2/book-appointment', async (req, res) => {
             }
 
             const escapedName = linaService.escapeXml(ctx.prospectName);
-            const confirmCode = bookingResult.confirmationCode;
+            const escapedBusiness = linaService.escapeXml(ctx.businessName || 'nuestra empresa');
 
-            const successText = `¡Excelente ${escapedName}! Su cita ha sido confirmada. Su código de confirmación es ${confirmCode.split('').join(' ')}. Le enviaremos un mensaje de texto con los detalles. ¡Gracias por llamar y que tenga un excelente día!`;
+            // Format date/time for Spanish speech
+            const moment = require('moment-timezone');
+            moment.locale('es');
+            const dateForSpeech = moment(appointmentDate).format('dddd, D [de] MMMM');
+            const formatTimeForSpeech = (timeStr) => {
+                const [hours, minutes] = timeStr.split(':');
+                let hour = parseInt(hours);
+                const isPM = hour >= 12;
+                if (hour > 12) hour -= 12;
+                if (hour === 0) hour = 12;
+                const period = isPM ? 'de la tarde' : 'de la mañana';
+                return minutes === '00' ? `${hour} ${period}` : `${hour}:${minutes} ${period}`;
+            };
+            const timeForSpeech = formatTimeForSpeech(appointmentTime);
+            const appointmentDateTimeForSpeech = `${dateForSpeech} a las ${timeForSpeech}`;
+
+            const successText = `Buenas noticias ${escapedName}. He registrado su cita con ${escapedBusiness} para el ${appointmentDateTimeForSpeech}. Su cita se encuentra actualmente pendiente de un depósito inicial. Un especialista se pondrá en contacto con usted en breve para brindarle más asistencia y completar el proceso. Gracias por llamar, y esperamos verle pronto.`;
 
             const audioUrl = await linaService.generateLinaAudio(successText);
 
