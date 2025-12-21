@@ -36,7 +36,7 @@ class LinaVoiceServiceV2 {
      */
     getTimeGreeting() {
         const hour = new Date().getHours();
-        if (hour < 12) return 'Buenos dias';
+        if (hour < 12) return 'Buenos días';
         if (hour < 19) return 'Buenas tardes';
         return 'Buenas noches';
     }
@@ -109,7 +109,7 @@ class LinaVoiceServiceV2 {
         const timeGreeting = this.getTimeGreeting();
         const escapedBusiness = this.escapeXml(businessName || 'nuestra empresa');
 
-        const greetingText = `${timeGreeting}, gracias por llamar a ${escapedBusiness}. Mi nombre es Lina, su asistente virtual. Puedo ayudarle a agendar una cita, o si prefiere, puede dejarme un mensaje. En que puedo ayudarle hoy?`;
+        const greetingText = `${timeGreeting}, gracias por llamar a ${escapedBusiness}. Mi nombre es Lina, su asistente virtual. Puedo ayudarle a agendar una cita, o si prefiere, puede dejarme un mensaje. ¿En qué puedo ayudarle hoy?`;
 
         // Try premium voice, fall back to Polly
         const audioUrl = await this.generateLinaAudio(greetingText);
@@ -120,7 +120,7 @@ class LinaVoiceServiceV2 {
     <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/lina-v2/process-speech?${contextParams}" method="POST" language="es-MX">
         <Play>${audioUrl}</Play>
     </Gather>
-    <Say voice="Polly.Lupe" language="es-MX">No escuche su respuesta. Intentemos de nuevo.</Say>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intentemos de nuevo.</Say>
     <Redirect>/voice/lina-v2/greeting?${contextParams}</Redirect>
 </Response>`;
         }
@@ -131,7 +131,7 @@ class LinaVoiceServiceV2 {
     <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/lina-v2/process-speech?${contextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe" language="es-MX">${greetingText}</Say>
     </Gather>
-    <Say voice="Polly.Lupe" language="es-MX">No escuche su respuesta. Intentemos de nuevo.</Say>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intentemos de nuevo.</Say>
     <Redirect>/voice/lina-v2/greeting?${contextParams}</Redirect>
 </Response>`;
     }
@@ -174,7 +174,7 @@ class LinaVoiceServiceV2 {
         const contextParams = this.buildContextParamsXml(clientId, businessName, userId);
         const escapedBusiness = this.escapeXml(businessName || 'nuestra empresa');
 
-        const text = `Excelente! Con mucho gusto le ayudare a agendar una cita con ${escapedBusiness}. Puede decirme su nombre por favor?`;
+        const text = `¡Excelente! Con mucho gusto le ayudaré a agendar una cita con ${escapedBusiness}. ¿Puede decirme su nombre por favor?`;
 
         const audioUrl = await this.generateLinaAudio(text);
         const playOrSay = audioUrl
@@ -186,7 +186,7 @@ class LinaVoiceServiceV2 {
     <Gather input="speech" timeout="10" speechTimeout="3" action="/voice/lina-v2/collect-name?${contextParams}" method="POST" language="es-MX">
         ${playOrSay}
     </Gather>
-    <Say voice="Polly.Lupe" language="es-MX">No escuche eso. Intentemos de nuevo.</Say>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché eso. Intentemos de nuevo.</Say>
     <Redirect>/voice/lina-v2/greeting?${contextParams}</Redirect>
 </Response>`;
     }
@@ -201,7 +201,7 @@ class LinaVoiceServiceV2 {
         // Include name in context for next step (already XML-escaped via contextParams)
         const contextWithName = `${contextParams}&amp;prospect_name=${encodeURIComponent(name)}`;
 
-        const text = `Gracias ${escapedName}. Ahora, puede decirme su numero de telefono de 10 digitos, o marcarlo usando el teclado?`;
+        const text = `Gracias ${escapedName}. Ahora, ¿puede decirme su número de teléfono de 10 dígitos, o marcarlo usando el teclado?`;
 
         const audioUrl = await this.generateLinaAudio(text);
         const playOrSay = audioUrl
@@ -213,7 +213,7 @@ class LinaVoiceServiceV2 {
     <Gather input="speech dtmf" timeout="12" speechTimeout="5" numDigits="10" action="/voice/lina-v2/collect-phone?${contextWithName}" method="POST" language="es-MX">
         ${playOrSay}
     </Gather>
-    <Say voice="Polly.Lupe" language="es-MX">No escuche su respuesta.</Say>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta.</Say>
     <Redirect>/voice/lina-v2/collect-name?${contextParams}</Redirect>
 </Response>`;
     }
@@ -228,7 +228,7 @@ class LinaVoiceServiceV2 {
         // Include name and phone in context for next step (use &amp; for XML)
         const contextWithData = `${contextParams}&amp;prospect_name=${encodeURIComponent(name)}&amp;prospect_phone=${encodeURIComponent(phone)}`;
 
-        const text = `Perfecto ${escapedName}. Ahora digame que dia y hora prefiere para su cita. Por ejemplo, puede decir manana a las 10 de la manana, o el viernes a las 2 de la tarde.`;
+        const text = `Perfecto ${escapedName}. Ahora dígame qué día y hora prefiere para su cita. Por ejemplo, puede decir mañana a las 10 de la mañana, o el viernes a las 2 de la tarde.`;
 
         const audioUrl = await this.generateLinaAudio(text);
         const playOrSay = audioUrl
@@ -240,7 +240,7 @@ class LinaVoiceServiceV2 {
     <Gather input="speech" timeout="12" speechTimeout="5" action="/voice/lina-v2/collect-datetime?${contextWithData}" method="POST" language="es-MX">
         ${playOrSay}
     </Gather>
-    <Say voice="Polly.Lupe" language="es-MX">No escuche su respuesta.</Say>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta.</Say>
     <Redirect>/voice/lina-v2/collect-phone?${contextParams}&amp;prospect_name=${encodeURIComponent(name)}</Redirect>
 </Response>`;
     }
@@ -256,7 +256,7 @@ class LinaVoiceServiceV2 {
         // Include all data in context for booking (use &amp; for XML)
         const contextWithAll = `${contextParams}&amp;prospect_name=${encodeURIComponent(name)}&amp;prospect_phone=${encodeURIComponent(phone)}&amp;datetime=${encodeURIComponent(datetime)}`;
 
-        const text = `Perfecto ${escapedName}. Dejeme confirmar: usted desea una cita para ${escapedDateTime}. Por favor espere un momento mientras verifico la disponibilidad.`;
+        const text = `Perfecto ${escapedName}. Déjeme confirmar: usted desea una cita para ${escapedDateTime}. Por favor espere un momento mientras verifico la disponibilidad.`;
 
         const audioUrl = await this.generateLinaAudio(text);
         const playOrSay = audioUrl
@@ -277,7 +277,7 @@ class LinaVoiceServiceV2 {
         const contextParams = this.buildContextParamsXml(clientId, businessName, userId);
         const escapedBusiness = this.escapeXml(businessName || 'nuestra empresa');
 
-        const text = `Por supuesto, con mucho gusto tomare su mensaje para ${escapedBusiness}. Despues del tono, por favor comparta su mensaje. Puede hablar hasta por 3 minutos. Cuando termine, presione la tecla numeral o cuelgue.`;
+        const text = `Por supuesto, con mucho gusto tomaré su mensaje para ${escapedBusiness}. Después del tono, por favor comparta su mensaje. Puede hablar hasta por 3 minutos. Cuando termine, presione la tecla numeral o cuelgue.`;
 
         const audioUrl = await this.generateLinaAudio(text);
         const playOrSay = audioUrl
@@ -298,7 +298,7 @@ class LinaVoiceServiceV2 {
         const contextParams = this.buildContextParamsXml(clientId, businessName, userId);
         const escapedBusiness = this.escapeXml(businessName || 'nuestra empresa');
 
-        const text = `Gracias por su interes en los servicios de ${escapedBusiness}. Con gusto le conectare con alguien que puede hablar sobre precios y opciones. Desea que le agende una consulta, o prefiere dejar un mensaje?`;
+        const text = `Gracias por su interés en los servicios de ${escapedBusiness}. Con gusto le conectaré con alguien que puede hablar sobre precios y opciones. ¿Desea que le agende una consulta, o prefiere dejar un mensaje?`;
 
         const audioUrl = await this.generateLinaAudio(text);
         const playOrSay = audioUrl
@@ -310,7 +310,7 @@ class LinaVoiceServiceV2 {
     <Gather input="speech" timeout="10" speechTimeout="3" action="/voice/lina-v2/process-speech?${contextParams}" method="POST" language="es-MX">
         ${playOrSay}
     </Gather>
-    <Say voice="Polly.Lupe" language="es-MX">No escuche su respuesta.</Say>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta.</Say>
     <Redirect>/voice/lina-v2/greeting?${contextParams}</Redirect>
 </Response>`;
     }
@@ -321,7 +321,7 @@ class LinaVoiceServiceV2 {
     async handleUnknown(clientId, businessName, userId) {
         const contextParams = this.buildContextParamsXml(clientId, businessName, userId);
 
-        const text = `Lo siento, no entendi bien. Puedo ayudarle a agendar una cita o tomar un mensaje. Que le gustaria hacer?`;
+        const text = `Lo siento, no entendí bien. Puedo ayudarle a agendar una cita o tomar un mensaje. ¿Qué le gustaría hacer?`;
 
         const audioUrl = await this.generateLinaAudio(text);
         const playOrSay = audioUrl
@@ -333,7 +333,7 @@ class LinaVoiceServiceV2 {
     <Gather input="speech" timeout="10" speechTimeout="3" action="/voice/lina-v2/process-speech?${contextParams}" method="POST" language="es-MX">
         ${playOrSay}
     </Gather>
-    <Say voice="Polly.Lupe" language="es-MX">No escuche su respuesta. Gracias por llamar.</Say>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Gracias por llamar.</Say>
     <Hangup/>
 </Response>`;
     }
@@ -356,7 +356,7 @@ class LinaVoiceServiceV2 {
     createSessionExpiredResponse() {
         return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="Polly.Lupe" language="es-MX">La sesion ha expirado. Por favor, llame de nuevo.</Say>
+    <Say voice="Polly.Lupe" language="es-MX">La sesión ha expirado. Por favor, llame de nuevo.</Say>
     <Hangup/>
 </Response>`;
     }

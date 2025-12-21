@@ -256,7 +256,7 @@ router.all('/voice/lina-v2/book-appointment', async (req, res) => {
             const escapedName = linaService.escapeXml(ctx.prospectName);
             const confirmCode = bookingResult.confirmationCode;
 
-            const successText = `Excelente ${escapedName}! Su cita ha sido confirmada. Su codigo de confirmacion es ${confirmCode.split('').join(' ')}. Le enviaremos un mensaje de texto con los detalles. Gracias por llamar y que tenga un excelente dia!`;
+            const successText = `¡Excelente ${escapedName}! Su cita ha sido confirmada. Su código de confirmación es ${confirmCode.split('').join(' ')}. Le enviaremos un mensaje de texto con los detalles. ¡Gracias por llamar y que tenga un excelente día!`;
 
             const audioUrl = await linaService.generateLinaAudio(successText);
 
@@ -270,7 +270,7 @@ router.all('/voice/lina-v2/book-appointment', async (req, res) => {
         } else {
             console.error('[LINA-V2] Booking failed:', bookingResult.error);
 
-            const errorText = `Lo siento ${linaService.escapeXml(ctx.prospectName)}, no pude completar su reservacion en este momento. Por favor intente llamar mas tarde o visite nuestro sitio web. Gracias por llamar.`;
+            const errorText = `Lo siento ${linaService.escapeXml(ctx.prospectName)}, no pude completar su reservación en este momento. Por favor intente llamar más tarde o visite nuestro sitio web. Gracias por llamar.`;
 
             res.type('text/xml');
             res.send(`<?xml version="1.0" encoding="UTF-8"?>
@@ -283,7 +283,7 @@ router.all('/voice/lina-v2/book-appointment', async (req, res) => {
     } catch (error) {
         console.error('[LINA-V2] Book appointment error:', error);
         res.type('text/xml');
-        res.send(linaService.createErrorResponse('Lo siento, hubo un error al hacer la reservacion. Por favor llame de nuevo.'));
+        res.send(linaService.createErrorResponse('Lo siento, hubo un error al hacer la reservación. Por favor llame de nuevo.'));
     }
 });
 
@@ -317,7 +317,7 @@ router.all('/voice/lina-v2/voicemail-complete', async (req, res) => {
             }
         }
 
-        const thankYouText = `Gracias por su mensaje. Lo entregaremos de inmediato. Que tenga un excelente dia!`;
+        const thankYouText = `Gracias por su mensaje. Lo entregaremos de inmediato. ¡Que tenga un excelente día!`;
 
         const audioUrl = await linaService.generateLinaAudio(thankYouText);
 
@@ -333,7 +333,7 @@ router.all('/voice/lina-v2/voicemail-complete', async (req, res) => {
         res.type('text/xml');
         res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="Polly.Lupe" language="es-MX">Gracias por su mensaje. Adios.</Say>
+    <Say voice="Polly.Lupe" language="es-MX">Gracias por su mensaje. Adiós.</Say>
     <Hangup/>
 </Response>`);
     }
