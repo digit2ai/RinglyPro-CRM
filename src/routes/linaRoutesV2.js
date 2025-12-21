@@ -234,7 +234,7 @@ router.all('/voice/lina-v2/book-appointment', async (req, res) => {
             time: appointmentTime,
             service: 'Cita',
             notes: `Reservado via Lina Voice AI V2 en espanol. Solicitud: ${ctx.datetime}`,
-            source: 'voice_booking_spanish'
+            source: 'rachel_voice_ai' // Using existing enum value (covers both Rachel & Lina voice AI)
         });
 
         if (bookingResult.success) {
