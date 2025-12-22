@@ -1396,9 +1396,10 @@ async function createIVRMenu(client, language = 'en') {
         if (audioUrl) {
             // Use premium Rachel voice with speech + DTMF input
             // Increased timeout to 10s and speechTimeout to 3s for noise tolerance
+            // IMPORTANT: Include full context params in action URL since Twilio doesn't preserve sessions
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/rachel/ivr-selection?lang=${language}" method="POST" speechTimeout="3" language="${speechLang}" hints="${speechHints}">
+    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/rachel/ivr-selection?${contextParams}" method="POST" speechTimeout="3" language="${speechLang}" hints="${speechHints}">
         <Play>${audioUrl}</Play>
     </Gather>
     <Say voice="Polly.Joanna">${retryMsg}</Say>
@@ -1413,9 +1414,10 @@ async function createIVRMenu(client, language = 'en') {
 
     // Fallback to standard voice (or Spanish)
     const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
+    // IMPORTANT: Include full context params in action URL since Twilio doesn't preserve sessions
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/rachel/ivr-selection?lang=${language}" method="POST" speechTimeout="3" language="${speechLang}" hints="${speechHints}">
+    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/rachel/ivr-selection?${contextParams}" method="POST" speechTimeout="3" language="${speechLang}" hints="${speechHints}">
         <Say voice="${voice}">${menuText}</Say>
     </Gather>
     <Say voice="${voice}">${retryMsg}</Say>
