@@ -1316,7 +1316,7 @@ router.post('/voice/rachel/select-language', async (req, res) => {
         // Try to preserve context even in error case
         const errorClientId = req.query.client_id || req.session?.client_id || '';
         const errorBusinessName = req.query.business_name || req.session?.business_name || '';
-        const errorContextParams = `client_id=${errorClientId}&business_name=${encodeURIComponent(errorBusinessName)}`;
+        const errorContextParams = `client_id=${errorClientId}&amp;business_name=${encodeURIComponent(errorBusinessName)}`;
 
         const twiml = `
             <?xml version="1.0" encoding="UTF-8"?>
@@ -1638,7 +1638,8 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
             } else {
                 // Spanish - use Polly.Lupe for now (or can add Lina premium voice)
                 // Pass context via query params since Twilio doesn't preserve sessions
-                const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${req.session.user_id || ''}`;
+                // IMPORTANT: Use &amp; for XML escaping in TwiML
+                const contextParams = `client_id=${clientId}&amp;business_name=${encodeURIComponent(businessName)}&amp;user_id=${req.session.user_id || ''}`;
                 const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/lina/collect-name?${contextParams}" method="POST" language="es-MX">
@@ -1655,7 +1656,8 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
             console.log(`📬 Voicemail selected for ${businessName}`);
 
             // Redirect to voicemail using TwiML Redirect with context params
-            const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${req.session.user_id || ''}`;
+            // IMPORTANT: Use &amp; for XML escaping in TwiML
+            const contextParams = `client_id=${clientId}&amp;business_name=${encodeURIComponent(businessName)}&amp;user_id=${req.session.user_id || ''}`;
             const voicePath = language === 'en' ? 'rachel' : 'lina';
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
