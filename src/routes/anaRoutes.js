@@ -1000,15 +1000,33 @@ router.post('/voice/ana/voicemail-transcription', async (req, res) => {
 // ============================================================================
 
 /**
- * Create Spanish IVR menu
+ * Create Spanish IVR menu with custom greeting support
+ * Checks for custom_greeting_spanish in client settings, falls back to default
  */
 async function createSpanishIVRMenu(client, anaService) {
     const businessName = client.business_name;
     const ivrOptions = client.ivr_options || [];
     const enabledDepts = ivrOptions.filter(dept => dept.enabled);
 
-    // Build menu text
-    let menuText = `¡Hola! Habla Ana de ${businessName}. Estoy aquí para ayudarle. `;
+    // Check for custom Spanish greeting in client settings
+    // Priority: settings.custom_greeting_spanish > default greeting
+    let customGreeting = null;
+    if (client.settings && client.settings.custom_greeting_spanish) {
+        customGreeting = client.settings.custom_greeting_spanish;
+        console.log(`🎙️ [ANA] Using custom Spanish greeting for ${businessName}`);
+    }
+
+    // Build menu text - start with custom greeting or default
+    let menuText;
+    if (customGreeting) {
+        // Use custom greeting, then add IVR options
+        menuText = `${customGreeting} `;
+    } else {
+        // Default greeting
+        menuText = `¡Hola! Habla Ana de ${businessName}. Estoy aquí para ayudarle. `;
+    }
+
+    // Add IVR options
     menuText += `Para programar una cita, presione 1 o diga cita. `;
 
     let speechHints = 'cita, programar, uno, mensaje, buzón, nueve';
@@ -1024,7 +1042,23 @@ async function createSpanishIVRMenu(client, anaService) {
 
     const contextParams = `client_id=${client.id}&amp;business_name=${encodeURIComponent(businessName)}&amp;lang=es`;
 
-    const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+    // Try to use Ana premium ElevenLabs voice
+    const audioUrl = await anaService.generateAnaAudio(menuText);
+
+    let twiml;
+    if (audioUrl) {
+        console.log(`✅ [ANA] Using premium ElevenLabs voice for IVR menu`);
+        twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/ana/ivr-selection?${contextParams}" method="POST" speechTimeout="3" language="es-MX" hints="${speechHints}">
+        <Play>${audioUrl}</Play>
+    </Gather>
+    <Say voice="Polly.Lupe" language="es-MX">No entendí bien. Permítame repetir las opciones.</Say>
+    <Redirect method="POST">/voice/ana/ivr-menu?${contextParams}</Redirect>
+</Response>`;
+    } else {
+        // Fallback to Polly
+        twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/ana/ivr-selection?${contextParams}" method="POST" speechTimeout="3" language="es-MX" hints="${speechHints}">
         <Say voice="Polly.Lupe" language="es-MX">${menuText}</Say>
@@ -1032,6 +1066,7 @@ async function createSpanishIVRMenu(client, anaService) {
     <Say voice="Polly.Lupe" language="es-MX">No entendí bien. Permítame repetir las opciones.</Say>
     <Redirect method="POST">/voice/ana/ivr-menu?${contextParams}</Redirect>
 </Response>`;
+    }
 
     console.log(`📋 [ANA] IVR Menu for ${businessName}: ${enabledDepts.length} departments`);
     return twiml;
