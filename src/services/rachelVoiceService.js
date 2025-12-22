@@ -198,7 +198,7 @@ class MultiTenantRachelService {
             timeout: 8,  // Increased from 5 to 8 seconds
             action: '/voice/rachel/process-speech',
             method: 'POST',
-            speechTimeout: 3,  // Changed from 'auto' to 3 seconds for more consistent detection
+            speechTimeout: "auto",  // Changed from 'auto' to 3 seconds for more consistent detection
             language: 'en-US'
         });
 
@@ -351,7 +351,7 @@ class MultiTenantRachelService {
             timeout: 12,  // Increased from 10 to 12 seconds
             action: `/voice/rachel/collect-name?${contextParams}`,
             method: 'POST',
-            speechTimeout: 3,  // Changed from 'auto' to 3 seconds for more consistent detection
+            speechTimeout: "auto",  // Changed from 'auto' to 3 seconds for more consistent detection
             language: 'en-US'
         });
 
@@ -387,7 +387,7 @@ class MultiTenantRachelService {
             timeout: 12,  // Increased from 10 to 12 seconds
             action: '/voice/rachel/handle-pricing-response',
             method: 'POST',
-            speechTimeout: 3,  // Changed from 'auto' to 3 seconds for more consistent detection
+            speechTimeout: "auto",  // Changed from 'auto' to 3 seconds for more consistent detection
             language: 'en-US'
         });
         
@@ -492,7 +492,7 @@ class MultiTenantRachelService {
             timeout: 12,  // Increased from 10 to 12 seconds
             action: '/voice/rachel/process-speech',
             method: 'POST',
-            speechTimeout: 3,  // Changed from 'auto' to 3 seconds for more consistent detection
+            speechTimeout: "auto",  // Changed from 'auto' to 3 seconds for more consistent detection
             language: 'en-US'
         });
 

@@ -73,7 +73,7 @@ router.post('/voice/ana/greeting', async (req, res) => {
         if (audioUrl) {
             twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/ana/process-speech?${contextParams}" method="POST" language="es-MX">
+    <Gather input="speech" timeout="10" speechTimeout="auto" action="/voice/ana/process-speech?${contextParams}" method="POST" language="es-MX">
         <Play>${audioUrl}</Play>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intentemos de nuevo.</Say>
@@ -82,7 +82,7 @@ router.post('/voice/ana/greeting', async (req, res) => {
         } else {
             twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/ana/process-speech?${contextParams}" method="POST" language="es-MX">
+    <Gather input="speech" timeout="10" speechTimeout="auto" action="/voice/ana/process-speech?${contextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe" language="es-MX">${greetingText}</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intentemos de nuevo.</Say>
@@ -152,7 +152,7 @@ router.post('/voice/ana/process-speech', async (req, res) => {
 
             twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="10" speechTimeout="3" action="/voice/ana/collect-name?${contextParams}" method="POST" language="es-MX">
+    <Gather input="speech" timeout="10" speechTimeout="auto" action="/voice/ana/collect-name?${contextParams}" method="POST" language="es-MX">
         ${playOrSay}
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché eso. Intentemos de nuevo.</Say>
@@ -180,7 +180,7 @@ router.post('/voice/ana/process-speech', async (req, res) => {
 
             twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="10" speechTimeout="3" action="/voice/ana/process-speech?${contextParams}" method="POST" language="es-MX">
+    <Gather input="speech" timeout="10" speechTimeout="auto" action="/voice/ana/process-speech?${contextParams}" method="POST" language="es-MX">
         ${playOrSay}
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta.</Say>
@@ -200,7 +200,7 @@ router.post('/voice/ana/process-speech', async (req, res) => {
 
             twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="10" speechTimeout="3" action="/voice/ana/process-speech?${contextParams}" method="POST" language="es-MX">
+    <Gather input="speech" timeout="10" speechTimeout="auto" action="/voice/ana/process-speech?${contextParams}" method="POST" language="es-MX">
         ${playOrSay}
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Gracias por llamar.</Say>
@@ -346,7 +346,7 @@ router.post('/voice/ana/collect-phone', async (req, res) => {
 
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/ana/collect-date?${contextParams}" method="POST" language="es-MX">
+    <Gather input="speech" timeout="12" speechTimeout="auto" action="/voice/ana/collect-date?${contextParams}" method="POST" language="es-MX">
         ${playOrSay}
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché eso. Intentemos de nuevo.</Say>
@@ -483,7 +483,7 @@ router.post('/voice/ana/offer-slots', async (req, res) => {
                 console.log(`❌ [ANA] No availability for ${appointmentDate}`);
                 twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/ana/collect-date?${contextParams}" method="POST" language="es-MX">
+    <Gather input="speech" timeout="8" speechTimeout="auto" action="/voice/ana/collect-date?${contextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe" language="es-MX">Lo siento ${escapedName}, no tenemos citas disponibles para esa fecha. ¿Desea probar con otra fecha? Por favor dígame otro día.</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Permítame transferirle a un especialista.</Say>
@@ -1050,7 +1050,7 @@ async function createSpanishIVRMenu(client, anaService) {
         console.log(`✅ [ANA] Using premium ElevenLabs voice for IVR menu`);
         twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/ana/ivr-selection?${contextParams}" method="POST" speechTimeout="3" language="es-MX" hints="${speechHints}">
+    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/ana/ivr-selection?${contextParams}" method="POST" speechTimeout="auto" language="es-MX" hints="${speechHints}">
         <Play>${audioUrl}</Play>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No entendí bien. Permítame repetir las opciones.</Say>
@@ -1060,7 +1060,7 @@ async function createSpanishIVRMenu(client, anaService) {
         // Fallback to Polly
         twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/ana/ivr-selection?${contextParams}" method="POST" speechTimeout="3" language="es-MX" hints="${speechHints}">
+    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/ana/ivr-selection?${contextParams}" method="POST" speechTimeout="auto" language="es-MX" hints="${speechHints}">
         <Say voice="Polly.Lupe" language="es-MX">${menuText}</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No entendí bien. Permítame repetir las opciones.</Say>
@@ -1189,7 +1189,7 @@ router.post('/voice/ana/ivr-selection', async (req, res) => {
 
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/ana/collect-name?${contextParams}" method="POST" language="es-MX">
+    <Gather input="speech" timeout="12" speechTimeout="auto" action="/voice/ana/collect-name?${contextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe" language="es-MX">${namePrompt}</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché eso. Intentemos de nuevo.</Say>

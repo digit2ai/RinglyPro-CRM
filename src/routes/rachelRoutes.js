@@ -137,7 +137,7 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
         if (audioUrl) {
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech dtmf" timeout="12" speechTimeout="3" numDigits="10" action="/voice/rachel/collect-phone?${xmlContextParams}" method="POST" language="en-US">
+    <Gather input="speech dtmf" timeout="12" speechTimeout="auto" numDigits="10" action="/voice/rachel/collect-phone?${xmlContextParams}" method="POST" language="en-US">
         <Play>${audioUrl}</Play>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
@@ -149,7 +149,7 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
             // Fallback to Polly
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech dtmf" timeout="12" speechTimeout="3" numDigits="10" action="/voice/rachel/collect-phone?${xmlContextParams}" method="POST" language="en-US">
+    <Gather input="speech dtmf" timeout="12" speechTimeout="auto" numDigits="10" action="/voice/rachel/collect-phone?${xmlContextParams}" method="POST" language="en-US">
         <Say voice="Polly.Joanna">Thank you ${escapedName}. Can you please provide your phone number so we can send you a confirmation?</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
@@ -258,7 +258,7 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
         if (audioUrl) {
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-date?${xmlContextParams}" method="POST" language="en-US">
+    <Gather input="speech" timeout="12" speechTimeout="auto" action="/voice/rachel/collect-date?${xmlContextParams}" method="POST" language="en-US">
         <Play>${audioUrl}</Play>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
@@ -271,7 +271,7 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
             // Fallback to Polly
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-date?${xmlContextParams}" method="POST" language="en-US">
+    <Gather input="speech" timeout="12" speechTimeout="auto" action="/voice/rachel/collect-date?${xmlContextParams}" method="POST" language="en-US">
         <Say voice="Polly.Joanna">Perfect ${escapedName}. Give me a minute to check our calendar. What date would you like to schedule your appointment? For example, you can say tomorrow, or Friday, or December 20th.</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
@@ -503,7 +503,7 @@ router.post('/voice/rachel/offer-slots', async (req, res) => {
                 console.log(`❌ [SLOT-FLOW] No availability for ${appointmentDate}`);
                 twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/rachel/collect-date?${xmlContextParams}" method="POST" language="en-US">
+    <Gather input="speech" timeout="8" speechTimeout="auto" action="/voice/rachel/collect-date?${xmlContextParams}" method="POST" language="en-US">
         <Say voice="Polly.Joanna">I'm sorry ${escapedName}, we don't have any available appointments for that date. Would you like to try a different date? Please tell me another date you'd prefer.</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't hear a response. Let me transfer you to a specialist who can help.</Say>
@@ -1415,7 +1415,7 @@ async function createIVRMenu(client, language = 'en') {
             // Increased timeout to 10s and speechTimeout to 3s for noise tolerance
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/rachel/ivr-selection?lang=${language}" method="POST" speechTimeout="3" language="${speechLang}" hints="${speechHints}">
+    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/rachel/ivr-selection?lang=${language}" method="POST" speechTimeout="auto" language="${speechLang}" hints="${speechHints}">
         <Play>${audioUrl}</Play>
     </Gather>
     <Say voice="Polly.Joanna">${retryMsg}</Say>
@@ -1432,7 +1432,7 @@ async function createIVRMenu(client, language = 'en') {
     const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/rachel/ivr-selection?lang=${language}" method="POST" speechTimeout="3" language="${speechLang}" hints="${speechHints}">
+    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/rachel/ivr-selection?lang=${language}" method="POST" speechTimeout="auto" language="${speechLang}" hints="${speechHints}">
         <Say voice="${voice}">${menuText}</Say>
     </Gather>
     <Say voice="${voice}">${retryMsg}</Say>
@@ -1629,7 +1629,7 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
                     if (audioUrl) {
                         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-name" method="POST" language="en-US">
+    <Gather input="speech" timeout="12" speechTimeout="auto" action="/voice/rachel/collect-name" method="POST" language="en-US">
         <Play>${audioUrl}</Play>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
@@ -1641,7 +1641,7 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
                         // Fallback to Polly
                         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-name" method="POST" language="en-US">
+    <Gather input="speech" timeout="12" speechTimeout="auto" action="/voice/rachel/collect-name" method="POST" language="en-US">
         <Say voice="Polly.Joanna">${namePrompt}</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
@@ -1658,7 +1658,7 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
                 const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${req.session.user_id || ''}`;
                 const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/lina/collect-name?${contextParams}" method="POST" language="es-MX">
+    <Gather input="speech" timeout="12" speechTimeout="auto" action="/voice/lina/collect-name?${contextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe">${namePrompt}</Say>
     </Gather>
     <Say voice="Polly.Lupe">No escuché eso. Intentemos de nuevo.</Say>
