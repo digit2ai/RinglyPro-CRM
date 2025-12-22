@@ -11,8 +11,8 @@ class LinaVoiceServiceV2 {
         this.webhookBaseUrl = webhookBaseUrl;
         this.elevenlabsApiKey = elevenlabsApiKey;
 
-        // Lina's voice - using ElevenLabs "Bella" which sounds good in Spanish
-        this.linaVoiceId = "EXAVITQu4vr4xnSDxMaL";
+        // Ana's voice - using ElevenLabs "Bella" which sounds good in Spanish
+        this.anaVoiceId = "EXAVITQu4vr4xnSDxMaL";
 
         // Audio directory
         this.audioDir = '/tmp';
@@ -69,7 +69,7 @@ class LinaVoiceServiceV2 {
         }
 
         try {
-            const url = `https://api.elevenlabs.io/v1/text-to-speech/${this.linaVoiceId}`;
+            const url = `https://api.elevenlabs.io/v1/text-to-speech/${this.anaVoiceId}`;
             const speechText = text.replace(/\n/g, " ").trim().replace(/\$/g, " dolares");
 
             const response = await axios.post(url, {
@@ -87,11 +87,11 @@ class LinaVoiceServiceV2 {
             });
 
             if (response.status === 200) {
-                const filename = `lina_${uuidv4()}.mp3`;
+                const filename = `ana_${uuidv4()}.mp3`;
                 const filepath = path.join(this.audioDir, filename);
                 await fs.writeFile(filepath, response.data);
                 const audioUrl = `${this.webhookBaseUrl}/audio/${filename}`;
-                console.log(`Lina audio generated: ${filename}`);
+                console.log(`Ana audio generated: ${filename}`);
                 return audioUrl;
             }
             return null;
@@ -109,7 +109,7 @@ class LinaVoiceServiceV2 {
         const timeGreeting = this.getTimeGreeting();
         const escapedBusiness = this.escapeXml(businessName || 'nuestra empresa');
 
-        const greetingText = `${timeGreeting}, gracias por llamar a ${escapedBusiness}. Mi nombre es Lina, su asistente virtual. Puedo ayudarle a agendar una cita, o si prefiere, puede dejarme un mensaje. ¿En qué puedo ayudarle hoy?`;
+        const greetingText = `${timeGreeting}, gracias por llamar a ${escapedBusiness}. Mi nombre es Ana, su asistente virtual. Puedo ayudarle a agendar una cita, o si prefiere, puede dejarme un mensaje. ¿En qué puedo ayudarle hoy?`;
 
         // Try premium voice, fall back to Polly
         const audioUrl = await this.generateLinaAudio(greetingText);
@@ -142,7 +142,7 @@ class LinaVoiceServiceV2 {
     async processSpeech(speechResult, clientId, businessName, userId) {
         const speech = (speechResult || '').toLowerCase().trim();
         // Note: contextParams not used directly in this method, but kept for logging
-        console.log(`Lina speech: "${speech}"`);
+        console.log(`Ana speech: "${speech}"`);
 
         // Booking keywords
         if (this.hasKeywords(speech, ['cita', 'reservar', 'agendar', 'programar', 'turno', 'hora', 'appointment'])) {
@@ -228,7 +228,7 @@ class LinaVoiceServiceV2 {
         // Include name and phone in context for next step (use &amp; for XML)
         const contextWithData = `${contextParams}&amp;prospect_name=${encodeURIComponent(name)}&amp;prospect_phone=${encodeURIComponent(phone)}`;
 
-        const text = `Perfecto ${escapedName}. Ahora dígame qué día y hora prefiere para su cita. Por ejemplo, puede decir mañana a las 10 de la mañana, o el viernes a las 2 de la tarde.`;
+        const text = `Perfecto ${escapedName}. ¿Qué día y a qué hora desea su cita?`;
 
         const audioUrl = await this.generateLinaAudio(text);
         const playOrSay = audioUrl

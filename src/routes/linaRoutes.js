@@ -621,7 +621,7 @@ router.post('/voice/lina/validate-slot', async (req, res) => {
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather input="speech" timeout="12" speechTimeout="4" action="/voice/lina/validate-slot?${xmlContextParams}" method="POST" language="es-MX">
-        <Say voice="Polly.Lupe" language="es-MX">No pude entender la hora. ¿A qué hora le gustaría su cita? Por ejemplo, puede decir a las 10 de la mañana o a las 3 de la tarde.</Say>
+        <Say voice="Polly.Lupe" language="es-MX">No pude entender la hora. ¿A qué hora le gustaría su cita?</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché una respuesta.</Say>
     <Redirect>/voice/lina/transfer-specialist?${xmlContextParams}</Redirect>

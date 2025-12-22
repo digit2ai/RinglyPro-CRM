@@ -14,8 +14,8 @@ class LinaSpanishService {
         this.webhookBaseUrl = webhookBaseUrl;
         this.elevenlabsApiKey = elevenlabsApiKey;
 
-        // Lina's voice configuration - ElevenLabs "Bella" (good Spanish voice)
-        this.linaVoiceId = "EXAVITQu4vr4xnSDxMaL";
+        // Ana's voice configuration - ElevenLabs "Bella" (good Spanish voice)
+        this.anaVoiceId = "EXAVITQu4vr4xnSDxMaL";
 
         // Audio directory for generated files
         this.audioDir = '/tmp';
@@ -63,13 +63,13 @@ class LinaSpanishService {
         const timeGreeting = this.getTimeGreeting();
         const escapedBusinessName = this.escapeXml(businessName || 'nuestra empresa');
 
-        const greetingText = `${timeGreeting}, gracias por llamar a ${escapedBusinessName}. Mi nombre es Lina, su asistente virtual. Puedo ayudarle a agendar una cita, o si prefiere, puede dejarme un mensaje. ¿En qué puedo ayudarle hoy?`;
+        const greetingText = `${timeGreeting}, gracias por llamar a ${escapedBusinessName}. Mi nombre es Ana, su asistente virtual. Puedo ayudarle a agendar una cita, o si prefiere, puede dejarme un mensaje. ¿En qué puedo ayudarle hoy?`;
 
         // Try premium ElevenLabs voice
         const audioUrl = await this.generateLinaAudio(greetingText);
 
         if (audioUrl) {
-            console.log(`✅ Using Lina premium voice for ${businessName}`);
+            console.log(`✅ Using Ana premium voice for ${businessName}`);
             return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/lina-new/process-speech?${contextParams}" method="POST" language="es-MX">
@@ -204,7 +204,7 @@ class LinaSpanishService {
         // Store name and phone in context params
         const contextWithData = `${contextParams}&prospect_name=${encodeURIComponent(name)}&prospect_phone=${encodeURIComponent(phone)}`;
 
-        const dateTimeText = `Perfecto ${escapedName}. Ahora dígame qué día y hora prefiere para su cita. Por ejemplo, puede decir mañana a las 10 de la mañana, o el viernes a las 2 de la tarde.`;
+        const dateTimeText = `Perfecto ${escapedName}. ¿Qué día y a qué hora desea su cita?`;
 
         const audioUrl = await this.generateLinaAudio(dateTimeText);
 
@@ -389,7 +389,7 @@ class LinaSpanishService {
         }
 
         try {
-            const url = `https://api.elevenlabs.io/v1/text-to-speech/${this.linaVoiceId}`;
+            const url = `https://api.elevenlabs.io/v1/text-to-speech/${this.anaVoiceId}`;
             const headers = {
                 "Accept": "audio/mpeg",
                 "Content-Type": "application/json",
@@ -416,13 +416,13 @@ class LinaSpanishService {
             });
 
             if (response.status === 200) {
-                const audioFilename = `lina_${uuidv4()}.mp3`;
+                const audioFilename = `ana_${uuidv4()}.mp3`;
                 const audioPath = path.join(this.audioDir, audioFilename);
 
                 await fs.writeFile(audioPath, response.data);
 
                 const audioUrl = `${this.webhookBaseUrl}/audio/${audioFilename}`;
-                console.log(`✅ Lina audio generated: ${audioFilename} (${response.data.byteLength} bytes)`);
+                console.log(`✅ Ana audio generated: ${audioFilename} (${response.data.byteLength} bytes)`);
                 return audioUrl;
             } else {
                 console.warn(`⚠️ ElevenLabs TTS failed with status ${response.status}`);
@@ -435,7 +435,7 @@ class LinaSpanishService {
             } else if (error.response) {
                 console.error(`❌ ElevenLabs Spanish TTS error: ${error.response.status}`);
             } else {
-                console.error(`❌ Error generating Lina audio: ${error.message}`);
+                console.error(`❌ Error generating Ana audio: ${error.message}`);
             }
             return null;
         }

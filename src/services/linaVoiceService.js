@@ -11,9 +11,9 @@ class LinaSpanishVoiceService {
         this.webhookBaseUrl = webhookBaseUrl;
         this.elevenlabsApiKey = elevenlabsApiKey;
 
-        // Lina's voice configuration - Using ElevenLabs "Bella" (good Spanish voice)
+        // Ana's voice configuration - Using ElevenLabs "Bella" (good Spanish voice)
         // You can change this to any other ElevenLabs Spanish voice ID
-        this.linaVoiceId = "EXAVITQu4vr4xnSDxMaL"; // Bella - Natural Spanish female voice
+        this.anaVoiceId = "EXAVITQu4vr4xnSDxMaL"; // Bella - Natural Spanish female voice
 
         // Ensure audio directory exists
         this.audioDir = '/tmp';
@@ -40,12 +40,12 @@ class LinaSpanishVoiceService {
             language: 'es-MX' // Mexican Spanish
         });
 
-        // Try to use Lina's premium voice
+        // Try to use Ana's premium voice
         const audioUrl = await this.generateLinaAudio(greetingText);
 
         if (audioUrl) {
             gather.play(audioUrl);
-            console.log(`✅ Using Lina's premium voice for ${clientInfo.business_name}`);
+            console.log(`✅ Using Ana's premium voice for ${clientInfo.business_name}`);
         } else {
             gather.say(greetingText, { voice: 'Polly.Lupe', language: 'es-MX' });
             console.warn(`⚠️ Fallback Spanish voice for ${clientInfo.business_name}`);
@@ -75,7 +75,7 @@ class LinaSpanishVoiceService {
             timeGreeting = 'Buenas noches';
         }
 
-        return `${timeGreeting}, gracias por llamar a ${businessName}. Mi nombre es Lina, su asistente virtual. Puedo ayudarle a agendar una cita, o si lo prefiere, puede dejarme un mensaje y me aseguraré de que se entregue de inmediato. ¿En qué puedo ayudarle hoy?`;
+        return `${timeGreeting}, gracias por llamar a ${businessName}. Mi nombre es Ana, su asistente virtual. Puedo ayudarle a agendar una cita, o si lo prefiere, puede dejarme un mensaje y me aseguraré de que se entregue de inmediato. ¿En qué puedo ayudarle hoy?`;
     }
 
     /**
@@ -321,7 +321,7 @@ class LinaSpanishVoiceService {
     }
 
     /**
-     * Generate audio using ElevenLabs Lina/Bella Spanish voice
+     * Generate audio using ElevenLabs Ana/Bella Spanish voice
      * @param {string} text - Text to convert to speech
      * @returns {string|null} URL to generated audio file or null if failed
      */
@@ -332,7 +332,7 @@ class LinaSpanishVoiceService {
         }
 
         try {
-            const url = `https://api.elevenlabs.io/v1/text-to-speech/${this.linaVoiceId}`;
+            const url = `https://api.elevenlabs.io/v1/text-to-speech/${this.anaVoiceId}`;
             const headers = {
                 "Accept": "audio/mpeg",
                 "Content-Type": "application/json",
@@ -366,7 +366,7 @@ class LinaSpanishVoiceService {
 
                 // Return URL that Twilio can access
                 const audioUrl = `${this.webhookBaseUrl}/audio/${audioFilename}`;
-                console.log(`✅ Lina audio generated successfully`);
+                console.log(`✅ Ana audio generated successfully`);
                 return audioUrl;
             } else {
                 console.warn(`ElevenLabs TTS failed: ${response.status}`);
@@ -374,7 +374,7 @@ class LinaSpanishVoiceService {
             }
 
         } catch (error) {
-            console.error("Error generating Lina audio:", error.message);
+            console.error("Error generating Ana audio:", error.message);
             return null;
         }
     }
