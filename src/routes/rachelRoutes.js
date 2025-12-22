@@ -1066,14 +1066,17 @@ const handleBookAppointment = async (req, res) => {
         const timeForSpeech = formatTimeForSpeech(appointmentTime);
         const appointmentDateTimeForSpeech = `${dateForSpeech} at ${timeForSpeech}`;
 
-        // Client ID 32 gets a custom message about pending deposit
+        // Check if client requires deposits - use pending deposit message
+        // Client 32 always gets deposit message (legacy), other clients check deposit_required setting
+        const requiresDeposit = (clientId == 32) || (client && client.deposit_required);
+
         let successMessage;
-        if (clientId === 32) {
-            // Custom message for client 32 - pending deposit flow
+        if (requiresDeposit) {
+            // Custom message for clients requiring deposits - pending deposit flow
             successMessage = `Great news ${prospectName || 'there'}. <break time="0.5s"/> I've entered your appointment with ${businessName || 'this business'} for ${appointmentDateTimeForSpeech}. <break time="0.5s"/> Your appointment is currently pending an initial deposit. <break time="0.5s"/> A specialist will contact you shortly to provide further assistance and complete the process. <break time="0.5s"/> Thank you for calling, and we look forward to seeing you.`;
-            console.log(`🎙️ Client 32 - Using custom deposit pending message`);
+            console.log(`🎙️ Client ${clientId} - Using deposit pending message (deposit_required=${client?.deposit_required || 'legacy client 32'})`);
         } else {
-            // Standard message for all other clients
+            // Standard message for clients without deposit requirement
             successMessage = `Great news ${prospectName || 'there'}. <break time="0.5s"/> I've successfully booked your appointment with ${businessName || 'this business'} for ${appointmentDateTimeForSpeech}. <break time="0.5s"/> Your confirmation code is ${confirmationCode}. <break time="0.5s"/> You'll receive a text message confirmation shortly with all the details. <break time="0.5s"/> Thank you for calling and we look forward to seeing you.`;
         }
         console.log(`🎙️ Generating Rachel premium voice for success confirmation`);
@@ -1111,9 +1114,9 @@ const handleBookAppointment = async (req, res) => {
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&apos;');
 
-            // Client ID 32 gets custom message, others get standard message
+            // Use deposit pending message for clients with deposit_required, standard message otherwise
             let pollyMessage;
-            if (clientId === 32) {
+            if (requiresDeposit) {
                 pollyMessage = `Great news ${escapedName}. I've entered your appointment with ${escapedBusiness} for ${escapedDateTime}. Your appointment is currently pending an initial deposit. A specialist will contact you shortly to provide further assistance and complete the process. Thank you for calling, and we look forward to seeing you.`;
             } else {
                 pollyMessage = `Great news ${escapedName}. I've successfully booked your appointment with ${escapedBusiness} for ${escapedDateTime}. Your confirmation code is ${confirmationCode}. You'll receive a text message confirmation shortly with all the details. Thank you for calling and we look forward to seeing you.`;

@@ -451,6 +451,11 @@ app.get('/signup', (req, res) => {
   });
 });
 
+// Register page route (alias for signup - used by all-in-one landing page)
+app.get('/register', (req, res) => {
+  res.redirect('/signup');
+});
+
 // Forgot password page route
 app.get('/forgot-password', (req, res) => {
   res.render('forgot-password', {

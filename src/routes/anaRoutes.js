@@ -941,10 +941,14 @@ const handleBookAppointment = async (req, res) => {
         const dateForSpeech = anaService.formatDateForSpanishSpeech(appointmentDate);
         const timeForSpeech = anaService.formatTimeForSpanishSpeech(appointmentTime);
 
-        // Client ID 32 gets custom deposit pending message
+        // Check if client requires deposits - use pending deposit message
+        // Client 32 always gets deposit message (legacy), other clients check deposit_required setting
+        const requiresDeposit = (clientId == 32) || (client && client.deposit_required);
+
         let successMessage;
-        if (clientId === 32) {
+        if (requiresDeposit) {
             successMessage = `¡Excelentes noticias ${escapedName}! He registrado su cita con ${escapedBusiness} para el ${dateForSpeech} a las ${timeForSpeech}. Su cita está pendiente de un depósito inicial. Un especialista se comunicará con usted pronto para brindarle más asistencia y completar el proceso. Gracias por llamar, esperamos verle pronto.`;
+            console.log(`🎙️ [ANA] Client ${clientId} - Using deposit pending message (deposit_required=${client?.deposit_required || 'legacy client 32'})`);
         } else {
             successMessage = `¡Excelentes noticias ${escapedName}! He reservado exitosamente su cita con ${escapedBusiness} para el ${dateForSpeech} a las ${timeForSpeech}. Su código de confirmación es ${confirmationCode}. Recibirá un mensaje de texto con todos los detalles en breve. Gracias por llamar, esperamos verle pronto.`;
         }
