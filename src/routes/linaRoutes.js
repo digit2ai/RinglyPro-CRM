@@ -31,7 +31,7 @@ function createSpanishIVRMenu(client, contextParams = '') {
 
     // Build Spanish menu text with warm, empathetic tone - WITH VOICE COMMAND SUPPORT
     // Match English flow: "press X or say Y" for hands-free driving
-    let menuText = `¡Hola! Habla Lina de ${businessName}. Estoy aquí para ayudarle. <break time="0.8s"/> `;
+    let menuText = `¡Hola! Habla Ana de ${businessName}. Estoy aquí para ayudarle. <break time="0.8s"/> `;
     menuText += `Para programar una cita, presione 1 o diga cita. <break time="0.5s"/> `;
 
     // Add department options (starting from 2) with voice commands
@@ -151,7 +151,7 @@ const handleSpanishIncoming = async (req, res) => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
 
-        const greetingText = `${timeGreeting}, gracias por llamar a ${escapedBusinessName}. Mi nombre es Lina, su asistente virtual. Puedo ayudarle a agendar una cita, o si prefiere, puede dejarme un mensaje. ¿En qué puedo ayudarle hoy?`;
+        const greetingText = `${timeGreeting}, gracias por llamar a ${escapedBusinessName}. Mi nombre es Ana, su asistente virtual. Puedo ayudarle a agendar una cita, o si prefiere, puede dejarme un mensaje. ¿En qué puedo ayudarle hoy?`;
 
         // Pass client context via query params since Twilio doesn't preserve sessions between requests
         // URL-encode the business name to handle special characters
@@ -468,11 +468,11 @@ router.post('/voice/lina/collect-phone', async (req, res) => {
         const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}`;
         const xmlContextParams = contextParams.replace(/&/g, '&amp;');
 
-        // NEW FLOW: Ask for date first, then offer real available slots from calendar
+        // NEW FLOW: Ask for date AND time together, then validate against calendar
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/lina/collect-date?${xmlContextParams}" method="POST" language="es-MX">
-        <Say voice="Polly.Lupe" language="es-MX">Perfecto ${escapedName}. Déjeme revisar nuestro calendario. ¿Qué día le gustaría programar su cita? Por ejemplo, puede decir mañana, o viernes, o una fecha como el 20 de diciembre.</Say>
+    <Gather input="speech" timeout="12" speechTimeout="4" action="/voice/lina/validate-slot?${xmlContextParams}" method="POST" language="es-MX">
+        <Say voice="Polly.Lupe" language="es-MX">Perfecto ${escapedName}. ¿Qué día y a qué hora desea su cita?</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intente de nuevo.</Say>
     <Redirect>/voice/lina/collect-phone?${xmlContextParams}</Redirect>
@@ -499,7 +499,270 @@ router.post('/voice/lina/collect-phone', async (req, res) => {
 });
 
 /**
- * NEW FLOW: Collect date only (Spanish)
+ * NEW FLOW: Validate requested slot against calendar (Spanish)
+ * Parse date+time from speech, check if slot is available
+ * If not available, offer alternatives
+ */
+router.post('/voice/lina/validate-slot', async (req, res) => {
+    try {
+        const speechInput = req.body.SpeechResult || '';
+
+        // Restore context from query params
+        const clientIdFromQuery = req.query.client_id;
+        const businessNameFromQuery = req.query.business_name;
+
+        if (clientIdFromQuery) {
+            const parsedClientId = parseInt(clientIdFromQuery, 10);
+            if (!isNaN(parsedClientId)) {
+                req.session.client_id = parsedClientId;
+            }
+        }
+        if (businessNameFromQuery) {
+            req.session.business_name = decodeURIComponent(businessNameFromQuery);
+        }
+
+        const clientId = req.session.client_id;
+        const prospectName = req.session.prospect_name;
+        const businessName = req.session.business_name || 'nuestra empresa';
+
+        // Build context params
+        const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}`;
+        const xmlContextParams = contextParams.replace(/&/g, '&amp;');
+
+        console.log(`📅 [VALIDATE-SLOT-ES] Input for client ${clientId}: "${speechInput}"`);
+
+        const moment = require('moment-timezone');
+        const now = moment().tz('America/New_York');
+
+        // Parse date and time from Spanish speech
+        const lowerInput = speechInput.toLowerCase();
+        let appointmentDate = null;
+        let requestedTime = null;
+
+        // ===== Parse DATE =====
+        if (lowerInput.includes('mañana') && !lowerInput.includes('de la mañana')) {
+            appointmentDate = now.clone().add(1, 'day').format('YYYY-MM-DD');
+        } else if (lowerInput.includes('hoy')) {
+            appointmentDate = now.format('YYYY-MM-DD');
+        } else if (lowerInput.includes('pasado mañana')) {
+            appointmentDate = now.clone().add(2, 'day').format('YYYY-MM-DD');
+        } else if (lowerInput.includes('lunes')) {
+            appointmentDate = now.clone().day(1 + (now.day() >= 1 ? 7 : 0)).format('YYYY-MM-DD');
+        } else if (lowerInput.includes('martes')) {
+            appointmentDate = now.clone().day(2 + (now.day() >= 2 ? 7 : 0)).format('YYYY-MM-DD');
+        } else if (lowerInput.includes('miércoles') || lowerInput.includes('miercoles')) {
+            appointmentDate = now.clone().day(3 + (now.day() >= 3 ? 7 : 0)).format('YYYY-MM-DD');
+        } else if (lowerInput.includes('jueves')) {
+            appointmentDate = now.clone().day(4 + (now.day() >= 4 ? 7 : 0)).format('YYYY-MM-DD');
+        } else if (lowerInput.includes('viernes')) {
+            appointmentDate = now.clone().day(5 + (now.day() >= 5 ? 7 : 0)).format('YYYY-MM-DD');
+        } else if (lowerInput.includes('sábado') || lowerInput.includes('sabado')) {
+            appointmentDate = now.clone().day(6 + (now.day() >= 6 ? 7 : 0)).format('YYYY-MM-DD');
+        } else if (lowerInput.includes('domingo')) {
+            appointmentDate = now.clone().day(0 + (now.day() >= 0 ? 7 : 0)).format('YYYY-MM-DD');
+        } else {
+            // Try to parse Spanish date format (e.g., "20 de diciembre")
+            const monthMap = {
+                'enero': 'January', 'febrero': 'February', 'marzo': 'March',
+                'abril': 'April', 'mayo': 'May', 'junio': 'June',
+                'julio': 'July', 'agosto': 'August', 'septiembre': 'September',
+                'octubre': 'October', 'noviembre': 'November', 'diciembre': 'December'
+            };
+            const dateMatch = lowerInput.match(/(?:el\s+)?(\d{1,2})\s+de\s+(\w+)/);
+            if (dateMatch) {
+                const day = dateMatch[1];
+                const monthSpanish = dateMatch[2];
+                const monthEnglish = monthMap[monthSpanish];
+                if (monthEnglish) {
+                    const parsedDate = moment(`${monthEnglish} ${day}`, 'MMMM D');
+                    if (parsedDate.isValid()) {
+                        parsedDate.year(now.year());
+                        if (parsedDate.isBefore(now, 'day')) {
+                            parsedDate.add(1, 'year');
+                        }
+                        appointmentDate = parsedDate.format('YYYY-MM-DD');
+                    }
+                }
+            }
+        }
+
+        // Default to tomorrow if no date parsed
+        if (!appointmentDate) {
+            appointmentDate = now.clone().add(1, 'day').format('YYYY-MM-DD');
+            console.log(`⚠️ [VALIDATE-SLOT-ES] Could not parse date, defaulting to tomorrow`);
+        }
+
+        // ===== Parse TIME =====
+        // Patterns: "a las 10", "a las 10 de la mañana", "a las 2 de la tarde", "a las 3:30"
+        const timeMatch = lowerInput.match(/(?:a\s+)?(?:las?\s+)?(\d{1,2})(?::(\d{2}))?\s*(?:y\s+(\d{1,2}))?\s*(?:de\s+la\s+(mañana|tarde|noche))?/);
+
+        if (timeMatch) {
+            let hour = parseInt(timeMatch[1]);
+            let minutes = timeMatch[2] ? parseInt(timeMatch[2]) : (timeMatch[3] ? parseInt(timeMatch[3]) : 0);
+            const period = timeMatch[4];
+
+            // Convert to 24h format
+            if (period === 'tarde' || period === 'noche') {
+                if (hour < 12) hour += 12;
+            } else if (period === 'mañana') {
+                if (hour === 12) hour = 0;
+            } else {
+                // No period specified - assume PM if hour <= 7 (business hours)
+                if (hour >= 1 && hour <= 7) hour += 12;
+            }
+
+            requestedTime = `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        }
+
+        console.log(`📆 [VALIDATE-SLOT-ES] Parsed: date=${appointmentDate}, time=${requestedTime}`);
+
+        // If no time was parsed, ask again
+        if (!requestedTime) {
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech" timeout="12" speechTimeout="4" action="/voice/lina/validate-slot?${xmlContextParams}" method="POST" language="es-MX">
+        <Say voice="Polly.Lupe" language="es-MX">No pude entender la hora. ¿A qué hora le gustaría su cita? Por ejemplo, puede decir a las 10 de la mañana o a las 3 de la tarde.</Say>
+    </Gather>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché una respuesta.</Say>
+    <Redirect>/voice/lina/transfer-specialist?${xmlContextParams}</Redirect>
+</Response>`;
+            res.type('text/xml');
+            return res.send(twiml);
+        }
+
+        // Store in session
+        req.session.appointment_date = appointmentDate;
+        req.session.requested_time = requestedTime;
+        req.session.slot_offset = 0;
+
+        await new Promise((resolve, reject) => {
+            req.session.save((err) => err ? reject(err) : resolve());
+        });
+
+        // Get available slots from calendar
+        const availabilityResult = await unifiedBookingService.getAvailableSlots(clientId, appointmentDate);
+        const allSlots = availabilityResult.slots || [];
+
+        console.log(`📋 [VALIDATE-SLOT-ES] Found ${allSlots.length} available slots for ${appointmentDate}`);
+
+        // Check if requested time is available
+        const isAvailable = allSlots.some(slot => {
+            const slotTime = slot.time24 || slot.startTime?.substring(11, 16) || slot.time?.substring(0, 5);
+            return slotTime === requestedTime;
+        });
+
+        const escapedName = (prospectName || 'señor')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        // Format time for Spanish speech
+        const formatTimeForSpanishSpeech = (timeStr) => {
+            const [hours, minutes] = timeStr.split(':');
+            let hour = parseInt(hours);
+            const isPM = hour >= 12;
+            if (hour > 12) hour -= 12;
+            if (hour === 0) hour = 12;
+            const article = hour === 1 ? 'la' : 'las';
+            const period = isPM ? 'de la tarde' : 'de la mañana';
+            if (minutes === '00') {
+                return `${article} ${hour} ${period}`;
+            } else {
+                return `${article} ${hour} y ${minutes} ${period}`;
+            }
+        };
+
+        const formattedDate = moment(appointmentDate).locale('es').format('dddd D [de] MMMM');
+        const formattedRequestedTime = formatTimeForSpanishSpeech(requestedTime);
+
+        let twiml;
+
+        if (isAvailable) {
+            // Requested slot is available - proceed to book
+            console.log(`✅ [VALIDATE-SLOT-ES] Requested slot ${requestedTime} is available`);
+
+            // Store the selected time and redirect to confirmation
+            req.session.appointment_time = requestedTime;
+            await new Promise((resolve, reject) => {
+                req.session.save((err) => err ? reject(err) : resolve());
+            });
+
+            twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Perfecto ${escapedName}, tenemos disponibilidad ${formattedRequestedTime} el ${formattedDate}. Déjeme confirmar su cita.</Say>
+    <Redirect>/voice/lina/confirm-booking?${xmlContextParams}</Redirect>
+</Response>`;
+        } else {
+            // Requested slot NOT available - offer alternatives
+            console.log(`❌ [VALIDATE-SLOT-ES] Requested slot ${requestedTime} is NOT available`);
+
+            if (allSlots.length === 0) {
+                // No slots available for this day
+                twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech" timeout="12" speechTimeout="4" action="/voice/lina/validate-slot?${xmlContextParams}" method="POST" language="es-MX">
+        <Say voice="Polly.Lupe" language="es-MX">Lo siento ${escapedName}, no tenemos citas disponibles para el ${formattedDate}. ¿Le gustaría probar con otro día? Por favor dígame qué día y a qué hora prefiere.</Say>
+    </Gather>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché una respuesta.</Say>
+    <Redirect>/voice/lina/transfer-specialist?${xmlContextParams}</Redirect>
+</Response>`;
+            } else {
+                // Offer up to 3 alternative slots
+                const slotsToOffer = allSlots.slice(0, 3);
+                const offeredSlots = slotsToOffer.map(slot => slot.time24 || slot.startTime?.substring(11, 16) || slot.time?.substring(0, 5));
+
+                // Store offered slots in session
+                req.session.offered_slots = offeredSlots;
+                req.session.has_more_slots = allSlots.length > 3;
+                await new Promise((resolve, reject) => {
+                    req.session.save((err) => err ? reject(err) : resolve());
+                });
+
+                const slot1 = formatTimeForSpanishSpeech(offeredSlots[0]);
+                const slot2 = offeredSlots[1] ? formatTimeForSpanishSpeech(offeredSlots[1]) : null;
+                const slot3 = offeredSlots[2] ? formatTimeForSpanishSpeech(offeredSlots[2]) : null;
+
+                let optionsSpeech = `Lo siento ${escapedName}, ${formattedRequestedTime} ya está ocupado. `;
+                optionsSpeech += `Tenemos disponible: Para ${slot1}, presione 1 o diga uno. `;
+                if (slot2) optionsSpeech += `Para ${slot2}, presione 2 o diga dos. `;
+                if (slot3) optionsSpeech += `Para ${slot3}, presione 3 o diga tres. `;
+                if (req.session.has_more_slots) {
+                    optionsSpeech += `Para más horarios, presione 4 o diga más. `;
+                }
+                optionsSpeech += `O presione 0 para hablar con un especialista.`;
+
+                twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="dtmf speech" numDigits="1" timeout="10" speechTimeout="3" action="/voice/lina/select-slot?${xmlContextParams}" method="POST" language="es-MX" hints="uno, dos, tres, cuatro, más, especialista">
+        <Say voice="Polly.Lupe" language="es-MX">${optionsSpeech}</Say>
+    </Gather>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché su selección.</Say>
+    <Redirect>/voice/lina/offer-slots?${xmlContextParams}</Redirect>
+</Response>`;
+            }
+        }
+
+        res.type('text/xml');
+        res.send(twiml);
+
+    } catch (error) {
+        console.error('[VALIDATE-SLOT-ES] Error:', error);
+        const errorClientId = req.query.client_id || req.session?.client_id || '';
+        const errorBusinessName = req.query.business_name || req.session?.business_name || '';
+        const errorContextParams = `client_id=${errorClientId}&amp;business_name=${encodeURIComponent(errorBusinessName)}`;
+
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Lo siento, hubo un error. Déjeme transferirlo con un especialista.</Say>
+    <Redirect>/voice/lina/transfer-specialist?${errorContextParams}</Redirect>
+</Response>`;
+        res.type('text/xml');
+        res.send(twiml);
+    }
+});
+
+/**
+ * LEGACY: Collect date only (Spanish) - kept for backwards compatibility
  * After getting date, we check availability and offer time slots
  */
 router.post('/voice/lina/collect-date', async (req, res) => {
@@ -1262,7 +1525,7 @@ const handleBookAppointmentSpanish = async (req, res) => {
                 date: appointmentDate,
                 time: appointmentTime,
                 service: 'Cita',
-                notes: 'Agendado via Lina Voice AI (Spanish)',
+                notes: 'Agendado via Ana Voice AI (Spanish)',
                 source: 'voice_booking_spanish'
             });
 
