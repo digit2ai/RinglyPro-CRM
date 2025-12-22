@@ -20,6 +20,9 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, '../public')));
 
+// Serve all-in-one landing page (LaunchStack)
+app.use('/all-in-one', express.static(path.join(__dirname, '../all-in-one')));
+
 // Add session middleware for Rachel routes
 const session = require('express-session');
 app.use(session({

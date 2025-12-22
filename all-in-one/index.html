@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="All-in-One Business Formation Platform - LLC formation, banking, website, CRM, accounting, and growth tools in one place.">
+  <meta name="keywords" content="LLC formation, business formation, EIN, registered agent, startup, business tools">
+  <title>All-in-One Business Formation | LaunchStack by RinglyPro</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #6366f1;
+      --primary-light: #818cf8;
+      --primary-dark: #4f46e5;
+      --accent: #06b6d4;
+      --accent-green: #10b981;
+      --light-bg: #ffffff;
+      --light-section: #f8fafc;
+      --light-card: #ffffff;
+      --light-border: #e2e8f0;
+      --text-dark: #1e293b;
+      --text-gray: #64748b;
+      --text-muted: #94a3b8;
+      --gradient-1: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+      --gradient-2: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--light-bg);
+      color: var(--text-dark);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Navigation */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--light-border);
+      z-index: 1000;
+      padding: 16px 0;
+    }
+
+    .nav-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      text-decoration: none;
+    }
+
+    .nav-logo span {
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .nav-links a {
+      color: var(--text-gray);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+
+    .nav-cta {
+      background: var(--gradient-1);
+      color: white;
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .nav-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: var(--light-bg);
+      padding: 140px 0 100px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -200px;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -100px;
+      left: -100px;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 3.75rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 24px;
+      color: var(--text-dark);
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    .hero h1 span {
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-gray);
+      margin-bottom: 40px;
+      max-width: 650px;
+      margin-left: auto;
+      margin-right: auto;
+      animation: fadeInUp 0.6s ease-out 0.1s backwards;
+    }
+
+    .hero-cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: center;
+      animation: fadeInUp 0.6s ease-out 0.2s backwards;
+    }
+
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      margin-top: 60px;
+      animation: fadeInUp 0.6s ease-out 0.3s backwards;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-gray);
+      margin-top: 4px;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--gradient-1);
+      color: white;
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(99, 102, 241, 0.45);
+    }
+
+    .btn-secondary {
+      background: var(--light-bg);
+      color: var(--text-dark);
+      border: 2px solid var(--light-border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    /* Services Grid */
+    .services {
+      padding: 100px 0;
+      background: var(--light-section);
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .section-label {
+      display: inline-block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 800;
+      margin-bottom: 16px;
+      color: var(--text-dark);
+    }
+
+    .section-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-gray);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 24px;
+    }
+
+    .service-card {
+      background: var(--light-card);
+      border: 1px solid var(--light-border);
+      border-radius: 20px;
+      padding: 32px;
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .service-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--gradient-1);
+      transform: scaleX(0);
+      transition: transform 0.4s ease;
+    }
+
+    .service-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-lg);
+      border-color: transparent;
+    }
+
+    .service-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .service-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .service-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .service-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke: var(--primary);
+    }
+
+    .service-card h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--text-dark);
+    }
+
+    .service-card > p {
+      color: var(--text-gray);
+      font-size: 15px;
+      margin-bottom: 20px;
+    }
+
+    .service-card .check-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .service-card .check-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-gray);
+      font-size: 14px;
+    }
+
+    .service-card .check-list li::before {
+      content: '✓';
+      color: var(--accent-green);
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    /* Steps Section */
+    .steps {
+      padding: 100px 0;
+      background: var(--light-bg);
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 32px;
+      margin-top: 60px;
+    }
+
+    .step-card {
+      text-align: center;
+      position: relative;
+    }
+
+    .step-number {
+      width: 64px;
+      height: 64px;
+      background: var(--gradient-1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 800;
+      color: white;
+      margin: 0 auto 24px;
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
+    }
+
+    .step-card h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text-dark);
+    }
+
+    .step-card p {
+      color: var(--text-gray);
+      font-size: 15px;
+    }
+
+    /* Pricing Section */
+    .pricing {
+      padding: 100px 0;
+      background: var(--light-section);
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 24px;
+      margin-top: 60px;
+    }
+
+    .pricing-card {
+      background: var(--light-card);
+      border: 1px solid var(--light-border);
+      border-radius: 24px;
+      padding: 40px 32px;
+      position: relative;
+      transition: all 0.4s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .pricing-card.featured {
+      border-color: var(--primary);
+      transform: scale(1.02);
+      box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
+    }
+
+    .pricing-card.featured::before {
+      content: 'MOST POPULAR';
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gradient-1);
+      color: white;
+      padding: 6px 20px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .pricing-card.featured:hover {
+      transform: scale(1.02) translateY(-8px);
+    }
+
+    .pricing-header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--light-border);
+    }
+
+    .pricing-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text-dark);
+    }
+
+    .pricing-tokens {
+      display: inline-block;
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--primary);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .pricing-amount {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+
+    .pricing-amount span {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text-gray);
+    }
+
+    .pricing-features {
+      list-style: none;
+      margin-bottom: 32px;
+    }
+
+    .pricing-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      color: var(--text-gray);
+    }
+
+    .pricing-features li::before {
+      content: '✓';
+      color: var(--accent-green);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .pricing-features li strong {
+      color: var(--text-dark);
+    }
+
+    .pricing-card .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    /* Integrations */
+    .integrations {
+      padding: 80px 0;
+      background: var(--light-bg);
+      text-align: center;
+    }
+
+    .integrations h2 {
+      font-size: 1.5rem;
+      margin-bottom: 40px;
+      color: var(--text-gray);
+      font-weight: 600;
+    }
+
+    .integrations-logos {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .integration-logo {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 12px 20px;
+      background: var(--light-section);
+      border: 1px solid var(--light-border);
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .integration-logo:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.05);
+      transform: translateY(-2px);
+    }
+
+    /* CTA Section */
+    .cta {
+      padding: 100px 0;
+      background: var(--light-section);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .cta h2 {
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 800;
+      margin-bottom: 20px;
+      color: var(--text-dark);
+    }
+
+    .cta p {
+      color: var(--text-gray);
+      font-size: 1.1rem;
+      margin-bottom: 40px;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 60px 0 40px;
+      background: var(--text-dark);
+      color: white;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+
+    .footer-brand h3 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .footer-brand h3 span {
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .footer-brand p {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .footer-links h4 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+      color: white;
+    }
+
+    .footer-links ul {
+      list-style: none;
+    }
+
+    .footer-links li {
+      margin-bottom: 12px;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.3s ease;
+    }
+
+    .footer-links a:hover {
+      color: white;
+    }
+
+    .footer-bottom {
+      padding-top: 32px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-bottom p {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .footer-bottom a {
+      color: var(--primary-light);
+      text-decoration: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+
+      .mobile-menu-btn {
+        display: block;
+      }
+
+      .hero {
+        padding: 120px 0 80px;
+      }
+
+      .hero-stats {
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .services-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .service-card .check-list {
+        grid-template-columns: 1fr;
+      }
+
+      .services, .steps, .pricing {
+        padding: 60px 0;
+      }
+
+      .pricing-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pricing-card.featured {
+        transform: none;
+      }
+
+      .pricing-card.featured:hover {
+        transform: translateY(-8px);
+      }
+
+      .integrations-logos {
+        gap: 12px;
+      }
+
+      .integration-logo {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+
+      .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="container nav-content">
+      <a href="/all-in-one" class="nav-logo">
+        <span>LaunchStack</span>
+      </a>
+      <div class="nav-links">
+        <a href="#services">Services</a>
+        <a href="#pricing">Pricing</a>
+        <a href="https://ringlypro.com" target="_blank">RinglyPro</a>
+        <a href="https://aiagent.ringlypro.com" class="nav-cta">Get Started</a>
+      </div>
+      <button class="mobile-menu-btn">☰</button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <h1>All-in-One <span>Business Formation</span> Platform</h1>
+        <p class="hero-subtitle">
+          From LLC formation to website, accounting, and growth strategy — everything you need to start, run, and scale your business in one powerful platform.
+        </p>
+        <div class="hero-cta">
+          <a href="https://aiagent.ringlypro.com" class="btn btn-primary">
+            Start Free Today
+          </a>
+          <a href="#pricing" class="btn btn-secondary">View Pricing</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <div class="stat-number">500+</div>
+            <div class="stat-label">Businesses Launched</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">50K+</div>
+            <div class="stat-label">Tasks Automated</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">$2M+</div>
+            <div class="stat-label">Revenue Generated</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Section -->
+  <section class="services" id="services">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">Complete Solution</span>
+        <h2 class="section-title">Everything Your Business Needs</h2>
+        <p class="section-subtitle">
+          Stop juggling multiple tools. Get formation, operations, and growth in one integrated platform.
+        </p>
+      </div>
+
+      <div class="services-grid">
+        <div class="service-card">
+          <div class="service-header">
+            <div class="service-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+            </div>
+            <div>
+              <h3>Business Formation</h3>
+            </div>
+          </div>
+          <p>LLC or C-Corp formation with all legal documents handled for you.</p>
+          <ul class="check-list">
+            <li>LLC/C-Corp Registration</li>
+            <li>EIN Number (Tax ID)</li>
+            <li>Registered Agent Service</li>
+            <li>Operating Agreement</li>
+          </ul>
+        </div>
+
+        <div class="service-card">
+          <div class="service-header">
+            <div class="service-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+              </svg>
+            </div>
+            <div>
+              <h3>Banking & Payments</h3>
+            </div>
+          </div>
+          <p>Business bank account setup with integrated payment processing.</p>
+          <ul class="check-list">
+            <li>Business Bank Account</li>
+            <li>Payment Processing</li>
+            <li>Invoicing Tools</li>
+            <li>Financial Dashboard</li>
+          </ul>
+        </div>
+
+        <div class="service-card">
+          <div class="service-header">
+            <div class="service-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+              </svg>
+            </div>
+            <div>
+              <h3>Website & Domain</h3>
+            </div>
+          </div>
+          <p>Professional website with custom domain and business email.</p>
+          <ul class="check-list">
+            <li>Website Builder</li>
+            <li>Custom Domain Name</li>
+            <li>Business Email</li>
+            <li>SSL Security</li>
+          </ul>
+        </div>
+
+        <div class="service-card">
+          <div class="service-header">
+            <div class="service-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3>Operations & CRM</h3>
+            </div>
+          </div>
+          <p>Manage customers, projects, and daily operations effortlessly.</p>
+          <ul class="check-list">
+            <li>Customer Management</li>
+            <li>Task & Project Tracking</li>
+            <li>Appointment Scheduling</li>
+            <li>Team Collaboration</li>
+          </ul>
+        </div>
+
+        <div class="service-card">
+          <div class="service-header">
+            <div class="service-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V18zm2.498-6.75h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zm0 2.25h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V18zm2.504-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zm0 2.25h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V18zm2.498-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0012 2.25z" />
+              </svg>
+            </div>
+            <div>
+              <h3>Accounting & Taxes</h3>
+            </div>
+          </div>
+          <p>Bookkeeping, tax preparation, and financial compliance made easy.</p>
+          <ul class="check-list">
+            <li>Automated Bookkeeping</li>
+            <li>Expense Tracking</li>
+            <li>Tax Filing Preparation</li>
+            <li>Financial Reports</li>
+          </ul>
+        </div>
+
+        <div class="service-card">
+          <div class="service-header">
+            <div class="service-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+              </svg>
+            </div>
+            <div>
+              <h3>Growth & Strategy</h3>
+            </div>
+          </div>
+          <p>Expert guidance and tools to scale your business faster.</p>
+          <ul class="check-list">
+            <li>Business Advisor Access</li>
+            <li>Marketing Automation</li>
+            <li>Data-Driven Insights</li>
+            <li>Partner Perks ($350K+)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Steps Section -->
+  <section class="steps">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">How It Works</span>
+        <h2 class="section-title">Launch Your Business in 3 Steps</h2>
+        <p class="section-subtitle">
+          From idea to fully operational business — faster than you ever imagined.
+        </p>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h3>Choose Your Structure</h3>
+          <p>Select LLC or C-Corp. Pick your state. We handle all the paperwork and filing automatically.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h3>Set Up Operations</h3>
+          <p>Get your EIN, bank account, website, and business tools configured in minutes.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h3>Grow Your Business</h3>
+          <p>Use CRM, marketing automation, and expert guidance to scale fast.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Section -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">Simple Pricing</span>
+        <h2 class="section-title">Choose Your Plan</h2>
+        <p class="section-subtitle">
+          Token-based pricing. Pay only for what you use. No hidden fees.
+        </p>
+      </div>
+
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <div class="pricing-header">
+            <h3 class="pricing-name">Starter</h3>
+            <div class="pricing-tokens">500 tokens/month</div>
+            <div class="pricing-amount">$97 <span>/month</span></div>
+          </div>
+          <ul class="pricing-features">
+            <li><strong>LLC or C-Corp Formation</strong></li>
+            <li>EIN/Tax ID Registration</li>
+            <li>Operating Agreement Template</li>
+            <li>Compliance Alerts</li>
+            <li>24/7 Answering Service</li>
+            <li>Human-Like Voice Agent</li>
+            <li>Appointment Scheduling</li>
+            <li>SMS & Email Notifications</li>
+            <li>CRM Co-Pilot Access</li>
+            <li>Email Support</li>
+          </ul>
+          <a href="https://aiagent.ringlypro.com" class="btn btn-secondary">Get Started</a>
+        </div>
+
+        <div class="pricing-card featured">
+          <div class="pricing-header">
+            <h3 class="pricing-name">Growth</h3>
+            <div class="pricing-tokens">2,000 tokens/month</div>
+            <div class="pricing-amount">$297 <span>/month</span></div>
+          </div>
+          <ul class="pricing-features">
+            <li><strong>Everything in Starter</strong></li>
+            <li>Registered Agent (1 Year)</li>
+            <li>Business Website + Domain</li>
+            <li>CRM & Automation</li>
+            <li>Bookkeeping Dashboard</li>
+            <li>Business Collector (Lead Gen)</li>
+            <li>Outbound Calling Campaigns</li>
+            <li>Advanced Analytics</li>
+            <li>Token Rollover (up to 5,000)</li>
+            <li>Priority Support</li>
+          </ul>
+          <a href="https://aiagent.ringlypro.com" class="btn btn-primary">Start Growth Plan</a>
+        </div>
+
+        <div class="pricing-card">
+          <div class="pricing-header">
+            <h3 class="pricing-name">Professional</h3>
+            <div class="pricing-tokens">7,500 tokens/month</div>
+            <div class="pricing-amount">$497 <span>/month</span></div>
+          </div>
+          <ul class="pricing-features">
+            <li><strong>Everything in Growth</strong></li>
+            <li>Full-Service Bookkeeping</li>
+            <li>Tax Filing Preparation</li>
+            <li>Business Strategy Sessions</li>
+            <li>$350K+ Partner Perks</li>
+            <li>Marketing Automation</li>
+            <li>Email & SMS Campaigns</li>
+            <li>Unlimited Token Rollover</li>
+            <li>Dedicated Account Manager</li>
+            <li>24/7 Premium Support</li>
+          </ul>
+          <a href="https://aiagent.ringlypro.com" class="btn btn-secondary">Contact Sales</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Integrations -->
+  <section class="integrations">
+    <div class="container">
+      <h2>Integrates With Your Favorite Tools</h2>
+      <div class="integrations-logos">
+        <div class="integration-logo">Stripe</div>
+        <div class="integration-logo">QuickBooks</div>
+        <div class="integration-logo">Zapier</div>
+        <div class="integration-logo">Google</div>
+        <div class="integration-logo">GoHighLevel</div>
+        <div class="integration-logo">HubSpot</div>
+        <div class="integration-logo">Vagaro</div>
+        <div class="integration-logo">Zelle</div>
+        <div class="integration-logo">WhatsApp</div>
+        <div class="integration-logo">Jobber</div>
+        <div class="integration-logo">Slack</div>
+        <div class="integration-logo">Notion</div>
+        <div class="integration-logo">ElevenLabs</div>
+        <div class="integration-logo">OpenAI</div>
+        <div class="integration-logo">Anthropic</div>
+        <div class="integration-logo">GitHub</div>
+        <div class="integration-logo">Render</div>
+        <div class="integration-logo">PixelStudioCo</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta">
+    <div class="container">
+      <div class="cta-content">
+        <h2>Ready to Launch Your Business?</h2>
+        <p>
+          Join thousands of entrepreneurs who started their companies with our all-in-one platform. No credit card required.
+        </p>
+        <a href="https://aiagent.ringlypro.com" class="btn btn-primary">
+          Start Free Today
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3><span>LaunchStack</span></h3>
+          <p>The all-in-one platform for business formation, operations, and growth. From LLC setup to scaling your company — we've got you covered.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="https://ringlypro.com" target="_blank">RinglyPro</a></li>
+            <li><a href="https://ordergopro.com" target="_blank">OrderGoPro</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="https://ringlypro.com/about">About</a></li>
+            <li><a href="https://ringlypro.com/docs">Documentation</a></li>
+            <li><a href="https://ringlypro.com/support">Support</a></li>
+            <li><a href="mailto:support@ringlypro.com">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="https://ringlypro.com/privacy">Privacy Policy</a></li>
+            <li><a href="https://ringlypro.com/terms">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 LaunchStack. A service of <a href="https://ringlypro.com" target="_blank">Digit2ai LLC</a>. All rights reserved.</p>
+        <p>(813) 212-4888 · support@ringlypro.com</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
