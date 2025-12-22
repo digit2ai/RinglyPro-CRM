@@ -22,6 +22,19 @@ class MultiTenantRachelService {
     }
 
     /**
+     * Build query params string for client context preservation
+     * Twilio doesn't preserve sessions between webhook calls, so we pass context via URL params
+     * @param {Object} session - Express session object
+     * @returns {string} Query params string
+     */
+    buildContextParams(session) {
+        const clientId = session.client_id || '';
+        const businessName = encodeURIComponent(session.business_name || 'this business');
+        const userId = session.user_id || '';
+        return `client_id=${clientId}&business_name=${businessName}&user_id=${userId}`;
+    }
+
+    /**
      * Handle incoming call with client identification
      * @param {Object} requestBody - Twilio webhook request body
      * @param {Object} session - Express session object
@@ -132,19 +145,23 @@ class MultiTenantRachelService {
         const twiml = new twilio.twiml.VoiceResponse();
 
         // Bilingual greeting: Introduce as Lina with warm, empathetic tone
-        const bilingualGreeting = `Hello! Thank you for calling ${clientInfo.business_name}. My name is Lina, and I'm here to assist you. <break time="1s"/> For English, please press 1. <break time="0.8s"/> Para español, presione 2.`;
+        // Updated to support both DTMF and speech input for language selection
+        const bilingualGreeting = `Hello! Thank you for calling ${clientInfo.business_name}. My name is Lina, and I'm here to assist you. <break time="1s"/> For English, press 1 or say English. <break time="0.8s"/> Para español, presione 2 o diga español.`;
 
         // Build context params for Twilio callback (Twilio doesn't preserve sessions between webhooks)
         const contextParams = `client_id=${clientInfo.client_id}&business_name=${encodeURIComponent(clientInfo.business_name || '')}`;
 
-        // Create gather for language selection (DTMF keypad input)
+        // Create gather for language selection (DTMF keypad + speech input)
         const gather = twiml.gather({
-            input: 'dtmf',
+            input: 'dtmf speech',
             numDigits: 1,
             timeout: 8,  // Increased from 3 to 8 seconds to give callers more time to decide
             finishOnKey: '',  // Don't wait for # key
             action: `/voice/rachel/select-language?${contextParams}`,
-            method: 'POST'
+            method: 'POST',
+            speechTimeout: 'auto',
+            language: 'en-US',  // Primary language for speech recognition
+            hints: 'English, Spanish, Inglés, Español, one, two, uno, dos'  // Speech recognition hints
         });
 
         // Try to use Rachel's voice for bilingual greeting
@@ -319,7 +336,8 @@ class MultiTenantRachelService {
     async handleBookingRequest(speechResult, session) {
         const twiml = new twilio.twiml.VoiceResponse();
         const businessName = session.business_name || 'this business';
-        
+        const contextParams = this.buildContextParams(session);
+
         const bookingText = `
             Great! I'd be happy to help you book an appointment with ${businessName}.
             <break time="0.5s"/>
@@ -327,23 +345,23 @@ class MultiTenantRachelService {
             <break time="0.5s"/>
             Can you please tell me your first name?
         `;
-        
+
         const gather = twiml.gather({
             input: 'speech',
             timeout: 12,  // Increased from 10 to 12 seconds
-            action: '/voice/rachel/collect-name',
+            action: `/voice/rachel/collect-name?${contextParams}`,
             method: 'POST',
             speechTimeout: 3,  // Changed from 'auto' to 3 seconds for more consistent detection
             language: 'en-US'
         });
-        
+
         const audioUrl = await this.generateRachelAudio(bookingText);
         if (audioUrl) {
             gather.play(audioUrl);
         } else {
             gather.say(bookingText, { voice: 'Polly.Joanna' });
         }
-        
+
         return twiml.toString();
     }
 

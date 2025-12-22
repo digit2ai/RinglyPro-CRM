@@ -79,8 +79,30 @@ router.post('/voice/rachel/process-speech', async (req, res) => {
 router.post('/voice/rachel/collect-name', async (req, res) => {
     try {
         const name = req.body.SpeechResult || '';
+
+        // Restore context from query params (Twilio doesn't preserve sessions between webhooks)
+        const clientIdFromQuery = req.query.client_id;
+        const businessNameFromQuery = req.query.business_name;
+        const userIdFromQuery = req.query.user_id;
+
+        if (clientIdFromQuery) {
+            const parsedClientId = parseInt(clientIdFromQuery, 10);
+            if (!isNaN(parsedClientId)) {
+                req.session.client_id = parsedClientId;
+            }
+        }
+        if (businessNameFromQuery) {
+            req.session.business_name = decodeURIComponent(businessNameFromQuery);
+        }
+        if (userIdFromQuery) {
+            req.session.user_id = userIdFromQuery;
+        }
+
         const clientId = req.session.client_id;
         const businessName = req.session.business_name || 'this business';
+
+        // Build context params for subsequent redirects
+        const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${req.session.user_id || ''}`;
 
         console.log(`📝 Name collected for client ${clientId}: ${name}`);
 
@@ -109,14 +131,17 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
 
         const audioUrl = await rachelService.generateRachelAudio(phonePrompt);
 
+        // XML-safe context params (escape & as &amp;)
+        const xmlContextParams = contextParams.replace(/&/g, '&amp;');
+
         if (audioUrl) {
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech dtmf" timeout="12" speechTimeout="3" numDigits="10" action="/voice/rachel/collect-phone" method="POST" language="en-US">
+    <Gather input="speech dtmf" timeout="12" speechTimeout="3" numDigits="10" action="/voice/rachel/collect-phone?${xmlContextParams}" method="POST" language="en-US">
         <Play>${audioUrl}</Play>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
-    <Redirect>/voice/rachel/collect-name</Redirect>
+    <Redirect>/voice/rachel/collect-name?${xmlContextParams}</Redirect>
 </Response>`;
             res.set('Content-Type', 'text/xml; charset=utf-8');
             res.send(twiml);
@@ -124,11 +149,11 @@ router.post('/voice/rachel/collect-name', async (req, res) => {
             // Fallback to Polly
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech dtmf" timeout="12" speechTimeout="3" numDigits="10" action="/voice/rachel/collect-phone" method="POST" language="en-US">
+    <Gather input="speech dtmf" timeout="12" speechTimeout="3" numDigits="10" action="/voice/rachel/collect-phone?${xmlContextParams}" method="POST" language="en-US">
         <Say voice="Polly.Joanna">Thank you ${escapedName}. Can you please provide your phone number so we can send you a confirmation?</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
-    <Redirect>/voice/rachel/collect-name</Redirect>
+    <Redirect>/voice/rachel/collect-name?${xmlContextParams}</Redirect>
 </Response>`;
             res.set('Content-Type', 'text/xml; charset=utf-8');
             res.send(twiml);
@@ -157,9 +182,31 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
     try {
         const digits = req.body.Digits || '';  // DTMF keypad input
         const speechResult = req.body.SpeechResult || '';  // Voice input
+
+        // Restore context from query params (Twilio doesn't preserve sessions between webhooks)
+        const clientIdFromQuery = req.query.client_id;
+        const businessNameFromQuery = req.query.business_name;
+        const userIdFromQuery = req.query.user_id;
+
+        if (clientIdFromQuery) {
+            const parsedClientId = parseInt(clientIdFromQuery, 10);
+            if (!isNaN(parsedClientId)) {
+                req.session.client_id = parsedClientId;
+            }
+        }
+        if (businessNameFromQuery) {
+            req.session.business_name = decodeURIComponent(businessNameFromQuery);
+        }
+        if (userIdFromQuery) {
+            req.session.user_id = userIdFromQuery;
+        }
+
         const clientId = req.session.client_id;
         const prospectName = req.session.prospect_name;
         const businessName = req.session.business_name || 'this business';
+
+        // Build context params for subsequent redirects
+        const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${req.session.user_id || ''}`;
 
         let normalizedPhone;
 
@@ -205,14 +252,17 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
 
         const audioUrl = await rachelService.generateRachelAudio(datePrompt);
 
+        // XML-safe context params (escape & as &amp;)
+        const xmlContextParams = contextParams.replace(/&/g, '&amp;');
+
         if (audioUrl) {
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-date" method="POST" language="en-US">
+    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-date?${xmlContextParams}" method="POST" language="en-US">
         <Play>${audioUrl}</Play>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
-    <Redirect>/voice/rachel/collect-phone</Redirect>
+    <Redirect>/voice/rachel/collect-phone?${xmlContextParams}</Redirect>
 </Response>`;
             console.log('📤 Sending TwiML from collect-phone with Rachel premium voice');
             res.set('Content-Type', 'text/xml; charset=utf-8');
@@ -221,11 +271,11 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
             // Fallback to Polly
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-date" method="POST" language="en-US">
+    <Gather input="speech" timeout="12" speechTimeout="3" action="/voice/rachel/collect-date?${xmlContextParams}" method="POST" language="en-US">
         <Say voice="Polly.Joanna">Perfect ${escapedName}. Give me a minute to check our calendar. What date would you like to schedule your appointment? For example, you can say tomorrow, or Friday, or December 20th.</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't catch that. Let me try again.</Say>
-    <Redirect>/voice/rachel/collect-phone</Redirect>
+    <Redirect>/voice/rachel/collect-phone?${xmlContextParams}</Redirect>
 </Response>`;
             console.log('📤 Sending TwiML from collect-phone (fallback to Polly)');
             res.set('Content-Type', 'text/xml; charset=utf-8');
@@ -255,9 +305,32 @@ router.post('/voice/rachel/collect-phone', async (req, res) => {
 router.post('/voice/rachel/collect-date', async (req, res) => {
     try {
         const dateInput = req.body.SpeechResult || '';
+
+        // Restore context from query params (Twilio doesn't preserve sessions between webhooks)
+        const clientIdFromQuery = req.query.client_id;
+        const businessNameFromQuery = req.query.business_name;
+        const userIdFromQuery = req.query.user_id;
+
+        if (clientIdFromQuery) {
+            const parsedClientId = parseInt(clientIdFromQuery, 10);
+            if (!isNaN(parsedClientId)) {
+                req.session.client_id = parsedClientId;
+            }
+        }
+        if (businessNameFromQuery) {
+            req.session.business_name = decodeURIComponent(businessNameFromQuery);
+        }
+        if (userIdFromQuery) {
+            req.session.user_id = userIdFromQuery;
+        }
+
         const clientId = req.session.client_id;
         const prospectName = req.session.prospect_name;
         const businessName = req.session.business_name || 'this business';
+
+        // Build context params for subsequent redirects
+        const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${req.session.user_id || ''}`;
+        const xmlContextParams = contextParams.replace(/&/g, '&amp;');
 
         console.log(`📅 [SLOT-FLOW] Date input for client ${clientId}: "${dateInput}"`);
 
@@ -321,7 +394,7 @@ router.post('/voice/rachel/collect-date', async (req, res) => {
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="Polly.Joanna">Let me check our available times for ${dateInput}.</Say>
-    <Redirect>/voice/rachel/offer-slots</Redirect>
+    <Redirect>/voice/rachel/offer-slots?${xmlContextParams}</Redirect>
 </Response>`;
 
         res.set('Content-Type', 'text/xml; charset=utf-8');
@@ -329,10 +402,16 @@ router.post('/voice/rachel/collect-date', async (req, res) => {
 
     } catch (error) {
         console.error('[SLOT-FLOW] Error collecting date:', error);
+        // Build error context params
+        const errorClientId = req.query.client_id || req.session?.client_id || '';
+        const errorBusinessName = req.query.business_name || req.session?.business_name || '';
+        const errorUserId = req.query.user_id || req.session?.user_id || '';
+        const errorContextParams = `client_id=${errorClientId}&amp;business_name=${encodeURIComponent(errorBusinessName)}&amp;user_id=${errorUserId}`;
+
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="Polly.Joanna">I'm sorry, I had trouble understanding the date. Let me try again.</Say>
-    <Redirect>/voice/rachel/collect-phone</Redirect>
+    <Redirect>/voice/rachel/collect-phone?${errorContextParams}</Redirect>
 </Response>`;
         res.type('text/xml');
         res.send(twiml);
@@ -345,11 +424,33 @@ router.post('/voice/rachel/collect-date', async (req, res) => {
  */
 router.post('/voice/rachel/offer-slots', async (req, res) => {
     try {
+        // Restore context from query params (Twilio doesn't preserve sessions between webhooks)
+        const clientIdFromQuery = req.query.client_id;
+        const businessNameFromQuery = req.query.business_name;
+        const userIdFromQuery = req.query.user_id;
+
+        if (clientIdFromQuery) {
+            const parsedClientId = parseInt(clientIdFromQuery, 10);
+            if (!isNaN(parsedClientId)) {
+                req.session.client_id = parsedClientId;
+            }
+        }
+        if (businessNameFromQuery) {
+            req.session.business_name = decodeURIComponent(businessNameFromQuery);
+        }
+        if (userIdFromQuery) {
+            req.session.user_id = userIdFromQuery;
+        }
+
         const clientId = req.session.client_id;
         const prospectName = req.session.prospect_name;
         const appointmentDate = req.session.appointment_date;
         const slotOffset = req.session.slot_offset || 0;
         const businessName = req.session.business_name || 'this business';
+
+        // Build context params for subsequent redirects
+        const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${req.session.user_id || ''}`;
+        const xmlContextParams = contextParams.replace(/&/g, '&amp;');
 
         console.log(`🔍 [SLOT-FLOW] Checking availability for client ${clientId}, date ${appointmentDate}, offset ${slotOffset}`);
 
@@ -402,11 +503,11 @@ router.post('/voice/rachel/offer-slots', async (req, res) => {
                 console.log(`❌ [SLOT-FLOW] No availability for ${appointmentDate}`);
                 twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/rachel/collect-date" method="POST" language="en-US">
+    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/rachel/collect-date?${xmlContextParams}" method="POST" language="en-US">
         <Say voice="Polly.Joanna">I'm sorry ${escapedName}, we don't have any available appointments for that date. Would you like to try a different date? Please tell me another date you'd prefer.</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't hear a response. Let me transfer you to a specialist who can help.</Say>
-    <Redirect>/voice/rachel/transfer-specialist</Redirect>
+    <Redirect>/voice/rachel/transfer-specialist?${xmlContextParams}</Redirect>
 </Response>`;
             } else {
                 // We've shown all slots and user rejected them all
@@ -414,7 +515,7 @@ router.post('/voice/rachel/offer-slots', async (req, res) => {
                 twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="Polly.Joanna">I'm sorry ${escapedName}, those were all our available times for that day. Let me transfer you to a specialist who can check other options for you.</Say>
-    <Redirect>/voice/rachel/transfer-specialist</Redirect>
+    <Redirect>/voice/rachel/transfer-specialist?${xmlContextParams}</Redirect>
 </Response>`;
             }
         } else {
@@ -437,11 +538,11 @@ router.post('/voice/rachel/offer-slots', async (req, res) => {
 
             twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf" numDigits="1" timeout="10" action="/voice/rachel/select-slot" method="POST">
+    <Gather input="dtmf" numDigits="1" timeout="10" action="/voice/rachel/select-slot?${xmlContextParams}" method="POST">
         <Say voice="Polly.Joanna">${escapedName}, I have the following times available. ${optionsSpeech}</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't receive a selection. Let me repeat the options.</Say>
-    <Redirect>/voice/rachel/offer-slots</Redirect>
+    <Redirect>/voice/rachel/offer-slots?${xmlContextParams}</Redirect>
 </Response>`;
         }
 
@@ -1064,7 +1165,40 @@ router.post('/voice/rachel/handle-pricing-response', async (req, res) => {
 router.post('/voice/rachel/select-language', async (req, res) => {
     try {
         const digits = req.body.Digits || '';
-        console.log(`🌍 Language selected: ${digits === '1' ? 'English' : digits === '2' ? 'Spanish' : 'Unknown'}`);
+        const speechResult = (req.body.SpeechResult || '').toLowerCase().trim();
+
+        // Determine language from DTMF or speech input
+        let selectedLanguage = null;
+
+        // Check DTMF first
+        if (digits === '1') {
+            selectedLanguage = 'en';
+        } else if (digits === '2') {
+            selectedLanguage = 'es';
+        }
+
+        // Check speech input if no DTMF
+        if (!selectedLanguage && speechResult) {
+            // English keywords
+            const englishKeywords = ['english', 'inglés', 'ingles', 'one', '1'];
+            // Spanish keywords
+            const spanishKeywords = ['spanish', 'español', 'espanol', 'two', 'dos', '2'];
+
+            if (englishKeywords.some(keyword => speechResult.includes(keyword))) {
+                selectedLanguage = 'en';
+            } else if (spanishKeywords.some(keyword => speechResult.includes(keyword))) {
+                selectedLanguage = 'es';
+            }
+        }
+
+        // Default to English if no valid selection
+        if (!selectedLanguage) {
+            selectedLanguage = 'en';
+        }
+
+        const languageLabel = selectedLanguage === 'en' ? 'English' : 'Spanish';
+        const inputMethod = digits ? `DTMF: ${digits}` : speechResult ? `Speech: "${speechResult}"` : 'Default';
+        console.log(`🌍 Language selected: ${languageLabel} (${inputMethod})`);
 
         // Restore context from query params (Twilio doesn't preserve sessions between webhooks)
         const clientIdFromQuery = req.query.client_id;
@@ -1082,7 +1216,7 @@ router.post('/voice/rachel/select-language', async (req, res) => {
         }
 
         // Store language preference in session
-        req.session.language = digits === '1' ? 'en' : digits === '2' ? 'es' : 'en';
+        req.session.language = selectedLanguage;
 
         // ============= DEDUCT TOKEN FOR LINA AI CALL =============
         // Deduct 1 token when user selects a language (call is being handled)
@@ -1122,10 +1256,10 @@ router.post('/voice/rachel/select-language', async (req, res) => {
         const businessName = req.session.business_name || '';
         const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}`;
 
-        if (digits === '1') {
+        if (selectedLanguage === 'en') {
             // English - Continue with Rachel (include context params for safety)
             res.redirect(307, `/voice/rachel/incoming?lang=en&${contextParams}`);
-        } else if (digits === '2') {
+        } else if (selectedLanguage === 'es') {
             // Spanish - Redirect to V2 Lina flow (rebuilt from scratch)
             // All context via query params - NO session dependency
             console.log('🇪🇸 Spanish selected - redirecting to Lina V2 flow');
@@ -1162,8 +1296,8 @@ router.post('/voice/rachel/select-language', async (req, res) => {
             res.type('text/xml');
             return res.send(twiml);
         } else {
-            // Invalid input - default to English
-            console.warn(`⚠️ Invalid language selection: ${digits}, defaulting to English`);
+            // Fallback - default to English (shouldn't reach here with new logic)
+            console.warn(`⚠️ Unexpected language selection fallback, defaulting to English`);
             res.redirect(307, `/voice/rachel/incoming?lang=en&${contextParams}`);
         }
 
