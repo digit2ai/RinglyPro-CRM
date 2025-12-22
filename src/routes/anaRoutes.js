@@ -1026,7 +1026,7 @@ async function createSpanishIVRMenu(client, anaService) {
 
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/ana/ivr-selection?lang=es" method="POST" speechTimeout="3" language="es-MX" hints="${speechHints}">
+    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/ana/ivr-selection?${contextParams}" method="POST" speechTimeout="3" language="es-MX" hints="${speechHints}">
         <Say voice="Polly.Lupe" language="es-MX">${menuText}</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No entendí bien. Permítame repetir las opciones.</Say>
