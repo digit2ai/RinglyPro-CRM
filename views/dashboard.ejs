@@ -3774,6 +3774,7 @@
                 };
 
                 // Determine if appointment needs confirmation (not yet confirmed by client)
+                // Only show Confirm button if not yet confirmed - hide completely once confirmed
                 const needsConfirmation = status !== 'confirmed';
                 const confirmButtonHtml = needsConfirmation
                     ? `<button class="btn-confirm-apt" onclick="confirmAppointment(${aptId}, '${name.replace(/'/g, "\\'")}')">
@@ -3782,12 +3783,7 @@
                             </svg>
                             Confirm
                         </button>`
-                    : `<button class="btn-confirm-apt confirmed" disabled>
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            Confirmed
-                        </button>`;
+                    : ''; // Don't show any button once confirmed
 
                 return `
                 <div class="appointment-card" id="appointment-card-${aptId}">
@@ -4401,19 +4397,12 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    // Update the button in the UI to show "Confirmed"
+                    // Hide the confirm button after successful confirmation
                     const card = document.getElementById(`appointment-card-${appointmentId}`);
                     if (card) {
                         const confirmBtn = card.querySelector('.btn-confirm-apt');
                         if (confirmBtn) {
-                            confirmBtn.classList.add('confirmed');
-                            confirmBtn.disabled = true;
-                            confirmBtn.innerHTML = `
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                Confirmed
-                            `;
+                            confirmBtn.remove(); // Remove the button completely
                         }
                     }
                     // Show success message
