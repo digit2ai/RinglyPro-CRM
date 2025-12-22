@@ -370,51 +370,63 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Cancel appointment FOR THIS CLIENT
+// Delete appointment FOR THIS CLIENT (permanent deletion from database)
 router.delete('/:id', async (req, res) => {
   try {
     const { reason } = req.body;
-    
+
     const appointment = await Appointment.findOne({
       where: {
         id: req.params.id,
         clientId: req.clientId
       }
     });
-    
+
     if (!appointment) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        error: 'Appointment not found' 
+        error: 'Appointment not found'
       });
     }
-    
-    await appointment.update({ status: 'cancelled' });
-    
-    console.log(`✅ Client ${req.clientId}: Cancelled appointment ${appointment.id}`);
-    
+
+    // Store appointment data before deletion for SMS notification
+    const appointmentData = {
+      id: appointment.id,
+      customerName: appointment.customerName,
+      customerPhone: appointment.customerPhone,
+      appointmentDate: appointment.appointmentDate,
+      appointmentTime: appointment.appointmentTime,
+      confirmationCode: appointment.confirmationCode
+    };
+
+    // Permanently delete the appointment from the database
+    await appointment.destroy();
+
+    console.log(`🗑️ Client ${req.clientId}: DELETED appointment ${appointmentData.id} for ${appointmentData.customerName} permanently`);
+
+    // Send cancellation SMS to notify customer
     let smsResult = null;
     try {
       smsResult = await sendAppointmentCancellationSMS({
-        appointmentId: appointment.id,
-        customerPhone: appointment.customerPhone,
-        customerName: appointment.customerName,
-        appointmentDate: appointment.appointmentDate,
-        appointmentTime: appointment.appointmentTime,
-        confirmationCode: appointment.confirmationCode,
+        appointmentId: appointmentData.id,
+        customerPhone: appointmentData.customerPhone,
+        customerName: appointmentData.customerName,
+        appointmentDate: appointmentData.appointmentDate,
+        appointmentTime: appointmentData.appointmentTime,
+        confirmationCode: appointmentData.confirmationCode,
         reason: reason || 'scheduling conflict'
       });
     } catch (smsError) {
       console.error(`⚠️ Failed to send cancellation SMS:`, smsError.message);
     }
-    
+
     res.json({
       success: true,
-      message: 'Appointment cancelled successfully',
+      message: 'Appointment deleted permanently',
       appointment: {
-        id: appointment.id,
-        customerName: appointment.customerName,
-        status: appointment.status
+        id: appointmentData.id,
+        customerName: appointmentData.customerName,
+        deleted: true
       },
       smsNotification: smsResult ? {
         sent: true,
@@ -422,12 +434,12 @@ router.delete('/:id', async (req, res) => {
         twilioSid: smsResult.twilioSid
       } : { sent: false }
     });
-    
+
   } catch (error) {
-    console.error('❌ Error cancelling appointment:', error);
-    res.status(500).json({ 
+    console.error('❌ Error deleting appointment:', error);
+    res.status(500).json({
       success: false,
-      error: error.message 
+      error: error.message
     });
   }
 });
