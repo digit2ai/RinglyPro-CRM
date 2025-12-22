@@ -675,12 +675,18 @@ router.post('/voice/rachel/select-slot', async (req, res) => {
 </Response>`;
             }
         } else {
-            // Invalid input
-            console.log(`❓ [SLOT-FLOW] Invalid digit: ${digit}`);
+            // Invalid or unrecognized input - retry with context
+            const inputInfo = digits ? `DTMF: ${digits}` : speechResult ? `Speech: "${speechResult}"` : 'None';
+            console.log(`❓ [SLOT-FLOW] Unclear input: ${digit || 'none'} (${inputInfo}) - retrying`);
+
+            // Build context params for retry
+            const retryContextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${req.session.user_id || ''}`;
+            const xmlRetryParams = retryContextParams.replace(/&/g, '&amp;');
+
             twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="Polly.Joanna">I didn't understand that selection. Let me repeat the options.</Say>
-    <Redirect>/voice/rachel/offer-slots</Redirect>
+    <Say voice="Polly.Joanna">I didn't quite catch that. Let me repeat your options.</Say>
+    <Redirect>/voice/rachel/offer-slots?${xmlRetryParams}</Redirect>
 </Response>`;
         }
 
@@ -1392,19 +1398,28 @@ async function createIVRMenu(client, language = 'en') {
     // For English, try to use Rachel's premium voice
     const speechLang = language === 'en' ? 'en-US' : 'es-MX';
 
+    // Build context params for retry redirect
+    const contextParams = `client_id=${client.id}&amp;business_name=${encodeURIComponent(businessName)}&amp;lang=${language}`;
+
+    // Retry message for unclear input
+    const retryMsg = language === 'en'
+        ? "I didn't quite catch that. Let me repeat your options."
+        : "No entendí bien. Permítame repetir las opciones.";
+
     if (language === 'en') {
         console.log(`🎙️ Generating Rachel premium voice for IVR menu: "${menuText.substring(0, 50)}..."`);
         const audioUrl = await rachelService.generateRachelAudio(menuText);
 
         if (audioUrl) {
             // Use premium Rachel voice with speech + DTMF input
+            // Increased timeout to 10s and speechTimeout to 3s for noise tolerance
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf speech" numDigits="1" timeout="8" action="/voice/rachel/ivr-selection?lang=${language}" method="POST" speechTimeout="auto" language="${speechLang}" hints="${speechHints}">
+    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/rachel/ivr-selection?lang=${language}" method="POST" speechTimeout="3" language="${speechLang}" hints="${speechHints}">
         <Play>${audioUrl}</Play>
     </Gather>
-    <Say voice="Polly.Joanna">I didn't receive a selection. Goodbye.</Say>
-    <Hangup/>
+    <Say voice="Polly.Joanna">${retryMsg}</Say>
+    <Redirect method="POST">/voice/rachel/ivr-menu?${contextParams}</Redirect>
 </Response>`;
             console.log(`✅ IVR Menu created with Rachel premium voice for ${businessName}: ${enabledDepts.length} departments, URL: ${audioUrl}`);
             return twiml;
@@ -1417,16 +1432,68 @@ async function createIVRMenu(client, language = 'en') {
     const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf speech" numDigits="1" timeout="8" action="/voice/rachel/ivr-selection?lang=${language}" method="POST" speechTimeout="auto" language="${speechLang}" hints="${speechHints}">
+    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/rachel/ivr-selection?lang=${language}" method="POST" speechTimeout="3" language="${speechLang}" hints="${speechHints}">
         <Say voice="${voice}">${menuText}</Say>
     </Gather>
-    <Say voice="${voice}">${language === 'en' ? "I didn't receive a selection. Goodbye." : "No recibí una selección. Adiós."}</Say>
-    <Hangup/>
+    <Say voice="${voice}">${retryMsg}</Say>
+    <Redirect method="POST">/voice/rachel/ivr-menu?${contextParams}</Redirect>
 </Response>`;
 
     console.log(`📋 IVR Menu created for ${businessName} (${language}): ${enabledDepts.length} departments`);
     return twiml;
 }
+
+/**
+ * IVR Menu endpoint - used for retries when input is unclear
+ * Loads client from query params and generates IVR menu
+ */
+router.post('/voice/rachel/ivr-menu', async (req, res) => {
+    try {
+        const clientId = req.query.client_id;
+        const language = req.query.lang || 'en';
+
+        if (!clientId) {
+            const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="${voice}">${language === 'en' ? 'Session expired. Please call back.' : 'La sesión ha expirado. Por favor llame de nuevo.'}</Say>
+    <Hangup/>
+</Response>`;
+            res.type('text/xml');
+            return res.send(twiml);
+        }
+
+        const { Client } = require('../models');
+        const client = await Client.findByPk(clientId);
+
+        if (!client) {
+            const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="${voice}">${language === 'en' ? 'I\'m sorry, there was an error. Please call back.' : 'Lo siento, hubo un error. Por favor llame de nuevo.'}</Say>
+    <Hangup/>
+</Response>`;
+            res.type('text/xml');
+            return res.send(twiml);
+        }
+
+        // Generate and return IVR menu
+        const twiml = await createIVRMenu(client, language);
+        res.type('text/xml');
+        res.send(twiml);
+
+    } catch (error) {
+        console.error('Error generating IVR menu:', error);
+        const voice = req.query.lang === 'es' ? 'Polly.Lupe' : 'Polly.Joanna';
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="${voice}">I'm sorry, there was an error. Please try calling again.</Say>
+    <Hangup/>
+</Response>`;
+        res.type('text/xml');
+        res.send(twiml);
+    }
+});
 
 /**
  * Handle IVR menu selection via DTMF or speech
@@ -1708,17 +1775,23 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
                 res.type('text/xml');
                 return res.send(twiml);
             } else {
-                // Invalid selection
-                console.log(`❌ Invalid IVR selection: ${digit}`);
+                // Invalid or unrecognized selection - retry instead of hanging up
+                const inputInfo = digits ? `DTMF: ${digits}` : speechResult ? `Speech: "${speechResult}"` : 'None';
+                console.log(`⚠️ Unclear IVR selection: ${digit || 'none'} (${inputInfo}) - retrying`);
+
                 const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
-                const errorMsg = language === 'en'
-                    ? 'Invalid selection. Goodbye.'
-                    : 'Selección inválida. Adiós.';
+                const retryMsg = language === 'en'
+                    ? "I didn't quite understand that. Let me give you the options again."
+                    : "No entendí bien. Permítame repetir las opciones.";
+
+                // Build context params for retry redirect
+                const retryContextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&lang=${language}`;
+                const xmlRetryParams = retryContextParams.replace(/&/g, '&amp;');
 
                 const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="${voice}">${errorMsg}</Say>
-    <Hangup/>
+    <Say voice="${voice}">${retryMsg}</Say>
+    <Redirect method="POST">/voice/rachel/ivr-menu?${xmlRetryParams}</Redirect>
 </Response>`;
 
                 res.type('text/xml');
