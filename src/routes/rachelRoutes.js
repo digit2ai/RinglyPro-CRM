@@ -1286,9 +1286,9 @@ router.post('/voice/rachel/select-language', async (req, res) => {
             // English - Continue with Rachel (include context params for safety)
             res.redirect(307, `/voice/rachel/incoming?lang=en&${contextParams}`);
         } else if (selectedLanguage === 'es') {
-            // Spanish - Redirect to V2 Lina flow (rebuilt from scratch)
+            // Spanish - Redirect to Ana flow (new Spanish agent, mirrors Rachel exactly)
             // All context via query params - NO session dependency
-            console.log('🇪🇸 Spanish selected - redirecting to Lina V2 flow');
+            console.log('🇪🇸 Spanish selected - redirecting to Ana flow');
 
             const userId = req.session.user_id || '';
             const spanishBusinessName = businessName || 'nuestra empresa';
@@ -1305,11 +1305,11 @@ router.post('/voice/rachel/select-language', async (req, res) => {
                 return res.send(twiml);
             }
 
-            // Use TwiML Redirect to V2 Spanish flow
+            // Use TwiML Redirect to Ana Spanish flow
             // IMPORTANT: Twilio requires absolute URL for reliable redirects
             // IMPORTANT: Must escape & as &amp; for valid XML
             const baseUrl = process.env.WEBHOOK_BASE_URL || 'https://ringlypro-crm.onrender.com';
-            const absoluteRedirectUrl = `${baseUrl}/voice/lina-v2/greeting?${spanishContextParams}`;
+            const absoluteRedirectUrl = `${baseUrl}/voice/ana/greeting?${spanishContextParams}`;
             // Escape & for XML (query string separators)
             const xmlSafeUrl = absoluteRedirectUrl.replace(/&/g, '&amp;');
 
@@ -1318,7 +1318,7 @@ router.post('/voice/rachel/select-language', async (req, res) => {
     <Redirect method="POST">${xmlSafeUrl}</Redirect>
 </Response>`;
 
-            console.log(`✅ Redirecting to ${absoluteRedirectUrl}`);
+            console.log(`✅ Redirecting to Ana: ${absoluteRedirectUrl}`);
             res.type('text/xml');
             return res.send(twiml);
         } else {

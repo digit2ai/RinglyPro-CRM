@@ -59,6 +59,7 @@ const voiceBotRoutes = require('./routes/voiceBot');
 const creditRoutes = require('./routes/credits'); // Credit system routes
 const voiceWebhookRouter = require('./routes/voiceWebhook'); // Rachel voice routes
 const rachelRoutes = require('./routes/rachelRoutes'); // Multi-tenant Rachel routes (English)
+const anaRoutes = require('./routes/anaRoutes'); // Spanish voice routes (Ana) - mirrors Rachel exactly
 const linaRoutes = require('./routes/linaRoutes'); // Spanish voice routes (Lina) - legacy
 const linaNewRoutes = require('./routes/linaNewRoutes'); // New Spanish voice routes (stateless)
 const linaRoutesV2 = require('./routes/linaRoutesV2'); // Spanish V2 - rebuilt from scratch
@@ -343,9 +344,13 @@ app.use('/webhook', conditionalForwardRoutes);
 app.use('/', rachelRoutes);
 console.log('🎯 Multi-tenant Rachel routes mounted - Client identification active');
 
+// Ana Voice routes (Spanish) - mirrors Rachel exactly
+app.use('/', anaRoutes);
+console.log('🇪🇸 Ana Spanish voice routes mounted - Mirrors Rachel flow exactly');
+
 // Lina Voice routes (ElevenLabs integration - Spanish) - legacy
 app.use('/', linaRoutes);
-console.log('🇪🇸 Lina Spanish voice routes mounted - Bilingual support active');
+console.log('🇪🇸 Lina Spanish voice routes mounted - Bilingual support active (legacy)');
 
 // NEW Lina Voice routes (stateless, mirrors English flow)
 app.use('/', linaNewRoutes);
