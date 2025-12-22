@@ -7,6 +7,127 @@ const AnaVoiceService = require('../services/anaVoiceService');
 const { normalizePhoneFromSpeech } = require('../utils/phoneNormalizer');
 const { sendAppointmentConfirmation } = require('../services/appointmentNotification');
 
+// ============================================================================
+// INTELLIGENT SPEECH MATCHING UTILITIES
+// Handles Spanglish, accent variations, and common speech recognition errors
+// ============================================================================
+
+/**
+ * Normalize speech input for better matching
+ * Handles accent marks, common substitutions, and normalization
+ * @param {string} speech - Raw speech input
+ * @returns {string} Normalized speech
+ */
+function normalizeSpeechForMatching(speech) {
+    if (!speech) return '';
+
+    let normalized = speech.toLowerCase().trim();
+
+    // Remove accent marks for matching (keep original for logging)
+    const accentMap = {
+        'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
+        'ü': 'u', 'ñ': 'n'
+    };
+    for (const [accented, plain] of Object.entries(accentMap)) {
+        normalized = normalized.replace(new RegExp(accented, 'g'), plain);
+    }
+
+    // Common speech recognition substitutions
+    // (Google/Twilio sometimes hears these differently)
+    const substitutions = {
+        // B/V confusion (common in Spanish)
+        'reserbar': 'reservar',
+        'boz': 'voz',
+        // S/C/Z confusion
+        'sita': 'cita',
+        'zita': 'cita',
+        // Double letters
+        'appoiment': 'appointment',
+        'appointmen': 'appointment',
+        // Common mishears
+        'eskeduler': 'schedule',
+        'eskejul': 'schedule'
+    };
+
+    for (const [wrong, right] of Object.entries(substitutions)) {
+        normalized = normalized.replace(new RegExp(wrong, 'g'), right);
+    }
+
+    return normalized;
+}
+
+/**
+ * Check if speech matches any keywords using intelligent matching
+ * Supports partial matches, word boundaries, and fuzzy matching
+ * @param {string} normalizedSpeech - Normalized speech input
+ * @param {string[]} keywords - Array of keywords to match
+ * @returns {boolean} True if any keyword matches
+ */
+function matchesKeywords(normalizedSpeech, keywords) {
+    if (!normalizedSpeech || !keywords.length) return false;
+
+    // Direct substring match (most common case)
+    for (const keyword of keywords) {
+        if (normalizedSpeech.includes(keyword.toLowerCase())) {
+            return true;
+        }
+    }
+
+    // Word-by-word fuzzy match for longer keywords
+    const speechWords = normalizedSpeech.split(/\s+/);
+    for (const keyword of keywords) {
+        const keywordWords = keyword.toLowerCase().split(/\s+/);
+
+        // Single word keywords - check each speech word
+        if (keywordWords.length === 1) {
+            for (const word of speechWords) {
+                // Fuzzy match: allow 1-2 character difference for words > 4 chars
+                if (word.length > 4 && keywordWords[0].length > 4) {
+                    if (fuzzyMatch(word, keywordWords[0], 2)) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Simple fuzzy matching using Levenshtein distance
+ * @param {string} str1 - First string
+ * @param {string} str2 - Second string
+ * @param {number} maxDistance - Maximum allowed distance
+ * @returns {boolean} True if within distance
+ */
+function fuzzyMatch(str1, str2, maxDistance) {
+    // Quick length check
+    if (Math.abs(str1.length - str2.length) > maxDistance) return false;
+
+    // Simple Levenshtein distance
+    const matrix = [];
+    for (let i = 0; i <= str1.length; i++) {
+        matrix[i] = [i];
+    }
+    for (let j = 0; j <= str2.length; j++) {
+        matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= str1.length; i++) {
+        for (let j = 1; j <= str2.length; j++) {
+            const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+            matrix[i][j] = Math.min(
+                matrix[i - 1][j] + 1,      // deletion
+                matrix[i][j - 1] + 1,      // insertion
+                matrix[i - 1][j - 1] + cost // substitution
+            );
+        }
+    }
+
+    return matrix[str1.length][str2.length] <= maxDistance;
+}
+
 // Initialize Ana service
 const anaService = new AnaVoiceService(
     process.env.WEBHOOK_BASE_URL || 'https://ringlypro-crm.onrender.com',
@@ -130,16 +251,78 @@ router.post('/voice/ana/process-speech', async (req, res) => {
 
         const contextParams = anaService.buildContextParamsXml(clientId, businessName, userId);
 
-        // Booking keywords in Spanish
-        const bookingKeywords = ['cita', 'reservar', 'agendar', 'programar', 'turno', 'hora', 'appointment'];
-        // Voicemail keywords in Spanish
-        const voicemailKeywords = ['mensaje', 'dejar', 'grabar', 'buzón', 'recado', 'voicemail'];
-        // Pricing keywords in Spanish
-        const pricingKeywords = ['precio', 'costo', 'cuánto', 'cuanto', 'tarifa', 'price'];
+        // ============================================================================
+        // INTELLIGENT SPEECH RECOGNITION WITH SPANGLISH & ACCENT SUPPORT
+        // Handles: code-switching, accent variations, common mispronunciations
+        // ============================================================================
+
+        // Normalize speech for matching (handle accent marks, common variations)
+        const normalizedSpeech = normalizeSpeechForMatching(speechResult);
+
+        // Booking keywords - comprehensive Spanglish and accent variations
+        // Includes: Spanish, English, Spanglish, accent variations, common speech recognition errors
+        const bookingKeywords = [
+            // Core Spanish
+            'cita', 'reservar', 'agendar', 'programar', 'turno', 'hora',
+            // English mixed in (code-switching)
+            'appointment', 'book', 'booking', 'schedule', 'meeting',
+            // Spanglish variations (common in US Hispanic community)
+            'bookear', 'booker', 'bukear', 'buquear', 'esquedular', 'eskedular',
+            'schedulear', 'meetin', 'mitin', 'appoinmen', 'apoinmen',
+            // Phrase fragments
+            'una cita', 'un turno', 'una hora', 'un appointment',
+            'quiero cita', 'necesito cita', 'hacer cita', 'sacar cita',
+            'pedir cita', 'apartar', 'apartamento', // common confusion
+            // Accent/pronunciation variations
+            'sita', 'zita', 'reserbar', 'ajendar', 'programar',
+            // Common speech recognition errors
+            'citar', 'citas', 'reserva', 'reservación', 'reservacion',
+            'reunion', 'reunión', 'junta', 'consulta'
+        ];
+
+        // Voicemail keywords - with variations
+        const voicemailKeywords = [
+            // Core Spanish
+            'mensaje', 'dejar', 'grabar', 'buzón', 'buzon', 'recado',
+            // English
+            'voicemail', 'message', 'leave message',
+            // Spanglish
+            'voicemel', 'voismail', 'mesaje', 'mensage',
+            // Phrases
+            'dejar mensaje', 'dejar recado', 'grabar mensaje',
+            'tomar mensaje', 'un mensaje', 'el buzon'
+        ];
+
+        // Pricing keywords - with variations
+        const pricingKeywords = [
+            // Core Spanish
+            'precio', 'precios', 'costo', 'costos', 'cuánto', 'cuanto',
+            'tarifa', 'tarifas', 'cobrar', 'cobran',
+            // English
+            'price', 'pricing', 'cost', 'how much', 'rate', 'rates',
+            // Spanglish
+            'prais', 'cuanto cuesta', 'cuanto vale', 'que precio',
+            // Phrases
+            'cuánto cuesta', 'cuánto cobran', 'cuánto vale',
+            'que cuesta', 'que cobran', 'cuanto es'
+        ];
+
+        // Transfer/human keywords
+        const transferKeywords = [
+            // Spanish
+            'persona', 'humano', 'agente', 'representante', 'alguien',
+            'hablar con', 'transferir', 'operador', 'operadora',
+            // English
+            'person', 'human', 'agent', 'representative', 'someone',
+            'transfer', 'operator', 'speak to',
+            // Spanglish
+            'real person', 'persona real', 'hablar con alguien'
+        ];
 
         let twiml;
 
-        if (bookingKeywords.some(k => speechResult.includes(k))) {
+        // Check for booking intent (most common)
+        if (matchesKeywords(normalizedSpeech, bookingKeywords)) {
             // Start appointment booking flow - ask for name
             console.log(`📅 [ANA] Booking intent detected`);
 
@@ -159,7 +342,7 @@ router.post('/voice/ana/process-speech', async (req, res) => {
     <Redirect>/voice/ana/greeting?${contextParams}</Redirect>
 </Response>`;
 
-        } else if (voicemailKeywords.some(k => speechResult.includes(k))) {
+        } else if (matchesKeywords(normalizedSpeech, voicemailKeywords)) {
             // Voicemail flow
             console.log(`📬 [ANA] Voicemail intent detected`);
             twiml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -167,7 +350,7 @@ router.post('/voice/ana/process-speech', async (req, res) => {
     <Redirect method="POST">/voice/ana/voicemail?${contextParams}</Redirect>
 </Response>`;
 
-        } else if (pricingKeywords.some(k => speechResult.includes(k))) {
+        } else if (matchesKeywords(normalizedSpeech, pricingKeywords)) {
             // Pricing inquiry
             console.log(`💰 [ANA] Pricing intent detected`);
 
