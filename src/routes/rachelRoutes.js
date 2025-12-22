@@ -1653,19 +1653,44 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
                 });
                 return; // Exit early since we're handling response in promise
             } else {
-                // Spanish - use Polly.Lupe for now (or can add Lina premium voice)
+                // Spanish - use Ana premium voice (ElevenLabs Bella)
                 // Pass context via query params since Twilio doesn't preserve sessions
                 const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${req.session.user_id || ''}`;
-                const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+                const xmlContextParams = contextParams.replace(/&/g, '&amp;');
+
+                console.log(`🎙️ Generating Ana premium voice for Spanish appointment booking`);
+                const AnaVoiceService = require('../services/anaVoiceService');
+                const anaService = new AnaVoiceService(
+                    process.env.WEBHOOK_BASE_URL || 'https://ringlypro-crm.onrender.com',
+                    process.env.ELEVENLABS_API_KEY
+                );
+
+                const audioUrl = await anaService.generateAnaAudio(namePrompt);
+
+                if (audioUrl) {
+                    const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="auto" action="/voice/lina/collect-name?${contextParams}" method="POST" language="es-MX">
-        <Say voice="Polly.Lupe">${namePrompt}</Say>
+    <Gather input="speech" timeout="12" speechTimeout="auto" action="/voice/ana/collect-name?${xmlContextParams}" method="POST" language="es-MX">
+        <Play>${audioUrl}</Play>
     </Gather>
-    <Say voice="Polly.Lupe">No escuché eso. Intentemos de nuevo.</Say>
-    <Redirect>/voice/lina/incoming?${contextParams}</Redirect>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché eso. Intentemos de nuevo.</Say>
+    <Redirect>/voice/ana/greeting?${xmlContextParams}</Redirect>
 </Response>`;
-                res.type('text/xml');
-                return res.send(twiml);
+                    res.type('text/xml');
+                    return res.send(twiml);
+                } else {
+                    // Fallback to Polly
+                    const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather input="speech" timeout="12" speechTimeout="auto" action="/voice/ana/collect-name?${xmlContextParams}" method="POST" language="es-MX">
+        <Say voice="Polly.Lupe" language="es-MX">${namePrompt}</Say>
+    </Gather>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché eso. Intentemos de nuevo.</Say>
+    <Redirect>/voice/ana/greeting?${xmlContextParams}</Redirect>
+</Response>`;
+                    res.type('text/xml');
+                    return res.send(twiml);
+                }
             }
         } else if (digit === '9') {
             // Voicemail
@@ -1673,7 +1698,7 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
 
             // Redirect to voicemail using TwiML Redirect with context params
             const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${req.session.user_id || ''}`;
-            const voicePath = language === 'en' ? 'rachel' : 'lina';
+            const voicePath = language === 'en' ? 'rachel' : 'ana';
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Redirect method="POST">/voice/${voicePath}/voicemail?${contextParams}</Redirect>

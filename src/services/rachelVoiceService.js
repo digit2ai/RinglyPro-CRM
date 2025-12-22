@@ -144,22 +144,23 @@ class MultiTenantRachelService {
     async createLanguageSelectionMenu(clientInfo) {
         const twiml = new twilio.twiml.VoiceResponse();
 
-        // Bilingual greeting: Introduce as Lina with warm, empathetic tone
+        // Bilingual greeting: Neutral introduction for both languages
         // Updated to support both DTMF and speech input for language selection
-        const bilingualGreeting = `Hello! Thank you for calling ${clientInfo.business_name}. My name is Lina, and I'm here to assist you. <break time="1s"/> For English, press 1 or say English. <break time="0.8s"/> Para español, presione 2 o diga español.`;
+        const bilingualGreeting = `Hello! Thank you for calling ${clientInfo.business_name}. <break time="0.8s"/> For English, press 1 or say English. <break time="1s"/> Para español, presione 2 o diga español.`;
 
         // Build context params for Twilio callback (Twilio doesn't preserve sessions between webhooks)
         const contextParams = `client_id=${clientInfo.client_id}&business_name=${encodeURIComponent(clientInfo.business_name || '')}`;
 
         // Create gather for language selection (DTMF keypad + speech input)
+        // Increased timeout and using auto speechTimeout for better noise tolerance
         const gather = twiml.gather({
             input: 'dtmf speech',
             numDigits: 1,
-            timeout: 8,  // Increased from 3 to 8 seconds to give callers more time to decide
+            timeout: 12,  // Increased to 12 seconds to give callers more time
             finishOnKey: '',  // Don't wait for # key
             action: `/voice/rachel/select-language?${contextParams}`,
             method: 'POST',
-            speechTimeout: 'auto',
+            speechTimeout: 'auto',  // Auto detection is more noise tolerant
             language: 'en-US',  // Primary language for speech recognition
             hints: 'English, Spanish, Inglés, Español, one, two, uno, dos'  // Speech recognition hints
         });
