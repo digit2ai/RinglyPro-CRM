@@ -1282,25 +1282,33 @@ router.post('/voice/rachel/select-language', async (req, res) => {
         const businessName = req.session.business_name || '';
         const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}`;
 
+        // Use TwiML <Redirect> instead of HTTP redirect (Twilio expects TwiML responses)
+        // XML-escape the context params for TwiML
+        const xmlContextParams = contextParams.replace(/&/g, '&amp;');
+
+        let redirectUrl;
         if (selectedLanguage === 'en') {
-            // English - Continue with Rachel (include context params for safety)
-            res.redirect(307, `/voice/rachel/incoming?lang=en&${contextParams}`);
+            // English - Continue with Rachel
+            console.log('🇺🇸 English selected - using Rachel flow');
+            redirectUrl = `/voice/rachel/incoming?lang=en&amp;${xmlContextParams}`;
         } else if (selectedLanguage === 'es') {
             // Spanish - Use unified Rachel flow with lang=es
             // This uses the same IVR menu, slot-based booking, and voice commands as English
             console.log('🇪🇸 Spanish selected - using unified Rachel flow with lang=es');
-
-            // Redirect to /voice/rachel/incoming?lang=es which uses createIVRMenu(client, 'es')
-            // This gives Spanish the same workflow as English:
-            // - IVR with voice commands ("presione 1 o diga cita")
-            // - Real calendar slot selection
-            // - Hands-free support
-            res.redirect(307, `/voice/rachel/incoming?lang=es&${contextParams}`);
+            redirectUrl = `/voice/rachel/incoming?lang=es&amp;${xmlContextParams}`;
         } else {
             // Fallback - default to English (shouldn't reach here with new logic)
             console.warn(`⚠️ Unexpected language selection fallback, defaulting to English`);
-            res.redirect(307, `/voice/rachel/incoming?lang=en&${contextParams}`);
+            redirectUrl = `/voice/rachel/incoming?lang=en&amp;${xmlContextParams}`;
         }
+
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Redirect method="POST">${redirectUrl}</Redirect>
+</Response>`;
+
+        res.type('text/xml');
+        res.send(twiml);
 
     } catch (error) {
         console.error('Error handling language selection:', error);
