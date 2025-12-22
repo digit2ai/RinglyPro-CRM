@@ -209,6 +209,7 @@ class UnifiedBookingService {
 
   /**
    * Get locally available slots (check against appointments table)
+   * Now reads client-specific booking settings from database
    * @param {number} clientId - Client ID
    * @param {string} date - Date (YYYY-MM-DD)
    * @param {string} timezone - Timezone
@@ -216,12 +217,66 @@ class UnifiedBookingService {
    */
   async getLocalAvailableSlots(clientId, date, timezone = 'America/New_York') {
     try {
-      // Business hours slots
-      const businessHours = [
-        '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-        '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
-        '15:00', '15:30', '16:00', '16:30', '17:00'
-      ];
+      // Get client's booking settings from database
+      const clientSettings = await sequelize.query(
+        `SELECT business_hours_start, business_hours_end, appointment_duration,
+                timezone, calendar_settings, business_days
+         FROM clients WHERE id = :clientId`,
+        {
+          replacements: { clientId },
+          type: QueryTypes.SELECT
+        }
+      );
+
+      const client = clientSettings[0] || {};
+
+      // Use client settings or defaults
+      const clientTimezone = client.timezone || timezone;
+      const appointmentDuration = client.appointment_duration || 30;
+      let startTime = client.business_hours_start || '09:00:00';
+      let endTime = client.business_hours_end || '17:00:00';
+
+      // Check for per-day calendar settings
+      if (client.calendar_settings) {
+        const moment = require('moment-timezone');
+        const dayOfWeek = moment(date).format('dddd').toLowerCase();
+        const daySettings = client.calendar_settings[dayOfWeek];
+
+        if (daySettings) {
+          if (!daySettings.enabled) {
+            logger.info(`[UNIFIED-BOOKING] Client ${clientId}: ${dayOfWeek} is disabled`);
+            return { success: true, slots: [], source: 'local' };
+          }
+          if (daySettings.start) startTime = daySettings.start;
+          if (daySettings.end) endTime = daySettings.end;
+        }
+      }
+
+      // Check if day is within business_days (e.g., "Mon-Fri", "Mon-Sat")
+      if (client.business_days) {
+        const moment = require('moment-timezone');
+        const dayOfWeek = moment(date).day(); // 0=Sunday, 6=Saturday
+        const businessDays = client.business_days.toLowerCase();
+
+        // Parse business_days format (e.g., "mon-fri", "mon-sat", "mon-sun")
+        const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
+        const isSaturday = dayOfWeek === 6;
+        const isSunday = dayOfWeek === 0;
+
+        if (businessDays === 'mon-fri' && !isWeekday) {
+          logger.info(`[UNIFIED-BOOKING] Client ${clientId}: ${date} is outside Mon-Fri`);
+          return { success: true, slots: [], source: 'local' };
+        }
+        if (businessDays === 'mon-sat' && isSunday) {
+          logger.info(`[UNIFIED-BOOKING] Client ${clientId}: ${date} is Sunday (closed)`);
+          return { success: true, slots: [], source: 'local' };
+        }
+      }
+
+      // Generate time slots based on client settings
+      const businessHours = this.generateTimeSlots(startTime, endTime, appointmentDuration);
+
+      logger.info(`[UNIFIED-BOOKING] Client ${clientId} hours: ${startTime}-${endTime}, duration: ${appointmentDuration}min, slots: ${businessHours.length}`);
 
       // Get booked times for this date
       const bookedResult = await sequelize.query(
@@ -243,7 +298,7 @@ class UnifiedBookingService {
         .map(time => ({
           startTime: `${date}T${time}:00`,
           time24: time,
-          timezone
+          timezone: clientTimezone
         }));
 
       logger.info(`[UNIFIED-BOOKING] Local slots for ${date}: ${availableSlots.length}/${businessHours.length} available`);
@@ -258,6 +313,40 @@ class UnifiedBookingService {
       logger.error('[UNIFIED-BOOKING] Error getting local slots:', error.message);
       return { success: false, error: error.message, slots: [], source: 'local' };
     }
+  }
+
+  /**
+   * Generate time slots between start and end times
+   * @param {string} startTime - Start time (HH:mm or HH:mm:ss)
+   * @param {string} endTime - End time (HH:mm or HH:mm:ss)
+   * @param {number} duration - Slot duration in minutes
+   * @returns {Array<string>} Array of time slots in HH:mm format
+   */
+  generateTimeSlots(startTime, endTime, duration = 30) {
+    const slots = [];
+
+    // Parse times (handle both HH:mm and HH:mm:ss formats)
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
+
+    let currentHour = startHour;
+    let currentMin = startMin;
+
+    const endMinutes = endHour * 60 + endMin;
+
+    while ((currentHour * 60 + currentMin) < endMinutes) {
+      const timeStr = `${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`;
+      slots.push(timeStr);
+
+      // Add duration
+      currentMin += duration;
+      while (currentMin >= 60) {
+        currentMin -= 60;
+        currentHour += 1;
+      }
+    }
+
+    return slots;
   }
 
   /**
