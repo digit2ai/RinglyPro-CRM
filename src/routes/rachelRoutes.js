@@ -519,26 +519,26 @@ router.post('/voice/rachel/offer-slots', async (req, res) => {
 </Response>`;
             }
         } else {
-            // Build the slot options speech
+            // Build the slot options speech with both keypress and voice options
             const slot1 = formatTimeForSpeech(offeredSlots[0]);
             const slot2 = offeredSlots[1] ? formatTimeForSpeech(offeredSlots[1]) : null;
             const slot3 = offeredSlots[2] ? formatTimeForSpeech(offeredSlots[2]) : null;
 
-            let optionsSpeech = `For ${slot1}, press 1. `;
-            if (slot2) optionsSpeech += `For ${slot2}, press 2. `;
-            if (slot3) optionsSpeech += `For ${slot3}, press 3. `;
+            let optionsSpeech = `For ${slot1}, press 1 or say one. `;
+            if (slot2) optionsSpeech += `For ${slot2}, press 2 or say two. `;
+            if (slot3) optionsSpeech += `For ${slot3}, press 3 or say three. `;
 
             // Add option to hear more slots or transfer
             if (req.session.has_more_slots) {
-                optionsSpeech += `To hear more times, press 4. `;
+                optionsSpeech += `To hear more times, press 4 or say more. `;
             }
-            optionsSpeech += `Or press 0 to speak with a specialist.`;
+            optionsSpeech += `Or press 0 or say specialist to speak with someone.`;
 
             console.log(`🎙️ [SLOT-FLOW] Offering: ${offeredSlots.join(', ')}`);
 
             twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf" numDigits="1" timeout="10" action="/voice/rachel/select-slot?${xmlContextParams}" method="POST">
+    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/rachel/select-slot?${xmlContextParams}" method="POST" speechTimeout="auto" language="en-US" hints="one, two, three, four, more, specialist, zero">
         <Say voice="Polly.Joanna">${escapedName}, I have the following times available. ${optionsSpeech}</Say>
     </Gather>
     <Say voice="Polly.Joanna">I didn't receive a selection. Let me repeat the options.</Say>
@@ -568,11 +568,30 @@ router.get('/voice/rachel/offer-slots', (req, res) => {
 });
 
 /**
- * NEW FLOW: Handle slot selection via DTMF
+ * NEW FLOW: Handle slot selection via DTMF or speech
  */
 router.post('/voice/rachel/select-slot', async (req, res) => {
     try {
-        const digit = req.body.Digits || '';
+        const digits = req.body.Digits || '';
+        const speechResult = (req.body.SpeechResult || '').toLowerCase().trim();
+
+        // Convert speech to digit equivalent
+        let digit = digits;
+        if (!digit && speechResult) {
+            // Map speech to digit
+            if (speechResult.includes('one') || speechResult === '1') {
+                digit = '1';
+            } else if (speechResult.includes('two') || speechResult === '2') {
+                digit = '2';
+            } else if (speechResult.includes('three') || speechResult === '3') {
+                digit = '3';
+            } else if (speechResult.includes('four') || speechResult.includes('more') || speechResult === '4') {
+                digit = '4';
+            } else if (speechResult.includes('zero') || speechResult.includes('specialist') || speechResult.includes('someone') || speechResult === '0') {
+                digit = '0';
+            }
+        }
+
         const clientId = req.session.client_id;
         const prospectName = req.session.prospect_name;
         const prospectPhone = req.session.prospect_phone;
@@ -580,7 +599,8 @@ router.post('/voice/rachel/select-slot', async (req, res) => {
         const offeredSlots = req.session.offered_slots || [];
         const businessName = req.session.business_name || 'this business';
 
-        console.log(`🔢 [SLOT-FLOW] Slot selection: digit=${digit}, offered=${offeredSlots.join(',')}`);
+        const inputMethod = digits ? `DTMF: ${digits}` : speechResult ? `Speech: "${speechResult}"` : 'None';
+        console.log(`🔢 [SLOT-FLOW] Slot selection: digit=${digit} (${inputMethod}), offered=${offeredSlots.join(',')}`);
 
         const escapedName = (prospectName || 'there')
             .replace(/&/g, '&amp;')
@@ -1335,42 +1355,52 @@ async function createIVRMenu(client, language = 'en') {
     // Get enabled departments only
     const enabledDepts = ivrOptions.filter(dept => dept.enabled);
 
-    // Build menu text
+    // Build menu text with both keypress and voice options for hands-free use
     let menuText = '';
+    // Build speech hints for recognition
+    let speechHints = 'appointment, schedule, one, voicemail, message, nine';
+
     if (language === 'en') {
         menuText = `Hello! This is Lina from ${businessName}. I'm here to help you today. <break time="0.8s"/> `;
-        menuText += `To schedule an appointment, please press 1. <break time="0.5s"/> `;
+        menuText += `To schedule an appointment, press 1 or say appointment. <break time="0.5s"/> `;
 
         // Add department options (starting from 2)
         enabledDepts.forEach((dept, index) => {
             const digit = index + 2;
-            menuText += `For ${dept.name}, press ${digit}. <break time="0.5s"/> `;
+            const numberWord = ['two', 'three', 'four', 'five', 'six', 'seven', 'eight'][index] || digit;
+            menuText += `For ${dept.name}, press ${digit} or say ${dept.name.toLowerCase()}. <break time="0.5s"/> `;
+            speechHints += `, ${dept.name.toLowerCase()}, ${numberWord}`;
         });
 
-        menuText += `Or, to leave a voicemail message, press 9. `;
+        menuText += `Or, to leave a voicemail message, press 9 or say voicemail. `;
     } else {
         // Spanish
         menuText = `¡Hola! Habla Lina de ${businessName}. Estoy aquí para ayudarle. <break time="0.8s"/> `;
-        menuText += `Para programar una cita, presione 1. <break time="0.5s"/> `;
+        menuText += `Para programar una cita, presione 1 o diga cita. <break time="0.5s"/> `;
+        speechHints = 'cita, programar, uno, mensaje, buzón, nueve';
 
         enabledDepts.forEach((dept, index) => {
             const digit = index + 2;
-            menuText += `Para ${dept.name}, presione ${digit}. <break time="0.5s"/> `;
+            const numberWord = ['dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho'][index] || digit;
+            menuText += `Para ${dept.name}, presione ${digit} o diga ${dept.name.toLowerCase()}. <break time="0.5s"/> `;
+            speechHints += `, ${dept.name.toLowerCase()}, ${numberWord}`;
         });
 
-        menuText += `O, para dejar un mensaje de voz, presione 9. `;
+        menuText += `O, para dejar un mensaje de voz, presione 9 o diga mensaje. `;
     }
 
     // For English, try to use Rachel's premium voice
+    const speechLang = language === 'en' ? 'en-US' : 'es-MX';
+
     if (language === 'en') {
         console.log(`🎙️ Generating Rachel premium voice for IVR menu: "${menuText.substring(0, 50)}..."`);
         const audioUrl = await rachelService.generateRachelAudio(menuText);
 
         if (audioUrl) {
-            // Use premium Rachel voice
+            // Use premium Rachel voice with speech + DTMF input
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf" numDigits="1" timeout="8" action="/voice/rachel/ivr-selection?lang=${language}" method="POST">
+    <Gather input="dtmf speech" numDigits="1" timeout="8" action="/voice/rachel/ivr-selection?lang=${language}" method="POST" speechTimeout="auto" language="${speechLang}" hints="${speechHints}">
         <Play>${audioUrl}</Play>
     </Gather>
     <Say voice="Polly.Joanna">I didn't receive a selection. Goodbye.</Say>
@@ -1387,10 +1417,10 @@ async function createIVRMenu(client, language = 'en') {
     const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf" numDigits="1" timeout="8" action="/voice/rachel/ivr-selection?lang=${language}" method="POST">
+    <Gather input="dtmf speech" numDigits="1" timeout="8" action="/voice/rachel/ivr-selection?lang=${language}" method="POST" speechTimeout="auto" language="${speechLang}" hints="${speechHints}">
         <Say voice="${voice}">${menuText}</Say>
     </Gather>
-    <Say voice="${voice}">I didn't receive a selection. Goodbye.</Say>
+    <Say voice="${voice}">${language === 'en' ? "I didn't receive a selection. Goodbye." : "No recibí una selección. Adiós."}</Say>
     <Hangup/>
 </Response>`;
 
@@ -1399,12 +1429,13 @@ async function createIVRMenu(client, language = 'en') {
 }
 
 /**
- * Handle IVR menu selection
+ * Handle IVR menu selection via DTMF or speech
  * Restores client context from query params since Twilio doesn't preserve sessions
  */
 router.post('/voice/rachel/ivr-selection', async (req, res) => {
     try {
-        const digit = req.body.Digits || '';
+        const digits = req.body.Digits || '';
+        const speechResult = (req.body.SpeechResult || '').toLowerCase().trim();
         const language = req.query.lang || 'en';
 
         // Restore client context from query params (Twilio doesn't preserve sessions)
@@ -1430,7 +1461,66 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
         const clientId = req.session.client_id;
         const businessName = req.session.business_name;
 
-        console.log(`🔢 IVR selection: ${digit} (${language}) for client ${clientId}`);
+        // Load client IVR settings early to match department names for speech
+        const { Client } = require('../models');
+        const client = await Client.findByPk(clientId);
+        const enabledDepts = client ? (client.ivr_options || []).filter(dept => dept.enabled) : [];
+
+        // Convert speech to digit equivalent
+        let digit = digits;
+        if (!digit && speechResult) {
+            // Map speech to digit based on language
+            if (language === 'en') {
+                // English speech recognition
+                if (speechResult.includes('appointment') || speechResult.includes('schedule') || speechResult.includes('book') || speechResult === 'one' || speechResult === '1') {
+                    digit = '1';
+                } else if (speechResult.includes('voicemail') || speechResult.includes('message') || speechResult.includes('leave a message') || speechResult === 'nine' || speechResult === '9') {
+                    digit = '9';
+                } else {
+                    // Check for department name matches
+                    enabledDepts.forEach((dept, index) => {
+                        if (speechResult.includes(dept.name.toLowerCase())) {
+                            digit = String(index + 2);
+                        }
+                    });
+                    // Check for number words
+                    if (!digit) {
+                        const numberMap = { 'two': '2', 'three': '3', 'four': '4', 'five': '5', 'six': '6', 'seven': '7', 'eight': '8' };
+                        Object.keys(numberMap).forEach(word => {
+                            if (speechResult.includes(word)) {
+                                digit = numberMap[word];
+                            }
+                        });
+                    }
+                }
+            } else {
+                // Spanish speech recognition
+                if (speechResult.includes('cita') || speechResult.includes('programar') || speechResult.includes('reservar') || speechResult === 'uno' || speechResult === '1') {
+                    digit = '1';
+                } else if (speechResult.includes('mensaje') || speechResult.includes('buzón') || speechResult.includes('voz') || speechResult === 'nueve' || speechResult === '9') {
+                    digit = '9';
+                } else {
+                    // Check for department name matches
+                    enabledDepts.forEach((dept, index) => {
+                        if (speechResult.includes(dept.name.toLowerCase())) {
+                            digit = String(index + 2);
+                        }
+                    });
+                    // Check for Spanish number words
+                    if (!digit) {
+                        const numberMap = { 'dos': '2', 'tres': '3', 'cuatro': '4', 'cinco': '5', 'seis': '6', 'siete': '7', 'ocho': '8' };
+                        Object.keys(numberMap).forEach(word => {
+                            if (speechResult.includes(word)) {
+                                digit = numberMap[word];
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
+        const inputMethod = digits ? `DTMF: ${digits}` : speechResult ? `Speech: "${speechResult}"` : 'None';
+        console.log(`🔢 IVR selection: ${digit} (${inputMethod}) (${language}) for client ${clientId}`);
 
         if (!clientId) {
             const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
@@ -1443,10 +1533,7 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
             return res.send(twiml);
         }
 
-        // Load client IVR settings
-        const { Client } = require('../models');
-        const client = await Client.findByPk(clientId);
-
+        // Client already loaded above for speech recognition
         if (!client) {
             const voice = language === 'en' ? 'Polly.Joanna' : 'Polly.Lupe';
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -1457,8 +1544,6 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
             res.type('text/xml');
             return res.send(twiml);
         }
-
-        const enabledDepts = (client.ivr_options || []).filter(dept => dept.enabled);
 
         // Handle selection
         if (digit === '1') {
