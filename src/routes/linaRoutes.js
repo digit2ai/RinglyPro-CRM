@@ -22,35 +22,48 @@ const router = express.Router();
 /**
  * Create IVR menu for Spanish (same logic as English, different language)
  */
-function createSpanishIVRMenu(client) {
+function createSpanishIVRMenu(client, contextParams = '') {
     const businessName = client.business_name;
     const ivrOptions = client.ivr_options || [];
 
     // Get enabled departments only
     const enabledDepts = ivrOptions.filter(dept => dept.enabled);
 
-    // Build Spanish menu text with warm, empathetic tone
+    // Build Spanish menu text with warm, empathetic tone - WITH VOICE COMMAND SUPPORT
+    // Match English flow: "press X or say Y" for hands-free driving
     let menuText = `¡Hola! Habla Lina de ${businessName}. Estoy aquí para ayudarle. <break time="0.8s"/> `;
-    menuText += `Para programar una cita, presione 1. <break time="0.5s"/> `;
+    menuText += `Para programar una cita, presione 1 o diga cita. <break time="0.5s"/> `;
 
-    // Add department options (starting from 2)
+    // Add department options (starting from 2) with voice commands
+    const numberWords = ['', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho'];
     enabledDepts.forEach((dept, index) => {
         const digit = index + 2;
-        menuText += `Para ${dept.name}, presione ${digit}. <break time="0.5s"/> `;
+        const numberWord = numberWords[digit] || digit.toString();
+        menuText += `Para ${dept.name}, presione ${digit} o diga ${dept.name.toLowerCase()}. <break time="0.5s"/> `;
     });
 
-    menuText += `O, para dejar un mensaje de voz, presione 9. `;
+    menuText += `O, para dejar un mensaje de voz, presione 9 o diga mensaje. `;
+
+    // Build speech hints for recognition
+    let hints = 'cita, uno, mensaje, nueve';
+    enabledDepts.forEach((dept) => {
+        hints += `, ${dept.name.toLowerCase()}`;
+    });
+
+    // XML-safe context params
+    const xmlContextParams = contextParams ? contextParams.replace(/&/g, '&amp;') : '';
+    const actionUrl = `/voice/rachel/ivr-selection?lang=es${xmlContextParams ? '&amp;' + xmlContextParams.substring(1) : ''}`;
 
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf" numDigits="1" timeout="5" action="/voice/rachel/ivr-selection?lang=es" method="POST">
+    <Gather input="dtmf speech" numDigits="1" timeout="10" speechTimeout="3" action="${actionUrl}" method="POST" language="es-MX" hints="${hints}">
         <Say voice="Polly.Lupe" language="es-MX">${menuText}</Say>
     </Gather>
-    <Say voice="Polly.Lupe" language="es-MX">No recibí una selección. Adiós.</Say>
-    <Hangup/>
+    <Say voice="Polly.Lupe" language="es-MX">No escuché su selección. Déjeme repetir las opciones.</Say>
+    <Redirect>/voice/lina/ivr-menu?${xmlContextParams}</Redirect>
 </Response>`;
 
-    console.log(`📋 Spanish IVR Menu created for ${businessName}: ${enabledDepts.length} departments`);
+    console.log(`📋 Spanish IVR Menu created for ${businessName}: ${enabledDepts.length} departments (with voice commands)`);
     return twiml;
 }
 
@@ -114,8 +127,11 @@ const handleSpanishIncoming = async (req, res) => {
 
         // Check if IVR is enabled
         if (client.ivr_enabled && client.ivr_options && client.ivr_options.length > 0) {
-            console.log(`✅ IVR enabled for ${businessName} - showing Spanish menu`);
-            const twiml = createSpanishIVRMenu(client);
+            console.log(`✅ IVR enabled for ${businessName} - showing Spanish menu with voice commands`);
+            // Pass context params for retry flow
+            const encodedBusinessName = encodeURIComponent(businessName || 'nuestra empresa');
+            const contextParams = `client_id=${clientId}&business_name=${encodedBusinessName}`;
+            const twiml = createSpanishIVRMenu(client, contextParams);
             res.type('text/xml');
             return res.send(twiml);
         }
@@ -172,6 +188,62 @@ const handleSpanishIncoming = async (req, res) => {
 // Register both GET and POST routes
 router.post('/voice/lina/incoming', handleSpanishIncoming);
 router.get('/voice/lina/incoming', handleSpanishIncoming);
+
+/**
+ * Spanish IVR Menu Retry endpoint
+ * Called when user doesn't make a selection and we need to repeat the IVR options
+ * Loads client from query params and generates IVR menu
+ */
+router.post('/voice/lina/ivr-menu', async (req, res) => {
+    try {
+        const clientId = req.query.client_id;
+        const businessName = req.query.business_name ? decodeURIComponent(req.query.business_name) : '';
+
+        if (!clientId) {
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">La sesión ha expirado. Por favor llame de nuevo.</Say>
+    <Hangup/>
+</Response>`;
+            res.type('text/xml');
+            return res.send(twiml);
+        }
+
+        const { Client } = require('../models');
+        const client = await Client.findByPk(clientId);
+
+        if (!client) {
+            const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Lo siento, hubo un error. Por favor llame de nuevo.</Say>
+    <Hangup/>
+</Response>`;
+            res.type('text/xml');
+            return res.send(twiml);
+        }
+
+        // Generate and return Spanish IVR menu with voice commands
+        const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(client.business_name || '')}`;
+        const twiml = createSpanishIVRMenu(client, contextParams);
+        res.type('text/xml');
+        res.send(twiml);
+
+    } catch (error) {
+        console.error('Error generating Spanish IVR menu:', error);
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Lupe" language="es-MX">Lo siento, hubo un error. Por favor llame de nuevo.</Say>
+    <Hangup/>
+</Response>`;
+        res.type('text/xml');
+        res.send(twiml);
+    }
+});
+
+// Handle GET for IVR menu retry
+router.get('/voice/lina/ivr-menu', (req, res) => {
+    res.redirect(307, `/voice/lina/ivr-menu?${req.url.split('?')[1] || ''}`);
+});
 
 /**
  * Process Spanish speech input endpoint
