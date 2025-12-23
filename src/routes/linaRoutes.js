@@ -1546,11 +1546,12 @@ const handleBookAppointmentSpanish = async (req, res) => {
             console.log(`   🔑 Confirmation: ${confirmationCode}`);
             console.log(`   📊 CRM System: ${bookingResult.system}`);
 
+            // Load client info for SMS (MUST be outside try block for consistency)
+            const { Client } = require('../models');
+            const client = await Client.findByPk(clientId);
+
             // Send Spanish SMS confirmation
             try {
-                const { Client } = require('../models');
-                const client = await Client.findByPk(clientId);
-
                 if (client && client.ringlypro_number) {
                     console.log(`📱 Enviando SMS de confirmación a ${prospectPhone}`);
 

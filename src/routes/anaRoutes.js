@@ -909,10 +909,12 @@ const handleBookAppointment = async (req, res) => {
         console.log(`   🔑 Confirmación: ${confirmationCode}`);
         console.log(`   📍 Sistema CRM: ${crmSystem}`);
 
+        // Load client info for SMS and deposit check (MUST be outside try block)
+        const { Client } = require('../models');
+        const client = await Client.findByPk(clientId);
+
         // Send SMS confirmation
         try {
-            const { Client } = require('../models');
-            const client = await Client.findByPk(clientId);
 
             if (client && client.ringlypro_number && prospectPhone) {
                 console.log(`📱 [ANA] Sending SMS confirmation to ${prospectPhone}`);
