@@ -1016,11 +1016,12 @@ const handleBookAppointment = async (req, res) => {
         if (bookingResult.meetingId) console.log(`   🔗 HubSpot Meeting: ${bookingResult.meetingId}`);
         if (bookingResult.vagaroAppointmentId) console.log(`   🔗 Vagaro Appointment: ${bookingResult.vagaroAppointmentId}`);
 
+        // Load client info for SMS and deposit check
+        const { Client } = require('../models');
+        const client = await Client.findByPk(clientId);
+
         // Send SMS confirmation
         try {
-            const { Client } = require('../models');
-            const client = await Client.findByPk(clientId);
-
             if (client && client.ringlypro_number && prospectPhone) {
                 console.log(`📱 Sending SMS confirmation to ${prospectPhone}`);
 
