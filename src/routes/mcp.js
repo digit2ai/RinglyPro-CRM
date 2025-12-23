@@ -6,6 +6,7 @@ const axios = require('axios');
 const sequelize = require('../config/database');
 const { QueryTypes } = require('sequelize');
 const tokenService = require('../services/tokenService');
+const client15VagaroFilter = require('../services/client15VagaroFilter');
 
 // Import MCP services - using absolute path from project root
 const projectRoot = path.join(__dirname, '../..');
@@ -1246,6 +1247,7 @@ router.post('/vagaro/connect', async (req, res) => {
 // Business Collector connection
 router.post('/business-collector/connect', async (req, res) => {
   console.log('🔗 Business Collector connection request received');
+  const { clientId } = req.body;
 
   try {
     const proxy = new BusinessCollectorMCPProxy();
@@ -1257,20 +1259,31 @@ router.post('/business-collector/connect', async (req, res) => {
       throw new Error('Business Collector service is offline');
     }
 
+    // CLIENT 15 SPECIAL HANDLING: Vagaro Discovery Mode
+    const isVagaroMode = client15VagaroFilter.isClient15(clientId);
+    if (isVagaroMode) {
+      console.log(`🎯 [Client 15] Business Collector in VAGARO DISCOVERY MODE`);
+    }
+
     sessions.set(sessionId, {
       type: 'business-collector',
       proxy,
+      clientId: clientId || null,
+      isVagaroMode,
       createdAt: new Date()
     });
 
-    console.log('✅ Business Collector connected, session:', sessionId);
+    console.log('✅ Business Collector connected, session:', sessionId, isVagaroMode ? '(Vagaro Mode)' : '');
 
     res.json({
       success: true,
       sessionId,
-      message: 'Business Collector connected successfully',
+      message: isVagaroMode
+        ? 'Business Collector connected - Vagaro Discovery Mode active'
+        : 'Business Collector connected successfully',
       serviceStatus: health.status,
-      version: health.version
+      version: health.version,
+      vagaroMode: isVagaroMode
     });
   } catch (error) {
     console.error('❌ Business Collector connection error:', error);
@@ -1345,8 +1358,15 @@ router.post('/business-collector/collect', async (req, res) => {
   }
 
   try {
+    // CLIENT 15 SPECIAL HANDLING: Translate Vagaro-related categories
+    let effectiveCategory = category;
+    if (client15VagaroFilter.isClient15(clientId)) {
+      effectiveCategory = client15VagaroFilter.translateVagaroCategory(category);
+      console.log(`🎯 [Client 15] Vagaro Discovery Mode: "${category}" → "${effectiveCategory}"`);
+    }
+
     const result = await session.businessCollectorProxy.collectBusinesses({
-      category,
+      category: effectiveCategory,
       geography,
       maxResults: maxResults || 100
     });
@@ -1362,6 +1382,33 @@ router.post('/business-collector/collect', async (req, res) => {
       });
     }
 
+    // CLIENT 15 SPECIAL HANDLING: Filter to Vagaro users only
+    let finalBusinesses = result.businesses;
+    let vagaroStats = null;
+
+    if (client15VagaroFilter.isClient15(clientId)) {
+      console.log(`🎯 [Client 15] Applying Vagaro filter to ${result.businesses?.length || 0} results`);
+      const filterResult = client15VagaroFilter.filterVagaroUsers(result.businesses);
+      finalBusinesses = filterResult.businesses;
+      vagaroStats = filterResult.stats;
+
+      if (finalBusinesses.length === 0) {
+        console.log(`⚠️ [Client 15] No Vagaro users found in results`);
+        return res.json({
+          success: true,
+          summary: {
+            ...result.summary,
+            total: 0,
+            vagaro_filtered: true
+          },
+          businesses: [],
+          displayText: `No Vagaro users found for "${category}" in ${geography}.\n\n💡 Tip: Try broader locations (e.g., "Florida" instead of "Tampa") or different categories like "Hair Salon", "Barber Shop", "Day Spa".`,
+          tokensDeducted: 0,
+          vagaroStats
+        });
+      }
+    }
+
     // Deduct tokens AFTER successful collection only
     let tokensDeducted = 0;
     if (userId) {
@@ -1370,27 +1417,35 @@ router.post('/business-collector/collect', async (req, res) => {
           userId,
           'business_collector_100',
           {
-            category,
+            category: effectiveCategory,
             geography,
-            leadsCollected: result.businesses?.length || 0
+            leadsCollected: finalBusinesses?.length || 0
           }
         );
         tokensDeducted = 20;
-        console.log(`✅ Deducted 20 tokens from user ${userId} for Business Collector (${result.businesses?.length || 0} leads)`);
+        console.log(`✅ Deducted 20 tokens from user ${userId} for Business Collector (${finalBusinesses?.length || 0} leads)`);
       } catch (error) {
         console.error(`❌ Token deduction failed for user ${userId}:`, error.message);
         // Don't fail the request - leads were already collected
       }
     }
 
-    const displayText = session.businessCollectorProxy.formatForDisplay(result.businesses);
+    // CLIENT 15: Use Vagaro-specific formatting
+    const displayText = client15VagaroFilter.isClient15(clientId)
+      ? client15VagaroFilter.formatVagaroResults(finalBusinesses)
+      : session.businessCollectorProxy.formatForDisplay(finalBusinesses);
 
     res.json({
       success: true,
-      summary: result.summary,
-      businesses: result.businesses,
+      summary: {
+        ...result.summary,
+        total: finalBusinesses.length,
+        vagaro_filtered: client15VagaroFilter.isClient15(clientId)
+      },
+      businesses: finalBusinesses,
       displayText,
-      tokensDeducted
+      tokensDeducted,
+      vagaroStats
     });
   } catch (error) {
     console.error('❌ Business collection error:', error);
@@ -1448,35 +1503,74 @@ router.get('/business-collector/quick', async (req, res) => {
   }
 
   try {
+    // CLIENT 15 SPECIAL HANDLING: Translate Vagaro-related categories
+    let effectiveCategory = category;
+    if (client15VagaroFilter.isClient15(client_id)) {
+      effectiveCategory = client15VagaroFilter.translateVagaroCategory(category);
+      console.log(`🎯 [Client 15] Vagaro Discovery Mode (Quick): "${category}" → "${effectiveCategory}"`);
+    }
+
     const proxy = new BusinessCollectorMCPProxy();
-    const result = await proxy.quickCollect(category, geography, parseInt(max) || 50);
+    const result = await proxy.quickCollect(effectiveCategory, geography, parseInt(max) || 50);
+
+    // CLIENT 15 SPECIAL HANDLING: Filter to Vagaro users only
+    let finalBusinesses = result.businesses;
+    let vagaroStats = null;
+
+    if (client15VagaroFilter.isClient15(client_id)) {
+      console.log(`🎯 [Client 15] Applying Vagaro filter to ${result.businesses?.length || 0} results`);
+      const filterResult = client15VagaroFilter.filterVagaroUsers(result.businesses);
+      finalBusinesses = filterResult.businesses;
+      vagaroStats = filterResult.stats;
+
+      if (finalBusinesses.length === 0) {
+        return res.json({
+          success: true,
+          summary: { ...result.summary, total: 0, vagaro_filtered: true },
+          businesses: [],
+          displayText: `No Vagaro users found for "${category}" in ${geography}.\n\n💡 Try broader locations or categories like "Hair Salon", "Barber Shop", "Day Spa".`,
+          tokensDeducted: 0,
+          vagaroStats
+        });
+      }
+    }
 
     // Deduct tokens AFTER successful collection only
     let tokensDeducted = 0;
-    if (userId && result.businesses?.length > 0) {
+    if (userId && finalBusinesses?.length > 0) {
       try {
         await tokenService.deductTokens(
           userId,
           'business_collector_100',
           {
-            category,
+            category: effectiveCategory,
             geography,
-            leadsCollected: result.businesses.length
+            leadsCollected: finalBusinesses.length
           }
         );
         tokensDeducted = 20;
-        console.log(`✅ Deducted 20 tokens from user ${userId} for Business Collector (${result.businesses.length} leads)`);
+        console.log(`✅ Deducted 20 tokens from user ${userId} for Business Collector (${finalBusinesses.length} leads)`);
       } catch (error) {
         console.error(`❌ Token deduction failed for user ${userId}:`, error.message);
       }
     }
 
+    // CLIENT 15: Use Vagaro-specific formatting
+    const displayText = client15VagaroFilter.isClient15(client_id)
+      ? client15VagaroFilter.formatVagaroResults(finalBusinesses)
+      : proxy.formatForDisplay(finalBusinesses);
+
     res.json({
       success: true,
-      summary: result.summary,
-      businesses: result.businesses,
-      displayText: proxy.formatForDisplay(result.businesses),
-      tokensDeducted
+      summary: {
+        ...result.summary,
+        total: finalBusinesses.length,
+        vagaro_filtered: client15VagaroFilter.isClient15(client_id)
+      },
+      businesses: finalBusinesses,
+      displayText,
+      tokensDeducted,
+      vagaroStats
     });
   } catch (error) {
     console.error('❌ Quick collection error:', error);
@@ -3780,8 +3874,15 @@ No text in image.`;
       const categoryMatch = message.match(/(?:collect|find|get|search)\s+(?:leads\s+for\s+)?([^in]+?)\s+in\s+([^,]+)/i);
 
       if (categoryMatch) {
-        const category = categoryMatch[1].trim();
+        let category = categoryMatch[1].trim();
         const geography = categoryMatch[2].trim();
+
+        // CLIENT 15 SPECIAL HANDLING: Translate Vagaro requests
+        if (session.isVagaroMode) {
+          const originalCategory = category;
+          category = client15VagaroFilter.translateVagaroCategory(category);
+          console.log(`🎯 [Client 15] Vagaro Discovery: "${originalCategory}" → "${category}"`);
+        }
 
         try {
           console.log(`🔍 Collecting ${category} in ${geography}`);
@@ -3791,13 +3892,50 @@ No text in image.`;
             maxResults: 100
           });
 
-          const displayText = session.proxy.formatForDisplay(result.businesses);
+          // CLIENT 15 SPECIAL HANDLING: Filter to Vagaro users only
+          let finalBusinesses = result.businesses;
+          let vagaroStats = null;
 
-          response = `Found ${result.summary.total} ${category} in ${geography}!\n\n${displayText}`;
-          data = result;
+          if (session.isVagaroMode) {
+            console.log(`🎯 [Client 15] Applying Vagaro filter to ${result.businesses?.length || 0} results`);
+            const filterResult = client15VagaroFilter.filterVagaroUsers(result.businesses);
+            finalBusinesses = filterResult.businesses;
+            vagaroStats = filterResult.stats;
+
+            if (finalBusinesses.length === 0) {
+              response = `🎯 Vagaro Discovery: No Vagaro users found for "${categoryMatch[1].trim()}" in ${geography}.\n\n` +
+                `📊 Scanned ${vagaroStats.original} businesses, 0 confirmed Vagaro users.\n\n` +
+                `💡 Tips:\n• Try broader locations (e.g., "Florida" instead of "Tampa")\n` +
+                `• Try different categories: Hair Salon, Barber Shop, Day Spa, Nail Salon`;
+
+              return res.json({
+                success: true,
+                response,
+                suggestions: [
+                  'Find Hair Salons in Florida',
+                  'Find Barber Shops in Miami',
+                  'Find Day Spas in Tampa'
+                ]
+              });
+            }
+          }
+
+          // Format results
+          const displayText = session.isVagaroMode
+            ? client15VagaroFilter.formatVagaroResults(finalBusinesses)
+            : session.proxy.formatForDisplay(finalBusinesses);
+
+          if (session.isVagaroMode) {
+            response = `🎯 Vagaro Discovery: Found ${finalBusinesses.length} Vagaro users in ${geography}!\n\n` +
+              `📊 Scanned ${vagaroStats?.original || 0} businesses, ${finalBusinesses.length} confirmed Vagaro users.\n\n${displayText}`;
+          } else {
+            response = `Found ${result.summary.total} ${category} in ${geography}!\n\n${displayText}`;
+          }
+
+          data = { ...result, businesses: finalBusinesses, vagaroStats };
 
           // Store last results in session for CSV export
-          session.lastCollectionResults = result;
+          session.lastCollectionResults = { ...result, businesses: finalBusinesses };
 
           return res.json({
             success: true,
@@ -3817,26 +3955,44 @@ No text in image.`;
             suggestions: [
               'Try a broader location (e.g., "Florida" instead of "Small Town")',
               'Check category spelling',
-              'Try: "Collect Real Estate Agents in Florida"'
+              session.isVagaroMode
+                ? 'Try: "Find Vagaro salons in Florida"'
+                : 'Try: "Collect Real Estate Agents in Florida"'
             ]
           });
         }
       } else {
         // No valid pattern found, provide guidance
-        response = `I can help you collect business leads! Try:\n\n` +
-          `• "Collect Real Estate Agents in Florida"\n` +
-          `• "Find Dentists in Miami"\n` +
-          `• "Get Plumbers in Tampa, FL"\n` +
-          `• "Collect leads for Lawyers in California"`;
+        if (session.isVagaroMode) {
+          response = `🎯 Vagaro Discovery Mode Active!\n\n` +
+            `I can find businesses using Vagaro. Try:\n\n` +
+            `• "Find Vagaro users in Tampa"\n` +
+            `• "Find Hair Salons in Florida"\n` +
+            `• "Find Barber Shops in Miami"\n` +
+            `• "Find Day Spas in California"\n\n` +
+            `📋 Supported categories: Hair Salon, Barber Shop, Beauty Salon, Day Spa, Med Spa, Nail Salon, Massage, Fitness, Yoga`;
+        } else {
+          response = `I can help you collect business leads! Try:\n\n` +
+            `• "Collect Real Estate Agents in Florida"\n` +
+            `• "Find Dentists in Miami"\n` +
+            `• "Get Plumbers in Tampa, FL"\n` +
+            `• "Collect leads for Lawyers in California"`;
+        }
 
         return res.json({
           success: true,
           response,
-          suggestions: [
-            'Collect Real Estate Agents in Florida',
-            'Find Dentists in Miami',
-            'Get Plumbers in Tampa'
-          ]
+          suggestions: session.isVagaroMode
+            ? [
+                'Find Vagaro users in Tampa',
+                'Find Hair Salons in Florida',
+                'Find Barber Shops in Miami'
+              ]
+            : [
+                'Collect Real Estate Agents in Florida',
+                'Find Dentists in Miami',
+                'Get Plumbers in Tampa'
+              ]
         });
       }
     }
