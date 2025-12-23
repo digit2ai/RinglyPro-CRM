@@ -24,6 +24,64 @@ const conversationStates = new Map(); // sessionId -> conversation state
 const webhookManager = new WebhookManager();
 const workflowEngine = new WorkflowEngine();
 
+// ============= QUICK ADMIN ENDPOINT (API KEY AUTH) =============
+// Quick disable all leads for a client - used for Client 15 Vagaro migration
+router.post('/admin/disable-all-leads/:clientId', async (req, res) => {
+  const { clientId } = req.params;
+  const { apiKey } = req.body;
+
+  // Simple API key check
+  const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+  if (apiKey !== expectedKey) {
+    return res.status(401).json({ success: false, error: 'Invalid API key' });
+  }
+
+  try {
+    console.log(`🔒 MCP Admin: Disabling all leads for client ${clientId}`);
+
+    // Get count before disabling
+    const countResult = await sequelize.query(
+      `SELECT COUNT(*) as total FROM business_directory
+       WHERE client_id = :clientId AND (call_status IS NULL OR call_status != 'DISABLED')`,
+      { replacements: { clientId: parseInt(clientId) }, type: QueryTypes.SELECT }
+    );
+
+    const leadsToDisable = parseInt(countResult[0].total);
+
+    if (leadsToDisable === 0) {
+      return res.json({
+        success: true,
+        message: 'No active leads to disable',
+        disabled: 0,
+        clientId: parseInt(clientId)
+      });
+    }
+
+    // Disable all leads
+    await sequelize.query(
+      `UPDATE business_directory
+       SET call_status = 'DISABLED',
+           notes = CONCAT(COALESCE(notes, ''), ' [DISABLED via MCP admin on ', TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI'), ']'),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE client_id = :clientId AND (call_status IS NULL OR call_status != 'DISABLED')`,
+      { replacements: { clientId: parseInt(clientId) } }
+    );
+
+    console.log(`✅ MCP Admin: Disabled ${leadsToDisable} leads for client ${clientId}`);
+
+    res.json({
+      success: true,
+      message: `Successfully disabled ${leadsToDisable} leads for client ${clientId}`,
+      disabled: leadsToDisable,
+      clientId: parseInt(clientId)
+    });
+
+  } catch (error) {
+    console.error('❌ MCP Admin error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Conversation State Structure
 // {
 //   intent: null,              // 'create_contact', 'update_contact', 'send_sms', 'send_email', 'add_tag', 'remove_tag', 'search_contacts'
