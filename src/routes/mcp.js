@@ -2060,6 +2060,118 @@ router.get('/business-collector/directory/:clientId', async (req, res) => {
   }
 });
 
+// Admin endpoint: Disable all leads for a specific client
+// Sets call_status to 'DISABLED' so they won't be picked up by auto-caller
+router.post('/business-collector/admin/disable-leads/:clientId', async (req, res) => {
+  console.log('🔒 Admin: Disable leads request received');
+  const { clientId } = req.params;
+  const { adminKey } = req.body;
+
+  // Simple admin key check (should match environment variable)
+  const expectedKey = process.env.ADMIN_SECRET_KEY || 'ringlypro-admin-2024';
+  if (adminKey !== expectedKey) {
+    return res.status(401).json({
+      success: false,
+      error: 'Unauthorized - Invalid admin key'
+    });
+  }
+
+  if (!clientId) {
+    return res.status(400).json({
+      success: false,
+      error: 'Client ID is required'
+    });
+  }
+
+  try {
+    // Get count before disabling
+    const countBefore = await sequelize.query(
+      `SELECT COUNT(*) as total FROM business_directory
+       WHERE client_id = :clientId AND call_status != 'DISABLED'`,
+      {
+        replacements: { clientId: parseInt(clientId) },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const leadsToDisable = parseInt(countBefore[0].total);
+
+    if (leadsToDisable === 0) {
+      return res.json({
+        success: true,
+        message: 'No active leads to disable',
+        disabled: 0
+      });
+    }
+
+    // Disable all leads for this client
+    await sequelize.query(
+      `UPDATE business_directory
+       SET call_status = 'DISABLED',
+           notes = CONCAT(COALESCE(notes, ''), ' [DISABLED on ', TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI'), ']'),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE client_id = :clientId AND call_status != 'DISABLED'`,
+      {
+        replacements: { clientId: parseInt(clientId) },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    console.log(`✅ Disabled ${leadsToDisable} leads for client ${clientId}`);
+
+    res.json({
+      success: true,
+      message: `Successfully disabled ${leadsToDisable} leads for client ${clientId}`,
+      disabled: leadsToDisable,
+      clientId: parseInt(clientId)
+    });
+
+  } catch (error) {
+    console.error('❌ Error disabling leads:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to disable leads'
+    });
+  }
+});
+
+// Admin endpoint: Get stats for a client's business directory
+router.get('/business-collector/admin/stats/:clientId', async (req, res) => {
+  const { clientId } = req.params;
+
+  try {
+    const stats = await sequelize.query(
+      `SELECT
+         call_status,
+         COUNT(*) as count
+       FROM business_directory
+       WHERE client_id = :clientId
+       GROUP BY call_status
+       ORDER BY count DESC`,
+      {
+        replacements: { clientId: parseInt(clientId) },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const total = stats.reduce((sum, s) => sum + parseInt(s.count), 0);
+
+    res.json({
+      success: true,
+      clientId: parseInt(clientId),
+      total,
+      byStatus: stats
+    });
+
+  } catch (error) {
+    console.error('❌ Error getting stats:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // AI Copilot chat
 router.post('/copilot/chat', async (req, res) => {
   console.log('📩 MCP Chat request received:', { sessionId: req.body.sessionId, message: req.body.message?.substring(0, 50) });

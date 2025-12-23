@@ -6,6 +6,11 @@ console.log('✅ business-collector-form.js loaded');
 let businessCollectorModal = null;
 let currentLeads = null;
 
+// CLIENT 15 SPECIAL HANDLING: Vagaro Discovery Mode
+// Client 15 only sees "Vagaro Users" category and gets filtered results
+const CLIENT_15_VAGARO_MODE = true;
+const CLIENT_15_ID = 15;
+
 // US Cities by State - Top cities for each state
 const US_CITIES_BY_STATE = {
     'Florida': ['Miami', 'Orlando', 'Tampa', 'Jacksonville', 'Fort Lauderdale', 'St. Petersburg', 'Tallahassee', 'Cape Coral', 'Port St. Lucie', 'Pembroke Pines', 'Hollywood', 'Miramar', 'Coral Springs', 'Clearwater', 'Palm Bay', 'Lakeland', 'Pompano Beach', 'West Palm Beach', 'Boca Raton', 'Gainesville', 'Fort Myers', 'Daytona Beach', 'Sarasota', 'Kissimmee', 'Naples', 'Deerfield Beach', 'Boynton Beach', 'Delray Beach', 'Melbourne', 'Ocala', 'Pensacola', 'Brandon', 'Spring Hill', 'Largo'],
@@ -38,180 +43,215 @@ function openBusinessCollectorForm() {
     }
 }
 
+// Check if this is Client 15 (Vagaro Discovery Mode)
+function isClient15ForVagaro() {
+    const clientId = typeof currentClientId !== 'undefined' ? currentClientId : null;
+    return CLIENT_15_VAGARO_MODE && parseInt(clientId) === CLIENT_15_ID;
+}
+
+// Get category dropdown HTML based on client
+function getCategoryDropdownHTML() {
+    // Client 15: Only show Vagaro Users category
+    if (isClient15ForVagaro()) {
+        console.log('🎯 Client 15 detected - Vagaro Discovery Mode activated');
+        return `
+            <div class="bc-form-group">
+                <label for="bcCategory">Business Category *</label>
+                <select id="bcCategory" required>
+                    <option value="">Select a category...</option>
+                    <optgroup label="Vagaro Discovery Mode">
+                        <option value="Vagaro Users" selected>🎯 Vagaro Users (Hair Salons, Spas, etc.)</option>
+                    </optgroup>
+                </select>
+                <small style="color: #10b981; margin-top: 5px; display: block;">
+                    ✨ Vagaro Discovery Mode: Only businesses using Vagaro will be returned
+                </small>
+            </div>`;
+    }
+
+    // All other clients: Full category list
+    return `
+        <div class="bc-form-group">
+            <label for="bcCategory">Business Category *</label>
+            <select id="bcCategory" required>
+                <option value="">Select a category...</option>
+                <optgroup label="Home & Property Services">
+                    <option value="lawn care service">Lawn Care & Landscaping</option>
+                    <option value="tree service">Tree Trimming & Removal</option>
+                    <option value="pool cleaning service">Pool Cleaning & Maintenance</option>
+                    <option value="pest control service">Pest Control</option>
+                    <option value="pressure washing service">Pressure Washing</option>
+                    <option value="roofing contractor">Roofing & Gutters</option>
+                    <option value="painting contractor">Painting Contractors</option>
+                    <option value="plumber">Plumbing</option>
+                    <option value="electrician">Electrical Services</option>
+                    <option value="HVAC contractor">HVAC (Air Conditioning & Heating)</option>
+                    <option value="garage door repair">Garage Door Repair</option>
+                    <option value="handyman service">Handyman Services</option>
+                    <option value="flooring contractor">Flooring & Tile</option>
+                    <option value="fence contractor">Fence Installation & Repair</option>
+                    <option value="carpet cleaning service">Carpet Cleaning</option>
+                    <option value="window cleaning service">Window Cleaning</option>
+                    <option value="junk removal service">Junk Removal</option>
+                    <option value="home remodeling contractor">Home Remodeling</option>
+                    <option value="cleaning service">Cleaning Services</option>
+                    <option value="appliance repair service">Appliance Repair</option>
+                </optgroup>
+                <optgroup label="Real Estate & Housing">
+                    <option value="real estate agent">Real Estate Agents</option>
+                    <option value="property management company">Property Managers</option>
+                    <option value="apartment complex">Apartment Complexes</option>
+                    <option value="home inspection service">Home Inspectors</option>
+                    <option value="mortgage lender">Mortgage Loan Officers</option>
+                    <option value="title company">Title Companies</option>
+                    <option value="real estate photography service">Real Estate Photographers</option>
+                </optgroup>
+                <optgroup label="Health, Wellness & Personal Care">
+                    <option value="chiropractor">Chiropractors</option>
+                    <option value="dentist">Dentists & Orthodontists</option>
+                    <option value="physical therapy clinic">Physical Therapists</option>
+                    <option value="massage therapist">Massage Therapists</option>
+                    <option value="medical spa">Med Spas</option>
+                    <option value="hair salon">Hair Salons & Barbershops</option>
+                    <option value="nail salon">Nail Salons</option>
+                    <option value="personal trainer">Personal Trainers & Gyms</option>
+                    <option value="nutritionist">Nutritionists & Dieticians</option>
+                    <option value="counseling service">Counseling & Therapy</option>
+                </optgroup>
+                <optgroup label="Professional Services">
+                    <option value="insurance agency">Insurance Agents</option>
+                    <option value="financial planner">Financial Advisors</option>
+                    <option value="accounting firm">Accountants & Tax Preparers</option>
+                    <option value="law firm">Lawyers & Legal Services</option>
+                    <option value="notary public">Notaries</option>
+                    <option value="business consultant">Consultants & Coaches</option>
+                </optgroup>
+                <optgroup label="Auto & Transportation">
+                    <option value="auto repair shop">Auto Repair</option>
+                    <option value="auto detailing service">Car Detailing</option>
+                    <option value="mobile mechanic">Mobile Mechanics</option>
+                    <option value="towing service">Towing Services</option>
+                    <option value="car dealership">Car Dealerships</option>
+                    <option value="driving school">Driving Schools</option>
+                    <option value="auto glass repair">Auto Glass Repair</option>
+                </optgroup>
+                <optgroup label="Events & Lifestyle">
+                    <option value="wedding planner">Wedding Planners</option>
+                    <option value="photographer">Photographers & Videographers</option>
+                    <option value="DJ service">DJs & Entertainment</option>
+                    <option value="catering service">Caterers & Food Trucks</option>
+                    <option value="party equipment rental">Party Rentals</option>
+                    <option value="event venue">Event Venues</option>
+                    <option value="florist">Florists</option>
+                </optgroup>
+                <optgroup label="Food & Beverage">
+                    <option value="restaurant">Restaurants</option>
+                    <option value="bakery">Bakeries</option>
+                    <option value="pastry shop">Pastry Shops</option>
+                    <option value="dessert cafe">Dessert Cafés</option>
+                    <option value="confectionery">Confectioneries</option>
+                    <option value="ice cream shop">Ice Cream Shops</option>
+                    <option value="cafe">Cafés & Coffee Shops</option>
+                    <option value="pizza restaurant">Pizza Restaurants</option>
+                    <option value="fast food restaurant">Fast Food</option>
+                    <option value="deli">Delis & Sandwich Shops</option>
+                    <option value="food truck">Food Trucks</option>
+                    <option value="bar">Bars & Pubs</option>
+                </optgroup>
+                <optgroup label="Pet & Animal Services">
+                    <option value="dog grooming service">Dog Groomers</option>
+                    <option value="veterinarian">Veterinarians</option>
+                    <option value="pet boarding service">Pet Boarding & Daycare</option>
+                    <option value="dog trainer">Dog Training</option>
+                </optgroup>
+                <optgroup label="Medical & Healthcare">
+                    <option value="medical clinic">Medical Clinics</option>
+                    <option value="medical billing service">Medical Billing</option>
+                    <option value="home health care service">Home Health Care</option>
+                    <option value="optometrist">Optometrists & Eye Clinics</option>
+                    <option value="dental clinic">Dental Offices</option>
+                    <option value="speech therapist">Speech & Occupational Therapy</option>
+                </optgroup>
+                <optgroup label="Education & Tutoring">
+                    <option value="tutoring service">Private Tutors</option>
+                    <option value="test preparation center">Test Prep Centers</option>
+                    <option value="childcare center">Childcare & Preschools</option>
+                    <option value="art school">Art & Music Schools</option>
+                </optgroup>
+                <optgroup label="Technology & Marketing">
+                    <option value="web design agency">Web Design Agencies</option>
+                    <option value="marketing agency">Marketing Consultants</option>
+                    <option value="IT services">IT Support & MSPs</option>
+                    <option value="SEO service">SEO & Social Media</option>
+                </optgroup>
+                <optgroup label="Construction & B2B">
+                    <option value="general contractor">General Contractors</option>
+                    <option value="excavation contractor">Excavation & Concrete</option>
+                    <option value="welding service">Welding & Fabrication</option>
+                    <option value="equipment rental service">Equipment Rental</option>
+                </optgroup>
+                <optgroup label="Jewelry & Accessories Retail">
+                    <option value="women's boutique">Women's Boutiques</option>
+                    <option value="clothing boutique">Clothing Boutiques</option>
+                    <option value="fashion boutique">Fashion Boutiques</option>
+                    <option value="accessories store">Accessories Stores</option>
+                    <option value="jewelry store">Jewelry Stores</option>
+                </optgroup>
+                <optgroup label="Gift & Specialty Retail">
+                    <option value="gift shop">Gift Shops</option>
+                    <option value="souvenir shop">Souvenir Shops</option>
+                    <option value="specialty gift store">Specialty Gift Stores</option>
+                    <option value="tourist gift shop">Tourist Gift Shops</option>
+                    <option value="beach shop">Beach Shops</option>
+                </optgroup>
+                <optgroup label="Consignment & Resale">
+                    <option value="consignment boutique">Consignment Boutiques</option>
+                    <option value="resale boutique">Resale Boutiques</option>
+                    <option value="upscale consignment shop">Upscale Consignment Shops</option>
+                    <option value="designer resale store">Designer Resale Stores</option>
+                </optgroup>
+                <optgroup label="Beauty & Wellness">
+                    <option value="day spa">Day Spas</option>
+                    <option value="hair salon">Hair Salons</option>
+                    <option value="nail salon">Nail Salons</option>
+                    <option value="med spa">Med Spas</option>
+                    <option value="beauty salon">Beauty Salons</option>
+                </optgroup>
+                <optgroup label="Home & Lifestyle">
+                    <option value="home décor store">Home Décor Stores</option>
+                    <option value="antique shop">Antique Shops</option>
+                    <option value="art gallery">Art Galleries</option>
+                </optgroup>
+                <optgroup label="Bridal & Special Occasion">
+                    <option value="bridal shop">Bridal Shops</option>
+                    <option value="formal wear store">Formal Wear Stores</option>
+                    <option value="dress boutique">Dress Boutiques</option>
+                </optgroup>
+                <optgroup label="Tourism & Hospitality">
+                    <option value="hotel gift shop">Hotel Gift Shops</option>
+                    <option value="resort shop">Resort Shops</option>
+                    <option value="museum gift shop">Museum Gift Shops</option>
+                </optgroup>
+            </select>
+        </div>`;
+}
+
 // Create the modal HTML
 function createBusinessCollectorModal() {
+    // Get the appropriate category dropdown based on client
+    const categoryDropdownHTML = getCategoryDropdownHTML();
+    const modalTitle = isClient15ForVagaro() ? '🎯 Vagaro User Discovery' : '🔍 Business Collector';
+
     const modalHTML = `
         <div id="businessCollectorModal" class="bc-modal">
             <div class="bc-modal-content">
                 <div class="bc-modal-header">
-                    <h2>🔍 Business Collector</h2>
+                    <h2>${modalTitle}</h2>
                     <button class="bc-close-btn" onclick="closeBusinessCollectorForm()">&times;</button>
                 </div>
 
                 <form id="bcForm" class="bc-form">
-                    <div class="bc-form-group">
-                        <label for="bcCategory">Business Category *</label>
-                        <select id="bcCategory" required>
-                            <option value="">Select a category...</option>
-                            <optgroup label="Home & Property Services">
-                                <option value="lawn care service">Lawn Care & Landscaping</option>
-                                <option value="tree service">Tree Trimming & Removal</option>
-                                <option value="pool cleaning service">Pool Cleaning & Maintenance</option>
-                                <option value="pest control service">Pest Control</option>
-                                <option value="pressure washing service">Pressure Washing</option>
-                                <option value="roofing contractor">Roofing & Gutters</option>
-                                <option value="painting contractor">Painting Contractors</option>
-                                <option value="plumber">Plumbing</option>
-                                <option value="electrician">Electrical Services</option>
-                                <option value="HVAC contractor">HVAC (Air Conditioning & Heating)</option>
-                                <option value="garage door repair">Garage Door Repair</option>
-                                <option value="handyman service">Handyman Services</option>
-                                <option value="flooring contractor">Flooring & Tile</option>
-                                <option value="fence contractor">Fence Installation & Repair</option>
-                                <option value="carpet cleaning service">Carpet Cleaning</option>
-                                <option value="window cleaning service">Window Cleaning</option>
-                                <option value="junk removal service">Junk Removal</option>
-                                <option value="home remodeling contractor">Home Remodeling</option>
-                                <option value="cleaning service">Cleaning Services</option>
-                                <option value="appliance repair service">Appliance Repair</option>
-                            </optgroup>
-                            <optgroup label="Real Estate & Housing">
-                                <option value="real estate agent">Real Estate Agents</option>
-                                <option value="property management company">Property Managers</option>
-                                <option value="apartment complex">Apartment Complexes</option>
-                                <option value="home inspection service">Home Inspectors</option>
-                                <option value="mortgage lender">Mortgage Loan Officers</option>
-                                <option value="title company">Title Companies</option>
-                                <option value="real estate photography service">Real Estate Photographers</option>
-                            </optgroup>
-                            <optgroup label="Health, Wellness & Personal Care">
-                                <option value="chiropractor">Chiropractors</option>
-                                <option value="dentist">Dentists & Orthodontists</option>
-                                <option value="physical therapy clinic">Physical Therapists</option>
-                                <option value="massage therapist">Massage Therapists</option>
-                                <option value="medical spa">Med Spas</option>
-                                <option value="hair salon">Hair Salons & Barbershops</option>
-                                <option value="nail salon">Nail Salons</option>
-                                <option value="personal trainer">Personal Trainers & Gyms</option>
-                                <option value="nutritionist">Nutritionists & Dieticians</option>
-                                <option value="counseling service">Counseling & Therapy</option>
-                            </optgroup>
-                            <optgroup label="Professional Services">
-                                <option value="insurance agency">Insurance Agents</option>
-                                <option value="financial planner">Financial Advisors</option>
-                                <option value="accounting firm">Accountants & Tax Preparers</option>
-                                <option value="law firm">Lawyers & Legal Services</option>
-                                <option value="notary public">Notaries</option>
-                                <option value="business consultant">Consultants & Coaches</option>
-                            </optgroup>
-                            <optgroup label="Auto & Transportation">
-                                <option value="auto repair shop">Auto Repair</option>
-                                <option value="auto detailing service">Car Detailing</option>
-                                <option value="mobile mechanic">Mobile Mechanics</option>
-                                <option value="towing service">Towing Services</option>
-                                <option value="car dealership">Car Dealerships</option>
-                                <option value="driving school">Driving Schools</option>
-                                <option value="auto glass repair">Auto Glass Repair</option>
-                            </optgroup>
-                            <optgroup label="Events & Lifestyle">
-                                <option value="wedding planner">Wedding Planners</option>
-                                <option value="photographer">Photographers & Videographers</option>
-                                <option value="DJ service">DJs & Entertainment</option>
-                                <option value="catering service">Caterers & Food Trucks</option>
-                                <option value="party equipment rental">Party Rentals</option>
-                                <option value="event venue">Event Venues</option>
-                                <option value="florist">Florists</option>
-                            </optgroup>
-                            <optgroup label="Food & Beverage">
-                                <option value="restaurant">Restaurants</option>
-                                <option value="bakery">Bakeries</option>
-                                <option value="pastry shop">Pastry Shops</option>
-                                <option value="dessert cafe">Dessert Cafés</option>
-                                <option value="confectionery">Confectioneries</option>
-                                <option value="ice cream shop">Ice Cream Shops</option>
-                                <option value="cafe">Cafés & Coffee Shops</option>
-                                <option value="pizza restaurant">Pizza Restaurants</option>
-                                <option value="fast food restaurant">Fast Food</option>
-                                <option value="deli">Delis & Sandwich Shops</option>
-                                <option value="food truck">Food Trucks</option>
-                                <option value="bar">Bars & Pubs</option>
-                            </optgroup>
-                            <optgroup label="Pet & Animal Services">
-                                <option value="dog grooming service">Dog Groomers</option>
-                                <option value="veterinarian">Veterinarians</option>
-                                <option value="pet boarding service">Pet Boarding & Daycare</option>
-                                <option value="dog trainer">Dog Training</option>
-                            </optgroup>
-                            <optgroup label="Medical & Healthcare">
-                                <option value="medical clinic">Medical Clinics</option>
-                                <option value="medical billing service">Medical Billing</option>
-                                <option value="home health care service">Home Health Care</option>
-                                <option value="optometrist">Optometrists & Eye Clinics</option>
-                                <option value="dental clinic">Dental Offices</option>
-                                <option value="speech therapist">Speech & Occupational Therapy</option>
-                            </optgroup>
-                            <optgroup label="Education & Tutoring">
-                                <option value="tutoring service">Private Tutors</option>
-                                <option value="test preparation center">Test Prep Centers</option>
-                                <option value="childcare center">Childcare & Preschools</option>
-                                <option value="art school">Art & Music Schools</option>
-                            </optgroup>
-                            <optgroup label="Technology & Marketing">
-                                <option value="web design agency">Web Design Agencies</option>
-                                <option value="marketing agency">Marketing Consultants</option>
-                                <option value="IT services">IT Support & MSPs</option>
-                                <option value="SEO service">SEO & Social Media</option>
-                            </optgroup>
-                            <optgroup label="Construction & B2B">
-                                <option value="general contractor">General Contractors</option>
-                                <option value="excavation contractor">Excavation & Concrete</option>
-                                <option value="welding service">Welding & Fabrication</option>
-                                <option value="equipment rental service">Equipment Rental</option>
-                            </optgroup>
-                            <optgroup label="Jewelry & Accessories Retail">
-                                <option value="women's boutique">Women's Boutiques</option>
-                                <option value="clothing boutique">Clothing Boutiques</option>
-                                <option value="fashion boutique">Fashion Boutiques</option>
-                                <option value="accessories store">Accessories Stores</option>
-                                <option value="jewelry store">Jewelry Stores</option>
-                            </optgroup>
-                            <optgroup label="Gift & Specialty Retail">
-                                <option value="gift shop">Gift Shops</option>
-                                <option value="souvenir shop">Souvenir Shops</option>
-                                <option value="specialty gift store">Specialty Gift Stores</option>
-                                <option value="tourist gift shop">Tourist Gift Shops</option>
-                                <option value="beach shop">Beach Shops</option>
-                            </optgroup>
-                            <optgroup label="Consignment & Resale">
-                                <option value="consignment boutique">Consignment Boutiques</option>
-                                <option value="resale boutique">Resale Boutiques</option>
-                                <option value="upscale consignment shop">Upscale Consignment Shops</option>
-                                <option value="designer resale store">Designer Resale Stores</option>
-                            </optgroup>
-                            <optgroup label="Beauty & Wellness">
-                                <option value="day spa">Day Spas</option>
-                                <option value="hair salon">Hair Salons</option>
-                                <option value="nail salon">Nail Salons</option>
-                                <option value="med spa">Med Spas</option>
-                                <option value="beauty salon">Beauty Salons</option>
-                            </optgroup>
-                            <optgroup label="Home & Lifestyle">
-                                <option value="home décor store">Home Décor Stores</option>
-                                <option value="antique shop">Antique Shops</option>
-                                <option value="art gallery">Art Galleries</option>
-                            </optgroup>
-                            <optgroup label="Bridal & Special Occasion">
-                                <option value="bridal shop">Bridal Shops</option>
-                                <option value="formal wear store">Formal Wear Stores</option>
-                                <option value="dress boutique">Dress Boutiques</option>
-                            </optgroup>
-                            <optgroup label="Tourism & Hospitality">
-                                <option value="hotel gift shop">Hotel Gift Shops</option>
-                                <option value="resort shop">Resort Shops</option>
-                                <option value="museum gift shop">Museum Gift Shops</option>
-                            </optgroup>
-                        </select>
-                    </div>
+                    ${categoryDropdownHTML}
 
                     <div class="bc-form-group">
                         <label for="bcState">State *</label>
