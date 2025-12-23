@@ -131,6 +131,10 @@ console.log('📄 About to require auth routes...');
 const authRoutes = require('./routes/auth'); // User authentication routes
 console.log('✅ Auth routes required successfully, type:', typeof authRoutes);
 
+// Import LaunchStack routes (separate from RinglyPro)
+const launchstackRoutes = require('./routes/launchstack'); // LaunchStack registration/login
+console.log('✅ LaunchStack routes loaded successfully');
+
 // Import Stripe webhook routes
 const webhookRoutes = require('./routes/webhooks'); // Stripe webhooks for subscriptions
 console.log('✅ Webhook routes loaded successfully');
@@ -178,6 +182,10 @@ console.log('✅ Project Tracker routes loaded successfully');
 console.log('📄 About to mount auth routes...');
 app.use('/api/auth', authRoutes); // Mount user authentication routes
 console.log('✅ Auth routes mounted successfully');
+
+// LaunchStack API routes (separate from RinglyPro)
+app.use('/api/launchstack', launchstackRoutes); // Mount LaunchStack routes
+console.log('✅ LaunchStack routes mounted at /api/launchstack');
 
 // Mount webhook routes (IMPORTANT: Must be mounted BEFORE body parser middleware)
 app.use('/webhooks', webhookRoutes); // Stripe webhooks for subscriptions

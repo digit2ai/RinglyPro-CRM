@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaunchStack - Sign In | All-in-One Business Formation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+        }
+        .glass-effect {
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(209, 213, 219, 0.3);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #9333ea 100%);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+        <!-- Logo and Header -->
+        <div class="text-center mb-8">
+            <a href="/all-in-one" class="inline-block">
+                <h1 class="text-4xl font-extrabold mb-2">
+                    <span class="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">LaunchStack</span>
+                </h1>
+            </a>
+            <p class="text-indigo-200">Sign in to your account</p>
+        </div>
+
+        <!-- Main Form Container -->
+        <div class="glass-effect rounded-2xl shadow-2xl p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Welcome Back</h2>
+
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="email" id="email" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="john@example.com" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="password" id="password" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter your password" required>
+                        <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-eye" id="toggleIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="rememberMe" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <span class="ml-2 text-sm text-gray-600">Remember me</span>
+                    </label>
+                    <a href="/forgot-password" class="text-sm text-indigo-600 hover:underline">Forgot password?</a>
+                </div>
+
+                <div id="errorMessage" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm"></div>
+
+                <button type="submit" id="loginBtn" class="w-full btn-primary text-white font-bold py-3 px-4 rounded-lg transition duration-300 transform hover:scale-[1.02] shadow-lg">
+                    <span id="btnText">Sign In</span>
+                    <i class="fas fa-arrow-right ml-2" id="btnIcon"></i>
+                    <i class="fas fa-spinner fa-spin ml-2 hidden" id="btnSpinner"></i>
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="my-6 flex items-center">
+                <div class="flex-1 border-t border-gray-300"></div>
+                <span class="px-4 text-sm text-gray-500">or</span>
+                <div class="flex-1 border-t border-gray-300"></div>
+            </div>
+
+            <!-- Quick access to RinglyPro -->
+            <a href="/login" class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition duration-300">
+                <i class="fas fa-phone-volume mr-2 text-indigo-600"></i>
+                Sign in to RinglyPro Dashboard
+            </a>
+        </div>
+
+        <!-- Signup Link -->
+        <div class="text-center mt-6">
+            <p class="text-indigo-200">
+                Don't have an account?
+                <a href="/all-in-one/signup.html" class="text-white font-medium hover:underline">Create one</a>
+            </p>
+        </div>
+
+        <!-- Powered by -->
+        <div class="text-center mt-4">
+            <p class="text-indigo-300/60 text-xs">
+                Powered by <a href="https://ringlypro.com" target="_blank" class="hover:text-white">RinglyPro</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMessage');
+            const btn = document.getElementById('loginBtn');
+            const btnText = document.getElementById('btnText');
+            const btnIcon = document.getElementById('btnIcon');
+            const btnSpinner = document.getElementById('btnSpinner');
+
+            // Reset error
+            errorDiv.classList.add('hidden');
+
+            // Show loading
+            btn.disabled = true;
+            btnText.textContent = 'Signing in...';
+            btnIcon.classList.add('hidden');
+            btnSpinner.classList.remove('hidden');
+
+            try {
+                // Use LaunchStack login endpoint
+                const response = await fetch('/api/launchstack/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Store token
+                    if (result.token) {
+                        localStorage.setItem('token', result.token);
+                    }
+
+                    // Mark as LaunchStack user and redirect to dashboard
+                    localStorage.setItem('launchstack_user', 'true');
+                    window.location.href = '/all-in-one/dashboard.html';
+                } else {
+                    throw new Error(result.error || 'Login failed');
+                }
+            } catch (error) {
+                errorDiv.textContent = error.message || 'Invalid email or password';
+                errorDiv.classList.remove('hidden');
+
+                // Reset button
+                btn.disabled = false;
+                btnText.textContent = 'Sign In';
+                btnIcon.classList.remove('hidden');
+                btnSpinner.classList.add('hidden');
+            }
+        });
+
+        function togglePassword() {
+            const field = document.getElementById('password');
+            const icon = document.getElementById('toggleIcon');
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaunchStack - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+        }
+        .glass-effect {
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(209, 213, 219, 0.3);
+        }
+        .sidebar {
+            background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 text-white flex flex-col">
+            <div class="p-6">
+                <h1 class="text-2xl font-extrabold">
+                    <span class="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">LaunchStack</span>
+                </h1>
+            </div>
+
+            <nav class="flex-1 px-4">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="/all-in-one/dashboard.html" class="flex items-center px-4 py-3 bg-white/10 rounded-lg text-white">
+                            <i class="fas fa-home w-5"></i>
+                            <span class="ml-3">Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center px-4 py-3 hover:bg-white/10 rounded-lg text-indigo-200">
+                            <i class="fas fa-file-contract w-5"></i>
+                            <span class="ml-3">LLC Formation</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center px-4 py-3 hover:bg-white/10 rounded-lg text-indigo-200">
+                            <i class="fas fa-globe w-5"></i>
+                            <span class="ml-3">Website & Domain</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center px-4 py-3 hover:bg-white/10 rounded-lg text-indigo-200">
+                            <i class="fas fa-calculator w-5"></i>
+                            <span class="ml-3">Bookkeeping</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/" class="flex items-center px-4 py-3 hover:bg-white/10 rounded-lg text-indigo-200">
+                            <i class="fas fa-phone-volume w-5"></i>
+                            <span class="ml-3">Voice AI (RinglyPro)</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="p-4 border-t border-white/10">
+                <a href="#" onclick="logout()" class="flex items-center px-4 py-3 hover:bg-white/10 rounded-lg text-indigo-200">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span class="ml-3">Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Welcome back, <span id="userName">Business Owner</span>!</h2>
+                    <p class="text-gray-600">Here's what's happening with your business today.</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition">
+                        <i class="fas fa-plus mr-2"></i> Add Service
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="glass-effect rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Active Services</p>
+                            <p class="text-3xl font-bold text-gray-800" id="activeServices">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-layer-group text-indigo-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-effect rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Business Status</p>
+                            <p class="text-xl font-bold text-green-600" id="businessStatus">Active</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-check-circle text-green-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-effect rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Account Type</p>
+                            <p class="text-xl font-bold text-indigo-600" id="accountType">Starter</p>
+                        </div>
+                        <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-star text-indigo-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-effect rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Trial Status</p>
+                            <p class="text-xl font-bold text-orange-600" id="trialStatus">14 days left</p>
+                        </div>
+                        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-clock text-orange-600"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Services Section -->
+            <div class="glass-effect rounded-xl p-6 shadow-lg mb-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Your Services</h3>
+                <div id="servicesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Services will be dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="glass-effect rounded-xl p-6 shadow-lg">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-file-invoice text-indigo-600"></i>
+                        </div>
+                        <span class="font-medium text-gray-700">View Documents</span>
+                    </button>
+                    <button class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-headset text-green-600"></i>
+                        </div>
+                        <span class="font-medium text-gray-700">Contact Support</span>
+                    </button>
+                    <button class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-cog text-purple-600"></i>
+                        </div>
+                        <span class="font-medium text-gray-700">Account Settings</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Check authentication
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/all-in-one/login.html';
+        }
+
+        // Parse JWT to get user info
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Initialize dashboard
+        async function initDashboard() {
+            const tokenData = parseJwt(token);
+
+            if (tokenData) {
+                document.getElementById('userName').textContent = tokenData.businessName || 'Business Owner';
+            }
+
+            // Fetch user profile from LaunchStack API
+            try {
+                const response = await fetch('/api/launchstack/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success && result.data && result.data.user) {
+                        updateDashboard(result.data.user);
+                        return;
+                    }
+                } else if (response.status === 401) {
+                    // Token is invalid or expired - redirect to login
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('launchstack_user');
+                    window.location.href = '/all-in-one/login.html';
+                    return;
+                }
+
+                // Fallback to token data
+                if (tokenData) {
+                    updateDashboard(tokenData);
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+                // Fallback to token data
+                if (tokenData) {
+                    updateDashboard(tokenData);
+                }
+            }
+        }
+
+        function updateDashboard(userData) {
+            // Parse services from localStorage or token
+            const servicesStr = localStorage.getItem('user_services');
+            let services = [];
+
+            try {
+                if (servicesStr) {
+                    services = JSON.parse(servicesStr);
+                }
+            } catch (e) {
+                services = [];
+            }
+
+            // Update active services count
+            document.getElementById('activeServices').textContent = services.length || 1;
+
+            // Populate services
+            const servicesContainer = document.getElementById('servicesContainer');
+            const serviceTemplates = {
+                'llc_formation': {
+                    icon: 'fa-file-contract',
+                    color: 'indigo',
+                    name: 'LLC Formation',
+                    description: 'Business registration and compliance'
+                },
+                'voice_ai': {
+                    icon: 'fa-phone-volume',
+                    color: 'green',
+                    name: 'AI Voice Answering',
+                    description: '24/7 AI receptionist powered by RinglyPro'
+                },
+                'website': {
+                    icon: 'fa-globe',
+                    color: 'purple',
+                    name: 'Website & Domain',
+                    description: 'Professional website with custom domain'
+                },
+                'accounting': {
+                    icon: 'fa-calculator',
+                    color: 'blue',
+                    name: 'Bookkeeping & Taxes',
+                    description: 'Automated bookkeeping and tax prep'
+                }
+            };
+
+            if (services.length > 0) {
+                servicesContainer.innerHTML = services.map(service => {
+                    const template = serviceTemplates[service] || {
+                        icon: 'fa-box',
+                        color: 'gray',
+                        name: service,
+                        description: 'Service details'
+                    };
+                    return `
+                        <div class="flex items-center p-4 border border-gray-200 rounded-lg">
+                            <div class="w-12 h-12 bg-${template.color}-100 rounded-lg flex items-center justify-center mr-4">
+                                <i class="fas ${template.icon} text-${template.color}-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">${template.name}</h4>
+                                <p class="text-sm text-gray-500">${template.description}</p>
+                            </div>
+                            <span class="ml-auto px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">Active</span>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                servicesContainer.innerHTML = `
+                    <div class="col-span-2 text-center py-8 text-gray-500">
+                        <i class="fas fa-box-open text-4xl mb-4 text-gray-300"></i>
+                        <p>No services selected yet.</p>
+                        <button class="mt-4 text-indigo-600 hover:underline">Browse available services</button>
+                    </div>
+                `;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('launchstack_user');
+            localStorage.removeItem('user_services');
+            window.location.href = '/all-in-one/login.html';
+        }
+
+        // Initialize on page load
+        initDashboard();
+    </script>
+</body>
+</html>
