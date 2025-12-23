@@ -17,22 +17,81 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-// Vagaro category slugs for their directory
+// Vagaro category slugs for their directory - COMPREHENSIVE LIST
+// Covers all business types that commonly use Vagaro
 const VAGARO_CATEGORY_SLUGS = [
+  // Hair & Barbershops
   'hair-salons',
   'barbershops',
+  'hair-stylists',
+  'hair-colorists',
+  'hair-extensions',
+
+  // Beauty & Aesthetics
   'beauty-salons',
+  'nail-salons',
+  'makeup-artists',
+  'eyebrow-services',
+  'eyelash-extensions',
+  'microblading',
+  'permanent-makeup',
+  'waxing-salons',
+  'threading-salons',
+  'skincare',
+  'estheticians',
+  'facial-services',
+
+  // Spas & Wellness
   'day-spas',
   'med-spas',
-  'nail-salons',
+  'medical-spas',
   'massage',
+  'massage-therapy',
+  'massage-therapists',
+  'wellness-centers',
+  'wellness-spas',
+  'holistic-wellness',
+  'acupuncture',
+  'chiropractic',
+  'float-therapy',
+  'cryotherapy',
+  'infrared-sauna',
+  'salt-rooms',
+  'body-treatments',
+  'body-wraps',
+  'detox-spa',
+
+  // Fitness & Movement
   'fitness',
+  'fitness-studios',
   'yoga-studios',
+  'pilates-studios',
   'personal-trainers',
+  'personal-training',
+  'gyms',
+  'crossfit',
+  'spinning',
+  'barre-studios',
+  'dance-studios',
+  'martial-arts',
+  'boxing-gyms',
+  'boot-camp',
+
+  // Tanning & Body
   'tanning-salons',
-  'makeup-artists',
+  'spray-tanning',
+  'body-sculpting',
+  'body-contouring',
+  'coolsculpting',
+
+  // Tattoo & Piercing
   'tattoo-shops',
-  'wellness-centers'
+  'piercing-studios',
+
+  // Other Vagaro-Compatible
+  'pet-grooming',
+  'dog-grooming',
+  'mobile-services'
 ];
 
 // State name to URL slug mapping

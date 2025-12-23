@@ -1445,8 +1445,25 @@ router.post('/business-collector/collect', async (req, res) => {
 
       // STRATEGY 2: Also search Google Business Collector and filter for Vagaro
       // This catches businesses that have Vagaro links but aren't in Vagaro's main directory
+      // COMPREHENSIVE CATEGORY LIST - all business types that commonly use Vagaro
       console.log(`  🔍 Also searching Google for Vagaro-linked businesses...`);
-      const categories = ['Hair Salon', 'Beauty Salon', 'Barber Shop', 'Day Spa', 'Nail Salon', 'Med Spa', 'Massage Therapy'];
+      const categories = [
+        // Hair & Barbershops
+        'Hair Salon', 'Barber Shop', 'Hair Stylist', 'Hair Colorist',
+        // Beauty & Aesthetics
+        'Beauty Salon', 'Nail Salon', 'Makeup Artist', 'Eyebrow Service',
+        'Eyelash Extensions', 'Waxing Salon', 'Esthetician', 'Skincare Clinic',
+        // Spas & Wellness
+        'Day Spa', 'Med Spa', 'Medical Spa', 'Massage Therapy', 'Massage Therapist',
+        'Wellness Center', 'Acupuncture', 'Float Therapy', 'Cryotherapy',
+        // Fitness & Movement
+        'Fitness Studio', 'Yoga Studio', 'Pilates Studio', 'Personal Trainer',
+        'Dance Studio', 'Barre Studio', 'CrossFit', 'Boxing Gym',
+        // Tanning & Body
+        'Tanning Salon', 'Spray Tan', 'Body Sculpting',
+        // Other
+        'Tattoo Shop', 'Pet Grooming', 'Dog Grooming'
+      ];
       let googleVagaroBusinesses = [];
 
       for (const cat of categories) {
@@ -1716,9 +1733,26 @@ router.get('/business-collector/quick', async (req, res) => {
       });
 
       // STRATEGY 2: Also search Google Business Collector with multiple categories
+      // COMPREHENSIVE CATEGORY LIST - all business types that commonly use Vagaro
       console.log(`  🔍 Also searching Google for Vagaro-linked businesses...`);
       const proxy = new BusinessCollectorMCPProxy();
-      const categories = ['Hair Salon', 'Beauty Salon', 'Barber Shop', 'Day Spa', 'Nail Salon', 'Med Spa', 'Massage Therapy'];
+      const categories = [
+        // Hair & Barbershops
+        'Hair Salon', 'Barber Shop', 'Hair Stylist', 'Hair Colorist',
+        // Beauty & Aesthetics
+        'Beauty Salon', 'Nail Salon', 'Makeup Artist', 'Eyebrow Service',
+        'Eyelash Extensions', 'Waxing Salon', 'Esthetician', 'Skincare Clinic',
+        // Spas & Wellness
+        'Day Spa', 'Med Spa', 'Medical Spa', 'Massage Therapy', 'Massage Therapist',
+        'Wellness Center', 'Acupuncture', 'Float Therapy', 'Cryotherapy',
+        // Fitness & Movement
+        'Fitness Studio', 'Yoga Studio', 'Pilates Studio', 'Personal Trainer',
+        'Dance Studio', 'Barre Studio', 'CrossFit', 'Boxing Gym',
+        // Tanning & Body
+        'Tanning Salon', 'Spray Tan', 'Body Sculpting',
+        // Other
+        'Tattoo Shop', 'Pet Grooming', 'Dog Grooming'
+      ];
       let googleVagaroBusinesses = [];
 
       for (const cat of categories) {
