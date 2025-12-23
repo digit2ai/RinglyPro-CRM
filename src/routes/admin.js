@@ -829,6 +829,75 @@ router.post('/gift-tokens', async (req, res) => {
 
 // ============= BUSINESS DIRECTORY ADMIN =============
 
+// Quick disable leads endpoint with API key auth (no JWT required)
+// Used for quick admin operations like Client 15 Vagaro migration
+router.post('/quick-disable-leads/:clientId', async (req, res) => {
+    try {
+        const { clientId } = req.params;
+        const { apiKey } = req.body;
+
+        // Simple API key check
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+        if (apiKey !== expectedKey) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid API key'
+            });
+        }
+
+        console.log(`🔒 Quick Admin: Disabling leads for client ${clientId}`);
+
+        // Get count before disabling
+        const [countResult] = await sequelize.query(
+            `SELECT COUNT(*) as total FROM business_directory
+             WHERE client_id = :clientId AND (call_status IS NULL OR call_status != 'DISABLED')`,
+            {
+                replacements: { clientId: parseInt(clientId) },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        const leadsToDisable = parseInt(countResult.total);
+
+        if (leadsToDisable === 0) {
+            return res.json({
+                success: true,
+                message: 'No active leads to disable',
+                disabled: 0,
+                clientId: parseInt(clientId)
+            });
+        }
+
+        // Disable all leads
+        await sequelize.query(
+            `UPDATE business_directory
+             SET call_status = 'DISABLED',
+                 notes = CONCAT(COALESCE(notes, ''), ' [DISABLED by quick-admin on ', TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI'), ']'),
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE client_id = :clientId AND (call_status IS NULL OR call_status != 'DISABLED')`,
+            {
+                replacements: { clientId: parseInt(clientId) }
+            }
+        );
+
+        console.log(`✅ Quick Admin: Disabled ${leadsToDisable} leads for client ${clientId}`);
+
+        res.json({
+            success: true,
+            message: `Successfully disabled ${leadsToDisable} leads for client ${clientId}`,
+            disabled: leadsToDisable,
+            clientId: parseInt(clientId)
+        });
+
+    } catch (error) {
+        console.error('❌ Error in quick-disable-leads:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Disable all leads for a specific client (sets call_status to DISABLED)
 // Quick admin endpoint for Client 15 Vagaro migration
 router.post('/disable-leads/:clientId', authenticateAdmin, async (req, res) => {
