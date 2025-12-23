@@ -83,6 +83,59 @@ router.post('/admin/disable-all-leads/:clientId', async (req, res) => {
   }
 });
 
+// Emergency fix: Update client's RinglyPro phone number
+router.post('/admin/fix-client-phone/:clientId', async (req, res) => {
+  const { clientId } = req.params;
+  const { apiKey, phoneNumber } = req.body;
+
+  // Simple API key check
+  const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+  if (apiKey !== expectedKey) {
+    return res.status(401).json({ success: false, error: 'Invalid API key' });
+  }
+
+  if (!phoneNumber) {
+    return res.status(400).json({ success: false, error: 'phoneNumber is required' });
+  }
+
+  try {
+    console.log(`🔧 Emergency Fix: Updating ringlypro_number for client ${clientId} to ${phoneNumber}`);
+
+    // Update the client's phone number
+    const [updateResult] = await sequelize.query(
+      `UPDATE clients
+       SET ringlypro_number = :phoneNumber,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = :clientId
+       RETURNING id, business_name, ringlypro_number`,
+      {
+        replacements: { clientId: parseInt(clientId), phoneNumber },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!updateResult) {
+      return res.status(404).json({ success: false, error: `Client ${clientId} not found` });
+    }
+
+    console.log(`✅ Emergency Fix: Client ${clientId} (${updateResult.business_name}) phone updated to ${phoneNumber}`);
+
+    res.json({
+      success: true,
+      message: `Successfully updated phone number for client ${clientId}`,
+      client: {
+        id: updateResult.id,
+        business_name: updateResult.business_name,
+        ringlypro_number: updateResult.ringlypro_number
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Emergency Fix error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Conversation State Structure
 // {
 //   intent: null,              // 'create_contact', 'update_contact', 'send_sms', 'send_email', 'add_tag', 'remove_tag', 'search_contacts'
