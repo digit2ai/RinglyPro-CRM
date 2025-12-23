@@ -448,7 +448,7 @@ router.post('/voice/ana/collect-name', async (req, res) => {
 
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech dtmf" timeout="12" speechTimeout="5" numDigits="10" action="/voice/ana/collect-phone?${contextParams}" method="POST" language="es-MX">
+    <Gather input="speech dtmf" timeout="12" speechTimeout="auto" numDigits="10" action="/voice/ana/collect-phone?${contextParams}" method="POST" language="es-MX">
         ${playOrSay}
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta.</Say>

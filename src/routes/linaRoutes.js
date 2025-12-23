@@ -56,7 +56,7 @@ function createSpanishIVRMenu(client, contextParams = '') {
 
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf speech" numDigits="1" timeout="10" speechTimeout="3" action="${actionUrl}" method="POST" language="es-MX" hints="${hints}">
+    <Gather input="dtmf speech" numDigits="1" timeout="10" speechTimeout="auto" action="${actionUrl}" method="POST" language="es-MX" hints="${hints}">
         <Say voice="Polly.Lupe" language="es-MX">${menuText}</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su selección. Déjeme repetir las opciones.</Say>
@@ -161,7 +161,7 @@ const handleSpanishIncoming = async (req, res) => {
         // Use Polly.Lupe which is reliable - skip ElevenLabs for now to ensure stability
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/lina/process-speech?${contextParams}" method="POST" language="es-MX">
+    <Gather input="speech" timeout="8" speechTimeout="auto" action="/voice/lina/process-speech?${contextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe" language="es-MX">${greetingText}</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intentemos de nuevo.</Say>
@@ -361,7 +361,7 @@ router.post('/voice/lina/collect-name', async (req, res) => {
 
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech dtmf" timeout="10" speechTimeout="5" numDigits="10" action="/voice/lina/collect-phone?${contextParams}" method="POST" language="es-MX">
+    <Gather input="speech dtmf" timeout="10" speechTimeout="auto" numDigits="10" action="/voice/lina/collect-phone?${contextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe" language="es-MX">Gracias ${escapedName}. Ahora puede decir su número de teléfono de 10 dígitos, o marcarlo usando el teclado.</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intente de nuevo.</Say>
@@ -471,7 +471,7 @@ router.post('/voice/lina/collect-phone', async (req, res) => {
         // NEW FLOW: Ask for date AND time together, then validate against calendar
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="4" action="/voice/lina/validate-slot?${xmlContextParams}" method="POST" language="es-MX">
+    <Gather input="speech" timeout="12" speechTimeout="auto" action="/voice/lina/validate-slot?${xmlContextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe" language="es-MX">Perfecto ${escapedName}. ¿Qué día y a qué hora desea su cita?</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su respuesta. Intente de nuevo.</Say>
@@ -620,7 +620,7 @@ router.post('/voice/lina/validate-slot', async (req, res) => {
         if (!requestedTime) {
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="4" action="/voice/lina/validate-slot?${xmlContextParams}" method="POST" language="es-MX">
+    <Gather input="speech" timeout="12" speechTimeout="auto" action="/voice/lina/validate-slot?${xmlContextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe" language="es-MX">No pude entender la hora. ¿A qué hora le gustaría su cita?</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché una respuesta.</Say>
@@ -700,7 +700,7 @@ router.post('/voice/lina/validate-slot', async (req, res) => {
                 // No slots available for this day
                 twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="12" speechTimeout="4" action="/voice/lina/validate-slot?${xmlContextParams}" method="POST" language="es-MX">
+    <Gather input="speech" timeout="12" speechTimeout="auto" action="/voice/lina/validate-slot?${xmlContextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe" language="es-MX">Lo siento ${escapedName}, no tenemos citas disponibles para el ${formattedDate}. ¿Le gustaría probar con otro día? Por favor dígame qué día y a qué hora prefiere.</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché una respuesta.</Say>
@@ -733,7 +733,7 @@ router.post('/voice/lina/validate-slot', async (req, res) => {
 
                 twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf speech" numDigits="1" timeout="10" speechTimeout="3" action="/voice/lina/select-slot?${xmlContextParams}" method="POST" language="es-MX" hints="uno, dos, tres, cuatro, más, especialista">
+    <Gather input="dtmf speech" numDigits="1" timeout="10" speechTimeout="auto" action="/voice/lina/select-slot?${xmlContextParams}" method="POST" language="es-MX" hints="uno, dos, tres, cuatro, más, especialista">
         <Say voice="Polly.Lupe" language="es-MX">${optionsSpeech}</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché su selección.</Say>
@@ -988,7 +988,7 @@ router.post('/voice/lina/offer-slots', async (req, res) => {
                 console.log(`❌ [SLOT-FLOW-ES] No availability for ${appointmentDate}`);
                 twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="speech" timeout="8" speechTimeout="3" action="/voice/lina/collect-date?${xmlContextParams}" method="POST" language="es-MX">
+    <Gather input="speech" timeout="8" speechTimeout="auto" action="/voice/lina/collect-date?${xmlContextParams}" method="POST" language="es-MX">
         <Say voice="Polly.Lupe" language="es-MX">Lo siento ${escapedName}, no tenemos citas disponibles para ese día. ¿Le gustaría probar con otra fecha? Por favor dígame otra fecha que prefiera.</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No escuché una respuesta. Déjeme transferirlo con un especialista.</Say>
@@ -1023,7 +1023,7 @@ router.post('/voice/lina/offer-slots', async (req, res) => {
 
             twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/lina/select-slot?${xmlContextParams}" method="POST" speechTimeout="3" language="es-MX" hints="uno, dos, tres, cuatro, más, especialista, cero">
+    <Gather input="dtmf speech" numDigits="1" timeout="10" action="/voice/lina/select-slot?${xmlContextParams}" method="POST" speechTimeout="auto" language="es-MX" hints="uno, dos, tres, cuatro, más, especialista, cero">
         <Say voice="Polly.Lupe" language="es-MX">${escapedName}, tengo los siguientes horarios disponibles. ${optionsSpeech}</Say>
     </Gather>
     <Say voice="Polly.Lupe" language="es-MX">No recibí una selección. Déjeme repetir las opciones.</Say>
