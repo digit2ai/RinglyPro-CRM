@@ -1700,8 +1700,8 @@ router.post('/voice/rachel/ivr-selection', async (req, res) => {
             // Voicemail
             console.log(`📬 Voicemail selected for ${businessName}`);
 
-            // Redirect to voicemail using TwiML Redirect with context params
-            const contextParams = `client_id=${clientId}&business_name=${encodeURIComponent(businessName)}&user_id=${req.session.user_id || ''}`;
+            // Redirect to voicemail using TwiML Redirect with XML-escaped context params
+            const contextParams = `client_id=${clientId}&amp;business_name=${encodeURIComponent(businessName)}&amp;user_id=${req.session.user_id || ''}`;
             const voicePath = language === 'en' ? 'rachel' : 'ana';
             const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
