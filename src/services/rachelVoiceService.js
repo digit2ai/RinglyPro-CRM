@@ -41,8 +41,18 @@ class MultiTenantRachelService {
      * @returns {string} TwiML response
      */
     async handleIncomingCall(requestBody, session) {
-        const toNumber = requestBody.To || '';
-        const fromNumber = requestBody.From || '';
+        // Normalize phone numbers - handle URL encoding where + becomes space
+        const normalizePhone = (phone) => {
+            if (!phone) return '';
+            // If phone starts with space followed by digit, replace space with +
+            if (phone.match(/^ \d/)) {
+                return '+' + phone.substring(1);
+            }
+            return phone;
+        };
+
+        const toNumber = normalizePhone(requestBody.To || '');
+        const fromNumber = normalizePhone(requestBody.From || '');
         const callSid = requestBody.CallSid || '';
 
         console.log(`📞 Incoming call: ${fromNumber} → ${toNumber} (SID: ${callSid})`);
