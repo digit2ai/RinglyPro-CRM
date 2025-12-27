@@ -5406,30 +5406,19 @@
         </div>
     </div>
 
-    <!-- Voice Assistant Modal -->
-    <div id="voiceAssistantModal" class="modal">
-        <div class="modal-overlay" onclick="closeVoiceAssistant()"></div>
-        <div class="modal-content" style="width: 100%; max-width: 450px; min-height: 500px;">
-            <div class="modal-header">
-                <h2>AI Voice Assistant</h2>
-                <button class="modal-close" onclick="closeVoiceAssistant()">
-                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="modal-body" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; min-height: 400px;">
-                <elevenlabs-convai agent-id="agent_4801kd9a0495frvbjxz6dyrnbz1j"></elevenlabs-convai>
-            </div>
-        </div>
-    </div>
+    <!-- ElevenLabs Voice Assistant Widget -->
+    <elevenlabs-convai agent-id="agent_4801kd9a0495frvbjxz6dyrnbz1j"></elevenlabs-convai>
     <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
     <script>
         function openVoiceAssistant() {
-            document.getElementById('voiceAssistantModal').classList.add('active');
-        }
-        function closeVoiceAssistant() {
-            document.getElementById('voiceAssistantModal').classList.remove('active');
+            // Find the ElevenLabs widget and click its call button
+            const widget = document.querySelector('elevenlabs-convai');
+            if (widget && widget.shadowRoot) {
+                const callButton = widget.shadowRoot.querySelector('button');
+                if (callButton) {
+                    callButton.click();
+                }
+            }
         }
     </script>
 
