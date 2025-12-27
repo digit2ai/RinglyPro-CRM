@@ -2010,7 +2010,7 @@
                 Projects
                 <div class="credit-amount" id="projectsCount" style="background: #10b981;">0</div>
             </button>
-            <button class="action-btn" onclick="window.open('https://ringlypro.com/user-guide', '_blank')" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <button class="action-btn" onclick="openVoiceAssistant()" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                 </svg>
@@ -5405,6 +5405,33 @@
             </div>
         </div>
     </div>
+
+    <!-- Voice Assistant Modal -->
+    <div id="voiceAssistantModal" class="modal">
+        <div class="modal-overlay" onclick="closeVoiceAssistant()"></div>
+        <div class="modal-content" style="width: 100%; max-width: 450px; min-height: 500px;">
+            <div class="modal-header">
+                <h2>AI Voice Assistant</h2>
+                <button class="modal-close" onclick="closeVoiceAssistant()">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; min-height: 400px;">
+                <elevenlabs-convai agent-id="agent_4801kd9a0495frvbjxz6dyrnbz1j"></elevenlabs-convai>
+            </div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+    <script>
+        function openVoiceAssistant() {
+            document.getElementById('voiceAssistantModal').classList.add('active');
+        }
+        function closeVoiceAssistant() {
+            document.getElementById('voiceAssistantModal').classList.remove('active');
+        }
+    </script>
 
 </body>
 </html>
