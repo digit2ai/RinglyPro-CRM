@@ -43,7 +43,12 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING(100),
             allowNull: true,
             validate: {
-                isIn: [['healthcare', 'legal', 'realestate', 'automotive', 'retail', 'restaurant', 'beauty', 'fitness', 'professional', 'technology', 'education', 'other']]
+                isIn: [[
+                    // Original RinglyPro types
+                    'healthcare', 'legal', 'realestate', 'automotive', 'retail', 'restaurant', 'beauty', 'fitness', 'professional', 'technology', 'education', 'other',
+                    // LaunchStack types
+                    'consulting', 'ecommerce', 'marketing', 'construction', 'finance'
+                ]]
             }
         },
         website_url: {

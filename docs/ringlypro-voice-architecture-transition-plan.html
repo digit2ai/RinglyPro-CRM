@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RinglyPro Voice AI - Transition Roadmap (Updated)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #f59e0b, #22c55e, #0ea5e9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        .header .updated-badge {
+            display: inline-block;
+            background: #7c3aed;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+
+        /* Already Built Section */
+        .already-built {
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border: 3px solid #22c55e;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+        }
+
+        .already-built h2 {
+            color: #166534;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+        }
+
+        .built-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .built-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #22c55e;
+        }
+
+        .built-item h3 {
+            color: #166534;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .built-item .file-path {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .built-item ul {
+            list-style: none;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+
+        .built-item li {
+            padding: 4px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .built-item li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #22c55e;
+            font-weight: bold;
+        }
+
+        /* State comparison header */
+        .state-comparison {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .state-box {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .state-box.current {
+            border: 3px solid #f59e0b;
+        }
+
+        .state-box.future {
+            border: 3px solid #22c55e;
+        }
+
+        .state-box h2 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+
+        .state-box.current h2 { color: #f59e0b; }
+        .state-box.future h2 { color: #22c55e; }
+
+        .state-box .features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .state-box .feature-tag {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .state-box.current .feature-tag {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .state-box .feature-tag.done {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .state-box.future .feature-tag {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .transition-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .transition-arrow .arrow {
+            font-size: 3rem;
+            color: #7c3aed;
+        }
+
+        .transition-arrow .label {
+            background: #7c3aed;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* MCP Architecture Section */
+        .mcp-architecture {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .mcp-architecture h2 {
+            text-align: center;
+            color: #1e293b;
+            margin-bottom: 25px;
+            font-size: 1.4rem;
+        }
+
+        .mcp-layers {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .mcp-layer {
+            display: flex;
+            gap: 20px;
+            align-items: stretch;
+        }
+
+        .mcp-layer-label {
+            width: 180px;
+            background: linear-gradient(135deg, #7c3aed, #6366f1);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .mcp-layer-content {
+            flex: 1;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .mcp-component {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 200px;
+            flex: 1;
+        }
+
+        .mcp-component.exists {
+            border-color: #22c55e;
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        }
+
+        .mcp-component.needed {
+            border-color: #f59e0b;
+            border-style: dashed;
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+        }
+
+        .mcp-component h4 {
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mcp-component.exists h4 { color: #166534; }
+        .mcp-component.needed h4 { color: #92400e; }
+
+        .mcp-component .details {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .mcp-component .file {
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            color: #7c3aed;
+            margin-top: 8px;
+        }
+
+        /* Tools Grid */
+        .tools-section {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .tools-section h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .tool-card {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .tool-card.exists {
+            border-color: #22c55e;
+        }
+
+        .tool-card.needed {
+            border-color: #f59e0b;
+            border-style: dashed;
+        }
+
+        .tool-card h4 {
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .tool-card.exists h4::before {
+            content: '✓ ';
+            color: #22c55e;
+        }
+
+        .tool-card.needed h4::before {
+            content: '○ ';
+            color: #f59e0b;
+        }
+
+        .tool-card .description {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .tool-card .proxy {
+            font-size: 0.7rem;
+            color: #7c3aed;
+            margin-top: 6px;
+        }
+
+        /* Phase Timeline */
+        .timeline {
+            position: relative;
+            margin: 40px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #22c55e, #7c3aed, #0ea5e9);
+            border-radius: 2px;
+        }
+
+        .phase {
+            position: relative;
+            margin-bottom: 60px;
+        }
+
+        .phase:last-child {
+            margin-bottom: 0;
+        }
+
+        .phase-content {
+            width: 45%;
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            position: relative;
+        }
+
+        .phase:nth-child(odd) .phase-content {
+            margin-left: 55%;
+        }
+
+        .phase:nth-child(even) .phase-content {
+            margin-right: 55%;
+        }
+
+        .phase-marker {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .phase-1 .phase-marker { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .phase-2 .phase-marker { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .phase-3 .phase-marker { background: linear-gradient(135deg, #3b82f6, #0ea5e9); }
+
+        .phase-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .phase-number {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        .phase-1 .phase-number { background: #dcfce7; color: #166534; }
+        .phase-2 .phase-number { background: #ede9fe; color: #5b21b6; }
+        .phase-3 .phase-number { background: #dbeafe; color: #1e40af; }
+
+        .phase-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .phase-description {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        /* Risk indicators */
+        .risk-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .risk-low { background: #dcfce7; color: #166534; }
+        .risk-medium { background: #fef3c7; color: #92400e; }
+
+        /* Tasks */
+        .tasks {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 3px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+
+        .task:hover {
+            background: #f1f5f9;
+            transform: translateX(5px);
+        }
+
+        .task.done {
+            border-left-color: #22c55e;
+            background: #f0fdf4;
+        }
+
+        .task.partial {
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+        }
+
+        .task-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .task-detail {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .task-status {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+
+        .task-status.done {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .task-status.partial {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .task-status.todo {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .task-files {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .task-file {
+            font-size: 0.7rem;
+            background: #e2e8f0;
+            color: #475569;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .task-file.exists {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        /* Rollback strategy */
+        .rollback-section {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border: 2px solid #ef4444;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .rollback-title {
+            color: #991b1b;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rollback-content {
+            font-size: 0.85rem;
+            color: #7f1d1d;
+        }
+
+        /* Testing checklist */
+        .testing-section {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 2px solid #3b82f6;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .testing-title {
+            color: #1e40af;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .testing-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .testing-item {
+            background: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        /* Gap Analysis */
+        .gap-analysis {
+            background: linear-gradient(135deg, #fefce8, #fef9c3);
+            border: 3px solid #eab308;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 40px 0;
+        }
+
+        .gap-analysis h2 {
+            color: #854d0e;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .gap-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .gap-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #eab308;
+        }
+
+        .gap-item h3 {
+            color: #854d0e;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .gap-item p {
+            font-size: 0.85rem;
+            color: #713f12;
+            margin-bottom: 10px;
+        }
+
+        .gap-item .solution {
+            font-size: 0.8rem;
+            color: #166534;
+            background: #dcfce7;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        /* Safety callout */
+        .safety-callout {
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border: 2px solid #22c55e;
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .safety-callout h3 {
+            color: #166534;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .safety-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .safety-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .safety-item-icon {
+            font-size: 1.5rem;
+        }
+
+        .safety-item-text {
+            font-size: 0.9rem;
+            color: #166534;
+        }
+
+        /* Feature table */
+        .feature-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .feature-table th,
+        .feature-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .feature-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .feature-table .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-done { background: #dcfce7; color: #166534; }
+        .status-partial { background: #fef3c7; color: #92400e; }
+        .status-todo { background: #e2e8f0; color: #475569; }
+
+        /* Responsive */
+        @media (max-width: 1000px) {
+            .state-comparison {
+                grid-template-columns: 1fr;
+            }
+
+            .transition-arrow {
+                transform: rotate(90deg);
+                margin: 20px 0;
+            }
+
+            .timeline::before {
+                left: 30px;
+            }
+
+            .phase-content {
+                width: calc(100% - 80px) !important;
+                margin-left: 80px !important;
+                margin-right: 0 !important;
+            }
+
+            .phase-marker {
+                left: 30px !important;
+                transform: translateX(-50%);
+            }
+
+            .mcp-layer {
+                flex-direction: column;
+            }
+
+            .mcp-layer-label {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>RinglyPro Voice AI Transition Roadmap</h1>
+            <p>From Current State to Future State - Migration Guide</p>
+            <div class="updated-badge">Updated: Based on Existing MCP Implementation Analysis</div>
+        </div>
+
+        <!-- What's Already Built -->
+        <div class="already-built">
+            <h2>✅ What's Already Built (Existing MCP Infrastructure)</h2>
+            <div class="built-grid">
+                <div class="built-item">
+                    <h3>🔧 MCP Server (Dual Mode)</h3>
+                    <div class="file-path">mcp-integrations/server.js + claude-server.js</div>
+                    <ul>
+                        <li>Express HTTP Server on port 3001</li>
+                        <li>Stdio MCP Server for Claude Desktop</li>
+                        <li>Uses official @modelcontextprotocol/sdk v0.5.0</li>
+                        <li>Web UI at /mcp-copilot/</li>
+                    </ul>
+                </div>
+
+                <div class="built-item">
+                    <h3>🔌 HubSpot Proxy (Full)</h3>
+                    <div class="file-path">mcp-integrations/api/hubspot-proxy.js</div>
+                    <ul>
+                        <li>Contact CRUD operations</li>
+                        <li>Deal management</li>
+                        <li>Meeting scheduling & availability</li>
+                        <li>Tasks & notes</li>
+                    </ul>
+                </div>
+
+                <div class="built-item">
+                    <h3>🟢 GoHighLevel Proxy (Comprehensive)</h3>
+                    <div class="file-path">mcp-integrations/api/gohighlevel-proxy.js (913 lines)</div>
+                    <ul>
+                        <li>MCP Protocol + REST API fallback</li>
+                        <li>Contacts, opportunities, pipelines</li>
+                        <li>SMS, email, conversations</li>
+                        <li>Workflows, campaigns, tasks</li>
+                        <li>Social media posting</li>
+                    </ul>
+                </div>
+
+                <div class="built-item">
+                    <h3>💇 Vagaro Proxy</h3>
+                    <div class="file-path">mcp-integrations/api/vagaro-proxy.js</div>
+                    <ul>
+                        <li>Customer management</li>
+                        <li>Appointment booking</li>
+                        <li>Availability checking</li>
+                        <li>Services & employees</li>
+                    </ul>
+                </div>
+
+                <div class="built-item">
+                    <h3>🎤 Voice Services</h3>
+                    <div class="file-path">mcp-integrations/voice/</div>
+                    <ul>
+                        <li>VoiceHandler with session management</li>
+                        <li>ElevenLabs TTS service</li>
+                        <li>OpenAI Whisper STT service</li>
+                        <li>Event-driven architecture</li>
+                    </ul>
+                </div>
+
+                <div class="built-item">
+                    <h3>🔔 Webhook System</h3>
+                    <div class="file-path">mcp-integrations/webhooks/</div>
+                    <ul>
+                        <li>WebhookManager with HMAC signing</li>
+                        <li>HubSpot webhook handlers</li>
+                        <li>GoHighLevel webhook handlers</li>
+                        <li>Event routing system</li>
+                    </ul>
+                </div>
+
+                <div class="built-item">
+                    <h3>⚙️ Workflow Engine</h3>
+                    <div class="file-path">mcp-integrations/workflows/workflow-engine.js</div>
+                    <ul>
+                        <li>Workflow creation & execution</li>
+                        <li>Step-by-step processing</li>
+                        <li>CRM actions, notifications, delays</li>
+                        <li>Execution history tracking</li>
+                    </ul>
+                </div>
+
+                <div class="built-item">
+                    <h3>🧠 Intent Router</h3>
+                    <div class="file-path">mcp-integrations/config/ghl-intent-router.js</div>
+                    <ul>
+                        <li>31+ intent mappings</li>
+                        <li>NLP pattern matching</li>
+                        <li>Natural language → API routing</li>
+                        <li>Parameter extraction</li>
+                    </ul>
+                </div>
+
+                <div class="built-item">
+                    <h3>💬 Copilot Chat</h3>
+                    <div class="file-path">src/routes/mcp.js (6,551 lines)</div>
+                    <ul>
+                        <li>Multi-turn conversation state</li>
+                        <li>Intent detection & classification</li>
+                        <li>Contact disambiguation</li>
+                        <li>Form field gathering</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- State Comparison -->
+        <div class="state-comparison">
+            <div class="state-box current">
+                <h2>Current State</h2>
+                <p>Rachel/Ana + MCP Infrastructure</p>
+                <div class="features">
+                    <span class="feature-tag">Rachel (EN)</span>
+                    <span class="feature-tag">Ana (ES)</span>
+                    <span class="feature-tag done">MCP Server ✓</span>
+                    <span class="feature-tag done">CRM Proxies ✓</span>
+                    <span class="feature-tag">Voice = TwiML</span>
+                    <span class="feature-tag">No Failover</span>
+                </div>
+            </div>
+
+            <div class="transition-arrow">
+                <div class="arrow">→</div>
+                <div class="label">3 Phases</div>
+            </div>
+
+            <div class="state-box future">
+                <h2>Future State</h2>
+                <p>ElevenLabs Agent + Rachel Fallback</p>
+                <div class="features">
+                    <span class="feature-tag">ElevenLabs Agent</span>
+                    <span class="feature-tag">Rachel Fallback</span>
+                    <span class="feature-tag">MCP via SSE</span>
+                    <span class="feature-tag">Health Checks</span>
+                    <span class="feature-tag">Auto-Failover</span>
+                    <span class="feature-tag">Circuit Breaker</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- MCP Architecture Overview -->
+        <div class="mcp-architecture">
+            <h2>🏗️ Existing MCP Architecture</h2>
+            <div class="mcp-layers">
+                <div class="mcp-layer">
+                    <div class="mcp-layer-label">Transport Layer</div>
+                    <div class="mcp-layer-content">
+                        <div class="mcp-component exists">
+                            <h4>✓ HTTP Server</h4>
+                            <div class="details">Express on port 3001<br>REST API endpoints<br>Web UI at /mcp-copilot/</div>
+                            <div class="file">mcp-integrations/server.js</div>
+                        </div>
+                        <div class="mcp-component exists">
+                            <h4>✓ Stdio Transport</h4>
+                            <div class="details">Claude Desktop integration<br>Official MCP SDK<br>StdioServerTransport</div>
+                            <div class="file">mcp-integrations/claude-server.js</div>
+                        </div>
+                        <div class="mcp-component needed">
+                            <h4>○ SSE Transport</h4>
+                            <div class="details">For ElevenLabs Agent<br>Server-Sent Events<br>Real-time streaming</div>
+                            <div class="file">TO BUILD: src/routes/mcpSSE.js</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mcp-layer">
+                    <div class="mcp-layer-label">Tool Layer</div>
+                    <div class="mcp-layer-content">
+                        <div class="mcp-component exists">
+                            <h4>✓ search_crm_contacts</h4>
+                            <div class="details">HubSpot + GHL search</div>
+                        </div>
+                        <div class="mcp-component exists">
+                            <h4>✓ create_crm_contact</h4>
+                            <div class="details">Create in any CRM</div>
+                        </div>
+                        <div class="mcp-component exists">
+                            <h4>✓ send_sms</h4>
+                            <div class="details">GHL SMS sending</div>
+                        </div>
+                        <div class="mcp-component needed">
+                            <h4>○ book_appointment</h4>
+                            <div class="details">Expose existing proxy</div>
+                        </div>
+                        <div class="mcp-component needed">
+                            <h4>○ get_availability</h4>
+                            <div class="details">Expose existing proxy</div>
+                        </div>
+                        <div class="mcp-component needed">
+                            <h4>○ update_deal</h4>
+                            <div class="details">Expose existing proxy</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mcp-layer">
+                    <div class="mcp-layer-label">Proxy Layer</div>
+                    <div class="mcp-layer-content">
+                        <div class="mcp-component exists">
+                            <h4>✓ HubSpot Proxy</h4>
+                            <div class="details">Full CRUD, meetings, deals</div>
+                            <div class="file">hubspot-proxy.js (442 lines)</div>
+                        </div>
+                        <div class="mcp-component exists">
+                            <h4>✓ GoHighLevel Proxy</h4>
+                            <div class="details">MCP + REST dual mode</div>
+                            <div class="file">gohighlevel-proxy.js (913 lines)</div>
+                        </div>
+                        <div class="mcp-component exists">
+                            <h4>✓ Vagaro Proxy</h4>
+                            <div class="details">Salon scheduling</div>
+                            <div class="file">vagaro-proxy.js (429 lines)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mcp-layer">
+                    <div class="mcp-layer-label">Voice Layer</div>
+                    <div class="mcp-layer-content">
+                        <div class="mcp-component exists">
+                            <h4>✓ Rachel/Ana (TwiML)</h4>
+                            <div class="details">Current primary voice<br>Webhook-based flow</div>
+                            <div class="file">src/routes/rachelRoutes.js</div>
+                        </div>
+                        <div class="mcp-component exists">
+                            <h4>✓ Voice Handler</h4>
+                            <div class="details">Session management<br>Event-driven</div>
+                            <div class="file">mcp-integrations/voice/</div>
+                        </div>
+                        <div class="mcp-component needed">
+                            <h4>○ ElevenLabs Agent</h4>
+                            <div class="details">Conversational AI<br>MCP-connected</div>
+                            <div class="file">ElevenLabs Console</div>
+                        </div>
+                        <div class="mcp-component needed">
+                            <h4>○ Voice Router</h4>
+                            <div class="details">Health check<br>Failover logic</div>
+                            <div class="file">TO BUILD: src/routes/voiceRouter.js</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Existing MCP Tools -->
+        <div class="tools-section">
+            <h2>🔧 MCP Tools Inventory</h2>
+            <div class="tools-grid">
+                <!-- Existing Tools -->
+                <div class="tool-card exists">
+                    <h4>search_crm_contacts</h4>
+                    <div class="description">Search contacts in HubSpot or GoHighLevel by query</div>
+                    <div class="proxy">Via: hubspot-proxy.js, gohighlevel-proxy.js</div>
+                </div>
+                <div class="tool-card exists">
+                    <h4>create_crm_contact</h4>
+                    <div class="description">Create new contact with email, name, phone</div>
+                    <div class="proxy">Via: hubspot-proxy.js, gohighlevel-proxy.js</div>
+                </div>
+                <div class="tool-card exists">
+                    <h4>send_sms</h4>
+                    <div class="description">Send SMS to contact via GoHighLevel</div>
+                    <div class="proxy">Via: gohighlevel-proxy.js</div>
+                </div>
+
+                <!-- Proxy Methods (Need MCP Tool Wrapper) -->
+                <div class="tool-card needed">
+                    <h4>book_appointment</h4>
+                    <div class="description">Book meeting/appointment - proxy method exists</div>
+                    <div class="proxy">Expose: hubspot-proxy.bookMeeting(), vagaro-proxy.createAppointment()</div>
+                </div>
+                <div class="tool-card needed">
+                    <h4>get_availability</h4>
+                    <div class="description">Get available time slots - proxy method exists</div>
+                    <div class="proxy">Expose: hubspot-proxy.getAvailability(), vagaro-proxy.getAvailability()</div>
+                </div>
+                <div class="tool-card needed">
+                    <h4>update_deal</h4>
+                    <div class="description">Update deal/opportunity - proxy method exists</div>
+                    <div class="proxy">Expose: hubspot-proxy.updateDeal(), gohighlevel-proxy.updateOpportunity()</div>
+                </div>
+                <div class="tool-card needed">
+                    <h4>log_call</h4>
+                    <div class="description">Log call activity to CRM</div>
+                    <div class="proxy">Expose: hubspot-proxy.addNote()</div>
+                </div>
+                <div class="tool-card needed">
+                    <h4>trigger_workflow</h4>
+                    <div class="description">Trigger CRM workflow - proxy method exists</div>
+                    <div class="proxy">Expose: gohighlevel-proxy.addToWorkflow()</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gap Analysis -->
+        <div class="gap-analysis">
+            <h2>⚠️ Gap Analysis: What's Still Needed</h2>
+            <div class="gap-grid">
+                <div class="gap-item">
+                    <h3>1. SSE Transport for ElevenLabs</h3>
+                    <p>Current MCP has HTTP + Stdio, but ElevenLabs Agent needs SSE (Server-Sent Events) transport for real-time MCP communication.</p>
+                    <div class="solution">Solution: Add SSE endpoint using existing MCP tools infrastructure</div>
+                </div>
+
+                <div class="gap-item">
+                    <h3>2. Expose More Tools via MCP</h3>
+                    <p>Many powerful methods exist in proxies but only 3 are exposed as MCP tools. ElevenLabs Agent needs: book_appointment, get_availability, update_deal, log_call.</p>
+                    <div class="solution">Solution: Add tool handlers in claude-server.js calling existing proxy methods</div>
+                </div>
+
+                <div class="gap-item">
+                    <h3>3. Voice Router with Failover</h3>
+                    <p>No intelligent routing exists. Need health checks, automatic failover to Rachel, and circuit breaker pattern.</p>
+                    <div class="solution">Solution: New voiceRouter.js with health monitoring</div>
+                </div>
+
+                <div class="gap-item">
+                    <h3>4. ElevenLabs Agent Configuration</h3>
+                    <p>Agent needs to be configured in ElevenLabs console with MCP connection pointing to SSE endpoint.</p>
+                    <div class="solution">Solution: Configure in ElevenLabs Console, set MCP URL</div>
+                </div>
+
+                <div class="gap-item">
+                    <h3>5. Health Check Service</h3>
+                    <p>No proactive health monitoring for ElevenLabs service availability.</p>
+                    <div class="solution">Solution: Periodic pings, latency tracking, circuit breaker state</div>
+                </div>
+
+                <div class="gap-item">
+                    <h3>6. Feature Flags per Client</h3>
+                    <p>Need ability to enable ElevenLabs Agent for specific clients only for gradual rollout.</p>
+                    <div class="solution">Solution: Add use_elevenlabs_agent column to clients table</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revised Timeline (3 Phases) -->
+        <div class="timeline">
+            <!-- Phase 1: Connect the Dots -->
+            <div class="phase phase-1">
+                <div class="phase-marker">1</div>
+                <div class="phase-content">
+                    <div class="phase-header">
+                        <span class="phase-number">Phase 1</span>
+                        <span class="phase-title">Connect the Dots</span>
+                        <span class="risk-badge risk-low">Low Risk</span>
+                    </div>
+                    <p class="phase-description">
+                        <strong>Most infrastructure already exists!</strong> This phase focuses on wiring together existing components:
+                        adding SSE transport, exposing more proxy methods as MCP tools, and setting up feature flags.
+                        Zero impact on current voice system.
+                    </p>
+
+                    <div class="tasks">
+                        <div class="task done">
+                            <span class="task-icon">✅</span>
+                            <div class="task-content">
+                                <div class="task-title">MCP Server with Official SDK <span class="task-status done">DONE</span></div>
+                                <div class="task-detail">Already using @modelcontextprotocol/sdk v0.5.0</div>
+                                <div class="task-files">
+                                    <span class="task-file exists">mcp-integrations/claude-server.js</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task done">
+                            <span class="task-icon">✅</span>
+                            <div class="task-content">
+                                <div class="task-title">CRM Proxy Layer <span class="task-status done">DONE</span></div>
+                                <div class="task-detail">HubSpot, GHL, Vagaro proxies fully implemented</div>
+                                <div class="task-files">
+                                    <span class="task-file exists">mcp-integrations/api/*.js</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task">
+                            <span class="task-icon">🔌</span>
+                            <div class="task-content">
+                                <div class="task-title">Add SSE Transport Endpoint <span class="task-status todo">TODO</span></div>
+                                <div class="task-detail">Create SSE endpoint for ElevenLabs MCP connection</div>
+                                <div class="task-files">
+                                    <span class="task-file">src/routes/mcpSSE.js</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task partial">
+                            <span class="task-icon">🔧</span>
+                            <div class="task-content">
+                                <div class="task-title">Expose Additional MCP Tools <span class="task-status partial">PARTIAL</span></div>
+                                <div class="task-detail">Add tool handlers for: book_appointment, get_availability, update_deal, log_call, trigger_workflow</div>
+                                <div class="task-files">
+                                    <span class="task-file">mcp-integrations/claude-server.js</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task">
+                            <span class="task-icon">🏥</span>
+                            <div class="task-content">
+                                <div class="task-title">Health Check Service <span class="task-status todo">TODO</span></div>
+                                <div class="task-detail">Monitor ElevenLabs Agent availability, track latency</div>
+                                <div class="task-files">
+                                    <span class="task-file">src/services/healthCheckService.js</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task">
+                            <span class="task-icon">🚦</span>
+                            <div class="task-content">
+                                <div class="task-title">Feature Flag System <span class="task-status todo">TODO</span></div>
+                                <div class="task-detail">Add use_elevenlabs_agent, enable_failover to clients table</div>
+                                <div class="task-files">
+                                    <span class="task-file">migrations/add_voice_flags.js</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="testing-section">
+                        <div class="testing-title">🧪 Testing Checklist</div>
+                        <div class="testing-items">
+                            <span class="testing-item">SSE endpoint accepts connections</span>
+                            <span class="testing-item">New tools respond correctly</span>
+                            <span class="testing-item">Health check pings work</span>
+                            <span class="testing-item">Feature flags toggle correctly</span>
+                            <span class="testing-item">Rachel still works normally</span>
+                        </div>
+                    </div>
+
+                    <div class="rollback-section">
+                        <div class="rollback-title">⏪ Rollback Strategy</div>
+                        <div class="rollback-content">
+                            All new code in separate files. Existing Rachel/Ana routes untouched.
+                            Simply don't mount new SSE route to disable.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 2: ElevenLabs Integration -->
+            <div class="phase phase-2">
+                <div class="phase-marker">2</div>
+                <div class="phase-content">
+                    <div class="phase-header">
+                        <span class="phase-number">Phase 2</span>
+                        <span class="phase-title">ElevenLabs Agent Integration</span>
+                        <span class="risk-badge risk-medium">Medium Risk</span>
+                    </div>
+                    <p class="phase-description">
+                        Configure ElevenLabs Conversational Agent, connect it to MCP SSE endpoint,
+                        create the voice router with failover logic. Test with internal clients first.
+                    </p>
+
+                    <div class="tasks">
+                        <div class="task">
+                            <span class="task-icon">🤖</span>
+                            <div class="task-content">
+                                <div class="task-title">Configure ElevenLabs Agent <span class="task-status todo">TODO</span></div>
+                                <div class="task-detail">Set up in ElevenLabs console: personality, voice, system prompt</div>
+                                <div class="task-files">
+                                    <span class="task-file">ElevenLabs Console</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task">
+                            <span class="task-icon">🔗</span>
+                            <div class="task-content">
+                                <div class="task-title">Connect Agent to MCP SSE <span class="task-status todo">TODO</span></div>
+                                <div class="task-detail">Point ElevenLabs to: https://ringlypro-crm.onrender.com/mcp/sse</div>
+                                <div class="task-files">
+                                    <span class="task-file">ElevenLabs MCP Config</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task">
+                            <span class="task-icon">📞</span>
+                            <div class="task-content">
+                                <div class="task-title">Create Voice Router <span class="task-status todo">TODO</span></div>
+                                <div class="task-detail">Health check → Route to ElevenLabs or Rachel fallback</div>
+                                <div class="task-files">
+                                    <span class="task-file">src/routes/voiceRouter.js</span>
+                                    <span class="task-file">src/services/voiceRoutingService.js</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task">
+                            <span class="task-icon">🔒</span>
+                            <div class="task-content">
+                                <div class="task-title">Circuit Breaker Implementation <span class="task-status todo">TODO</span></div>
+                                <div class="task-detail">3 failures → open circuit → all traffic to Rachel for 30s</div>
+                                <div class="task-files">
+                                    <span class="task-file">src/services/circuitBreakerService.js</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task">
+                            <span class="task-icon">🎯</span>
+                            <div class="task-content">
+                                <div class="task-title">Test Client Rollout <span class="task-status todo">TODO</span></div>
+                                <div class="task-detail">Enable for internal test accounts only, monitor closely</div>
+                                <div class="task-files">
+                                    <span class="task-file">clients.use_elevenlabs_agent = true</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="testing-section">
+                        <div class="testing-title">🧪 Testing Checklist</div>
+                        <div class="testing-items">
+                            <span class="testing-item">Agent connects to MCP SSE</span>
+                            <span class="testing-item">Tools execute correctly</span>
+                            <span class="testing-item">Failover triggers on error</span>
+                            <span class="testing-item">Circuit breaker opens/closes</span>
+                            <span class="testing-item">Rachel fallback works</span>
+                        </div>
+                    </div>
+
+                    <div class="rollback-section">
+                        <div class="rollback-title">⏪ Rollback Strategy</div>
+                        <div class="rollback-content">
+                            Set use_elevenlabs_agent = false for all clients.
+                            Instant rollback to Rachel without deployment.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 3: Gradual Rollout -->
+            <div class="phase phase-3">
+                <div class="phase-marker">3</div>
+                <div class="phase-content">
+                    <div class="phase-header">
+                        <span class="phase-number">Phase 3</span>
+                        <span class="phase-title">Gradual Rollout & Cleanup</span>
+                        <span class="risk-badge risk-low">Low Risk</span>
+                    </div>
+                    <p class="phase-description">
+                        Gradually increase traffic to ElevenLabs Agent: 5% → 25% → 50% → 100%.
+                        Once stable, update Twilio webhooks and clean up legacy Lina code.
+                    </p>
+
+                    <div class="tasks">
+                        <div class="task">
+                            <span class="task-icon">📈</span>
+                            <div class="task-content">
+                                <div class="task-title">Percentage-Based Rollout <span class="task-status todo">TODO</span></div>
+                                <div class="task-detail">Route X% of calls based on hash for consistent assignment</div>
+                                <div class="task-files">
+                                    <span class="task-file">src/services/rolloutService.js</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task">
+                            <span class="task-icon">📊</span>
+                            <div class="task-content">
+                                <div class="task-title">Monitoring Dashboard <span class="task-status todo">TODO</span></div>
+                                <div class="task-detail">Success rates, failover events, latency P95</div>
+                                <div class="task-files">
+                                    <span class="task-file">Monitoring config</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task">
+                            <span class="task-icon">🗺️</span>
+                            <div class="task-content">
+                                <div class="task-title">Update Twilio Webhooks <span class="task-status todo">TODO</span></div>
+                                <div class="task-detail">Change from /voice/rachel/ to /voice (intelligent router)</div>
+                                <div class="task-files">
+                                    <span class="task-file">Twilio Console</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task">
+                            <span class="task-icon">🧹</span>
+                            <div class="task-content">
+                                <div class="task-title">Remove Legacy Lina Routes <span class="task-status todo">TODO</span></div>
+                                <div class="task-detail">Delete 3 redundant Lina implementations</div>
+                                <div class="task-files">
+                                    <span class="task-file">src/routes/linaRoutes.js</span>
+                                    <span class="task-file">src/routes/linaNewRoutes.js</span>
+                                    <span class="task-file">src/routes/linaRoutesV2.js</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task">
+                            <span class="task-icon">🔔</span>
+                            <div class="task-content">
+                                <div class="task-title">Alerting Setup <span class="task-status todo">TODO</span></div>
+                                <div class="task-detail">Alerts for failover events, circuit breaker trips</div>
+                                <div class="task-files">
+                                    <span class="task-file">Monitoring config</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="testing-section">
+                        <div class="testing-title">🧪 Success Metrics</div>
+                        <div class="testing-items">
+                            <span class="testing-item">&gt;95% call success rate</span>
+                            <span class="testing-item">&lt;2s latency P95</span>
+                            <span class="testing-item">&lt;1% failover rate</span>
+                            <span class="testing-item">Zero user complaints</span>
+                            <span class="testing-item">2 weeks stable at 100%</span>
+                        </div>
+                    </div>
+
+                    <div class="rollback-section">
+                        <div class="rollback-title">⏪ Rollback Strategy</div>
+                        <div class="rollback-content">
+                            Set rollout_percentage = 0 in config. Instant rollback.
+                            Rachel code remains intact throughout migration.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Safety Principles -->
+        <div class="safety-callout">
+            <h3>🛡️ Zero-Downtime Migration Principles</h3>
+            <div class="safety-items">
+                <div class="safety-item">
+                    <div class="safety-item-icon">🏗️</div>
+                    <div class="safety-item-text"><strong>Build on Existing:</strong> Leverage the sophisticated MCP infrastructure already built (6,500+ lines of code)</div>
+                </div>
+                <div class="safety-item">
+                    <div class="safety-item-icon">🔄</div>
+                    <div class="safety-item-text"><strong>Feature Flags:</strong> Every new component can be toggled off instantly per-client</div>
+                </div>
+                <div class="safety-item">
+                    <div class="safety-item-icon">📊</div>
+                    <div class="safety-item-text"><strong>Gradual Rollout:</strong> Start with 5% of calls, increase based on success metrics</div>
+                </div>
+                <div class="safety-item">
+                    <div class="safety-item-icon">⚡</div>
+                    <div class="safety-item-text"><strong>Instant Rollback:</strong> Rachel remains fully functional as fallback throughout</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Implementation Priority Table -->
+        <div class="tools-section">
+            <h2>📋 Implementation Priority</h2>
+            <table class="feature-table">
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Status</th>
+                        <th>Effort</th>
+                        <th>Phase</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>MCP Server (SDK)</td>
+                        <td><span class="status status-done">✓ Complete</span></td>
+                        <td>—</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>CRM Proxies (HubSpot, GHL, Vagaro)</td>
+                        <td><span class="status status-done">✓ Complete</span></td>
+                        <td>—</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>Voice Handler + TTS/STT</td>
+                        <td><span class="status status-done">✓ Complete</span></td>
+                        <td>—</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>Webhook System</td>
+                        <td><span class="status status-done">✓ Complete</span></td>
+                        <td>—</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>Workflow Engine</td>
+                        <td><span class="status status-done">✓ Complete</span></td>
+                        <td>—</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>Intent Router</td>
+                        <td><span class="status status-done">✓ Complete</span></td>
+                        <td>—</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>SSE Transport Endpoint</td>
+                        <td><span class="status status-todo">To Build</span></td>
+                        <td>Small</td>
+                        <td>Phase 1</td>
+                    </tr>
+                    <tr>
+                        <td>Additional MCP Tool Handlers</td>
+                        <td><span class="status status-partial">Partial</span></td>
+                        <td>Small</td>
+                        <td>Phase 1</td>
+                    </tr>
+                    <tr>
+                        <td>Health Check Service</td>
+                        <td><span class="status status-todo">To Build</span></td>
+                        <td>Small</td>
+                        <td>Phase 1</td>
+                    </tr>
+                    <tr>
+                        <td>Feature Flags (DB migration)</td>
+                        <td><span class="status status-todo">To Build</span></td>
+                        <td>Small</td>
+                        <td>Phase 1</td>
+                    </tr>
+                    <tr>
+                        <td>ElevenLabs Agent Config</td>
+                        <td><span class="status status-todo">To Configure</span></td>
+                        <td>Medium</td>
+                        <td>Phase 2</td>
+                    </tr>
+                    <tr>
+                        <td>Voice Router + Failover</td>
+                        <td><span class="status status-todo">To Build</span></td>
+                        <td>Medium</td>
+                        <td>Phase 2</td>
+                    </tr>
+                    <tr>
+                        <td>Circuit Breaker</td>
+                        <td><span class="status status-todo">To Build</span></td>
+                        <td>Small</td>
+                        <td>Phase 2</td>
+                    </tr>
+                    <tr>
+                        <td>Rollout Service</td>
+                        <td><span class="status status-todo">To Build</span></td>
+                        <td>Small</td>
+                        <td>Phase 3</td>
+                    </tr>
+                    <tr>
+                        <td>Monitoring Dashboard</td>
+                        <td><span class="status status-todo">To Build</span></td>
+                        <td>Medium</td>
+                        <td>Phase 3</td>
+                    </tr>
+                    <tr>
+                        <td>Legacy Lina Cleanup</td>
+                        <td><span class="status status-todo">To Remove</span></td>
+                        <td>Small</td>
+                        <td>Phase 3</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; color: #94a3b8; font-size: 0.85rem;">
+            <p>RinglyPro Voice AI - Transition Roadmap</p>
+            <p>Leveraging Existing MCP Infrastructure | 3 Phases to Future State</p>
+            <p>Updated: December 2024</p>
+        </div>
+    </div>
+</body>
+</html>

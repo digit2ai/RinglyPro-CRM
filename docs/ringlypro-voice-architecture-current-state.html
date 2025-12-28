@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RinglyPro Voice AI Architecture - CURRENT STATE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #f59e0b, #ef4444, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: #22c55e;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .architecture {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .layer {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .layer-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #64748b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .layer-title::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .entry-layer .layer-title::before { background: #22c55e; }
+        .voice-layer .layer-title::before { background: #ec4899; }
+        .routing-layer .layer-title::before { background: #f59e0b; }
+        .integration-layer .layer-title::before { background: #0ea5e9; }
+        .data-layer .layer-title::before { background: #7c3aed; }
+
+        .components {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .component {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 15px 20px;
+            min-width: 180px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .component:hover {
+            transform: translateY(-3px);
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .component-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .component-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #1e293b;
+        }
+
+        .component-details {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .component-url {
+            font-size: 0.7rem;
+            color: #3b82f6;
+            word-break: break-all;
+            margin-top: 5px;
+        }
+
+        /* Active component styling */
+        .active {
+            border: 2px solid #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+        }
+
+        .active .component-name::after {
+            content: ' (ACTIVE)';
+            font-size: 0.6rem;
+            color: #22c55e;
+            font-weight: 700;
+        }
+
+        /* English voice */
+        .english {
+            border: 2px solid #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .english .component-name::after {
+            content: ' (ENGLISH)';
+            font-size: 0.6rem;
+            color: #3b82f6;
+            font-weight: 700;
+        }
+
+        /* Spanish voice */
+        .spanish {
+            border: 2px solid #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+
+        .spanish .component-name::after {
+            content: ' (SPANISH)';
+            font-size: 0.6rem;
+            color: #f59e0b;
+            font-weight: 700;
+        }
+
+        /* Legacy styling */
+        .legacy {
+            border: 2px dashed #94a3b8;
+            opacity: 0.7;
+        }
+
+        .legacy .component-name::after {
+            content: ' (LEGACY)';
+            font-size: 0.6rem;
+            color: #94a3b8;
+            font-weight: 700;
+        }
+
+        /* Connection arrows */
+        .arrow-container {
+            display: flex;
+            justify-content: center;
+            padding: 10px 0;
+        }
+
+        .arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #64748b;
+        }
+
+        .arrow-line {
+            width: 3px;
+            height: 30px;
+            background: linear-gradient(180deg, #f59e0b, #ef4444);
+            border-radius: 2px;
+        }
+
+        .arrow-head {
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 10px solid #ef4444;
+        }
+
+        .arrow-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        /* Voice router special box */
+        .language-router {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(245, 158, 11, 0.1));
+            border: 2px solid #3b82f6;
+            position: relative;
+        }
+
+        .language-router::before {
+            content: 'LANGUAGE SELECTION';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #3b82f6;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        /* HTTP API box (not true MCP) */
+        .http-api {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(245, 158, 11, 0.08));
+            border: 2px dashed #ef4444;
+            min-width: 300px;
+        }
+
+        .http-api::before {
+            content: 'HTTP API (Not MCP Protocol)';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ef4444;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .api-endpoints {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+
+        .api-endpoint {
+            background: #ef4444;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        /* Flow diagram section */
+        .flow-section {
+            margin-top: 30px;
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .flow-title {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .flow-steps {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .flow-step {
+            background: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            text-align: center;
+            min-width: 140px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .flow-step-number {
+            background: #f59e0b;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .flow-step-text {
+            font-size: 0.85rem;
+            color: #475569;
+        }
+
+        .flow-arrow {
+            color: #f59e0b;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Branch indicator */
+        .flow-branch {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .legend-active { background: #22c55e; }
+        .legend-english { background: #3b82f6; }
+        .legend-spanish { background: #f59e0b; }
+        .legend-legacy { background: #94a3b8; }
+        .legend-http { background: #ef4444; }
+
+        /* Table styling */
+        .tech-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .tech-table th {
+            text-align: left;
+            padding: 12px;
+            color: #64748b;
+            font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .tech-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .tech-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .tech-table .endpoint {
+            color: #3b82f6;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .tech-table .purpose {
+            color: #64748b;
+        }
+
+        .tech-table .status-cell {
+            font-weight: 600;
+        }
+
+        .status-active { color: #22c55e; }
+        .status-legacy { color: #94a3b8; }
+
+        /* Comparison callout */
+        .comparison-callout {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .comparison-callout h3 {
+            color: #92400e;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .comparison-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .comparison-column h4 {
+            color: #78350f;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .comparison-column ul {
+            list-style: none;
+            font-size: 0.85rem;
+            color: #92400e;
+        }
+
+        .comparison-column li {
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .comparison-column.current li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #22c55e;
+            font-weight: bold;
+        }
+
+        .comparison-column.future li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #3b82f6;
+            font-weight: bold;
+        }
+
+        /* Token billing section */
+        .billing-section {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(14, 165, 233, 0.05));
+            border: 1px solid #7c3aed;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .billing-title {
+            color: #7c3aed;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .billing-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .billing-item {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .billing-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #7c3aed;
+        }
+
+        .billing-label {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8rem; }
+            .component { min-width: 150px; }
+            .flow-steps { flex-direction: column; }
+            .flow-arrow { transform: rotate(90deg); }
+            .comparison-list { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>RinglyPro Voice AI Architecture</h1>
+            <p>CURRENT STATE - Rachel, Ana & Lina Voice System</p>
+            <div class="status-badge">LIVE SYSTEM - Active Users</div>
+        </div>
+
+        <div class="architecture">
+            <!-- Entry Layer -->
+            <div class="layer entry-layer">
+                <div class="layer-title">Entry Point - Incoming Communications</div>
+                <div class="components">
+                    <div class="component active">
+                        <div class="component-icon">📞</div>
+                        <div class="component-name">Phone Calls</div>
+                        <div class="component-details">+1 888-610-3810</div>
+                        <div class="component-url">Twilio Voice Webhook</div>
+                    </div>
+                    <div class="component active">
+                        <div class="component-icon">💬</div>
+                        <div class="component-name">SMS/Text</div>
+                        <div class="component-details">Twilio Messaging</div>
+                        <div class="component-url">/webhook/twilio/sms</div>
+                    </div>
+                    <div class="component">
+                        <div class="component-icon">🌐</div>
+                        <div class="component-name">Web Widget</div>
+                        <div class="component-details">Chat Interface</div>
+                        <div class="component-url">Not currently active</div>
+                    </div>
+                    <div class="component">
+                        <div class="component-icon">📱</div>
+                        <div class="component-name">WhatsApp</div>
+                        <div class="component-details">Business API</div>
+                        <div class="component-url">Not currently active</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow-container">
+                <div class="arrow">
+                    <div class="arrow-line"></div>
+                    <div class="arrow-head"></div>
+                    <div class="arrow-label">Twilio Webhook → /voice/rachel/</div>
+                </div>
+            </div>
+
+            <!-- Client Identification Layer -->
+            <div class="layer routing-layer">
+                <div class="layer-title">Client Identification - Multi-Tenant Routing</div>
+                <div class="components">
+                    <div class="component active">
+                        <div class="component-icon">🔍</div>
+                        <div class="component-name">Client Lookup</div>
+                        <div class="component-details">Match To: number<br>to clients.ringlypro_number</div>
+                        <div class="component-url">clientIdentificationService.js</div>
+                    </div>
+                    <div class="component active">
+                        <div class="component-icon">🎫</div>
+                        <div class="component-name">Token Check</div>
+                        <div class="component-details">Verify credits<br>before processing</div>
+                        <div class="component-url">tokenService.js</div>
+                    </div>
+                    <div class="component active">
+                        <div class="component-icon">⚙️</div>
+                        <div class="component-name">Client Config</div>
+                        <div class="component-details">Load IVR options<br>greeting, hours</div>
+                        <div class="component-url">clients table</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow-container">
+                <div class="arrow">
+                    <div class="arrow-line"></div>
+                    <div class="arrow-head"></div>
+                    <div class="arrow-label">Language Selection Menu</div>
+                </div>
+            </div>
+
+            <!-- Voice Layer -->
+            <div class="layer voice-layer">
+                <div class="layer-title">Voice AI Layer - Language-Based Routing</div>
+                <div class="components">
+                    <div class="component language-router">
+                        <div class="component-icon">🗣️</div>
+                        <div class="component-name">Language Menu</div>
+                        <div class="component-details">DTMF: 1=EN, 2=ES<br>Speech: "English"/"Español"<br>12 sec timeout</div>
+                        <div class="component-url">/voice/rachel/select-language</div>
+                    </div>
+                </div>
+                <div class="components" style="margin-top: 15px;">
+                    <div class="component english">
+                        <div class="component-icon">👩‍💼</div>
+                        <div class="component-name">Rachel Voice AI</div>
+                        <div class="component-details">ElevenLabs TTS<br>Voice ID: 21m00Tcm4TlvDq8ikWAM<br>Claude AI Brain<br>Polly Fallback</div>
+                        <div class="component-url">/voice/rachel/*</div>
+                    </div>
+                    <div class="component spanish">
+                        <div class="component-icon">👩‍💼</div>
+                        <div class="component-name">Ana Voice AI</div>
+                        <div class="component-details">ElevenLabs TTS (Bella)<br>Voice ID: EXAVITQu4vr4xnSDxMaL<br>Spanish Optimized<br>Accent Handling</div>
+                        <div class="component-url">/voice/ana/*</div>
+                    </div>
+                    <div class="component legacy">
+                        <div class="component-icon">👩‍💼</div>
+                        <div class="component-name">Lina Voice AI</div>
+                        <div class="component-details">3 versions exist<br>linaRoutes.js (84KB)<br>linaNewRoutes.js<br>linaRoutesV2.js</div>
+                        <div class="component-url">/voice/lina/*</div>
+                    </div>
+                </div>
+
+                <!-- Token Billing -->
+                <div class="billing-section">
+                    <div class="billing-title">💰 Token Billing System</div>
+                    <div class="billing-items">
+                        <div class="billing-item">
+                            <div class="billing-value">1</div>
+                            <div class="billing-label">token per call<br>(on language select)</div>
+                        </div>
+                        <div class="billing-item">
+                            <div class="billing-value">5</div>
+                            <div class="billing-label">tokens per minute<br>(inbound calls)</div>
+                        </div>
+                        <div class="billing-item">
+                            <div class="billing-value">~</div>
+                            <div class="billing-label">additional tokens<br>(appointments, SMS)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow-container">
+                <div class="arrow">
+                    <div class="arrow-line"></div>
+                    <div class="arrow-head"></div>
+                    <div class="arrow-label">Direct HTTP API Calls (No MCP Protocol)</div>
+                </div>
+            </div>
+
+            <!-- Integration Layer (HTTP API, not MCP) -->
+            <div class="layer integration-layer">
+                <div class="layer-title">Integration Layer - HTTP API Proxies</div>
+                <div class="components">
+                    <div class="component http-api" style="position: relative;">
+                        <div class="component-icon">🔌</div>
+                        <div class="component-name">CRM Integration APIs</div>
+                        <div class="component-details">Custom HTTP Endpoints<br>NOT Model Context Protocol</div>
+                        <div class="component-url">/mcp-integrations/api/*</div>
+                        <div class="api-endpoints">
+                            <span class="api-endpoint">hubspot-proxy</span>
+                            <span class="api-endpoint">gohighlevel-proxy</span>
+                            <span class="api-endpoint">vagaro-proxy</span>
+                            <span class="api-endpoint">claude-integration</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="components" style="margin-top: 15px;">
+                    <div class="component active">
+                        <div class="component-icon">🟠</div>
+                        <div class="component-name">HubSpot CRM</div>
+                        <div class="component-details">Contacts, Deals<br>Companies, Tasks</div>
+                        <div class="component-url">hubspot-booking.js</div>
+                    </div>
+                    <div class="component active">
+                        <div class="component-icon">🟢</div>
+                        <div class="component-name">GoHighLevel</div>
+                        <div class="component-details">Contacts, SMS<br>Workflows, Pipelines</div>
+                        <div class="component-url">gohighlevel-proxy.js (34KB)</div>
+                    </div>
+                    <div class="component active">
+                        <div class="component-icon">📱</div>
+                        <div class="component-name">Twilio</div>
+                        <div class="component-details">Voice, SMS<br>Verify, Recordings</div>
+                        <div class="component-url">Primary communication</div>
+                    </div>
+                    <div class="component active">
+                        <div class="component-icon">🔊</div>
+                        <div class="component-name">ElevenLabs</div>
+                        <div class="component-details">Premium TTS<br>15 sec timeout<br>Polly fallback</div>
+                        <div class="component-url">elevenLabsService.js</div>
+                    </div>
+                    <div class="component active">
+                        <div class="component-icon">💇</div>
+                        <div class="component-name">Vagaro</div>
+                        <div class="component-details">Salon/Spa<br>Scheduling</div>
+                        <div class="component-url">vagaro-proxy.js</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow-container">
+                <div class="arrow">
+                    <div class="arrow-line"></div>
+                    <div class="arrow-head"></div>
+                    <div class="arrow-label">Sequelize ORM</div>
+                </div>
+            </div>
+
+            <!-- Data Layer -->
+            <div class="layer data-layer">
+                <div class="layer-title">Data Layer - PostgreSQL Storage</div>
+                <div class="components">
+                    <div class="component active">
+                        <div class="component-icon">🐘</div>
+                        <div class="component-name">PostgreSQL</div>
+                        <div class="component-details">Render Managed DB<br>Max 10 connections<br>Sequelize ORM</div>
+                        <div class="component-url">CRM_DATABASE_URL</div>
+                    </div>
+                    <div class="component active">
+                        <div class="component-icon">👥</div>
+                        <div class="component-name">Clients Table</div>
+                        <div class="component-details">Multi-tenant config<br>ringlypro_number<br>IVR options, hours</div>
+                    </div>
+                    <div class="component active">
+                        <div class="component-icon">📅</div>
+                        <div class="component-name">Appointments</div>
+                        <div class="component-details">Booking records<br>Date, duration, notes</div>
+                    </div>
+                    <div class="component active">
+                        <div class="component-icon">📞</div>
+                        <div class="component-name">Calls</div>
+                        <div class="component-details">Call history<br>Duration, status</div>
+                    </div>
+                    <div class="component active">
+                        <div class="component-icon">💳</div>
+                        <div class="component-name">Credit Accounts</div>
+                        <div class="component-details">Token balances<br>Usage history</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Call Flow Section -->
+        <div class="flow-section">
+            <div class="flow-title">📞 Current Incoming Call Flow</div>
+            <div class="flow-steps">
+                <div class="flow-step">
+                    <div class="flow-step-number">1</div>
+                    <div class="flow-step-text">Call to<br>888-610-3810</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-number">2</div>
+                    <div class="flow-step-text">Twilio<br>Webhook</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-number">3</div>
+                    <div class="flow-step-text">Client ID<br>by To: number</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-number">4</div>
+                    <div class="flow-step-text">Language<br>Menu (12s)</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-branch">
+                    <div class="flow-step" style="border-color: #3b82f6;">
+                        <div class="flow-step-number" style="background: #3b82f6;">5a</div>
+                        <div class="flow-step-text">Rachel<br>(English)</div>
+                    </div>
+                    <div class="flow-step" style="border-color: #f59e0b;">
+                        <div class="flow-step-number" style="background: #f59e0b;">5b</div>
+                        <div class="flow-step-text">Ana<br>(Spanish)</div>
+                    </div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-number">6</div>
+                    <div class="flow-step-text">Appointment<br>Booking Flow</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-number">7</div>
+                    <div class="flow-step-text">DB Save &<br>Token Deduct</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointment Booking Flow -->
+        <div class="flow-section" style="margin-top: 20px;">
+            <div class="flow-title">📅 Appointment Booking Sub-Flow</div>
+            <div class="flow-steps">
+                <div class="flow-step">
+                    <div class="flow-step-number">1</div>
+                    <div class="flow-step-text">Collect<br>Name</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-number">2</div>
+                    <div class="flow-step-text">Collect<br>Phone</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-number">3</div>
+                    <div class="flow-step-text">Collect<br>Date/Time</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-number">4</div>
+                    <div class="flow-step-text">Offer<br>Slots</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-number">5</div>
+                    <div class="flow-step-text">Confirm<br>Booking</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-number">6</div>
+                    <div class="flow-step-text">Save to DB<br>& CRM Sync</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color legend-active"></div>
+                <span>Active Component</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-english"></div>
+                <span>English (Rachel)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-spanish"></div>
+                <span>Spanish (Ana)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-legacy"></div>
+                <span>Legacy (Lina)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-http"></div>
+                <span>HTTP API (Not MCP)</span>
+            </div>
+        </div>
+
+        <!-- Comparison with Future State -->
+        <div class="comparison-callout">
+            <h3>⚠️ Key Differences: Current vs Future State</h3>
+            <div class="comparison-list">
+                <div class="comparison-column current">
+                    <h4>Current State (What Exists Now)</h4>
+                    <ul>
+                        <li>Language-based routing (Rachel EN / Ana ES)</li>
+                        <li>No health check or failover logic</li>
+                        <li>HTTP API proxies (custom implementation)</li>
+                        <li>ElevenLabs TTS only (no Conversational Agent)</li>
+                        <li>Sequential webhook flow (Twilio TwiML)</li>
+                        <li>Polly as TTS fallback only</li>
+                        <li>3 separate Lina implementations (legacy)</li>
+                        <li>No circuit breaker pattern</li>
+                    </ul>
+                </div>
+                <div class="comparison-column future">
+                    <h4>Future State (Planned)</h4>
+                    <ul>
+                        <li>ElevenLabs Conversational Agent as PRIMARY</li>
+                        <li>Health check + automatic failover to Rachel</li>
+                        <li>True MCP Protocol server</li>
+                        <li>MCP tools (search_contacts, book_appointment, etc.)</li>
+                        <li>ElevenLabs MCP SSE connection</li>
+                        <li>Rachel as FALLBACK (not primary)</li>
+                        <li>Unified voice routing with health monitoring</li>
+                        <li>Centralized tool execution via MCP</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Details -->
+        <div class="flow-section" style="margin-top: 20px;">
+            <div class="flow-title">🔧 Current Technical Endpoints</div>
+            <table class="tech-table">
+                <tr>
+                    <th>Service</th>
+                    <th>Endpoint</th>
+                    <th>Status</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><strong>Voice Entry</strong></td>
+                    <td class="endpoint">/voice/rachel/</td>
+                    <td class="status-cell status-active">ACTIVE</td>
+                    <td class="purpose">Incoming call webhook</td>
+                </tr>
+                <tr>
+                    <td><strong>Language Select</strong></td>
+                    <td class="endpoint">/voice/rachel/select-language</td>
+                    <td class="status-cell status-active">ACTIVE</td>
+                    <td class="purpose">EN/ES routing decision</td>
+                </tr>
+                <tr>
+                    <td><strong>Rachel Routes</strong></td>
+                    <td class="endpoint">/voice/rachel/*</td>
+                    <td class="status-cell status-active">ACTIVE</td>
+                    <td class="purpose">English voice AI flow</td>
+                </tr>
+                <tr>
+                    <td><strong>Ana Routes</strong></td>
+                    <td class="endpoint">/voice/ana/*</td>
+                    <td class="status-cell status-active">ACTIVE</td>
+                    <td class="purpose">Spanish voice AI flow</td>
+                </tr>
+                <tr>
+                    <td><strong>Lina Routes</strong></td>
+                    <td class="endpoint">/voice/lina/*</td>
+                    <td class="status-cell status-legacy">LEGACY</td>
+                    <td class="purpose">Alt Spanish (3 versions)</td>
+                </tr>
+                <tr>
+                    <td><strong>Call Status</strong></td>
+                    <td class="endpoint">/webhook/call-status</td>
+                    <td class="status-cell status-active">ACTIVE</td>
+                    <td class="purpose">Track completion, deduct tokens</td>
+                </tr>
+                <tr>
+                    <td><strong>SMS Webhook</strong></td>
+                    <td class="endpoint">/webhook/twilio/sms</td>
+                    <td class="status-cell status-active">ACTIVE</td>
+                    <td class="purpose">Inbound SMS handling</td>
+                </tr>
+                <tr>
+                    <td><strong>GHL Proxy</strong></td>
+                    <td class="endpoint">/api/ghl/*</td>
+                    <td class="status-cell status-active">ACTIVE</td>
+                    <td class="purpose">GoHighLevel integration</td>
+                </tr>
+                <tr>
+                    <td><strong>HubSpot Booking</strong></td>
+                    <td class="endpoint">/api/integrations/hubspot</td>
+                    <td class="status-cell status-active">ACTIVE</td>
+                    <td class="purpose">HubSpot contact sync</td>
+                </tr>
+                <tr>
+                    <td><strong>Vagaro API</strong></td>
+                    <td class="endpoint">/api/vagaro</td>
+                    <td class="status-cell status-active">ACTIVE</td>
+                    <td class="purpose">Salon scheduling</td>
+                </tr>
+                <tr>
+                    <td><strong>MCP HTTP API</strong></td>
+                    <td class="endpoint">/mcp-integrations/*</td>
+                    <td class="status-cell status-active">ACTIVE</td>
+                    <td class="purpose">HTTP proxies (NOT true MCP)</td>
+                </tr>
+                <tr>
+                    <td><strong>Health Check</strong></td>
+                    <td class="endpoint">/health</td>
+                    <td class="status-cell status-active">ACTIVE</td>
+                    <td class="purpose">Server health only</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Voice AI Configuration -->
+        <div class="flow-section" style="margin-top: 20px;">
+            <div class="flow-title">🎤 Voice AI Configuration</div>
+            <table class="tech-table">
+                <tr>
+                    <th>Voice Agent</th>
+                    <th>Language</th>
+                    <th>ElevenLabs Voice ID</th>
+                    <th>File Size</th>
+                    <th>Status</th>
+                </tr>
+                <tr>
+                    <td><strong>Rachel</strong></td>
+                    <td>English</td>
+                    <td class="endpoint">21m00Tcm4TlvDq8ikWAM</td>
+                    <td>95KB routes</td>
+                    <td class="status-cell status-active">PRIMARY EN</td>
+                </tr>
+                <tr>
+                    <td><strong>Ana</strong></td>
+                    <td>Spanish</td>
+                    <td class="endpoint">EXAVITQu4vr4xnSDxMaL (Bella)</td>
+                    <td>61KB routes</td>
+                    <td class="status-cell status-active">PRIMARY ES</td>
+                </tr>
+                <tr>
+                    <td><strong>Lina</strong></td>
+                    <td>Spanish</td>
+                    <td class="endpoint">Various</td>
+                    <td>84KB + 13KB + 14KB</td>
+                    <td class="status-cell status-legacy">LEGACY</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Not Yet Implemented -->
+        <div class="flow-section" style="margin-top: 20px; border-color: #ef4444;">
+            <div class="flow-title" style="color: #ef4444;">❌ NOT Currently Implemented</div>
+            <div class="components">
+                <div class="component" style="border-color: #fecaca; background: #fef2f2;">
+                    <div class="component-icon">🔄</div>
+                    <div class="component-name">Health Check Failover</div>
+                    <div class="component-details">No automatic failover<br>between voice agents</div>
+                </div>
+                <div class="component" style="border-color: #fecaca; background: #fef2f2;">
+                    <div class="component-icon">⚡</div>
+                    <div class="component-name">True MCP Protocol</div>
+                    <div class="component-details">Only HTTP API exists<br>Not MCP SDK standard</div>
+                </div>
+                <div class="component" style="border-color: #fecaca; background: #fef2f2;">
+                    <div class="component-icon">🤖</div>
+                    <div class="component-name">ElevenLabs Agent</div>
+                    <div class="component-details">TTS only, no<br>Conversational Agent</div>
+                </div>
+                <div class="component" style="border-color: #fecaca; background: #fef2f2;">
+                    <div class="component-icon">🔌</div>
+                    <div class="component-name">MCP SSE Endpoint</div>
+                    <div class="component-details">Not configured for<br>ElevenLabs connection</div>
+                </div>
+                <div class="component" style="border-color: #fecaca; background: #fef2f2;">
+                    <div class="component-icon">🔒</div>
+                    <div class="component-name">Circuit Breaker</div>
+                    <div class="component-details">No rate limiting or<br>circuit breaker pattern</div>
+                </div>
+                <div class="component" style="border-color: #fecaca; background: #fef2f2;">
+                    <div class="component-icon">📊</div>
+                    <div class="component-name">Voice Analytics</div>
+                    <div class="component-details">Basic call logging only<br>No detailed analytics</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database Schema Summary -->
+        <div class="flow-section" style="margin-top: 20px;">
+            <div class="flow-title">🗄️ Key Database Tables (Sequelize Models)</div>
+            <table class="tech-table">
+                <tr>
+                    <th>Table</th>
+                    <th>Key Fields</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><strong>clients</strong></td>
+                    <td class="endpoint">ringlypro_number, rachel_enabled, ivr_options, business_hours</td>
+                    <td class="purpose">Multi-tenant client configuration</td>
+                </tr>
+                <tr>
+                    <td><strong>appointments</strong></td>
+                    <td class="endpoint">client_id, caller_phone, prospect_name, appointment_date</td>
+                    <td class="purpose">Voice-booked appointments</td>
+                </tr>
+                <tr>
+                    <td><strong>calls</strong></td>
+                    <td class="endpoint">client_id, from_number, duration, status, started_at</td>
+                    <td class="purpose">Call history and tracking</td>
+                </tr>
+                <tr>
+                    <td><strong>credit_accounts</strong></td>
+                    <td class="endpoint">user_id, credits_available, usage_history</td>
+                    <td class="purpose">Token/credit billing</td>
+                </tr>
+                <tr>
+                    <td><strong>contacts</strong></td>
+                    <td class="endpoint">client_id, phone, email, first_name, last_name</td>
+                    <td class="purpose">CRM contact records</td>
+                </tr>
+                <tr>
+                    <td><strong>users</strong></td>
+                    <td class="endpoint">email, password, role</td>
+                    <td class="purpose">Authentication & accounts</td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; color: #94a3b8; font-size: 0.85rem;">
+            <p>RinglyPro Voice AI Architecture - Current State Documentation</p>
+            <p>Generated: December 2024 | Version: Current Production</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -99,6 +99,24 @@ try {
     console.log('⚠️ GoHighLevel MCP routes not available:', error.message);
 }
 
+// Import ElevenLabs tools routes
+let elevenlabsToolsRoutes = null;
+try {
+    elevenlabsToolsRoutes = require('./routes/elevenlabs-tools'); // ElevenLabs Conversational AI tools
+    console.log('✅ ElevenLabs tools routes loaded successfully');
+} catch (error) {
+    console.log('⚠️ ElevenLabs tools routes not available:', error.message);
+}
+
+// Import ElevenLabs voice routes
+let elevenlabsVoiceRoutes = null;
+try {
+    elevenlabsVoiceRoutes = require('./routes/elevenlabs-voice'); // ElevenLabs Conversational AI voice handler
+    console.log('✅ ElevenLabs voice routes loaded successfully');
+} catch (error) {
+    console.log('⚠️ ElevenLabs voice routes not available:', error.message);
+}
+
 // Import email marketing routes (SendGrid integration)
 const emailRoutes = require('./routes/email'); // Email marketing with SendGrid
 
@@ -310,6 +328,22 @@ if (ghlMCPRoutes) {
     console.log('🎯 GoHighLevel MCP routes mounted at /api/ghl');
 } else {
     console.log('⚠️ GoHighLevel MCP routes not available - skipping mount');
+}
+
+// ElevenLabs Conversational AI tools routes
+if (elevenlabsToolsRoutes) {
+    app.use('/api/elevenlabs/tools', elevenlabsToolsRoutes);
+    console.log('🎙️ ElevenLabs tools routes mounted at /api/elevenlabs/tools');
+} else {
+    console.log('⚠️ ElevenLabs tools routes not available - skipping mount');
+}
+
+// ElevenLabs voice webhook routes (Twilio -> ElevenLabs)
+if (elevenlabsVoiceRoutes) {
+    app.use('/voice/elevenlabs', elevenlabsVoiceRoutes);
+    console.log('🎙️ ElevenLabs voice routes mounted at /voice/elevenlabs');
+} else {
+    console.log('⚠️ ElevenLabs voice routes not available - skipping mount');
 }
 
 // Email Marketing routes (SendGrid integration)
