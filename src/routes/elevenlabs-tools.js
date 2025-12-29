@@ -27,10 +27,9 @@ const twilioClient = twilio(
 );
 
 /**
- * Main tool execution endpoint
- * ElevenLabs sends POST requests with tool_name and parameters
+ * Process tool request - shared handler for all endpoints
  */
-router.post('/', async (req, res) => {
+async function processToolRequest(req, res, clientIdOverride = null) {
   try {
     // ElevenLabs sends all parameters flat in the body, not nested under "parameters"
     // Support both formats for flexibility
@@ -42,9 +41,15 @@ router.post('/', async (req, res) => {
     // If ElevenLabs sends nested parameters, use those; otherwise use the whole body
     const params = body.parameters || body;
 
+    // If client_id is provided via URL, override any param value
+    if (clientIdOverride) {
+      params.client_id = clientIdOverride;
+    }
+
     logger.info(`[ElevenLabs Tools] Received tool call: ${tool_name}`, {
       conversation_id,
       agent_id,
+      client_id: params.client_id,
       params: JSON.stringify(params)
     });
 
@@ -63,12 +68,18 @@ router.post('/', async (req, res) => {
         result = await handleGetBusinessInfo(params);
         break;
       case 'check_availability':
+      case 'check_availability_corvita':
+      case 'check_availability_ringlypro':
         result = await handleCheckAvailability(params);
         break;
       case 'book_appointment':
+      case 'book_appointment_corvita':
+      case 'book_appointment_ringlypro':
         result = await handleBookAppointment(params);
         break;
       case 'send_sms':
+      case 'send_sms_corvita':
+      case 'send_sms_ringlypro':
         result = await handleSendSms(params);
         break;
       case 'get_open_slots':
@@ -94,6 +105,25 @@ router.post('/', async (req, res) => {
       error: error.message
     });
   }
+}
+
+/**
+ * Main tool execution endpoint (generic)
+ * ElevenLabs sends POST requests with tool_name and parameters
+ */
+router.post('/', async (req, res) => {
+  return processToolRequest(req, res);
+});
+
+/**
+ * Client-specific tool endpoints
+ * Use these to create separate tools in ElevenLabs for each client
+ * This prevents ElevenLabs from linking tools across agents
+ */
+router.post('/client/:clientId', async (req, res) => {
+  const clientId = req.params.clientId;
+  logger.info(`[ElevenLabs Tools] Client-specific endpoint called for client ${clientId}`);
+  return processToolRequest(req, res, clientId);
 });
 
 /**
