@@ -60,20 +60,26 @@ router.post('/', async (req, res) => {
     let result;
     switch (tool_name) {
       case 'get_business_info':
+      case 'get_business_info_ringlypro':
+      case 'get_business_info_corvita':
         result = await handleGetBusinessInfo(params);
         break;
       case 'check_availability':
+      case 'check_availability_ringlypro':
+      case 'check_availability_corvita':
+      case 'get_open_slots':
+        // All availability check variants route to same handler
         result = await handleCheckAvailability(params);
         break;
       case 'book_appointment':
+      case 'book_appointment_ringlypro':
+      case 'book_appointment_corvita':
         result = await handleBookAppointment(params);
         break;
       case 'send_sms':
+      case 'send_sms_ringlypro':
+      case 'send_sms_corvita':
         result = await handleSendSms(params);
-        break;
-      case 'get_open_slots':
-        // Alias for check_availability (matches your Twilio Function naming)
-        result = await handleCheckAvailability(params);
         break;
       default:
         result = {
