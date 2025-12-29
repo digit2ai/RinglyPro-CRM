@@ -55,9 +55,9 @@ class GHLBookingService {
         }
       }
 
-      // Fall back to direct API key from clients table (also get settings JSON for calendarId)
+      // Fall back to direct API key from clients table
       const clientResult = await sequelize.query(
-        `SELECT ghl_api_key, ghl_location_id, settings->'integration'->'ghl' as ghl_settings FROM clients WHERE id = :clientId`,
+        `SELECT ghl_api_key, ghl_location_id FROM clients WHERE id = :clientId`,
         {
           replacements: { clientId },
           type: QueryTypes.SELECT
@@ -65,18 +65,24 @@ class GHLBookingService {
       );
 
       if (clientResult.length > 0 && clientResult[0].ghl_api_key) {
-        const ghlSettings = clientResult[0].ghl_settings || {};
         return {
           apiKey: clientResult[0].ghl_api_key,
           locationId: clientResult[0].ghl_location_id,
-          calendarId: ghlSettings.calendarId, // Get calendarId from settings JSON
           source: 'direct'
         };
       }
 
-      // Check settings JSONB for GHL config (if no direct API key in column)
-      if (clientResult.length > 0 && clientResult[0].ghl_settings) {
-        const ghlSettings = clientResult[0].ghl_settings;
+      // Check settings JSONB for GHL config
+      const settingsResult = await sequelize.query(
+        `SELECT settings->'integration'->'ghl' as ghl_settings FROM clients WHERE id = :clientId`,
+        {
+          replacements: { clientId },
+          type: QueryTypes.SELECT
+        }
+      );
+
+      if (settingsResult.length > 0 && settingsResult[0].ghl_settings) {
+        const ghlSettings = settingsResult[0].ghl_settings;
         if (ghlSettings.enabled && ghlSettings.apiKey) {
           return {
             apiKey: ghlSettings.apiKey,
@@ -583,22 +589,11 @@ class GHLBookingService {
       const endTime = new Date(endDate);
       endTime.setHours(23, 59, 59, 999);
 
-      // Build query params - GHL API requires calendarId, userId, or groupId
-      const queryParams = {
+      // GHL uses /calendars/events endpoint to fetch appointments
+      const result = await this.callGHL(credentials, 'GET', '/calendars/events', {
         startTime: startTime.getTime(),
         endTime: endTime.getTime()
-      };
-
-      // Add calendarId if available (required by GHL API)
-      if (credentials.calendarId) {
-        queryParams.calendarId = credentials.calendarId;
-        logger.info(`[GHL] Fetching appointments with calendarId: ${credentials.calendarId}`);
-      } else {
-        logger.warn(`[GHL] No calendarId configured for client ${clientId} - GHL API may reject request`);
-      }
-
-      // GHL uses /calendars/events endpoint to fetch appointments
-      const result = await this.callGHL(credentials, 'GET', '/calendars/events', queryParams);
+      });
 
       if (!result.success) {
         logger.warn(`[GHL] Failed to fetch appointments: ${result.error}`);
