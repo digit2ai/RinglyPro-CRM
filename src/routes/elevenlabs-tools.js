@@ -208,9 +208,9 @@ async function handleCheckAvailability(params) {
       return { success: false, error: 'No GHL calendar configured for this client' };
     }
 
-    // Calculate date range
-    const startDate = date || new Date().toISOString().split('T')[0];
-    const endDate = new Date(Date.now() + days_ahead * 86400000).toISOString().split('T')[0];
+    // Calculate date range - GHL API requires Unix timestamps in milliseconds
+    const startTimestamp = date ? new Date(date).getTime() : Date.now();
+    const endTimestamp = startTimestamp + (parseInt(days_ahead) || 7) * 86400000;
 
     // Get API key - prefer passed key, then from credentials
     let apiKey = ghl_api_key;
@@ -225,7 +225,7 @@ async function handleCheckAvailability(params) {
 
     // Call GHL API directly for availability
     const response = await fetch(
-      `https://services.leadconnectorhq.com/calendars/${calendarId}/free-slots?startDate=${startDate}&endDate=${endDate}&timezone=${timezone}`,
+      `https://services.leadconnectorhq.com/calendars/${calendarId}/free-slots?startDate=${startTimestamp}&endDate=${endTimestamp}&timezone=${timezone}`,
       {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
@@ -240,11 +240,17 @@ async function handleCheckAvailability(params) {
       return { success: false, error: data.message || 'Failed to fetch slots' };
     }
 
-    // Flatten and limit slots
+    // Flatten and limit slots - GHL returns { "YYYY-MM-DD": { "slots": [...] }, ... }
     const slots = [];
-    for (const [dateKey, times] of Object.entries(data || {})) {
-      if (Array.isArray(times)) {
-        for (const slot of times) {
+    for (const [dateKey, dayData] of Object.entries(data || {})) {
+      // Skip non-date keys like "traceId"
+      if (dateKey === 'traceId' || !dayData) continue;
+
+      // Handle both formats: { slots: [...] } or direct array
+      const timeSlots = dayData.slots || (Array.isArray(dayData) ? dayData : []);
+
+      if (Array.isArray(timeSlots)) {
+        for (const slot of timeSlots) {
           const time = typeof slot === 'string' ? slot : slot.startTime || slot.start;
           if (time) {
             slots.push({
@@ -263,8 +269,8 @@ async function handleCheckAvailability(params) {
       success: true,
       calendar_id: calendarId,
       timezone,
-      start_date: startDate,
-      end_date: endDate,
+      start_date: new Date(startTimestamp).toISOString().split('T')[0],
+      end_date: new Date(endTimestamp).toISOString().split('T')[0],
       slots,
       slot_count: slots.length
     };
