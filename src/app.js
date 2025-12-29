@@ -624,13 +624,13 @@ app.get('/pixlypro-upload', (req, res) => {
   });
 });
 
-// Vagaro Integration Settings
-app.get('/settings/vagaro', (req, res) => {
-  res.render('settings-vagaro', {
-    title: 'Vagaro Integration - RinglyPro Settings',
-    APP_URL: process.env.APP_URL || process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'
-  });
-});
+// Vagaro Integration Settings - DISABLED (removed from UI)
+// app.get('/settings/vagaro', (req, res) => {
+//   res.render('settings-vagaro', {
+//     title: 'Vagaro Integration - RinglyPro Settings',
+//     APP_URL: process.env.APP_URL || process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'
+//   });
+// });
 
 // WhatsApp Integration Settings
 app.get('/settings/whatsapp', (req, res) => {
@@ -647,12 +647,12 @@ app.get('/settings/ghl', (req, res) => {
   });
 });
 
-// HubSpot Integration Settings
-app.get('/settings/hubspot', (req, res) => {
-  res.render('settings-hubspot', {
-    title: 'HubSpot Integration - RinglyPro Settings'
-  });
-});
+// HubSpot Integration Settings - DISABLED (removed from UI)
+// app.get('/settings/hubspot', (req, res) => {
+//   res.render('settings-hubspot', {
+//     title: 'HubSpot Integration - RinglyPro Settings'
+//   });
+// });
 
 // SendGrid Email Marketing Settings
 app.get('/settings/sendgrid', (req, res) => {
