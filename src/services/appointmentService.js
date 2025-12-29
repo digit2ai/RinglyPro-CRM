@@ -42,6 +42,7 @@ class AppointmentService {
 
             // Check if client requires deposit - if so, set status to 'pending' instead of 'confirmed'
             let appointmentStatus = 'confirmed';
+            let depositStatus = 'not_required';
             if (Appointment && Appointment.sequelize) {
                 const clientCheck = await Appointment.sequelize.query(
                     `SELECT deposit_required FROM clients WHERE id = :clientId`,
@@ -52,7 +53,8 @@ class AppointmentService {
                 );
                 if (clientCheck && clientCheck[0] && clientCheck[0].deposit_required) {
                     appointmentStatus = 'pending';
-                    console.log(`📋 Client ${clientId} requires deposit - setting status to 'pending'`);
+                    depositStatus = 'pending';
+                    console.log(`📋 Client ${clientId} requires deposit - setting status to 'pending', deposit_status to 'pending'`);
                 }
             }
 
@@ -64,12 +66,12 @@ class AppointmentService {
                     `INSERT INTO appointments (
                         client_id, customer_name, customer_phone, customer_email,
                         appointment_date, appointment_time, duration, purpose,
-                        status, source, confirmation_code, reminder_sent, confirmation_sent,
+                        status, deposit_status, source, confirmation_code, reminder_sent, confirmation_sent,
                         created_at, updated_at
                     ) VALUES (
                         :clientId, :customerName, :customerPhone, :customerEmail,
                         :appointmentDate, :appointmentTime, :duration, :purpose,
-                        :status, :source, :confirmationCode, :reminderSent, :confirmationSent,
+                        :status, :depositStatus, :source, :confirmationCode, :reminderSent, :confirmationSent,
                         NOW(), NOW()
                     ) RETURNING *`,
                     {
@@ -83,6 +85,7 @@ class AppointmentService {
                             duration: appointmentData.duration || 30,
                             purpose: appointmentData.purpose || 'Voice booking consultation',
                             status: appointmentStatus,
+                            depositStatus: depositStatus,
                             source: appointmentData.source || 'voice_booking',
                             confirmationCode: confirmationCode,
                             reminderSent: false,
