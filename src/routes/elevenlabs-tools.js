@@ -351,7 +351,7 @@ async function handleBookAppointment(params) {
       appointment_time: finalTime,
       duration: parseInt(duration),
       purpose,
-      source: 'elevenlabs_voice'
+      source: 'voice_booking'  // Use valid enum value (elevenlabs_voice not in enum)
     };
 
     logger.info(`[ElevenLabs Tools] Booking appointment for client ${client_id}:`, appointmentData);
