@@ -168,7 +168,8 @@ async function handleCheckAvailability(params) {
     days_ahead = 7,
     timezone = 'America/New_York',
     ghl_calendar_id,
-    ghl_location_id
+    ghl_location_id,
+    ghl_api_key  // Allow passing API key directly for flexibility
   } = params;
 
   try {
@@ -203,68 +204,61 @@ async function handleCheckAvailability(params) {
     const startDate = date || new Date().toISOString().split('T')[0];
     const endDate = new Date(Date.now() + days_ahead * 86400000).toISOString().split('T')[0];
 
-    // Use GHL booking service to get slots
-    const result = await ghlBookingService.getAvailableSlots(client_id, calendarId, startDate);
-
-    if (!result.success) {
-      // Fallback: try direct GHL API call
+    // Get API key - prefer passed key, then from credentials
+    let apiKey = ghl_api_key;
+    if (!apiKey) {
       const credentials = await ghlBookingService.getClientCredentials(client_id);
-      if (!credentials) {
-        return { success: false, error: 'GHL not configured' };
-      }
+      apiKey = credentials?.apiKey;
+    }
 
-      const response = await fetch(
-        `https://services.leadconnectorhq.com/calendars/${calendarId}/free-slots?startDate=${startDate}&endDate=${endDate}&timezone=${timezone}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${credentials.apiKey}`,
-            'Version': '2021-07-28'
-          }
+    if (!apiKey) {
+      return { success: false, error: 'GHL API key not configured' };
+    }
+
+    // Call GHL API directly for availability
+    const response = await fetch(
+      `https://services.leadconnectorhq.com/calendars/${calendarId}/free-slots?startDate=${startDate}&endDate=${endDate}&timezone=${timezone}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Version': '2021-07-28'
         }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: data.message || 'Failed to fetch slots' };
       }
+    );
 
-      // Flatten and limit slots
-      const slots = [];
-      for (const [dateKey, times] of Object.entries(data || {})) {
-        if (Array.isArray(times)) {
-          for (const slot of times) {
-            const time = typeof slot === 'string' ? slot : slot.startTime || slot.start;
-            if (time) {
-              slots.push({
-                date: dateKey,
-                time: time,
-                datetime: time
-              });
-            }
-            if (slots.length >= 10) break;
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { success: false, error: data.message || 'Failed to fetch slots' };
+    }
+
+    // Flatten and limit slots
+    const slots = [];
+    for (const [dateKey, times] of Object.entries(data || {})) {
+      if (Array.isArray(times)) {
+        for (const slot of times) {
+          const time = typeof slot === 'string' ? slot : slot.startTime || slot.start;
+          if (time) {
+            slots.push({
+              date: dateKey,
+              time: time,
+              datetime: time
+            });
           }
+          if (slots.length >= 10) break;
         }
-        if (slots.length >= 10) break;
       }
-
-      return {
-        success: true,
-        calendar_id: calendarId,
-        timezone,
-        start_date: startDate,
-        end_date: endDate,
-        slots,
-        slot_count: slots.length
-      };
+      if (slots.length >= 10) break;
     }
 
     return {
       success: true,
       calendar_id: calendarId,
       timezone,
-      slots: result.slots || [],
-      slot_count: (result.slots || []).length
+      start_date: startDate,
+      end_date: endDate,
+      slots,
+      slot_count: slots.length
     };
 
   } catch (error) {
