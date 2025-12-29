@@ -19,7 +19,7 @@ class AppointmentService {
     async bookAppointment(clientId, appointmentData) {
         try {
             console.log(`🎯 Booking appointment for client ${clientId}:`, appointmentData);
-            
+
             // Validate booking data
             const validationResult = this.validateBookingData(appointmentData);
             if (!validationResult.isValid) {
@@ -28,11 +28,11 @@ class AppointmentService {
 
             // Check for duplicate bookings using raw SQL
             const duplicateCheck = await this.checkDuplicateBooking(
-                clientId, 
-                appointmentData.appointment_date, 
+                clientId,
+                appointmentData.appointment_date,
                 appointmentData.appointment_time
             );
-            
+
             if (duplicateCheck.exists) {
                 throw new Error('Time slot already booked');
             }
@@ -40,9 +40,25 @@ class AppointmentService {
             // Generate confirmation code
             const confirmationCode = this.generateConfirmationCode();
 
+            // Check if client requires deposit - if so, set status to 'pending' instead of 'confirmed'
+            let appointmentStatus = 'confirmed';
+            if (Appointment && Appointment.sequelize) {
+                const clientCheck = await Appointment.sequelize.query(
+                    `SELECT deposit_required FROM clients WHERE id = :clientId`,
+                    {
+                        replacements: { clientId },
+                        type: Appointment.sequelize.QueryTypes.SELECT
+                    }
+                );
+                if (clientCheck && clientCheck[0] && clientCheck[0].deposit_required) {
+                    appointmentStatus = 'pending';
+                    console.log(`📋 Client ${clientId} requires deposit - setting status to 'pending'`);
+                }
+            }
+
             // Create appointment using raw SQL to avoid field mapping issues
             let appointment;
-            
+
             if (Appointment && Appointment.sequelize) {
                 const result = await Appointment.sequelize.query(
                     `INSERT INTO appointments (
@@ -66,8 +82,8 @@ class AppointmentService {
                             appointmentTime: appointmentData.appointment_time,
                             duration: appointmentData.duration || 30,
                             purpose: appointmentData.purpose || 'Voice booking consultation',
-                            status: 'confirmed',
-                            source: 'voice_booking',
+                            status: appointmentStatus,
+                            source: appointmentData.source || 'voice_booking',
                             confirmationCode: confirmationCode,
                             reminderSent: false,
                             confirmationSent: false
@@ -75,9 +91,9 @@ class AppointmentService {
                         type: Appointment.sequelize.QueryTypes.INSERT
                     }
                 );
-                
+
                 appointment = result[0][0]; // PostgreSQL RETURNING result
-                console.log('✅ Appointment booked in database:', appointment.id);
+                console.log(`✅ Appointment booked in database: ${appointment.id} (status: ${appointmentStatus})`);
             } else {
                 // Fallback mock appointment
                 appointment = {
@@ -90,13 +106,13 @@ class AppointmentService {
                     appointment_time: appointmentData.appointment_time,
                     duration: appointmentData.duration || 30,
                     purpose: appointmentData.purpose || 'General consultation',
-                    status: 'confirmed',
-                    source: 'voice_booking',
+                    status: appointmentStatus,
+                    source: appointmentData.source || 'voice_booking',
                     confirmation_code: confirmationCode,
                     created_at: new Date(),
                     updated_at: new Date()
                 };
-                
+
                 console.log('✅ Mock appointment created:', appointment.id);
             }
             

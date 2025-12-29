@@ -5406,10 +5406,25 @@
         </div>
     </div>
 
-    <!-- ElevenLabs Voice Assistant Widget -->
-    <elevenlabs-convai agent-id="agent_4801kd9a0495frvbjxz6dyrnbz1j"></elevenlabs-convai>
+    <!-- ElevenLabs Voice Assistant Widget (hidden for client 32) -->
+    <div id="elevenlabs-widget-container">
+        <elevenlabs-convai agent-id="agent_4801kd9a0495frvbjxz6dyrnbz1j"></elevenlabs-convai>
+    </div>
     <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
     <script>
+        // Hide ElevenLabs widget for client 32 (Corvita - has their own ElevenLabs voice agent)
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const clientId = getClientIdFromToken();
+                if (clientId == 32) {
+                    const widgetContainer = document.getElementById('elevenlabs-widget-container');
+                    if (widgetContainer) {
+                        widgetContainer.style.display = 'none';
+                    }
+                }
+            }, 100);
+        });
+
         function openVoiceAssistant() {
             // Find the ElevenLabs widget and click its call button
             const widget = document.querySelector('elevenlabs-convai');
