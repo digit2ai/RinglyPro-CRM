@@ -114,7 +114,7 @@ async function handleGetBusinessInfo(params) {
       return { success: false, error: 'Missing client_id or called_number' };
     }
 
-    const [clients] = await sequelize.query(`
+    const clients = await sequelize.query(`
       SELECT
         id,
         business_name,
@@ -181,7 +181,7 @@ async function handleCheckAvailability(params) {
     let locationId = ghl_location_id;
 
     if (!calendarId) {
-      const [clients] = await sequelize.query(`
+      const clients = await sequelize.query(`
         SELECT
           settings->'integration'->'ghl'->>'calendarId' as calendar_id,
           settings->'integration'->'ghl'->>'locationId' as location_id,
@@ -407,7 +407,7 @@ async function handleSendSms(params) {
     }
 
     // Get client's Twilio number
-    const [clients] = await sequelize.query(`
+    const clients = await sequelize.query(`
       SELECT ringlypro_number, business_name FROM clients WHERE id = :clientId
     `, { replacements: { clientId: client_id }, type: QueryTypes.SELECT });
 

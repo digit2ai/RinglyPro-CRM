@@ -46,7 +46,7 @@ router.post('/incoming', async (req, res) => {
     logger.info(`[ElevenLabs Voice] Incoming call: ${From} -> ${To}, CallSid: ${CallSid}`);
 
     // Find client by the called number
-    const [clients] = await sequelize.query(`
+    const clients = await sequelize.query(`
       SELECT
         id,
         business_name,
