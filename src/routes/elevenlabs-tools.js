@@ -365,10 +365,10 @@ async function handleBookAppointment(params) {
 
     // Also sync to GHL if configured
     try {
-      const ghlResult = await ghlBookingService.bookAppointmentFromWhatsApp(client_id, {
-        name,
-        phone: phoneNum,
-        email: emailAddr,
+      const ghlResult = await ghlBookingService.bookFromWhatsApp(client_id, {
+        customerName: name,
+        customerPhone: phoneNum,
+        customerEmail: emailAddr,
         date: finalDate,
         time: finalTime,
         service: purpose,
@@ -376,7 +376,9 @@ async function handleBookAppointment(params) {
       });
 
       if (ghlResult.success) {
-        logger.info(`[ElevenLabs Tools] Also synced to GHL: ${ghlResult.appointmentId}`);
+        logger.info(`[ElevenLabs Tools] Also synced to GHL: ${ghlResult.appointment?.id}`);
+      } else {
+        logger.warn(`[ElevenLabs Tools] GHL sync failed: ${ghlResult.error}`);
       }
     } catch (ghlError) {
       logger.warn(`[ElevenLabs Tools] GHL sync failed (non-blocking): ${ghlError.message}`);
