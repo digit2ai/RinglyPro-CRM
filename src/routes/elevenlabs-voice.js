@@ -41,8 +41,7 @@ router.post('/incoming', async (req, res) => {
   try {
     const CallSid = req.body?.CallSid;
     const From = normalizePhone(req.body?.From);
-    // Twilio sends 'Called' for inbound calls, 'To' for outbound
-    const To = normalizePhone(req.body?.Called || req.body?.To);
+    const To = normalizePhone(req.body?.To);
 
     logger.info(`[ElevenLabs Voice] Incoming call: ${From} -> ${To}, CallSid: ${CallSid}`);
 

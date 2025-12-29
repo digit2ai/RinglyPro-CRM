@@ -63,18 +63,12 @@ router.post('/', async (req, res) => {
         result = await handleGetBusinessInfo(params);
         break;
       case 'check_availability':
-      case 'check_availability_ringlypro':
-      case 'check_availability_corvita':
         result = await handleCheckAvailability(params);
         break;
       case 'book_appointment':
-      case 'book_appointment_ringlypro':
-      case 'book_appointment_corvita':
         result = await handleBookAppointment(params);
         break;
       case 'send_sms':
-      case 'send_sms_ringlypro':
-      case 'send_sms_corvita':
         result = await handleSendSms(params);
         break;
       case 'get_open_slots':
