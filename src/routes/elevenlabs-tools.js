@@ -32,12 +32,20 @@ const twilioClient = twilio(
  */
 router.post('/', async (req, res) => {
   try {
-    const { tool_name, parameters, conversation_id, agent_id } = req.body;
+    // ElevenLabs sends all parameters flat in the body, not nested under "parameters"
+    // Support both formats for flexibility
+    const body = req.body || {};
+    const tool_name = body.tool_name;
+    const conversation_id = body.conversation_id;
+    const agent_id = body.agent_id;
+
+    // If ElevenLabs sends nested parameters, use those; otherwise use the whole body
+    const params = body.parameters || body;
 
     logger.info(`[ElevenLabs Tools] Received tool call: ${tool_name}`, {
       conversation_id,
       agent_id,
-      parameters: JSON.stringify(parameters)
+      params: JSON.stringify(params)
     });
 
     // Validate required fields
@@ -52,20 +60,20 @@ router.post('/', async (req, res) => {
     let result;
     switch (tool_name) {
       case 'get_business_info':
-        result = await handleGetBusinessInfo(parameters);
+        result = await handleGetBusinessInfo(params);
         break;
       case 'check_availability':
-        result = await handleCheckAvailability(parameters);
+        result = await handleCheckAvailability(params);
         break;
       case 'book_appointment':
-        result = await handleBookAppointment(parameters);
+        result = await handleBookAppointment(params);
         break;
       case 'send_sms':
-        result = await handleSendSms(parameters);
+        result = await handleSendSms(params);
         break;
       case 'get_open_slots':
         // Alias for check_availability (matches your Twilio Function naming)
-        result = await handleCheckAvailability(parameters);
+        result = await handleCheckAvailability(params);
         break;
       default:
         result = {
