@@ -67,6 +67,7 @@ router.post('/', async (req, res) => {
       case 'check_availability':
       case 'check_availability_ringlypro':
       case 'check_availability_corvita':
+      case 'check_availability_recovery':
       case 'get_open_slots':
         // All availability check variants route to same handler
         result = await handleCheckAvailability(params);
@@ -74,11 +75,13 @@ router.post('/', async (req, res) => {
       case 'book_appointment':
       case 'book_appointment_ringlypro':
       case 'book_appointment_corvita':
+      case 'book_appointment_recovery':
         result = await handleBookAppointment(params);
         break;
       case 'send_sms':
       case 'send_sms_ringlypro':
       case 'send_sms_corvita':
+      case 'send_sms_recovery':
         result = await handleSendSms(params);
         break;
       default:
