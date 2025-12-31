@@ -5914,9 +5914,77 @@
     </div>
 
     <!-- ElevenLabs User Training AI Widget - helps clients learn to use RinglyPro -->
-    <div id="elevenlabs-widget-container">
-        <elevenlabs-convai agent-id="agent_4801kd9a0495frvbjxz6dyrnbz1j"></elevenlabs-convai>
+    <style>
+        #elevenlabs-widget-wrapper {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        #elevenlabs-widget-wrapper.hidden {
+            display: none;
+        }
+        #widget-close-btn {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 24px;
+            height: 24px;
+            background: #ef4444;
+            border: 2px solid white;
+            border-radius: 50%;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            z-index: 10000;
+            transition: all 0.2s;
+        }
+        #widget-close-btn:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
+        #widget-reopen-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            z-index: 9998;
+            transition: all 0.2s;
+        }
+        #widget-reopen-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
+        }
+        #widget-reopen-btn.show {
+            display: flex;
+        }
+    </style>
+    <div id="elevenlabs-widget-wrapper">
+        <button id="widget-close-btn" onclick="closeVoiceWidget()" title="Close widget">×</button>
+        <div id="elevenlabs-widget-container">
+            <elevenlabs-convai agent-id="agent_4801kd9a0495frvbjxz6dyrnbz1j"></elevenlabs-convai>
+        </div>
     </div>
+    <button id="widget-reopen-btn" onclick="reopenVoiceWidget()" title="Open Voice Assistant">
+        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/>
+        </svg>
+    </button>
     <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
     <script>
         // ElevenLabs User Training AI Widget - available for all clients
@@ -5931,6 +5999,20 @@
                     callButton.click();
                 }
             }
+        }
+
+        function closeVoiceWidget() {
+            const wrapper = document.getElementById('elevenlabs-widget-wrapper');
+            const reopenBtn = document.getElementById('widget-reopen-btn');
+            wrapper.classList.add('hidden');
+            reopenBtn.classList.add('show');
+        }
+
+        function reopenVoiceWidget() {
+            const wrapper = document.getElementById('elevenlabs-widget-wrapper');
+            const reopenBtn = document.getElementById('widget-reopen-btn');
+            wrapper.classList.remove('hidden');
+            reopenBtn.classList.remove('show');
         }
     </script>
 
