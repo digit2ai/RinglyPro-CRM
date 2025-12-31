@@ -583,6 +583,13 @@ class GHLBookingService {
     }
 
     try {
+      // Get calendar ID from client settings
+      const settingsResult = await sequelize.query(
+        `SELECT settings->'integration'->'ghl'->>'calendarId' as calendar_id FROM clients WHERE id = :clientId`,
+        { replacements: { clientId }, type: QueryTypes.SELECT }
+      );
+      const calendarId = settingsResult[0]?.calendar_id;
+
       // Convert dates to timestamps for GHL API
       const startTime = new Date(startDate);
       startTime.setHours(0, 0, 0, 0);
@@ -590,10 +597,17 @@ class GHLBookingService {
       endTime.setHours(23, 59, 59, 999);
 
       // GHL uses /calendars/events endpoint to fetch appointments
-      const result = await this.callGHL(credentials, 'GET', '/calendars/events', {
+      const params = {
         startTime: startTime.getTime(),
         endTime: endTime.getTime()
-      });
+      };
+
+      // Add calendarId if available to filter to specific calendar
+      if (calendarId) {
+        params.calendarId = calendarId;
+      }
+
+      const result = await this.callGHL(credentials, 'GET', '/calendars/events', params);
 
       if (!result.success) {
         logger.warn(`[GHL] Failed to fetch appointments: ${result.error}`);
