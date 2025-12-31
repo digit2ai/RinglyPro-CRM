@@ -141,60 +141,256 @@ https://aiagent.ringlypro.com/api/elevenlabs/tools
 The agent should be configured with these tools:
 
 #### 1. check_availability_recovery
+
+**CRITICAL:** The `tool_name` constant MUST be `"check_availability"` (not `"book_appointment"`)
+
+**Full ElevenLabs Tool Configuration:**
 ```json
 {
+  "type": "webhook",
   "name": "check_availability_recovery",
-  "description": "Check available appointment slots for Recovery Sessions",
-  "parameters": {
-    "client_id": {
-      "type": "string",
-      "description": "Client ID",
-      "default": "32"
+  "description": "Check available appointment slots for Recovery Sessions. Use this to find open times before booking.",
+  "disable_interruptions": false,
+  "force_pre_tool_speech": "auto",
+  "assignments": [],
+  "tool_call_sound": null,
+  "tool_call_sound_behavior": "auto",
+  "execution_mode": "immediate",
+  "api_schema": {
+    "url": "https://aiagent.ringlypro.com/api/elevenlabs/tools",
+    "method": "POST",
+    "path_params_schema": [],
+    "query_params_schema": [],
+    "request_body_schema": {
+      "id": "body",
+      "type": "object",
+      "description": "Parameters for checking availability",
+      "properties": [
+        {
+          "id": "tool_name",
+          "type": "string",
+          "value_type": "constant",
+          "description": "",
+          "dynamic_variable": "",
+          "constant_value": "check_availability",
+          "enum": null,
+          "is_system_provided": false,
+          "required": true
+        },
+        {
+          "id": "client_id",
+          "type": "string",
+          "value_type": "constant",
+          "description": "",
+          "dynamic_variable": "",
+          "constant_value": "32",
+          "enum": null,
+          "is_system_provided": false,
+          "required": true
+        },
+        {
+          "id": "days_ahead",
+          "type": "integer",
+          "value_type": "constant",
+          "description": "Number of days ahead to check for availability",
+          "dynamic_variable": "",
+          "constant_value": "7",
+          "enum": null,
+          "is_system_provided": false,
+          "required": false
+        },
+        {
+          "id": "ghl_calendar_id",
+          "type": "string",
+          "value_type": "constant",
+          "description": "",
+          "dynamic_variable": "",
+          "constant_value": "yHDUtxQWt9GzaPcdUnxs",
+          "enum": null,
+          "is_system_provided": false,
+          "required": true
+        },
+        {
+          "id": "ghl_location_id",
+          "type": "string",
+          "value_type": "constant",
+          "description": "",
+          "dynamic_variable": "",
+          "constant_value": "CU7M8At2sWwodiBrr71J",
+          "enum": null,
+          "is_system_provided": false,
+          "required": true
+        },
+        {
+          "id": "ghl_api_key",
+          "type": "string",
+          "value_type": "constant",
+          "description": "",
+          "dynamic_variable": "",
+          "constant_value": "pit-c06c6e76-a6c2-4ad6-adcc-132ccaf11d51",
+          "enum": null,
+          "is_system_provided": false,
+          "required": true
+        }
+      ],
+      "required": false,
+      "value_type": "llm_prompt"
     },
-    "days_ahead": {
-      "type": "integer",
-      "description": "Number of days to check",
-      "default": 7
-    }
+    "request_headers": [],
+    "auth_connection": null
+  },
+  "response_timeout_secs": 20,
+  "dynamic_variables": {
+    "dynamic_variable_placeholders": {}
   }
 }
 ```
-
-**Important:** The `client_id` must be set to `"32"` either as a default value or passed dynamically.
 
 #### 2. book_appointment_recovery
+
+**Full ElevenLabs Tool Configuration:**
 ```json
 {
+  "type": "webhook",
   "name": "book_appointment_recovery",
-  "description": "Book a Recovery Session appointment",
-  "parameters": {
-    "client_id": {
-      "type": "string",
-      "default": "32"
+  "description": "Book an appointment for the caller. Use this after confirming the date, time, and collecting the caller's name and phone number.",
+  "disable_interruptions": false,
+  "force_pre_tool_speech": "auto",
+  "assignments": [],
+  "tool_call_sound": null,
+  "tool_call_sound_behavior": "auto",
+  "execution_mode": "immediate",
+  "api_schema": {
+    "url": "https://aiagent.ringlypro.com/api/elevenlabs/tools",
+    "method": "POST",
+    "path_params_schema": [],
+    "query_params_schema": [],
+    "request_body_schema": {
+      "id": "body",
+      "type": "object",
+      "description": "Parameters for booking an appointment",
+      "properties": [
+        {
+          "id": "tool_name",
+          "type": "string",
+          "value_type": "constant",
+          "description": "",
+          "dynamic_variable": "",
+          "constant_value": "book_appointment",
+          "enum": null,
+          "is_system_provided": false,
+          "required": true
+        },
+        {
+          "id": "client_id",
+          "type": "string",
+          "value_type": "constant",
+          "description": "",
+          "dynamic_variable": "",
+          "constant_value": "32",
+          "enum": null,
+          "is_system_provided": false,
+          "required": true
+        },
+        {
+          "id": "customer_name",
+          "type": "string",
+          "value_type": "llm_prompt",
+          "description": "The caller's full name",
+          "dynamic_variable": "",
+          "constant_value": "",
+          "enum": null,
+          "is_system_provided": false,
+          "required": true
+        },
+        {
+          "id": "customer_phone",
+          "type": "string",
+          "value_type": "llm_prompt",
+          "description": "The caller's phone number",
+          "dynamic_variable": "",
+          "constant_value": "",
+          "enum": null,
+          "is_system_provided": false,
+          "required": true
+        },
+        {
+          "id": "appointment_date",
+          "type": "string",
+          "value_type": "llm_prompt",
+          "description": "The appointment date in YYYY-MM-DD format",
+          "dynamic_variable": "",
+          "constant_value": "",
+          "enum": null,
+          "is_system_provided": false,
+          "required": true
+        },
+        {
+          "id": "appointment_time",
+          "type": "string",
+          "value_type": "llm_prompt",
+          "description": "The appointment time in HH:MM format",
+          "dynamic_variable": "",
+          "constant_value": "",
+          "enum": null,
+          "is_system_provided": false,
+          "required": true
+        },
+        {
+          "id": "ghl_calendar_id",
+          "type": "string",
+          "value_type": "constant",
+          "description": "",
+          "dynamic_variable": "",
+          "constant_value": "yHDUtxQWt9GzaPcdUnxs",
+          "enum": null,
+          "is_system_provided": false,
+          "required": true
+        },
+        {
+          "id": "ghl_location_id",
+          "type": "string",
+          "value_type": "constant",
+          "description": "",
+          "dynamic_variable": "",
+          "constant_value": "CU7M8At2sWwodiBrr71J",
+          "enum": null,
+          "is_system_provided": false,
+          "required": true
+        },
+        {
+          "id": "ghl_api_key",
+          "type": "string",
+          "value_type": "constant",
+          "description": "",
+          "dynamic_variable": "",
+          "constant_value": "pit-c06c6e76-a6c2-4ad6-adcc-132ccaf11d51",
+          "enum": null,
+          "is_system_provided": false,
+          "required": true
+        }
+      ],
+      "required": false,
+      "value_type": "llm_prompt"
     },
-    "customer_name": {
-      "type": "string",
-      "description": "Customer's full name"
-    },
-    "customer_phone": {
-      "type": "string",
-      "description": "Customer's phone number"
-    },
-    "appointment_date": {
-      "type": "string",
-      "description": "Date in YYYY-MM-DD format"
-    },
-    "appointment_time": {
-      "type": "string",
-      "description": "Time in HH:MM format or ISO datetime"
-    }
+    "request_headers": [],
+    "auth_connection": null
+  },
+  "response_timeout_secs": 20,
+  "dynamic_variables": {
+    "dynamic_variable_placeholders": {}
   }
 }
 ```
 
-#### Tool Name Aliases
+#### Tool Name Mapping (IMPORTANT)
 
-The API accepts multiple tool name variations:
+| ElevenLabs Tool Name | `tool_name` Constant Value | Purpose |
+|---------------------|---------------------------|---------|
+| `check_availability_recovery` | `"check_availability"` | Check open slots |
+| `book_appointment_recovery` | `"book_appointment"` | Book appointment |
+
+The API accepts these tool name variations:
 - `check_availability` / `check_availability_recovery` / `check_availability_corvita`
 - `book_appointment` / `book_appointment_recovery` / `book_appointment_corvita`
 - `get_business_info` / `get_business_info_recovery`
