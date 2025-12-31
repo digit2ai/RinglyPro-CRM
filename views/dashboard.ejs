@@ -2327,13 +2327,13 @@
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <!-- View Toggle -->
                     <div class="view-toggle">
-                        <button id="listViewBtn" class="active" onclick="setAppointmentView('list')" title="List View">
+                        <button id="listViewBtn" onclick="setAppointmentView('list')" title="List View">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                             </svg>
                             List
                         </button>
-                        <button id="calendarViewBtn" onclick="setAppointmentView('calendar')" title="Calendar View">
+                        <button id="calendarViewBtn" class="active" onclick="setAppointmentView('calendar')" title="Calendar View">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
@@ -2356,15 +2356,15 @@
                     </button>
                 </div>
             </div>
-            <!-- List View (default) -->
-            <div id="appointmentsList">
+            <!-- List View (hidden by default) -->
+            <div id="appointmentsList" style="display: none;">
                 <div class="loading">
                     <div class="spinner"></div>
                     <p>Loading appointments...</p>
                 </div>
             </div>
-            <!-- Calendar Grid View (hidden by default) -->
-            <div id="calendarView" style="display: none;">
+            <!-- Calendar Grid View (default) -->
+            <div id="calendarView">
                 <div class="calendar-grid-container">
                     <div class="calendar-nav">
                         <button onclick="navigateCalendarWeek(-1)" title="Previous Week">
@@ -3980,7 +3980,7 @@
         // CALENDAR VIEW FUNCTIONS
         // =====================================================
 
-        let currentView = 'list'; // 'list' or 'calendar'
+        let currentView = 'calendar'; // 'list' or 'calendar' - calendar is default
         let calendarWeekOffset = 0; // 0 = current week, -1 = last week, 1 = next week
 
         // Toggle between list and calendar view
@@ -4197,6 +4197,11 @@
 
             // Apply current filter
             filterAppointmentsByDays(currentDaysFilter);
+
+            // If calendar is the default view, render it
+            if (currentView === 'calendar') {
+                renderCalendarView();
+            }
         }
 
         // Render filtered appointments
