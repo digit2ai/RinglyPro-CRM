@@ -250,15 +250,17 @@ async function handleCheckAvailability(params) {
     }
 
     // Flatten and limit slots - GHL returns { "YYYY-MM-DD": { "slots": [...] }, ... }
+    // Take up to 2 slots per day, spread across multiple days (max 10 total)
     const slots = [];
-    for (const [dateKey, dayData] of Object.entries(data || {})) {
-      // Skip non-date keys like "traceId"
-      if (dateKey === 'traceId' || !dayData) continue;
+    const sortedDates = Object.keys(data || {}).filter(k => k !== 'traceId' && data[k]).sort();
 
+    for (const dateKey of sortedDates) {
+      const dayData = data[dateKey];
       // Handle both formats: { slots: [...] } or direct array
       const timeSlots = dayData.slots || (Array.isArray(dayData) ? dayData : []);
 
       if (Array.isArray(timeSlots)) {
+        let daySlotCount = 0;
         for (const slot of timeSlots) {
           const time = typeof slot === 'string' ? slot : slot.startTime || slot.start;
           if (time) {
@@ -267,8 +269,10 @@ async function handleCheckAvailability(params) {
               time: time,
               datetime: time
             });
+            daySlotCount++;
           }
-          if (slots.length >= 10) break;
+          // Limit to 2 slots per day to spread across multiple days
+          if (daySlotCount >= 2) break;
         }
       }
       if (slots.length >= 10) break;
