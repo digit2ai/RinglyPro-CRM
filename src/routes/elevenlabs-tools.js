@@ -32,20 +32,33 @@ const twilioClient = twilio(
  */
 router.post('/', async (req, res) => {
   try {
-    // ElevenLabs sends all parameters flat in the body, not nested under "parameters"
-    // Support both formats for flexibility
+    // ElevenLabs sends different formats depending on configuration:
+    // Format 1: { tool_name: "...", client_id: "...", ... } (flat)
+    // Format 2: { tool_name: "...", parameters: { client_id: "..." } } (nested params)
+    // Format 3: { tool: { name: "...", parameters: { ... } } } (nested tool object)
+    // Format 4: { name: "...", parameters: { ... } } (OpenAI-style)
     const body = req.body || {};
-    const tool_name = body.tool_name;
+
+    // Extract tool_name from various possible locations
+    let tool_name = body.tool_name || body.name;
+    if (!tool_name && body.tool && body.tool.name) {
+      tool_name = body.tool.name;
+    }
+
     const conversation_id = body.conversation_id;
     const agent_id = body.agent_id;
 
-    // If ElevenLabs sends nested parameters, use those; otherwise use the whole body
-    const params = body.parameters || body;
+    // Extract parameters from various possible locations
+    let params = body.parameters || body;
+    if (body.tool && body.tool.parameters) {
+      params = body.tool.parameters;
+    }
 
     logger.info(`[ElevenLabs Tools] Received tool call: ${tool_name}`, {
       conversation_id,
       agent_id,
-      params: JSON.stringify(params)
+      params: JSON.stringify(params),
+      raw_body: JSON.stringify(body).substring(0, 500) // Log raw body for debugging (truncated)
     });
 
     // Validate required fields
