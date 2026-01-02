@@ -190,12 +190,14 @@ async function handleGetBusinessInfo(params) {
 
 /**
  * Check availability for appointments
+ * UPDATED: Now returns all slots without artificial limits,
+ * respecting the actual GHL calendar availability
  */
 async function handleCheckAvailability(params) {
   const {
     client_id,
     date,
-    days_ahead = 7,
+    days_ahead = 30,  // Changed from 7 to 30 to match user expectations
     timezone = 'America/New_York',
     ghl_calendar_id,
     ghl_location_id,
@@ -232,7 +234,7 @@ async function handleCheckAvailability(params) {
 
     // Calculate date range - GHL API requires Unix timestamps in milliseconds
     const startTimestamp = date ? new Date(date).getTime() : Date.now();
-    const endTimestamp = startTimestamp + (parseInt(days_ahead) || 7) * 86400000;
+    const endTimestamp = startTimestamp + (parseInt(days_ahead) || 30) * 86400000;
 
     // Get API key - prefer passed key, then from credentials
     let apiKey = ghl_api_key;
@@ -246,6 +248,8 @@ async function handleCheckAvailability(params) {
     }
 
     // Call GHL API directly for availability
+    // NOTE: This API uses the calendar's openHours settings, NOT the user's Schedule availability
+    // The GHL Calendar View uses Schedule availability, but the API uses openHours (which may be cached)
     const response = await fetch(
       `https://services.leadconnectorhq.com/calendars/${calendarId}/free-slots?startDate=${startTimestamp}&endDate=${endTimestamp}&timezone=${timezone}`,
       {
@@ -262,8 +266,8 @@ async function handleCheckAvailability(params) {
       return { success: false, error: data.message || 'Failed to fetch slots' };
     }
 
-    // Flatten and limit slots - GHL returns { "YYYY-MM-DD": { "slots": [...] }, ... }
-    // Take up to 2 slots per day, spread across multiple days (max 10 total)
+    // Flatten slots - GHL returns { "YYYY-MM-DD": { "slots": [...] }, ... }
+    // UPDATED: Return ALL slots instead of limiting to 2 per day
     const slots = [];
     const sortedDates = Object.keys(data || {}).filter(k => k !== 'traceId' && data[k]).sort();
 
@@ -273,7 +277,6 @@ async function handleCheckAvailability(params) {
       const timeSlots = dayData.slots || (Array.isArray(dayData) ? dayData : []);
 
       if (Array.isArray(timeSlots)) {
-        let daySlotCount = 0;
         for (const slot of timeSlots) {
           const time = typeof slot === 'string' ? slot : slot.startTime || slot.start;
           if (time) {
@@ -282,13 +285,9 @@ async function handleCheckAvailability(params) {
               time: time,
               datetime: time
             });
-            daySlotCount++;
           }
-          // Limit to 2 slots per day to spread across multiple days
-          if (daySlotCount >= 2) break;
         }
       }
-      if (slots.length >= 10) break;
     }
 
     return {
