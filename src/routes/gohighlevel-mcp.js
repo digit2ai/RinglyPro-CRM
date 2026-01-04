@@ -64,7 +64,6 @@ async function callGHL(config, method, endpoint, data = null) {
     }
 
     console.log(`🌐 GHL API ${method} ${fullUrl}`);
-    console.log(`📦 GHL Request data keys:`, data ? Object.keys(data) : 'null');
 
     // Prepare request body - only add locationId for POST requests (create operations)
     // PUT/PATCH (update operations) should not include locationId in body
@@ -75,11 +74,9 @@ async function callGHL(config, method, endpoint, data = null) {
       } else {
         // PUT, PATCH, DELETE - don't add locationId to body
         requestData = { ...data };
-        // Explicitly remove locationId if present
         delete requestData.locationId;
       }
     }
-    console.log(`📦 GHL Final request data keys:`, requestData ? Object.keys(requestData) : 'null');
 
     const response = await axios({
       method,
@@ -189,7 +186,6 @@ router.get('/contacts/:contactId', ghlAuth, async (req, res) => {
 // Update contact
 router.put('/contacts/:contactId', ghlAuth, async (req, res) => {
   console.log('✏️ Updating GHL contact:', req.params.contactId);
-  console.log('📝 Request body keys:', Object.keys(req.body));
   const { firstName, lastName, email, phone, tags, customFields } = req.body;
 
   const updateData = {
@@ -200,7 +196,6 @@ router.put('/contacts/:contactId', ghlAuth, async (req, res) => {
     tags,
     customField: customFields
   };
-  console.log('📝 Update data keys:', Object.keys(updateData));
 
   const result = await callGHL(req.ghlConfig, 'PUT', `/contacts/${req.params.contactId}`, updateData);
 
