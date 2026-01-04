@@ -2377,19 +2377,77 @@
         <div class="content-section" id="messagesSection">
             <div class="section-header">
                 <h2>Messages & Voicemails</h2>
-                <button onclick="refreshMessages()" class="btn-refresh" id="refreshMessagesBtn" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                        <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-                    </svg>
-                    <span id="refreshBtnText">Refresh</span>
-                </button>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <!-- View Toggle -->
+                    <div style="display: flex; background: #f3f4f6; border-radius: 0.5rem; padding: 2px;">
+                        <button id="voicemailsViewBtn" onclick="switchMessagesView('voicemails')" style="padding: 0.4rem 0.75rem; border-radius: 0.4rem; border: none; cursor: pointer; font-size: 0.8rem; background: #3b82f6; color: white; transition: all 0.2s;">
+                            Voicemails
+                        </button>
+                        <button id="conversationsViewBtn" onclick="switchMessagesView('conversations')" style="padding: 0.4rem 0.75rem; border-radius: 0.4rem; border: none; cursor: pointer; font-size: 0.8rem; background: transparent; color: #6b7280; transition: all 0.2s;">
+                            Conversations
+                        </button>
+                    </div>
+                    <button onclick="refreshMessages()" class="btn-refresh" id="refreshMessagesBtn" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                        </svg>
+                        <span id="refreshBtnText">Refresh</span>
+                    </button>
+                </div>
             </div>
 
+            <!-- Voicemails View -->
             <div id="messagesList">
                 <div class="loading">
                     <div class="spinner"></div>
                     <p>Loading messages...</p>
+                </div>
+            </div>
+
+            <!-- Conversations View (GHL Synced) -->
+            <div id="conversationsList" style="display: none;">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading conversations...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversation Detail Modal -->
+        <div id="conversationModal" class="modal" style="display: none;">
+            <div class="modal-content" style="max-width: 600px; max-height: 80vh; display: flex; flex-direction: column;">
+                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #e5e7eb;">
+                    <div>
+                        <h3 id="conversationContactName" style="margin: 0;">Contact Name</h3>
+                        <p id="conversationContactPhone" style="margin: 0; font-size: 0.875rem; color: #6b7280;"></p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span id="ghlSyncIndicator" style="display: none; background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">
+                            GHL Synced
+                        </span>
+                        <button onclick="syncConversationWithGHL()" id="syncGHLBtn" style="padding: 0.4rem 0.75rem; background: #f59e0b; color: white; border: none; border-radius: 0.375rem; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 0.25rem;">
+                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                            </svg>
+                            Sync GHL
+                        </button>
+                        <button onclick="closeConversationModal()" style="background: none; border: none; cursor: pointer; padding: 0.5rem;">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="conversationMessages" style="flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <!-- Messages will be rendered here -->
+                </div>
+                <div style="padding: 1rem; border-top: 1px solid #e5e7eb; display: flex; gap: 0.5rem;">
+                    <input type="text" id="conversationReplyInput" placeholder="Type a message..." style="flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.9rem;">
+                    <button onclick="sendConversationReply()" style="padding: 0.75rem 1.5rem; background: #3b82f6; color: white; border: none; border-radius: 0.375rem; cursor: pointer; font-weight: 500;">
+                        Send
+                    </button>
                 </div>
             </div>
         </div>
@@ -4854,6 +4912,287 @@
         }
 
         // SMS compose form removed - Reply button now uses device SMS app (sendSMS function)
+
+        // ============= CONVERSATIONS (GHL SYNC) =============
+        let currentMessagesView = 'voicemails';
+        let currentConversationContact = null;
+
+        // Switch between voicemails and conversations view
+        function switchMessagesView(view) {
+            currentMessagesView = view;
+
+            const voicemailsBtn = document.getElementById('voicemailsViewBtn');
+            const conversationsBtn = document.getElementById('conversationsViewBtn');
+            const messagesList = document.getElementById('messagesList');
+            const conversationsList = document.getElementById('conversationsList');
+
+            if (view === 'voicemails') {
+                voicemailsBtn.style.background = '#3b82f6';
+                voicemailsBtn.style.color = 'white';
+                conversationsBtn.style.background = 'transparent';
+                conversationsBtn.style.color = '#6b7280';
+                messagesList.style.display = 'block';
+                conversationsList.style.display = 'none';
+            } else {
+                voicemailsBtn.style.background = 'transparent';
+                voicemailsBtn.style.color = '#6b7280';
+                conversationsBtn.style.background = '#3b82f6';
+                conversationsBtn.style.color = 'white';
+                messagesList.style.display = 'none';
+                conversationsList.style.display = 'block';
+                loadConversationsList();
+            }
+        }
+
+        // Load conversations list
+        async function loadConversationsList() {
+            const container = document.getElementById('conversationsList');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading conversations...</p></div>';
+
+            try {
+                const response = await authenticatedFetch(`/api/mobile/conversations-list/${CLIENT_ID}?limit=30`);
+                if (!response) return;
+
+                const data = await response.json();
+                if (!data.success || !data.conversations || data.conversations.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            <p>No conversations yet</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = data.conversations.map(conv => {
+                    const contactName = `${conv.contact.firstName || ''} ${conv.contact.lastName || ''}`.trim() || conv.contact.phone || 'Unknown';
+                    const lastMsgPreview = conv.lastMessage.body ? (conv.lastMessage.body.length > 60 ? conv.lastMessage.body.substring(0, 60) + '...' : conv.lastMessage.body) : '';
+                    const timeAgo = getTimeAgo(new Date(conv.lastMessage.createdAt));
+                    const isUnread = conv.unreadCount > 0;
+                    const ghlSynced = !!conv.contact.ghlContactId;
+
+                    // Source badge
+                    const sourceBadge = conv.lastMessage.messageSource === 'ghl'
+                        ? '<span style="background: #3b82f6; color: white; padding: 0.1rem 0.3rem; border-radius: 0.2rem; font-size: 0.65rem; margin-left: 0.25rem;">GHL</span>'
+                        : conv.lastMessage.messageSource === 'twilio'
+                        ? '<span style="background: #ef4444; color: white; padding: 0.1rem 0.3rem; border-radius: 0.2rem; font-size: 0.65rem; margin-left: 0.25rem;">SMS</span>'
+                        : '';
+
+                    // Message type icon
+                    const typeIcon = conv.lastMessage.messageType === 'voicemail' ? '📞'
+                        : conv.lastMessage.messageType === 'call' ? '📱'
+                        : conv.lastMessage.messageType === 'email' ? '✉️'
+                        : conv.lastMessage.messageType === 'whatsapp' ? '💬'
+                        : '💬';
+
+                    return `
+                        <div class="conversation-card ${isUnread ? 'unread' : ''}" onclick="openConversation(${conv.contact.id}, '${contactName.replace(/'/g, "\\'")}', '${conv.contact.phone || ''}', ${ghlSynced})" style="padding: 1rem; border-bottom: 1px solid #e5e7eb; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: ${isUnread ? '#eff6ff' : 'white'}; transition: background 0.2s;">
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    ${isUnread ? '<span style="width: 8px; height: 8px; background: #3b82f6; border-radius: 50%;"></span>' : ''}
+                                    <strong style="color: #1f2937;">${contactName}</strong>
+                                    ${ghlSynced ? '<span style="background: #10b981; color: white; padding: 0.1rem 0.3rem; border-radius: 0.2rem; font-size: 0.65rem;">GHL</span>' : ''}
+                                </div>
+                                <div style="color: #6b7280; font-size: 0.875rem; margin-top: 0.25rem;">
+                                    ${typeIcon} ${lastMsgPreview} ${sourceBadge}
+                                </div>
+                            </div>
+                            <div style="text-align: right; font-size: 0.75rem; color: #9ca3af;">
+                                <div>${timeAgo}</div>
+                                ${conv.unreadCount > 0 ? `<span style="background: #3b82f6; color: white; padding: 0.2rem 0.5rem; border-radius: 9999px; font-size: 0.7rem;">${conv.unreadCount}</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Error loading conversations:', error);
+                container.innerHTML = '<div class="empty-state"><p>Error loading conversations</p></div>';
+            }
+        }
+
+        // Open conversation detail
+        async function openConversation(contactId, contactName, contactPhone, ghlSynced) {
+            currentConversationContact = { id: contactId, name: contactName, phone: contactPhone, ghlSynced };
+
+            document.getElementById('conversationContactName').textContent = contactName;
+            document.getElementById('conversationContactPhone').textContent = contactPhone;
+            document.getElementById('ghlSyncIndicator').style.display = ghlSynced ? 'inline-block' : 'none';
+            document.getElementById('conversationModal').style.display = 'flex';
+
+            // Load conversation messages
+            await loadConversationMessages(contactId);
+
+            // Mark as read
+            try {
+                await authenticatedFetch(`/api/mobile/conversations/${contactId}/mark-read/${CLIENT_ID}`, { method: 'POST' });
+            } catch (e) {
+                console.error('Error marking conversation as read:', e);
+            }
+        }
+
+        // Load messages for a conversation
+        async function loadConversationMessages(contactId) {
+            const container = document.getElementById('conversationMessages');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading...</p></div>';
+
+            try {
+                const response = await authenticatedFetch(`/api/mobile/conversations/${contactId}/${CLIENT_ID}?limit=50`);
+                if (!response) return;
+
+                const data = await response.json();
+                if (!data.success || !data.messages || data.messages.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #6b7280;">No messages in this conversation</p>';
+                    return;
+                }
+
+                // Sort messages oldest first for chat display
+                const sortedMessages = [...data.messages].reverse();
+
+                container.innerHTML = sortedMessages.map(msg => {
+                    const isOutgoing = msg.direction === 'outgoing';
+                    const timeStr = new Date(msg.createdAt).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' });
+
+                    // Source indicator
+                    const sourceIndicator = msg.ghlSynced
+                        ? '<span style="font-size: 0.65rem; color: #10b981; margin-left: 0.25rem;">GHL</span>'
+                        : '';
+
+                    return `
+                        <div style="display: flex; flex-direction: column; align-items: ${isOutgoing ? 'flex-end' : 'flex-start'};">
+                            <div style="max-width: 80%; padding: 0.75rem 1rem; border-radius: ${isOutgoing ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem'}; background: ${isOutgoing ? '#3b82f6' : '#f3f4f6'}; color: ${isOutgoing ? 'white' : '#1f2937'};">
+                                ${msg.body}
+                            </div>
+                            <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0.25rem;">
+                                ${timeStr} ${sourceIndicator}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Scroll to bottom
+                container.scrollTop = container.scrollHeight;
+
+            } catch (error) {
+                console.error('Error loading conversation messages:', error);
+                container.innerHTML = '<p style="text-align: center; color: #ef4444;">Error loading messages</p>';
+            }
+        }
+
+        // Close conversation modal
+        function closeConversationModal() {
+            document.getElementById('conversationModal').style.display = 'none';
+            currentConversationContact = null;
+            // Refresh conversations list to update read status
+            if (currentMessagesView === 'conversations') {
+                loadConversationsList();
+            }
+        }
+
+        // Sync conversation with GHL
+        async function syncConversationWithGHL() {
+            if (!currentConversationContact) return;
+
+            const btn = document.getElementById('syncGHLBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Syncing...</span>';
+
+            try {
+                const response = await authenticatedFetch(`/api/mobile/conversations/${currentConversationContact.id}/sync/${CLIENT_ID}`, {
+                    method: 'POST'
+                });
+
+                if (!response) {
+                    throw new Error('No response');
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show success
+                    btn.innerHTML = '<span style="color: #10b981;">Synced!</span>';
+                    document.getElementById('ghlSyncIndicator').style.display = 'inline-block';
+
+                    // Reload messages
+                    await loadConversationMessages(currentConversationContact.id);
+
+                    setTimeout(() => {
+                        btn.innerHTML = `
+                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                            </svg>
+                            Sync GHL
+                        `;
+                        btn.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Sync failed');
+                }
+
+            } catch (error) {
+                console.error('Error syncing with GHL:', error);
+                btn.innerHTML = '<span style="color: #ef4444;">Error</span>';
+                setTimeout(() => {
+                    btn.innerHTML = `
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                        </svg>
+                        Sync GHL
+                    `;
+                    btn.disabled = false;
+                }, 2000);
+            }
+        }
+
+        // Send reply in conversation
+        async function sendConversationReply() {
+            if (!currentConversationContact) return;
+
+            const input = document.getElementById('conversationReplyInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Clear input
+            input.value = '';
+
+            try {
+                // Send via existing SMS endpoint
+                const response = await authenticatedFetch(`/api/mobile/send-sms/${CLIENT_ID}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: currentConversationContact.phone,
+                        body: message
+                    })
+                });
+
+                if (response && response.ok) {
+                    // Reload messages to show the new one
+                    await loadConversationMessages(currentConversationContact.id);
+                } else {
+                    alert('Failed to send message');
+                }
+            } catch (error) {
+                console.error('Error sending reply:', error);
+                alert('Error sending message');
+            }
+        }
+
+        // Handle enter key in reply input
+        document.addEventListener('DOMContentLoaded', () => {
+            const replyInput = document.getElementById('conversationReplyInput');
+            if (replyInput) {
+                replyInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        sendConversationReply();
+                    }
+                });
+            }
+        });
 
         // Tab Switching
         function setupTabSwitching() {

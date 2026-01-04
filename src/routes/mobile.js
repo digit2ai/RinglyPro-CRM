@@ -499,6 +499,179 @@ router.get('/analytics/messages/:client_id', async (req, res) => {
   }
 });
 
+// ============= CONVERSATION SYNC API =============
+
+const ghlConversationSync = require('../services/ghlConversationSyncService');
+
+// Get unified conversation for a contact
+router.get('/conversations/:contact_id/:client_id', async (req, res) => {
+  const { client_id, contact_id } = req.params;
+  const { limit = 50, offset = 0 } = req.query;
+
+  try {
+    const result = await ghlConversationSync.getUnifiedConversation(
+      parseInt(client_id),
+      parseInt(contact_id),
+      { limit: parseInt(limit), offset: parseInt(offset) }
+    );
+
+    res.json(result);
+  } catch (error) {
+    console.error('Conversation fetch error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch conversation' });
+  }
+});
+
+// Get sync status for a contact
+router.get('/conversations/:contact_id/sync-status/:client_id', async (req, res) => {
+  const { client_id, contact_id } = req.params;
+
+  try {
+    const result = await ghlConversationSync.getSyncStatus(
+      parseInt(client_id),
+      parseInt(contact_id)
+    );
+
+    res.json(result);
+  } catch (error) {
+    console.error('Sync status error:', error);
+    res.status(500).json({ success: false, error: 'Failed to get sync status' });
+  }
+});
+
+// Trigger full sync for a contact
+router.post('/conversations/:contact_id/sync/:client_id', async (req, res) => {
+  const { client_id, contact_id } = req.params;
+
+  try {
+    console.log(`🔄 Triggering full sync for contact ${contact_id}, client ${client_id}`);
+
+    const result = await ghlConversationSync.fullSyncForContact(
+      parseInt(client_id),
+      parseInt(contact_id)
+    );
+
+    res.json(result);
+  } catch (error) {
+    console.error('Full sync error:', error);
+    res.status(500).json({ success: false, error: 'Failed to sync conversations' });
+  }
+});
+
+// Sync a single message to GHL
+router.post('/messages/:message_id/sync-to-ghl/:client_id', async (req, res) => {
+  const { client_id, message_id } = req.params;
+
+  try {
+    // Get message from database
+    const [message] = await sequelize.query(
+      `SELECT * FROM messages WHERE id = $1 AND client_id = $2`,
+      {
+        bind: [message_id, client_id],
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    if (!message) {
+      return res.status(404).json({ success: false, error: 'Message not found' });
+    }
+
+    const result = await ghlConversationSync.syncMessageToGHL(parseInt(client_id), message);
+    res.json(result);
+  } catch (error) {
+    console.error('Message sync error:', error);
+    res.status(500).json({ success: false, error: 'Failed to sync message to GHL' });
+  }
+});
+
+// Get all conversations list (grouped by contact)
+router.get('/conversations-list/:client_id', async (req, res) => {
+  const { client_id } = req.params;
+  const { limit = 20, offset = 0 } = req.query;
+
+  try {
+    // Get conversations grouped by contact with latest message
+    const conversationsQuery = `
+      SELECT
+        c.id as contact_id,
+        c.first_name,
+        c.last_name,
+        c.phone,
+        c.ghl_contact_id,
+        m.id as last_message_id,
+        m.body as last_message,
+        m.direction as last_direction,
+        m.created_at as last_message_at,
+        m.read,
+        m.message_type,
+        m.message_source,
+        (SELECT COUNT(*) FROM messages WHERE contact_id = c.id AND read = false AND direction = 'incoming') as unread_count
+      FROM contacts c
+      INNER JOIN LATERAL (
+        SELECT * FROM messages
+        WHERE contact_id = c.id
+        ORDER BY created_at DESC
+        LIMIT 1
+      ) m ON true
+      WHERE c.client_id = $1
+      ORDER BY m.created_at DESC
+      LIMIT $2 OFFSET $3
+    `;
+
+    const conversations = await sequelize.query(conversationsQuery, {
+      bind: [client_id, parseInt(limit), parseInt(offset)],
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    res.json({
+      success: true,
+      conversations: conversations.map(conv => ({
+        contact: {
+          id: conv.contact_id,
+          firstName: conv.first_name,
+          lastName: conv.last_name,
+          phone: conv.phone,
+          ghlContactId: conv.ghl_contact_id
+        },
+        lastMessage: {
+          id: conv.last_message_id,
+          body: conv.last_message,
+          direction: conv.last_direction,
+          createdAt: conv.last_message_at,
+          read: conv.read,
+          messageType: conv.message_type,
+          messageSource: conv.message_source
+        },
+        unreadCount: parseInt(conv.unread_count) || 0
+      }))
+    });
+  } catch (error) {
+    console.error('Conversations list error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch conversations list' });
+  }
+});
+
+// Mark conversation as read
+router.post('/conversations/:contact_id/mark-read/:client_id', async (req, res) => {
+  const { client_id, contact_id } = req.params;
+
+  try {
+    await sequelize.query(
+      `UPDATE messages SET read = true
+       WHERE client_id = $1 AND contact_id = $2 AND direction = 'incoming' AND read = false`,
+      {
+        bind: [client_id, contact_id],
+        type: sequelize.QueryTypes.UPDATE
+      }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Mark read error:', error);
+    res.status(500).json({ success: false, error: 'Failed to mark as read' });
+  }
+});
+
 // ============= HELPER FUNCTIONS =============
 
 function getRelativeTime(dateString) {

@@ -1,11 +1,12 @@
 // src/routes/ghl-webhook.js
-// GoHighLevel Webhook Receiver for Contact and Appointment Sync
+// GoHighLevel Webhook Receiver for Contact, Appointment, and Message Sync
 const express = require('express');
 const router = express.Router();
 const Contact = require('../models/contact');
 const Appointment = require('../models/Appointment');
 const { QueryTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const ghlConversationSync = require('../services/ghlConversationSyncService');
 
 /**
  * GoHighLevel Webhook Event Handler
@@ -359,6 +360,57 @@ router.post('/', async (req, res) => {
           return res.status(400).json({ success: false, error: 'Appointment ID missing' });
         }
         await deleteAppointment(appointment.id, clientId);
+        break;
+
+      // Message/Conversation webhook events
+      case 'InboundMessage':
+      case 'OutboundMessage':
+      case 'ConversationMessage':
+      case 'MessageReceived':
+      case 'MessageSent':
+        // Process incoming/outgoing message from GHL
+        const messageWebhookData = {
+          locationId: finalLocationId,
+          contactId: req.body.contactId || req.body.contact_id || customData?.contactId,
+          conversationId: req.body.conversationId || req.body.conversation_id || customData?.conversationId,
+          messageId: req.body.messageId || req.body.message_id || req.body.id || customData?.messageId,
+          message: req.body.body || req.body.message || customData?.body || customData?.message,
+          type: req.body.messageType || req.body.type || customData?.messageType || 'SMS',
+          direction: eventType === 'OutboundMessage' || eventType === 'MessageSent' ? 'outbound' : 'inbound',
+          phone: req.body.phone || req.body.from || customData?.phone
+        };
+
+        console.log(`💬 Processing GHL message webhook:`, messageWebhookData);
+
+        const messageResult = await ghlConversationSync.processGHLMessageWebhook(messageWebhookData);
+        if (!messageResult.success) {
+          console.error(`❌ Failed to process message webhook:`, messageResult.error);
+        } else {
+          console.log(`✅ Message webhook processed: ${messageResult.action}`);
+        }
+        break;
+
+      // Conversation-related events
+      case 'ConversationProviderInboundMessage':
+      case 'ConversationProviderOutboundMessage':
+        // These are provider-specific message events (SMS, Email, WhatsApp, etc.)
+        const providerMessageData = {
+          locationId: finalLocationId,
+          contactId: req.body.contactId || customData?.contactId,
+          conversationId: req.body.conversationId || customData?.conversationId,
+          messageId: req.body.messageId || req.body.id,
+          message: req.body.body || req.body.text || customData?.body,
+          type: req.body.messageType || req.body.channel || 'SMS',
+          direction: eventType.includes('Outbound') ? 'outbound' : 'inbound',
+          phone: req.body.phone || req.body.from
+        };
+
+        console.log(`📱 Processing GHL provider message webhook:`, providerMessageData);
+
+        const providerResult = await ghlConversationSync.processGHLMessageWebhook(providerMessageData);
+        if (!providerResult.success) {
+          console.error(`❌ Failed to process provider message webhook:`, providerResult.error);
+        }
         break;
 
       default:

@@ -86,6 +86,55 @@ const Message = sequelize.define('Message', {
     allowNull: false,
     comment: 'Whether the message has been read by the client'
   },
+  // GHL Sync Fields
+  ghlMessageId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'ghl_message_id',
+    comment: 'GoHighLevel message ID for sync tracking'
+  },
+  ghlConversationId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'ghl_conversation_id',
+    comment: 'GoHighLevel conversation thread ID'
+  },
+  ghlContactId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'ghl_contact_id',
+    comment: 'GoHighLevel contact ID'
+  },
+  syncedToGhl: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'synced_to_ghl',
+    comment: 'Whether this message has been synced to GHL'
+  },
+  syncedFromGhl: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'synced_from_ghl',
+    comment: 'Whether this message originated from GHL'
+  },
+  ghlSyncedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'ghl_synced_at',
+    comment: 'Timestamp of last GHL sync'
+  },
+  messageSource: {
+    type: DataTypes.ENUM('twilio', 'ghl', 'whatsapp', 'manual'),
+    defaultValue: 'twilio',
+    field: 'message_source',
+    comment: 'Source of the message'
+  },
+  messageType: {
+    type: DataTypes.ENUM('sms', 'email', 'call', 'voicemail', 'whatsapp', 'note'),
+    defaultValue: 'sms',
+    field: 'message_type',
+    comment: 'Type of message/communication'
+  },
   createdAt: {
     type: DataTypes.DATE,
     allowNull: false,
