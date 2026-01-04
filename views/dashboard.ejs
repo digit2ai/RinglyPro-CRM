@@ -6100,18 +6100,17 @@
 
         async function loadContacts() {
             try {
-                // First get client's GHL settings
-                const clientResponse = await authenticatedFetch('/api/client/my-client');
-                const clientData = await clientResponse.json();
+                // First get client's GHL credentials from CRM credentials endpoint
+                const credResponse = await authenticatedFetch(`/api/client/crm-credentials/${CLIENT_ID}`);
+                const credData = await credResponse.json();
 
-                if (!clientData.success || !clientData.client) {
-                    throw new Error('Could not load client settings');
+                if (!credData.success) {
+                    throw new Error('Could not load CRM credentials');
                 }
 
-                const client = clientData.client;
-                const ghlSettings = client.settings?.integration?.ghl || {};
+                const ghlCreds = credData.credentials?.gohighlevel || {};
 
-                if (!ghlSettings.apiKey || !ghlSettings.locationId) {
+                if (!ghlCreds.api_key || !ghlCreds.location_id) {
                     document.getElementById('contactsLoading').style.display = 'none';
                     document.getElementById('contactsError').textContent = 'GoHighLevel integration not configured. Please set up your GHL credentials in Settings.';
                     document.getElementById('contactsError').style.display = 'block';
@@ -6120,8 +6119,8 @@
 
                 // Store GHL config for later use
                 contactsGhlConfig = {
-                    apiKey: ghlSettings.apiKey,
-                    locationId: ghlSettings.locationId
+                    apiKey: ghlCreds.api_key,
+                    locationId: ghlCreds.location_id
                 };
 
                 // Fetch contacts from GHL via our API
@@ -6129,8 +6128,8 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-ghl-api-key': ghlSettings.apiKey,
-                        'x-ghl-location-id': ghlSettings.locationId
+                        'x-ghl-api-key': ghlCreds.api_key,
+                        'x-ghl-location-id': ghlCreds.location_id
                     },
                     body: JSON.stringify({ limit: 500 })
                 });
@@ -6252,20 +6251,23 @@
         // Load contacts count on page load
         async function loadContactsCount() {
             try {
-                const clientResponse = await authenticatedFetch('/api/client/my-client');
-                const clientData = await clientResponse.json();
+                if (!CLIENT_ID) return;
 
-                if (!clientData.success || !clientData.client) return;
+                // Get GHL credentials from CRM credentials endpoint
+                const credResponse = await authenticatedFetch(`/api/client/crm-credentials/${CLIENT_ID}`);
+                const credData = await credResponse.json();
 
-                const ghlSettings = clientData.client.settings?.integration?.ghl || {};
-                if (!ghlSettings.apiKey || !ghlSettings.locationId) return;
+                if (!credData.success) return;
+
+                const ghlCreds = credData.credentials?.gohighlevel || {};
+                if (!ghlCreds.api_key || !ghlCreds.location_id) return;
 
                 const response = await authenticatedFetch('/api/gohighlevel/contacts/search', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-ghl-api-key': ghlSettings.apiKey,
-                        'x-ghl-location-id': ghlSettings.locationId
+                        'x-ghl-api-key': ghlCreds.api_key,
+                        'x-ghl-location-id': ghlCreds.location_id
                     },
                     body: JSON.stringify({ limit: 100 })
                 });
@@ -6282,9 +6284,9 @@
             }
         }
 
-        // Add to DOMContentLoaded
+        // Add to DOMContentLoaded - delay slightly to ensure CLIENT_ID is set
         document.addEventListener('DOMContentLoaded', function() {
-            loadContactsCount();
+            setTimeout(loadContactsCount, 1000);
         });
     </script>
 
