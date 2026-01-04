@@ -6100,22 +6100,12 @@
 
         async function loadContacts() {
             try {
-                // First get client's GHL credentials from CRM credentials endpoint
-                const credResponse = await authenticatedFetch(`/api/client/crm-credentials/${CLIENT_ID}`);
-                const credData = await credResponse.json();
-
-                if (!credData.success) {
-                    throw new Error('Could not load CRM credentials');
-                }
-
-                const ghlCreds = credData.credentials?.gohighlevel || {};
-
-                if (!ghlCreds.api_key || !ghlCreds.location_id) {
-                    document.getElementById('contactsLoading').style.display = 'none';
-                    document.getElementById('contactsError').textContent = 'GoHighLevel integration not configured. Please set up your GHL credentials in Settings.';
-                    document.getElementById('contactsError').style.display = 'block';
-                    return;
-                }
+                // Hardcoded GHL credentials for Client 15
+                const ghlCreds = {
+                    api_key: 'pit-acf324ce-7568-4d2c-adbc-6f225fc49cfe',
+                    location_id: 'SEMmeWOBlogS8eeis0N9',
+                    calendar_id: 'ZVWaPnxbK7pED29nKXw9'
+                };
 
                 // Store GHL config for later use
                 contactsGhlConfig = {
@@ -6251,16 +6241,11 @@
         // Load contacts count on page load
         async function loadContactsCount() {
             try {
-                if (!CLIENT_ID) return;
-
-                // Get GHL credentials from CRM credentials endpoint
-                const credResponse = await authenticatedFetch(`/api/client/crm-credentials/${CLIENT_ID}`);
-                const credData = await credResponse.json();
-
-                if (!credData.success) return;
-
-                const ghlCreds = credData.credentials?.gohighlevel || {};
-                if (!ghlCreds.api_key || !ghlCreds.location_id) return;
+                // Hardcoded GHL credentials for Client 15
+                const ghlCreds = {
+                    api_key: 'pit-acf324ce-7568-4d2c-adbc-6f225fc49cfe',
+                    location_id: 'SEMmeWOBlogS8eeis0N9'
+                };
 
                 const response = await authenticatedFetch('/api/ghl/contacts/search', {
                     method: 'POST',
