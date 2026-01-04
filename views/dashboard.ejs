@@ -3069,6 +3069,58 @@
         </div>
     </div>
 
+    <!-- Contact Conversation History Modal -->
+    <div id="contactConversationModal" class="modal">
+        <div class="modal-overlay" onclick="closeContactConversation()"></div>
+        <div class="modal-content" style="max-width: 700px; max-height: 85vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #e5e7eb; flex-shrink: 0;">
+                <div>
+                    <h3 id="contactConvName" style="margin: 0; font-size: 1.1rem;">Contact Name</h3>
+                    <p id="contactConvPhone" style="margin: 0; font-size: 0.875rem; color: #6b7280;"></p>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <span id="contactGhlBadge" style="display: none; background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">
+                        GHL Linked
+                    </span>
+                    <button onclick="syncContactConversationWithGHL()" id="contactSyncGHLBtn" style="padding: 0.4rem 0.75rem; background: #f59e0b; color: white; border: none; border-radius: 0.375rem; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 0.25rem;">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                        </svg>
+                        Sync GHL
+                    </button>
+                    <button class="modal-close" onclick="closeContactConversation()">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <!-- Contact Info Summary -->
+            <div id="contactInfoSummary" style="padding: 0.75rem 1rem; background: #f9fafb; border-bottom: 1px solid #e5e7eb; flex-shrink: 0;">
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.8rem; color: #6b7280;">
+                    <span id="contactConvEmail"></span>
+                    <span id="contactConvTags"></span>
+                    <span id="contactConvSource"></span>
+                </div>
+            </div>
+            <!-- Conversation Messages -->
+            <div id="contactConvMessages" style="flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; min-height: 300px;">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading conversation history...</p>
+                </div>
+            </div>
+            <!-- Reply Input -->
+            <div style="padding: 1rem; border-top: 1px solid #e5e7eb; display: flex; gap: 0.5rem; flex-shrink: 0;">
+                <input type="text" id="contactConvReplyInput" placeholder="Type a message..." style="flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.9rem;">
+                <button onclick="sendContactConvReply()" style="padding: 0.75rem 1.5rem; background: #3b82f6; color: white; border: none; border-radius: 0.375rem; cursor: pointer; font-weight: 500;">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Analytics Modal -->
     <div id="analyticsModal" class="modal">
         <div class="modal-overlay" onclick="closeAnalyticsModal()"></div>
@@ -6712,6 +6764,10 @@
                                     💬 SMS
                                 </button>
                             ` : ''}
+                            <button onclick="openContactConversation('${contactDataAttr}')"
+                                style="padding: 0.4rem 0.75rem; background: #8b5cf6; color: white; border: none; border-radius: 0.375rem; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 0.25rem;">
+                                💬 History
+                            </button>
                             <button onclick="openEditContact('${contactDataAttr}')"
                                 style="padding: 0.4rem 0.75rem; background: #6b7280; color: white; border: none; border-radius: 0.375rem; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 0.25rem;">
                                 ✏️ Edit
@@ -6884,6 +6940,332 @@
             successEl.style.display = 'block';
             document.getElementById('editContactError').style.display = 'none';
         }
+
+        // ============= CONTACT CONVERSATION HISTORY =============
+        let currentContactConversation = null;
+
+        async function openContactConversation(encodedContactData) {
+            try {
+                const contact = JSON.parse(decodeURIComponent(encodedContactData));
+                currentContactConversation = contact;
+
+                const contactName = [contact.firstName, contact.lastName].filter(Boolean).join(' ') || 'Unknown';
+                const tags = contact.tags || [];
+                const isRinglyPro = tags.some(t => t.toLowerCase().includes('ringlypro') || t.toLowerCase().includes('ringly'));
+
+                // Populate modal header
+                document.getElementById('contactConvName').textContent = contactName;
+                document.getElementById('contactConvPhone').textContent = contact.phone || 'No phone';
+
+                // Contact info summary
+                document.getElementById('contactConvEmail').textContent = contact.email ? `✉️ ${contact.email}` : '';
+                document.getElementById('contactConvTags').textContent = tags.length > 0 ? `🏷️ ${tags.slice(0, 3).join(', ')}${tags.length > 3 ? '...' : ''}` : '';
+                document.getElementById('contactConvSource').textContent = isRinglyPro ? '🟢 RinglyPro' : '🔵 GHL';
+
+                // GHL badge
+                const ghlBadge = document.getElementById('contactGhlBadge');
+                ghlBadge.style.display = contact.id ? 'inline-block' : 'none';
+
+                // Show modal
+                document.getElementById('contactConversationModal').classList.add('active');
+
+                // Load conversation history
+                await loadContactConversationHistory(contact);
+
+            } catch (error) {
+                console.error('Error opening contact conversation:', error);
+                alert('Failed to load conversation history');
+            }
+        }
+
+        function closeContactConversation() {
+            document.getElementById('contactConversationModal').classList.remove('active');
+            currentContactConversation = null;
+        }
+
+        async function loadContactConversationHistory(contact) {
+            const container = document.getElementById('contactConvMessages');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading conversation history...</p></div>';
+
+            try {
+                // Try to find local contact by phone number first
+                const phone = contact.phone;
+                if (!phone) {
+                    container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #6b7280;"><p>No phone number - cannot load conversation history</p></div>';
+                    return;
+                }
+
+                // Fetch messages by phone number from our messages API
+                const response = await authenticatedFetch(`/api/messages/phone/${encodeURIComponent(phone)}?client_id=${CLIENT_ID}&limit=50`);
+
+                if (!response || !response.ok) {
+                    // Try alternate endpoint - search by GHL contact ID
+                    if (contact.id) {
+                        await loadConversationByGHLContact(contact, container);
+                        return;
+                    }
+                    throw new Error('Failed to load messages');
+                }
+
+                const messages = await response.json();
+
+                if (!messages || messages.length === 0) {
+                    // No messages found by phone, try GHL contact lookup
+                    if (contact.id) {
+                        await loadConversationByGHLContact(contact, container);
+                        return;
+                    }
+
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: #6b7280;">
+                            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            <p>No conversation history with this contact</p>
+                            <p style="font-size: 0.8rem; margin-top: 0.5rem;">Send an SMS to start a conversation</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                renderContactConversationMessages(messages, container);
+
+            } catch (error) {
+                console.error('Error loading contact conversation:', error);
+
+                // Try GHL contact lookup as fallback
+                if (contact.id) {
+                    await loadConversationByGHLContact(contact, container);
+                } else {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: #6b7280;">
+                            <p>No conversation history found</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        async function loadConversationByGHLContact(contact, container) {
+            try {
+                // Try to get conversation from GHL conversations API
+                const ghlCreds = {
+                    api_key: 'pit-6cb3545f-9480-4846-af63-4135957d4cf6',
+                    location_id: 'SEMmeWOBlogS8eeis0N9'
+                };
+
+                const ghlResponse = await authenticatedFetch(`/api/ghl/conversations/${contact.id}/messages?limit=50`, {
+                    headers: {
+                        'x-ghl-api-key': ghlCreds.api_key,
+                        'x-ghl-location-id': ghlCreds.location_id
+                    }
+                });
+
+                if (ghlResponse && ghlResponse.ok) {
+                    const ghlData = await ghlResponse.json();
+                    if (ghlData.success && ghlData.data?.messages?.length > 0) {
+                        renderGHLConversationMessages(ghlData.data.messages, container);
+                        return;
+                    }
+                }
+
+                // No messages found
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #6b7280;">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                        <p>No conversation history with this contact</p>
+                        <p style="font-size: 0.8rem; margin-top: 0.5rem;">Send an SMS to start a conversation</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading GHL conversation:', error);
+                container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #ef4444;"><p>Error loading conversation</p></div>';
+            }
+        }
+
+        function renderContactConversationMessages(messages, container) {
+            // Sort messages oldest first for chat display
+            const sortedMessages = [...messages].sort((a, b) =>
+                new Date(a.createdAt || a.created_at) - new Date(b.createdAt || b.created_at)
+            );
+
+            container.innerHTML = sortedMessages.map(msg => {
+                const isOutgoing = msg.direction === 'outgoing';
+                const createdAt = new Date(msg.createdAt || msg.created_at);
+                const timeStr = createdAt.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' });
+
+                // Message type indicator
+                const msgType = msg.messageType || msg.message_type || 'sms';
+                const typeIcon = msgType === 'voicemail' ? '📞 '
+                    : msgType === 'call' ? '📱 '
+                    : msgType === 'email' ? '✉️ '
+                    : '';
+
+                // Source indicator
+                const msgSource = msg.messageSource || msg.message_source || 'twilio';
+                const sourceIndicator = msg.syncedToGhl || msg.synced_to_ghl
+                    ? '<span style="font-size: 0.65rem; color: #10b981; margin-left: 0.25rem;">GHL</span>'
+                    : msgSource === 'ghl'
+                    ? '<span style="font-size: 0.65rem; color: #3b82f6; margin-left: 0.25rem;">GHL</span>'
+                    : '';
+
+                return `
+                    <div style="display: flex; flex-direction: column; align-items: ${isOutgoing ? 'flex-end' : 'flex-start'};">
+                        <div style="max-width: 80%; padding: 0.75rem 1rem; border-radius: ${isOutgoing ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem'}; background: ${isOutgoing ? '#3b82f6' : '#f3f4f6'}; color: ${isOutgoing ? 'white' : '#1f2937'};">
+                            ${typeIcon}${msg.body || '(No content)'}
+                        </div>
+                        <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0.25rem;">
+                            ${timeStr} ${sourceIndicator}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function renderGHLConversationMessages(messages, container) {
+            // Sort messages oldest first
+            const sortedMessages = [...messages].sort((a, b) =>
+                new Date(a.dateAdded || a.createdAt) - new Date(b.dateAdded || b.createdAt)
+            );
+
+            container.innerHTML = sortedMessages.map(msg => {
+                const isOutgoing = msg.direction === 'outbound';
+                const createdAt = new Date(msg.dateAdded || msg.createdAt);
+                const timeStr = createdAt.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' });
+
+                // Message type indicator
+                const msgType = (msg.type || 'SMS').toUpperCase();
+                const typeIcon = msgType === 'EMAIL' ? '✉️ '
+                    : msgType === 'CALL' ? '📱 '
+                    : msgType === 'WHATSAPP' ? '💬 '
+                    : '';
+
+                return `
+                    <div style="display: flex; flex-direction: column; align-items: ${isOutgoing ? 'flex-end' : 'flex-start'};">
+                        <div style="max-width: 80%; padding: 0.75rem 1rem; border-radius: ${isOutgoing ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem'}; background: ${isOutgoing ? '#3b82f6' : '#f3f4f6'}; color: ${isOutgoing ? 'white' : '#1f2937'};">
+                            ${typeIcon}${msg.body || msg.message || '(No content)'}
+                        </div>
+                        <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0.25rem;">
+                            ${timeStr} <span style="font-size: 0.65rem; color: #3b82f6; margin-left: 0.25rem;">GHL</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function syncContactConversationWithGHL() {
+            if (!currentContactConversation) return;
+
+            const btn = document.getElementById('contactSyncGHLBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Syncing...</span>';
+
+            try {
+                // Trigger sync via GHL API
+                const ghlCreds = {
+                    api_key: 'pit-6cb3545f-9480-4846-af63-4135957d4cf6',
+                    location_id: 'SEMmeWOBlogS8eeis0N9'
+                };
+
+                // Fetch latest messages from GHL
+                const response = await authenticatedFetch(`/api/ghl/conversations/${currentContactConversation.id}/messages?limit=50`, {
+                    headers: {
+                        'x-ghl-api-key': ghlCreds.api_key,
+                        'x-ghl-location-id': ghlCreds.location_id
+                    }
+                });
+
+                if (response && response.ok) {
+                    btn.innerHTML = '<span style="color: #10b981;">Synced!</span>';
+
+                    // Reload conversation
+                    await loadContactConversationHistory(currentContactConversation);
+
+                    setTimeout(() => {
+                        btn.innerHTML = `
+                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                            </svg>
+                            Sync GHL
+                        `;
+                        btn.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error('Sync failed');
+                }
+
+            } catch (error) {
+                console.error('Error syncing with GHL:', error);
+                btn.innerHTML = '<span style="color: #ef4444;">Error</span>';
+                setTimeout(() => {
+                    btn.innerHTML = `
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                        </svg>
+                        Sync GHL
+                    `;
+                    btn.disabled = false;
+                }, 2000);
+            }
+        }
+
+        async function sendContactConvReply() {
+            if (!currentContactConversation || !currentContactConversation.phone) {
+                alert('No phone number available');
+                return;
+            }
+
+            const input = document.getElementById('contactConvReplyInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Clear input
+            input.value = '';
+
+            try {
+                // Send via SMS endpoint
+                const response = await authenticatedFetch(`/api/mobile/send-sms/${CLIENT_ID}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: currentContactConversation.phone,
+                        body: message
+                    })
+                });
+
+                if (response && response.ok) {
+                    // Reload conversation to show the new message
+                    await loadContactConversationHistory(currentContactConversation);
+                } else {
+                    alert('Failed to send message');
+                }
+            } catch (error) {
+                console.error('Error sending reply:', error);
+                alert('Error sending message');
+            }
+        }
+
+        // Handle enter key in contact conversation reply input
+        document.addEventListener('DOMContentLoaded', () => {
+            const contactConvInput = document.getElementById('contactConvReplyInput');
+            if (contactConvInput) {
+                contactConvInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        sendContactConvReply();
+                    }
+                });
+            }
+        });
 
         // Analytics Modal Functions
         let currentAnalyticsPeriod = 'today';

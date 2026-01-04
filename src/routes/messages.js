@@ -108,6 +108,46 @@ router.get('/client/:clientId', async (req, res) => {
   }
 });
 
+// GET /api/messages/phone/:phone - Get messages by phone number for a client
+router.get('/phone/:phone', async (req, res) => {
+  try {
+    const { phone } = req.params;
+    const { client_id, limit = 50, offset = 0 } = req.query;
+
+    if (!Message) {
+      console.log('⚠️ Message model not available');
+      return res.status(503).json({ error: 'Message service not available' });
+    }
+
+    if (!client_id) {
+      return res.status(400).json({ error: 'client_id is required' });
+    }
+
+    console.log(`📱 Fetching messages for phone ${phone}, client ${client_id}...`);
+
+    // Normalize phone number - remove any encoding issues
+    const normalizedPhone = decodeURIComponent(phone);
+
+    const messages = await Message.findByPhoneNumber(normalizedPhone, {
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: 'DESC'
+    });
+
+    // Filter by client_id for multi-tenant security
+    const clientMessages = messages.filter(m => m.clientId === parseInt(client_id));
+
+    console.log(`✅ Found ${clientMessages.length} messages for phone ${normalizedPhone}`);
+    res.json(clientMessages);
+  } catch (error) {
+    console.error(`❌ Error fetching messages by phone:`, error);
+    res.status(500).json({
+      error: 'Failed to fetch messages by phone',
+      details: error.message
+    });
+  }
+});
+
 // PATCH /api/messages/:messageId/mark-read - Mark message as read
 router.patch('/:messageId/mark-read', async (req, res) => {
   try {
