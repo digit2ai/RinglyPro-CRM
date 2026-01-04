@@ -65,11 +65,23 @@ async function callGHL(config, method, endpoint, data = null) {
 
     console.log(`🌐 GHL API ${method} ${fullUrl}`);
 
+    // Prepare request body - only add locationId for POST requests (create operations)
+    // PUT/PATCH (update operations) should not include locationId in body
+    let requestData = undefined;
+    if (method !== 'GET' && data) {
+      if (method === 'POST') {
+        requestData = { ...data, locationId: config.locationId };
+      } else {
+        // PUT, PATCH, DELETE - don't add locationId to body
+        requestData = data;
+      }
+    }
+
     const response = await axios({
       method,
       url: fullUrl,
       headers: config.headers,
-      data: method !== 'GET' && data ? { ...data, locationId: config.locationId } : undefined
+      data: requestData
     });
 
     return {
