@@ -2262,6 +2262,12 @@
                 Tokens
                 <div class="credit-amount" id="tokensCardAmount" style="background: #10b981;">0</div>
             </button>
+            <button class="action-btn" onclick="openAnalyticsModal()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                Analytics
+            </button>
         </div>
     </div>
 
@@ -3001,6 +3007,108 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Modal -->
+    <div id="analyticsModal" class="modal">
+        <div class="modal-overlay" onclick="closeAnalyticsModal()"></div>
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>Analytics</h2>
+                <button class="modal-close" onclick="closeAnalyticsModal()">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Time Period Selector -->
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <button onclick="loadAnalytics('today')" id="analyticsBtn-today" class="analytics-period-btn active"
+                            style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; background: #f59e0b; color: white; cursor: pointer; font-size: 0.875rem;">
+                        Today
+                    </button>
+                    <button onclick="loadAnalytics('week')" id="analyticsBtn-week" class="analytics-period-btn"
+                            style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; background: white; cursor: pointer; font-size: 0.875rem;">
+                        This Week
+                    </button>
+                    <button onclick="loadAnalytics('month')" id="analyticsBtn-month" class="analytics-period-btn"
+                            style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; background: white; cursor: pointer; font-size: 0.875rem;">
+                        This Month
+                    </button>
+                </div>
+
+                <!-- Loading State -->
+                <div id="analyticsLoading" style="text-align: center; padding: 2rem; color: #6b7280;">
+                    <i class="fas fa-spinner fa-spin"></i> Loading analytics...
+                </div>
+
+                <!-- Analytics Content -->
+                <div id="analyticsContent" style="display: none;">
+                    <!-- Summary Cards -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold;" id="statTotalCalls">0</div>
+                            <div style="font-size: 0.75rem; opacity: 0.9;">Total Calls</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold;" id="statAnsweredCalls">0</div>
+                            <div style="font-size: 0.75rem; opacity: 0.9;">Answered</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold;" id="statMissedCalls">0</div>
+                            <div style="font-size: 0.75rem; opacity: 0.9;">Missed</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold;" id="statAppointments">0</div>
+                            <div style="font-size: 0.75rem; opacity: 0.9;">Appointments</div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Stats -->
+                    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem;">
+                        <h3 style="font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.75rem;">Call Details</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;">
+                                <span style="color: #6b7280; font-size: 0.875rem;">Incoming Calls</span>
+                                <span style="font-weight: 600; color: #1f2937;" id="statIncoming">0</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;">
+                                <span style="color: #6b7280; font-size: 0.875rem;">Outgoing Calls</span>
+                                <span style="font-weight: 600; color: #1f2937;" id="statOutgoing">0</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;">
+                                <span style="color: #6b7280; font-size: 0.875rem;">Total Duration</span>
+                                <span style="font-weight: 600; color: #1f2937;" id="statDuration">0 min</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;">
+                                <span style="color: #6b7280; font-size: 0.875rem;">Avg Duration</span>
+                                <span style="font-weight: 600; color: #1f2937;" id="statAvgDuration">0 min</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;">
+                                <span style="color: #6b7280; font-size: 0.875rem;">Messages Received</span>
+                                <span style="font-weight: 600; color: #1f2937;" id="statMessagesIn">0</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;">
+                                <span style="color: #6b7280; font-size: 0.875rem;">Messages Sent</span>
+                                <span style="font-weight: 600; color: #1f2937;" id="statMessagesOut">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Answer Rate -->
+                    <div style="margin-top: 1rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span style="font-size: 0.875rem; font-weight: 600; color: #374151;">Answer Rate</span>
+                            <span style="font-size: 1.25rem; font-weight: bold; color: #10b981;" id="statAnswerRate">0%</span>
+                        </div>
+                        <div style="background: #e5e7eb; border-radius: 9999px; height: 8px; overflow: hidden;">
+                            <div id="answerRateBar" style="background: #10b981; height: 100%; width: 0%; transition: width 0.5s ease;"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -6436,6 +6544,132 @@
             successEl.textContent = message;
             successEl.style.display = 'block';
             document.getElementById('editContactError').style.display = 'none';
+        }
+
+        // Analytics Modal Functions
+        let currentAnalyticsPeriod = 'today';
+
+        function openAnalyticsModal() {
+            document.getElementById('analyticsModal').classList.add('active');
+            loadAnalytics('today');
+        }
+
+        function closeAnalyticsModal() {
+            document.getElementById('analyticsModal').classList.remove('active');
+        }
+
+        async function loadAnalytics(period) {
+            currentAnalyticsPeriod = period;
+
+            // Update button styles
+            document.querySelectorAll('.analytics-period-btn').forEach(btn => {
+                btn.style.background = 'white';
+                btn.style.color = '#374151';
+            });
+            const activeBtn = document.getElementById(`analyticsBtn-${period}`);
+            if (activeBtn) {
+                activeBtn.style.background = '#f59e0b';
+                activeBtn.style.color = 'white';
+            }
+
+            // Show loading
+            document.getElementById('analyticsLoading').style.display = 'block';
+            document.getElementById('analyticsContent').style.display = 'none';
+
+            try {
+                // Calculate date range
+                const now = new Date();
+                let startDate = new Date();
+
+                if (period === 'today') {
+                    startDate.setHours(0, 0, 0, 0);
+                } else if (period === 'week') {
+                    startDate.setDate(now.getDate() - 7);
+                } else if (period === 'month') {
+                    startDate.setDate(now.getDate() - 30);
+                }
+
+                // Fetch analytics data from multiple endpoints
+                const [callsResponse, appointmentsResponse, messagesResponse] = await Promise.all([
+                    authenticatedFetch(`/api/mobile/analytics/calls/${CLIENT_ID}?start=${startDate.toISOString()}&end=${now.toISOString()}`).catch(() => null),
+                    authenticatedFetch(`/api/mobile/analytics/appointments/${CLIENT_ID}?start=${startDate.toISOString()}&end=${now.toISOString()}`).catch(() => null),
+                    authenticatedFetch(`/api/mobile/analytics/messages/${CLIENT_ID}?start=${startDate.toISOString()}&end=${now.toISOString()}`).catch(() => null)
+                ]);
+
+                let callsData = { total: 0, answered: 0, missed: 0, incoming: 0, outgoing: 0, duration: 0 };
+                let appointmentsCount = 0;
+                let messagesData = { incoming: 0, outgoing: 0 };
+
+                // Process calls data
+                if (callsResponse && callsResponse.ok) {
+                    const data = await callsResponse.json();
+                    if (data.success) {
+                        callsData = data.stats || callsData;
+                    }
+                }
+
+                // Process appointments data
+                if (appointmentsResponse && appointmentsResponse.ok) {
+                    const data = await appointmentsResponse.json();
+                    if (data.success) {
+                        appointmentsCount = data.count || 0;
+                    }
+                }
+
+                // Process messages data
+                if (messagesResponse && messagesResponse.ok) {
+                    const data = await messagesResponse.json();
+                    if (data.success) {
+                        messagesData = data.stats || messagesData;
+                    }
+                }
+
+                // Update UI
+                updateAnalyticsUI(callsData, appointmentsCount, messagesData);
+
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                // Show content with zeros if error
+                updateAnalyticsUI(
+                    { total: 0, answered: 0, missed: 0, incoming: 0, outgoing: 0, duration: 0 },
+                    0,
+                    { incoming: 0, outgoing: 0 }
+                );
+            }
+        }
+
+        function updateAnalyticsUI(calls, appointments, messages) {
+            // Summary cards
+            document.getElementById('statTotalCalls').textContent = calls.total || 0;
+            document.getElementById('statAnsweredCalls').textContent = calls.answered || 0;
+            document.getElementById('statMissedCalls').textContent = calls.missed || 0;
+            document.getElementById('statAppointments').textContent = appointments || 0;
+
+            // Call details
+            document.getElementById('statIncoming').textContent = calls.incoming || 0;
+            document.getElementById('statOutgoing').textContent = calls.outgoing || 0;
+
+            // Duration formatting
+            const totalMinutes = Math.round((calls.duration || 0) / 60);
+            document.getElementById('statDuration').textContent = totalMinutes > 60
+                ? `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`
+                : `${totalMinutes} min`;
+
+            const avgDuration = calls.total > 0 ? Math.round((calls.duration || 0) / calls.total / 60) : 0;
+            document.getElementById('statAvgDuration').textContent = `${avgDuration} min`;
+
+            // Messages
+            document.getElementById('statMessagesIn').textContent = messages.incoming || 0;
+            document.getElementById('statMessagesOut').textContent = messages.outgoing || 0;
+
+            // Answer rate
+            const answerRate = calls.total > 0 ? Math.round((calls.answered / calls.total) * 100) : 0;
+            document.getElementById('statAnswerRate').textContent = `${answerRate}%`;
+            document.getElementById('answerRateBar').style.width = `${answerRate}%`;
+
+            // Show content
+            document.getElementById('analyticsLoading').style.display = 'none';
+            document.getElementById('analyticsContent').style.display = 'block';
         }
 
         // Load contacts count on page load

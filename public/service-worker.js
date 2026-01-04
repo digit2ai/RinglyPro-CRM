@@ -1,5 +1,5 @@
 // RinglyPro Service Worker
-const CACHE_NAME = 'ringlypro-v8';
+const CACHE_NAME = 'ringlypro-v9';
 const urlsToCache = [
   '/manifest.json'
 ];

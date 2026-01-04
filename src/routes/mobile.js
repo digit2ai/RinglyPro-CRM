@@ -379,6 +379,126 @@ router.post('/send-sms/:client_id', async (req, res) => {
   }
 });
 
+// ============= ANALYTICS ENDPOINTS =============
+
+// GET /api/mobile/analytics/calls/:client_id - Get call statistics
+router.get('/analytics/calls/:client_id', async (req, res) => {
+  const { client_id } = req.params;
+  const { start, end } = req.query;
+
+  try {
+    const startDate = start ? new Date(start) : new Date(new Date().setHours(0, 0, 0, 0));
+    const endDate = end ? new Date(end) : new Date();
+
+    const statsQuery = `
+      SELECT
+        COUNT(*) as total,
+        COUNT(CASE WHEN call_status = 'completed' OR call_status = 'answered' THEN 1 END) as answered,
+        COUNT(CASE WHEN call_status = 'missed' OR call_status = 'no-answer' THEN 1 END) as missed,
+        COUNT(CASE WHEN direction = 'incoming' THEN 1 END) as incoming,
+        COUNT(CASE WHEN direction = 'outgoing' THEN 1 END) as outgoing,
+        COALESCE(SUM(duration), 0) as duration
+      FROM calls
+      WHERE client_id = $1
+        AND created_at >= $2
+        AND created_at <= $3
+    `;
+
+    const [stats] = await sequelize.query(statsQuery, {
+      bind: [client_id, startDate, endDate],
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    res.json({
+      success: true,
+      stats: {
+        total: parseInt(stats.total) || 0,
+        answered: parseInt(stats.answered) || 0,
+        missed: parseInt(stats.missed) || 0,
+        incoming: parseInt(stats.incoming) || 0,
+        outgoing: parseInt(stats.outgoing) || 0,
+        duration: parseInt(stats.duration) || 0
+      }
+    });
+
+  } catch (error) {
+    console.error('Analytics calls error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch call analytics' });
+  }
+});
+
+// GET /api/mobile/analytics/appointments/:client_id - Get appointment count
+router.get('/analytics/appointments/:client_id', async (req, res) => {
+  const { client_id } = req.params;
+  const { start, end } = req.query;
+
+  try {
+    const startDate = start ? new Date(start) : new Date(new Date().setHours(0, 0, 0, 0));
+    const endDate = end ? new Date(end) : new Date();
+
+    const countQuery = `
+      SELECT COUNT(*) as count
+      FROM appointments
+      WHERE client_id = $1
+        AND created_at >= $2
+        AND created_at <= $3
+        AND status != 'cancelled'
+    `;
+
+    const [result] = await sequelize.query(countQuery, {
+      bind: [client_id, startDate, endDate],
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    res.json({
+      success: true,
+      count: parseInt(result.count) || 0
+    });
+
+  } catch (error) {
+    console.error('Analytics appointments error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch appointment analytics' });
+  }
+});
+
+// GET /api/mobile/analytics/messages/:client_id - Get message statistics
+router.get('/analytics/messages/:client_id', async (req, res) => {
+  const { client_id } = req.params;
+  const { start, end } = req.query;
+
+  try {
+    const startDate = start ? new Date(start) : new Date(new Date().setHours(0, 0, 0, 0));
+    const endDate = end ? new Date(end) : new Date();
+
+    const statsQuery = `
+      SELECT
+        COUNT(CASE WHEN direction = 'incoming' THEN 1 END) as incoming,
+        COUNT(CASE WHEN direction = 'outgoing' THEN 1 END) as outgoing
+      FROM messages
+      WHERE client_id = $1
+        AND created_at >= $2
+        AND created_at <= $3
+    `;
+
+    const [stats] = await sequelize.query(statsQuery, {
+      bind: [client_id, startDate, endDate],
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    res.json({
+      success: true,
+      stats: {
+        incoming: parseInt(stats.incoming) || 0,
+        outgoing: parseInt(stats.outgoing) || 0
+      }
+    });
+
+  } catch (error) {
+    console.error('Analytics messages error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch message analytics' });
+  }
+});
+
 // ============= HELPER FUNCTIONS =============
 
 function getRelativeTime(dateString) {
