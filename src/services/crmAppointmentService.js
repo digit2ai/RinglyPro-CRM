@@ -48,11 +48,12 @@ async function getEnabledIntegrations(clientId) {
 
     logger.info(`[CRM Sync] Client ${clientId} GHL check: ghl_api_key=${client.ghl_api_key ? 'SET' : 'NULL'}, settings.ghl.apiKey=${ghlSettings.apiKey ? 'SET' : 'NULL'}, enabled=${ghlSettings.enabled}, result=${ghlEnabled}`);
 
-    // Check HubSpot - has API key and enabled
-    const hubspotEnabled = !!(
-      client.hubspot_api_key &&
-      (integrationSettings.hubspot?.enabled !== false)
-    );
+    // Check HubSpot - DISABLED (we only use GHL now)
+    // const hubspotEnabled = !!(
+    //   client.hubspot_api_key &&
+    //   (integrationSettings.hubspot?.enabled !== false)
+    // );
+    const hubspotEnabled = false; // HubSpot integration disabled - using GHL only
 
     // Check Vagaro - has credentials configured
     const vagaroSettings = client.vagaro_settings || integrationSettings.vagaro || {};

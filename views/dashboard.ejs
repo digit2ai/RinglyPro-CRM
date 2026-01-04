@@ -2238,11 +2238,12 @@
                 </svg>
                 SMS / Dial
             </button>
-            <button class="action-btn" style="background: linear-gradient(135deg, #FF914D 0%, #ff6b35 100%);" onclick="window.location.href='https://aiagent.ringlypro.com/partnership-roadmap'">
+            <button class="action-btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);" onclick="openContactsModal()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
-                Partnership
+                Contacts
+                <div class="credit-amount" id="contactsCount" style="background: #8b5cf6;">0</div>
             </button>
             <button class="action-btn btn-calendar" onclick="openSettings()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2900,6 +2901,62 @@
                         <button type="button" class="btn-cancel" onclick="closeAppointmentModal()">Cancel</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contacts Modal -->
+    <div id="contactsModal" class="modal">
+        <div class="modal-overlay" onclick="closeContactsModal()"></div>
+        <div class="modal-content" style="max-width: 900px; max-height: 85vh;">
+            <div class="modal-header">
+                <h2>Contacts</h2>
+                <button class="modal-close" onclick="closeContactsModal()">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto; max-height: calc(85vh - 120px);">
+                <!-- Search and Filter -->
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                    <input type="text" id="contactSearchInput" placeholder="Search contacts..."
+                           style="flex: 1; min-width: 200px; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem;"
+                           oninput="filterContacts()">
+                    <select id="contactSourceFilter" onchange="filterContacts()"
+                            style="padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem;">
+                        <option value="all">All Sources</option>
+                        <option value="ringlypro">RinglyPro</option>
+                        <option value="ghl">GHL</option>
+                    </select>
+                </div>
+
+                <!-- Loading State -->
+                <div id="contactsLoading" style="text-align: center; padding: 2rem; color: #6b7280;">
+                    <i class="fas fa-spinner fa-spin"></i> Loading contacts...
+                </div>
+
+                <!-- Error State -->
+                <div id="contactsError" style="display: none; background: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                </div>
+
+                <!-- Contacts List -->
+                <div id="contactsList" style="display: none;">
+                    <div style="margin-bottom: 0.75rem; font-size: 0.875rem; color: #6b7280;">
+                        Showing <span id="contactsShowing">0</span> of <span id="contactsTotal">0</span> contacts
+                    </div>
+                    <div id="contactsGrid" style="display: grid; gap: 0.75rem;">
+                        <!-- Contacts will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="contactsEmpty" style="display: none; text-align: center; padding: 3rem; color: #6b7280;">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <p>No contacts found</p>
+                </div>
             </div>
         </div>
     </div>
@@ -6014,6 +6071,221 @@
             wrapper.classList.remove('hidden');
             reopenBtn.classList.remove('show');
         }
+
+        // ============================================
+        // CONTACTS MODAL FUNCTIONS
+        // ============================================
+        let allContacts = [];
+        let contactsGhlConfig = null;
+
+        async function openContactsModal() {
+            const modal = document.getElementById('contactsModal');
+            modal.classList.add('active');
+
+            // Reset states
+            document.getElementById('contactsLoading').style.display = 'block';
+            document.getElementById('contactsList').style.display = 'none';
+            document.getElementById('contactsEmpty').style.display = 'none';
+            document.getElementById('contactsError').style.display = 'none';
+            document.getElementById('contactSearchInput').value = '';
+            document.getElementById('contactSourceFilter').value = 'all';
+
+            await loadContacts();
+        }
+
+        function closeContactsModal() {
+            const modal = document.getElementById('contactsModal');
+            modal.classList.remove('active');
+        }
+
+        async function loadContacts() {
+            try {
+                // First get client's GHL settings
+                const clientResponse = await authenticatedFetch('/api/client/my-client');
+                const clientData = await clientResponse.json();
+
+                if (!clientData.success || !clientData.client) {
+                    throw new Error('Could not load client settings');
+                }
+
+                const client = clientData.client;
+                const ghlSettings = client.settings?.integration?.ghl || {};
+
+                if (!ghlSettings.apiKey || !ghlSettings.locationId) {
+                    document.getElementById('contactsLoading').style.display = 'none';
+                    document.getElementById('contactsError').textContent = 'GoHighLevel integration not configured. Please set up your GHL credentials in Settings.';
+                    document.getElementById('contactsError').style.display = 'block';
+                    return;
+                }
+
+                // Store GHL config for later use
+                contactsGhlConfig = {
+                    apiKey: ghlSettings.apiKey,
+                    locationId: ghlSettings.locationId
+                };
+
+                // Fetch contacts from GHL via our API
+                const response = await authenticatedFetch('/api/gohighlevel/contacts/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-ghl-api-key': ghlSettings.apiKey,
+                        'x-ghl-location-id': ghlSettings.locationId
+                    },
+                    body: JSON.stringify({ limit: 500 })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load contacts');
+                }
+
+                allContacts = data.data?.contacts || [];
+
+                // Update contacts count in header
+                const countEl = document.getElementById('contactsCount');
+                if (countEl) {
+                    countEl.textContent = allContacts.length;
+                }
+
+                document.getElementById('contactsLoading').style.display = 'none';
+
+                if (allContacts.length === 0) {
+                    document.getElementById('contactsEmpty').style.display = 'block';
+                } else {
+                    renderContacts(allContacts);
+                    document.getElementById('contactsList').style.display = 'block';
+                }
+
+            } catch (error) {
+                console.error('Error loading contacts:', error);
+                document.getElementById('contactsLoading').style.display = 'none';
+                document.getElementById('contactsError').textContent = error.message;
+                document.getElementById('contactsError').style.display = 'block';
+            }
+        }
+
+        function renderContacts(contacts) {
+            const grid = document.getElementById('contactsGrid');
+            const showingEl = document.getElementById('contactsShowing');
+            const totalEl = document.getElementById('contactsTotal');
+
+            showingEl.textContent = contacts.length;
+            totalEl.textContent = allContacts.length;
+
+            if (contacts.length === 0) {
+                grid.innerHTML = '<div style="text-align: center; padding: 2rem; color: #6b7280;">No contacts match your search</div>';
+                return;
+            }
+
+            grid.innerHTML = contacts.map(contact => {
+                const name = [contact.firstName, contact.lastName].filter(Boolean).join(' ') || 'Unknown';
+                const tags = contact.tags || [];
+                const isRinglyPro = tags.some(t => t.toLowerCase().includes('ringlypro') || t.toLowerCase().includes('ringly'));
+                const sourceTag = isRinglyPro ? 'RinglyPro' : 'GHL';
+                const sourceColor = isRinglyPro ? '#10b981' : '#3b82f6';
+
+                return `
+                    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                <strong style="font-size: 0.95rem; color: #1f2937;">${escapeHtml(name)}</strong>
+                                <span style="background: ${sourceColor}; color: white; font-size: 0.65rem; padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-weight: 600;">${sourceTag}</span>
+                            </div>
+                            <div style="font-size: 0.8rem; color: #6b7280;">
+                                ${contact.phone ? `<span style="margin-right: 1rem;">📞 ${escapeHtml(contact.phone)}</span>` : ''}
+                                ${contact.email ? `<span>✉️ ${escapeHtml(contact.email)}</span>` : ''}
+                            </div>
+                            ${tags.length > 0 ? `
+                                <div style="margin-top: 0.5rem; display: flex; gap: 0.25rem; flex-wrap: wrap;">
+                                    ${tags.slice(0, 5).map(tag => `<span style="background: #e5e7eb; color: #4b5563; font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 0.2rem;">${escapeHtml(tag)}</span>`).join('')}
+                                    ${tags.length > 5 ? `<span style="color: #9ca3af; font-size: 0.65rem;">+${tags.length - 5} more</span>` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div style="color: #9ca3af; font-size: 0.75rem; text-align: right;">
+                            ${contact.dateAdded ? new Date(contact.dateAdded).toLocaleDateString() : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterContacts() {
+            const searchTerm = document.getElementById('contactSearchInput').value.toLowerCase();
+            const sourceFilter = document.getElementById('contactSourceFilter').value;
+
+            let filtered = allContacts;
+
+            // Filter by search term
+            if (searchTerm) {
+                filtered = filtered.filter(contact => {
+                    const name = [contact.firstName, contact.lastName].filter(Boolean).join(' ').toLowerCase();
+                    const phone = (contact.phone || '').toLowerCase();
+                    const email = (contact.email || '').toLowerCase();
+                    return name.includes(searchTerm) || phone.includes(searchTerm) || email.includes(searchTerm);
+                });
+            }
+
+            // Filter by source
+            if (sourceFilter !== 'all') {
+                filtered = filtered.filter(contact => {
+                    const tags = contact.tags || [];
+                    const isRinglyPro = tags.some(t => t.toLowerCase().includes('ringlypro') || t.toLowerCase().includes('ringly'));
+                    if (sourceFilter === 'ringlypro') return isRinglyPro;
+                    if (sourceFilter === 'ghl') return !isRinglyPro;
+                    return true;
+                });
+            }
+
+            renderContacts(filtered);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Load contacts count on page load
+        async function loadContactsCount() {
+            try {
+                const clientResponse = await authenticatedFetch('/api/client/my-client');
+                const clientData = await clientResponse.json();
+
+                if (!clientData.success || !clientData.client) return;
+
+                const ghlSettings = clientData.client.settings?.integration?.ghl || {};
+                if (!ghlSettings.apiKey || !ghlSettings.locationId) return;
+
+                const response = await authenticatedFetch('/api/gohighlevel/contacts/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-ghl-api-key': ghlSettings.apiKey,
+                        'x-ghl-location-id': ghlSettings.locationId
+                    },
+                    body: JSON.stringify({ limit: 100 })
+                });
+
+                const data = await response.json();
+                if (data.success && data.data?.total) {
+                    const countEl = document.getElementById('contactsCount');
+                    if (countEl) {
+                        countEl.textContent = data.data.total;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading contacts count:', error);
+            }
+        }
+
+        // Add to DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            loadContactsCount();
+        });
     </script>
 
 </body>
