@@ -6123,8 +6123,8 @@
                     locationId: ghlCreds.location_id
                 };
 
-                // Fetch contacts from GHL via our API
-                const response = await authenticatedFetch('/api/gohighlevel/contacts/search', {
+                // Fetch contacts from GHL via our API (mounted at /api/ghl)
+                const response = await authenticatedFetch('/api/ghl/contacts/search', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -6262,7 +6262,7 @@
                 const ghlCreds = credData.credentials?.gohighlevel || {};
                 if (!ghlCreds.api_key || !ghlCreds.location_id) return;
 
-                const response = await authenticatedFetch('/api/gohighlevel/contacts/search', {
+                const response = await authenticatedFetch('/api/ghl/contacts/search', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
