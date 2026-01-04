@@ -54,12 +54,22 @@ const ghlAuth = (req, res, next) => {
 // Helper function to make GHL API calls
 async function callGHL(config, method, endpoint, data = null) {
   try {
+    // Build the full URL with locationId in query string for GET requests
+    let fullUrl = `${GHL_BASE_URL}${endpoint}`;
+
+    if (method === 'GET') {
+      // Append locationId to URL query string
+      const separator = endpoint.includes('?') ? '&' : '?';
+      fullUrl = `${fullUrl}${separator}locationId=${config.locationId}`;
+    }
+
+    console.log(`🌐 GHL API ${method} ${fullUrl}`);
+
     const response = await axios({
       method,
-      url: `${GHL_BASE_URL}${endpoint}`,
+      url: fullUrl,
       headers: config.headers,
-      data: data ? { ...data, locationId: config.locationId } : null,
-      params: method === 'GET' ? { locationId: config.locationId, ...data } : null
+      data: method !== 'GET' && data ? { ...data, locationId: config.locationId } : undefined
     });
 
     return {
