@@ -9,10 +9,20 @@ const GHL_API_VERSION = '2021-07-28';
 
 // Middleware to add GHL authentication
 const ghlAuth = (req, res, next) => {
+  console.log('🔐 GHL Auth middleware - checking credentials...');
+  console.log('   Headers x-ghl-api-key:', req.headers['x-ghl-api-key'] ? 'SET' : 'NOT SET');
+  console.log('   Headers x-ghl-location-id:', req.headers['x-ghl-location-id'] ? 'SET' : 'NOT SET');
+  console.log('   Body apiKey:', req.body?.apiKey ? 'SET' : 'NOT SET');
+  console.log('   Body locationId:', req.body?.locationId ? 'SET' : 'NOT SET');
+
   const apiKey = req.body.apiKey || req.headers['x-ghl-api-key'] || process.env.GHL_PRIVATE_API_KEY;
   const locationId = req.body.locationId || req.headers['x-ghl-location-id'] || process.env.GHL_LOCATION_ID;
 
+  console.log('   Final apiKey:', apiKey ? `${apiKey.substring(0, 10)}...` : 'NULL');
+  console.log('   Final locationId:', locationId || 'NULL');
+
   if (!apiKey) {
+    console.log('❌ GHL Auth failed - no API key');
     return res.status(401).json({
       success: false,
       error: 'GoHighLevel API key is required'
@@ -20,12 +30,14 @@ const ghlAuth = (req, res, next) => {
   }
 
   if (!locationId) {
+    console.log('❌ GHL Auth failed - no location ID');
     return res.status(401).json({
       success: false,
       error: 'GoHighLevel Location ID is required'
     });
   }
 
+  console.log('✅ GHL Auth passed');
   req.ghlConfig = {
     apiKey,
     locationId,
