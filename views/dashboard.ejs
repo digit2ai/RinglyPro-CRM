@@ -6081,12 +6081,16 @@
 
         async function loadContacts() {
             try {
+                console.log('📇 Loading contacts...');
+
                 // Hardcoded GHL credentials for Client 15
                 const ghlCreds = {
                     api_key: 'pit-6cb3545f-9480-4846-af63-4135957d4cf6',
                     location_id: 'SEMmeWOBlogS8eeis0N9',
                     calendar_id: 'ZVWaPnxbK7pED29nKXw9'
                 };
+
+                console.log('📇 Using GHL credentials:', { location_id: ghlCreds.location_id });
 
                 // Store GHL config for later use
                 contactsGhlConfig = {
@@ -6095,6 +6099,7 @@
                 };
 
                 // Fetch contacts from GHL via our API (mounted at /api/ghl)
+                console.log('📇 Calling /api/ghl/contacts/search...');
                 const response = await authenticatedFetch('/api/ghl/contacts/search', {
                     method: 'POST',
                     headers: {
@@ -6105,13 +6110,16 @@
                     body: JSON.stringify({ limit: 500 })
                 });
 
+                console.log('📇 Response status:', response.status);
                 const data = await response.json();
+                console.log('📇 Response data:', data);
 
                 if (!data.success) {
                     throw new Error(data.error || 'Failed to load contacts');
                 }
 
                 allContacts = data.data?.contacts || [];
+                console.log('📇 Loaded contacts:', allContacts.length);
 
                 // Update contacts count in header
                 const countEl = document.getElementById('contactsCount');
