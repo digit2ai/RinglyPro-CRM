@@ -2203,14 +2203,14 @@
                 <span class="username" id="username-display">Loading...</span>
             </div>
             
-            <!-- Lina AI Toggle Card -->
+            <!-- AI Assistant Toggle Card with Logo and Business Name -->
             <div class="rachel-card">
                 <div class="rachel-toggle-row">
                     <div class="rachel-info">
-                        <div class="status-dot active" id="rachelStatusDot"></div>
+                        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1ceaedd63a48d8059af0a.png" alt="RinglyPro" style="height: 40px; width: 40px; border-radius: 8px; margin-right: 10px;">
                         <div class="rachel-text">
-                            <h3>Lina AI Assistant</h3>
-                            <p id="rachelStatusText">Checking status...</p>
+                            <h3 style="display: flex; align-items: center; gap: 6px;">Welcome, <span id="businessNameDisplay">RinglyPro</span></h3>
+                            <p id="rachelStatusText" style="display: flex; align-items: center; gap: 4px;"><span class="status-dot active" id="rachelStatusDot" style="width: 8px; height: 8px;"></span> Checking status...</p>
                         </div>
                     </div>
                     <label class="toggle-switch">
@@ -2277,7 +2277,7 @@
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
-            Today
+            Calendar
         </button>
         <button class="nav-tab" data-tab="messages">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2286,21 +2286,14 @@
             Messages
             <span id="messagesBadge" class="tab-badge" style="display: none;">0</span>
         </button>
-        <button class="nav-tab" data-tab="userguide">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-            </svg>
-            Guide
-        </button>
     </div>
 
     <!-- Content Area -->
     <div class="content">
-        <!-- Today's Appointments -->
+        <!-- Calendar / Appointments -->
         <div class="content-section active" id="todaySection">
             <div class="section-header" style="flex-wrap: wrap; gap: 1rem;">
                 <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
-                    <h2>Upcoming Appointments</h2>
                     <div class="date-filter-tabs" style="display: flex; gap: 0.5rem;">
                         <button class="filter-tab active" onclick="filterAppointmentsByDays(7)" data-days="7">7 days</button>
                         <button class="filter-tab" onclick="filterAppointmentsByDays(14)" data-days="14">14 days</button>
@@ -2373,10 +2366,9 @@
             </div>
         </div>
 
-        <!-- Messages & Voicemails -->
+        <!-- Messages Section -->
         <div class="content-section" id="messagesSection">
             <div class="section-header">
-                <h2>Messages & Voicemails</h2>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                     <!-- View Toggle -->
                     <div style="display: flex; background: #f3f4f6; border-radius: 0.5rem; padding: 2px;">
@@ -2448,36 +2440,6 @@
                     <button onclick="sendConversationReply()" style="padding: 0.75rem 1.5rem; background: #3b82f6; color: white; border: none; border-radius: 0.375rem; cursor: pointer; font-weight: 500;">
                         Send
                     </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- User Guide Section -->
-        <div class="content-section" id="userguideSection">
-            <div class="section-header">
-                <h2>Guide</h2>
-                <div style="display: flex; gap: 0.5rem;">
-                    <button onclick="scrollToEnglish()" class="btn-secondary" style="display: flex; align-items: center; gap: 0.5rem;">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286H4.545zm1.634-.736L5.5 3.956h-.049l-.679 2.022H6.18z"/>
-                            <path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2zm7.138 9.995c.193.301.402.583.63.846-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14V8h-3v1.047h.765c-.318.844-.74 1.546-1.272 2.13a6.066 6.066 0 0 1-.415-.492 1.988 1.988 0 0 1-.94.31z"/>
-                        </svg>
-                        Lina
-                    </button>
-                    <button onclick="scrollToSpanish()" class="btn-secondary" style="display: flex; align-items: center; gap: 0.5rem;">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286H4.545zm1.634-.736L5.5 3.956h-.049l-.679 2.022H6.18z"/>
-                            <path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2zm7.138 9.995c.193.301.402.583.63.846-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14V8h-3v1.047h.765c-.318.844-.74 1.546-1.272 2.13a6.066 6.066 0 0 1-.415-.492 1.988 1.988 0 0 1-.94.31z"/>
-                        </svg>
-                        Lina
-                    </button>
-                </div>
-            </div>
-
-            <div id="userGuideContent" style="padding: 2rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-height: 70vh; overflow-y: auto;">
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>Loading user guide...</p>
                 </div>
             </div>
         </div>
@@ -2945,10 +2907,10 @@
         </div>
     </div>
 
-    <!-- Contacts Modal -->
+    <!-- Contacts Modal - Full Window -->
     <div id="contactsModal" class="modal">
         <div class="modal-overlay" onclick="closeContactsModal()"></div>
-        <div class="modal-content" style="max-width: 900px; max-height: 85vh;">
+        <div class="modal-content" style="width: 95vw; max-width: 1400px; height: 90vh; max-height: 90vh; display: flex; flex-direction: column;">
             <div class="modal-header">
                 <h2>Contacts</h2>
                 <button class="modal-close" onclick="closeContactsModal()">
@@ -2957,23 +2919,27 @@
                     </svg>
                 </button>
             </div>
-            <div class="modal-body" style="overflow-y: auto; max-height: calc(85vh - 120px);">
+            <div class="modal-body" style="flex: 1; overflow-y: auto; padding: 1.5rem;">
                 <!-- Search and Filter -->
-                <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
-                    <input type="text" id="contactSearchInput" placeholder="Search contacts..."
-                           style="flex: 1; min-width: 200px; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem;"
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center;">
+                    <input type="text" id="contactSearchInput" placeholder="Search contacts by name, phone, or email..."
+                           style="flex: 1; min-width: 300px; padding: 0.875rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
                            oninput="filterContacts()">
                     <select id="contactSourceFilter" onchange="filterContacts()"
-                            style="padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem;">
+                            style="padding: 0.875rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
                         <option value="all">All Sources</option>
                         <option value="ringlypro">RinglyPro</option>
                         <option value="ghl">GHL</option>
                     </select>
+                    <div style="font-size: 0.875rem; color: #6b7280;">
+                        Showing <span id="contactsShowing" style="font-weight: 600;">0</span> of <span id="contactsTotal" style="font-weight: 600;">0</span> contacts
+                    </div>
                 </div>
 
                 <!-- Loading State -->
-                <div id="contactsLoading" style="text-align: center; padding: 2rem; color: #6b7280;">
-                    <i class="fas fa-spinner fa-spin"></i> Loading contacts...
+                <div id="contactsLoading" style="text-align: center; padding: 3rem; color: #6b7280;">
+                    <div class="spinner" style="margin: 0 auto 1rem;"></div>
+                    Loading contacts...
                 </div>
 
                 <!-- Error State -->
@@ -2982,20 +2948,17 @@
 
                 <!-- Contacts List -->
                 <div id="contactsList" style="display: none;">
-                    <div style="margin-bottom: 0.75rem; font-size: 0.875rem; color: #6b7280;">
-                        Showing <span id="contactsShowing">0</span> of <span id="contactsTotal">0</span> contacts
-                    </div>
-                    <div id="contactsGrid" style="display: grid; gap: 0.75rem;">
+                    <div id="contactsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1rem;">
                         <!-- Contacts will be rendered here -->
                     </div>
                 </div>
 
                 <!-- Empty State -->
                 <div id="contactsEmpty" style="display: none; text-align: center; padding: 3rem; color: #6b7280;">
-                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
+                    <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
-                    <p>No contacts found</p>
+                    <p style="font-size: 1.1rem;">No contacts found</p>
                 </div>
             </div>
         </div>
@@ -3121,101 +3084,142 @@
         </div>
     </div>
 
-    <!-- Analytics Modal -->
+    <!-- Analytics Modal - Full Window -->
     <div id="analyticsModal" class="modal">
         <div class="modal-overlay" onclick="closeAnalyticsModal()"></div>
-        <div class="modal-content" style="max-width: 700px;">
-            <div class="modal-header">
-                <h2>Analytics</h2>
+        <div class="modal-content" style="width: 95vw; max-width: 1400px; height: 90vh; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="flex-shrink: 0;">
+                <h2>Analytics Dashboard</h2>
                 <button class="modal-close" onclick="closeAnalyticsModal()">
                     <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                         <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
                     </svg>
                 </button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="flex: 1; overflow-y: auto; padding: 1.5rem;">
                 <!-- Time Period Selector -->
-                <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; justify-content: center;">
                     <button onclick="loadAnalytics('today')" id="analyticsBtn-today" class="analytics-period-btn active"
-                            style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; background: #f59e0b; color: white; cursor: pointer; font-size: 0.875rem;">
+                            style="padding: 0.75rem 1.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; background: #f59e0b; color: white; cursor: pointer; font-size: 1rem; font-weight: 500;">
                         Today
                     </button>
                     <button onclick="loadAnalytics('week')" id="analyticsBtn-week" class="analytics-period-btn"
-                            style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; background: white; cursor: pointer; font-size: 0.875rem;">
+                            style="padding: 0.75rem 1.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; background: white; cursor: pointer; font-size: 1rem; font-weight: 500;">
                         This Week
                     </button>
                     <button onclick="loadAnalytics('month')" id="analyticsBtn-month" class="analytics-period-btn"
-                            style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; background: white; cursor: pointer; font-size: 0.875rem;">
+                            style="padding: 0.75rem 1.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; background: white; cursor: pointer; font-size: 1rem; font-weight: 500;">
                         This Month
                     </button>
                 </div>
 
                 <!-- Loading State -->
-                <div id="analyticsLoading" style="text-align: center; padding: 2rem; color: #6b7280;">
-                    <i class="fas fa-spinner fa-spin"></i> Loading analytics...
+                <div id="analyticsLoading" style="text-align: center; padding: 3rem; color: #6b7280;">
+                    <div class="spinner" style="margin: 0 auto 1rem;"></div>
+                    Loading analytics...
                 </div>
 
                 <!-- Analytics Content -->
                 <div id="analyticsContent" style="display: none;">
-                    <!-- Summary Cards -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-                        <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 1rem; border-radius: 0.5rem; text-align: center;">
-                            <div style="font-size: 2rem; font-weight: bold;" id="statTotalCalls">0</div>
-                            <div style="font-size: 0.75rem; opacity: 0.9;">Total Calls</div>
+                    <!-- Primary Metrics - Top Row -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 1.5rem; border-radius: 0.75rem; text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: bold;" id="statTotalCalls">0</div>
+                            <div style="font-size: 0.875rem; opacity: 0.9;">Total Calls</div>
                         </div>
-                        <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1rem; border-radius: 0.5rem; text-align: center;">
-                            <div style="font-size: 2rem; font-weight: bold;" id="statAnsweredCalls">0</div>
-                            <div style="font-size: 0.75rem; opacity: 0.9;">Answered</div>
+                        <div style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 1.5rem; border-radius: 0.75rem; text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: bold;" id="statAppointments">0</div>
+                            <div style="font-size: 0.875rem; opacity: 0.9;">Appointments Booked</div>
                         </div>
-                        <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 1rem; border-radius: 0.5rem; text-align: center;">
-                            <div style="font-size: 2rem; font-weight: bold;" id="statMissedCalls">0</div>
-                            <div style="font-size: 0.75rem; opacity: 0.9;">Missed</div>
+                        <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1.5rem; border-radius: 0.75rem; text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: bold;" id="statAfterHoursCalls">0</div>
+                            <div style="font-size: 0.875rem; opacity: 0.9;">After-Hours Calls</div>
                         </div>
-                        <div style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 1rem; border-radius: 0.5rem; text-align: center;">
-                            <div style="font-size: 2rem; font-weight: bold;" id="statAppointments">0</div>
-                            <div style="font-size: 0.75rem; opacity: 0.9;">Appointments</div>
-                        </div>
-                    </div>
-
-                    <!-- Additional Stats -->
-                    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem;">
-                        <h3 style="font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.75rem;">Call Details</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-                            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;">
-                                <span style="color: #6b7280; font-size: 0.875rem;">Incoming Calls</span>
-                                <span style="font-weight: 600; color: #1f2937;" id="statIncoming">0</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;">
-                                <span style="color: #6b7280; font-size: 0.875rem;">Outgoing Calls</span>
-                                <span style="font-weight: 600; color: #1f2937;" id="statOutgoing">0</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;">
-                                <span style="color: #6b7280; font-size: 0.875rem;">Total Duration</span>
-                                <span style="font-weight: 600; color: #1f2937;" id="statDuration">0 min</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;">
-                                <span style="color: #6b7280; font-size: 0.875rem;">Avg Duration</span>
-                                <span style="font-weight: 600; color: #1f2937;" id="statAvgDuration">0 min</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;">
-                                <span style="color: #6b7280; font-size: 0.875rem;">Messages Received</span>
-                                <span style="font-weight: 600; color: #1f2937;" id="statMessagesIn">0</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;">
-                                <span style="color: #6b7280; font-size: 0.875rem;">Messages Sent</span>
-                                <span style="font-weight: 600; color: #1f2937;" id="statMessagesOut">0</span>
-                            </div>
+                        <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 1.5rem; border-radius: 0.75rem; text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: bold;" id="statAfterHoursBookings">0</div>
+                            <div style="font-size: 0.875rem; opacity: 0.9;">After-Hours Bookings</div>
                         </div>
                     </div>
 
-                    <!-- Answer Rate -->
-                    <div style="margin-top: 1rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <span style="font-size: 0.875rem; font-weight: 600; color: #374151;">Answer Rate</span>
-                            <span style="font-size: 1.25rem; font-weight: bold; color: #10b981;" id="statAnswerRate">0%</span>
+                    <!-- Secondary Metrics - Second Row -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="background: linear-gradient(135deg, #ec4899, #db2777); color: white; padding: 1.5rem; border-radius: 0.75rem; text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: bold;" id="statTokensAvailable">0</div>
+                            <div style="font-size: 0.875rem; opacity: 0.9;">Tokens Available</div>
                         </div>
-                        <div style="background: #e5e7eb; border-radius: 9999px; height: 8px; overflow: hidden;">
-                            <div id="answerRateBar" style="background: #10b981; height: 100%; width: 0%; transition: width 0.5s ease;"></div>
+                        <div style="background: linear-gradient(135deg, #14b8a6, #0d9488); color: white; padding: 1.5rem; border-radius: 0.75rem; text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: bold;" id="statTokenAvgRate">0</div>
+                            <div style="font-size: 0.875rem; opacity: 0.9;">Token Avg Rate/Call</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; padding: 1.5rem; border-radius: 0.75rem; text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: bold;" id="statAvgConvTime">0:00</div>
+                            <div style="font-size: 0.875rem; opacity: 0.9;">Avg Conversation Time</div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Stats Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                        <!-- Call Details -->
+                        <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.5rem;">
+                            <h3 style="font-size: 1rem; font-weight: 600; color: #374151; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="width: 8px; height: 8px; background: #3b82f6; border-radius: 50%;"></span>
+                                Call Breakdown
+                            </h3>
+                            <div style="display: grid; gap: 0.75rem;">
+                                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: white; border-radius: 0.5rem;">
+                                    <span style="color: #6b7280;">Answered Calls</span>
+                                    <span style="font-weight: 600; color: #10b981;" id="statAnsweredCalls">0</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: white; border-radius: 0.5rem;">
+                                    <span style="color: #6b7280;">Missed Calls</span>
+                                    <span style="font-weight: 600; color: #ef4444;" id="statMissedCalls">0</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: white; border-radius: 0.5rem;">
+                                    <span style="color: #6b7280;">Incoming Calls</span>
+                                    <span style="font-weight: 600; color: #1f2937;" id="statIncoming">0</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: white; border-radius: 0.5rem;">
+                                    <span style="color: #6b7280;">Outgoing Calls</span>
+                                    <span style="font-weight: 600; color: #1f2937;" id="statOutgoing">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Time & Messages -->
+                        <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.5rem;">
+                            <h3 style="font-size: 1rem; font-weight: 600; color: #374151; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="width: 8px; height: 8px; background: #8b5cf6; border-radius: 50%;"></span>
+                                Time & Messages
+                            </h3>
+                            <div style="display: grid; gap: 0.75rem;">
+                                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: white; border-radius: 0.5rem;">
+                                    <span style="color: #6b7280;">Total Call Duration</span>
+                                    <span style="font-weight: 600; color: #1f2937;" id="statDuration">0 min</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: white; border-radius: 0.5rem;">
+                                    <span style="color: #6b7280;">Avg Call Duration</span>
+                                    <span style="font-weight: 600; color: #1f2937;" id="statAvgDuration">0 min</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: white; border-radius: 0.5rem;">
+                                    <span style="color: #6b7280;">Messages Received</span>
+                                    <span style="font-weight: 600; color: #1f2937;" id="statMessagesIn">0</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: white; border-radius: 0.5rem;">
+                                    <span style="color: #6b7280;">Messages Sent</span>
+                                    <span style="font-weight: 600; color: #1f2937;" id="statMessagesOut">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Answer Rate Progress Bar -->
+                    <div style="margin-top: 1.5rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <span style="font-size: 1rem; font-weight: 600; color: #374151;">Answer Rate</span>
+                            <span style="font-size: 1.5rem; font-weight: bold; color: #10b981;" id="statAnswerRate">0%</span>
+                        </div>
+                        <div style="background: #e5e7eb; border-radius: 9999px; height: 12px; overflow: hidden;">
+                            <div id="answerRateBar" style="background: linear-gradient(90deg, #10b981, #059669); height: 100%; width: 0%; transition: width 0.5s ease;"></div>
                         </div>
                     </div>
                 </div>
@@ -3520,17 +3524,23 @@
             }
         }
 
-        // Load Rachel Status
+        // Load Rachel Status and Business Name
         async function loadRachelStatus() {
             try {
                 const response = await authenticatedFetch(`/api/client/rachel-status/${CLIENT_ID}`);
                 if (!response) return;
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     updateRachelUI(data.client.rachel_enabled);
                     document.getElementById('rachelToggle').checked = data.client.rachel_enabled;
+
+                    // Update business name display
+                    const businessNameEl = document.getElementById('businessNameDisplay');
+                    if (businessNameEl && data.client.business_name) {
+                        businessNameEl.textContent = data.client.business_name;
+                    }
                 }
             } catch (error) {
                 console.error('Error loading Rachel status:', error);
@@ -6574,13 +6584,14 @@
             display: flex;
         }
     </style>
-    <div id="elevenlabs-widget-wrapper">
+    <!-- ElevenLabs Voice AI Widget - starts minimized -->
+    <div id="elevenlabs-widget-wrapper" class="hidden">
         <button id="widget-close-btn" onclick="closeVoiceWidget()" title="Close widget">×</button>
         <div id="elevenlabs-widget-container">
             <elevenlabs-convai agent-id="agent_4801kd9a0495frvbjxz6dyrnbz1j"></elevenlabs-convai>
         </div>
     </div>
-    <button id="widget-reopen-btn" onclick="reopenVoiceWidget()" title="Open Voice Assistant">
+    <button id="widget-reopen-btn" class="show" onclick="reopenVoiceWidget()" title="Open Voice Assistant">
         <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/>
         </svg>
@@ -7311,15 +7322,17 @@
                 }
 
                 // Fetch analytics data from multiple endpoints
-                const [callsResponse, appointmentsResponse, messagesResponse] = await Promise.all([
+                const [callsResponse, appointmentsResponse, messagesResponse, extendedResponse] = await Promise.all([
                     authenticatedFetch(`/api/mobile/analytics/calls/${CLIENT_ID}?start=${startDate.toISOString()}&end=${now.toISOString()}`).catch(() => null),
                     authenticatedFetch(`/api/mobile/analytics/appointments/${CLIENT_ID}?start=${startDate.toISOString()}&end=${now.toISOString()}`).catch(() => null),
-                    authenticatedFetch(`/api/mobile/analytics/messages/${CLIENT_ID}?start=${startDate.toISOString()}&end=${now.toISOString()}`).catch(() => null)
+                    authenticatedFetch(`/api/mobile/analytics/messages/${CLIENT_ID}?start=${startDate.toISOString()}&end=${now.toISOString()}`).catch(() => null),
+                    authenticatedFetch(`/api/mobile/analytics/extended/${CLIENT_ID}?start=${startDate.toISOString()}&end=${now.toISOString()}`).catch(() => null)
                 ]);
 
                 let callsData = { total: 0, answered: 0, missed: 0, incoming: 0, outgoing: 0, duration: 0 };
                 let appointmentsCount = 0;
                 let messagesData = { incoming: 0, outgoing: 0 };
+                let extendedData = { afterHoursCalls: 0, afterHoursBookings: 0, tokensAvailable: 0, tokenAvgRate: 0, avgConversationTime: 0 };
 
                 // Process calls data
                 if (callsResponse && callsResponse.ok) {
@@ -7345,8 +7358,16 @@
                     }
                 }
 
+                // Process extended analytics data
+                if (extendedResponse && extendedResponse.ok) {
+                    const data = await extendedResponse.json();
+                    if (data.success) {
+                        extendedData = data.extended || extendedData;
+                    }
+                }
+
                 // Update UI
-                updateAnalyticsUI(callsData, appointmentsCount, messagesData);
+                updateAnalyticsUI(callsData, appointmentsCount, messagesData, extendedData);
 
             } catch (error) {
                 console.error('Error loading analytics:', error);
@@ -7354,17 +7375,35 @@
                 updateAnalyticsUI(
                     { total: 0, answered: 0, missed: 0, incoming: 0, outgoing: 0, duration: 0 },
                     0,
-                    { incoming: 0, outgoing: 0 }
+                    { incoming: 0, outgoing: 0 },
+                    { afterHoursCalls: 0, afterHoursBookings: 0, tokensAvailable: 0, tokenAvgRate: 0, avgConversationTime: 0 }
                 );
             }
         }
 
-        function updateAnalyticsUI(calls, appointments, messages) {
+        function updateAnalyticsUI(calls, appointments, messages, extended = {}) {
             // Summary cards
             document.getElementById('statTotalCalls').textContent = calls.total || 0;
             document.getElementById('statAnsweredCalls').textContent = calls.answered || 0;
             document.getElementById('statMissedCalls').textContent = calls.missed || 0;
             document.getElementById('statAppointments').textContent = appointments || 0;
+
+            // Extended metrics - After-hours
+            document.getElementById('statAfterHoursCalls').textContent = extended.afterHoursCalls || 0;
+            document.getElementById('statAfterHoursBookings').textContent = extended.afterHoursBookings || 0;
+
+            // Extended metrics - Tokens
+            const tokensAvailable = extended.tokensAvailable || 0;
+            document.getElementById('statTokensAvailable').textContent = tokensAvailable >= 1000
+                ? `${(tokensAvailable / 1000).toFixed(1)}k`
+                : tokensAvailable.toFixed(0);
+            document.getElementById('statTokenAvgRate').textContent = `${extended.tokenAvgRate || 0} min`;
+
+            // Extended metrics - Average Conversation Time (convert seconds to mm:ss)
+            const avgConvSeconds = extended.avgConversationTime || 0;
+            const avgConvMinutes = Math.floor(avgConvSeconds / 60);
+            const avgConvSecs = avgConvSeconds % 60;
+            document.getElementById('statAvgConvTime').textContent = `${avgConvMinutes}:${avgConvSecs.toString().padStart(2, '0')}`;
 
             // Call details
             document.getElementById('statIncoming').textContent = calls.incoming || 0;

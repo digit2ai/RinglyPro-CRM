@@ -499,6 +499,119 @@ router.get('/analytics/messages/:client_id', async (req, res) => {
   }
 });
 
+// GET /api/mobile/analytics/extended/:client_id - Get extended analytics (after-hours, tokens, avg time)
+router.get('/analytics/extended/:client_id', async (req, res) => {
+  const { client_id } = req.params;
+  const { start, end } = req.query;
+
+  try {
+    const startDate = start ? new Date(start) : new Date(new Date().setHours(0, 0, 0, 0));
+    const endDate = end ? new Date(end) : new Date();
+
+    // Get client's business hours for after-hours calculation
+    const clientQuery = `
+      SELECT business_hours_start, business_hours_end, timezone
+      FROM clients
+      WHERE id = $1
+    `;
+    const [clientData] = await sequelize.query(clientQuery, {
+      bind: [client_id],
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    const businessStart = clientData?.business_hours_start || '09:00:00';
+    const businessEnd = clientData?.business_hours_end || '17:00:00';
+
+    // Get after-hours calls (calls outside business hours)
+    const afterHoursCallsQuery = `
+      SELECT COUNT(*) as count
+      FROM calls
+      WHERE client_id = $1
+        AND created_at >= $2
+        AND created_at <= $3
+        AND (call_status = 'completed' OR call_status = 'answered')
+        AND (
+          EXTRACT(HOUR FROM created_at) < EXTRACT(HOUR FROM $4::time)
+          OR EXTRACT(HOUR FROM created_at) >= EXTRACT(HOUR FROM $5::time)
+        )
+    `;
+    const [afterHoursCalls] = await sequelize.query(afterHoursCallsQuery, {
+      bind: [client_id, startDate, endDate, businessStart, businessEnd],
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    // Get after-hours bookings (appointments booked outside business hours)
+    const afterHoursBookingsQuery = `
+      SELECT COUNT(*) as count
+      FROM appointments
+      WHERE client_id = $1
+        AND created_at >= $2
+        AND created_at <= $3
+        AND status != 'cancelled'
+        AND (
+          EXTRACT(HOUR FROM created_at) < EXTRACT(HOUR FROM $4::time)
+          OR EXTRACT(HOUR FROM created_at) >= EXTRACT(HOUR FROM $5::time)
+        )
+    `;
+    const [afterHoursBookings] = await sequelize.query(afterHoursBookingsQuery, {
+      bind: [client_id, startDate, endDate, businessStart, businessEnd],
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    // Get credit account balance (tokens)
+    const tokenQuery = `
+      SELECT balance, total_minutes_used
+      FROM credit_accounts
+      WHERE client_id = $1
+    `;
+    const [tokenData] = await sequelize.query(tokenQuery, {
+      bind: [client_id],
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    // Calculate average token rate per call (total tokens used / total calls in period)
+    const tokenUsageQuery = `
+      SELECT
+        COALESCE(SUM(duration), 0) as total_duration,
+        COUNT(*) as total_calls
+      FROM calls
+      WHERE client_id = $1
+        AND created_at >= $2
+        AND created_at <= $3
+        AND (call_status = 'completed' OR call_status = 'answered')
+    `;
+    const [tokenUsage] = await sequelize.query(tokenUsageQuery, {
+      bind: [client_id, startDate, endDate],
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    // Calculate average conversation time (total duration / completed calls)
+    const avgDurationSeconds = tokenUsage.total_calls > 0
+      ? Math.round(parseInt(tokenUsage.total_duration) / parseInt(tokenUsage.total_calls))
+      : 0;
+
+    // Token average rate = minutes used per call (assuming 1 token = 1 minute)
+    const avgTokenRate = tokenUsage.total_calls > 0
+      ? (parseInt(tokenUsage.total_duration) / 60 / parseInt(tokenUsage.total_calls)).toFixed(1)
+      : 0;
+
+    res.json({
+      success: true,
+      extended: {
+        afterHoursCalls: parseInt(afterHoursCalls?.count) || 0,
+        afterHoursBookings: parseInt(afterHoursBookings?.count) || 0,
+        tokensAvailable: parseFloat(tokenData?.balance) || 0,
+        tokenAvgRate: parseFloat(avgTokenRate) || 0,
+        avgConversationTime: avgDurationSeconds // in seconds
+      }
+    });
+
+  } catch (error) {
+    console.error('Extended analytics error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch extended analytics' });
+  }
+});
+
 // ============= CONVERSATION SYNC API =============
 
 const ghlConversationSync = require('../services/ghlConversationSyncService');
