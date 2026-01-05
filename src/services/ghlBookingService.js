@@ -676,7 +676,18 @@ class GHLBookingService {
 
       // Map to standardized format
       const appointments = allAppointments.map(event => {
-        const startDT = event.startTime ? new Date(event.startTime) : null;
+        // Parse date and time directly from ISO string to avoid timezone issues
+        // Format: "2026-01-05T10:00:00-05:00"
+        let appointmentDate = null;
+        let appointmentTime = null;
+
+        if (event.startTime && typeof event.startTime === 'string') {
+          // Extract date (YYYY-MM-DD) and time (HH:MM:SS) from ISO string
+          appointmentDate = event.startTime.substring(0, 10); // "2026-01-05"
+          const hourStr = event.startTime.substring(11, 13);  // "10"
+          appointmentTime = `${hourStr}:00:00`;               // "10:00:00"
+        }
+
         return {
           id: event.id,
           ghlAppointmentId: event.ghlAppointmentId,
@@ -685,8 +696,8 @@ class GHLBookingService {
           customerName: event.isBusySlot ? 'Busy' : (event.contact?.name || event.title || 'Unknown'),
           customerPhone: event.contact?.phone || '',
           customerEmail: event.contact?.email || '',
-          appointmentDate: startDT ? startDT.toISOString().split('T')[0] : null,
-          appointmentTime: startDT ? `${startDT.getHours().toString().padStart(2, '0')}:00:00` : null,
+          appointmentDate,
+          appointmentTime,
           duration: event.duration || 60,
           purpose: event.calendarName || event.title || 'GHL Appointment',
           status: this.mapGHLStatus(event.appointmentStatus || event.status),
