@@ -992,4 +992,69 @@ router.get('/my-client', authenticateToken, async (req, res) => {
     }
 });
 
+// GET /api/client/ghl-credentials/:client_id - Get GHL credentials for a specific client (multi-tenant secure)
+router.get('/ghl-credentials/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { sequelize } = require('../models');
+
+        // First check ghl_integrations table (OAuth-based integration)
+        const [integration] = await sequelize.query(
+            `SELECT ghl_location_id, access_token as api_key
+             FROM ghl_integrations
+             WHERE client_id = :client_id AND is_active = true
+             LIMIT 1`,
+            {
+                replacements: { client_id },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (integration && integration.ghl_location_id && integration.api_key) {
+            return res.json({
+                success: true,
+                credentials: {
+                    api_key: integration.api_key,
+                    location_id: integration.ghl_location_id
+                }
+            });
+        }
+
+        // Fallback: Check clients table for legacy GHL fields
+        const [client] = await sequelize.query(
+            `SELECT ghl_api_key, ghl_location_id
+             FROM clients
+             WHERE id = :client_id`,
+            {
+                replacements: { client_id },
+                type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (client && client.ghl_api_key && client.ghl_location_id) {
+            return res.json({
+                success: true,
+                credentials: {
+                    api_key: client.ghl_api_key,
+                    location_id: client.ghl_location_id
+                }
+            });
+        }
+
+        // No GHL integration configured
+        return res.json({
+            success: false,
+            error: 'No GHL integration configured for this client',
+            credentials: null
+        });
+
+    } catch (error) {
+        console.error('Error fetching GHL credentials:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch GHL credentials'
+        });
+    }
+});
+
 module.exports = router;

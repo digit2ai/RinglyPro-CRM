@@ -6633,18 +6633,32 @@
 
         async function loadContacts() {
             try {
-                console.log('📇 Loading contacts...');
+                console.log('📇 Loading contacts for client:', CLIENT_ID);
 
-                // Hardcoded GHL credentials for Client 15
-                const ghlCreds = {
-                    api_key: 'pit-6cb3545f-9480-4846-af63-4135957d4cf6',
-                    location_id: 'SEMmeWOBlogS8eeis0N9',
-                    calendar_id: 'ZVWaPnxbK7pED29nKXw9'
-                };
+                // Fetch GHL credentials for this specific client (multi-tenant secure)
+                const credsResponse = await authenticatedFetch(`/api/client/ghl-credentials/${CLIENT_ID}`);
+                const credsData = await credsResponse.json();
 
-                console.log('📇 Using GHL credentials:', { location_id: ghlCreds.location_id });
+                if (!credsData.success || !credsData.credentials) {
+                    console.log('📇 No GHL integration configured for this client');
+                    document.getElementById('contactsLoading').style.display = 'none';
+                    document.getElementById('contactsError').style.display = 'block';
+                    document.getElementById('contactsError').innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: #6b7280;">
+                            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                            <p style="font-weight: 600; margin-bottom: 0.5rem;">GoHighLevel Not Connected</p>
+                            <p style="font-size: 0.875rem;">Please configure your GHL integration in Settings to view contacts.</p>
+                        </div>
+                    `;
+                    return;
+                }
 
-                // Store GHL config for later use
+                const ghlCreds = credsData.credentials;
+                console.log('📇 Using GHL credentials for client:', CLIENT_ID);
+
+                // Store GHL config for later use (call, SMS, edit operations)
                 contactsGhlConfig = {
                     apiKey: ghlCreds.api_key,
                     locationId: ghlCreds.location_id
@@ -6860,18 +6874,17 @@
             submitBtn.textContent = 'Saving...';
 
             try {
-                // Hardcoded GHL credentials for Client 15
-                const ghlCreds = {
-                    api_key: 'pit-6cb3545f-9480-4846-af63-4135957d4cf6',
-                    location_id: 'SEMmeWOBlogS8eeis0N9'
-                };
+                // Use stored GHL config from loadContacts (multi-tenant secure)
+                if (!contactsGhlConfig) {
+                    throw new Error('GHL configuration not loaded. Please refresh the contacts list.');
+                }
 
                 const response = await authenticatedFetch(`/api/ghl/contacts/${contactId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-ghl-api-key': ghlCreds.api_key,
-                        'x-ghl-location-id': ghlCreds.location_id
+                        'x-ghl-api-key': contactsGhlConfig.apiKey,
+                        'x-ghl-location-id': contactsGhlConfig.locationId
                     },
                     body: JSON.stringify({
                         firstName,
@@ -7038,16 +7051,15 @@
 
         async function loadConversationByGHLContact(contact, container) {
             try {
-                // Try to get conversation from GHL conversations API
-                const ghlCreds = {
-                    api_key: 'pit-6cb3545f-9480-4846-af63-4135957d4cf6',
-                    location_id: 'SEMmeWOBlogS8eeis0N9'
-                };
+                // Use stored GHL config from loadContacts (multi-tenant secure)
+                if (!contactsGhlConfig) {
+                    throw new Error('GHL configuration not loaded');
+                }
 
                 const ghlResponse = await authenticatedFetch(`/api/ghl/conversations/${contact.id}/messages?limit=50`, {
                     headers: {
-                        'x-ghl-api-key': ghlCreds.api_key,
-                        'x-ghl-location-id': ghlCreds.location_id
+                        'x-ghl-api-key': contactsGhlConfig.apiKey,
+                        'x-ghl-location-id': contactsGhlConfig.locationId
                     }
                 });
 
@@ -7159,17 +7171,16 @@
             btn.innerHTML = '<span>Syncing...</span>';
 
             try {
-                // Trigger sync via GHL API
-                const ghlCreds = {
-                    api_key: 'pit-6cb3545f-9480-4846-af63-4135957d4cf6',
-                    location_id: 'SEMmeWOBlogS8eeis0N9'
-                };
+                // Use stored GHL config from loadContacts (multi-tenant secure)
+                if (!contactsGhlConfig) {
+                    throw new Error('GHL configuration not loaded');
+                }
 
                 // Fetch latest messages from GHL
                 const response = await authenticatedFetch(`/api/ghl/conversations/${currentContactConversation.id}/messages?limit=50`, {
                     headers: {
-                        'x-ghl-api-key': ghlCreds.api_key,
-                        'x-ghl-location-id': ghlCreds.location_id
+                        'x-ghl-api-key': contactsGhlConfig.apiKey,
+                        'x-ghl-location-id': contactsGhlConfig.locationId
                     }
                 });
 
@@ -7411,14 +7422,19 @@
             document.getElementById('analyticsContent').style.display = 'block';
         }
 
-        // Load contacts count on page load
+        // Load contacts count on page load (multi-tenant secure)
         async function loadContactsCount() {
             try {
-                // Hardcoded GHL credentials for Client 15
-                const ghlCreds = {
-                    api_key: 'pit-6cb3545f-9480-4846-af63-4135957d4cf6',
-                    location_id: 'SEMmeWOBlogS8eeis0N9'
-                };
+                // Fetch GHL credentials for this specific client
+                const credsResponse = await authenticatedFetch(`/api/client/ghl-credentials/${CLIENT_ID}`);
+                const credsData = await credsResponse.json();
+
+                if (!credsData.success || !credsData.credentials) {
+                    console.log('📇 No GHL integration - contacts count unavailable');
+                    return;
+                }
+
+                const ghlCreds = credsData.credentials;
 
                 const response = await authenticatedFetch('/api/ghl/contacts/search', {
                     method: 'POST',
