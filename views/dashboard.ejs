@@ -2204,7 +2204,7 @@
                         <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1ceaedd63a48d8059af0a.png" alt="RinglyPro" style="height: 40px; width: 40px; border-radius: 8px; margin-right: 10px;">
                         <div class="rachel-text">
                             <h3 style="display: flex; align-items: center; gap: 6px;"><span id="businessNameDisplay">RinglyPro</span></h3>
-                            <p id="rachelStatusText" style="display: flex; align-items: center; gap: 4px;"><span class="status-dot active" id="rachelStatusDot" style="width: 8px; height: 8px;"></span> Checking status...</p>
+                            <p style="display: flex; align-items: center; gap: 4px;"><span class="status-dot active" id="rachelStatusDot" style="width: 8px; height: 8px;"></span> <span id="rachelStatusText">Checking status...</span></p>
                         </div>
                     </div>
                     <label class="toggle-switch">
@@ -3531,7 +3531,12 @@
         function updateRachelUI(enabled) {
             const dot = document.getElementById('rachelStatusDot');
             const text = document.getElementById('rachelStatusText');
-            
+
+            if (!dot || !text) {
+                console.warn('Rachel UI elements not found');
+                return;
+            }
+
             if (enabled) {
                 dot.classList.add('active');
                 dot.classList.remove('inactive');
