@@ -53,25 +53,22 @@ router.use(authenticateClient);
 // Includes auto-sync from GHL if configured
 router.get('/', async (req, res) => {
   try {
-    // Auto-sync from GHL if configured (non-blocking, don't wait for result)
+    // Auto-sync from GHL if configured - BLOCKING to ensure fresh data
     const syncFromGHL = req.query.sync !== 'false';
     if (syncFromGHL) {
-      // Sync in background - don't block the response
-      (async () => {
-        try {
-          const today = new Date();
-          const startDate = today.toISOString().split('T')[0];
-          const endDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      try {
+        const today = new Date();
+        const startDate = today.toISOString().split('T')[0];
+        const endDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-          const crmData = await crmAppointmentService.fetchAllCRMAppointments(req.clientId, startDate, endDate);
-          if (crmData.appointments && crmData.appointments.length > 0) {
-            await crmAppointmentService.syncToLocalDB(req.clientId, crmData.appointments);
-            console.log(`🔄 Auto-synced ${crmData.appointments.length} GHL appointments for client ${req.clientId}`);
-          }
-        } catch (syncError) {
-          console.log(`⚠️ GHL sync skipped for client ${req.clientId}:`, syncError.message);
+        const crmData = await crmAppointmentService.fetchAllCRMAppointments(req.clientId, startDate, endDate);
+        if (crmData.appointments && crmData.appointments.length > 0) {
+          await crmAppointmentService.syncToLocalDB(req.clientId, crmData.appointments);
+          console.log(`🔄 Auto-synced ${crmData.appointments.length} GHL appointments for client ${req.clientId}`);
         }
-      })();
+      } catch (syncError) {
+        console.log(`⚠️ GHL sync skipped for client ${req.clientId}:`, syncError.message);
+      }
     }
 
     const appointments = await Appointment.findAll({
