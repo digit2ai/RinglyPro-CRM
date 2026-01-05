@@ -570,6 +570,7 @@ class GHLBookingService {
 
   /**
    * Get appointments from GHL for a date range
+   * Fetches from ALL calendars in the location (not just one calendar)
    * Used for syncing CRM appointments to dashboard
    * @param {number} clientId - Client ID
    * @param {string} startDate - Start date (YYYY-MM-DD)
@@ -583,41 +584,58 @@ class GHLBookingService {
     }
 
     try {
-      // Get calendar ID from client settings
-      const settingsResult = await sequelize.query(
-        `SELECT settings->'integration'->'ghl'->>'calendarId' as calendar_id FROM clients WHERE id = :clientId`,
-        { replacements: { clientId }, type: QueryTypes.SELECT }
-      );
-      const calendarId = settingsResult[0]?.calendar_id;
-
       // Convert dates to timestamps for GHL API
       const startTime = new Date(startDate);
       startTime.setHours(0, 0, 0, 0);
       const endTime = new Date(endDate);
       endTime.setHours(23, 59, 59, 999);
 
-      // GHL uses /calendars/events endpoint to fetch appointments
-      const params = {
-        startTime: startTime.getTime(),
-        endTime: endTime.getTime()
-      };
+      // First, get ALL calendars for this location
+      const calendarsResult = await this.callGHL(credentials, 'GET', '/calendars/');
+      const calendars = calendarsResult.success ? (calendarsResult.data.calendars || []) : [];
 
-      // Add calendarId if available to filter to specific calendar
-      if (calendarId) {
-        params.calendarId = calendarId;
+      logger.info(`[GHL] Found ${calendars.length} calendars for client ${clientId}: ${calendars.map(c => c.name).join(', ')}`);
+
+      let allAppointments = [];
+
+      if (calendars.length === 0) {
+        // No calendars found, try fetching all events without calendar filter
+        const params = {
+          startTime: startTime.getTime(),
+          endTime: endTime.getTime()
+        };
+
+        const result = await this.callGHL(credentials, 'GET', '/calendars/events', params);
+        if (result.success) {
+          allAppointments = result.data?.events || [];
+        }
+      } else {
+        // Fetch appointments from EACH calendar
+        for (const calendar of calendars) {
+          try {
+            const params = {
+              startTime: startTime.getTime(),
+              endTime: endTime.getTime(),
+              calendarId: calendar.id
+            };
+
+            const result = await this.callGHL(credentials, 'GET', '/calendars/events', params);
+            if (result.success && result.data?.events) {
+              const calendarEvents = result.data.events.map(event => ({
+                ...event,
+                calendarName: calendar.name  // Add calendar name for reference
+              }));
+              allAppointments = allAppointments.concat(calendarEvents);
+              logger.info(`[GHL] Calendar "${calendar.name}": ${result.data.events.length} appointments`);
+            }
+          } catch (calendarError) {
+            logger.warn(`[GHL] Error fetching from calendar ${calendar.name}: ${calendarError.message}`);
+          }
+        }
       }
-
-      const result = await this.callGHL(credentials, 'GET', '/calendars/events', params);
-
-      if (!result.success) {
-        logger.warn(`[GHL] Failed to fetch appointments: ${result.error}`);
-        return { success: false, error: result.error, appointments: [] };
-      }
-
-      const events = result.data?.events || [];
 
       // Map GHL events to standardized format
-      const appointments = events.map(event => ({
+      const appointments = allAppointments.map(event => ({
         id: event.id,
         ghlAppointmentId: event.id,
         ghlContactId: event.contactId,
@@ -628,13 +646,13 @@ class GHLBookingService {
         appointmentDate: event.startTime ? new Date(event.startTime).toISOString().split('T')[0] : null,
         appointmentTime: event.startTime ? new Date(event.startTime).toISOString().split('T')[1].substring(0, 8) : null,
         duration: event.duration || 30,
-        purpose: event.title || 'GHL Appointment',
+        purpose: event.calendarName || event.title || 'GHL Appointment',
         status: this.mapGHLStatus(event.appointmentStatus || event.status),
         source: 'ghl_sync',
         notes: event.notes || ''
       }));
 
-      logger.info(`[GHL] Fetched ${appointments.length} appointments for client ${clientId}`);
+      logger.info(`[GHL] Fetched ${appointments.length} total appointments from ${calendars.length} calendars for client ${clientId}`);
       return { success: true, appointments };
 
     } catch (error) {
