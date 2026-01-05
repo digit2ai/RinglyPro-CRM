@@ -2197,12 +2197,6 @@
                 </div>
             </div>
             
-            <!-- User Info -->
-            <div class="user-info">
-                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1ceaedd63a48d8059af0a.png" alt="RinglyPro Logo" style="height: 80px; width: auto; margin-bottom: 10px; border-radius: 12px;">
-                <span class="username" id="username-display">Loading...</span>
-            </div>
-            
             <!-- AI Assistant Toggle Card with Logo and Business Name -->
             <div class="rachel-card">
                 <div class="rachel-toggle-row">
@@ -2293,13 +2287,6 @@
         <!-- Calendar / Appointments -->
         <div class="content-section active" id="todaySection">
             <div class="section-header" style="flex-wrap: wrap; gap: 1rem;">
-                <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
-                    <div class="date-filter-tabs" style="display: flex; gap: 0.5rem;">
-                        <button class="filter-tab active" onclick="filterAppointmentsByDays(7)" data-days="7">7 days</button>
-                        <button class="filter-tab" onclick="filterAppointmentsByDays(14)" data-days="14">14 days</button>
-                        <button class="filter-tab" onclick="filterAppointmentsByDays(30)" data-days="30">30 days</button>
-                    </div>
-                </div>
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <!-- View Toggle -->
                     <div class="view-toggle">
@@ -2316,14 +2303,6 @@
                             Calendar
                         </button>
                     </div>
-                    <button onclick="syncCRMAppointments()" id="syncCrmBtn" class="btn-refresh" style="display: flex; align-items: center; gap: 0.5rem; background: #f0f9ff; border: 1px solid #0ea5e9; color: #0369a1;">
-                        <svg id="syncCrmIcon" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-                        </svg>
-                        <span id="syncCrmText">Sync CRM</span>
-                    </button>
-                    <span id="lastSyncTime" style="font-size: 0.75rem; color: #6b7280; display: none;"></span>
                     <button onclick="openAppointmentModal()" class="btn-primary" style="display: flex; align-items: center; gap: 0.5rem;">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
@@ -2907,10 +2886,10 @@
         </div>
     </div>
 
-    <!-- Contacts Modal - Full Window -->
+    <!-- Contacts Modal - Full Screen -->
     <div id="contactsModal" class="modal">
         <div class="modal-overlay" onclick="closeContactsModal()"></div>
-        <div class="modal-content" style="width: 95vw; max-width: 1400px; height: 90vh; max-height: 90vh; display: flex; flex-direction: column;">
+        <div class="modal-content" style="width: 100vw; max-width: 100vw; height: 100vh; max-height: 100vh; margin: 0; border-radius: 0; display: flex; flex-direction: column;">
             <div class="modal-header">
                 <h2>Contacts</h2>
                 <button class="modal-close" onclick="closeContactsModal()">
