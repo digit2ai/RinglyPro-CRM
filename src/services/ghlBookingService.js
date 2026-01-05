@@ -570,7 +570,7 @@ class GHLBookingService {
 
   /**
    * Get appointments from GHL for a date range
-   * Fetches from ALL calendars in the location (not just one calendar)
+   * Fetches from ALL calendars in the location including busy/booked slots
    * Used for syncing CRM appointments to dashboard
    * @param {number} clientId - Client ID
    * @param {string} startDate - Start date (YYYY-MM-DD)
@@ -584,12 +584,6 @@ class GHLBookingService {
     }
 
     try {
-      // Convert dates to timestamps for GHL API
-      const startTime = new Date(startDate);
-      startTime.setHours(0, 0, 0, 0);
-      const endTime = new Date(endDate);
-      endTime.setHours(23, 59, 59, 999);
-
       // First, get ALL calendars for this location
       const calendarsResult = await this.callGHL(credentials, 'GET', '/calendars/');
       const calendars = calendarsResult.success ? (calendarsResult.data.calendars || []) : [];
@@ -598,61 +592,110 @@ class GHLBookingService {
 
       let allAppointments = [];
 
-      if (calendars.length === 0) {
-        // No calendars found, try fetching all events without calendar filter
-        const params = {
-          startTime: startTime.getTime(),
-          endTime: endTime.getTime()
-        };
-
-        const result = await this.callGHL(credentials, 'GET', '/calendars/events', params);
-        if (result.success) {
-          allAppointments = result.data?.events || [];
-        }
-      } else {
-        // Fetch appointments from EACH calendar
-        for (const calendar of calendars) {
-          try {
-            const params = {
-              startTime: startTime.getTime(),
-              endTime: endTime.getTime(),
-              calendarId: calendar.id
-            };
-
-            const result = await this.callGHL(credentials, 'GET', '/calendars/events', params);
-            if (result.success && result.data?.events) {
-              const calendarEvents = result.data.events.map(event => ({
-                ...event,
-                calendarName: calendar.name  // Add calendar name for reference
-              }));
-              allAppointments = allAppointments.concat(calendarEvents);
-              logger.info(`[GHL] Calendar "${calendar.name}": ${result.data.events.length} appointments`);
-            }
-          } catch (calendarError) {
-            logger.warn(`[GHL] Error fetching from calendar ${calendar.name}: ${calendarError.message}`);
+      // For each calendar, derive busy slots from open hours vs free slots
+      for (const calendar of calendars) {
+        try {
+          // Get full calendar details including open hours
+          const calDetailResult = await this.callGHLWithoutLocation(credentials, 'GET', `/calendars/${calendar.id}`);
+          if (!calDetailResult.success) {
+            logger.warn(`[GHL] Could not get details for calendar ${calendar.name}`);
+            continue;
           }
+
+          const calDetail = calDetailResult.data.calendar;
+          const slotDuration = calDetail.slotDuration || 60; // Default 60 mins
+
+          // Generate dates in range
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+
+          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toISOString().split('T')[0];
+            const dayOfWeek = d.getDay(); // 0=Sun, 1=Mon, etc.
+
+            // Find open hours config for this day
+            const dayConfig = calDetail.openHours?.find(oh => oh.daysOfTheWeek?.includes(dayOfWeek));
+            if (!dayConfig || !dayConfig.hours || !dayConfig.hours[0]) {
+              continue; // No open hours for this day
+            }
+
+            const hours = dayConfig.hours[0];
+            const openHour = hours.openHour;
+            const closeHour = hours.closeHour;
+
+            // Generate all possible slots based on open hours
+            const allPossibleSlots = [];
+            for (let h = openHour; h < closeHour; h++) {
+              // Format: 2026-01-05T10:00:00-05:00
+              allPossibleSlots.push(`${dateStr}T${h.toString().padStart(2, '0')}:00:00-05:00`);
+            }
+
+            if (allPossibleSlots.length === 0) continue;
+
+            // Get free slots from GHL for this day
+            const dayStart = new Date(`${dateStr}T00:00:00-05:00`).getTime();
+            const dayEnd = new Date(`${dateStr}T23:59:59-05:00`).getTime();
+
+            const freeSlotsResult = await this.callGHLWithoutLocation(
+              credentials,
+              'GET',
+              `/calendars/${calendar.id}/free-slots`,
+              { startDate: dayStart, endDate: dayEnd }
+            );
+
+            const freeSlots = freeSlotsResult.success ? (freeSlotsResult.data[dateStr]?.slots || []) : [];
+
+            // Busy slots = all possible slots - free slots
+            const busySlots = allPossibleSlots.filter(slot => !freeSlots.includes(slot));
+
+            // Add busy slots as appointments
+            for (const slot of busySlots) {
+              const slotDate = new Date(slot);
+              const appointmentId = `busy_${calendar.id}_${dateStr}_${slotDate.getHours()}`;
+
+              allAppointments.push({
+                id: appointmentId,
+                ghlAppointmentId: appointmentId,
+                ghlContactId: null,
+                ghlCalendarId: calendar.id,
+                calendarName: calendar.name,
+                startTime: slot,
+                title: 'Busy',
+                appointmentStatus: 'confirmed',
+                duration: slotDuration,
+                isBusySlot: true
+              });
+            }
+
+            logger.info(`[GHL] Calendar "${calendar.name}" ${dateStr}: ${busySlots.length} busy, ${freeSlots.length} free`);
+          }
+        } catch (calendarError) {
+          logger.warn(`[GHL] Error processing calendar ${calendar.name}: ${calendarError.message}`);
         }
       }
 
-      // Map GHL events to standardized format
-      const appointments = allAppointments.map(event => ({
-        id: event.id,
-        ghlAppointmentId: event.id,
-        ghlContactId: event.contactId,
-        ghlCalendarId: event.calendarId,
-        customerName: event.contact?.name || event.title || 'Unknown',
-        customerPhone: event.contact?.phone || '',
-        customerEmail: event.contact?.email || '',
-        appointmentDate: event.startTime ? new Date(event.startTime).toISOString().split('T')[0] : null,
-        appointmentTime: event.startTime ? new Date(event.startTime).toISOString().split('T')[1].substring(0, 8) : null,
-        duration: event.duration || 30,
-        purpose: event.calendarName || event.title || 'GHL Appointment',
-        status: this.mapGHLStatus(event.appointmentStatus || event.status),
-        source: 'ghl_sync',
-        notes: event.notes || ''
-      }));
+      // Map to standardized format
+      const appointments = allAppointments.map(event => {
+        const startDT = event.startTime ? new Date(event.startTime) : null;
+        return {
+          id: event.id,
+          ghlAppointmentId: event.ghlAppointmentId,
+          ghlContactId: event.ghlContactId,
+          ghlCalendarId: event.ghlCalendarId,
+          customerName: event.isBusySlot ? 'Busy' : (event.contact?.name || event.title || 'Unknown'),
+          customerPhone: event.contact?.phone || '',
+          customerEmail: event.contact?.email || '',
+          appointmentDate: startDT ? startDT.toISOString().split('T')[0] : null,
+          appointmentTime: startDT ? `${startDT.getHours().toString().padStart(2, '0')}:00:00` : null,
+          duration: event.duration || 60,
+          purpose: event.calendarName || event.title || 'GHL Appointment',
+          status: this.mapGHLStatus(event.appointmentStatus || event.status),
+          source: 'ghl_sync',
+          notes: event.isBusySlot ? 'Busy/Blocked slot from GHL calendar' : (event.notes || '')
+        };
+      });
 
-      logger.info(`[GHL] Fetched ${appointments.length} total appointments from ${calendars.length} calendars for client ${clientId}`);
+      logger.info(`[GHL] Fetched ${appointments.length} total appointments (busy slots) from ${calendars.length} calendars for client ${clientId}`);
       return { success: true, appointments };
 
     } catch (error) {
