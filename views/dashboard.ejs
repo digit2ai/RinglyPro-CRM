@@ -846,6 +846,22 @@
             border-left-color: #10b981;
         }
 
+        /* Calendar-specific colors for GHL busy slots */
+        .calendar-event.hyperbaric-busy {
+            background: #ffedd5;
+            border-left-color: #f97316;
+        }
+
+        .calendar-event.recovery-busy {
+            background: #fee2e2;
+            border-left-color: #ef4444;
+        }
+
+        .calendar-event.cryotherapy-busy {
+            background: #dcfce7;
+            border-left-color: #22c55e;
+        }
+
         .calendar-event.pending-deposit {
             background: #fef3c7;
             border-left-color: #f59e0b;
@@ -874,6 +890,33 @@
 
         .calendar-event.ghl-sync .event-time {
             color: #10b981;
+        }
+
+        /* Hyperbaric busy slot text colors (Orange) */
+        .calendar-event.hyperbaric-busy .event-title {
+            color: #9a3412;
+        }
+
+        .calendar-event.hyperbaric-busy .event-time {
+            color: #ea580c;
+        }
+
+        /* Recovery busy slot text colors (Red) */
+        .calendar-event.recovery-busy .event-title {
+            color: #991b1b;
+        }
+
+        .calendar-event.recovery-busy .event-time {
+            color: #dc2626;
+        }
+
+        /* Cryotherapy busy slot text colors (Green) */
+        .calendar-event.cryotherapy-busy .event-title {
+            color: #166534;
+        }
+
+        .calendar-event.cryotherapy-busy .event-time {
+            color: #16a34a;
         }
 
         .calendar-event.pending-deposit .event-title {
@@ -4449,16 +4492,35 @@
                     const slotHeight = 60; // pixels per hour
                     const topOffset = (hours - startHour) * slotHeight + (minutes / 60) * slotHeight;
 
-                    // Determine event class based on source/status
+                    // Determine event class based on source/status/calendar
                     const source = apt.source || 'voice_booking';
                     const depositStatus = apt.depositStatus || apt.deposit_status || 'not_required';
+                    const purpose = (apt.purpose || '').toLowerCase();
+                    const notes = (apt.notes || '').toLowerCase();
+                    const ghlCalendarId = apt.ghlCalendarId || apt.ghl_calendar_id || '';
                     let eventClass = 'calendar-event';
+
+                    // Check if it's a busy/blocked slot from GHL
+                    const isBusySlot = notes.includes('busy/blocked slot') || (apt.customerName || '').toLowerCase() === 'busy';
 
                     if (depositStatus === 'pending') {
                         eventClass += ' pending-deposit';
+                    } else if (isBusySlot && source === 'ghl_sync') {
+                        // Color-code busy slots by calendar type
+                        if (purpose.includes('hyperbaric') || ghlCalendarId === 'lqwsBWMJip0wx6NGLeaG') {
+                            eventClass += ' hyperbaric-busy';
+                        } else if (purpose.includes('recovery') || ghlCalendarId === 'OD1RVR9H5rnGhD3s0xoD') {
+                            eventClass += ' recovery-busy';
+                        } else if (purpose.includes('cryotherapy') || purpose.includes('localized') || ghlCalendarId === 'a4NHsZo1R2mGdpORoJSB') {
+                            eventClass += ' cryotherapy-busy';
+                        } else {
+                            // Default busy slot color (orange)
+                            eventClass += ' hyperbaric-busy';
+                        }
                     } else if (source === 'ghl_sync') {
                         eventClass += ' ghl-sync';
                     } else {
+                        // AI-booked appointments (blue)
                         eventClass += ' voice-booking';
                     }
 

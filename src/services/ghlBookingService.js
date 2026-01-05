@@ -650,8 +650,9 @@ class GHLBookingService {
 
             // Add busy slots as appointments
             for (const slot of busySlots) {
-              const slotDate = new Date(slot);
-              const appointmentId = `busy_${calendar.id}_${dateStr}_${slotDate.getHours()}`;
+              // Extract hour from string to avoid timezone issues (slot format: "2026-01-06T10:00:00-05:00")
+              const slotHour = slot.substring(11, 13);
+              const appointmentId = `busy_${calendar.id}_${dateStr}_${slotHour}`;
 
               allAppointments.push({
                 id: appointmentId,

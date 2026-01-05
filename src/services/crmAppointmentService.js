@@ -332,7 +332,7 @@ async function syncToLocalDB(clientId, appointments) {
             client_id, customer_name, customer_phone, customer_email,
             appointment_date, appointment_time, duration, purpose,
             status, source, confirmation_code, notes,
-            ghl_appointment_id, ghl_contact_id,
+            ghl_appointment_id, ghl_contact_id, ghl_calendar_id,
             hubspot_meeting_id, hubspot_contact_id,
             vagaro_appointment_id, vagaro_contact_id,
             crm_last_synced_at, created_at, updated_at
@@ -340,7 +340,7 @@ async function syncToLocalDB(clientId, appointments) {
             :clientId, :customerName, :customerPhone, :customerEmail,
             :appointmentDate, :appointmentTime, :duration, :purpose,
             :status, :source, :confirmationCode, :notes,
-            :ghlAppointmentId, :ghlContactId,
+            :ghlAppointmentId, :ghlContactId, :ghlCalendarId,
             :hubspotMeetingId, :hubspotContactId,
             :vagaroAppointmentId, :vagaroContactId,
             NOW(), NOW(), NOW()
@@ -361,6 +361,7 @@ async function syncToLocalDB(clientId, appointments) {
               notes: appt.notes || '',
               ghlAppointmentId: appt.ghlAppointmentId || null,
               ghlContactId: appt.ghlContactId || null,
+              ghlCalendarId: appt.ghlCalendarId || null,
               hubspotMeetingId: appt.hubspotMeetingId || null,
               hubspotContactId: appt.hubspotContactId || null,
               vagaroAppointmentId: appt.vagaroAppointmentId || null,
