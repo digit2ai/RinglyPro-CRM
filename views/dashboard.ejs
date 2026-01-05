@@ -4507,11 +4507,12 @@
                         eventClass += ' pending-deposit';
                     } else if (isBusySlot && source === 'ghl_sync') {
                         // Color-code busy slots by calendar type
+                        // Calendar IDs: Hyperbaric=lqwsBWMJip0wx6NGLeaG, Cryo=mV3NGEcqoXayzHtIEE97, Recovery=yHDUtxQWt9GzaPcdUnxs
                         if (purpose.includes('hyperbaric') || ghlCalendarId === 'lqwsBWMJip0wx6NGLeaG') {
                             eventClass += ' hyperbaric-busy';
-                        } else if (purpose.includes('recovery') || ghlCalendarId === 'OD1RVR9H5rnGhD3s0xoD') {
+                        } else if (purpose.includes('recovery') || ghlCalendarId === 'yHDUtxQWt9GzaPcdUnxs') {
                             eventClass += ' recovery-busy';
-                        } else if (purpose.includes('cryotherapy') || purpose.includes('localized') || ghlCalendarId === 'a4NHsZo1R2mGdpORoJSB') {
+                        } else if (purpose.includes('cryotherapy') || purpose.includes('localized') || ghlCalendarId === 'mV3NGEcqoXayzHtIEE97') {
                             eventClass += ' cryotherapy-busy';
                         } else {
                             // Default busy slot color (orange)
