@@ -165,7 +165,7 @@ class OutboundCallerService {
     if (clientId) {
       try {
         const [clientData] = await sequelize.query(
-          'SELECT ringlypro_number, elevenlabs_agent_id, use_elevenlabs_outbound FROM clients WHERE id = :clientId',
+          'SELECT ringlypro_number, elevenlabs_agent_id, elevenlabs_phone_number_id, use_elevenlabs_outbound FROM clients WHERE id = :clientId',
           {
             replacements: { clientId },
             type: QueryTypes.SELECT
@@ -174,7 +174,9 @@ class OutboundCallerService {
 
         if (clientData && clientData.use_elevenlabs_outbound && clientData.elevenlabs_agent_id) {
           logger.info(`📞 Client ${clientId} uses ElevenLabs outbound - initiating AI call`);
-          return await this.makeElevenLabsCall(validation.normalized, clientData.elevenlabs_agent_id, clientData.ringlypro_number, leadData);
+          // Use ElevenLabs phone number ID if available, otherwise fall back to ringlypro_number
+          const phoneNumberId = clientData.elevenlabs_phone_number_id || clientData.ringlypro_number;
+          return await this.makeElevenLabsCall(validation.normalized, clientData.elevenlabs_agent_id, phoneNumberId, leadData);
         }
       } catch (error) {
         logger.error(`Error checking ElevenLabs config for client ${clientId}:`, error.message);
