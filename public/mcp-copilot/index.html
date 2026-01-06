@@ -90,60 +90,6 @@
             background: #dc2626;
         }
 
-        /* Connection Status Card */
-        .connection-card {
-            background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
-            border: 2px solid #3b82f6;
-            border-radius: 0.75rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .connection-status {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .connection-info {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .status-dot {
-            width: 0.75rem;
-            height: 0.75rem;
-            border-radius: 50%;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        .status-dot.active {
-            background: #10b981;
-        }
-
-        .status-dot.inactive {
-            background: #ef4444;
-            animation: none;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .connection-text h3 {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 0.125rem;
-        }
-
-        .connection-text p {
-            font-size: 0.75rem;
-            color: #6b7280;
-        }
-
         /* Quick Actions */
         .quick-actions {
             padding: 1rem;
@@ -495,18 +441,6 @@
                 <a href="https://aiagent.ringlypro.com/" class="back-btn">← Back to Dashboard</a>
             </div>
 
-            <!-- Connection Status -->
-            <div class="connection-card">
-                <div class="connection-status">
-                    <div class="connection-info">
-                        <div id="statusDot" class="status-dot inactive"></div>
-                        <div class="connection-text">
-                            <h3 id="crmName">CRM</h3>
-                            <p id="connectionStatus">Checking...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -516,7 +450,7 @@
         <div class="action-grid">
             <button class="action-btn btn-business" onclick="openBusinessCollectorForm()">
                 <div class="action-icon">🔍</div>
-                <div>Business Collector</div>
+                <div>AI Lead Collector</div>
             </button>
 
             <button class="action-btn btn-call" onclick="openAdHocCall()">
