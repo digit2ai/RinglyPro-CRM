@@ -1088,12 +1088,14 @@ router.get('/ghl-calendar-slots', async (req, res) => {
     console.log(`📆 Fetching live GHL calendar slots for client ${clientId}`);
 
     // Get client's GHL credentials
-    const [clients] = await sequelize.query(
+    const clientResults = await sequelize.query(
       'SELECT ghl_api_key, ghl_location_id FROM clients WHERE id = :clientId',
       { replacements: { clientId }, type: sequelize.QueryTypes.SELECT }
     );
 
-    if (!clients || !clients.ghl_api_key) {
+    console.log(`📆 Client query result:`, clientResults);
+
+    if (!clientResults || clientResults.length === 0 || !clientResults[0].ghl_api_key) {
       return res.json({
         success: false,
         error: 'GHL not configured for this client',
@@ -1101,8 +1103,8 @@ router.get('/ghl-calendar-slots', async (req, res) => {
       });
     }
 
-    const apiKey = clients.ghl_api_key;
-    const locationId = clients.ghl_location_id;
+    const apiKey = clientResults[0].ghl_api_key;
+    const locationId = clientResults[0].ghl_location_id;
 
     // Get all calendars for this location
     const calendarsRes = await axios.get(
