@@ -110,12 +110,9 @@ class OutboundCallerService {
 
   /**
    * Make a single outbound call
+   * Supports both traditional Twilio calls and ElevenLabs AI Agent calls
    */
   async makeCall(phoneNumber, leadData = {}, userId = null, clientId = null) {
-    if (!this.twilioClient) {
-      throw new Error('Twilio not configured');
-    }
-
     // Check token balance and deduct 1 token if userId provided
     if (userId) {
       try {
@@ -164,8 +161,34 @@ class OutboundCallerService {
       };
     }
 
+    // Check if client uses ElevenLabs for outbound calls
+    if (clientId) {
+      try {
+        const [clientData] = await sequelize.query(
+          'SELECT ringlypro_number, elevenlabs_agent_id, use_elevenlabs_outbound FROM clients WHERE id = :clientId',
+          {
+            replacements: { clientId },
+            type: QueryTypes.SELECT
+          }
+        );
+
+        if (clientData && clientData.use_elevenlabs_outbound && clientData.elevenlabs_agent_id) {
+          logger.info(`📞 Client ${clientId} uses ElevenLabs outbound - initiating AI call`);
+          return await this.makeElevenLabsCall(validation.normalized, clientData.elevenlabs_agent_id, clientData.ringlypro_number, leadData);
+        }
+      } catch (error) {
+        logger.error(`Error checking ElevenLabs config for client ${clientId}:`, error.message);
+        // Fall through to Twilio call
+      }
+    }
+
+    // Traditional Twilio call
+    if (!this.twilioClient) {
+      throw new Error('Twilio not configured');
+    }
+
     try {
-      logger.info(`Making call to ${validation.normalized}${clientId ? ` for client ${clientId}` : ''}`);
+      logger.info(`Making Twilio call to ${validation.normalized}${clientId ? ` for client ${clientId}` : ''}`);
 
       // Fetch client's Twilio number if clientId provided
       let fromNumber = this.twilioNumber; // Default to environment variable
@@ -244,6 +267,92 @@ class OutboundCallerService {
         success: false,
         error: error.message,
         phone: phoneNumber
+      };
+    }
+  }
+
+  /**
+   * Make an outbound call using ElevenLabs Conversational AI Agent
+   * This initiates an interactive AI phone call instead of playing a pre-recorded message
+   */
+  async makeElevenLabsCall(phoneNumber, agentId, fromNumber, leadData = {}) {
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+
+    if (!apiKey) {
+      logger.error('❌ ELEVENLABS_API_KEY not configured');
+      throw new Error('ElevenLabs API key not configured');
+    }
+
+    try {
+      logger.info(`🤖 Initiating ElevenLabs AI call to ${phoneNumber} with agent ${agentId}`);
+
+      const response = await fetch('https://api.elevenlabs.io/v1/convai/conversation/create_phone_call', {
+        method: 'POST',
+        headers: {
+          'xi-api-key': apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          agent_id: agentId,
+          agent_phone_number_id: fromNumber, // The ElevenLabs phone number ID or Twilio number
+          customer_phone_number: phoneNumber,
+          // Optional: Override agent settings for this specific call
+          conversation_config_override: {
+            agent: {
+              first_message: leadData.customFirstMessage || null
+            }
+          }
+        })
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        logger.error(`❌ ElevenLabs API error: ${JSON.stringify(responseData)}`);
+        throw new Error(responseData.detail?.message || responseData.error || 'ElevenLabs API error');
+      }
+
+      logger.info(`✅ ElevenLabs call initiated: ${JSON.stringify(responseData)}`);
+
+      const logEntry = {
+        callSid: responseData.conversation_id || responseData.call_id,
+        phone: phoneNumber,
+        leadData,
+        status: 'initiated',
+        timestamp: new Date(),
+        direction: 'outbound',
+        provider: 'elevenlabs'
+      };
+
+      this.callLogs.push(logEntry);
+
+      return {
+        success: true,
+        callSid: responseData.conversation_id || responseData.call_id,
+        phone: phoneNumber,
+        status: 'initiated',
+        provider: 'elevenlabs',
+        response: responseData
+      };
+
+    } catch (error) {
+      logger.error(`❌ ElevenLabs call error: ${error.message}`);
+
+      const errorLog = {
+        phone: phoneNumber,
+        error: error.message,
+        timestamp: new Date(),
+        status: 'failed',
+        provider: 'elevenlabs'
+      };
+
+      this.callLogs.push(errorLog);
+
+      return {
+        success: false,
+        error: error.message,
+        phone: phoneNumber,
+        provider: 'elevenlabs'
       };
     }
   }
