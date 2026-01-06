@@ -288,7 +288,9 @@ class OutboundCallerService {
     try {
       logger.info(`🤖 Initiating ElevenLabs AI call to ${phoneNumber} with agent ${agentId}`);
 
-      const response = await fetch('https://api.elevenlabs.io/v1/convai/conversation/create_phone_call', {
+      // ElevenLabs Twilio Outbound Call API
+      // Docs: https://elevenlabs.io/docs/api-reference/twilio/outbound-call
+      const response = await fetch('https://api.elevenlabs.io/v1/convai/twilio/outbound-call', {
         method: 'POST',
         headers: {
           'xi-api-key': apiKey,
@@ -296,14 +298,8 @@ class OutboundCallerService {
         },
         body: JSON.stringify({
           agent_id: agentId,
-          agent_phone_number_id: fromNumber, // The ElevenLabs phone number ID or Twilio number
-          customer_phone_number: phoneNumber,
-          // Optional: Override agent settings for this specific call
-          conversation_config_override: {
-            agent: {
-              first_message: leadData.customFirstMessage || null
-            }
-          }
+          agent_phone_number_id: fromNumber, // The ElevenLabs phone number ID
+          to_number: phoneNumber // Recipient's phone number
         })
       });
 
