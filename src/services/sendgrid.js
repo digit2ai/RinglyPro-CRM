@@ -203,6 +203,14 @@ async function sendBulkEmails(clientId, emails) {
         return response;
     } catch (error) {
         console.error(`❌ [Client ${clientId}] SendGrid bulk error:`, error.response?.body || error.message);
+
+        // Extract detailed error message from SendGrid response
+        if (error.response?.body?.errors) {
+            const errorMessages = error.response.body.errors.map(e => e.message).join(', ');
+            console.error(`❌ [Client ${clientId}] SendGrid detailed errors: ${errorMessages}`);
+            throw new Error(errorMessages);
+        }
+
         throw error;
     }
 }

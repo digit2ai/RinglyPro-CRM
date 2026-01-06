@@ -847,9 +847,9 @@
                 }
             });
 
-            // Message character counter
+            // Message character counter (uses innerText for contenteditable div)
             document.getElementById('emailMessage').addEventListener('input', (e) => {
-                const length = e.target.value.length;
+                const length = (e.target.innerText || '').length;
                 document.getElementById('messageCounter').textContent = `${length} characters`;
             });
 
