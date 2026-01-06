@@ -348,12 +348,13 @@ class ScheduledAutoCallerService {
       }
 
       // Make the call using existing outbound caller service
+      // Pass clientId to enable ElevenLabs AI calling for configured clients
       const result = await outboundCallerService.makeCall(prospect.phone_number, {
         name: prospect.business_name,
         category: prospect.category,
         location: prospect.location,
         prospectId: prospect.id
-      }, userId);
+      }, userId, this.currentClientId);
 
       if (result.success) {
         this.stats.calledToday++;
