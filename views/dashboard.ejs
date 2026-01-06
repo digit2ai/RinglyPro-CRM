@@ -2493,26 +2493,12 @@
         <div class="content-section active" id="todaySection">
             <div class="section-header" style="flex-wrap: wrap; gap: 1rem;">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <!-- View Toggle -->
-                    <div class="view-toggle">
-                        <button id="listViewBtn" onclick="setAppointmentView('list')" title="List View">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                            </svg>
-                            List
-                        </button>
-                        <button id="calendarViewBtn" class="active" onclick="setAppointmentView('calendar')" title="Calendar View">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                            Calendar
-                        </button>
-                        <button id="ghlCardsViewBtn" onclick="setAppointmentView('ghlCards')" title="GHL Calendar Cards">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-                            </svg>
-                            GHL Cards
-                        </button>
+                    <!-- Schedule Header -->
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="color: #4F46E5;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span style="font-weight: 600; font-size: 1rem; color: #111827;">Schedule</span>
                     </div>
                     <button onclick="openAppointmentModal()" class="btn-primary" style="display: flex; align-items: center; gap: 0.5rem;">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -2522,15 +2508,15 @@
                     </button>
                 </div>
             </div>
-            <!-- List View (hidden by default) -->
-            <div id="appointmentsList" style="display: none;">
+            <!-- List View (hidden - no longer used) -->
+            <div id="appointmentsList" style="display: none !important;">
                 <div class="loading">
                     <div class="spinner"></div>
                     <p>Loading appointments...</p>
                 </div>
             </div>
-            <!-- Calendar Grid View (default) -->
-            <div id="calendarView">
+            <!-- Calendar Grid View (hidden - no longer used) -->
+            <div id="calendarView" style="display: none !important;">
                 <div class="calendar-grid-container">
                     <div class="calendar-nav">
                         <button onclick="navigateCalendarWeek(-1)" title="Previous Week">
@@ -2554,8 +2540,8 @@
                     </div>
                 </div>
             </div>
-            <!-- GHL Calendar Cards View -->
-            <div id="ghlCardsView" style="display: none;">
+            <!-- Schedule View (GHL Calendar Cards) - Default View -->
+            <div id="ghlCardsView" style="display: block;">
                 <div class="ghl-cards-container">
                     <div class="ghl-cards-header">
                         <button onclick="refreshGHLCards()" class="btn-refresh" id="refreshGHLCardsBtn">
@@ -2563,7 +2549,7 @@
                                 <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
                                 <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
                             </svg>
-                            Refresh from GHL
+                            Refresh
                         </button>
                         <span class="ghl-last-updated" id="ghlLastUpdated"></span>
                     </div>
@@ -4351,19 +4337,8 @@
         // Load Dashboard Data
         async function loadDashboard() {
             try {
-                // Load ALL appointments (not just today) for 30-day filter
-                const appointmentsResponse = await authenticatedFetch(`/api/appointments`);
-                if (!appointmentsResponse) {
-                    throw new Error('No response from appointments API');
-                }
-
-                const appointmentsData = await appointmentsResponse.json();
-
-                if (appointmentsData.success) {
-                    renderAppointments(appointmentsData.appointments);
-                } else {
-                    throw new Error(appointmentsData.message || 'Failed to load appointments');
-                }
+                // Load Schedule (GHL Calendar Cards) on initial load
+                loadGHLCards();
 
                 // Load communications data separately
                 try {
@@ -4377,16 +4352,10 @@
                     }
                 } catch (commError) {
                     console.warn('Error loading communications:', commError);
-                    // Continue without communications - appointments still loaded
+                    // Continue without communications - schedule still loaded
                 }
             } catch (error) {
                 console.error('Error loading dashboard:', error);
-                document.getElementById('appointmentsList').innerHTML = `
-                    <div class="empty-state">
-                        <p>Error loading appointments</p>
-                        <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">${error.message}</p>
-                    </div>
-                `;
             }
         }
 
@@ -4525,42 +4494,16 @@
         // CALENDAR VIEW FUNCTIONS
         // =====================================================
 
-        let currentView = 'calendar'; // 'list', 'calendar', or 'ghlCards' - calendar is default
+        let currentView = 'ghlCards'; // 'ghlCards' is the default (Schedule view)
         let calendarWeekOffset = 0; // 0 = current week, -1 = last week, 1 = next week
         let ghlCardsData = null; // Cache for GHL cards data
 
-        // Toggle between list, calendar, and GHL cards view
+        // Set appointment view (Schedule/GHL Cards is now the only view)
         function setAppointmentView(view) {
-            currentView = view;
-            const listView = document.getElementById('appointmentsList');
-            const calendarView = document.getElementById('calendarView');
+            currentView = 'ghlCards'; // Always use GHL Cards (Schedule) view
             const ghlCardsView = document.getElementById('ghlCardsView');
-            const listBtn = document.getElementById('listViewBtn');
-            const calendarBtn = document.getElementById('calendarViewBtn');
-            const ghlCardsBtn = document.getElementById('ghlCardsViewBtn');
-
-            // Hide all views
-            listView.style.display = 'none';
-            calendarView.style.display = 'none';
-            ghlCardsView.style.display = 'none';
-
-            // Remove active from all buttons
-            listBtn.classList.remove('active');
-            calendarBtn.classList.remove('active');
-            ghlCardsBtn.classList.remove('active');
-
-            if (view === 'list') {
-                listView.style.display = 'block';
-                listBtn.classList.add('active');
-            } else if (view === 'ghlCards') {
-                ghlCardsView.style.display = 'block';
-                ghlCardsBtn.classList.add('active');
-                loadGHLCards();
-            } else {
-                calendarView.style.display = 'block';
-                calendarBtn.classList.add('active');
-                renderCalendarView();
-            }
+            ghlCardsView.style.display = 'block';
+            loadGHLCards();
         }
 
         // Load GHL Calendar Cards data
@@ -4904,35 +4847,16 @@
             });
         }
 
-        // Show appointment details (could open a modal or scroll to list item)
+        // Show appointment details (opens details via console log for now)
         function showAppointmentDetails(appointmentId) {
-            // Switch to list view and highlight the appointment
-            setAppointmentView('list');
-
-            // Scroll to and highlight the appointment card
-            const card = document.getElementById(`appointment-card-${appointmentId}`);
-            if (card) {
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                card.style.transition = 'box-shadow 0.3s';
-                card.style.boxShadow = '0 0 0 3px #3b82f6';
-                setTimeout(() => {
-                    card.style.boxShadow = '';
-                }, 2000);
-            }
+            console.log('Appointment details requested:', appointmentId);
+            // Could open a modal with appointment details in the future
         }
 
-        // Render Appointments (initial load - stores all)
+        // Render Appointments (kept for backward compatibility)
         function renderAppointments(appointments) {
-            // Store all appointments
+            // Store all appointments (for any legacy code that might need it)
             allAppointments = appointments || [];
-
-            // Apply current filter
-            filterAppointmentsByDays(currentDaysFilter);
-
-            // If calendar is the default view, render it
-            if (currentView === 'calendar') {
-                renderCalendarView();
-            }
         }
 
         // Render filtered appointments
