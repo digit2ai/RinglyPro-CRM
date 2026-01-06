@@ -927,6 +927,168 @@
             color: #b45309;
         }
 
+        /* GHL Calendar Cards View */
+        .ghl-cards-container {
+            padding: 1rem;
+        }
+
+        .ghl-cards-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .ghl-last-updated {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .ghl-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .ghl-calendar-card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .ghl-calendar-card.hyperbaric {
+            border-top: 4px solid #f97316;
+        }
+
+        .ghl-calendar-card.cryotherapy {
+            border-top: 4px solid #22c55e;
+        }
+
+        .ghl-calendar-card.recovery {
+            border-top: 4px solid #ef4444;
+        }
+
+        .ghl-card-header {
+            padding: 1rem;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .ghl-card-header h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 0.25rem;
+        }
+
+        .ghl-card-header .calendar-id {
+            font-size: 0.7rem;
+            color: #9ca3af;
+            font-family: monospace;
+        }
+
+        .ghl-card-header .open-hours {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+        }
+
+        .ghl-card-body {
+            padding: 0.75rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .ghl-date-row {
+            display: flex;
+            align-items: flex-start;
+            padding: 0.5rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .ghl-date-row:last-child {
+            border-bottom: none;
+        }
+
+        .ghl-date-row.closed {
+            background: #f9fafb;
+            color: #9ca3af;
+        }
+
+        .ghl-date-label {
+            width: 80px;
+            flex-shrink: 0;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #374151;
+        }
+
+        .ghl-date-label .day-name {
+            font-size: 0.7rem;
+            color: #9ca3af;
+            font-weight: 400;
+        }
+
+        .ghl-slots-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .ghl-slots-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .ghl-slots-row .label {
+            width: 50px;
+            flex-shrink: 0;
+            font-weight: 500;
+        }
+
+        .ghl-slots-row.free .label {
+            color: #16a34a;
+        }
+
+        .ghl-slots-row.busy .label {
+            color: #dc2626;
+        }
+
+        .ghl-slots-row .slots {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+
+        .ghl-slot-badge {
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        .ghl-slot-badge.free {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .ghl-slot-badge.busy {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .ghl-closed-badge {
+            background: #f3f4f6;
+            color: #6b7280;
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.7rem;
+        }
+
         /* Week Navigation */
         .calendar-nav {
             display: flex;
@@ -2345,6 +2507,12 @@
                             </svg>
                             Calendar
                         </button>
+                        <button id="ghlCardsViewBtn" onclick="setAppointmentView('ghlCards')" title="GHL Calendar Cards">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                            </svg>
+                            GHL Cards
+                        </button>
                     </div>
                     <button onclick="openAppointmentModal()" class="btn-primary" style="display: flex; align-items: center; gap: 0.5rem;">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -2383,6 +2551,27 @@
                     </div>
                     <div class="calendar-body" id="calendarBody">
                         <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            <!-- GHL Calendar Cards View -->
+            <div id="ghlCardsView" style="display: none;">
+                <div class="ghl-cards-container">
+                    <div class="ghl-cards-header">
+                        <button onclick="refreshGHLCards()" class="btn-refresh" id="refreshGHLCardsBtn">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                            </svg>
+                            Refresh from GHL
+                        </button>
+                        <span class="ghl-last-updated" id="ghlLastUpdated"></span>
+                    </div>
+                    <div class="ghl-cards-grid" id="ghlCardsGrid">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <p>Loading GHL calendars...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4336,29 +4525,195 @@
         // CALENDAR VIEW FUNCTIONS
         // =====================================================
 
-        let currentView = 'calendar'; // 'list' or 'calendar' - calendar is default
+        let currentView = 'calendar'; // 'list', 'calendar', or 'ghlCards' - calendar is default
         let calendarWeekOffset = 0; // 0 = current week, -1 = last week, 1 = next week
+        let ghlCardsData = null; // Cache for GHL cards data
 
-        // Toggle between list and calendar view
+        // Toggle between list, calendar, and GHL cards view
         function setAppointmentView(view) {
             currentView = view;
             const listView = document.getElementById('appointmentsList');
             const calendarView = document.getElementById('calendarView');
+            const ghlCardsView = document.getElementById('ghlCardsView');
             const listBtn = document.getElementById('listViewBtn');
             const calendarBtn = document.getElementById('calendarViewBtn');
+            const ghlCardsBtn = document.getElementById('ghlCardsViewBtn');
+
+            // Hide all views
+            listView.style.display = 'none';
+            calendarView.style.display = 'none';
+            ghlCardsView.style.display = 'none';
+
+            // Remove active from all buttons
+            listBtn.classList.remove('active');
+            calendarBtn.classList.remove('active');
+            ghlCardsBtn.classList.remove('active');
 
             if (view === 'list') {
                 listView.style.display = 'block';
-                calendarView.style.display = 'none';
                 listBtn.classList.add('active');
-                calendarBtn.classList.remove('active');
+            } else if (view === 'ghlCards') {
+                ghlCardsView.style.display = 'block';
+                ghlCardsBtn.classList.add('active');
+                loadGHLCards();
             } else {
-                listView.style.display = 'none';
                 calendarView.style.display = 'block';
-                listBtn.classList.remove('active');
                 calendarBtn.classList.add('active');
                 renderCalendarView();
             }
+        }
+
+        // Load GHL Calendar Cards data
+        async function loadGHLCards() {
+            const grid = document.getElementById('ghlCardsGrid');
+            const lastUpdated = document.getElementById('ghlLastUpdated');
+
+            // Show loading if no cached data
+            if (!ghlCardsData) {
+                grid.innerHTML = `
+                    <div class="loading" style="grid-column: 1 / -1;">
+                        <div class="spinner"></div>
+                        <p>Loading GHL calendars...</p>
+                    </div>
+                `;
+            }
+
+            try {
+                const response = await fetch('/api/appointments/ghl-calendar-slots?days=7', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch GHL slots');
+
+                const data = await response.json();
+                ghlCardsData = data;
+
+                if (!data.success || !data.calendars || data.calendars.length === 0) {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #6b7280;">
+                            <p>No GHL calendars configured for this client.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                renderGHLCards(data);
+                lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+
+            } catch (error) {
+                console.error('Error loading GHL cards:', error);
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #dc2626;">
+                        <p>Error loading GHL calendars: ${error.message}</p>
+                        <button onclick="loadGHLCards()" class="btn-primary" style="margin-top: 1rem;">Retry</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Render GHL Calendar Cards
+        function renderGHLCards(data) {
+            const grid = document.getElementById('ghlCardsGrid');
+            const dates = Object.keys(data.calendars[0]?.slotsByDate || {}).sort();
+
+            let html = '';
+
+            for (const calendar of data.calendars) {
+                // Determine card color class
+                let colorClass = '';
+                const nameLower = calendar.name.toLowerCase();
+                if (nameLower.includes('hyperbaric')) colorClass = 'hyperbaric';
+                else if (nameLower.includes('cryotherapy') || nameLower.includes('cryo')) colorClass = 'cryotherapy';
+                else if (nameLower.includes('recovery')) colorClass = 'recovery';
+
+                // Build open hours string
+                let openHoursStr = '';
+                if (calendar.openHours) {
+                    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    const hours = {};
+                    for (const [day, config] of Object.entries(calendar.openHours)) {
+                        const key = `${config.openHour}:00-${config.closeHour}:00`;
+                        if (!hours[key]) hours[key] = [];
+                        hours[key].push(dayNames[day]);
+                    }
+                    openHoursStr = Object.entries(hours).map(([time, days]) => `${days.join(', ')}: ${time}`).join(' | ');
+                }
+
+                html += `
+                    <div class="ghl-calendar-card ${colorClass}">
+                        <div class="ghl-card-header">
+                            <h3>${calendar.name}</h3>
+                            <div class="calendar-id">ID: ${calendar.id}</div>
+                            <div class="open-hours">${openHoursStr || 'No open hours configured'}</div>
+                        </div>
+                        <div class="ghl-card-body">
+                `;
+
+                // Add rows for each date
+                for (const dateStr of dates) {
+                    const dayData = calendar.slotsByDate[dateStr];
+                    if (!dayData) continue;
+
+                    const dateParts = dateStr.split('-');
+                    const displayDate = `${dateParts[1]}/${dateParts[2]}`;
+
+                    if (dayData.closed) {
+                        html += `
+                            <div class="ghl-date-row closed">
+                                <div class="ghl-date-label">
+                                    ${displayDate}
+                                    <div class="day-name">${dayData.dayName}</div>
+                                </div>
+                                <div class="ghl-slots-container">
+                                    <span class="ghl-closed-badge">CLOSED</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        html += `
+                            <div class="ghl-date-row">
+                                <div class="ghl-date-label">
+                                    ${displayDate}
+                                    <div class="day-name">${dayData.dayName}</div>
+                                </div>
+                                <div class="ghl-slots-container">
+                                    <div class="ghl-slots-row free">
+                                        <span class="label">FREE:</span>
+                                        <div class="slots">
+                                            ${dayData.freeSlots.length > 0
+                                                ? dayData.freeSlots.map(s => `<span class="ghl-slot-badge free">${s}</span>`).join('')
+                                                : '<span style="color: #9ca3af; font-size: 0.7rem;">None</span>'}
+                                        </div>
+                                    </div>
+                                    <div class="ghl-slots-row busy">
+                                        <span class="label">BUSY:</span>
+                                        <div class="slots">
+                                            ${dayData.busySlots.length > 0
+                                                ? dayData.busySlots.map(s => `<span class="ghl-slot-badge busy">${s}</span>`).join('')
+                                                : '<span style="color: #9ca3af; font-size: 0.7rem;">None</span>'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            grid.innerHTML = html;
+        }
+
+        // Refresh GHL Cards
+        function refreshGHLCards() {
+            ghlCardsData = null; // Clear cache
+            loadGHLCards();
         }
 
         // Navigate calendar weeks
