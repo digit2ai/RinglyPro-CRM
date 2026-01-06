@@ -99,9 +99,9 @@ router.get('/today', async (req, res) => {
   try {
     const { Op } = require('sequelize');
     const today = new Date().toISOString().split('T')[0];
-    
+
     console.log(`📅 Fetching today's appointments for client ${req.clientId}: ${today}`);
-    
+
     const appointments = await Appointment.findAll({
       where: {
         clientId: req.clientId,
@@ -112,20 +112,219 @@ router.get('/today', async (req, res) => {
       },
       order: [['appointmentTime', 'ASC']]
     });
-    
+
     console.log(`📊 Client ${req.clientId}: Found ${appointments.length} active appointments for today`);
-    
+
     res.json({
       success: true,
       count: appointments.length,
       appointments: appointments
     });
-    
+
   } catch (error) {
     console.error('❌ Error fetching today\'s appointments:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: error.message 
+      error: error.message
+    });
+  }
+});
+
+// =====================================================
+// GHL CALENDAR SLOTS ENDPOINT (LIVE DATA)
+// Must be defined BEFORE /:id route to avoid route matching issues
+// =====================================================
+
+/**
+ * GET /api/appointments/ghl-calendar-slots
+ * Get live FREE/BUSY slots directly from GHL calendars
+ * Returns data for all calendars with open hours and slots by date
+ */
+router.get('/ghl-calendar-slots', async (req, res) => {
+  try {
+    const axios = require('axios');
+    const clientId = req.clientId;
+    const days = parseInt(req.query.days) || 7;
+
+    console.log(`📆 Fetching live GHL calendar slots for client ${clientId}`);
+
+    // Get client's GHL credentials
+    const clientResults = await sequelize.query(
+      'SELECT ghl_api_key, ghl_location_id FROM clients WHERE id = :clientId',
+      { replacements: { clientId }, type: sequelize.QueryTypes.SELECT }
+    );
+
+    if (!clientResults || clientResults.length === 0 || !clientResults[0].ghl_api_key) {
+      return res.json({
+        success: false,
+        error: 'GHL not configured for this client',
+        calendars: []
+      });
+    }
+
+    const apiKey = clientResults[0].ghl_api_key;
+    const locationId = clientResults[0].ghl_location_id;
+
+    // Get all calendars for this location
+    const calendarsRes = await axios.get(
+      'https://services.leadconnectorhq.com/calendars/',
+      {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Version': '2021-07-28'
+        },
+        params: { locationId }
+      }
+    );
+
+    const calendars = calendarsRes.data.calendars || [];
+    const result = [];
+
+    // Generate date range
+    const today = new Date();
+    const dates = [];
+    for (let i = 0; i < days; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      dates.push(d.toISOString().split('T')[0]);
+    }
+
+    // Process each calendar
+    for (const calendar of calendars) {
+      try {
+        // Get calendar details (open hours)
+        const calDetailRes = await axios.get(
+          `https://services.leadconnectorhq.com/calendars/${calendar.id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Version': '2021-07-28'
+            }
+          }
+        );
+
+        const calDetail = calDetailRes.data.calendar;
+
+        // Build open hours map
+        const openHoursConfig = {};
+        if (calDetail.openHours) {
+          calDetail.openHours.forEach(oh => {
+            if (oh.hours && oh.hours[0]) {
+              oh.daysOfTheWeek.forEach(day => {
+                openHoursConfig[day] = {
+                  openHour: oh.hours[0].openHour,
+                  closeHour: oh.hours[0].closeHour
+                };
+              });
+            }
+          });
+        }
+
+        const calendarData = {
+          id: calendar.id,
+          name: calendar.name,
+          openHours: openHoursConfig,
+          slotsByDate: {}
+        };
+
+        // Get slots for each date
+        for (const dateStr of dates) {
+          const d = new Date(dateStr);
+          const dayOfWeek = d.getDay();
+          const dayConfig = openHoursConfig[dayOfWeek];
+
+          if (!dayConfig) {
+            calendarData.slotsByDate[dateStr] = {
+              closed: true,
+              dayName: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayOfWeek],
+              freeSlots: [],
+              busySlots: []
+            };
+            continue;
+          }
+
+          const dayStart = new Date(`${dateStr}T00:00:00`).getTime();
+          const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+
+          try {
+            const freeSlotsRes = await axios.get(
+              `https://services.leadconnectorhq.com/calendars/${calendar.id}/free-slots`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${apiKey}`,
+                  'Version': '2021-07-28'
+                },
+                params: { startDate: dayStart, endDate: dayEnd }
+              }
+            );
+
+            const slotsData = freeSlotsRes.data?.slots || freeSlotsRes.data || {};
+            const dateKeys = Object.keys(slotsData);
+            const freeSlots = dateKeys.length > 0 ? (slotsData[dateKeys[0]]?.slots || []) : [];
+
+            // Generate all possible slots
+            const allPossibleSlots = [];
+            for (let h = dayConfig.openHour; h < dayConfig.closeHour; h++) {
+              allPossibleSlots.push(`${dateStr}T${h.toString().padStart(2, '0')}:00:00-05:00`);
+            }
+
+            // Calculate busy slots
+            const busySlots = allPossibleSlots.filter(slot => !freeSlots.includes(slot));
+
+            // Extract just the time portion (HH:MM)
+            const freeHours = freeSlots.map(s => s.substring(11, 16));
+            const busyHours = busySlots.map(s => s.substring(11, 16));
+
+            calendarData.slotsByDate[dateStr] = {
+              closed: false,
+              dayName: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayOfWeek],
+              openHour: dayConfig.openHour,
+              closeHour: dayConfig.closeHour,
+              freeSlots: freeHours,
+              busySlots: busyHours,
+              totalSlots: allPossibleSlots.length
+            };
+
+          } catch (slotErr) {
+            calendarData.slotsByDate[dateStr] = {
+              closed: false,
+              dayName: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayOfWeek],
+              error: slotErr.message,
+              freeSlots: [],
+              busySlots: []
+            };
+          }
+        }
+
+        result.push(calendarData);
+
+      } catch (calErr) {
+        console.error(`Error processing calendar ${calendar.name}:`, calErr.message);
+        result.push({
+          id: calendar.id,
+          name: calendar.name,
+          error: calErr.message,
+          slotsByDate: {}
+        });
+      }
+    }
+
+    console.log(`📆 Fetched slots for ${result.length} calendars for client ${clientId}`);
+
+    res.json({
+      success: true,
+      clientId,
+      locationId,
+      dateRange: { start: dates[0], end: dates[dates.length - 1] },
+      calendars: result
+    });
+
+  } catch (error) {
+    console.error('Error fetching GHL calendar slots:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      calendars: []
     });
   }
 });
@@ -1069,205 +1268,5 @@ async function sendAppointmentCancellationSMS({
     throw error;
   }
 }
-
-// =====================================================
-// GHL CALENDAR SLOTS ENDPOINT (LIVE DATA)
-// =====================================================
-
-/**
- * GET /api/appointments/ghl-calendar-slots
- * Get live FREE/BUSY slots directly from GHL calendars
- * Returns data for all calendars with open hours and slots by date
- */
-router.get('/ghl-calendar-slots', async (req, res) => {
-  try {
-    const axios = require('axios');
-    const clientId = req.clientId;
-    const days = parseInt(req.query.days) || 7;
-
-    console.log(`📆 Fetching live GHL calendar slots for client ${clientId}`);
-
-    // Get client's GHL credentials
-    const clientResults = await sequelize.query(
-      'SELECT ghl_api_key, ghl_location_id FROM clients WHERE id = :clientId',
-      { replacements: { clientId }, type: sequelize.QueryTypes.SELECT }
-    );
-
-    console.log(`📆 Client query result:`, clientResults);
-
-    if (!clientResults || clientResults.length === 0 || !clientResults[0].ghl_api_key) {
-      return res.json({
-        success: false,
-        error: 'GHL not configured for this client',
-        calendars: []
-      });
-    }
-
-    const apiKey = clientResults[0].ghl_api_key;
-    const locationId = clientResults[0].ghl_location_id;
-
-    // Get all calendars for this location
-    const calendarsRes = await axios.get(
-      'https://services.leadconnectorhq.com/calendars/',
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Version': '2021-07-28'
-        },
-        params: { locationId }
-      }
-    );
-
-    const calendars = calendarsRes.data.calendars || [];
-    const result = [];
-
-    // Generate date range
-    const today = new Date();
-    const dates = [];
-    for (let i = 0; i < days; i++) {
-      const d = new Date(today);
-      d.setDate(d.getDate() + i);
-      dates.push(d.toISOString().split('T')[0]);
-    }
-
-    // Process each calendar
-    for (const calendar of calendars) {
-      try {
-        // Get calendar details (open hours)
-        const calDetailRes = await axios.get(
-          `https://services.leadconnectorhq.com/calendars/${calendar.id}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${apiKey}`,
-              'Version': '2021-07-28'
-            }
-          }
-        );
-
-        const calDetail = calDetailRes.data.calendar;
-
-        // Build open hours map
-        const openHoursConfig = {};
-        if (calDetail.openHours) {
-          calDetail.openHours.forEach(oh => {
-            if (oh.hours && oh.hours[0]) {
-              oh.daysOfTheWeek.forEach(day => {
-                openHoursConfig[day] = {
-                  openHour: oh.hours[0].openHour,
-                  closeHour: oh.hours[0].closeHour
-                };
-              });
-            }
-          });
-        }
-
-        const calendarData = {
-          id: calendar.id,
-          name: calendar.name,
-          openHours: openHoursConfig,
-          slotsByDate: {}
-        };
-
-        // Get slots for each date
-        for (const dateStr of dates) {
-          const d = new Date(dateStr);
-          const dayOfWeek = d.getDay();
-          const dayConfig = openHoursConfig[dayOfWeek];
-
-          if (!dayConfig) {
-            calendarData.slotsByDate[dateStr] = {
-              closed: true,
-              dayName: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayOfWeek],
-              freeSlots: [],
-              busySlots: []
-            };
-            continue;
-          }
-
-          const dayStart = new Date(`${dateStr}T00:00:00`).getTime();
-          const dayEnd = dayStart + 24 * 60 * 60 * 1000;
-
-          try {
-            const freeSlotsRes = await axios.get(
-              `https://services.leadconnectorhq.com/calendars/${calendar.id}/free-slots`,
-              {
-                headers: {
-                  'Authorization': `Bearer ${apiKey}`,
-                  'Version': '2021-07-28'
-                },
-                params: { startDate: dayStart, endDate: dayEnd }
-              }
-            );
-
-            const slotsData = freeSlotsRes.data?.slots || freeSlotsRes.data || {};
-            const dateKeys = Object.keys(slotsData);
-            const freeSlots = dateKeys.length > 0 ? (slotsData[dateKeys[0]]?.slots || []) : [];
-
-            // Generate all possible slots
-            const allPossibleSlots = [];
-            for (let h = dayConfig.openHour; h < dayConfig.closeHour; h++) {
-              allPossibleSlots.push(`${dateStr}T${h.toString().padStart(2, '0')}:00:00-05:00`);
-            }
-
-            // Calculate busy slots
-            const busySlots = allPossibleSlots.filter(slot => !freeSlots.includes(slot));
-
-            // Extract just the time portion (HH:MM)
-            const freeHours = freeSlots.map(s => s.substring(11, 16));
-            const busyHours = busySlots.map(s => s.substring(11, 16));
-
-            calendarData.slotsByDate[dateStr] = {
-              closed: false,
-              dayName: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayOfWeek],
-              openHour: dayConfig.openHour,
-              closeHour: dayConfig.closeHour,
-              freeSlots: freeHours,
-              busySlots: busyHours,
-              totalSlots: allPossibleSlots.length
-            };
-
-          } catch (slotErr) {
-            calendarData.slotsByDate[dateStr] = {
-              closed: false,
-              dayName: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayOfWeek],
-              error: slotErr.message,
-              freeSlots: [],
-              busySlots: []
-            };
-          }
-        }
-
-        result.push(calendarData);
-
-      } catch (calErr) {
-        console.error(`Error processing calendar ${calendar.name}:`, calErr.message);
-        result.push({
-          id: calendar.id,
-          name: calendar.name,
-          error: calErr.message,
-          slotsByDate: {}
-        });
-      }
-    }
-
-    console.log(`📆 Fetched slots for ${result.length} calendars for client ${clientId}`);
-
-    res.json({
-      success: true,
-      clientId,
-      locationId,
-      dateRange: { start: dates[0], end: dates[dates.length - 1] },
-      calendars: result
-    });
-
-  } catch (error) {
-    console.error('Error fetching GHL calendar slots:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      calendars: []
-    });
-  }
-});
 
 module.exports = router;
