@@ -194,8 +194,10 @@ class ElevenLabsConvAIService {
                         summary = firstMessages.substring(0, 500) || 'AI Phone Call';
                     }
 
-                    // Calculate duration
-                    const duration = conv.duration_seconds ||
+                    // Calculate duration - ElevenLabs API uses call_duration_secs
+                    const duration = conv.call_duration_secs ||
+                                   conv.duration_seconds ||
+                                   details.call_duration_secs ||
                                    details.duration_seconds ||
                                    (conv.end_time && conv.start_time ?
                                     Math.round((new Date(conv.end_time) - new Date(conv.start_time)) / 1000) : null);
