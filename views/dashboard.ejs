@@ -5827,10 +5827,9 @@
 
                 const messages = await response.json();
 
-                // Filter to only ElevenLabs calls
+                // Filter to only ElevenLabs calls (message_source = 'elevenlabs')
                 const elevenLabsCalls = messages.filter(msg =>
-                    (msg.messageSource || msg.message_source) === 'elevenlabs' ||
-                    (msg.twilioSid && msg.twilioSid.startsWith && msg.twilioSid.length > 30)
+                    (msg.messageSource || msg.message_source) === 'elevenlabs'
                 );
 
                 renderElevenLabsCalls(elevenLabsCalls);
@@ -5873,8 +5872,14 @@
                     durationDisplay = mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `0:${secs.toString().padStart(2, '0')}`;
                 }
 
-                // Get recording URL
-                const recordingUrl = call.recordingUrl || call.recording_url;
+                // Get recording URL - use proxy for Twilio URLs to avoid auth popup
+                let recordingUrl = call.recordingUrl || call.recording_url;
+                if (recordingUrl && recordingUrl.includes('twilio.com')) {
+                    const recordingSidMatch = recordingUrl.match(/RE[a-f0-9]{32}/i);
+                    if (recordingSidMatch) {
+                        recordingUrl = '/api/messages/recording/' + recordingSidMatch[0];
+                    }
+                }
 
                 // Message body/summary
                 const preview = call.body ? (call.body.length > 150 ? call.body.substring(0, 150) + '...' : call.body) : 'AI Phone Call';
