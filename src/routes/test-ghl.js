@@ -3,6 +3,9 @@ const router = express.Router();
 const { runTests } = require('../../test-ghl-direct');
 const axios = require('axios');
 
+// Dual Calendar Service import
+const dualCalendarService = require('../services/dualCalendarService');
+
 // GET /api/test-ghl/calendars/:client_id - List GHL calendars for a client
 router.get('/calendars/:client_id', async (req, res) => {
     try {
@@ -197,7 +200,7 @@ router.get('/events/:client_id', async (req, res) => {
 router.get('/dual-calendar-status/:client_id', async (req, res) => {
     try {
         const { client_id } = req.params;
-        const dualCalendarService = require('../services/dualCalendarService');
+        console.log(`🔍 Checking dual calendar status for client ${client_id}`);
 
         const status = await dualCalendarService.isDualModeEnabled(parseInt(client_id));
 
@@ -222,7 +225,7 @@ router.get('/dual-calendar-status/:client_id', async (req, res) => {
 router.get('/availability/:client_id/:date', async (req, res) => {
     try {
         const { client_id, date } = req.params;
-        const dualCalendarService = require('../services/dualCalendarService');
+        console.log(`🔍 Checking availability for client ${client_id} on ${date}`);
 
         const businessHours = { start: 9, end: 17, slotDuration: 60 };
         const availability = await dualCalendarService.getCombinedAvailability(
