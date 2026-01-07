@@ -5030,10 +5030,112 @@
             });
         }
 
-        // Show appointment details (opens details via console log for now)
+        // Current appointment being viewed in details modal
+        let currentAppointmentDetails = null;
+
+        // Show appointment details modal (for calendar grid clicks)
         function showAppointmentDetails(appointmentId) {
             console.log('Appointment details requested:', appointmentId);
-            // Could open a modal with appointment details in the future
+
+            // Find the appointment in allAppointments
+            const apt = allAppointments.find(a => a.id === appointmentId);
+            if (!apt) {
+                console.error('Appointment not found:', appointmentId);
+                return;
+            }
+
+            // Store current appointment for actions
+            currentAppointmentDetails = apt;
+
+            // Extract fields (handle both camelCase and snake_case)
+            const name = apt.customerName || apt.customer_name || apt.name || 'Unknown';
+            const phone = apt.customerPhone || apt.customer_phone || apt.phone || '';
+            const date = apt.appointmentDate || apt.appointment_date || apt.date || '';
+            const rawTime = apt.appointmentTime || apt.appointment_time || apt.time || '';
+            const purpose = apt.purpose || apt.notes || 'Appointment';
+            const source = apt.source || 'unknown';
+
+            // Format time for display
+            let displayTime = rawTime;
+            if (rawTime) {
+                const [hours, minutes] = rawTime.split(':').map(Number);
+                const displayHour = hours > 12 ? hours - 12 : (hours === 0 ? 12 : hours);
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                displayTime = `${displayHour}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+            }
+
+            // Format date for display
+            let displayDate = date;
+            if (date) {
+                const [year, month, day] = date.split('-');
+                const dateObj = new Date(year, month - 1, day);
+                displayDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            }
+
+            // Get source label
+            const sourceLabels = {
+                'ghl_sync': 'GHL Calendar',
+                'whatsapp_ghl': 'WhatsApp (GHL)',
+                'voice_booking': 'AI Voice Booking',
+                'whatsapp': 'WhatsApp',
+                'online': 'Online Booking',
+                'manual': 'Manual Entry'
+            };
+            const sourceLabel = sourceLabels[source] || source;
+
+            // Populate modal
+            document.getElementById('aptDetailsName').textContent = name;
+            document.getElementById('aptDetailsDate').textContent = displayDate;
+            document.getElementById('aptDetailsTime').textContent = displayTime;
+            document.getElementById('aptDetailsPhone').textContent = phone || 'No phone';
+            document.getElementById('aptDetailsPurpose').textContent = purpose;
+            document.getElementById('aptDetailsSource').textContent = sourceLabel;
+
+            // Hide phone row if no phone
+            document.getElementById('aptDetailsPhoneRow').style.display = phone ? 'block' : 'none';
+
+            // Disable text/call buttons if no phone
+            document.getElementById('aptDetailsTextBtn').disabled = !phone;
+            document.getElementById('aptDetailsCallBtn').disabled = !phone;
+            document.getElementById('aptDetailsTextBtn').style.opacity = phone ? '1' : '0.5';
+            document.getElementById('aptDetailsCallBtn').style.opacity = phone ? '1' : '0.5';
+
+            // Show modal
+            document.getElementById('appointmentDetailsModal').classList.add('active');
+        }
+
+        // Close appointment details modal
+        function closeAppointmentDetailsModal() {
+            document.getElementById('appointmentDetailsModal').classList.remove('active');
+            currentAppointmentDetails = null;
+        }
+
+        // Handle appointment details actions
+        function aptDetailsAction(action) {
+            if (!currentAppointmentDetails) return;
+
+            const apt = currentAppointmentDetails;
+            const name = apt.customerName || apt.customer_name || apt.name || 'Unknown';
+            const phone = apt.customerPhone || apt.customer_phone || apt.phone || '';
+
+            switch (action) {
+                case 'text':
+                    if (phone) {
+                        sendSMS(phone, name);
+                        closeAppointmentDetailsModal();
+                    }
+                    break;
+                case 'call':
+                    if (phone) {
+                        makeCall(phone, name);
+                        closeAppointmentDetailsModal();
+                    }
+                    break;
+                case 'delete':
+                    closeAppointmentDetailsModal();
+                    deleteAppointment(apt.id, name);
+                    break;
+            }
         }
 
         // Render Appointments (kept for backward compatibility)
@@ -7027,6 +7129,72 @@
                     </button>
                     <button type="button" class="btn-confirm-deposit" onclick="confirmDeposit()" style="padding: 0.625rem 1.25rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-weight: 500; cursor: pointer;">
                         Confirm Deposit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment Details Modal (for calendar grid click) -->
+    <div id="appointmentDetailsModal" class="modal">
+        <div class="modal-overlay" onclick="closeAppointmentDetailsModal()"></div>
+        <div class="modal-content" style="width: 100%; max-width: 400px;">
+            <div class="modal-header">
+                <h2 id="aptDetailsTitle">Appointment Details</h2>
+                <button class="modal-close" onclick="closeAppointmentDetailsModal()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.5rem; height: 1.5rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="background: #f0f9ff; border: 1px solid #7dd3fc; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
+                    <p style="margin: 0 0 0.5rem 0; font-weight: 600; color: #0369a1; font-size: 1.1rem;" id="aptDetailsName"></p>
+                    <p style="margin: 0 0 0.25rem 0; color: #0284c7;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span id="aptDetailsDate"></span>
+                    </p>
+                    <p style="margin: 0 0 0.25rem 0; color: #0284c7;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span id="aptDetailsTime"></span>
+                    </p>
+                    <p style="margin: 0; color: #0284c7;" id="aptDetailsPhoneRow">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                        </svg>
+                        <span id="aptDetailsPhone"></span>
+                    </p>
+                </div>
+                <div style="margin-bottom: 1rem; padding: 0.75rem; background: #f9fafb; border-radius: 0.375rem;">
+                    <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">
+                        <strong>Purpose:</strong> <span id="aptDetailsPurpose"></span>
+                    </p>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: #6b7280;" id="aptDetailsSourceRow">
+                        <strong>Source:</strong> <span id="aptDetailsSource"></span>
+                    </p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <button type="button" id="aptDetailsTextBtn" onclick="aptDetailsAction('text')" style="padding: 0.75rem 1rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                        </svg>
+                        Send Text Message
+                    </button>
+                    <button type="button" id="aptDetailsCallBtn" onclick="aptDetailsAction('call')" style="padding: 0.75rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 0.5rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                        </svg>
+                        Call Customer
+                    </button>
+                    <button type="button" id="aptDetailsDeleteBtn" onclick="aptDetailsAction('delete')" style="padding: 0.75rem 1rem; background: #ef4444; color: white; border: none; border-radius: 0.5rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Delete Appointment
                     </button>
                 </div>
             </div>
