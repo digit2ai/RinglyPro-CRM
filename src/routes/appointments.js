@@ -4,44 +4,6 @@ const { Appointment, sequelize } = require('../models');
 const crmAppointmentService = require('../services/crmAppointmentService');
 const router = express.Router();
 
-// =====================================================
-// DEBUG ENDPOINT - No auth required (for testing)
-// =====================================================
-router.get('/debug/client/:clientId', async (req, res) => {
-  try {
-    const clientId = parseInt(req.params.clientId);
-    const days = parseInt(req.query.days) || 30;
-
-    console.log(`🔍 DEBUG: Fetching appointments for client ${clientId}, days=${days}`);
-
-    const result = await crmAppointmentService.getDashboardAppointments(clientId, {
-      days,
-      refresh: true
-    });
-
-    // Log field names from first appointment
-    if (result.appointments && result.appointments.length > 0) {
-      console.log('🔍 DEBUG: First appointment fields:', Object.keys(result.appointments[0]));
-      console.log('🔍 DEBUG: First appointment data:', JSON.stringify(result.appointments[0], null, 2));
-    }
-
-    res.json({
-      success: true,
-      clientId,
-      appointmentCount: result.appointments?.length || 0,
-      appointments: result.appointments,
-      fieldNames: result.appointments?.length > 0 ? Object.keys(result.appointments[0]) : [],
-      dateRange: result.dateRange
-    });
-  } catch (error) {
-    console.error('DEBUG endpoint error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
 // Middleware to extract and verify client_id from JWT token
 const authenticateClient = (req, res, next) => {
   try {
