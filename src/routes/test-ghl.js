@@ -8,7 +8,7 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.7' });
+    res.json({ success: true, message: 'pong', version: '2.8' });
 });
 
 // GET /api/test-ghl/debug-day/:client_id/:calendar_id - Debug slot comparison for a single day
@@ -199,26 +199,37 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
         // Process each day
         let totalInserted = 0;
         const insertedSlots = [];
-        const today = new Date();
+        const debugDays = []; // Track what happens each day
 
         for (let d = 0; d < days; d++) {
-            const checkDate = new Date(today);
-            checkDate.setDate(today.getDate() + d);
-            const dateStr = checkDate.toISOString().substring(0, 10);
-            const dayOfWeek = checkDate.getDay(); // 0=Sun, 1=Mon, ...
+            // Use same date handling as debug-day endpoint
+            const today = new Date();
+            today.setDate(today.getDate() + d);
+            const dateStr = today.toISOString().substring(0, 10);
+
+            // Use T12:00:00 to avoid timezone day shifts (same as debug-day)
+            const dateObj = new Date(dateStr + 'T12:00:00');
+            const dayOfWeek = dateObj.getDay(); // 0=Sun, 1=Mon, ...
+            const dayDebug = { dateStr, dayOfWeek, dOffset: d };
 
             // Get business hours for this day (GHL uses 'daysOfTheWeek' in some responses, 'days' in others)
             const dayConfig = calendar?.openHours?.find(oh =>
                 (oh.daysOfTheWeek?.includes(dayOfWeek)) || (oh.days?.includes(dayOfWeek))
             );
             if (!dayConfig || !dayConfig.hours?.length) {
+                dayDebug.status = 'closed';
+                dayDebug.matchedConfig = null;
+                debugDays.push(dayDebug);
                 console.log(`   ${dateStr} (day ${dayOfWeek}): Closed`);
                 continue;
             }
+            dayDebug.status = 'open';
+            dayDebug.matchedConfig = { days: dayConfig.days, daysOfTheWeek: dayConfig.daysOfTheWeek };
 
             const hours = dayConfig.hours[0];
             const openHour = hours.openHour;
             const closeHour = hours.closeHour;
+            dayDebug.hours = { openHour, closeHour };
 
             // Generate all possible slots for this day
             const allSlots = [];
@@ -228,16 +239,14 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
                     allSlots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:00`);
                 }
             }
+            dayDebug.allSlotsCount = allSlots.length;
 
-            // Get free slots from GHL
+            // Get free slots from GHL - use same calculation as debug-day
             let freeSlots = [];
             try {
-                // Calculate timestamps for the day (EST/EDT timezone)
                 const [year, month, day] = dateStr.split('-').map(Number);
-                const isDST = (month > 3 && month < 11) || (month === 3 && day >= 9) || (month === 11 && day < 2);
-                const etOffset = isDST ? 4 : 5;
-                const startTime = new Date(Date.UTC(year, month - 1, day, etOffset, 0, 0));
-                const endTime = new Date(Date.UTC(year, month - 1, day + 1, etOffset - 1, 59, 59));
+                const startTime = new Date(Date.UTC(year, month - 1, day, 5, 0, 0));
+                const endTime = new Date(Date.UTC(year, month - 1, day + 1, 4, 59, 59));
 
                 const slotsRes = await axios.get(
                     `https://services.leadconnectorhq.com/calendars/${calendarId}/free-slots`,
@@ -258,17 +267,24 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
                     }
                 }
             } catch (e) {
+                dayDebug.error = e.message;
+                dayDebug.freeSlotsCount = 0;
+                dayDebug.blockedSlotsCount = 0;
+                debugDays.push(dayDebug);
                 console.log(`   ${dateStr}: Error getting free slots: ${e.message}`);
                 continue;
             }
 
             // Blocked slots = all slots - free slots
             const blockedSlots = allSlots.filter(s => !freeSlots.includes(s));
+            dayDebug.freeSlotsCount = freeSlots.length;
+            dayDebug.blockedSlotsCount = blockedSlots.length;
             console.log(`   ${dateStr}: allSlots=${JSON.stringify(allSlots)}`);
             console.log(`   ${dateStr}: freeSlots=${JSON.stringify(freeSlots)}`);
             console.log(`   ${dateStr}: ${blockedSlots.length} blocked / ${allSlots.length} total (${freeSlots.length} free)`);
 
             // Insert blocked slots as "Busy" appointments
+            let dayInserted = 0;
             for (const slot of blockedSlots) {
                 try {
                     const code = `BS${Date.now().toString().slice(-6)}${totalInserted}`;
@@ -294,11 +310,14 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
                         }
                     );
                     totalInserted++;
+                    dayInserted++;
                     insertedSlots.push({ date: dateStr, time: slot });
                 } catch (e) {
                     console.error(`   Insert error: ${e.message}`);
                 }
             }
+            dayDebug.inserted = dayInserted;
+            debugDays.push(dayDebug);
         }
 
         console.log(`✅ Sync complete: ${totalInserted} blocked slots inserted`);
@@ -325,7 +344,8 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
                 openHours: openHoursDebug,
                 todayDayOfWeek: new Date().getDay(),
                 serverTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                serverDate: new Date().toISOString()
+                serverDate: new Date().toISOString(),
+                daysProcessed: debugDays
             }
         });
 
