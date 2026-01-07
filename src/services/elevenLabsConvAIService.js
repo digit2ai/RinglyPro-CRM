@@ -146,8 +146,12 @@ class ElevenLabsConvAIService {
             let skipped = 0;
             const synced = [];
 
+            console.log(`📋 Processing ${conversations.length} conversations from ElevenLabs`);
+
             for (const conv of conversations) {
                 try {
+                    console.log(`🔍 Processing conversation: ${conv.conversation_id}`);
+
                     // Check if already synced (by conversation ID in twilioSid field)
                     const [existing] = await sequelize.query(
                         'SELECT id FROM messages WHERE twilio_sid = $1 AND client_id = $2',
@@ -155,6 +159,7 @@ class ElevenLabsConvAIService {
                     );
 
                     if (existing) {
+                        console.log(`⏭️ Already synced: ${conv.conversation_id}`);
                         skipped++;
                         continue;
                     }
@@ -226,6 +231,7 @@ class ElevenLabsConvAIService {
                     );
 
                     inserted++;
+                    console.log(`✅ Inserted: ${conv.conversation_id} | Phone: ${phoneNumber} | Duration: ${duration}s`);
                     synced.push({
                         conversationId: conv.conversation_id,
                         phone: phoneNumber,
@@ -234,7 +240,7 @@ class ElevenLabsConvAIService {
                     });
 
                 } catch (insertError) {
-                    console.error(`Error syncing conversation ${conv.conversation_id}:`, insertError.message);
+                    console.error(`❌ Error syncing conversation ${conv.conversation_id}:`, insertError.message);
                 }
             }
 
