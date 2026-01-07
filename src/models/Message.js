@@ -135,6 +135,18 @@ const Message = sequelize.define('Message', {
     field: 'message_type',
     comment: 'Type of message/communication'
   },
+  callDuration: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'call_duration',
+    comment: 'Duration of call/voicemail in seconds'
+  },
+  callStartTime: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'call_start_time',
+    comment: 'When the call started (for voicemails/calls)'
+  },
   createdAt: {
     type: DataTypes.DATE,
     allowNull: false,
@@ -215,7 +227,7 @@ Message.findByContact = function(contactId, options = {}) {
 Message.findByClient = function(clientId, options = {}) {
   return this.findAll({
     where: { clientId },
-    attributes: ['id', 'clientId', 'contactId', 'twilioSid', 'recordingUrl', 'direction', 'fromNumber', 'toNumber', 'body', 'status', 'read', 'createdAt', 'updatedAt'],
+    attributes: ['id', 'clientId', 'contactId', 'twilioSid', 'recordingUrl', 'direction', 'fromNumber', 'toNumber', 'body', 'status', 'read', 'messageType', 'callDuration', 'callStartTime', 'createdAt', 'updatedAt'],
     order: [['createdAt', options.order || 'DESC']],
     limit: options.limit || 50,
     offset: options.offset || 0
@@ -250,7 +262,7 @@ Message.getTodaysMessages = function() {
         [Op.between]: [today, tomorrow]
       }
     },
-    attributes: ['id', 'clientId', 'contactId', 'twilioSid', 'recordingUrl', 'direction', 'fromNumber', 'toNumber', 'body', 'status', 'read', 'createdAt', 'updatedAt'],
+    attributes: ['id', 'clientId', 'contactId', 'twilioSid', 'recordingUrl', 'direction', 'fromNumber', 'toNumber', 'body', 'status', 'read', 'messageType', 'callDuration', 'callStartTime', 'createdAt', 'updatedAt'],
     order: [['createdAt', 'DESC']]
   });
 };

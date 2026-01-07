@@ -720,6 +720,108 @@ router.post('/sync-ghl-appointments/:clientId', async (req, res) => {
     }
 });
 
+// ============= SYNC ELEVENLABS CALLS TO MESSAGES =============
+// POST /api/admin/sync-elevenlabs-calls/:clientId
+// Syncs call history from ElevenLabs Conversational AI to the Messages table
+// Uses API key auth (no JWT required)
+router.post('/sync-elevenlabs-calls/:clientId', async (req, res) => {
+    try {
+        const { clientId } = req.params;
+        const { apiKey } = req.body;
+
+        // Simple API key check
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+        if (apiKey !== expectedKey) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid API key'
+            });
+        }
+
+        console.log(`🔄 Admin: Syncing ElevenLabs calls for client ${clientId}`);
+
+        // Get client's ElevenLabs agent ID
+        const [clientData] = await sequelize.query(
+            'SELECT elevenlabs_agent_id, business_name FROM clients WHERE id = $1',
+            { bind: [parseInt(clientId)], type: sequelize.QueryTypes.SELECT }
+        );
+
+        if (!clientData || !clientData.elevenlabs_agent_id) {
+            return res.status(404).json({
+                success: false,
+                error: 'Client not found or no ElevenLabs agent configured'
+            });
+        }
+
+        const elevenLabsConvAI = require('../services/elevenLabsConvAIService');
+        const result = await elevenLabsConvAI.syncConversationsToMessages(
+            parseInt(clientId),
+            clientData.elevenlabs_agent_id,
+            sequelize
+        );
+
+        res.json({
+            ...result,
+            clientId: parseInt(clientId),
+            businessName: clientData.business_name,
+            agentId: clientData.elevenlabs_agent_id
+        });
+
+    } catch (error) {
+        console.error('❌ Error syncing ElevenLabs calls:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// ============= GET ELEVENLABS CALL DETAILS =============
+// GET /api/admin/elevenlabs-call/:conversationId
+// Gets details for a specific ElevenLabs call
+router.get('/elevenlabs-call/:conversationId', async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+
+        const elevenLabsConvAI = require('../services/elevenLabsConvAIService');
+        const details = await elevenLabsConvAI.getConversation(conversationId);
+
+        res.json({
+            success: true,
+            conversation: details
+        });
+
+    } catch (error) {
+        console.error('❌ Error getting ElevenLabs call details:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// ============= GET ELEVENLABS CALL AUDIO =============
+// GET /api/admin/elevenlabs-audio/:conversationId
+// Streams the audio recording for an ElevenLabs call
+router.get('/elevenlabs-audio/:conversationId', async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+
+        const elevenLabsConvAI = require('../services/elevenLabsConvAIService');
+        const audioData = await elevenLabsConvAI.getConversationAudio(conversationId);
+
+        res.set('Content-Type', audioData.contentType || 'audio/mpeg');
+        res.send(Buffer.from(audioData.audioData));
+
+    } catch (error) {
+        console.error('❌ Error streaming ElevenLabs audio:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Apply admin authentication to all routes AFTER quick endpoints
 router.use(authenticateAdmin);
 

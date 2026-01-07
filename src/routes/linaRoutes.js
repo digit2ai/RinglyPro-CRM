@@ -1851,11 +1851,14 @@ router.post('/voice/lina/voicemail-complete', async (req, res) => {
                 toNumber: To,
                 body: `📞 Mensaje de voz en español (${RecordingDuration}s) - Haga clic para escuchar la grabación`,
                 status: 'received',
+                messageType: 'voicemail',
+                callDuration: parseInt(RecordingDuration) || null,
+                callStartTime: new Date(),
                 createdAt: new Date(),
                 updatedAt: new Date()
             });
 
-            console.log(`💾 Spanish voicemail stored for client ${client.id} (${client.business_name})`);
+            console.log(`💾 Spanish voicemail stored for client ${client.id} (${client.business_name}) (Duration: ${RecordingDuration}s)`);
         } else {
             console.warn(`⚠️ No client found for number ${To}`);
         }
@@ -1936,12 +1939,15 @@ router.post('/voice/lina/voicemail-transcription', async (req, res) => {
             toNumber: To,
             body: summary,
             status: 'received',
+            messageType: 'voicemail',
+            callDuration: parseInt(req.body.RecordingDuration) || null,
+            callStartTime: new Date(),
             createdAt: new Date(),
             updatedAt: new Date()
         });
 
         console.log(`💾 Spanish voicemail stored for client ${client.id} (${client.business_name})`);
-        console.log(`🎵 Recording URL: ${RecordingUrl}`);
+        console.log(`🎵 Recording URL: ${RecordingUrl} (Duration: ${req.body.RecordingDuration}s)`);
 
         res.status(200).send('OK');
 

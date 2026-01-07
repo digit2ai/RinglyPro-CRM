@@ -2124,12 +2124,15 @@ router.post('/voice/rachel/voicemail-transcription', async (req, res) => {
             toNumber: To,
             body: summary,
             status: 'received',
+            messageType: 'voicemail',
+            callDuration: parseInt(req.body.RecordingDuration) || null,
+            callStartTime: new Date(),
             createdAt: new Date(),
             updatedAt: new Date()
         });
 
         console.log(`💾 Voicemail stored for client ${client.id} (${client.business_name})`);
-        console.log(`🎵 Recording URL: ${RecordingUrl}`);
+        console.log(`🎵 Recording URL: ${RecordingUrl} (Duration: ${req.body.RecordingDuration}s)`);
 
         res.status(200).send('OK');
 
