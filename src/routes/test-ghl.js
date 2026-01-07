@@ -1,6 +1,60 @@
 const express = require('express');
 const router = express.Router();
 const { runTests } = require('../../test-ghl-direct');
+const axios = require('axios');
+
+// GET /api/test-ghl/calendars/:client_id - List GHL calendars for a client
+router.get('/calendars/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { sequelize } = require('../models');
+
+        // Get credentials
+        const results = await sequelize.query(
+            'SELECT id, business_name, ghl_api_key, ghl_location_id FROM clients WHERE id = :client_id',
+            { replacements: { client_id }, type: sequelize.QueryTypes.SELECT }
+        );
+
+        if (!results || results.length === 0 || !results[0].ghl_api_key) {
+            return res.status(404).json({ success: false, error: 'No GHL credentials found' });
+        }
+
+        const client = results[0];
+
+        // Fetch calendars from GHL
+        const calendarsRes = await axios.get(
+            'https://services.leadconnectorhq.com/calendars/',
+            {
+                headers: {
+                    'Authorization': `Bearer ${client.ghl_api_key}`,
+                    'Version': '2021-07-28'
+                },
+                params: { locationId: client.ghl_location_id }
+            }
+        );
+
+        const calendars = calendarsRes.data.calendars || [];
+
+        res.json({
+            success: true,
+            clientId: client.id,
+            businessName: client.business_name,
+            locationId: client.ghl_location_id,
+            calendarCount: calendars.length,
+            calendars: calendars.map(c => ({
+                id: c.id,
+                name: c.name,
+                description: c.description,
+                calendarType: c.calendarType,
+                isActive: c.isActive
+            }))
+        });
+
+    } catch (error) {
+        console.error('❌ Calendar fetch error:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
 
 // GET /api/test-ghl/:client_id - Run GHL API tests for a client
 // GET /api/test-ghl/auto - Automatically find a client with GHL credentials
