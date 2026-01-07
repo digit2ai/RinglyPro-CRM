@@ -592,83 +592,70 @@ class GHLBookingService {
 
       let allAppointments = [];
 
-      // For each calendar, derive busy slots from open hours vs free slots
+      // Convert dates to epoch timestamps in milliseconds for GHL API
+      const startEpoch = new Date(startDate).getTime();
+      const endEpoch = new Date(endDate).getTime() + (24 * 60 * 60 * 1000); // Include end date
+
+      // For each calendar, fetch actual appointment events
       for (const calendar of calendars) {
         try {
-          // Get full calendar details including open hours
-          const calDetailResult = await this.callGHLWithoutLocation(credentials, 'GET', `/calendars/${calendar.id}`);
-          if (!calDetailResult.success) {
-            logger.warn(`[GHL] Could not get details for calendar ${calendar.name}`);
+          // Fetch actual events/appointments from GHL calendar
+          const eventsResult = await this.callGHLWithoutLocation(
+            credentials,
+            'GET',
+            '/calendars/events',
+            {
+              locationId: credentials.locationId,
+              calendarId: calendar.id,
+              startTime: startEpoch,
+              endTime: endEpoch
+            }
+          );
+
+          if (!eventsResult.success) {
+            logger.warn(`[GHL] Could not fetch events for calendar ${calendar.name}: ${eventsResult.error}`);
             continue;
           }
 
-          const calDetail = calDetailResult.data.calendar;
-          const slotDuration = calDetail.slotDuration || 60; // Default 60 mins
+          const events = eventsResult.data.events || [];
+          logger.info(`[GHL] Calendar "${calendar.name}": Found ${events.length} appointments`);
 
-          // Generate dates in range
-          const start = new Date(startDate);
-          const end = new Date(endDate);
+          // Get contact details for each event
+          for (const event of events) {
+            let contactName = event.title || 'GHL Appointment';
+            let contactPhone = '';
+            let contactEmail = '';
 
-          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-            const dateStr = d.toISOString().split('T')[0];
-            const dayOfWeek = d.getDay(); // 0=Sun, 1=Mon, etc.
-
-            // Find open hours config for this day
-            const dayConfig = calDetail.openHours?.find(oh => oh.daysOfTheWeek?.includes(dayOfWeek));
-            if (!dayConfig || !dayConfig.hours || !dayConfig.hours[0]) {
-              continue; // No open hours for this day
+            // Fetch contact details if contactId exists
+            if (event.contactId) {
+              try {
+                const contactResult = await this.callGHL(credentials, 'GET', `/contacts/${event.contactId}`);
+                if (contactResult.success && contactResult.data.contact) {
+                  const contact = contactResult.data.contact;
+                  contactName = contact.contactName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || contactName;
+                  contactPhone = contact.phone || '';
+                  contactEmail = contact.email || '';
+                }
+              } catch (contactError) {
+                logger.debug(`[GHL] Could not fetch contact ${event.contactId}: ${contactError.message}`);
+              }
             }
 
-            const hours = dayConfig.hours[0];
-            const openHour = hours.openHour;
-            const closeHour = hours.closeHour;
-
-            // Generate all possible slots based on open hours
-            const allPossibleSlots = [];
-            for (let h = openHour; h < closeHour; h++) {
-              // Format: 2026-01-05T10:00:00-05:00
-              allPossibleSlots.push(`${dateStr}T${h.toString().padStart(2, '0')}:00:00-05:00`);
-            }
-
-            if (allPossibleSlots.length === 0) continue;
-
-            // Get free slots from GHL for this day
-            const dayStart = new Date(`${dateStr}T00:00:00-05:00`).getTime();
-            const dayEnd = new Date(`${dateStr}T23:59:59-05:00`).getTime();
-
-            const freeSlotsResult = await this.callGHLWithoutLocation(
-              credentials,
-              'GET',
-              `/calendars/${calendar.id}/free-slots`,
-              { startDate: dayStart, endDate: dayEnd }
-            );
-
-            const freeSlots = freeSlotsResult.success ? (freeSlotsResult.data[dateStr]?.slots || []) : [];
-
-            // Busy slots = all possible slots - free slots
-            const busySlots = allPossibleSlots.filter(slot => !freeSlots.includes(slot));
-
-            // Add busy slots as appointments
-            for (const slot of busySlots) {
-              // Extract hour from string to avoid timezone issues (slot format: "2026-01-06T10:00:00-05:00")
-              const slotHour = slot.substring(11, 13);
-              const appointmentId = `busy_${calendar.id}_${dateStr}_${slotHour}`;
-
-              allAppointments.push({
-                id: appointmentId,
-                ghlAppointmentId: appointmentId,
-                ghlContactId: null,
-                ghlCalendarId: calendar.id,
-                calendarName: calendar.name,
-                startTime: slot,
-                title: 'Busy',
-                appointmentStatus: 'confirmed',
-                duration: slotDuration,
-                isBusySlot: true
-              });
-            }
-
-            logger.info(`[GHL] Calendar "${calendar.name}" ${dateStr}: ${busySlots.length} busy, ${freeSlots.length} free`);
+            allAppointments.push({
+              id: event.id,
+              ghlAppointmentId: event.id,
+              ghlContactId: event.contactId,
+              ghlCalendarId: calendar.id,
+              calendarName: calendar.name,
+              startTime: event.startTime,
+              endTime: event.endTime,
+              title: event.title,
+              appointmentStatus: event.appointmentStatus,
+              contactName,
+              contactPhone,
+              contactEmail,
+              notes: event.notes || ''
+            });
           }
         } catch (calendarError) {
           logger.warn(`[GHL] Error processing calendar ${calendar.name}: ${calendarError.message}`);
@@ -681,12 +668,19 @@ class GHLBookingService {
         // Format: "2026-01-05T10:00:00-05:00"
         let appointmentDate = null;
         let appointmentTime = null;
+        let duration = 60;
 
         if (event.startTime && typeof event.startTime === 'string') {
           // Extract date (YYYY-MM-DD) and time (HH:MM:SS) from ISO string
           appointmentDate = event.startTime.substring(0, 10); // "2026-01-05"
-          const hourStr = event.startTime.substring(11, 13);  // "10"
-          appointmentTime = `${hourStr}:00:00`;               // "10:00:00"
+          appointmentTime = event.startTime.substring(11, 19); // "10:00:00"
+
+          // Calculate duration if endTime exists
+          if (event.endTime) {
+            const start = new Date(event.startTime);
+            const end = new Date(event.endTime);
+            duration = Math.round((end - start) / (1000 * 60)); // Duration in minutes
+          }
         }
 
         return {
@@ -694,20 +688,20 @@ class GHLBookingService {
           ghlAppointmentId: event.ghlAppointmentId,
           ghlContactId: event.ghlContactId,
           ghlCalendarId: event.ghlCalendarId,
-          customerName: event.isBusySlot ? 'Busy' : (event.contact?.name || event.title || 'Unknown'),
-          customerPhone: event.contact?.phone || '',
-          customerEmail: event.contact?.email || '',
+          customerName: event.contactName || event.title || 'GHL Appointment',
+          customerPhone: event.contactPhone || '',
+          customerEmail: event.contactEmail || '',
           appointmentDate,
           appointmentTime,
-          duration: event.duration || 60,
-          purpose: event.calendarName || event.title || 'GHL Appointment',
-          status: this.mapGHLStatus(event.appointmentStatus || event.status),
+          duration,
+          purpose: event.title || event.calendarName || 'GHL Appointment',
+          status: this.mapGHLStatus(event.appointmentStatus),
           source: 'ghl_sync',
-          notes: event.isBusySlot ? 'Busy/Blocked slot from GHL calendar' : (event.notes || '')
+          notes: event.notes || ''
         };
       });
 
-      logger.info(`[GHL] Fetched ${appointments.length} total appointments (busy slots) from ${calendars.length} calendars for client ${clientId}`);
+      logger.info(`[GHL] Fetched ${appointments.length} actual appointments from ${calendars.length} calendars for client ${clientId}`);
       return { success: true, appointments };
 
     } catch (error) {
