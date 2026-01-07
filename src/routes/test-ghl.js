@@ -8,7 +8,7 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.5' });
+    res.json({ success: true, message: 'pong', version: '2.6' });
 });
 
 // GET /api/test-ghl/test-free-slots/:client_id/:calendar_id - Test free slots API directly
@@ -113,8 +113,10 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
             const dateStr = checkDate.toISOString().substring(0, 10);
             const dayOfWeek = checkDate.getDay(); // 0=Sun, 1=Mon, ...
 
-            // Get business hours for this day
-            const dayConfig = calendar?.openHours?.find(oh => oh.daysOfTheWeek?.includes(dayOfWeek));
+            // Get business hours for this day (GHL uses 'daysOfTheWeek' in some responses, 'days' in others)
+            const dayConfig = calendar?.openHours?.find(oh =>
+                (oh.daysOfTheWeek?.includes(dayOfWeek)) || (oh.days?.includes(dayOfWeek))
+            );
             if (!dayConfig || !dayConfig.hours?.length) {
                 console.log(`   ${dateStr} (day ${dayOfWeek}): Closed`);
                 continue;
