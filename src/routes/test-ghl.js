@@ -6,6 +6,31 @@ const axios = require('axios');
 // Dual Calendar Service import
 const dualCalendarService = require('../services/dualCalendarService');
 
+// GET /api/test-ghl/dual-status/:client_id - Check dual calendar mode (simpler path)
+router.get('/dual-status/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        console.log(`🔍 Checking dual status for client ${client_id}`);
+
+        const status = await dualCalendarService.isDualModeEnabled(parseInt(client_id));
+
+        res.json({
+            success: true,
+            clientId: parseInt(client_id),
+            dualModeEnabled: status.enabled,
+            ghlEnabled: status.ghlEnabled,
+            calendarId: status.calendarId,
+            locationId: status.locationId,
+            message: status.enabled
+                ? 'Dual calendar mode is ACTIVE'
+                : 'Dual calendar mode is OFF - using RinglyPro only'
+        });
+    } catch (error) {
+        console.error('❌ Dual status error:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // GET /api/test-ghl/calendars/:client_id - List GHL calendars for a client
 router.get('/calendars/:client_id', async (req, res) => {
     try {
