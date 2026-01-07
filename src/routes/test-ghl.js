@@ -8,7 +8,7 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.9' });
+    res.json({ success: true, message: 'pong', version: '2.10' });
 });
 
 // GET /api/test-ghl/debug-day/:client_id/:calendar_id - Debug slot comparison for a single day
