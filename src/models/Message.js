@@ -227,6 +227,7 @@ Message.findByContact = function(contactId, options = {}) {
 Message.findByClient = function(clientId, options = {}) {
   return this.findAll({
     where: { clientId },
+    attributes: ['id', 'clientId', 'contactId', 'twilioSid', 'recordingUrl', 'direction', 'fromNumber', 'toNumber', 'body', 'status', 'read', 'createdAt', 'updatedAt'],
     order: [['createdAt', options.order || 'DESC']],
     limit: options.limit || 50,
     offset: options.offset || 0
@@ -261,6 +262,7 @@ Message.getTodaysMessages = function() {
         [Op.between]: [today, tomorrow]
       }
     },
+    attributes: ['id', 'clientId', 'contactId', 'twilioSid', 'recordingUrl', 'direction', 'fromNumber', 'toNumber', 'body', 'status', 'read', 'createdAt', 'updatedAt'],
     order: [['createdAt', 'DESC']]
   });
 };
