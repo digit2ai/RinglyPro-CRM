@@ -210,13 +210,8 @@ class ElevenLabsConvAIService {
                                    (conv.end_time && conv.start_time ?
                                     Math.round((new Date(conv.end_time) - new Date(conv.start_time)) / 1000) : null);
 
-                    // Get audio URL
-                    let audioUrl = null;
-                    try {
-                        audioUrl = await this.getSignedAudioUrl(conv.conversation_id);
-                    } catch (e) {
-                        // Audio URL not available
-                    }
+                    // Use proxy URL for audio (signed URLs require auth, proxy handles it)
+                    const audioUrl = `/api/admin/elevenlabs-audio/${conv.conversation_id}`;
 
                     // Insert into messages table
                     const confirmationCode = `EL${Date.now().toString().slice(-8)}`;

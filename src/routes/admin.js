@@ -850,7 +850,7 @@ router.post('/update-elevenlabs-calls/:clientId', async (req, res) => {
 
         // Get existing ElevenLabs messages for this client
         const existingMessages = await sequelize.query(
-            `SELECT id, twilio_sid, from_number, call_duration
+            `SELECT id, twilio_sid, from_number, call_duration, recording_url
              FROM messages
              WHERE client_id = $1 AND message_source = 'elevenlabs'
              ORDER BY created_at DESC`,
@@ -880,8 +880,11 @@ router.post('/update-elevenlabs-calls/:clientId', async (req, res) => {
                                 details.metadata?.call_duration_secs ||
                                 null;
 
+                // Proxy URL for audio
+                const audioProxyUrl = `/api/admin/elevenlabs-audio/${msg.twilio_sid}`;
+
                 // Update if we have new data
-                if (phoneNumber || duration) {
+                if (phoneNumber || duration || !msg.recording_url) {
                     const updateFields = [];
                     const updateValues = [];
                     let paramIndex = 1;
@@ -894,6 +897,10 @@ router.post('/update-elevenlabs-calls/:clientId', async (req, res) => {
                         updateFields.push(`call_duration = $${paramIndex++}`);
                         updateValues.push(duration);
                     }
+                    if (!msg.recording_url) {
+                        updateFields.push(`recording_url = $${paramIndex++}`);
+                        updateValues.push(audioProxyUrl);
+                    }
 
                     if (updateFields.length > 0) {
                         updateValues.push(msg.id);
@@ -902,7 +909,7 @@ router.post('/update-elevenlabs-calls/:clientId', async (req, res) => {
                             { bind: updateValues }
                         );
                         updated++;
-                        console.log(`✅ Updated message ${msg.id}: phone=${phoneNumber}, duration=${duration}`);
+                        console.log(`✅ Updated message ${msg.id}: phone=${phoneNumber}, duration=${duration}, audio=${audioProxyUrl}`);
                     }
                 }
             } catch (e) {
