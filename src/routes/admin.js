@@ -980,6 +980,42 @@ router.get('/elevenlabs-audio/:conversationId', async (req, res) => {
     }
 });
 
+// ============= FIX ELEVENLABS RECORDING URLS =============
+// POST /api/admin/fix-elevenlabs-recordings/:clientId
+// Updates all ElevenLabs messages to have the correct proxy recording URL
+router.post('/fix-elevenlabs-recordings/:clientId', async (req, res) => {
+    try {
+        const { clientId } = req.params;
+        console.log(`🔄 Admin: Fixing ElevenLabs recording URLs for client ${clientId}`);
+
+        // Update all ElevenLabs messages to set the recording URL based on twilio_sid
+        const result = await sequelize.query(
+            `UPDATE messages
+             SET recording_url = '/api/admin/elevenlabs-audio/' || twilio_sid,
+                 updated_at = NOW()
+             WHERE client_id = $1
+             AND message_source = 'elevenlabs'
+             AND (recording_url IS NULL OR recording_url = '')`,
+            { bind: [clientId] }
+        );
+
+        console.log(`✅ Updated recording URLs for client ${clientId}`);
+
+        res.json({
+            success: true,
+            message: `Updated recording URLs for ElevenLabs messages`,
+            clientId: parseInt(clientId)
+        });
+
+    } catch (error) {
+        console.error('❌ Error fixing ElevenLabs recording URLs:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // ============= RUN ELEVENLABS MIGRATIONS =============
 // POST /api/admin/run-elevenlabs-migrations
 // One-time migration to set up ElevenLabs integration (API key auth, no JWT)
