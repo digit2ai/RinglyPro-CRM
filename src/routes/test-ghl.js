@@ -56,6 +56,143 @@ router.get('/calendars/:client_id', async (req, res) => {
     }
 });
 
+// GET /api/test-ghl/events/:client_id - List GHL calendar events/appointments for a client
+router.get('/events/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const days = parseInt(req.query.days) || 14;
+        const { sequelize } = require('../models');
+
+        // Get credentials
+        const results = await sequelize.query(
+            'SELECT id, business_name, ghl_api_key, ghl_location_id FROM clients WHERE id = :client_id',
+            { replacements: { client_id }, type: sequelize.QueryTypes.SELECT }
+        );
+
+        if (!results || results.length === 0 || !results[0].ghl_api_key) {
+            return res.status(404).json({ success: false, error: 'No GHL credentials found' });
+        }
+
+        const client = results[0];
+
+        // First get calendars
+        const calendarsRes = await axios.get(
+            'https://services.leadconnectorhq.com/calendars/',
+            {
+                headers: {
+                    'Authorization': `Bearer ${client.ghl_api_key}`,
+                    'Version': '2021-07-28'
+                },
+                params: { locationId: client.ghl_location_id }
+            }
+        );
+
+        const calendars = calendarsRes.data.calendars || [];
+        if (calendars.length === 0) {
+            return res.json({ success: true, message: 'No calendars found', events: [] });
+        }
+
+        // Calculate date range
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + days);
+
+        const startEpoch = startDate.getTime();
+        const endEpoch = endDate.getTime();
+
+        // Fetch events from each calendar
+        const allEvents = [];
+        for (const calendar of calendars) {
+            try {
+                const eventsRes = await axios.get(
+                    'https://services.leadconnectorhq.com/calendars/events',
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${client.ghl_api_key}`,
+                            'Version': '2021-07-28'
+                        },
+                        params: {
+                            locationId: client.ghl_location_id,
+                            calendarId: calendar.id,
+                            startTime: startEpoch,
+                            endTime: endEpoch
+                        }
+                    }
+                );
+
+                const events = eventsRes.data.events || [];
+
+                // Fetch contact details for each event
+                for (const event of events) {
+                    let contactName = 'Unknown';
+                    let contactPhone = '';
+                    let contactEmail = '';
+
+                    if (event.contactId) {
+                        try {
+                            const contactRes = await axios.get(
+                                `https://services.leadconnectorhq.com/contacts/${event.contactId}`,
+                                {
+                                    headers: {
+                                        'Authorization': `Bearer ${client.ghl_api_key}`,
+                                        'Version': '2021-07-28'
+                                    }
+                                }
+                            );
+                            const contact = contactRes.data.contact;
+                            if (contact) {
+                                contactName = `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unknown';
+                                contactPhone = contact.phone || '';
+                                contactEmail = contact.email || '';
+                            }
+                        } catch (e) {
+                            // Contact fetch failed, use defaults
+                        }
+                    }
+
+                    allEvents.push({
+                        id: event.id,
+                        calendarId: calendar.id,
+                        calendarName: calendar.name,
+                        title: event.title || event.name || 'Appointment',
+                        startTime: event.startTime,
+                        endTime: event.endTime,
+                        startTimeFormatted: new Date(event.startTime).toLocaleString(),
+                        endTimeFormatted: new Date(event.endTime).toLocaleString(),
+                        status: event.appointmentStatus || event.status,
+                        contactId: event.contactId,
+                        contactName,
+                        contactPhone,
+                        contactEmail
+                    });
+                }
+            } catch (calError) {
+                console.error(`Error fetching events for calendar ${calendar.name}:`, calError.message);
+            }
+        }
+
+        // Sort by start time
+        allEvents.sort((a, b) => a.startTime - b.startTime);
+
+        res.json({
+            success: true,
+            clientId: client.id,
+            businessName: client.business_name,
+            locationId: client.ghl_location_id,
+            dateRange: {
+                start: startDate.toISOString().split('T')[0],
+                end: endDate.toISOString().split('T')[0]
+            },
+            eventCount: allEvents.length,
+            events: allEvents
+        });
+
+    } catch (error) {
+        console.error('❌ Events fetch error:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // GET /api/test-ghl/:client_id - Run GHL API tests for a client
 // GET /api/test-ghl/auto - Automatically find a client with GHL credentials
 router.get('/:client_id', async (req, res) => {
