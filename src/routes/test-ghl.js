@@ -193,6 +193,61 @@ router.get('/events/:client_id', async (req, res) => {
     }
 });
 
+// GET /api/test-ghl/dual-calendar-status/:client_id - Check dual calendar mode status
+router.get('/dual-calendar-status/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const dualCalendarService = require('../services/dualCalendarService');
+
+        const status = await dualCalendarService.isDualModeEnabled(parseInt(client_id));
+
+        res.json({
+            success: true,
+            clientId: parseInt(client_id),
+            dualModeEnabled: status.enabled,
+            ghlEnabled: status.ghlEnabled,
+            calendarId: status.calendarId,
+            locationId: status.locationId,
+            message: status.enabled
+                ? 'Dual calendar mode is ACTIVE - appointments will be checked/created in both RinglyPro and GHL'
+                : 'Dual calendar mode is OFF - using RinglyPro calendar only'
+        });
+    } catch (error) {
+        console.error('❌ Dual calendar status error:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// GET /api/test-ghl/availability/:client_id/:date - Test combined availability
+router.get('/availability/:client_id/:date', async (req, res) => {
+    try {
+        const { client_id, date } = req.params;
+        const dualCalendarService = require('../services/dualCalendarService');
+
+        const businessHours = { start: 9, end: 17, slotDuration: 60 };
+        const availability = await dualCalendarService.getCombinedAvailability(
+            parseInt(client_id),
+            date,
+            { businessHours }
+        );
+
+        res.json({
+            success: true,
+            clientId: parseInt(client_id),
+            date,
+            availableSlots: availability.availableSlots,
+            ringlyProSlots: availability.ringlyProSlots,
+            ghlSlots: availability.ghlSlots,
+            dualModeActive: availability.dualModeActive,
+            source: availability.source,
+            businessHours
+        });
+    } catch (error) {
+        console.error('❌ Availability check error:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // GET /api/test-ghl/:client_id - Run GHL API tests for a client
 // GET /api/test-ghl/auto - Automatically find a client with GHL credentials
 router.get('/:client_id', async (req, res) => {
