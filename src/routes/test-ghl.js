@@ -8,7 +8,7 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.4' });
+    res.json({ success: true, message: 'pong', version: '2.5' });
 });
 
 // GET /api/test-ghl/test-free-slots/:client_id/:calendar_id - Test free slots API directly
@@ -168,6 +168,8 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
 
             // Blocked slots = all slots - free slots
             const blockedSlots = allSlots.filter(s => !freeSlots.includes(s));
+            console.log(`   ${dateStr}: allSlots=${JSON.stringify(allSlots)}`);
+            console.log(`   ${dateStr}: freeSlots=${JSON.stringify(freeSlots)}`);
             console.log(`   ${dateStr}: ${blockedSlots.length} blocked / ${allSlots.length} total (${freeSlots.length} free)`);
 
             // Insert blocked slots as "Busy" appointments
@@ -205,6 +207,12 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
 
         console.log(`✅ Sync complete: ${totalInserted} blocked slots inserted`);
 
+        // Get calendar open hours for debug
+        const openHoursDebug = calendar?.openHours?.map(oh => ({
+            days: oh.daysOfTheWeek,
+            hours: oh.hours
+        }));
+
         res.json({
             success: true,
             clientId: parseInt(client_id),
@@ -215,7 +223,11 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
             deleted: deleted.length,
             inserted: totalInserted,
             days,
-            slots: insertedSlots.slice(0, 50) // Show first 50
+            slots: insertedSlots.slice(0, 50), // Show first 50
+            debug: {
+                openHours: openHoursDebug,
+                todayDayOfWeek: new Date().getDay()
+            }
         });
 
     } catch (error) {
