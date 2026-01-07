@@ -8,7 +8,7 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.11' });
+    res.json({ success: true, message: 'pong', version: '2.12' });
 });
 
 // GET /api/test-ghl/debug-day/:client_id/:calendar_id - Debug slot comparison for a single day
@@ -297,7 +297,7 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
                             status, source, confirmation_code, notes,
                             ghl_calendar_id, created_at, updated_at
                         ) VALUES ($1, $2, '', '', $3, $4, $5, 'Blocked Time',
-                            'confirmed', 'api', $6, $7, $8, NOW(), NOW())`,
+                            'confirmed', 'manual', $6, $7, $8, NOW(), NOW())`,
                         {
                             bind: [
                                 parseInt(client_id),
