@@ -8,7 +8,7 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.0' });
+    res.json({ success: true, message: 'pong', version: '2.1' });
 });
 
 // GET /api/test-ghl/dual-status/:client_id - Check dual calendar mode (simpler path)
