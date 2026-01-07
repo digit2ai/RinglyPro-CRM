@@ -938,6 +938,32 @@ router.post('/run-elevenlabs-migrations', async (req, res) => {
             console.log('Note (call_start_time may exist):', e.message);
         }
 
+        // 6. Add ALL missing GHL columns to messages
+        const ghlColumns = [
+            { name: 'ghl_message_id', type: 'VARCHAR' },
+            { name: 'ghl_conversation_id', type: 'VARCHAR' },
+            { name: 'ghl_contact_id', type: 'VARCHAR' },
+            { name: 'synced_to_ghl', type: 'BOOLEAN DEFAULT FALSE' },
+            { name: 'synced_from_ghl', type: 'BOOLEAN DEFAULT FALSE' },
+            { name: 'ghl_synced_at', type: 'TIMESTAMP WITH TIME ZONE' },
+            { name: 'message_source', type: 'VARCHAR DEFAULT \'twilio\'' },
+            { name: 'message_type', type: 'VARCHAR DEFAULT \'sms\'' },
+            { name: 'error_code', type: 'VARCHAR' },
+            { name: 'error_message', type: 'TEXT' },
+            { name: 'cost', type: 'DECIMAL(10,4)' },
+            { name: 'sent_at', type: 'TIMESTAMP WITH TIME ZONE' },
+            { name: 'delivered_at', type: 'TIMESTAMP WITH TIME ZONE' }
+        ];
+
+        for (const col of ghlColumns) {
+            try {
+                await sequelize.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`);
+                console.log(`✅ Added ${col.name} column`);
+            } catch (e) {
+                console.log(`Note (${col.name} may exist):`, e.message);
+            }
+        }
+
         // Verify
         const [client] = await sequelize.query(
             `SELECT id, business_name, elevenlabs_agent_id FROM clients WHERE id = 32`,
