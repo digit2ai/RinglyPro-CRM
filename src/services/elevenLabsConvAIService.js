@@ -178,10 +178,18 @@ class ElevenLabsConvAIService {
                     }
 
                     // Extract phone number from conversation data
+                    // ElevenLabs stores phone in various fields depending on setup
                     const phoneNumber = conv.metadata?.phone_number ||
                                        conv.call?.phone_number ||
+                                       conv.user_id ||  // Often contains phone number
                                        details.metadata?.phone_number ||
+                                       details.user_id ||
+                                       details.analysis?.user_id ||
+                                       details.data_collection_results?.phone ||
+                                       details.data_collection_results?.caller_phone ||
                                        'Unknown';
+
+                    console.log(`📞 Phone extraction - conv.user_id: ${conv.user_id}, details keys: ${Object.keys(details).join(', ')}`);
 
                     // Build summary from transcript
                     let summary = 'AI Phone Call';

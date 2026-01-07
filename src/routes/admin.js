@@ -840,6 +840,93 @@ router.post('/sync-elevenlabs-calls/:clientId', async (req, res) => {
     }
 });
 
+// ============= UPDATE EXISTING ELEVENLABS CALLS =============
+// POST /api/admin/update-elevenlabs-calls/:clientId
+// Updates existing ElevenLabs call records with phone numbers and durations from API
+router.post('/update-elevenlabs-calls/:clientId', async (req, res) => {
+    try {
+        const { clientId } = req.params;
+        console.log(`🔄 Admin: Updating ElevenLabs calls for client ${clientId}`);
+
+        // Get existing ElevenLabs messages for this client
+        const existingMessages = await sequelize.query(
+            `SELECT id, twilio_sid, from_number, call_duration
+             FROM messages
+             WHERE client_id = $1 AND message_source = 'elevenlabs'
+             ORDER BY created_at DESC`,
+            { bind: [clientId], type: sequelize.QueryTypes.SELECT }
+        );
+
+        console.log(`📋 Found ${existingMessages.length} ElevenLabs messages to update`);
+
+        const elevenLabsConvAI = require('../services/elevenLabsConvAIService');
+        let updated = 0;
+        let errors = [];
+
+        for (const msg of existingMessages) {
+            try {
+                // Get conversation details from ElevenLabs
+                const details = await elevenLabsConvAI.getConversation(msg.twilio_sid);
+
+                // Extract phone number
+                const phoneNumber = details.user_id ||
+                                   details.metadata?.phone_number ||
+                                   details.analysis?.user_id ||
+                                   details.data_collection_results?.phone ||
+                                   null;
+
+                // Get duration
+                const duration = details.call_duration_secs ||
+                                details.metadata?.call_duration_secs ||
+                                null;
+
+                // Update if we have new data
+                if (phoneNumber || duration) {
+                    const updateFields = [];
+                    const updateValues = [];
+                    let paramIndex = 1;
+
+                    if (phoneNumber && msg.from_number === 'Unknown') {
+                        updateFields.push(`from_number = $${paramIndex++}`);
+                        updateValues.push(phoneNumber);
+                    }
+                    if (duration && !msg.call_duration) {
+                        updateFields.push(`call_duration = $${paramIndex++}`);
+                        updateValues.push(duration);
+                    }
+
+                    if (updateFields.length > 0) {
+                        updateValues.push(msg.id);
+                        await sequelize.query(
+                            `UPDATE messages SET ${updateFields.join(', ')}, updated_at = NOW() WHERE id = $${paramIndex}`,
+                            { bind: updateValues }
+                        );
+                        updated++;
+                        console.log(`✅ Updated message ${msg.id}: phone=${phoneNumber}, duration=${duration}`);
+                    }
+                }
+            } catch (e) {
+                console.log(`⚠️ Could not update ${msg.twilio_sid}: ${e.message}`);
+                errors.push({ id: msg.id, error: e.message });
+            }
+        }
+
+        res.json({
+            success: true,
+            total: existingMessages.length,
+            updated,
+            errors: errors.slice(0, 5)
+        });
+
+    } catch (error) {
+        console.error('❌ Error updating ElevenLabs calls:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // ============= GET ELEVENLABS CALL DETAILS =============
 // GET /api/admin/elevenlabs-call/:conversationId
 // Gets details for a specific ElevenLabs call
