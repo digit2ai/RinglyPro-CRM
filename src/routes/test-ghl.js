@@ -8,7 +8,98 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.1' });
+    res.json({ success: true, message: 'pong', version: '2.2' });
+});
+
+// GET /api/test-ghl/debug-blocked/:client_id/:calendar_id - Debug blocked slots API
+router.get('/debug-blocked/:client_id/:calendar_id', async (req, res) => {
+    try {
+        const { client_id, calendar_id } = req.params;
+        const { sequelize } = require('../models');
+        const { QueryTypes } = require('sequelize');
+
+        const clientResult = await sequelize.query(
+            'SELECT ghl_api_key, ghl_location_id FROM clients WHERE id = :clientId',
+            { replacements: { clientId: parseInt(client_id) }, type: QueryTypes.SELECT }
+        );
+
+        if (!clientResult.length || !clientResult[0].ghl_api_key) {
+            return res.json({ error: 'No credentials' });
+        }
+
+        const { ghl_api_key: ghlApiKey, ghl_location_id: locationId } = clientResult[0];
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + 30);
+
+        // Try multiple API endpoints
+        const results = {};
+
+        // 1. Try blocked-slots endpoint
+        try {
+            const blockedRes = await axios.get(
+                'https://services.leadconnectorhq.com/calendars/blocked-slots',
+                {
+                    headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': '2021-07-28' },
+                    params: { locationId, calendarId: calendar_id, startTime: startDate.getTime(), endTime: endDate.getTime() }
+                }
+            );
+            results.blockedSlots = { status: 200, data: blockedRes.data };
+        } catch (e) {
+            results.blockedSlots = { status: e.response?.status, error: e.message, data: e.response?.data };
+        }
+
+        // 2. Try events endpoint
+        try {
+            const eventsRes = await axios.get(
+                'https://services.leadconnectorhq.com/calendars/events',
+                {
+                    headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': '2021-07-28' },
+                    params: { locationId, calendarId: calendar_id, startTime: startDate.getTime(), endTime: endDate.getTime() }
+                }
+            );
+            results.events = { status: 200, data: eventsRes.data };
+        } catch (e) {
+            results.events = { status: e.response?.status, error: e.message, data: e.response?.data };
+        }
+
+        // 3. Try calendar resource endpoint (might have blocked time)
+        try {
+            const calRes = await axios.get(
+                `https://services.leadconnectorhq.com/calendars/${calendar_id}`,
+                {
+                    headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': '2021-07-28' }
+                }
+            );
+            results.calendarDetails = { status: 200, data: calRes.data };
+        } catch (e) {
+            results.calendarDetails = { status: e.response?.status, error: e.message };
+        }
+
+        // 4. Try to get calendar groups/resources
+        try {
+            const groupsRes = await axios.get(
+                'https://services.leadconnectorhq.com/calendars/groups',
+                {
+                    headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': '2021-07-28' },
+                    params: { locationId }
+                }
+            );
+            results.groups = { status: 200, data: groupsRes.data };
+        } catch (e) {
+            results.groups = { status: e.response?.status, error: e.message };
+        }
+
+        res.json({
+            clientId: parseInt(client_id),
+            calendarId: calendar_id,
+            locationId,
+            dateRange: { start: startDate.toISOString(), end: endDate.toISOString() },
+            results
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // GET /api/test-ghl/dual-status/:client_id - Check dual calendar mode (simpler path)
