@@ -8,7 +8,7 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.8' });
+    res.json({ success: true, message: 'pong', version: '2.9' });
 });
 
 // GET /api/test-ghl/debug-day/:client_id/:calendar_id - Debug slot comparison for a single day
@@ -285,28 +285,30 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
 
             // Insert blocked slots as "Busy" appointments
             let dayInserted = 0;
+            const insertErrors = [];
             for (const slot of blockedSlots) {
                 try {
                     const code = `BS${Date.now().toString().slice(-6)}${totalInserted}`;
+                    console.log(`   Inserting: client=${client_id}, date=${dateStr}, time=${slot}`);
                     await sequelize.query(
                         `INSERT INTO appointments (
                             client_id, customer_name, customer_phone, customer_email,
                             appointment_date, appointment_time, duration, purpose,
                             status, source, confirmation_code, notes,
                             ghl_calendar_id, created_at, updated_at
-                        ) VALUES (:clientId, :name, '', '', :date, :time, :duration, 'Blocked Time',
-                            'confirmed', 'ghl_blocked_slot', :code, :notes, :calId, NOW(), NOW())`,
+                        ) VALUES ($1, $2, '', '', $3, $4, $5, 'Blocked Time',
+                            'confirmed', 'ghl_blocked_slot', $6, $7, $8, NOW(), NOW())`,
                         {
-                            replacements: {
-                                clientId: parseInt(client_id),
-                                name: `Busy - ${calendarName}`,
-                                date: dateStr,
-                                time: slot,
-                                duration: slotDuration,
+                            bind: [
+                                parseInt(client_id),
+                                `Busy - ${calendarName}`,
+                                dateStr,
+                                slot,
+                                slotDuration,
                                 code,
-                                notes: `Blocked slot derived from GHL availability`,
-                                calId: calendarId
-                            }
+                                `Blocked slot derived from GHL availability`,
+                                calendarId
+                            ]
                         }
                     );
                     totalInserted++;
@@ -314,9 +316,13 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
                     insertedSlots.push({ date: dateStr, time: slot });
                 } catch (e) {
                     console.error(`   Insert error: ${e.message}`);
+                    insertErrors.push({ slot, error: e.message });
                 }
             }
             dayDebug.inserted = dayInserted;
+            if (insertErrors.length > 0) {
+                dayDebug.insertErrors = insertErrors;
+            }
             debugDays.push(dayDebug);
         }
 
