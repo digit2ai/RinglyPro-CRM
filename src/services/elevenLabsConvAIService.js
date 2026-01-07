@@ -145,8 +145,13 @@ class ElevenLabsConvAIService {
             let inserted = 0;
             let skipped = 0;
             const synced = [];
+            const errors = [];
 
             console.log(`📋 Processing ${conversations.length} conversations from ElevenLabs`);
+            console.log(`📋 Raw data keys: ${Object.keys(data).join(', ')}`);
+            if (conversations.length > 0) {
+                console.log(`📋 First conversation sample:`, JSON.stringify(conversations[0]).substring(0, 500));
+            }
 
             for (const conv of conversations) {
                 try {
@@ -241,17 +246,24 @@ class ElevenLabsConvAIService {
 
                 } catch (insertError) {
                     console.error(`❌ Error syncing conversation ${conv.conversation_id}:`, insertError.message);
+                    errors.push({ conversationId: conv.conversation_id, error: insertError.message });
                 }
             }
 
-            console.log(`✅ Sync complete: ${inserted} inserted, ${skipped} skipped`);
+            console.log(`✅ Sync complete: ${inserted} inserted, ${skipped} skipped, ${errors.length} errors`);
 
             return {
                 success: true,
                 total: conversations.length,
                 inserted,
                 skipped,
-                synced
+                synced,
+                errors: errors.slice(0, 5), // Return first 5 errors for debugging
+                sampleConversation: conversations[0] ? {
+                    conversation_id: conversations[0].conversation_id,
+                    status: conversations[0].status,
+                    start_time: conversations[0].start_time
+                } : null
             };
 
         } catch (error) {
