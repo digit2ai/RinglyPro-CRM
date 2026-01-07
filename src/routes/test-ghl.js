@@ -281,6 +281,212 @@ router.get('/availability/:client_id/:date', async (req, res) => {
     }
 });
 
+// POST /api/test-ghl/sync-blocked-slots/:client_id - Sync blocked slots from specific calendar
+router.post('/sync-blocked-slots/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { calendarId } = req.body;
+        const { sequelize } = require('../models');
+        const { QueryTypes } = require('sequelize');
+        const GHL_API_VERSION = '2021-07-28';
+
+        if (!calendarId) {
+            return res.status(400).json({ success: false, error: 'calendarId is required' });
+        }
+
+        console.log(`🔄 Syncing blocked slots for client ${client_id}, calendar ${calendarId}`);
+
+        // Get client credentials
+        const clientResult = await sequelize.query(
+            'SELECT ghl_api_key, ghl_location_id, business_name FROM clients WHERE id = :clientId',
+            { replacements: { clientId: parseInt(client_id) }, type: QueryTypes.SELECT }
+        );
+
+        if (!clientResult || clientResult.length === 0 || !clientResult[0].ghl_api_key) {
+            return res.status(404).json({ success: false, error: 'Client not found or no GHL credentials' });
+        }
+
+        const { ghl_api_key: ghlApiKey, ghl_location_id: locationId, business_name: businessName } = clientResult[0];
+
+        // Delete existing appointments for this calendar
+        const [deleted] = await sequelize.query(
+            "DELETE FROM appointments WHERE client_id = :clientId AND ghl_calendar_id = :calendarId RETURNING id",
+            { replacements: { clientId: parseInt(client_id), calendarId } }
+        );
+        console.log(`   Deleted ${deleted.length} old records`);
+
+        // Get calendar name
+        const calendarsRes = await axios.get(
+            'https://services.leadconnectorhq.com/calendars/',
+            {
+                headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION },
+                params: { locationId }
+            }
+        );
+        const calendars = calendarsRes.data.calendars || [];
+        const targetCalendar = calendars.find(c => c.id === calendarId);
+        const calendarName = targetCalendar?.name || 'Unknown Calendar';
+
+        // Date range
+        const startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + 60);
+
+        // Fetch blocked slots
+        let blockedSlots = [];
+        try {
+            const blockedRes = await axios.get(
+                'https://services.leadconnectorhq.com/calendars/blocked-slots',
+                {
+                    headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION },
+                    params: { locationId, calendarId, startTime: startDate.getTime(), endTime: endDate.getTime() }
+                }
+            );
+            blockedSlots = blockedRes.data.blockedSlots || blockedRes.data.events || [];
+            console.log(`📋 Found ${blockedSlots.length} blocked slots`);
+        } catch (err) {
+            console.log(`⚠️ Blocked slots API: ${err.response?.status} - ${err.message}`);
+        }
+
+        // Fetch events
+        let events = [];
+        try {
+            const eventsRes = await axios.get(
+                'https://services.leadconnectorhq.com/calendars/events',
+                {
+                    headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION },
+                    params: { locationId, calendarId, startTime: startDate.getTime(), endTime: endDate.getTime() }
+                }
+            );
+            events = eventsRes.data.events || [];
+            console.log(`📋 Found ${events.length} appointments`);
+        } catch (err) {
+            console.log(`⚠️ Events API: ${err.message}`);
+        }
+
+        // Insert blocked slots
+        let insertedBlocked = 0;
+        for (const slot of blockedSlots) {
+            try {
+                const slotStart = new Date(slot.startTime);
+                const slotEnd = new Date(slot.endTime);
+                const appointmentDate = slotStart.toISOString().substring(0, 10);
+                const appointmentTime = slotStart.toISOString().substring(11, 19);
+                const duration = Math.round((slotEnd - slotStart) / (1000 * 60));
+
+                await sequelize.query(
+                    `INSERT INTO appointments (
+                        client_id, customer_name, customer_phone, customer_email,
+                        appointment_date, appointment_time, duration, purpose,
+                        status, source, confirmation_code, notes,
+                        ghl_appointment_id, ghl_calendar_id,
+                        created_at, updated_at
+                    ) VALUES (:clientId, :name, '', '', :date, :time, :duration, :purpose,
+                        'confirmed', 'ghl_blocked_slot', :code, :notes, :ghlId, :calId, NOW(), NOW())`,
+                    {
+                        replacements: {
+                            clientId: parseInt(client_id),
+                            name: `Busy - ${calendarName}`,
+                            date: appointmentDate,
+                            time: appointmentTime,
+                            duration: duration || 60,
+                            purpose: slot.title || 'Blocked Time',
+                            code: `BS${Date.now().toString().slice(-6)}${insertedBlocked}`,
+                            notes: `Blocked slot from GHL: ${calendarName}`,
+                            ghlId: slot.id,
+                            calId: calendarId
+                        }
+                    }
+                );
+                insertedBlocked++;
+            } catch (e) {
+                console.error(`Insert blocked error: ${e.message}`);
+            }
+        }
+
+        // Insert events
+        let insertedEvents = 0;
+        for (const event of events) {
+            try {
+                let contactName = event.title || 'GHL Appointment';
+                let contactPhone = '';
+                let contactEmail = '';
+
+                if (event.contactId) {
+                    try {
+                        const contactRes = await axios.get(
+                            `https://services.leadconnectorhq.com/contacts/${event.contactId}`,
+                            { headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION } }
+                        );
+                        const contact = contactRes.data.contact;
+                        if (contact) {
+                            contactName = contact.contactName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || contactName;
+                            contactPhone = contact.phone || '';
+                            contactEmail = contact.email || '';
+                        }
+                    } catch (e) {}
+                }
+
+                const eventStart = new Date(event.startTime);
+                const eventEnd = new Date(event.endTime);
+                const appointmentDate = eventStart.toISOString().substring(0, 10);
+                const appointmentTime = eventStart.toISOString().substring(11, 19);
+                const duration = Math.round((eventEnd - eventStart) / (1000 * 60));
+
+                await sequelize.query(
+                    `INSERT INTO appointments (
+                        client_id, customer_name, customer_phone, customer_email,
+                        appointment_date, appointment_time, duration, purpose,
+                        status, source, confirmation_code, notes,
+                        ghl_appointment_id, ghl_contact_id, ghl_calendar_id,
+                        created_at, updated_at
+                    ) VALUES (:clientId, :name, :phone, :email, :date, :time, :duration, :purpose,
+                        'confirmed', 'ghl_sync', :code, :notes, :ghlId, :contactId, :calId, NOW(), NOW())`,
+                    {
+                        replacements: {
+                            clientId: parseInt(client_id),
+                            name: contactName,
+                            phone: contactPhone,
+                            email: contactEmail,
+                            date: appointmentDate,
+                            time: appointmentTime,
+                            duration: duration || 60,
+                            purpose: event.title || calendarName,
+                            code: `GS${Date.now().toString().slice(-6)}${insertedEvents}`,
+                            notes: `Synced from GHL: ${calendarName}`,
+                            ghlId: event.id,
+                            contactId: event.contactId || null,
+                            calId: calendarId
+                        }
+                    }
+                );
+                insertedEvents++;
+            } catch (e) {
+                console.error(`Insert event error: ${e.message}`);
+            }
+        }
+
+        res.json({
+            success: true,
+            clientId: parseInt(client_id),
+            businessName,
+            calendarId,
+            calendarName,
+            deleted: deleted.length,
+            blockedSlotsFound: blockedSlots.length,
+            eventsFound: events.length,
+            insertedBlocked,
+            insertedEvents,
+            total: insertedBlocked + insertedEvents
+        });
+
+    } catch (error) {
+        console.error('❌ Sync error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // GET /api/test-ghl/:client_id - Run GHL API tests for a client
 // GET /api/test-ghl/auto - Automatically find a client with GHL credentials
 router.get('/:client_id', async (req, res) => {
