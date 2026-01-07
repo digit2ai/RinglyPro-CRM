@@ -2,7 +2,6 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { Appointment, sequelize } = require('../models');
 const crmAppointmentService = require('../services/crmAppointmentService');
-const dualCalendarService = require('../services/dualCalendarService');
 const router = express.Router();
 
 // Middleware to extract and verify client_id from JWT token
@@ -49,31 +48,6 @@ const authenticateClient = (req, res, next) => {
 
 // Apply authentication middleware to all routes
 router.use(authenticateClient);
-
-// Check dual calendar mode status for this client
-router.get('/dual-calendar-status', async (req, res) => {
-  try {
-    const status = await dualCalendarService.isDualModeEnabled(req.clientId);
-
-    res.json({
-      success: true,
-      clientId: req.clientId,
-      dualModeEnabled: status.enabled,
-      ghlEnabled: status.ghlEnabled,
-      calendarId: status.calendarId,
-      locationId: status.locationId,
-      message: status.enabled
-        ? 'Dual calendar mode is ACTIVE - appointments will be checked/created in both RinglyPro and GHL'
-        : 'Dual calendar mode is OFF - using RinglyPro calendar only'
-    });
-  } catch (error) {
-    console.error('Error checking dual calendar status:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
 
 // Get all appointments FOR THIS CLIENT ONLY
 // Includes auto-sync from GHL if configured
@@ -852,7 +826,6 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Get availability for a specific date FOR THIS CLIENT
-// Uses dual calendar service to check both RinglyPro and GHL (if enabled)
 router.get('/availability/:clientId/:date', async (req, res) => {
   try {
     const { clientId, date } = req.params;
@@ -865,30 +838,46 @@ router.get('/availability/:clientId/:date', async (req, res) => {
       });
     }
 
-    // Define business hours (9 AM to 5 PM, 60-minute slots)
+    // Define business hours (9 AM to 5 PM, 30-minute slots)
     const businessHours = {
       start: 9,  // 9 AM
       end: 17,   // 5 PM
-      slotDuration: 60 // minutes (changed to 60 for GHL compatibility)
+      slotDuration: 30 // minutes
     };
 
-    // Use dual calendar service to get combined availability
-    const availability = await dualCalendarService.getCombinedAvailability(
-      parseInt(clientId),
-      date,
-      { businessHours }
+    // Generate all possible time slots
+    const allSlots = [];
+    for (let hour = businessHours.start; hour < businessHours.end; hour++) {
+      for (let minute = 0; minute < 60; minute += businessHours.slotDuration) {
+        const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
+        allSlots.push(timeStr);
+      }
+    }
+
+    // Get existing appointments for this date
+    const existingAppointments = await sequelize.query(
+      'SELECT appointment_time FROM appointments WHERE client_id = :client_id AND appointment_date = :date AND status NOT IN (:cancelled, :completed)',
+      {
+        replacements: {
+          client_id: clientId,
+          date: date,
+          cancelled: 'cancelled',
+          completed: 'completed'
+        },
+        type: sequelize.QueryTypes.SELECT
+      }
     );
 
-    console.log(`📅 Client ${clientId}: ${availability.availableSlots.length} slots available on ${date} (source: ${availability.source})`);
+    const bookedTimes = existingAppointments.map(apt => apt.appointment_time);
+    const availableSlots = allSlots.filter(slot => !bookedTimes.includes(slot));
+
+    console.log(`📅 Client ${clientId}: ${availableSlots.length}/${allSlots.length} slots available on ${date}`);
 
     res.json({
       success: true,
       date: date,
-      available_slots: availability.availableSlots,
-      ringlypro_slots: availability.ringlyProSlots,
-      ghl_slots: availability.ghlSlots,
-      dual_mode_active: availability.dualModeActive,
-      source: availability.source,
+      available_slots: availableSlots,
+      booked_slots: bookedTimes,
       business_hours: businessHours
     });
   } catch (error) {
@@ -901,7 +890,6 @@ router.get('/availability/:clientId/:date', async (req, res) => {
 });
 
 // Create appointment from dashboard (different from POST / to allow custom field names)
-// Uses dual calendar service to create in both RinglyPro and GHL (if enabled)
 router.post('/create', async (req, res) => {
   try {
     const {
@@ -911,8 +899,7 @@ router.post('/create', async (req, res) => {
       appointmentDate,
       appointmentTime,
       duration,
-      notes,
-      purpose
+      notes
     } = req.body;
 
     if (!customerName || !customerPhone || !appointmentDate || !appointmentTime) {
@@ -922,53 +909,51 @@ router.post('/create', async (req, res) => {
       });
     }
 
-    // Use dual calendar service to check availability in both systems
-    const slotCheck = await dualCalendarService.isSlotAvailable(
-      req.clientId,
-      appointmentDate,
-      appointmentTime
+    // Check if slot is available FOR THIS CLIENT
+    const existing = await sequelize.query(
+      'SELECT id FROM appointments WHERE client_id = :client_id AND appointment_date = :date AND appointment_time = :time AND status NOT IN (:cancelled, :completed)',
+      {
+        replacements: {
+          client_id: req.clientId,
+          date: appointmentDate,
+          time: appointmentTime,
+          cancelled: 'cancelled',
+          completed: 'completed'
+        },
+        type: sequelize.QueryTypes.SELECT
+      }
     );
 
-    if (!slotCheck.available) {
-      const reason = slotCheck.dualModeActive
-        ? `Time slot is already booked (RinglyPro: ${slotCheck.ringlyProAvailable ? 'available' : 'booked'}, GHL: ${slotCheck.ghlAvailable ? 'available' : 'booked'})`
-        : 'Time slot is already booked';
-
+    if (existing.length > 0) {
       return res.status(409).json({
         success: false,
-        error: reason,
-        dual_mode_active: slotCheck.dualModeActive
+        error: 'Time slot is already booked'
       });
     }
 
-    // Use dual calendar service to create appointment in both systems
-    const result = await dualCalendarService.createDualAppointment(req.clientId, {
+    const confirmationCode = `APPT${Date.now().toString().slice(-6).toUpperCase()}`;
+
+    const appointment = await Appointment.create({
+      clientId: req.clientId,
       customerName,
-      customerEmail,
+      customerEmail: customerEmail || null,
       customerPhone,
       appointmentDate,
       appointmentTime,
-      duration: duration || 60,
-      purpose: purpose || notes || 'General consultation',
-      notes: notes || null
+      purpose: notes || 'General consultation',
+      confirmationCode: confirmationCode,
+      source: 'manual',
+      duration: duration || 30,
+      notes: notes || null,
+      status: 'confirmed'
     });
 
-    if (!result.success) {
-      return res.status(500).json({
-        success: false,
-        error: result.error || 'Failed to create appointment'
-      });
-    }
-
-    console.log(`✅ Client ${req.clientId}: Created appointment for ${customerName} (dual mode: ${result.dualModeActive})`);
+    console.log(`✅ Client ${req.clientId}: Created appointment ${appointment.id} for ${customerName} via CRM dashboard`);
 
     res.status(201).json({
       success: true,
-      message: result.message,
-      appointment: result.ringlyProAppointment,
-      ghl_appointment: result.ghlAppointment,
-      ghl_contact: result.ghlContact,
-      dual_mode_active: result.dualModeActive
+      message: 'Appointment created successfully',
+      appointment: appointment
     });
   } catch (error) {
     console.error('Error creating appointment from dashboard:', error);
