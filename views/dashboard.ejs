@@ -5771,7 +5771,7 @@
             }
         }
 
-        // Auto-refresh messages every 60 seconds
+        // Auto-refresh messages every 5 minutes
         let messagesAutoRefreshInterval;
 
         function startMessagesAutoRefresh() {
@@ -5780,7 +5780,7 @@
                 clearInterval(messagesAutoRefreshInterval);
             }
 
-            // Refresh every 60 seconds (1 minute)
+            // Refresh every 5 minutes (300 seconds)
             messagesAutoRefreshInterval = setInterval(async () => {
                 console.log('🔄 Auto-refreshing messages...');
                 try {
@@ -5794,9 +5794,9 @@
                 } catch (error) {
                     console.error('❌ Auto-refresh failed:', error);
                 }
-            }, 60000); // 60 seconds
+            }, 300000); // 5 minutes
 
-            console.log('✅ Messages auto-refresh enabled (every 60 seconds)');
+            console.log('✅ Messages auto-refresh enabled (every 5 minutes)');
         }
 
         function stopMessagesAutoRefresh() {
