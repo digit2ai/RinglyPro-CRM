@@ -2493,21 +2493,24 @@
         <div class="content-section active" id="todaySection">
             <div class="section-header" style="flex-wrap: wrap; gap: 1rem;">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <!-- Schedule Header -->
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <!-- Calendar Header with icon - Only shown for Client 15 -->
+                    <div id="calendarHeaderClient15" style="display: none; align-items: center; gap: 0.5rem;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="color: #4F46E5;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span style="font-weight: 600; font-size: 1rem; color: #111827;">Calendar</span>
+                    </div>
+                    <!-- Schedule Header - Only shown for non-Client 15 -->
+                    <div id="scheduleHeaderOthers" style="display: flex; align-items: center; gap: 0.5rem;">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="color: #4F46E5;">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                         </svg>
                         <span style="font-weight: 600; font-size: 1rem; color: #111827;">Schedule</span>
                     </div>
-                    <!-- View Toggle Buttons - Only shown for Client 15 -->
-                    <div id="viewToggleButtons" style="display: none; background: #f3f4f6; border-radius: 0.5rem; padding: 2px;">
-                        <button id="listViewBtn" onclick="setAppointmentView('list')" style="padding: 0.4rem 0.75rem; border-radius: 0.4rem; border: none; cursor: pointer; font-size: 0.8rem; background: transparent; color: #6b7280; transition: all 0.2s;">
-                            List
-                        </button>
-                        <button id="calendarViewBtn" onclick="setAppointmentView('calendar')" style="padding: 0.4rem 0.75rem; border-radius: 0.4rem; border: none; cursor: pointer; font-size: 0.8rem; background: #3b82f6; color: white; transition: all 0.2s;">
-                            Calendar
-                        </button>
+                    <!-- Hidden elements for backward compatibility -->
+                    <div id="viewToggleButtons" style="display: none;">
+                        <button id="listViewBtn" style="display: none;"></button>
+                        <button id="calendarViewBtn" style="display: none;"></button>
                     </div>
                     <!-- Refresh Button - Only shown for Client 15 -->
                     <button id="refreshAppointmentsBtn" onclick="refreshClient15Appointments()" class="btn-refresh" style="display: none;">
@@ -4354,17 +4357,21 @@
         // Load Dashboard Data
         async function loadDashboard() {
             try {
-                // Client 15: Show view toggle and use list view by default
-                // Other clients: Use GHL Calendar Cards
+                // Client 15: Show Calendar header and calendar grid view
+                // Other clients: Show Schedule header and use GHL Calendar Cards
                 if (isClient15()) {
-                    // Show view toggle buttons and refresh button for Client 15
-                    document.getElementById('viewToggleButtons').style.display = 'flex';
+                    // Show Calendar header, hide Schedule header for Client 15
+                    document.getElementById('calendarHeaderClient15').style.display = 'flex';
+                    document.getElementById('scheduleHeaderOthers').style.display = 'none';
+                    // Show refresh button for Client 15
                     document.getElementById('refreshAppointmentsBtn').style.display = 'flex';
-                    // Load calendar grid view by default (with auto-refresh)
+                    // Load calendar grid view directly (no list view)
                     setAppointmentView('calendar');
                 } else {
-                    // Hide view toggle and refresh button for other clients
-                    document.getElementById('viewToggleButtons').style.display = 'none';
+                    // Show Schedule header, hide Calendar header for other clients
+                    document.getElementById('calendarHeaderClient15').style.display = 'none';
+                    document.getElementById('scheduleHeaderOthers').style.display = 'flex';
+                    // Hide refresh button for other clients
                     document.getElementById('refreshAppointmentsBtn').style.display = 'none';
                     // Load GHL Calendar Cards on initial load
                     loadGHLCards();
