@@ -886,6 +886,60 @@ router.get('/elevenlabs-audio/:conversationId', async (req, res) => {
     }
 });
 
+// ============= RUN ELEVENLABS MIGRATIONS =============
+// POST /api/admin/run-elevenlabs-migrations
+// One-time migration to set up ElevenLabs integration (API key auth, no JWT)
+router.post('/run-elevenlabs-migrations', async (req, res) => {
+    try {
+        const { apiKey } = req.body;
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+
+        if (apiKey !== expectedKey) {
+            return res.status(401).json({ success: false, error: 'Invalid API key' });
+        }
+
+        console.log('🔄 Running ElevenLabs migrations...');
+
+        // 1. Add elevenlabs_agent_id column to clients
+        try {
+            await sequelize.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS elevenlabs_agent_id VARCHAR`);
+            console.log('✅ Added elevenlabs_agent_id column');
+        } catch (e) {
+            console.log('Note (column may exist):', e.message);
+        }
+
+        // 2. Set agent ID for Client 32
+        await sequelize.query(
+            `UPDATE clients SET elevenlabs_agent_id = 'agent_1801kdnq8avcews9r9rrvf7k0vh1' WHERE id = 32`
+        );
+        console.log('✅ Set agent ID for Client 32');
+
+        // 3. Add elevenlabs to message_source enum
+        try {
+            await sequelize.query(`ALTER TYPE "enum_messages_message_source" ADD VALUE IF NOT EXISTS 'elevenlabs'`);
+            console.log('✅ Added elevenlabs enum value');
+        } catch (e) {
+            console.log('Note (enum may exist):', e.message);
+        }
+
+        // Verify
+        const [client] = await sequelize.query(
+            `SELECT id, business_name, elevenlabs_agent_id FROM clients WHERE id = 32`,
+            { type: sequelize.QueryTypes.SELECT }
+        );
+
+        res.json({
+            success: true,
+            message: 'ElevenLabs migrations completed',
+            client32: client
+        });
+
+    } catch (error) {
+        console.error('❌ Migration error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Apply admin authentication to all routes AFTER quick endpoints
 router.use(authenticateAdmin);
 
@@ -1668,60 +1722,6 @@ router.get('/leads-stats/:clientId', authenticateAdmin, async (req, res) => {
             success: false,
             error: error.message
         });
-    }
-});
-
-// ============= RUN ELEVENLABS MIGRATIONS =============
-// POST /api/admin/run-elevenlabs-migrations
-// One-time migration to set up ElevenLabs integration
-router.post('/run-elevenlabs-migrations', async (req, res) => {
-    try {
-        const { apiKey } = req.body;
-        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
-
-        if (apiKey !== expectedKey) {
-            return res.status(401).json({ success: false, error: 'Invalid API key' });
-        }
-
-        console.log('🔄 Running ElevenLabs migrations...');
-
-        // 1. Add elevenlabs_agent_id column to clients
-        try {
-            await sequelize.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS elevenlabs_agent_id VARCHAR`);
-            console.log('✅ Added elevenlabs_agent_id column');
-        } catch (e) {
-            console.log('Note (column may exist):', e.message);
-        }
-
-        // 2. Set agent ID for Client 32
-        await sequelize.query(
-            `UPDATE clients SET elevenlabs_agent_id = 'agent_1801kdnq8avcews9r9rrvf7k0vh1' WHERE id = 32`
-        );
-        console.log('✅ Set agent ID for Client 32');
-
-        // 3. Add elevenlabs to message_source enum
-        try {
-            await sequelize.query(`ALTER TYPE "enum_messages_message_source" ADD VALUE IF NOT EXISTS 'elevenlabs'`);
-            console.log('✅ Added elevenlabs enum value');
-        } catch (e) {
-            console.log('Note (enum may exist):', e.message);
-        }
-
-        // Verify
-        const [client] = await sequelize.query(
-            `SELECT id, business_name, elevenlabs_agent_id FROM clients WHERE id = 32`,
-            { type: sequelize.QueryTypes.SELECT }
-        );
-
-        res.json({
-            success: true,
-            message: 'ElevenLabs migrations completed',
-            client32: client
-        });
-
-    } catch (error) {
-        console.error('❌ Migration error:', error);
-        res.status(500).json({ success: false, error: error.message });
     }
 });
 
