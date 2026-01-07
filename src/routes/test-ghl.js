@@ -8,7 +8,101 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.6' });
+    res.json({ success: true, message: 'pong', version: '2.7' });
+});
+
+// GET /api/test-ghl/debug-day/:client_id/:calendar_id - Debug slot comparison for a single day
+router.get('/debug-day/:client_id/:calendar_id', async (req, res) => {
+    try {
+        const { client_id, calendar_id } = req.params;
+        const { date } = req.query;
+        const { sequelize } = require('../models');
+        const { QueryTypes } = require('sequelize');
+        const GHL_API_VERSION = '2021-07-28';
+
+        const clientResult = await sequelize.query(
+            'SELECT ghl_api_key FROM clients WHERE id = :clientId',
+            { replacements: { clientId: parseInt(client_id) }, type: QueryTypes.SELECT }
+        );
+        if (!clientResult.length) return res.json({ error: 'No client' });
+        const ghlApiKey = clientResult[0].ghl_api_key;
+
+        // Get calendar details
+        const calRes = await axios.get(
+            `https://services.leadconnectorhq.com/calendars/${calendar_id}`,
+            { headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION } }
+        );
+        const calendar = calRes.data.calendar;
+        const slotDuration = calendar?.slotDuration || 60;
+
+        // Check date
+        const checkDate = date || new Date().toISOString().substring(0, 10);
+        const dateObj = new Date(checkDate + 'T12:00:00');
+        const dayOfWeek = dateObj.getDay();
+
+        // Find day config
+        const dayConfig = calendar?.openHours?.find(oh =>
+            (oh.daysOfTheWeek?.includes(dayOfWeek)) || (oh.days?.includes(dayOfWeek))
+        );
+
+        if (!dayConfig) {
+            return res.json({ date: checkDate, dayOfWeek, error: 'Day is closed', openHours: calendar?.openHours });
+        }
+
+        const hours = dayConfig.hours[0];
+        const openHour = hours.openHour;
+        const closeHour = hours.closeHour;
+
+        // Generate all slots
+        const allSlots = [];
+        for (let h = openHour; h < closeHour; h++) {
+            for (let m = 0; m < 60; m += slotDuration) {
+                if (h === closeHour - 1 && m + slotDuration > 60) break;
+                allSlots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:00`);
+            }
+        }
+
+        // Get free slots from GHL
+        const [year, month, day] = checkDate.split('-').map(Number);
+        const startTime = new Date(Date.UTC(year, month - 1, day, 5, 0, 0));
+        const endTime = new Date(Date.UTC(year, month - 1, day + 1, 4, 59, 59));
+
+        const slotsRes = await axios.get(
+            `https://services.leadconnectorhq.com/calendars/${calendar_id}/free-slots`,
+            {
+                headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION },
+                params: { startDate: startTime.getTime(), endDate: endTime.getTime() }
+            }
+        );
+
+        // Extract free slots
+        const freeSlots = [];
+        for (const key of Object.keys(slotsRes.data)) {
+            if (key !== 'traceId' && slotsRes.data[key]?.slots) {
+                for (const slot of slotsRes.data[key].slots) {
+                    freeSlots.push(slot.substring(11, 19));
+                }
+            }
+        }
+
+        // Calculate blocked
+        const blockedSlots = allSlots.filter(s => !freeSlots.includes(s));
+
+        res.json({
+            date: checkDate,
+            dayOfWeek,
+            dayConfig: { days: dayConfig.days, daysOfTheWeek: dayConfig.daysOfTheWeek, hours: dayConfig.hours },
+            openHour,
+            closeHour,
+            slotDuration,
+            allSlots,
+            freeSlots,
+            blockedSlots,
+            freeSlotsRaw: slotsRes.data
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // GET /api/test-ghl/test-free-slots/:client_id/:calendar_id - Test free slots API directly
@@ -211,7 +305,8 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
 
         // Get calendar open hours for debug
         const openHoursDebug = calendar?.openHours?.map(oh => ({
-            days: oh.daysOfTheWeek,
+            daysOfTheWeek: oh.daysOfTheWeek,
+            days: oh.days,
             hours: oh.hours
         }));
 
@@ -228,7 +323,9 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
             slots: insertedSlots.slice(0, 50), // Show first 50
             debug: {
                 openHours: openHoursDebug,
-                todayDayOfWeek: new Date().getDay()
+                todayDayOfWeek: new Date().getDay(),
+                serverTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                serverDate: new Date().toISOString()
             }
         });
 
