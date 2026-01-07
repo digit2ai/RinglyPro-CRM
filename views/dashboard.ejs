@@ -5287,8 +5287,12 @@
                     } else if (source === 'ghl_sync') {
                         eventClass += ' ghl-sync';
                     } else if (source === 'voice_booking' || source === 'rachel_voice_ai') {
-                        // AI Voice Booking - RED if pending, GREEN if confirmed
-                        if (aptStatus === 'confirmed') {
+                        // AI Voice Booking - For Client 32, check deposit status; for others, check appointment status
+                        // RED if pending (not confirmed), GREEN if confirmed
+                        const isConfirmed = CLIENT_ID == 32
+                            ? depositStatus === 'confirmed'  // Client 32 uses deposit confirmation
+                            : aptStatus === 'confirmed';     // Others use appointment status
+                        if (isConfirmed) {
                             eventClass += ' voice-booking-confirmed';
                         } else {
                             eventClass += ' voice-booking-pending';
