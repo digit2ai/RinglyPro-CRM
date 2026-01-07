@@ -770,18 +770,35 @@ router.post('/set-elevenlabs-agent/:clientId', async (req, res) => {
 // ============= SYNC ELEVENLABS CALLS TO MESSAGES =============
 // POST /api/admin/sync-elevenlabs-calls/:clientId
 // Syncs call history from ElevenLabs Conversational AI to the Messages table
-// Uses API key auth (no JWT required)
+// Accepts JWT auth OR API key auth
 router.post('/sync-elevenlabs-calls/:clientId', async (req, res) => {
     try {
         const { clientId } = req.params;
         const { apiKey } = req.body;
 
-        // Simple API key check
+        // Check for JWT token in Authorization header
+        const authHeader = req.headers.authorization;
+        let jwtValid = false;
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            try {
+                const token = authHeader.substring(7);
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ringlypro-2024-secure');
+                // JWT is valid if it belongs to this client
+                jwtValid = decoded.clientId === parseInt(clientId) || decoded.isAdmin;
+            } catch (e) {
+                jwtValid = false;
+            }
+        }
+
+        // Simple API key check (fallback)
         const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
-        if (apiKey !== expectedKey) {
+        const apiKeyValid = apiKey === expectedKey;
+
+        if (!jwtValid && !apiKeyValid) {
             return res.status(401).json({
                 success: false,
-                error: 'Invalid API key'
+                error: 'Invalid authentication - provide JWT token or API key'
             });
         }
 

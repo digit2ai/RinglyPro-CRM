@@ -124,7 +124,7 @@ const Message = sequelize.define('Message', {
     comment: 'Timestamp of last GHL sync'
   },
   messageSource: {
-    type: DataTypes.ENUM('twilio', 'ghl', 'whatsapp', 'manual'),
+    type: DataTypes.ENUM('twilio', 'ghl', 'whatsapp', 'manual', 'elevenlabs'),
     defaultValue: 'twilio',
     field: 'message_source',
     comment: 'Source of the message'
