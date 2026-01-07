@@ -1016,6 +1016,45 @@ router.post('/fix-elevenlabs-recordings/:clientId', async (req, res) => {
     }
 });
 
+// ============= DELETE ELEVENLABS TEST CALLS =============
+// DELETE /api/admin/elevenlabs-calls/:clientId
+// Deletes ElevenLabs calls by phone number (for removing test calls)
+router.delete('/elevenlabs-calls/:clientId', async (req, res) => {
+    try {
+        const { clientId } = req.params;
+        const { phone } = req.query;
+
+        if (!phone) {
+            return res.status(400).json({ success: false, error: 'Phone number required' });
+        }
+
+        console.log(`🗑️ Admin: Deleting ElevenLabs calls for client ${clientId} from phone ${phone}`);
+
+        const result = await sequelize.query(
+            `DELETE FROM messages
+             WHERE client_id = $1
+             AND message_source = 'elevenlabs'
+             AND from_number = $2`,
+            { bind: [clientId, phone] }
+        );
+
+        console.log(`✅ Deleted ElevenLabs test calls from ${phone}`);
+
+        res.json({
+            success: true,
+            message: `Deleted ElevenLabs calls from ${phone}`,
+            clientId: parseInt(clientId)
+        });
+
+    } catch (error) {
+        console.error('❌ Error deleting ElevenLabs calls:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // ============= RUN ELEVENLABS MIGRATIONS =============
 // POST /api/admin/run-elevenlabs-migrations
 // One-time migration to set up ElevenLabs integration (API key auth, no JWT)
