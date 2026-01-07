@@ -2617,22 +2617,20 @@
         <div class="content-section" id="messagesSection">
             <div class="section-header">
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <% if (client && client.id === 32) { %>
-                    <!-- ElevenLabs Calls Header for Client 32 -->
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <!-- ElevenLabs Calls Header for Client 32 (shown via JS) -->
+                    <div id="elevenLabsHeader" style="display: none; align-items: center; gap: 0.5rem;">
                         <span style="font-weight: 600; color: #1f2937;">AI Phone Calls</span>
                         <span style="background: #8b5cf6; color: white; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem;">ElevenLabs</span>
                     </div>
-                    <button onclick="syncElevenLabsCalls()" class="btn-refresh" id="syncElevenLabsBtn" style="display: flex; align-items: center; gap: 0.5rem; background: #8b5cf6; color: white;">
+                    <button onclick="syncElevenLabsCalls()" class="btn-refresh" id="syncElevenLabsBtn" style="display: none; align-items: center; gap: 0.5rem; background: #8b5cf6; color: white;">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
                             <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
                         </svg>
                         <span id="syncElevenLabsBtnText">Sync Calls</span>
                     </button>
-                    <% } else { %>
-                    <!-- View Toggle for other clients -->
-                    <div style="display: flex; background: #f3f4f6; border-radius: 0.5rem; padding: 2px;">
+                    <!-- View Toggle for regular clients -->
+                    <div id="regularMessagesHeader" style="display: flex; background: #f3f4f6; border-radius: 0.5rem; padding: 2px;">
                         <button id="voicemailsViewBtn" onclick="switchMessagesView('voicemails')" style="padding: 0.4rem 0.75rem; border-radius: 0.4rem; border: none; cursor: pointer; font-size: 0.8rem; background: #3b82f6; color: white; transition: all 0.2s;">
                             Voicemails
                         </button>
@@ -2640,7 +2638,6 @@
                             Conversations
                         </button>
                     </div>
-                    <% } %>
                     <button onclick="refreshMessages()" class="btn-refresh" id="refreshMessagesBtn" style="display: flex; align-items: center; gap: 0.5rem;">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
@@ -2651,15 +2648,13 @@
                 </div>
             </div>
 
-            <% if (client && client.id === 32) { %>
-            <!-- ElevenLabs Calls View for Client 32 -->
-            <div id="elevenLabsCallsList">
+            <!-- ElevenLabs Calls View for Client 32 (shown via JS) -->
+            <div id="elevenLabsCallsList" style="display: none;">
                 <div class="loading">
                     <div class="spinner"></div>
                     <p>Loading AI calls...</p>
                 </div>
             </div>
-            <% } else { %>
             <!-- Voicemails View -->
             <div id="messagesList">
                 <div class="loading">
@@ -2675,7 +2670,6 @@
                     <p>Loading conversations...</p>
                 </div>
             </div>
-            <% } %>
         </div>
 
         <!-- Conversation Detail Modal -->
@@ -3625,8 +3619,20 @@
             loadCreditsBalance();
             // Load messages based on client - Client 32 uses ElevenLabs, others use regular messages
             if (CLIENT_ID === 32) {
+                // Show ElevenLabs UI for Client 32
+                document.getElementById('elevenLabsHeader').style.display = 'flex';
+                document.getElementById('syncElevenLabsBtn').style.display = 'flex';
+                document.getElementById('regularMessagesHeader').style.display = 'none';
+                document.getElementById('elevenLabsCallsList').style.display = 'block';
+                document.getElementById('messagesList').style.display = 'none';
                 loadElevenLabsCalls();
             } else {
+                // Show regular messages UI for other clients
+                document.getElementById('elevenLabsHeader').style.display = 'none';
+                document.getElementById('syncElevenLabsBtn').style.display = 'none';
+                document.getElementById('regularMessagesHeader').style.display = 'flex';
+                document.getElementById('elevenLabsCallsList').style.display = 'none';
+                document.getElementById('messagesList').style.display = 'block';
                 loadMessages();
             }
             loadReferralStats(); // Load referral statistics
