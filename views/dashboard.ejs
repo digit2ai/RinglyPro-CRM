@@ -4535,9 +4535,10 @@
         let calendarWeekOffset = 0; // 0 = current week, -1 = last week, 1 = next week
         let ghlCardsData = null; // Cache for GHL cards data
 
-        // Check if this is Client 15 (uses default RinglyPro calendar instead of GHL Cards)
+        // Check if client uses RinglyPro Calendar View (Client 15 and 32)
+        // These clients use the default RinglyPro calendar instead of GHL Cards
         function isClient15() {
-            return CLIENT_ID === 15;
+            return CLIENT_ID === 15 || CLIENT_ID === 32;
         }
 
         // Set appointment view - Client 15 uses list/calendar, others use GHL Cards
@@ -5107,6 +5108,30 @@
             document.getElementById('aptDetailsTextBtn').style.opacity = phone ? '1' : '0.5';
             document.getElementById('aptDetailsCallBtn').style.opacity = phone ? '1' : '0.5';
 
+            // Handle deposit status (for Client 32)
+            const depositStatus = apt.depositStatus || apt.deposit_status || 'not_required';
+            const depositRow = document.getElementById('aptDetailsDepositRow');
+            const depositStatusSpan = document.getElementById('aptDetailsDepositStatus');
+            const depositBtn = document.getElementById('aptDetailsDepositBtn');
+
+            // Show deposit info only for Client 32
+            if (CLIENT_ID === 32) {
+                depositRow.style.display = 'block';
+                if (depositStatus === 'pending') {
+                    depositStatusSpan.innerHTML = '<span style="color: #f59e0b; font-weight: 600;">Pending</span>';
+                    depositBtn.style.display = 'flex';
+                } else if (depositStatus === 'confirmed') {
+                    depositStatusSpan.innerHTML = '<span style="color: #10b981; font-weight: 600;">Confirmed</span>';
+                    depositBtn.style.display = 'none';
+                } else {
+                    depositStatusSpan.innerHTML = '<span style="color: #6b7280;">Not Required</span>';
+                    depositBtn.style.display = 'none';
+                }
+            } else {
+                depositRow.style.display = 'none';
+                depositBtn.style.display = 'none';
+            }
+
             // Show modal
             document.getElementById('appointmentDetailsModal').classList.add('active');
         }
@@ -5141,6 +5166,14 @@
                 case 'delete':
                     closeAppointmentDetailsModal();
                     deleteAppointment(apt.id, name);
+                    break;
+                case 'deposit':
+                    // Open deposit confirmation modal
+                    const date = apt.appointmentDate || apt.appointment_date || apt.date || '';
+                    const rawTime = apt.appointmentTime || apt.appointment_time || apt.time || '';
+                    const time = rawTime ? rawTime.substring(0, 5) : '';
+                    closeAppointmentDetailsModal();
+                    openDepositModal(apt.id, name, date, time);
                     break;
             }
         }
@@ -7183,8 +7216,17 @@
                     <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: #6b7280;" id="aptDetailsSourceRow">
                         <strong>Source:</strong> <span id="aptDetailsSource"></span>
                     </p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #6b7280;" id="aptDetailsDepositRow">
+                        <strong>Deposit:</strong> <span id="aptDetailsDepositStatus"></span>
+                    </p>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <button type="button" id="aptDetailsDepositBtn" onclick="aptDetailsAction('deposit')" style="padding: 0.75rem 1rem; background: #f59e0b; color: white; border: none; border-radius: 0.5rem; font-weight: 500; cursor: pointer; display: none; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Confirm Deposit
+                    </button>
                     <button type="button" id="aptDetailsTextBtn" onclick="aptDetailsAction('text')" style="padding: 0.75rem 1rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
