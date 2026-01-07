@@ -5884,12 +5884,16 @@
                 // Message body/summary
                 const preview = call.body ? (call.body.length > 150 ? call.body.substring(0, 150) + '...' : call.body) : 'AI Phone Call';
 
+                // Unread status
+                const isUnread = !call.read;
+                const unreadIndicator = isUnread ? '<span style="display: inline-block; width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; margin-right: 0.5rem;"></span>' : '';
+
                 return `
-                    <div class="message-card" id="el-call-${index}" data-message-id="${call.id}">
-                        <div class="message-header" onclick="toggleElevenLabsCall(${index})">
+                    <div class="message-card ${isUnread ? 'unread' : ''}" id="el-call-${index}" data-message-id="${call.id}">
+                        <div class="message-header" onclick="toggleElevenLabsCall(${index}, ${call.id}, ${isUnread})">
                             <div class="message-info">
                                 <h3>
-                                    <span style="background: #4F46E5; color: white; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.65rem; margin-right: 0.5rem;">AI</span>
+                                    ${unreadIndicator}<span style="background: #4F46E5; color: white; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.65rem; margin-right: 0.5rem;">AI</span>
                                     📞 ${phoneNumber}
                                 </h3>
                                 <p style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
@@ -5945,10 +5949,39 @@
             updateMessagesBadge(unreadCount);
         }
 
-        // Toggle ElevenLabs call expand/collapse
-        function toggleElevenLabsCall(index) {
+        // Toggle ElevenLabs call expand/collapse and mark as read
+        async function toggleElevenLabsCall(index, messageId, isUnread) {
             const callCard = document.getElementById(`el-call-${index}`);
+            const wasExpanded = callCard.classList.contains('expanded');
+
             callCard.classList.toggle('expanded');
+
+            // Mark as read when expanding an unread call
+            if (!wasExpanded && isUnread) {
+                try {
+                    const response = await authenticatedFetch(`/api/messages/${messageId}/mark-read`, {
+                        method: 'PATCH'
+                    });
+
+                    if (response && response.ok) {
+                        // Remove unread indicator
+                        callCard.classList.remove('unread');
+                        const unreadDot = callCard.querySelector('h3 span:first-child');
+                        if (unreadDot && unreadDot.style.background === 'rgb(59, 130, 246)') {
+                            unreadDot.remove();
+                        }
+
+                        // Update badge counter (decrement by 1)
+                        const badge = document.getElementById('messagesBadge');
+                        if (badge && badge.textContent) {
+                            const currentCount = parseInt(badge.textContent);
+                            updateMessagesBadge(Math.max(0, currentCount - 1));
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error marking call as read:', error);
+                }
+            }
         }
 
         // Sync ElevenLabs calls from API
