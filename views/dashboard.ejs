@@ -841,6 +841,18 @@
             border-left-color: #3b82f6;
         }
 
+        /* AI Voice Booking - Pending (RED - needs confirmation) */
+        .calendar-event.voice-booking-pending {
+            background: #fee2e2;
+            border-left-color: #ef4444;
+        }
+
+        /* AI Voice Booking - Confirmed (GREEN) */
+        .calendar-event.voice-booking-confirmed {
+            background: #dcfce7;
+            border-left-color: #22c55e;
+        }
+
         .calendar-event.ghl-sync {
             background: #d1fae5;
             border-left-color: #10b981;
@@ -882,6 +894,24 @@
 
         .calendar-event.voice-booking .event-title {
             color: #1e40af;
+        }
+
+        /* AI Voice Booking - Pending text colors (RED) */
+        .calendar-event.voice-booking-pending .event-title {
+            color: #991b1b;
+        }
+
+        .calendar-event.voice-booking-pending .event-time {
+            color: #dc2626;
+        }
+
+        /* AI Voice Booking - Confirmed text colors (GREEN) */
+        .calendar-event.voice-booking-confirmed .event-title {
+            color: #166534;
+        }
+
+        .calendar-event.voice-booking-confirmed .event-time {
+            color: #16a34a;
         }
 
         .calendar-event.ghl-sync .event-title {
@@ -4979,6 +5009,7 @@
                     // Determine event class based on source/status/calendar
                     const source = apt.source || 'voice_booking';
                     const depositStatus = apt.depositStatus || apt.deposit_status || 'not_required';
+                    const aptStatus = apt.status || 'scheduled';
                     const purpose = (apt.purpose || '').toLowerCase();
                     const notes = (apt.notes || '').toLowerCase();
                     const ghlCalendarId = apt.ghlCalendarId || apt.ghl_calendar_id || '';
@@ -4988,11 +5019,9 @@
                     const customerName = apt.customerName || apt.customer_name || '';
 
                     // Check if it's a busy/blocked slot from GHL
-                    const isBusySlot = notes.includes('busy/blocked slot') || customerName.toLowerCase() === 'busy';
+                    const isBusySlot = notes.includes('busy/blocked slot') || customerName.toLowerCase() === 'busy' || customerName.toLowerCase().startsWith('busy -');
 
-                    if (depositStatus === 'pending') {
-                        eventClass += ' pending-deposit';
-                    } else if (isBusySlot && source === 'ghl_sync') {
+                    if (isBusySlot && (source === 'ghl_sync' || source === 'manual')) {
                         // Color-code busy slots by calendar type
                         // Calendar IDs: Hyperbaric=lqwsBWMJip0wx6NGLeaG, Cryo=mV3NGEcqoXayzHtIEE97, Recovery=yHDUtxQWt9GzaPcdUnxs
                         if (purpose.includes('hyperbaric') || ghlCalendarId === 'lqwsBWMJip0wx6NGLeaG') {
@@ -5007,8 +5036,15 @@
                         }
                     } else if (source === 'ghl_sync') {
                         eventClass += ' ghl-sync';
+                    } else if (source === 'voice_booking' || source === 'rachel_voice_ai') {
+                        // AI Voice Booking - RED if pending, GREEN if confirmed
+                        if (aptStatus === 'confirmed') {
+                            eventClass += ' voice-booking-confirmed';
+                        } else {
+                            eventClass += ' voice-booking-pending';
+                        }
                     } else {
-                        // AI-booked appointments (blue)
+                        // Other appointments (online, manual, etc.) - default blue
                         eventClass += ' voice-booking';
                     }
 
@@ -5108,6 +5144,31 @@
             document.getElementById('aptDetailsTextBtn').style.opacity = phone ? '1' : '0.5';
             document.getElementById('aptDetailsCallBtn').style.opacity = phone ? '1' : '0.5';
 
+            // Handle appointment status
+            const aptStatus = apt.status || 'scheduled';
+            const statusRow = document.getElementById('aptDetailsStatusRow');
+            const statusSpan = document.getElementById('aptDetailsStatus');
+            const confirmBtn = document.getElementById('aptDetailsConfirmBtn');
+
+            // Status labels and colors
+            const statusLabels = {
+                'scheduled': { label: 'Pending', color: '#ef4444' },
+                'confirmed': { label: 'Confirmed', color: '#22c55e' },
+                'completed': { label: 'Completed', color: '#3b82f6' },
+                'cancelled': { label: 'Cancelled', color: '#6b7280' },
+                'no_show': { label: 'No Show', color: '#f59e0b' }
+            };
+            const statusInfo = statusLabels[aptStatus] || { label: aptStatus, color: '#6b7280' };
+            statusSpan.innerHTML = `<span style="color: ${statusInfo.color}; font-weight: 600;">${statusInfo.label}</span>`;
+
+            // Show confirm button for AI voice bookings that are not yet confirmed
+            const isVoiceBooking = source === 'voice_booking' || source === 'rachel_voice_ai';
+            if (isVoiceBooking && aptStatus !== 'confirmed') {
+                confirmBtn.style.display = 'flex';
+            } else {
+                confirmBtn.style.display = 'none';
+            }
+
             // Handle deposit status (for Client 32)
             const depositStatus = apt.depositStatus || apt.deposit_status || 'not_required';
             const depositRow = document.getElementById('aptDetailsDepositRow');
@@ -5175,6 +5236,57 @@
                     closeAppointmentDetailsModal();
                     openDepositModal(apt.id, name, date, time);
                     break;
+                case 'confirm':
+                    // Confirm the appointment
+                    confirmAppointment(apt.id, name);
+                    break;
+            }
+        }
+
+        // Confirm appointment (change status to confirmed)
+        async function confirmAppointment(appointmentId, customerName) {
+            try {
+                const confirmBtn = document.getElementById('aptDetailsConfirmBtn');
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<svg class="animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"></circle><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="4" stroke-linecap="round"></path></svg> Confirming...';
+
+                const response = await fetch(`/api/appointments/${appointmentId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ status: 'confirmed' })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update local appointment data
+                    const apt = allAppointments.find(a => a.id === appointmentId);
+                    if (apt) {
+                        apt.status = 'confirmed';
+                    }
+
+                    // Close modal and refresh calendar
+                    closeAppointmentDetailsModal();
+                    showToast(`Appointment for ${customerName} confirmed!`, 'success');
+
+                    // Refresh the calendar view
+                    if (typeof loadAppointments === 'function') {
+                        loadAppointments();
+                    }
+                } else {
+                    throw new Error(data.error || 'Failed to confirm appointment');
+                }
+            } catch (error) {
+                console.error('Error confirming appointment:', error);
+                showToast('Failed to confirm appointment: ' + error.message, 'error');
+
+                // Reset button
+                const confirmBtn = document.getElementById('aptDetailsConfirmBtn');
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Confirm Appointment';
             }
         }
 
@@ -7216,11 +7328,21 @@
                     <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: #6b7280;" id="aptDetailsSourceRow">
                         <strong>Source:</strong> <span id="aptDetailsSource"></span>
                     </p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #6b7280;" id="aptDetailsStatusRow">
+                        <strong>Status:</strong> <span id="aptDetailsStatus"></span>
+                    </p>
                     <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #6b7280;" id="aptDetailsDepositRow">
                         <strong>Deposit:</strong> <span id="aptDetailsDepositStatus"></span>
                     </p>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <!-- Confirm Appointment Button (for AI voice bookings that need confirmation) -->
+                    <button type="button" id="aptDetailsConfirmBtn" onclick="aptDetailsAction('confirm')" style="padding: 0.75rem 1rem; background: #22c55e; color: white; border: none; border-radius: 0.5rem; font-weight: 500; cursor: pointer; display: none; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Confirm Appointment
+                    </button>
                     <button type="button" id="aptDetailsDepositBtn" onclick="aptDetailsAction('deposit')" style="padding: 0.75rem 1rem; background: #f59e0b; color: white; border: none; border-radius: 0.5rem; font-weight: 500; cursor: pointer; display: none; align-items: center; justify-content: center; gap: 0.5rem;">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>

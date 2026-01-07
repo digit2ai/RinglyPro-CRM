@@ -1056,6 +1056,72 @@ async function sendAppointmentConfirmationSMS({
 }
 
 // =====================================================
+// APPOINTMENT STATUS UPDATE ENDPOINT
+// =====================================================
+
+/**
+ * PATCH /api/appointments/:id/status
+ * Update the status of an appointment (scheduled, confirmed, completed, cancelled, no_show)
+ */
+router.patch('/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const clientId = req.clientId;
+
+    console.log(`📋 Status update request: appointment ${id}, status=${status}`);
+
+    // Validate status
+    const validStatuses = ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+      });
+    }
+
+    // Get the appointment (must belong to this client - multi-tenant safety)
+    const appointment = await Appointment.findOne({
+      where: {
+        id,
+        clientId
+      }
+    });
+
+    if (!appointment) {
+      console.log(`❌ Appointment ${id} not found for client ${clientId}`);
+      return res.status(404).json({
+        success: false,
+        error: 'Appointment not found'
+      });
+    }
+
+    // Update the status
+    await appointment.update({ status });
+
+    console.log(`✅ Appointment ${id} status updated to: ${status}`);
+
+    res.json({
+      success: true,
+      appointment: {
+        id: appointment.id,
+        status: appointment.status,
+        customerName: appointment.customerName,
+        appointmentDate: appointment.appointmentDate,
+        appointmentTime: appointment.appointmentTime
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error updating appointment status:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// =====================================================
 // DEPOSIT CONFIRMATION ENDPOINTS
 // =====================================================
 
