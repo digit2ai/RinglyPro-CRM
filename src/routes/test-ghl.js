@@ -8,7 +8,172 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.2' });
+    res.json({ success: true, message: 'pong', version: '2.3' });
+});
+
+// POST /api/test-ghl/sync-from-availability/:client_id - Sync blocked slots by checking availability
+router.post('/sync-from-availability/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { calendarId, days = 7 } = req.body;
+        const { sequelize } = require('../models');
+        const { QueryTypes } = require('sequelize');
+        const GHL_API_VERSION = '2021-07-28';
+
+        if (!calendarId) {
+            return res.status(400).json({ success: false, error: 'calendarId is required' });
+        }
+
+        console.log(`🔄 Syncing from availability for client ${client_id}, calendar ${calendarId}, days=${days}`);
+
+        // Get client credentials
+        const clientResult = await sequelize.query(
+            'SELECT ghl_api_key, ghl_location_id, business_name FROM clients WHERE id = :clientId',
+            { replacements: { clientId: parseInt(client_id) }, type: QueryTypes.SELECT }
+        );
+
+        if (!clientResult.length || !clientResult[0].ghl_api_key) {
+            return res.status(404).json({ success: false, error: 'No GHL credentials' });
+        }
+
+        const { ghl_api_key: ghlApiKey, ghl_location_id: locationId, business_name: businessName } = clientResult[0];
+
+        // Get calendar details for business hours
+        const calRes = await axios.get(
+            `https://services.leadconnectorhq.com/calendars/${calendarId}`,
+            { headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION } }
+        );
+        const calendar = calRes.data.calendar;
+        const calendarName = calendar?.name || 'Unknown';
+        const slotDuration = calendar?.slotDuration || 60;
+
+        // Delete existing appointments for this calendar
+        const [deleted] = await sequelize.query(
+            "DELETE FROM appointments WHERE client_id = :clientId AND ghl_calendar_id = :calendarId RETURNING id",
+            { replacements: { clientId: parseInt(client_id), calendarId } }
+        );
+        console.log(`   Deleted ${deleted.length} old records`);
+
+        // Process each day
+        let totalInserted = 0;
+        const insertedSlots = [];
+        const today = new Date();
+
+        for (let d = 0; d < days; d++) {
+            const checkDate = new Date(today);
+            checkDate.setDate(today.getDate() + d);
+            const dateStr = checkDate.toISOString().substring(0, 10);
+            const dayOfWeek = checkDate.getDay(); // 0=Sun, 1=Mon, ...
+
+            // Get business hours for this day
+            const dayConfig = calendar?.openHours?.find(oh => oh.daysOfTheWeek?.includes(dayOfWeek));
+            if (!dayConfig || !dayConfig.hours?.length) {
+                console.log(`   ${dateStr} (day ${dayOfWeek}): Closed`);
+                continue;
+            }
+
+            const hours = dayConfig.hours[0];
+            const openHour = hours.openHour;
+            const closeHour = hours.closeHour;
+
+            // Generate all possible slots for this day
+            const allSlots = [];
+            for (let h = openHour; h < closeHour; h++) {
+                for (let m = 0; m < 60; m += slotDuration) {
+                    if (h === closeHour - 1 && m + slotDuration > 60) break;
+                    allSlots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:00`);
+                }
+            }
+
+            // Get free slots from GHL
+            let freeSlots = [];
+            try {
+                // Calculate timestamps for the day (EST/EDT timezone)
+                const [year, month, day] = dateStr.split('-').map(Number);
+                const isDST = (month > 3 && month < 11) || (month === 3 && day >= 9) || (month === 11 && day < 2);
+                const etOffset = isDST ? 4 : 5;
+                const startTime = new Date(Date.UTC(year, month - 1, day, etOffset, 0, 0));
+                const endTime = new Date(Date.UTC(year, month - 1, day + 1, etOffset - 1, 59, 59));
+
+                const slotsRes = await axios.get(
+                    `https://services.leadconnectorhq.com/calendars/${calendarId}/free-slots`,
+                    {
+                        headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION },
+                        params: { startDate: startTime.getTime(), endDate: endTime.getTime() }
+                    }
+                );
+
+                // Extract slots from response
+                for (const key of Object.keys(slotsRes.data)) {
+                    if (key !== 'traceId' && slotsRes.data[key]?.slots) {
+                        for (const slot of slotsRes.data[key].slots) {
+                            // slot format: "2026-01-07T10:00:00-05:00"
+                            const time = slot.substring(11, 19);
+                            freeSlots.push(time);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log(`   ${dateStr}: Error getting free slots: ${e.message}`);
+                continue;
+            }
+
+            // Blocked slots = all slots - free slots
+            const blockedSlots = allSlots.filter(s => !freeSlots.includes(s));
+            console.log(`   ${dateStr}: ${blockedSlots.length} blocked / ${allSlots.length} total (${freeSlots.length} free)`);
+
+            // Insert blocked slots as "Busy" appointments
+            for (const slot of blockedSlots) {
+                try {
+                    const code = `BS${Date.now().toString().slice(-6)}${totalInserted}`;
+                    await sequelize.query(
+                        `INSERT INTO appointments (
+                            client_id, customer_name, customer_phone, customer_email,
+                            appointment_date, appointment_time, duration, purpose,
+                            status, source, confirmation_code, notes,
+                            ghl_calendar_id, created_at, updated_at
+                        ) VALUES (:clientId, :name, '', '', :date, :time, :duration, 'Blocked Time',
+                            'confirmed', 'ghl_blocked_slot', :code, :notes, :calId, NOW(), NOW())`,
+                        {
+                            replacements: {
+                                clientId: parseInt(client_id),
+                                name: `Busy - ${calendarName}`,
+                                date: dateStr,
+                                time: slot,
+                                duration: slotDuration,
+                                code,
+                                notes: `Blocked slot derived from GHL availability`,
+                                calId: calendarId
+                            }
+                        }
+                    );
+                    totalInserted++;
+                    insertedSlots.push({ date: dateStr, time: slot });
+                } catch (e) {
+                    console.error(`   Insert error: ${e.message}`);
+                }
+            }
+        }
+
+        console.log(`✅ Sync complete: ${totalInserted} blocked slots inserted`);
+
+        res.json({
+            success: true,
+            clientId: parseInt(client_id),
+            businessName,
+            calendarId,
+            calendarName,
+            slotDuration,
+            deleted: deleted.length,
+            inserted: totalInserted,
+            days,
+            slots: insertedSlots.slice(0, 50) // Show first 50
+        });
+
+    } catch (error) {
+        console.error('❌ Sync error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 // GET /api/test-ghl/debug-blocked/:client_id/:calendar_id - Debug blocked slots API
