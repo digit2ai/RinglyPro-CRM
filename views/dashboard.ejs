@@ -5059,11 +5059,12 @@
             }
 
             container.innerHTML = appointments.map(apt => {
-                // Map API fields to display fields
-                const name = apt.customerName || apt.name || 'Unknown';
-                const phone = apt.customerPhone || apt.phone || '';
-                const date = apt.appointmentDate || apt.date || '';
-                const time = apt.appointmentTime?.substring(0, 5) || apt.time || ''; // HH:MM from HH:MM:SS
+                // Map API fields to display fields (handle both camelCase and snake_case)
+                const name = apt.customerName || apt.customer_name || apt.name || 'Unknown';
+                const phone = apt.customerPhone || apt.customer_phone || apt.phone || '';
+                const date = apt.appointmentDate || apt.appointment_date || apt.date || '';
+                const rawTime = apt.appointmentTime || apt.appointment_time || apt.time || '';
+                const time = rawTime ? rawTime.substring(0, 5) : ''; // HH:MM from HH:MM:SS
                 const notes = apt.purpose || apt.notes || 'No notes';
                 const status = apt.status || 'confirmed';
                 const source = apt.source || 'voice_booking';
