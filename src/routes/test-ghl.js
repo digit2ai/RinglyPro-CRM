@@ -8,7 +8,55 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.3' });
+    res.json({ success: true, message: 'pong', version: '2.4' });
+});
+
+// GET /api/test-ghl/test-free-slots/:client_id/:calendar_id - Test free slots API directly
+router.get('/test-free-slots/:client_id/:calendar_id', async (req, res) => {
+    try {
+        const { client_id, calendar_id } = req.params;
+        const { date } = req.query;
+        const { sequelize } = require('../models');
+        const { QueryTypes } = require('sequelize');
+        const GHL_API_VERSION = '2021-07-28';
+
+        const clientResult = await sequelize.query(
+            'SELECT ghl_api_key, ghl_location_id FROM clients WHERE id = :clientId',
+            { replacements: { clientId: parseInt(client_id) }, type: QueryTypes.SELECT }
+        );
+
+        if (!clientResult.length || !clientResult[0].ghl_api_key) {
+            return res.json({ error: 'No credentials' });
+        }
+
+        const { ghl_api_key: ghlApiKey } = clientResult[0];
+        const checkDate = date || new Date().toISOString().substring(0, 10);
+        const [year, month, day] = checkDate.split('-').map(Number);
+
+        // Use EST timezone (UTC-5)
+        const startTime = new Date(Date.UTC(year, month - 1, day, 5, 0, 0));
+        const endTime = new Date(Date.UTC(year, month - 1, day + 1, 4, 59, 59));
+
+        console.log(`🔍 Testing free slots for ${checkDate}: ${startTime.toISOString()} to ${endTime.toISOString()}`);
+
+        const slotsRes = await axios.get(
+            `https://services.leadconnectorhq.com/calendars/${calendar_id}/free-slots`,
+            {
+                headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION },
+                params: { startDate: startTime.getTime(), endDate: endTime.getTime() }
+            }
+        );
+
+        res.json({
+            success: true,
+            date: checkDate,
+            startTimestamp: startTime.getTime(),
+            endTimestamp: endTime.getTime(),
+            rawResponse: slotsRes.data
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 // POST /api/test-ghl/sync-from-availability/:client_id - Sync blocked slots by checking availability
