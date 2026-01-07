@@ -4565,7 +4565,8 @@
                     listViewBtn.style.color = '#6b7280';
                     calendarViewBtn.style.background = '#3b82f6';
                     calendarViewBtn.style.color = 'white';
-                    renderCalendarView();
+                    // Load appointments first, then render calendar
+                    loadAppointmentsForCalendar();
                 }
             } else {
                 // All other clients use GHL Cards (Schedule) view
@@ -4609,15 +4610,57 @@
             }
         }
 
+        // Load appointments for calendar view (Client 15)
+        async function loadAppointmentsForCalendar() {
+            const calendarBody = document.getElementById('calendarBody');
+
+            // Show loading state in calendar body
+            if (calendarBody) {
+                calendarBody.innerHTML = `
+                    <div class="loading" style="padding: 2rem; text-align: center; grid-column: 1 / -1;">
+                        <div class="spinner"></div>
+                        <p>Loading appointments...</p>
+                    </div>
+                `;
+            }
+
+            try {
+                const response = await authenticatedFetch('/api/appointments/dashboard?days=30&refresh=true');
+                if (!response) throw new Error('No response');
+
+                const data = await response.json();
+                console.log('📅 Calendar API response:', data);
+
+                if (data.success && data.appointments) {
+                    allAppointments = data.appointments;
+                    console.log('📅 Loaded appointments for calendar:', allAppointments.length);
+                    console.log('📅 Appointments data:', JSON.stringify(allAppointments, null, 2));
+
+                    // Render calendar with loaded appointments
+                    renderCalendarView();
+                } else {
+                    throw new Error(data.error || 'Failed to load appointments');
+                }
+            } catch (error) {
+                console.error('Error loading appointments for calendar:', error);
+                if (calendarBody) {
+                    calendarBody.innerHTML = `
+                        <div class="empty-state" style="padding: 2rem; text-align: center; grid-column: 1 / -1;">
+                            <p>Error loading appointments: ${error.message}</p>
+                            <button onclick="loadAppointmentsForCalendar()" class="btn-primary" style="margin-top: 1rem;">Retry</button>
+                        </div>
+                    `;
+                }
+            }
+        }
+
         // Refresh Client 15 appointments
         function refreshClient15Appointments() {
             if (currentView === 'list') {
                 loadAppointmentsForList();
             } else if (currentView === 'calendar') {
                 // Reload appointments and re-render calendar
-                loadAppointmentsForList().then(() => {
-                    renderCalendarView();
-                });
+                loadAppointmentsForCalendar();
             }
         }
 
@@ -4873,31 +4916,51 @@
             const weekEnd = new Date(weekStart);
             weekEnd.setDate(weekEnd.getDate() + 7);
 
+            console.log('📅 placeAppointmentsOnCalendar called');
+            console.log('📅 weekStart:', weekStart.toISOString());
+            console.log('📅 weekEnd:', weekEnd.toISOString());
+            console.log('📅 allAppointments count:', allAppointments.length);
+            console.log('📅 allAppointments sample:', allAppointments.slice(0, 3));
+
             // Filter appointments for this week
             const weekAppointments = allAppointments.filter(apt => {
-                const dateString = apt.appointmentDate;
+                // Handle both snake_case (from DB) and camelCase field names
+                const dateString = apt.appointmentDate || apt.appointment_date;
+                if (!dateString) {
+                    console.log('📅 Skipping appointment with no date:', apt);
+                    return false;
+                }
                 const [year, month, day] = dateString.split('-').map(Number);
                 const aptDate = new Date(year, month - 1, day);
-                return aptDate >= weekStart && aptDate < weekEnd;
+                const matches = aptDate >= weekStart && aptDate < weekEnd;
+                const name = apt.customerName || apt.customer_name || apt.title || 'Unknown';
+                console.log(`📅 Appointment ${name} on ${dateString}: ${matches ? 'IN RANGE' : 'out of range'}`);
+                return matches;
             });
 
-            // Group by date
+            console.log('📅 weekAppointments filtered:', weekAppointments.length);
+
+            // Group by date (handle both snake_case and camelCase)
             const appointmentsByDate = {};
             weekAppointments.forEach(apt => {
-                const dateKey = apt.appointmentDate;
+                const dateKey = apt.appointmentDate || apt.appointment_date;
                 if (!appointmentsByDate[dateKey]) {
                     appointmentsByDate[dateKey] = [];
                 }
                 appointmentsByDate[dateKey].push(apt);
             });
 
+            console.log('📅 appointmentsByDate:', Object.keys(appointmentsByDate));
+
             // Place each appointment
             Object.keys(appointmentsByDate).forEach(dateKey => {
                 const dayColumn = document.querySelector(`.day-column[data-date="${dateKey}"]`);
+                console.log(`📅 Looking for dayColumn with date ${dateKey}:`, dayColumn ? 'found' : 'NOT FOUND');
                 if (!dayColumn) return;
 
                 appointmentsByDate[dateKey].forEach(apt => {
-                    const timeString = apt.appointmentTime || '09:00:00';
+                    // Handle both snake_case and camelCase field names
+                    const timeString = apt.appointmentTime || apt.appointment_time || '09:00:00';
                     const [hours, minutes] = timeString.split(':').map(Number);
 
                     // Calculate position (8am = hour 8, offset from start)
@@ -4913,8 +4976,11 @@
                     const ghlCalendarId = apt.ghlCalendarId || apt.ghl_calendar_id || '';
                     let eventClass = 'calendar-event';
 
+                    // Get customer name (handle both formats)
+                    const customerName = apt.customerName || apt.customer_name || '';
+
                     // Check if it's a busy/blocked slot from GHL
-                    const isBusySlot = notes.includes('busy/blocked slot') || (apt.customerName || '').toLowerCase() === 'busy';
+                    const isBusySlot = notes.includes('busy/blocked slot') || customerName.toLowerCase() === 'busy';
 
                     if (depositStatus === 'pending') {
                         eventClass += ' pending-deposit';
@@ -4943,9 +5009,11 @@
                     const ampm = hours >= 12 ? 'PM' : 'AM';
                     const displayTime = `${displayHour}:${minutes.toString().padStart(2, '0')} ${ampm}`;
 
-                    const name = apt.customerName || apt.name || 'Appointment';
+                    const name = customerName || apt.name || 'Appointment';
                     const duration = apt.duration || 60;
                     const eventHeight = Math.max(30, (duration / 60) * slotHeight - 4);
+
+                    console.log(`📅 Placing appointment: ${name} at ${displayTime} (top: ${topOffset}px)`);
 
                     const eventHtml = `
                         <div class="${eventClass}"
