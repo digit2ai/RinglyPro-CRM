@@ -417,7 +417,8 @@ app.get('/', async (req, res) => {
       title: `${CLIENT_NAME} CRM Dashboard`,
       currentDate: new Date().toLocaleDateString(),
       voiceEnabled: process.env.VOICE_ENABLED === 'true' || false,
-      clientName: CLIENT_NAME
+      clientName: CLIENT_NAME,
+      client: null // Client info loaded client-side via JWT
     });
   } catch (error) {
     console.error('Dashboard error:', error);
