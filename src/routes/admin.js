@@ -720,6 +720,53 @@ router.post('/sync-ghl-appointments/:clientId', async (req, res) => {
     }
 });
 
+// ============= SET ELEVENLABS AGENT ID =============
+// POST /api/admin/set-elevenlabs-agent/:clientId
+// Sets the ElevenLabs agent ID for a client
+// Uses API key auth (no JWT required)
+router.post('/set-elevenlabs-agent/:clientId', async (req, res) => {
+    try {
+        const { clientId } = req.params;
+        const { apiKey, agentId } = req.body;
+
+        // Simple API key check
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+        if (apiKey !== expectedKey) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid API key'
+            });
+        }
+
+        if (!agentId) {
+            return res.status(400).json({
+                success: false,
+                error: 'agentId is required'
+            });
+        }
+
+        console.log(`🔧 Setting ElevenLabs agent ID for client ${clientId}: ${agentId}`);
+
+        await sequelize.query(
+            'UPDATE clients SET elevenlabs_agent_id = $1 WHERE id = $2',
+            { bind: [agentId, parseInt(clientId)] }
+        );
+
+        res.json({
+            success: true,
+            clientId: parseInt(clientId),
+            agentId
+        });
+
+    } catch (error) {
+        console.error('❌ Error setting ElevenLabs agent:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // ============= SYNC ELEVENLABS CALLS TO MESSAGES =============
 // POST /api/admin/sync-elevenlabs-calls/:clientId
 // Syncs call history from ElevenLabs Conversational AI to the Messages table
