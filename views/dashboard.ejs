@@ -4819,16 +4819,11 @@
             `;
 
             try {
-                const response = await authenticatedFetch(`/api/appointments/client/${CLIENT_ID}?status=scheduled`);
+                const response = await authenticatedFetch('/api/appointments/pending-deposits');
                 if (!response) return;
 
-                const appointments = await response.json();
-
-                // Filter to only pending deposits
-                const pendingDeposits = appointments.filter(apt => {
-                    const depositStatus = apt.depositStatus || apt.deposit_status || 'not_required';
-                    return depositStatus === 'pending';
-                });
+                const data = await response.json();
+                const pendingDeposits = data.appointments || [];
 
                 renderPendingDeposits(pendingDeposits);
             } catch (error) {
@@ -4859,10 +4854,14 @@
             }
 
             container.innerHTML = deposits.map(apt => {
-                const name = apt.contactName || apt.contact_name || apt.name || 'Unknown';
-                const phone = apt.contactPhone || apt.contact_phone || apt.phone || '';
-                const service = apt.service || apt.purpose || 'Appointment';
-                const date = new Date(apt.startTime || apt.start_time || apt.date);
+                const name = apt.customerName || apt.customer_name || apt.contactName || apt.contact_name || 'Unknown';
+                const phone = apt.customerPhone || apt.customer_phone || apt.contactPhone || apt.contact_phone || '';
+                const service = apt.purpose || apt.service || 'Appointment';
+
+                // Build date from appointmentDate and appointmentTime fields
+                const aptDate = apt.appointmentDate || apt.appointment_date;
+                const aptTime = apt.appointmentTime || apt.appointment_time || '00:00';
+                const date = new Date(`${aptDate}T${aptTime}`);
                 const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
                 const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
@@ -4933,16 +4932,11 @@
             if (CLIENT_ID != 32) return;
 
             try {
-                const response = await authenticatedFetch(`/api/appointments/client/${CLIENT_ID}?status=scheduled`);
+                const response = await authenticatedFetch('/api/appointments/pending-deposits');
                 if (!response) return;
 
-                const appointments = await response.json();
-
-                // Count pending deposits
-                const pendingCount = appointments.filter(apt => {
-                    const depositStatus = apt.depositStatus || apt.deposit_status || 'not_required';
-                    return depositStatus === 'pending';
-                }).length;
+                const data = await response.json();
+                const pendingCount = (data.appointments || []).length;
 
                 const badge = document.getElementById('pendingDepositsBadge');
                 if (badge) {
