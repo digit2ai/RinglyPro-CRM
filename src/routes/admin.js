@@ -922,6 +922,22 @@ router.post('/run-elevenlabs-migrations', async (req, res) => {
             console.log('Note (enum may exist):', e.message);
         }
 
+        // 4. Add call_duration column to messages
+        try {
+            await sequelize.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS call_duration INTEGER`);
+            console.log('✅ Added call_duration column');
+        } catch (e) {
+            console.log('Note (call_duration may exist):', e.message);
+        }
+
+        // 5. Add call_start_time column to messages
+        try {
+            await sequelize.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS call_start_time TIMESTAMP WITH TIME ZONE`);
+            console.log('✅ Added call_start_time column');
+        } catch (e) {
+            console.log('Note (call_start_time may exist):', e.message);
+        }
+
         // Verify
         const [client] = await sequelize.query(
             `SELECT id, business_name, elevenlabs_agent_id FROM clients WHERE id = 32`,
