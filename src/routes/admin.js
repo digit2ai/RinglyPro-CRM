@@ -213,6 +213,248 @@ router.post('/quick-disable-leads/:clientId', async (req, res) => {
     }
 });
 
+// ============= SYNC GHL APPOINTMENTS (Clean up Busy placeholders) =============
+// POST /api/admin/sync-ghl-appointments/:clientId
+// Cleans up old "Busy" placeholder records and syncs real appointments from GHL
+// Uses API key auth (no JWT required)
+router.post('/sync-ghl-appointments/:clientId', async (req, res) => {
+    try {
+        const { clientId } = req.params;
+        const { apiKey } = req.body;
+        const axios = require('axios');
+        const GHL_API_VERSION = '2021-07-28';
+
+        // Simple API key check
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+        if (apiKey !== expectedKey) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid API key'
+            });
+        }
+
+        console.log(`🔄 Admin: Syncing GHL appointments for client ${clientId}`);
+
+        // Get client credentials
+        const [clients] = await sequelize.query(
+            'SELECT ghl_api_key, ghl_location_id, business_name FROM clients WHERE id = $1',
+            { bind: [parseInt(clientId)], type: sequelize.QueryTypes.SELECT }
+        );
+
+        if (!clients || !clients.ghl_api_key) {
+            return res.status(404).json({
+                success: false,
+                error: 'Client not found or no GHL credentials'
+            });
+        }
+
+        const { ghl_api_key: apiKey2, ghl_location_id: locationId, business_name: businessName } = clients;
+
+        // Step 1: Clean up old "Busy" placeholder records
+        console.log('🧹 Cleaning up old Busy/placeholder appointments...');
+        const [deleted1] = await sequelize.query(
+            "DELETE FROM appointments WHERE client_id = $1 AND customer_name LIKE 'Busy%' RETURNING id",
+            { bind: [parseInt(clientId)] }
+        );
+
+        const [deleted2] = await sequelize.query(
+            "DELETE FROM appointments WHERE client_id = $1 AND source = 'ghl_sync' AND notes LIKE '%Busy/Blocked%' RETURNING id",
+            { bind: [parseInt(clientId)] }
+        );
+
+        const totalDeleted = deleted1.length + deleted2.length;
+        console.log(`   Deleted ${totalDeleted} old placeholder records`);
+
+        // Step 2: Get all calendars for this location
+        const calendarsRes = await axios.get(
+            'https://services.leadconnectorhq.com/calendars/',
+            {
+                headers: {
+                    'Authorization': `Bearer ${apiKey2}`,
+                    'Version': GHL_API_VERSION
+                },
+                params: { locationId }
+            }
+        );
+
+        const calendars = calendarsRes.data.calendars || [];
+        console.log(`📅 Found ${calendars.length} calendars`);
+
+        // Step 3: Date range - today + 30 days
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + 30);
+        const startEpoch = startDate.getTime();
+        const endEpoch = endDate.getTime();
+
+        // Step 4: Fetch events from each calendar
+        let totalInserted = 0;
+        let totalUpdated = 0;
+        const appointments = [];
+
+        for (const calendar of calendars) {
+            try {
+                const eventsRes = await axios.get(
+                    'https://services.leadconnectorhq.com/calendars/events',
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${apiKey2}`,
+                            'Version': GHL_API_VERSION
+                        },
+                        params: {
+                            locationId,
+                            calendarId: calendar.id,
+                            startTime: startEpoch,
+                            endTime: endEpoch
+                        }
+                    }
+                );
+
+                const events = eventsRes.data.events || [];
+
+                for (const event of events) {
+                    // Get contact details
+                    let contactName = event.title || 'GHL Appointment';
+                    let contactPhone = '';
+                    let contactEmail = '';
+
+                    if (event.contactId) {
+                        try {
+                            const contactRes = await axios.get(
+                                `https://services.leadconnectorhq.com/contacts/${event.contactId}`,
+                                {
+                                    headers: {
+                                        'Authorization': `Bearer ${apiKey2}`,
+                                        'Version': GHL_API_VERSION
+                                    }
+                                }
+                            );
+                            const contact = contactRes.data.contact;
+                            if (contact) {
+                                contactName = contact.contactName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || contactName;
+                                contactPhone = contact.phone || '';
+                                contactEmail = contact.email || '';
+                            }
+                        } catch (e) {
+                            // Contact fetch failed, use defaults
+                        }
+                    }
+
+                    // Parse date and time from ISO string
+                    const appointmentDate = event.startTime.substring(0, 10);
+                    const appointmentTime = event.startTime.substring(11, 19);
+
+                    // Calculate duration
+                    let duration = 60;
+                    if (event.endTime) {
+                        const start = new Date(event.startTime);
+                        const end = new Date(event.endTime);
+                        duration = Math.round((end - start) / (1000 * 60));
+                    }
+
+                    // Check if appointment already exists
+                    const [existing] = await sequelize.query(
+                        'SELECT id FROM appointments WHERE client_id = $1 AND ghl_appointment_id = $2',
+                        { bind: [parseInt(clientId), event.id], type: sequelize.QueryTypes.SELECT }
+                    );
+
+                    const statusMap = {
+                        'confirmed': 'confirmed',
+                        'showed': 'completed',
+                        'noshow': 'no-show',
+                        'no_show': 'no-show',
+                        'cancelled': 'cancelled',
+                        'canceled': 'cancelled',
+                        'new': 'pending',
+                        'pending': 'pending'
+                    };
+                    const status = statusMap[event.appointmentStatus?.toLowerCase()] || 'confirmed';
+
+                    if (existing && existing.id) {
+                        // Update existing
+                        await sequelize.query(
+                            `UPDATE appointments SET
+                                customer_name = $1,
+                                customer_phone = $2,
+                                customer_email = $3,
+                                appointment_date = $4,
+                                appointment_time = $5,
+                                duration = $6,
+                                purpose = $7,
+                                status = $8,
+                                ghl_contact_id = $9,
+                                ghl_calendar_id = $10,
+                                updated_at = NOW()
+                             WHERE id = $11`,
+                            {
+                                bind: [
+                                    contactName, contactPhone, contactEmail,
+                                    appointmentDate, appointmentTime, duration,
+                                    event.title || calendar.name || 'GHL Appointment',
+                                    status, event.contactId || null, calendar.id,
+                                    existing.id
+                                ]
+                            }
+                        );
+                        totalUpdated++;
+                    } else {
+                        // Insert new
+                        const confirmationCode = `GS${Date.now().toString().slice(-6)}`;
+                        await sequelize.query(
+                            `INSERT INTO appointments (
+                                client_id, customer_name, customer_phone, customer_email,
+                                appointment_date, appointment_time, duration, purpose,
+                                status, source, confirmation_code, notes,
+                                ghl_appointment_id, ghl_contact_id, ghl_calendar_id,
+                                created_at, updated_at
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW())`,
+                            {
+                                bind: [
+                                    parseInt(clientId), contactName, contactPhone, contactEmail,
+                                    appointmentDate, appointmentTime, duration,
+                                    event.title || calendar.name || 'GHL Appointment',
+                                    status, 'ghl_sync', confirmationCode,
+                                    `Synced from GHL calendar: ${calendar.name}`,
+                                    event.id, event.contactId || null, calendar.id
+                                ]
+                            }
+                        );
+                        totalInserted++;
+                    }
+
+                    appointments.push({
+                        name: contactName,
+                        date: appointmentDate,
+                        time: appointmentTime,
+                        title: event.title
+                    });
+                }
+            } catch (calErr) {
+                console.error(`Error processing calendar ${calendar.name}: ${calErr.message}`);
+            }
+        }
+
+        console.log(`✅ Sync complete: ${totalInserted} inserted, ${totalUpdated} updated`);
+
+        res.json({
+            success: true,
+            clientId: parseInt(clientId),
+            businessName,
+            deleted: totalDeleted,
+            inserted: totalInserted,
+            updated: totalUpdated,
+            appointments: appointments.slice(0, 20) // Show first 20
+        });
+
+    } catch (error) {
+        console.error('❌ Error syncing GHL appointments:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Apply admin authentication to all routes AFTER quick endpoints
 router.use(authenticateAdmin);
 
