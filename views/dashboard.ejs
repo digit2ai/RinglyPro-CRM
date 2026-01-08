@@ -2591,8 +2591,7 @@
                         <span class="current-week" id="currentWeekLabel">Dec 30 - Jan 5</span>
                         <!-- Calendar Selector for Client 32 -->
                         <select id="calendarSelector" onchange="onCalendarSelectorChange()" style="display: none; margin-left: auto; padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; background: white; cursor: pointer; min-width: 220px;">
-                            <option value="all">All Calendars</option>
-                            <option value="yHDUtxQWt9GzaPcdUnxs">Recovery Specialist</option>
+                            <option value="yHDUtxQWt9GzaPcdUnxs" selected>Recovery Specialist</option>
                             <option value="lqwsBWMJip0wx6NGLeaG">Hyperbaric Oxygen Therapy</option>
                             <option value="mV3NGEcqoXayzHtIEE97">Localized Cryotherapy</option>
                         </select>
@@ -3624,7 +3623,7 @@
         let creditsData = null;
         let allAppointments = []; // Store all appointments for filtering
         let currentDaysFilter = 7; // Default to 7 days
-        let selectedCalendarId = 'all'; // Selected calendar filter for Client 32
+        let selectedCalendarId = 'yHDUtxQWt9GzaPcdUnxs'; // Default to Recovery Specialist for Client 32
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', async () => {
@@ -5237,8 +5236,8 @@
                     return false;
                 }
 
-                // For Client 32, filter by selected calendar if not "all"
-                if (CLIENT_ID == 32 && selectedCalendarId !== 'all') {
+                // For Client 32, always filter by selected calendar
+                if (CLIENT_ID == 32) {
                     const aptCalendarId = apt.ghlCalendarId || apt.ghl_calendar_id || '';
                     if (aptCalendarId !== selectedCalendarId) {
                         return false;
