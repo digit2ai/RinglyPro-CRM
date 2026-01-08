@@ -7715,7 +7715,7 @@
             currentDepositAppointmentId = null;
         }
 
-        async function confirmDeposit() {
+        async function confirmDepositFromModal() {
             if (!currentDepositAppointmentId) {
                 alert('No appointment selected');
                 return;
@@ -7819,7 +7819,7 @@
                     <button type="button" onclick="closeDepositModal()" style="padding: 0.625rem 1.25rem; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 0.5rem; font-weight: 500; cursor: pointer;">
                         Cancel
                     </button>
-                    <button type="button" class="btn-confirm-deposit" onclick="confirmDeposit()" style="padding: 0.625rem 1.25rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-weight: 500; cursor: pointer;">
+                    <button type="button" class="btn-confirm-deposit" onclick="confirmDepositFromModal()" style="padding: 0.625rem 1.25rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-weight: 500; cursor: pointer;">
                         Confirm Deposit
                     </button>
                 </div>
