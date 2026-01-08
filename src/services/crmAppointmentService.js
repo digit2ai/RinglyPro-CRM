@@ -412,6 +412,7 @@ async function getDashboardAppointments(clientId, options = {}) {
       appointment_date, appointment_time, duration, purpose,
       status, source, confirmation_code, notes,
       ghl_appointment_id, hubspot_meeting_id, vagaro_appointment_id,
+      ghl_calendar_id, deposit_status,
       crm_last_synced_at, created_at, updated_at
      FROM appointments
      WHERE client_id = :clientId
