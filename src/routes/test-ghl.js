@@ -8,7 +8,41 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.12' });
+    res.json({ success: true, message: 'pong', version: '2.13' });
+});
+
+// Debug endpoint to check ghl_calendar_id values in database
+router.get('/check-calendar-ids/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { sequelize } = require('../models');
+        const { QueryTypes } = require('sequelize');
+
+        const result = await sequelize.query(
+            `SELECT ghl_calendar_id, COUNT(*) as count
+             FROM appointments
+             WHERE client_id = :clientId
+             GROUP BY ghl_calendar_id`,
+            { replacements: { clientId: parseInt(client_id) }, type: QueryTypes.SELECT }
+        );
+
+        const sample = await sequelize.query(
+            `SELECT id, customer_name, ghl_calendar_id, appointment_date
+             FROM appointments
+             WHERE client_id = :clientId
+             ORDER BY id DESC LIMIT 5`,
+            { replacements: { clientId: parseInt(client_id) }, type: QueryTypes.SELECT }
+        );
+
+        res.json({
+            success: true,
+            clientId: parseInt(client_id),
+            byCalendarId: result,
+            sampleAppointments: sample
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 // GET /api/test-ghl/debug-day/:client_id/:calendar_id - Debug slot comparison for a single day
