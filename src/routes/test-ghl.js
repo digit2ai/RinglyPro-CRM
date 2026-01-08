@@ -8,7 +8,7 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.13' });
+    res.json({ success: true, message: 'pong', version: '2.14' });
 });
 
 // Debug endpoint to check ghl_calendar_id values in database
