@@ -45,6 +45,47 @@ router.get('/check-calendar-ids/:client_id', async (req, res) => {
     }
 });
 
+// DELETE /api/test-ghl/delete-messages-by-phone/:client_id - Delete messages by phone number
+router.delete('/delete-messages-by-phone/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { phone } = req.body;
+        const { sequelize } = require('../models');
+        const { QueryTypes } = require('sequelize');
+
+        if (!phone) {
+            return res.status(400).json({ success: false, error: 'phone is required in request body' });
+        }
+
+        // First count how many will be deleted
+        const countResult = await sequelize.query(
+            `SELECT COUNT(*) as count FROM messages WHERE client_id = :clientId AND from_number = :phone`,
+            { replacements: { clientId: parseInt(client_id), phone }, type: QueryTypes.SELECT }
+        );
+
+        const count = parseInt(countResult[0].count);
+
+        if (count === 0) {
+            return res.json({ success: true, deleted: 0, message: 'No messages found with that phone number' });
+        }
+
+        // Delete the messages
+        await sequelize.query(
+            `DELETE FROM messages WHERE client_id = :clientId AND from_number = :phone`,
+            { replacements: { clientId: parseInt(client_id), phone } }
+        );
+
+        res.json({
+            success: true,
+            deleted: count,
+            clientId: parseInt(client_id),
+            phone
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // GET /api/test-ghl/debug-day/:client_id/:calendar_id - Debug slot comparison for a single day
 router.get('/debug-day/:client_id/:calendar_id', async (req, res) => {
     try {
