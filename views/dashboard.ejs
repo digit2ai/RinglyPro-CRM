@@ -4896,6 +4896,13 @@
                                     </svg>
                                     Confirm Deposit
                                 </button>
+                                <button onclick="deleteAppointmentFromPending(${apt.id}, '${name.replace(/'/g, "\\'")}', '${dateStr}', '${timeStr}')" style="padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                    </svg>
+                                    Delete
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -4932,6 +4939,35 @@
             } catch (error) {
                 console.error('Error confirming deposit:', error);
                 alert('Error confirming deposit. Please try again.');
+            }
+        }
+
+        // Delete appointment from pending deposits
+        async function deleteAppointmentFromPending(appointmentId, name, date, time) {
+            if (!confirm(`Are you sure you want to delete ${name}'s appointment on ${date} at ${time}?\n\nThis will permanently remove the appointment from the calendar.`)) {
+                return;
+            }
+
+            try {
+                const response = await authenticatedFetch(`/api/appointments/${appointmentId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response && response.ok) {
+                    // Reload the pending deposits list
+                    loadPendingDeposits();
+                    // Update the badge count
+                    updatePendingDepositsBadge();
+                    // Refresh the calendar
+                    loadAppointmentsForCalendar();
+                    alert('Appointment deleted successfully!');
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Failed to delete appointment. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error deleting appointment:', error);
+                alert('Error deleting appointment. Please try again.');
             }
         }
 
