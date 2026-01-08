@@ -2589,6 +2589,13 @@
                             </svg>
                         </button>
                         <span class="current-week" id="currentWeekLabel">Dec 30 - Jan 5</span>
+                        <!-- Calendar Selector for Client 32 -->
+                        <select id="calendarSelector" onchange="onCalendarSelectorChange()" style="display: none; margin-left: auto; padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; background: white; cursor: pointer; min-width: 220px;">
+                            <option value="all">All Calendars</option>
+                            <option value="yHDUtxQWt9GzaPcdUnxs">Recovery Specialist</option>
+                            <option value="lqwsBWMJip0wx6NGLeaG">Hyperbaric Oxygen Therapy</option>
+                            <option value="mV3NGEcqoXayzHtIEE97">Localized Cryotherapy</option>
+                        </select>
                     </div>
                     <div class="calendar-header" id="calendarHeader">
                         <!-- Will be populated by JavaScript -->
@@ -3617,6 +3624,7 @@
         let creditsData = null;
         let allAppointments = []; // Store all appointments for filtering
         let currentDaysFilter = 7; // Default to 7 days
+        let selectedCalendarId = 'all'; // Selected calendar filter for Client 32
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', async () => {
@@ -4473,9 +4481,10 @@
                     loadGHLCards();
                 }
 
-                // Show Pending Deposits button for Client 32
+                // Show Pending Deposits button and Calendar Selector for Client 32
                 if (CLIENT_ID == 32) {
                     document.getElementById('pendingDepositsBtn').style.display = 'flex';
+                    document.getElementById('calendarSelector').style.display = 'block';
                     updatePendingDepositsBadge();
                 }
 
@@ -5115,6 +5124,15 @@
             renderCalendarView();
         }
 
+        // Handle calendar selector change (Client 32)
+        function onCalendarSelectorChange() {
+            const selector = document.getElementById('calendarSelector');
+            selectedCalendarId = selector.value;
+            console.log('📅 Calendar selector changed to:', selectedCalendarId);
+            // Re-render calendar view with filtered appointments
+            renderCalendarView();
+        }
+
         // Get the start of the week (Sunday) for a given date
         function getWeekStart(date) {
             const d = new Date(date);
@@ -5210,7 +5228,7 @@
             console.log('📅 allAppointments count:', allAppointments.length);
             console.log('📅 allAppointments sample:', allAppointments.slice(0, 3));
 
-            // Filter appointments for this week
+            // Filter appointments for this week (and by calendar for Client 32)
             const weekAppointments = allAppointments.filter(apt => {
                 // Handle both snake_case (from DB) and camelCase field names
                 const dateString = apt.appointmentDate || apt.appointment_date;
@@ -5218,6 +5236,15 @@
                     console.log('📅 Skipping appointment with no date:', apt);
                     return false;
                 }
+
+                // For Client 32, filter by selected calendar if not "all"
+                if (CLIENT_ID == 32 && selectedCalendarId !== 'all') {
+                    const aptCalendarId = apt.ghlCalendarId || apt.ghl_calendar_id || '';
+                    if (aptCalendarId !== selectedCalendarId) {
+                        return false;
+                    }
+                }
+
                 const [year, month, day] = dateString.split('-').map(Number);
                 const aptDate = new Date(year, month - 1, day);
                 const matches = aptDate >= weekStart && aptDate < weekEnd;
