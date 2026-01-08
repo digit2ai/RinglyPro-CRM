@@ -260,7 +260,7 @@ router.post('/sync-ghl-blocked-slots/:clientId', async (req, res) => {
         // Step 1: Delete all existing appointments for this client with this calendar ID
         console.log('🧹 Cleaning up existing appointments for this calendar...');
         const [deleted] = await sequelize.query(
-            "DELETE FROM appointments WHERE client_id = $1 AND (ghl_calendar_id = $2 OR source = 'ghl_blocked_slot') RETURNING id",
+            "DELETE FROM appointments WHERE client_id = $1 AND ghl_calendar_id = $2 RETURNING id",
             { bind: [parseInt(clientId), calendarId] }
         );
         console.log(`   Deleted ${deleted.length} old records`);
@@ -368,7 +368,7 @@ router.post('/sync-ghl-blocked-slots/:clientId', async (req, res) => {
                             duration || 60,
                             slot.title || 'Blocked Time',
                             'confirmed',
-                            'ghl_blocked_slot',
+                            'ghl_sync',
                             confirmationCode,
                             `Blocked slot from GHL calendar: ${calendarName}`,
                             slot.id,

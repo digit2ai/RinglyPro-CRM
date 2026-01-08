@@ -824,7 +824,7 @@ router.post('/sync-blocked-slots/:client_id', async (req, res) => {
                         ghl_appointment_id, ghl_calendar_id,
                         created_at, updated_at
                     ) VALUES (:clientId, :name, '', '', :date, :time, :duration, :purpose,
-                        'confirmed', 'ghl_blocked_slot', :code, :notes, :ghlId, :calId, NOW(), NOW())`,
+                        'confirmed', 'ghl_sync', :code, :notes, :ghlId, :calId, NOW(), NOW())`,
                     {
                         replacements: {
                             clientId: parseInt(client_id),
