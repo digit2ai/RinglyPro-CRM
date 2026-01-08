@@ -205,7 +205,7 @@ router.get('/debug/appointments/:client_id', async (req, res) => {
 
         const appointments = await sequelize.query(
             `SELECT id, client_id, customer_name, customer_phone, appointment_date,
-                    appointment_time, status, confirmation_code, created_at
+                    appointment_time, status, confirmation_code, ghl_calendar_id, created_at
              FROM appointments
              WHERE client_id = :client_id
              ORDER BY created_at DESC
