@@ -8,7 +8,7 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.16' });
+    res.json({ success: true, message: 'pong', version: '2.17' });
 });
 
 // Debug endpoint to check ghl_calendar_id values in database
@@ -670,6 +670,82 @@ router.get('/compare-user-slots/:client_id/:calendar_id', async (req, res) => {
                 difference: results.withoutUserId.count - results.withUserId.count,
                 sameResult: results.withoutUserId.count === results.withUserId.count
             };
+        }
+
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/test-ghl/user-calendars/:client_id/:user_id - Get user's connected calendars
+router.get('/user-calendars/:client_id/:user_id', async (req, res) => {
+    try {
+        const { client_id, user_id } = req.params;
+        const { sequelize } = require('../models');
+        const { QueryTypes } = require('sequelize');
+        const GHL_API_VERSION = '2021-07-28';
+
+        const clientResult = await sequelize.query(
+            'SELECT ghl_api_key, ghl_location_id FROM clients WHERE id = :clientId',
+            { replacements: { clientId: parseInt(client_id) }, type: QueryTypes.SELECT }
+        );
+
+        if (!clientResult.length || !clientResult[0].ghl_api_key) {
+            return res.json({ error: 'No credentials' });
+        }
+
+        const { ghl_api_key: ghlApiKey, ghl_location_id: locationId } = clientResult[0];
+        const results = { userId: user_id, locationId };
+
+        // Try to get user details
+        try {
+            const userRes = await axios.get(
+                `https://services.leadconnectorhq.com/users/${user_id}`,
+                { headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION } }
+            );
+            results.user = userRes.data;
+        } catch (e) {
+            results.userError = { status: e.response?.status, message: e.message, data: e.response?.data };
+        }
+
+        // Try to get user's calendar settings/integrations
+        try {
+            const calIntRes = await axios.get(
+                `https://services.leadconnectorhq.com/calendars/calendar-integrations`,
+                {
+                    headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION },
+                    params: { locationId, userId: user_id }
+                }
+            );
+            results.calendarIntegrations = calIntRes.data;
+        } catch (e) {
+            results.calendarIntegrationsError = { status: e.response?.status, message: e.message, data: e.response?.data };
+        }
+
+        // Try to get user availability
+        try {
+            const availRes = await axios.get(
+                `https://services.leadconnectorhq.com/users/${user_id}/availability`,
+                { headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION } }
+            );
+            results.userAvailability = availRes.data;
+        } catch (e) {
+            results.userAvailabilityError = { status: e.response?.status, message: e.message, data: e.response?.data };
+        }
+
+        // Try external calendar endpoints
+        try {
+            const extCalRes = await axios.get(
+                `https://services.leadconnectorhq.com/calendars/external-calendars`,
+                {
+                    headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION },
+                    params: { locationId }
+                }
+            );
+            results.externalCalendars = extCalRes.data;
+        } catch (e) {
+            results.externalCalendarsError = { status: e.response?.status, message: e.message, data: e.response?.data };
         }
 
         res.json(results);
