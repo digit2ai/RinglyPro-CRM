@@ -15,7 +15,8 @@ class GoogleCalendarService {
   constructor() {
     this.clientId = process.env.GOOGLE_CLIENT_ID;
     this.clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    this.redirectUri = process.env.GOOGLE_REDIRECT_URI;
+    // Default to production URL if not set
+    this.redirectUri = process.env.GOOGLE_REDIRECT_URI || 'https://ringlypro-crm.onrender.com/api/google-oauth/callback';
   }
 
   /**
