@@ -11,6 +11,7 @@ let Client;
 let CreditAccount;
 let AdminCommunication;
 let AdminNote;
+let GoogleCalendarIntegration;
 
 try {
   Message = require('./Message');
@@ -81,6 +82,14 @@ try {
   console.log('Note: AdminNote model needed for admin portal');
 }
 
+try {
+  GoogleCalendarIntegration = require('./GoogleCalendarIntegration');
+  console.log('GoogleCalendarIntegration model imported successfully');
+} catch (error) {
+  console.log('GoogleCalendarIntegration model not found:', error.message);
+  console.log('Note: GoogleCalendarIntegration model needed for Google Calendar sync');
+}
+
 // Import Project Tracker models
 let Project;
 let ProjectMilestone;
@@ -125,6 +134,7 @@ if (Client) models.Client = Client;
 if (CreditAccount) models.CreditAccount = CreditAccount;
 if (AdminCommunication) models.AdminCommunication = AdminCommunication;
 if (AdminNote) models.AdminNote = AdminNote;
+if (GoogleCalendarIntegration) models.GoogleCalendarIntegration = GoogleCalendarIntegration;
 if (Project) models.Project = Project;
 if (ProjectMilestone) models.ProjectMilestone = ProjectMilestone;
 if (ProjectMessage) models.ProjectMessage = ProjectMessage;
@@ -455,6 +465,16 @@ const syncDatabase = async (options = {}) => {
       }
     }
 
+    // Sync GoogleCalendarIntegration table for Google Calendar OAuth
+    if (GoogleCalendarIntegration) {
+      try {
+        await GoogleCalendarIntegration.sync({ ...options, alter: false });
+        console.log('GoogleCalendarIntegration table synchronized - Google Calendar OAuth ready');
+      } catch (error) {
+        console.log('GoogleCalendarIntegration table sync issues:', error.message);
+      }
+    }
+
     // Log available models
     const availableModels = Object.keys(models).filter(key => key !== 'sequelize');
     console.log('Available models:', availableModels.join(', ') || 'None');
@@ -715,6 +735,7 @@ module.exports.Client = Client;
 module.exports.CreditAccount = CreditAccount;
 module.exports.AdminCommunication = AdminCommunication;
 module.exports.AdminNote = AdminNote;
+module.exports.GoogleCalendarIntegration = GoogleCalendarIntegration;
 
 // Export Project Tracker models
 module.exports.Project = Project;
