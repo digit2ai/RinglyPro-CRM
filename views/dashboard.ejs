@@ -5419,12 +5419,26 @@
                     // Check if it's a busy/blocked slot from GHL
                     const isBusySlot = notes.includes('busy/blocked slot') || customerName.toLowerCase() === 'busy' || customerName.toLowerCase().startsWith('busy -');
 
-                    // For Client 32 with multi-calendar, use Google's calendar color
+                    // For Client 32 with multi-calendar, use specific colors per calendar
                     let customStyle = '';
-                    if (isGoogleCalendarEvent && apt.calendarColor && CLIENT_ID == 32) {
-                        // Use Google Calendar's color directly for Client 32
-                        eventClass += ' google-calendar-event google-calendar-custom-color';
-                        customStyle = `background: ${apt.calendarColor}20; border-left-color: ${apt.calendarColor};`;
+                    if (isGoogleCalendarEvent && CLIENT_ID == 32 && apt.calendarName) {
+                        // Use specific colors for Client 32 calendars
+                        const calName = apt.calendarName.toLowerCase();
+                        if (calName.includes('recovery') || calName === 'recovery') {
+                            // Recovery calendar = RED (like screenshot)
+                            eventClass += ' google-calendar-event google-calendar-custom-color';
+                            customStyle = `background: #fee2e2; border-left-color: #dc2626;`;
+                        } else if (calName.includes('hyperbaric') || calName.includes('oxygen')) {
+                            // Hyperbaric Oxygen Therapy = ORANGE (like screenshot)
+                            eventClass += ' google-calendar-event google-calendar-custom-color';
+                            customStyle = `background: #ffedd5; border-left-color: #ea580c;`;
+                        } else {
+                            // Other calendars use Google's color
+                            eventClass += ' google-calendar-event google-calendar-custom-color';
+                            customStyle = apt.calendarColor
+                                ? `background: ${apt.calendarColor}20; border-left-color: ${apt.calendarColor};`
+                                : '';
+                        }
                     } else if (isGoogleCalendarEvent) {
                         // Default purple for Google Calendar events
                         eventClass += ' google-calendar-event';
