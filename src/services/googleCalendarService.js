@@ -408,6 +408,22 @@ class GoogleCalendarService {
       return { connected: false };
     }
 
+    // Get client timezone from database
+    let timezone = 'America/New_York';
+    try {
+      const sequelize = require('../config/database');
+      const { QueryTypes } = require('sequelize');
+      const clientData = await sequelize.query(
+        'SELECT timezone FROM clients WHERE id = :clientId',
+        { replacements: { clientId }, type: QueryTypes.SELECT }
+      );
+      if (clientData[0]?.timezone) {
+        timezone = clientData[0].timezone;
+      }
+    } catch (err) {
+      console.log('Could not fetch client timezone:', err.message);
+    }
+
     return {
       connected: true,
       email: integration.googleEmail,
@@ -417,7 +433,8 @@ class GoogleCalendarService {
       syncBlockedTimes: integration.syncBlockedTimes,
       lastSyncedAt: integration.lastSyncedAt,
       lastError: integration.lastError,
-      tokenExpired: integration.isTokenExpired()
+      tokenExpired: integration.isTokenExpired(),
+      timezone
     };
   }
 }

@@ -254,27 +254,38 @@ router.get('/events/:clientId', async (req, res) => {
 
     const events = await googleCalendarService.listEvents(clientId, start, end);
 
+    // Get client timezone for proper time display
+    const moment = require('moment-timezone');
+    const clientTimezone = status.timezone || 'America/New_York';
+
     // Transform events to match RinglyPro appointment format for easy display
-    const formattedEvents = events.map(event => ({
-      id: `gcal_${event.id}`,
-      googleEventId: event.id,
-      customerName: event.title || 'Google Calendar Event',
-      customer_name: event.title || 'Google Calendar Event',
-      appointmentDate: event.start.toISOString().split('T')[0],
-      appointment_date: event.start.toISOString().split('T')[0],
-      appointmentTime: event.start.toTimeString().slice(0, 5),
-      appointment_time: event.start.toTimeString().slice(0, 5),
-      endTime: event.end.toTimeString().slice(0, 5),
-      duration: Math.round((event.end - event.start) / (1000 * 60)),
-      purpose: event.description?.split('\n')[0] || '',
-      notes: event.description || '',
-      status: event.status === 'cancelled' ? 'cancelled' : 'confirmed',
-      source: 'google_calendar',
-      isRinglyProEvent: event.isRinglyProEvent,
-      htmlLink: event.htmlLink,
-      // Visual indicator for Google Calendar events
-      calendarSource: event.isRinglyProEvent ? 'RinglyPro (synced)' : 'Google Calendar'
-    }));
+    const formattedEvents = events.map(event => {
+      // Convert to client's timezone for display
+      const startMoment = moment(event.start).tz(clientTimezone);
+      const endMoment = moment(event.end).tz(clientTimezone);
+
+      return {
+        id: `gcal_${event.id}`,
+        googleEventId: event.id,
+        customerName: event.title || 'Google Calendar Event',
+        customer_name: event.title || 'Google Calendar Event',
+        appointmentDate: startMoment.format('YYYY-MM-DD'),
+        appointment_date: startMoment.format('YYYY-MM-DD'),
+        appointmentTime: startMoment.format('HH:mm'),
+        appointment_time: startMoment.format('HH:mm'),
+        endTime: endMoment.format('HH:mm'),
+        duration: Math.round((event.end - event.start) / (1000 * 60)),
+        purpose: event.description?.split('\n')[0] || '',
+        notes: event.description || '',
+        status: event.status === 'cancelled' ? 'cancelled' : 'confirmed',
+        source: 'google_calendar',
+        isRinglyProEvent: event.isRinglyProEvent,
+        htmlLink: event.htmlLink,
+        timezone: clientTimezone,
+        // Visual indicator for Google Calendar events
+        calendarSource: event.isRinglyProEvent ? 'RinglyPro (synced)' : 'Google Calendar'
+      };
+    });
 
     res.json({
       events: formattedEvents,
