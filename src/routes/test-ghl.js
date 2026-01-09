@@ -8,7 +8,7 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.18' });
+    res.json({ success: true, message: 'pong', version: '2.19' });
 });
 
 // Debug endpoint to check ghl_calendar_id values in database
@@ -543,6 +543,86 @@ router.get('/debug-blocked/:client_id/:calendar_id', async (req, res) => {
             dateRange: { start: startDate.toISOString(), end: endDate.toISOString() },
             results
         });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/test-ghl/test-api-versions/:client_id/:calendar_id - Test different API versions
+router.get('/test-api-versions/:client_id/:calendar_id', async (req, res) => {
+    try {
+        const { client_id, calendar_id } = req.params;
+        const { date } = req.query;
+        const { sequelize } = require('../models');
+        const { QueryTypes } = require('sequelize');
+
+        const clientResult = await sequelize.query(
+            'SELECT ghl_api_key, ghl_location_id FROM clients WHERE id = :clientId',
+            { replacements: { clientId: parseInt(client_id) }, type: QueryTypes.SELECT }
+        );
+
+        if (!clientResult.length || !clientResult[0].ghl_api_key) {
+            return res.json({ error: 'No credentials' });
+        }
+
+        const { ghl_api_key: ghlApiKey, ghl_location_id: locationId } = clientResult[0];
+        const checkDate = date || new Date().toISOString().substring(0, 10);
+        const [year, month, day] = checkDate.split('-').map(Number);
+
+        const startTime = new Date(Date.UTC(year, month - 1, day, 5, 0, 0));
+        const endTime = new Date(Date.UTC(year, month - 1, day + 1, 4, 59, 59));
+
+        const results = { date: checkDate, calendarId: calendar_id };
+        const apiVersions = ['2021-04-15', '2021-07-28', '2021-10-01', '2022-01-01', '2022-07-28', '2023-01-01'];
+
+        for (const version of apiVersions) {
+            try {
+                const slotsRes = await axios.get(
+                    `https://services.leadconnectorhq.com/calendars/${calendar_id}/free-slots`,
+                    {
+                        headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': version },
+                        params: { startDate: startTime.getTime(), endDate: endTime.getTime() }
+                    }
+                );
+                const slots = [];
+                for (const key of Object.keys(slotsRes.data)) {
+                    if (key !== 'traceId' && slotsRes.data[key]?.slots) {
+                        slots.push(...slotsRes.data[key].slots.map(s => s.substring(11, 19)));
+                    }
+                }
+                results[version] = { count: slots.length, slots };
+            } catch (e) {
+                results[version] = { error: e.response?.status || e.message };
+            }
+        }
+
+        // Also try with includeBlockedSlots parameter (guessing)
+        try {
+            const slotsRes = await axios.get(
+                `https://services.leadconnectorhq.com/calendars/${calendar_id}/free-slots`,
+                {
+                    headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': '2021-07-28' },
+                    params: {
+                        startDate: startTime.getTime(),
+                        endDate: endTime.getTime(),
+                        includeBlockedSlots: true,
+                        includeExternalCalendar: true,
+                        checkExternalCalendar: true
+                    }
+                }
+            );
+            const slots = [];
+            for (const key of Object.keys(slotsRes.data)) {
+                if (key !== 'traceId' && slotsRes.data[key]?.slots) {
+                    slots.push(...slotsRes.data[key].slots.map(s => s.substring(11, 19)));
+                }
+            }
+            results['with-extra-params'] = { count: slots.length, slots, raw: slotsRes.data };
+        } catch (e) {
+            results['with-extra-params'] = { error: e.response?.status || e.message };
+        }
+
+        res.json(results);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
