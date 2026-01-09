@@ -411,13 +411,19 @@
 
         // Check URL params for connection result
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('google_connected') === 'true') {
+        if (urlParams.get('connected') === 'true' || urlParams.get('google_connected') === 'true') {
             showAlert('Google Calendar connected successfully!', 'success');
             // Clean up URL
             window.history.replaceState({}, document.title, window.location.pathname);
-        } else if (urlParams.get('google_error')) {
-            showAlert('Failed to connect Google Calendar: ' + urlParams.get('google_error'), 'error');
+        } else if (urlParams.get('error') || urlParams.get('google_error')) {
+            const errorMsg = urlParams.get('error') || urlParams.get('google_error');
+            showAlert('Failed to connect Google Calendar: ' + errorMsg, 'error');
             window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        // If client_id is in URL, use it (for redirect from OAuth)
+        if (urlParams.get('client_id')) {
+            clientId = parseInt(urlParams.get('client_id'));
         }
 
         async function loadStatus() {

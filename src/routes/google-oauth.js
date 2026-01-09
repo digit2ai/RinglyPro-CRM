@@ -51,11 +51,11 @@ router.get('/callback', async (req, res) => {
 
     if (error) {
       console.error('OAuth callback error:', error);
-      return res.redirect('/dashboard?google_error=access_denied');
+      return res.redirect('/settings/google-calendar?error=access_denied');
     }
 
     if (!code || !state) {
-      return res.redirect('/dashboard?google_error=missing_params');
+      return res.redirect('/settings/google-calendar?error=missing_params');
     }
 
     // Parse state to get client ID
@@ -64,7 +64,7 @@ router.get('/callback', async (req, res) => {
       const stateData = JSON.parse(state);
       clientId = stateData.clientId;
     } catch (e) {
-      return res.redirect('/dashboard?google_error=invalid_state');
+      return res.redirect('/settings/google-calendar?error=invalid_state');
     }
 
     console.log(`🔄 Processing Google OAuth callback for client ${clientId}`);
@@ -112,12 +112,12 @@ router.get('/callback', async (req, res) => {
       console.log(`✅ Created Google Calendar integration for client ${clientId}`);
     }
 
-    // Redirect to calendar selection page or dashboard
-    res.redirect(`/dashboard?client_id=${clientId}&google_connected=true`);
+    // Redirect to Google Calendar settings page with success message
+    res.redirect(`/settings/google-calendar?client_id=${clientId}&connected=true`);
 
   } catch (error) {
     console.error('OAuth callback processing error:', error);
-    res.redirect('/dashboard?google_error=callback_failed');
+    res.redirect('/settings/google-calendar?error=callback_failed');
   }
 });
 
