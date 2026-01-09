@@ -8,7 +8,7 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.17' });
+    res.json({ success: true, message: 'pong', version: '2.18' });
 });
 
 // Debug endpoint to check ghl_calendar_id values in database
@@ -670,6 +670,77 @@ router.get('/compare-user-slots/:client_id/:calendar_id', async (req, res) => {
                 difference: results.withoutUserId.count - results.withUserId.count,
                 sameResult: results.withoutUserId.count === results.withUserId.count
             };
+        }
+
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/test-ghl/appointments-list/:client_id - Get GHL appointments for date range
+router.get('/appointments-list/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { calendarId, startDate, endDate } = req.query;
+        const { sequelize } = require('../models');
+        const { QueryTypes } = require('sequelize');
+        const GHL_API_VERSION = '2021-07-28';
+
+        const clientResult = await sequelize.query(
+            'SELECT ghl_api_key, ghl_location_id FROM clients WHERE id = :clientId',
+            { replacements: { clientId: parseInt(client_id) }, type: QueryTypes.SELECT }
+        );
+
+        if (!clientResult.length || !clientResult[0].ghl_api_key) {
+            return res.json({ error: 'No credentials' });
+        }
+
+        const { ghl_api_key: ghlApiKey, ghl_location_id: locationId } = clientResult[0];
+
+        // Use provided dates or default to next 7 days
+        const start = startDate || new Date().toISOString().substring(0, 10);
+        const end = endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10);
+        const startTimestamp = new Date(start + 'T00:00:00').getTime();
+        const endTimestamp = new Date(end + 'T23:59:59').getTime();
+
+        const results = { locationId, calendarId, dateRange: { start, end } };
+
+        // Try appointments endpoint
+        const params = {
+            locationId,
+            startTime: startTimestamp,
+            endTime: endTimestamp
+        };
+        if (calendarId) {
+            params.calendarId = calendarId;
+        }
+
+        try {
+            const apptRes = await axios.get(
+                'https://services.leadconnectorhq.com/calendars/events',
+                {
+                    headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION },
+                    params
+                }
+            );
+            results.events = apptRes.data;
+        } catch (e) {
+            results.eventsError = { status: e.response?.status, message: e.message, data: e.response?.data };
+        }
+
+        // Also try /appointments endpoint
+        try {
+            const apptRes2 = await axios.get(
+                'https://services.leadconnectorhq.com/appointments/',
+                {
+                    headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION },
+                    params: { locationId, calendarId, startDate: startTimestamp, endDate: endTimestamp }
+                }
+            );
+            results.appointments = apptRes2.data;
+        } catch (e) {
+            results.appointmentsError = { status: e.response?.status, message: e.message, data: e.response?.data };
         }
 
         res.json(results);
