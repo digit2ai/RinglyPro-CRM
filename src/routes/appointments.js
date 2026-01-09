@@ -923,25 +923,35 @@ router.post('/create', async (req, res) => {
     }
 
     // Use dual calendar service to check availability in both systems
+    console.log(`📅 Checking availability for client ${req.clientId}, date=${appointmentDate}, time=${appointmentTime}`);
+
     const slotCheck = await dualCalendarService.isSlotAvailable(
       req.clientId,
       appointmentDate,
       appointmentTime
     );
 
+    console.log(`📅 Slot check result:`, JSON.stringify(slotCheck));
+
     if (!slotCheck.available) {
       const reason = slotCheck.dualModeActive
-        ? `Time slot is already booked (RinglyPro: ${slotCheck.ringlyProAvailable ? 'available' : 'booked'}, GHL: ${slotCheck.ghlAvailable ? 'available' : 'booked'})`
-        : 'Time slot is already booked';
+        ? `Time slot is not available (RinglyPro: ${slotCheck.ringlyProAvailable ? 'available' : 'booked'}, GHL: ${slotCheck.ghlAvailable ? 'available' : 'booked'})`
+        : 'Time slot is not available';
 
       return res.status(409).json({
         success: false,
         error: reason,
-        dual_mode_active: slotCheck.dualModeActive
+        dual_mode_active: slotCheck.dualModeActive,
+        debug: {
+          ringlyProAvailable: slotCheck.ringlyProAvailable,
+          ghlAvailable: slotCheck.ghlAvailable
+        }
       });
     }
 
     // Use dual calendar service to create appointment in both systems
+    console.log(`📅 Creating appointment for client ${req.clientId}`);
+
     const result = await dualCalendarService.createDualAppointment(req.clientId, {
       customerName,
       customerEmail,
@@ -953,10 +963,13 @@ router.post('/create', async (req, res) => {
       notes: notes || null
     });
 
+    console.log(`📅 Create result:`, JSON.stringify({ success: result.success, error: result.error, dualModeActive: result.dualModeActive }));
+
     if (!result.success) {
       return res.status(500).json({
         success: false,
-        error: result.error || 'Failed to create appointment'
+        error: result.error || 'Failed to create appointment',
+        details: 'Check server logs for more information'
       });
     }
 

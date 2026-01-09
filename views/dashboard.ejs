@@ -7412,31 +7412,24 @@
 
             const startTime = startTimeSelect.value;
 
-            if (!startTime || availableSlots.length === 0) {
+            if (!startTime) {
                 endTimeSelect.disabled = true;
                 endTimeSelect.innerHTML = '<option value="">Select start time first</option>';
                 return;
             }
 
-            // Find the index of the selected start time
-            const startIndex = availableSlots.indexOf(startTime);
+            // Generate end time options: 30 min, 1 hour, 1.5 hours, 2 hours, 2.5 hours, 3 hours after start
+            const durations = [30, 60, 90, 120, 150, 180]; // minutes
+            const endSlots = durations.map(minutes => addTimeToSlot(startTime, minutes));
 
-            // Get all slots after the start time
-            const endSlots = availableSlots.slice(startIndex + 1);
-
-            // Add one more option after the last available slot for appointments that go beyond business hours
-            endSlots.push(addTimeToSlot(availableSlots[availableSlots.length - 1], 30));
-
-            if (endSlots.length === 0) {
-                endTimeSelect.innerHTML = '<option value="">No end time available</option>';
-                endTimeSelect.disabled = true;
-                return;
-            }
-
-            // Populate end time options
+            // Populate end time options with duration labels
             endTimeSelect.innerHTML = '<option value="">Select end time</option>' +
-                endSlots.map(slot => {
-                    return `<option value="${slot}">${formatTimeSlot(slot)}</option>`;
+                endSlots.map((slot, index) => {
+                    const durationMinutes = durations[index];
+                    const durationLabel = durationMinutes >= 60
+                        ? `${Math.floor(durationMinutes / 60)}${durationMinutes % 60 ? '.5' : ''} hr`
+                        : `${durationMinutes} min`;
+                    return `<option value="${slot}">${formatTimeSlot(slot)} (${durationLabel})</option>`;
                 }).join('');
 
             endTimeSelect.disabled = false;
@@ -7539,7 +7532,16 @@
                                 submitBtn.textContent = 'Create Appointment';
                             }, 2000);
                         } else {
-                            throw new Error('Failed to create appointment');
+                            // Try to get error message from response
+                            let errorMessage = 'Failed to create appointment';
+                            try {
+                                const errorData = await response.json();
+                                errorMessage = errorData.error || errorMessage;
+                                console.log('Server error response:', errorData);
+                            } catch (e) {
+                                console.log('Could not parse error response');
+                            }
+                            throw new Error(errorMessage);
                         }
                     } catch (error) {
                         console.error('Error creating appointments:', error);
