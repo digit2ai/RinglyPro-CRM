@@ -321,7 +321,8 @@ router.get('/test-availability/:clientId', async (req, res) => {
     const dualCalendarService = require('../services/dualCalendarService');
 
     // Get combined availability (this is what the dashboard uses)
-    const businessHours = { start: 9, end: 17, slotDuration: 60 };
+    // 30-minute slots from 9 AM to 7 PM to match GHL availability
+    const businessHours = { start: 9, end: 19, slotDuration: 30 };
     const dualResult = await dualCalendarService.getCombinedAvailability(clientId, date, { businessHours });
 
     // Also get unified booking service result for comparison

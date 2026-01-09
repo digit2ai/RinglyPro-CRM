@@ -865,11 +865,11 @@ router.get('/availability/:clientId/:date', async (req, res) => {
       });
     }
 
-    // Define business hours (9 AM to 5 PM, 60-minute slots)
+    // Define business hours (9 AM to 7 PM, 30-minute slots to match GHL)
     const businessHours = {
       start: 9,  // 9 AM
-      end: 17,   // 5 PM
-      slotDuration: 60 // minutes (changed to 60 for GHL compatibility)
+      end: 19,   // 7 PM (extended to match GHL evening hours)
+      slotDuration: 30 // minutes (30-minute slots to match GHL availability)
     };
 
     // Use dual calendar service to get combined availability
