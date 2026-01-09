@@ -221,6 +221,79 @@ router.post('/disconnect/:clientId', async (req, res) => {
 });
 
 /**
+ * GET /api/google-oauth/events/:clientId
+ * Get Google Calendar events for display in RinglyPro
+ */
+router.get('/events/:clientId', async (req, res) => {
+  try {
+    const clientId = parseInt(req.params.clientId);
+    const { startDate, endDate } = req.query;
+
+    // Default to current week if no dates provided
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay()); // Start of week (Sunday)
+    weekStart.setHours(0, 0, 0, 0);
+
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 7);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    const start = startDate ? new Date(startDate) : weekStart;
+    const end = endDate ? new Date(endDate) : weekEnd;
+
+    // Check if Google Calendar is connected
+    const status = await googleCalendarService.getConnectionStatus(clientId);
+    if (!status.connected) {
+      return res.json({
+        events: [],
+        connected: false,
+        message: 'Google Calendar not connected'
+      });
+    }
+
+    const events = await googleCalendarService.listEvents(clientId, start, end);
+
+    // Transform events to match RinglyPro appointment format for easy display
+    const formattedEvents = events.map(event => ({
+      id: `gcal_${event.id}`,
+      googleEventId: event.id,
+      customerName: event.title || 'Google Calendar Event',
+      customer_name: event.title || 'Google Calendar Event',
+      appointmentDate: event.start.toISOString().split('T')[0],
+      appointment_date: event.start.toISOString().split('T')[0],
+      appointmentTime: event.start.toTimeString().slice(0, 5),
+      appointment_time: event.start.toTimeString().slice(0, 5),
+      endTime: event.end.toTimeString().slice(0, 5),
+      duration: Math.round((event.end - event.start) / (1000 * 60)),
+      purpose: event.description?.split('\n')[0] || '',
+      notes: event.description || '',
+      status: event.status === 'cancelled' ? 'cancelled' : 'confirmed',
+      source: 'google_calendar',
+      isRinglyProEvent: event.isRinglyProEvent,
+      htmlLink: event.htmlLink,
+      // Visual indicator for Google Calendar events
+      calendarSource: event.isRinglyProEvent ? 'RinglyPro (synced)' : 'Google Calendar'
+    }));
+
+    res.json({
+      events: formattedEvents,
+      connected: true,
+      calendarName: status.calendarName || 'Primary',
+      count: formattedEvents.length
+    });
+
+  } catch (error) {
+    console.error('Events fetch error:', error);
+    res.status(500).json({
+      error: error.message,
+      events: [],
+      connected: false
+    });
+  }
+});
+
+/**
  * POST /api/google-oauth/test-create-event/:clientId
  * Test endpoint to create a sample event (for testing only)
  */

@@ -879,6 +879,28 @@
             border-left-color: #f59e0b;
         }
 
+        /* Google Calendar events - distinct purple/Google blue */
+        .calendar-event.google-calendar-event {
+            background: #ede9fe;
+            border-left-color: #7c3aed;
+        }
+
+        .calendar-event.google-calendar-event .event-title {
+            color: #5b21b6;
+        }
+
+        .calendar-event.google-calendar-event .event-time {
+            color: #7c3aed;
+        }
+
+        .calendar-event.google-calendar-event::after {
+            content: '📅';
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 0.625rem;
+        }
+
         .calendar-event .event-title {
             font-weight: 600;
             white-space: nowrap;
@@ -4757,22 +4779,46 @@
             }
 
             try {
+                // Fetch RinglyPro appointments
                 const response = await authenticatedFetch('/api/appointments/dashboard?days=30&refresh=true');
                 if (!response) throw new Error('No response');
 
                 const data = await response.json();
                 console.log('📅 Calendar API response:', data);
 
+                let ringlyProAppointments = [];
                 if (data.success && data.appointments) {
-                    allAppointments = data.appointments;
-                    console.log('📅 Loaded appointments for calendar:', allAppointments.length);
-                    console.log('📅 Appointments data:', JSON.stringify(allAppointments, null, 2));
-
-                    // Render calendar with loaded appointments
-                    renderCalendarView();
-                } else {
-                    throw new Error(data.error || 'Failed to load appointments');
+                    ringlyProAppointments = data.appointments;
+                    console.log('📅 Loaded RinglyPro appointments:', ringlyProAppointments.length);
                 }
+
+                // Also fetch Google Calendar events (if connected)
+                let googleCalendarEvents = [];
+                try {
+                    const gcalResponse = await fetch(`/api/google-oauth/events/${CLIENT_ID}`);
+                    if (gcalResponse.ok) {
+                        const gcalData = await gcalResponse.json();
+                        if (gcalData.connected && gcalData.events) {
+                            googleCalendarEvents = gcalData.events;
+                            console.log('📅 Loaded Google Calendar events:', googleCalendarEvents.length);
+                        }
+                    }
+                } catch (gcalError) {
+                    console.log('📅 Google Calendar not connected or error:', gcalError.message);
+                }
+
+                // Merge appointments - Google Calendar events first, then RinglyPro
+                // Filter out Google events that are already synced from RinglyPro (to avoid duplicates)
+                const ringlyProIds = new Set(ringlyProAppointments.map(a => a.google_event_id || a.googleEventId).filter(Boolean));
+                const uniqueGoogleEvents = googleCalendarEvents.filter(e => !e.isRinglyProEvent && !ringlyProIds.has(e.googleEventId));
+
+                allAppointments = [...ringlyProAppointments, ...uniqueGoogleEvents];
+                console.log('📅 Total appointments (merged):', allAppointments.length);
+                console.log('📅 Appointments data:', JSON.stringify(allAppointments.slice(0, 3), null, 2));
+
+                // Render calendar with loaded appointments
+                renderCalendarView();
+
             } catch (error) {
                 console.error('Error loading appointments for calendar:', error);
                 if (calendarBody) {
@@ -5344,10 +5390,16 @@
                     // Get customer name (handle both formats)
                     const customerName = apt.customerName || apt.customer_name || '';
 
+                    // Check if it's a Google Calendar event
+                    const isGoogleCalendarEvent = source === 'google_calendar';
+
                     // Check if it's a busy/blocked slot from GHL
                     const isBusySlot = notes.includes('busy/blocked slot') || customerName.toLowerCase() === 'busy' || customerName.toLowerCase().startsWith('busy -');
 
-                    if (isBusySlot && (source === 'ghl_sync' || source === 'manual')) {
+                    if (isGoogleCalendarEvent) {
+                        // Google Calendar events - use distinct purple/Google blue color
+                        eventClass += ' google-calendar-event';
+                    } else if (isBusySlot && (source === 'ghl_sync' || source === 'manual')) {
                         // Color-code busy slots by calendar type
                         // Calendar IDs: Hyperbaric=lqwsBWMJip0wx6NGLeaG, Cryo=mV3NGEcqoXayzHtIEE97, Recovery=yHDUtxQWt9GzaPcdUnxs
                         if (purpose.includes('hyperbaric') || ghlCalendarId === 'lqwsBWMJip0wx6NGLeaG') {
@@ -5389,11 +5441,17 @@
 
                     console.log(`📅 Placing appointment: ${name} at ${displayTime} (top: ${topOffset}px)`);
 
+                    // For Google Calendar events, use string ID; for others, use numeric ID
+                    const aptIdStr = typeof apt.id === 'string' ? `'${apt.id}'` : apt.id;
+                    const onClickHandler = isGoogleCalendarEvent && apt.htmlLink
+                        ? `window.open('${apt.htmlLink}', '_blank')`
+                        : `showAppointmentDetails(${aptIdStr})`;
+
                     const eventHtml = `
                         <div class="${eventClass}"
                              style="top: ${topOffset}px; height: ${eventHeight}px;"
-                             onclick="showAppointmentDetails(${apt.id})"
-                             title="${name} at ${displayTime}">
+                             onclick="${onClickHandler}"
+                             title="${name} at ${displayTime}${isGoogleCalendarEvent ? ' (Google Calendar)' : ''}">
                             <div class="event-title">${name}</div>
                             <div class="event-time">${displayTime}</div>
                         </div>
