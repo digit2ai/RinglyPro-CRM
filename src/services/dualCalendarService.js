@@ -338,7 +338,7 @@ class DualCalendarService {
       ) VALUES (
         :clientId, :customerName, :customerPhone, :customerEmail,
         :appointmentDate, :appointmentTime, :duration, :purpose,
-        'confirmed', 'dashboard', :confirmationCode, :notes,
+        'confirmed', 'manual', :confirmationCode, :notes,
         :ghlAppointmentId, :ghlContactId,
         NOW(), NOW()
       ) RETURNING *`,
