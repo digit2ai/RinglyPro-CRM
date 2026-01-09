@@ -8,7 +8,7 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.15' });
+    res.json({ success: true, message: 'pong', version: '2.16' });
 });
 
 // Debug endpoint to check ghl_calendar_id values in database
@@ -543,6 +543,136 @@ router.get('/debug-blocked/:client_id/:calendar_id', async (req, res) => {
             dateRange: { start: startDate.toISOString(), end: endDate.toISOString() },
             results
         });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/test-ghl/compare-user-slots/:client_id/:calendar_id - Compare free-slots with/without userId
+// This tests if including the team member's userId gives accurate blocked slots from their Google Calendar sync
+router.get('/compare-user-slots/:client_id/:calendar_id', async (req, res) => {
+    try {
+        const { client_id, calendar_id } = req.params;
+        const { date, userId } = req.query;
+        const { sequelize } = require('../models');
+        const { QueryTypes } = require('sequelize');
+        const GHL_API_VERSION = '2021-07-28';
+
+        const clientResult = await sequelize.query(
+            'SELECT ghl_api_key, ghl_location_id FROM clients WHERE id = :clientId',
+            { replacements: { clientId: parseInt(client_id) }, type: QueryTypes.SELECT }
+        );
+
+        if (!clientResult.length || !clientResult[0].ghl_api_key) {
+            return res.json({ error: 'No credentials' });
+        }
+
+        const { ghl_api_key: ghlApiKey, ghl_location_id: locationId } = clientResult[0];
+        const checkDate = date || new Date().toISOString().substring(0, 10);
+        const [year, month, day] = checkDate.split('-').map(Number);
+
+        // Use EST timezone (UTC-5)
+        const startTime = new Date(Date.UTC(year, month - 1, day, 5, 0, 0));
+        const endTime = new Date(Date.UTC(year, month - 1, day + 1, 4, 59, 59));
+
+        // Get calendar to find team members if userId not provided
+        let teamMemberUserId = userId;
+        let calendarName = 'Unknown';
+        try {
+            const calRes = await axios.get(
+                `https://services.leadconnectorhq.com/calendars/${calendar_id}`,
+                { headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION } }
+            );
+            calendarName = calRes.data.calendar?.name || 'Unknown';
+            if (!teamMemberUserId && calRes.data.calendar?.teamMembers?.length > 0) {
+                teamMemberUserId = calRes.data.calendar.teamMembers[0].userId;
+            }
+        } catch (e) {
+            console.log('Could not get calendar details:', e.message);
+        }
+
+        const results = { date: checkDate, calendarId: calendar_id, calendarName, locationId };
+
+        // 1. Free slots WITHOUT userId
+        try {
+            const slotsRes = await axios.get(
+                `https://services.leadconnectorhq.com/calendars/${calendar_id}/free-slots`,
+                {
+                    headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION },
+                    params: { startDate: startTime.getTime(), endDate: endTime.getTime() }
+                }
+            );
+            const slotsWithout = [];
+            for (const key of Object.keys(slotsRes.data)) {
+                if (key !== 'traceId' && slotsRes.data[key]?.slots) {
+                    slotsWithout.push(...slotsRes.data[key].slots.map(s => s.substring(11, 19)));
+                }
+            }
+            results.withoutUserId = { count: slotsWithout.length, slots: slotsWithout, raw: slotsRes.data };
+        } catch (e) {
+            results.withoutUserId = { error: e.message };
+        }
+
+        // 2. Free slots WITH userId
+        if (teamMemberUserId) {
+            try {
+                const slotsRes = await axios.get(
+                    `https://services.leadconnectorhq.com/calendars/${calendar_id}/free-slots`,
+                    {
+                        headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION },
+                        params: { startDate: startTime.getTime(), endDate: endTime.getTime(), userId: teamMemberUserId }
+                    }
+                );
+                const slotsWith = [];
+                for (const key of Object.keys(slotsRes.data)) {
+                    if (key !== 'traceId' && slotsRes.data[key]?.slots) {
+                        slotsWith.push(...slotsRes.data[key].slots.map(s => s.substring(11, 19)));
+                    }
+                }
+                results.withUserId = { userId: teamMemberUserId, count: slotsWith.length, slots: slotsWith, raw: slotsRes.data };
+            } catch (e) {
+                results.withUserId = { userId: teamMemberUserId, error: e.message };
+            }
+        } else {
+            results.withUserId = { error: 'No team member userId found' };
+        }
+
+        // 3. Also try timezone parameter
+        try {
+            const slotsRes = await axios.get(
+                `https://services.leadconnectorhq.com/calendars/${calendar_id}/free-slots`,
+                {
+                    headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION },
+                    params: {
+                        startDate: checkDate,
+                        endDate: checkDate,
+                        timezone: 'America/New_York',
+                        userId: teamMemberUserId
+                    }
+                }
+            );
+            const slotsTz = [];
+            for (const key of Object.keys(slotsRes.data)) {
+                if (key !== 'traceId' && slotsRes.data[key]?.slots) {
+                    slotsTz.push(...slotsRes.data[key].slots.map(s => s.substring(11, 19)));
+                }
+            }
+            results.withTimezone = { timezone: 'America/New_York', userId: teamMemberUserId, count: slotsTz.length, slots: slotsTz, raw: slotsRes.data };
+        } catch (e) {
+            results.withTimezone = { error: e.message };
+        }
+
+        // Compare
+        if (results.withoutUserId.count !== undefined && results.withUserId.count !== undefined) {
+            results.comparison = {
+                withoutUserIdCount: results.withoutUserId.count,
+                withUserIdCount: results.withUserId.count,
+                difference: results.withoutUserId.count - results.withUserId.count,
+                sameResult: results.withoutUserId.count === results.withUserId.count
+            };
+        }
+
+        res.json(results);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
