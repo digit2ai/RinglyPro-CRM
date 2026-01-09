@@ -8,7 +8,7 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.14' });
+    res.json({ success: true, message: 'pong', version: '2.15' });
 });
 
 // Debug endpoint to check ghl_calendar_id values in database
@@ -229,6 +229,7 @@ router.get('/test-free-slots/:client_id/:calendar_id', async (req, res) => {
 });
 
 // POST /api/test-ghl/sync-from-availability/:client_id - Sync blocked slots by checking availability
+// Uses 30-minute intervals to capture partial-hour blocked slots from GHL
 router.post('/sync-from-availability/:client_id', async (req, res) => {
     try {
         const { client_id } = req.params;
@@ -237,11 +238,15 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
         const { QueryTypes } = require('sequelize');
         const GHL_API_VERSION = '2021-07-28';
 
+        // Use 30-minute intervals to capture partial-hour blocked slots
+        const SYNC_INTERVAL = 30; // minutes
+
         if (!calendarId) {
             return res.status(400).json({ success: false, error: 'calendarId is required' });
         }
 
         console.log(`🔄 Syncing from availability for client ${client_id}, calendar ${calendarId}, days=${days}`);
+        console.log(`   Using ${SYNC_INTERVAL}-minute intervals for accurate partial-hour sync`);
 
         // Get client credentials
         const clientResult = await sequelize.query(
@@ -262,14 +267,14 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
         );
         const calendar = calRes.data.calendar;
         const calendarName = calendar?.name || 'Unknown';
-        const slotDuration = calendar?.slotDuration || 60;
+        const ghlSlotDuration = calendar?.slotDuration || 60; // GHL's configured slot duration
 
-        // Delete existing appointments for this calendar
+        // Delete existing blocked slots for this calendar (keep real appointments)
         const [deleted] = await sequelize.query(
-            "DELETE FROM appointments WHERE client_id = :clientId AND ghl_calendar_id = :calendarId RETURNING id",
+            "DELETE FROM appointments WHERE client_id = :clientId AND ghl_calendar_id = :calendarId AND customer_name LIKE 'Busy - %' RETURNING id",
             { replacements: { clientId: parseInt(client_id), calendarId } }
         );
-        console.log(`   Deleted ${deleted.length} old records`);
+        console.log(`   Deleted ${deleted.length} old blocked slots`);
 
         // Process each day
         let totalInserted = 0;
@@ -306,11 +311,10 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
             const closeHour = hours.closeHour;
             dayDebug.hours = { openHour, closeHour };
 
-            // Generate all possible slots for this day
+            // Generate all possible slots using 30-minute intervals
             const allSlots = [];
             for (let h = openHour; h < closeHour; h++) {
-                for (let m = 0; m < 60; m += slotDuration) {
-                    if (h === closeHour - 1 && m + slotDuration > 60) break;
+                for (let m = 0; m < 60; m += SYNC_INTERVAL) {
                     allSlots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:00`);
                 }
             }
@@ -318,6 +322,7 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
 
             // Get free slots from GHL - use same calculation as debug-day
             let freeSlots = [];
+            let rawFreeSlots = []; // Store raw slot times from GHL
             try {
                 const [year, month, day] = dateStr.split('-').map(Number);
                 const startTime = new Date(Date.UTC(year, month - 1, day, 5, 0, 0));
@@ -337,7 +342,24 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
                         for (const slot of slotsRes.data[key].slots) {
                             // slot format: "2026-01-07T10:00:00-05:00"
                             const time = slot.substring(11, 19);
-                            freeSlots.push(time);
+                            rawFreeSlots.push(time);
+
+                            // For each free slot, mark all 30-minute intervals it covers as free
+                            // GHL slot duration determines how long each free slot is
+                            const slotHour = parseInt(time.substring(0, 2));
+                            const slotMin = parseInt(time.substring(3, 5));
+
+                            for (let offset = 0; offset < ghlSlotDuration; offset += SYNC_INTERVAL) {
+                                let totalMin = slotHour * 60 + slotMin + offset;
+                                let h = Math.floor(totalMin / 60);
+                                let m = totalMin % 60;
+                                if (h < closeHour) {
+                                    const expandedTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:00`;
+                                    if (!freeSlots.includes(expandedTime)) {
+                                        freeSlots.push(expandedTime);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -354,9 +376,8 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
             const blockedSlots = allSlots.filter(s => !freeSlots.includes(s));
             dayDebug.freeSlotsCount = freeSlots.length;
             dayDebug.blockedSlotsCount = blockedSlots.length;
-            console.log(`   ${dateStr}: allSlots=${JSON.stringify(allSlots)}`);
-            console.log(`   ${dateStr}: freeSlots=${JSON.stringify(freeSlots)}`);
-            console.log(`   ${dateStr}: ${blockedSlots.length} blocked / ${allSlots.length} total (${freeSlots.length} free)`);
+            dayDebug.rawFreeSlots = rawFreeSlots.length;
+            console.log(`   ${dateStr}: ${blockedSlots.length} blocked / ${allSlots.length} total (${freeSlots.length} free, ${rawFreeSlots.length} raw from GHL)`);
 
             // Insert blocked slots as "Busy" appointments
             let dayInserted = 0;
@@ -364,7 +385,6 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
             for (const slot of blockedSlots) {
                 try {
                     const code = `BS${Date.now().toString().slice(-6)}${totalInserted}`;
-                    console.log(`   Inserting: client=${client_id}, date=${dateStr}, time=${slot}`);
                     await sequelize.query(
                         `INSERT INTO appointments (
                             client_id, customer_name, customer_phone, customer_email,
@@ -379,7 +399,7 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
                                 `Busy - ${calendarName}`,
                                 dateStr,
                                 slot,
-                                slotDuration,
+                                SYNC_INTERVAL, // Use sync interval as duration
                                 code,
                                 `Blocked slot derived from GHL availability`,
                                 calendarId
@@ -401,7 +421,7 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
             debugDays.push(dayDebug);
         }
 
-        console.log(`✅ Sync complete: ${totalInserted} blocked slots inserted`);
+        console.log(`✅ Sync complete: ${totalInserted} blocked slots inserted (${SYNC_INTERVAL}-min intervals)`);
 
         // Get calendar open hours for debug
         const openHoursDebug = calendar?.openHours?.map(oh => ({
@@ -416,7 +436,8 @@ router.post('/sync-from-availability/:client_id', async (req, res) => {
             businessName,
             calendarId,
             calendarName,
-            slotDuration,
+            ghlSlotDuration,
+            syncInterval: SYNC_INTERVAL,
             deleted: deleted.length,
             inserted: totalInserted,
             days,
