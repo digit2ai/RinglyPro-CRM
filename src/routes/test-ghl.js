@@ -8,7 +8,7 @@ const dualCalendarService = require('../services/dualCalendarService');
 
 // Simple test endpoint
 router.get('/ping', (req, res) => {
-    res.json({ success: true, message: 'pong', version: '2.19' });
+    res.json({ success: true, message: 'pong', version: '2.20' });
 });
 
 // Debug endpoint to check ghl_calendar_id values in database
@@ -543,6 +543,59 @@ router.get('/debug-blocked/:client_id/:calendar_id', async (req, res) => {
             dateRange: { start: startDate.toISOString(), end: endDate.toISOString() },
             results
         });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/test-ghl/get-external-events/:client_id - Try to get external calendar events
+router.get('/get-external-events/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { userId, date } = req.query;
+        const { sequelize } = require('../models');
+        const { QueryTypes } = require('sequelize');
+        const GHL_API_VERSION = '2021-07-28';
+
+        const clientResult = await sequelize.query(
+            'SELECT ghl_api_key, ghl_location_id FROM clients WHERE id = :clientId',
+            { replacements: { clientId: parseInt(client_id) }, type: QueryTypes.SELECT }
+        );
+
+        if (!clientResult.length || !clientResult[0].ghl_api_key) {
+            return res.json({ error: 'No credentials' });
+        }
+
+        const { ghl_api_key: ghlApiKey, ghl_location_id: locationId } = clientResult[0];
+        const checkDate = date || new Date().toISOString().substring(0, 10);
+        const [year, month, day] = checkDate.split('-').map(Number);
+        const startTime = new Date(Date.UTC(year, month - 1, day, 0, 0, 0)).getTime();
+        const endTime = new Date(Date.UTC(year, month - 1, day + 1, 23, 59, 59)).getTime();
+
+        const results = { date: checkDate, locationId };
+
+        // Try various endpoints that might have external calendar data
+        const endpoints = [
+            { name: 'calendars/busy-slots', url: 'https://services.leadconnectorhq.com/calendars/busy-slots', params: { locationId, startDate: startTime, endDate: endTime } },
+            { name: 'calendars/check-availability', url: 'https://services.leadconnectorhq.com/calendars/check-availability', params: { locationId, startDate: startTime, endDate: endTime } },
+            { name: 'users-availability', url: `https://services.leadconnectorhq.com/users/${userId || 's4EcZAQ4p48ZsIjHE8bc'}/calendars`, params: {} },
+            { name: 'location-calendars', url: `https://services.leadconnectorhq.com/locations/${locationId}/calendars`, params: {} },
+            { name: 'calendars-resources', url: 'https://services.leadconnectorhq.com/calendars/resources', params: { locationId } },
+        ];
+
+        for (const ep of endpoints) {
+            try {
+                const response = await axios.get(ep.url, {
+                    headers: { 'Authorization': `Bearer ${ghlApiKey}`, 'Version': GHL_API_VERSION },
+                    params: ep.params
+                });
+                results[ep.name] = { status: 200, data: response.data };
+            } catch (e) {
+                results[ep.name] = { status: e.response?.status, error: e.message, data: e.response?.data };
+            }
+        }
+
+        res.json(results);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
