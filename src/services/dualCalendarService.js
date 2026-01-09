@@ -533,9 +533,12 @@ class DualCalendarService {
   async isSlotAvailable(clientId, date, time) {
     const dualMode = await this.isDualModeEnabled(clientId);
 
+    // Normalize time to HH:MM:SS format (getRinglyProAvailability uses HH:MM:SS)
+    const normalizedTime = time.length === 5 ? `${time}:00` : time;
+
     // Check RinglyPro
     const rpSlots = await this.getRinglyProAvailability(clientId, date);
-    const ringlyProAvailable = rpSlots.includes(time);
+    const ringlyProAvailable = rpSlots.includes(normalizedTime);
 
     if (!dualMode.enabled) {
       return {
@@ -546,9 +549,9 @@ class DualCalendarService {
       };
     }
 
-    // Check GHL
+    // Check GHL (use normalized time for consistency)
     const ghlSlots = await this.getGHLAvailability(clientId, date, dualMode.calendarId);
-    const ghlAvailable = ghlSlots.includes(time);
+    const ghlAvailable = ghlSlots.includes(normalizedTime);
 
     return {
       available: ringlyProAvailable && ghlAvailable,
