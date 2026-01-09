@@ -317,10 +317,15 @@ router.get('/test-availability/:clientId', async (req, res) => {
       return res.status(400).json({ error: 'date parameter required (YYYY-MM-DD)' });
     }
 
-    // Import unified booking service
-    const unifiedBookingService = require('../services/unifiedBookingService');
+    // Import dual calendar service (same as dashboard uses)
+    const dualCalendarService = require('../services/dualCalendarService');
 
-    // Get available slots (this checks both RinglyPro appointments AND Google Calendar)
+    // Get combined availability (this is what the dashboard uses)
+    const businessHours = { start: 9, end: 17, slotDuration: 60 };
+    const dualResult = await dualCalendarService.getCombinedAvailability(clientId, date, { businessHours });
+
+    // Also get unified booking service result for comparison
+    const unifiedBookingService = require('../services/unifiedBookingService');
     const result = await unifiedBookingService.getAvailableSlots(clientId, date);
 
     // Also get Google Calendar events for reference
@@ -332,6 +337,21 @@ router.get('/test-availability/:clientId', async (req, res) => {
       googleEvents = await googleCalendarService.listEvents(clientId, dayStart, dayEnd);
     }
 
+    // Extract time from slots - GHL returns ISO timestamps like "2026-01-14T09:00:00-05:00"
+    // Other systems may return objects with time24/startTime properties
+    const extractTime = (slot) => {
+      if (!slot) return null;
+      if (typeof slot === 'string') {
+        // ISO timestamp format: extract HH:MM:SS from position 11-19
+        if (slot.includes('T')) {
+          return slot.substring(11, 19);
+        }
+        return slot; // Already a time string
+      }
+      // Object format (HubSpot, etc.)
+      return slot.time24 || slot.startTime || null;
+    };
+
     res.json({
       date,
       clientId,
@@ -341,10 +361,21 @@ router.get('/test-availability/:clientId', async (req, res) => {
         start: e.start,
         end: e.end
       })),
-      availableSlots: result.slots?.map(s => s.time24 || s.startTime) || [],
-      totalSlotsAvailable: result.slots?.length || 0,
-      source: result.source,
-      googleCalendarChecked: result.googleCalendarChecked
+      // Dashboard-style result (what appointments/availability returns)
+      dashboardResult: {
+        availableSlots: dualResult.availableSlots,
+        ringlyProSlots: dualResult.ringlyProSlots,
+        ghlSlots: dualResult.ghlSlots,
+        googleBlockedSlots: dualResult.googleBlockedSlots,
+        dualModeActive: dualResult.dualModeActive,
+        source: dualResult.source
+      },
+      // Unified booking service result (for comparison)
+      unifiedResult: {
+        slots: result.slots?.map(extractTime).filter(Boolean) || [],
+        rawSlotsPreview: result.slots?.slice(0, 3) || [],
+        source: result.source
+      }
     });
 
   } catch (error) {
