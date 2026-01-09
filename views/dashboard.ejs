@@ -4793,9 +4793,17 @@
                 }
 
                 // Also fetch Google Calendar events (if connected)
+                // Calculate date range: past 7 days to 30 days ahead to match calendar view
+                const gcalStartDate = new Date();
+                gcalStartDate.setDate(gcalStartDate.getDate() - 7);
+                const gcalEndDate = new Date();
+                gcalEndDate.setDate(gcalEndDate.getDate() + 30);
+                const gcalStartStr = gcalStartDate.toISOString().split('T')[0];
+                const gcalEndStr = gcalEndDate.toISOString().split('T')[0];
+
                 let googleCalendarEvents = [];
                 try {
-                    const gcalResponse = await fetch(`/api/google-oauth/events/${CLIENT_ID}`);
+                    const gcalResponse = await fetch(`/api/google-oauth/events/${CLIENT_ID}?startDate=${gcalStartStr}&endDate=${gcalEndStr}`);
                     if (gcalResponse.ok) {
                         const gcalData = await gcalResponse.json();
                         if (gcalData.connected && gcalData.events) {
