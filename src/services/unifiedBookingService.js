@@ -29,6 +29,16 @@ const hubspotBookingService = require('./hubspotBookingService');
 const ghlBookingService = require('./ghlBookingService');
 const vagaroService = require('./vagaroService');
 
+// Google Calendar service for availability checking
+let googleCalendarService;
+let GoogleCalendarIntegration;
+try {
+  googleCalendarService = require('./googleCalendarService');
+  GoogleCalendarIntegration = require('../models/GoogleCalendarIntegration');
+} catch (error) {
+  logger.warn('[UNIFIED-BOOKING] Google Calendar service not available:', error.message);
+}
+
 // Local appointment model
 let Appointment;
 try {
@@ -292,21 +302,64 @@ class UnifiedBookingService {
 
       const bookedTimes = bookedResult.map(r => r.appointment_time?.substring(0, 5));
 
+      // Also check Google Calendar for busy times (if connected)
+      let googleBusyTimes = [];
+      if (googleCalendarService && GoogleCalendarIntegration) {
+        try {
+          const integration = await GoogleCalendarIntegration.getActiveForClient(clientId);
+          if (integration && integration.syncBlockedTimes) {
+            // Get busy times from Google Calendar for this date
+            const dateStart = new Date(`${date}T00:00:00`);
+            const dateEnd = new Date(`${date}T23:59:59`);
+
+            const busySlots = await googleCalendarService.getFreeBusy(clientId, dateStart, dateEnd);
+
+            // Convert Google busy slots to time strings for comparison
+            googleBusyTimes = busySlots.flatMap(slot => {
+              const times = [];
+              const slotStart = new Date(slot.start);
+              const slotEnd = new Date(slot.end);
+
+              // Generate all blocked time slots within this busy period
+              for (const time of businessHours) {
+                const [h, m] = time.split(':').map(Number);
+                const slotTime = new Date(`${date}T${time}:00`);
+                const slotEndTime = new Date(slotTime.getTime() + (client.appointment_duration || 30) * 60 * 1000);
+
+                // Check if this slot overlaps with the Google Calendar busy time
+                if (slotTime < slotEnd && slotEndTime > slotStart) {
+                  times.push(time);
+                }
+              }
+              return times;
+            });
+
+            logger.info(`[UNIFIED-BOOKING] Google Calendar: ${googleBusyTimes.length} blocked times for ${date}`);
+          }
+        } catch (gcalError) {
+          logger.warn(`[UNIFIED-BOOKING] Google Calendar check failed: ${gcalError.message}`);
+        }
+      }
+
+      // Combine booked times from RinglyPro appointments AND Google Calendar
+      const allBlockedTimes = [...new Set([...bookedTimes, ...googleBusyTimes])];
+
       // Filter available slots
       const availableSlots = businessHours
-        .filter(time => !bookedTimes.includes(time))
+        .filter(time => !allBlockedTimes.includes(time))
         .map(time => ({
           startTime: `${date}T${time}:00`,
           time24: time,
           timezone: clientTimezone
         }));
 
-      logger.info(`[UNIFIED-BOOKING] Local slots for ${date}: ${availableSlots.length}/${businessHours.length} available`);
+      logger.info(`[UNIFIED-BOOKING] Local slots for ${date}: ${availableSlots.length}/${businessHours.length} available (${bookedTimes.length} RinglyPro, ${googleBusyTimes.length} Google Calendar blocked)`);
 
       return {
         success: true,
         slots: availableSlots,
-        source: 'local'
+        source: 'local',
+        googleCalendarChecked: googleBusyTimes.length > 0 || (googleCalendarService && GoogleCalendarIntegration)
       };
 
     } catch (error) {
