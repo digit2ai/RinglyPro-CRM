@@ -23,13 +23,7 @@ router.get('/authorize/:clientId', async (req, res) => {
   try {
     const clientId = parseInt(req.params.clientId);
 
-    // Validate client exists and is allowed (exclude Client 32)
-    if (clientId === 32) {
-      return res.status(403).json({
-        error: 'Google Calendar integration is not available for this client'
-      });
-    }
-
+    // All clients can now use Google Calendar integration
     const authUrl = googleCalendarService.getAuthorizationUrl(clientId);
 
     console.log(`🔗 Google OAuth initiated for client ${clientId}`);

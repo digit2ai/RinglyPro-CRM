@@ -178,12 +178,6 @@ class DualCalendarService {
    */
   async getGoogleCalendarBlockedSlots(clientId, date, businessHours = { start: 9, end: 17, slotDuration: 60 }) {
     try {
-      // Client 32 is excluded from Google Calendar integration
-      if (clientId === 32) {
-        logger.info(`[DualCal] Client 32 excluded from Google Calendar integration`);
-        return [];
-      }
-
       // Check if client has Google Calendar connected
       const integration = await GoogleCalendarIntegration.getActiveForClient(clientId);
       if (!integration || !integration.syncBlockedTimes) {
@@ -375,12 +369,6 @@ class DualCalendarService {
    */
   async syncToGoogleCalendar(clientId, appointment) {
     try {
-      // Client 32 is excluded from Google Calendar integration
-      if (clientId === 32) {
-        logger.info(`[DualCal] Client 32 excluded from Google Calendar sync`);
-        return null;
-      }
-
       // Check if Google Calendar is connected and sync is enabled
       const integration = await GoogleCalendarIntegration.getActiveForClient(clientId);
       if (!integration || !integration.syncAppointments) {
