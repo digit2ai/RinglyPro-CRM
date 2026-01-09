@@ -294,6 +294,55 @@ router.get('/events/:clientId', async (req, res) => {
 });
 
 /**
+ * GET /api/google-oauth/test-availability/:clientId
+ * Test endpoint to check availability with Google Calendar blocking
+ */
+router.get('/test-availability/:clientId', async (req, res) => {
+  try {
+    const clientId = parseInt(req.params.clientId);
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({ error: 'date parameter required (YYYY-MM-DD)' });
+    }
+
+    // Import unified booking service
+    const unifiedBookingService = require('../services/unifiedBookingService');
+
+    // Get available slots (this checks both RinglyPro appointments AND Google Calendar)
+    const result = await unifiedBookingService.getAvailableSlots(clientId, date);
+
+    // Also get Google Calendar events for reference
+    const gcalStatus = await googleCalendarService.getConnectionStatus(clientId);
+    let googleEvents = [];
+    if (gcalStatus.connected) {
+      const dayStart = new Date(`${date}T00:00:00`);
+      const dayEnd = new Date(`${date}T23:59:59`);
+      googleEvents = await googleCalendarService.listEvents(clientId, dayStart, dayEnd);
+    }
+
+    res.json({
+      date,
+      clientId,
+      googleCalendarConnected: gcalStatus.connected,
+      googleEvents: googleEvents.map(e => ({
+        title: e.title,
+        start: e.start,
+        end: e.end
+      })),
+      availableSlots: result.slots?.map(s => s.time24 || s.startTime) || [],
+      totalSlotsAvailable: result.slots?.length || 0,
+      source: result.source,
+      googleCalendarChecked: result.googleCalendarChecked
+    });
+
+  } catch (error) {
+    console.error('Test availability error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * POST /api/google-oauth/test-create-event/:clientId
  * Test endpoint to create a sample event (for testing only)
  */
