@@ -4512,11 +4512,12 @@
                     loadGHLCards();
                 }
 
-                // Show Pending Deposits button and Calendar Selector for Client 32
+                // Show Pending Deposits button for Client 32 (no calendar dropdown - uses Google Calendar like Client 15)
                 // Keep Settings visible so client can access Google Calendar integration
                 if (CLIENT_ID == 32) {
                     document.getElementById('pendingDepositsBtn').style.display = 'flex';
-                    document.getElementById('calendarSelector').style.display = 'block';
+                    // Hide calendar selector - Client 32 now uses Google Calendar integration like Client 15
+                    document.getElementById('calendarSelector').style.display = 'none';
                     updatePendingDepositsBadge();
                     // Hide Analytics for Client 32 (but keep Settings visible for Google Calendar)
                     document.getElementById('analyticsBtn').style.display = 'none';
@@ -5339,13 +5340,8 @@
                     return false;
                 }
 
-                // For Client 32, always filter by selected calendar
-                if (CLIENT_ID == 32) {
-                    const aptCalendarId = apt.ghlCalendarId || apt.ghl_calendar_id || '';
-                    if (aptCalendarId !== selectedCalendarId) {
-                        return false;
-                    }
-                }
+                // Client 32 now uses Google Calendar integration like Client 15
+                // No GHL calendar filtering needed
 
                 const [year, month, day] = dateString.split('-').map(Number);
                 const aptDate = new Date(year, month - 1, day);
