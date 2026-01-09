@@ -23,9 +23,44 @@ Client 32 uses GoHighLevel (GHL) with 3 separate calendars for different service
 - **Saturday**: 10:00 AM - 3:00 PM EST
 - **Sunday**: Closed
 
+## ⚠️ Known Limitation: GHL API vs GHL UI Sync Discrepancy
+
+**Date Discovered**: 2026-01-09
+
+### The Problem
+The GHL Calendar UI shows blocked slots that come from the team member's connected Google Calendar, but the **GHL API does not expose these blocks**. This means:
+
+1. **GHL UI** (in browser) - Shows accurate availability including Google Calendar blocks
+2. **GHL API** (`/calendars/{id}/free-slots`) - Does NOT include Google Calendar blocks
+
+### Root Cause
+- The team member (`s4EcZAQ4p48ZsIjHE8bc`) has their Google Calendar synced to GHL
+- GHL UI reads this sync in real-time to display blocked times
+- GHL's public API endpoints (`free-slots`, `blocked-slots`, `events`) do NOT return this data
+- We tested: `userId` parameter, `timezone` parameter, `events` endpoint, `blocked-slots` endpoint - none return Google Calendar blocks
+
+### Impact
+RinglyPro cannot be 100% in sync with GHL Calendar UI because:
+- We can only sync what the GHL API returns
+- GHL API returns availability based on calendar settings only, not external calendar blocks
+
+### Possible Solutions
+1. **Manual sync via Admin** - Admin periodically reviews GHL UI and manually blocks slots in RinglyPro
+2. **Direct Google Calendar Integration** - Bypass GHL and integrate directly with Google Calendar API (requires OAuth setup)
+3. **Accept the limitation** - RinglyPro shows GHL's "configured" availability, users check GHL for final confirmation
+4. **GHL Webhook** - If GHL offers webhooks for external calendar sync events (unverified)
+
+### API Endpoints Tested
+| Endpoint | Result |
+|----------|--------|
+| `GET /calendars/{id}/free-slots` | Returns slots based on calendar settings only |
+| `GET /calendars/{id}/free-slots?userId={id}` | Same result - no difference |
+| `GET /calendars/blocked-slots` | Returns empty events array |
+| `GET /calendars/events` | Returns empty events array |
+
 ## Syncing Blocked Slots
 
-The blocked slots are derived from GHL's free-slot availability API. To sync blocked slots for each calendar:
+The blocked slots are derived from GHL's free-slot availability API. **Note: This sync only captures GHL calendar settings, NOT Google Calendar blocks.** To sync blocked slots for each calendar:
 
 ### Recovery Specialist
 ```bash
