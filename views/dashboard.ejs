@@ -4513,13 +4513,12 @@
                 }
 
                 // Show Pending Deposits button and Calendar Selector for Client 32
-                // Hide Settings and Analytics buttons for Client 32
+                // Keep Settings visible so client can access Google Calendar integration
                 if (CLIENT_ID == 32) {
                     document.getElementById('pendingDepositsBtn').style.display = 'flex';
                     document.getElementById('calendarSelector').style.display = 'block';
                     updatePendingDepositsBadge();
-                    // Hide Settings and Analytics for Client 32
-                    document.getElementById('settingsBtn').style.display = 'none';
+                    // Hide Analytics for Client 32 (but keep Settings visible for Google Calendar)
                     document.getElementById('analyticsBtn').style.display = 'none';
                 }
 
