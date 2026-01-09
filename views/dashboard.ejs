@@ -901,6 +901,15 @@
             font-size: 0.625rem;
         }
 
+        /* Google Calendar with custom color (multi-calendar view) */
+        .calendar-event.google-calendar-custom-color .event-title {
+            color: #1f2937;
+        }
+
+        .calendar-event.google-calendar-custom-color .event-time {
+            color: #4b5563;
+        }
+
         .calendar-event .event-title {
             font-weight: 600;
             white-space: nowrap;
@@ -5406,8 +5415,14 @@
                     // Check if it's a busy/blocked slot from GHL
                     const isBusySlot = notes.includes('busy/blocked slot') || customerName.toLowerCase() === 'busy' || customerName.toLowerCase().startsWith('busy -');
 
-                    if (isGoogleCalendarEvent) {
-                        // Google Calendar events - use distinct purple/Google blue color
+                    // For Client 32 with multi-calendar, use Google's calendar color
+                    let customStyle = '';
+                    if (isGoogleCalendarEvent && apt.calendarColor && CLIENT_ID == 32) {
+                        // Use Google Calendar's color directly for Client 32
+                        eventClass += ' google-calendar-event google-calendar-custom-color';
+                        customStyle = `background: ${apt.calendarColor}20; border-left-color: ${apt.calendarColor};`;
+                    } else if (isGoogleCalendarEvent) {
+                        // Default purple for Google Calendar events
                         eventClass += ' google-calendar-event';
                     } else if (isBusySlot && (source === 'ghl_sync' || source === 'manual')) {
                         // Color-code busy slots by calendar type
@@ -5457,11 +5472,13 @@
                         ? `window.open('${apt.htmlLink}', '_blank')`
                         : `showAppointmentDetails(${aptIdStr})`;
 
+                    // Include calendar name in title for multi-calendar view
+                    const calendarInfo = apt.calendarName && CLIENT_ID == 32 ? ` [${apt.calendarName}]` : '';
                     const eventHtml = `
                         <div class="${eventClass}"
-                             style="top: ${topOffset}px; height: ${eventHeight}px;"
+                             style="top: ${topOffset}px; height: ${eventHeight}px; ${customStyle}"
                              onclick="${onClickHandler}"
-                             title="${name} at ${displayTime}${isGoogleCalendarEvent ? ' (Google Calendar)' : ''}">
+                             title="${name} at ${displayTime}${calendarInfo}${isGoogleCalendarEvent ? ' (Google Calendar)' : ''}">
                             <div class="event-title">${name}</div>
                             <div class="event-time">${displayTime}</div>
                         </div>

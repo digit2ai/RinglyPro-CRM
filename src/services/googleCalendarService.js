@@ -356,6 +356,70 @@ class GoogleCalendarService {
   }
 
   /**
+   * List events from ALL calendars in the account
+   * This shows a unified view like Google Calendar's default view
+   * @param {number} clientId - RinglyPro client ID
+   * @param {Date} startTime - Start of time range
+   * @param {Date} endTime - End of time range
+   * @returns {Array} List of events from all calendars with calendar info
+   */
+  async listEventsFromAllCalendars(clientId, startTime, endTime) {
+    const auth = await this.getAuthenticatedClient(clientId);
+    const calendar = google.calendar({ version: 'v3', auth });
+
+    // Get all calendars for this account
+    const calendars = await this.listCalendars(clientId);
+
+    // Filter to only include calendars with write access (owner/writer) - skip holiday calendars etc
+    const ownedCalendars = calendars.filter(cal =>
+      cal.accessRole === 'owner' || cal.accessRole === 'writer'
+    );
+
+    console.log(`📅 Fetching events from ${ownedCalendars.length} calendars for client ${clientId}`);
+
+    // Fetch events from all calendars in parallel
+    const allEventsPromises = ownedCalendars.map(async (cal) => {
+      try {
+        const { data } = await calendar.events.list({
+          calendarId: cal.id,
+          timeMin: startTime.toISOString(),
+          timeMax: endTime.toISOString(),
+          singleEvents: true,
+          orderBy: 'startTime'
+        });
+
+        return data.items.map(event => ({
+          id: event.id,
+          title: event.summary,
+          description: event.description,
+          start: new Date(event.start.dateTime || event.start.date),
+          end: new Date(event.end.dateTime || event.end.date),
+          status: event.status,
+          htmlLink: event.htmlLink,
+          isRinglyProEvent: event.extendedProperties?.private?.source === 'ringlypro',
+          ringlyproAppointmentId: event.extendedProperties?.private?.ringlyproAppointmentId,
+          // Add calendar info for color coding
+          calendarId: cal.id,
+          calendarName: cal.name,
+          calendarColor: cal.backgroundColor
+        }));
+      } catch (error) {
+        console.error(`Error fetching events from calendar ${cal.name}:`, error.message);
+        return [];
+      }
+    });
+
+    const allEventsArrays = await Promise.all(allEventsPromises);
+    const allEvents = allEventsArrays.flat();
+
+    // Sort all events by start time
+    allEvents.sort((a, b) => a.start - b.start);
+
+    console.log(`📅 Total events from all calendars: ${allEvents.length}`);
+    return allEvents;
+  }
+
+  /**
    * Build event description from appointment details
    */
   buildEventDescription(details) {

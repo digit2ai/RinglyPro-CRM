@@ -246,7 +246,11 @@ router.get('/events/:clientId', async (req, res) => {
       });
     }
 
-    const events = await googleCalendarService.listEvents(clientId, start, end);
+    // Client 32: Fetch from ALL calendars (like Google Calendar's unified view)
+    // Other clients: Fetch from selected calendar only
+    const events = clientId === 32
+      ? await googleCalendarService.listEventsFromAllCalendars(clientId, start, end)
+      : await googleCalendarService.listEvents(clientId, start, end);
 
     // Get client timezone for proper time display
     const moment = require('moment-timezone');
@@ -276,16 +280,21 @@ router.get('/events/:clientId', async (req, res) => {
         isRinglyProEvent: event.isRinglyProEvent,
         htmlLink: event.htmlLink,
         timezone: clientTimezone,
+        // Calendar info for multi-calendar display (Client 32)
+        calendarId: event.calendarId || null,
+        calendarName: event.calendarName || status.calendarName || 'Primary',
+        calendarColor: event.calendarColor || null,
         // Visual indicator for Google Calendar events
-        calendarSource: event.isRinglyProEvent ? 'RinglyPro (synced)' : 'Google Calendar'
+        calendarSource: event.isRinglyProEvent ? 'RinglyPro (synced)' : (event.calendarName || 'Google Calendar')
       };
     });
 
     res.json({
       events: formattedEvents,
       connected: true,
-      calendarName: status.calendarName || 'Primary',
-      count: formattedEvents.length
+      calendarName: clientId === 32 ? 'All Calendars' : (status.calendarName || 'Primary'),
+      count: formattedEvents.length,
+      multiCalendar: clientId === 32
     });
 
   } catch (error) {
