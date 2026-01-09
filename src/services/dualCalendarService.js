@@ -17,6 +17,8 @@ const logger = require('../utils/logger');
 const { sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 const ghlBookingService = require('./ghlBookingService');
+const googleCalendarService = require('./googleCalendarService');
+const GoogleCalendarIntegration = require('../models/GoogleCalendarIntegration');
 
 const GHL_BASE_URL = 'https://services.leadconnectorhq.com';
 const GHL_API_VERSION = '2021-07-28';
@@ -167,12 +169,67 @@ class DualCalendarService {
   }
 
   /**
-   * Get COMBINED availability from both RinglyPro and GHL
-   * Only returns slots that are available in BOTH systems
+   * Get busy times from Google Calendar for a client
+   * Converts busy periods to blocked time slots
+   * @param {number} clientId - Client ID
+   * @param {string} date - Date (YYYY-MM-DD)
+   * @param {object} businessHours - { start: number, end: number, slotDuration: number }
+   * @returns {Promise<string[]>} Array of BLOCKED time slots (HH:MM:SS format)
+   */
+  async getGoogleCalendarBlockedSlots(clientId, date, businessHours = { start: 9, end: 17, slotDuration: 60 }) {
+    try {
+      // Client 32 is excluded from Google Calendar integration
+      if (clientId === 32) {
+        logger.info(`[DualCal] Client 32 excluded from Google Calendar integration`);
+        return [];
+      }
+
+      // Check if client has Google Calendar connected
+      const integration = await GoogleCalendarIntegration.getActiveForClient(clientId);
+      if (!integration || !integration.syncBlockedTimes) {
+        return [];
+      }
+
+      // Set up time range for the day
+      const dayStart = new Date(`${date}T00:00:00`);
+      const dayEnd = new Date(`${date}T23:59:59`);
+
+      // Get busy slots from Google Calendar
+      const busySlots = await googleCalendarService.getFreeBusy(clientId, dayStart, dayEnd);
+
+      // Generate all possible time slots
+      const blockedSlots = [];
+      for (let hour = businessHours.start; hour < businessHours.end; hour++) {
+        for (let minute = 0; minute < 60; minute += businessHours.slotDuration) {
+          const slotStart = new Date(`${date}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`);
+          const slotEnd = new Date(slotStart.getTime() + businessHours.slotDuration * 60 * 1000);
+          const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
+
+          // Check if this slot overlaps with any busy period
+          const isBlocked = busySlots.some(busy => slotStart < busy.end && slotEnd > busy.start);
+          if (isBlocked) {
+            blockedSlots.push(timeStr);
+          }
+        }
+      }
+
+      logger.info(`[DualCal] Google Calendar: ${blockedSlots.length} slots blocked on ${date} for client ${clientId}`);
+      return blockedSlots;
+
+    } catch (error) {
+      logger.error(`[DualCal] Google Calendar availability error: ${error.message}`);
+      // Fail open - don't block slots if Google Calendar check fails
+      return [];
+    }
+  }
+
+  /**
+   * Get COMBINED availability from RinglyPro, GHL, and Google Calendar
+   * Only returns slots that are available in ALL applicable systems
    * @param {number} clientId - Client ID
    * @param {string} date - Date (YYYY-MM-DD)
    * @param {object} options - { businessHours, calendarId }
-   * @returns {Promise<object>} { availableSlots, ringlyProSlots, ghlSlots, dualModeActive }
+   * @returns {Promise<object>} { availableSlots, ringlyProSlots, ghlSlots, googleBlockedSlots, dualModeActive }
    */
   async getCombinedAvailability(clientId, date, options = {}) {
     const { businessHours = { start: 9, end: 17, slotDuration: 60 }, calendarId } = options;
@@ -184,15 +241,32 @@ class DualCalendarService {
       // Get RinglyPro availability
       const ringlyProSlots = await this.getRinglyProAvailability(clientId, date, businessHours);
 
+      // Get Google Calendar blocked slots (only for non-Client 32)
+      let googleBlockedSlots = [];
+      let googleCalendarActive = false;
+      if (clientId !== 32) {
+        googleBlockedSlots = await this.getGoogleCalendarBlockedSlots(clientId, date, businessHours);
+        googleCalendarActive = googleBlockedSlots.length >= 0; // Will be true if we checked (even if no blocked slots)
+
+        // Check if Google Calendar is actually connected
+        const googleIntegration = await GoogleCalendarIntegration.getActiveForClient(clientId);
+        googleCalendarActive = !!(googleIntegration && googleIntegration.syncBlockedTimes);
+      }
+
+      // Filter out Google Calendar blocked slots from RinglyPro slots
+      let availableAfterGoogle = ringlyProSlots.filter(slot => !googleBlockedSlots.includes(slot));
+
       if (!dualMode.enabled) {
-        // Dual mode OFF - only use RinglyPro
-        logger.info(`[DualCal] Client ${clientId}: Dual mode OFF, using RinglyPro only`);
+        // Dual mode OFF - use RinglyPro filtered by Google Calendar
+        logger.info(`[DualCal] Client ${clientId}: Dual mode OFF, using RinglyPro + Google Calendar`);
         return {
-          availableSlots: ringlyProSlots,
+          availableSlots: availableAfterGoogle,
           ringlyProSlots,
           ghlSlots: [],
+          googleBlockedSlots,
+          googleCalendarActive,
           dualModeActive: false,
-          source: 'ringlypro_only'
+          source: googleCalendarActive ? 'ringlypro_google' : 'ringlypro_only'
         };
       }
 
@@ -200,17 +274,19 @@ class DualCalendarService {
       const effectiveCalendarId = calendarId || dualMode.calendarId;
       const ghlSlots = await this.getGHLAvailability(clientId, date, effectiveCalendarId);
 
-      // Find intersection - slots available in BOTH systems
-      const combinedSlots = ringlyProSlots.filter(slot => ghlSlots.includes(slot));
+      // Find intersection - slots available in ALL systems
+      const combinedSlots = availableAfterGoogle.filter(slot => ghlSlots.includes(slot));
 
-      logger.info(`[DualCal] Client ${clientId}: Combined availability: ${combinedSlots.length} slots (RP: ${ringlyProSlots.length}, GHL: ${ghlSlots.length})`);
+      logger.info(`[DualCal] Client ${clientId}: Combined availability: ${combinedSlots.length} slots (RP: ${ringlyProSlots.length}, GHL: ${ghlSlots.length}, Google blocked: ${googleBlockedSlots.length})`);
 
       return {
         availableSlots: combinedSlots,
         ringlyProSlots,
         ghlSlots,
+        googleBlockedSlots,
+        googleCalendarActive,
         dualModeActive: true,
-        source: 'dual_calendar'
+        source: googleCalendarActive ? 'dual_calendar_google' : 'dual_calendar'
       };
     } catch (error) {
       logger.error(`[DualCal] Combined availability error: ${error.message}`);
@@ -221,6 +297,8 @@ class DualCalendarService {
         availableSlots: ringlyProSlots,
         ringlyProSlots,
         ghlSlots: [],
+        googleBlockedSlots: [],
+        googleCalendarActive: false,
         dualModeActive: false,
         source: 'ringlypro_fallback',
         error: error.message
@@ -290,10 +368,89 @@ class DualCalendarService {
   }
 
   /**
-   * Create appointment in BOTH RinglyPro and GHL (if dual mode enabled)
+   * Sync appointment to Google Calendar
+   * @param {number} clientId - Client ID
+   * @param {object} appointment - Appointment data (from RinglyPro database)
+   * @returns {Promise<object|null>} Google Calendar event or null
+   */
+  async syncToGoogleCalendar(clientId, appointment) {
+    try {
+      // Client 32 is excluded from Google Calendar integration
+      if (clientId === 32) {
+        logger.info(`[DualCal] Client 32 excluded from Google Calendar sync`);
+        return null;
+      }
+
+      // Check if Google Calendar is connected and sync is enabled
+      const integration = await GoogleCalendarIntegration.getActiveForClient(clientId);
+      if (!integration || !integration.syncAppointments) {
+        logger.info(`[DualCal] Client ${clientId}: Google Calendar sync not enabled`);
+        return null;
+      }
+
+      // Parse appointment date and time
+      const appointmentDate = appointment.appointmentDate || appointment.appointment_date;
+      const appointmentTime = appointment.appointmentTime || appointment.appointment_time;
+      const duration = appointment.duration || 60;
+
+      const startTime = new Date(`${appointmentDate}T${appointmentTime}`);
+      const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
+
+      const eventDetails = {
+        appointmentId: appointment.id,
+        title: appointment.purpose || 'RinglyPro Appointment',
+        customerName: appointment.customerName || appointment.customer_name,
+        customerPhone: appointment.customerPhone || appointment.customer_phone,
+        customerEmail: appointment.customerEmail || appointment.customer_email,
+        startTime,
+        endTime,
+        purpose: appointment.purpose,
+        notes: appointment.notes,
+        confirmationCode: appointment.confirmationCode || appointment.confirmation_code,
+        timezone: 'America/New_York'
+      };
+
+      const googleEvent = await googleCalendarService.createEvent(clientId, eventDetails);
+
+      logger.info(`[DualCal] Google Calendar event created: ${googleEvent.googleEventId} for appointment ${appointment.id}`);
+
+      // Update appointment with Google event ID
+      if (appointment.id) {
+        await sequelize.query(
+          `UPDATE appointments SET google_event_id = :googleEventId, updated_at = NOW() WHERE id = :appointmentId`,
+          {
+            replacements: {
+              googleEventId: googleEvent.googleEventId,
+              appointmentId: appointment.id
+            },
+            type: QueryTypes.UPDATE
+          }
+        );
+      }
+
+      return googleEvent;
+
+    } catch (error) {
+      logger.error(`[DualCal] Google Calendar sync error: ${error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Build human-readable result message
+   */
+  buildResultMessage(ghlActive, googleActive) {
+    const parts = ['RinglyPro'];
+    if (ghlActive) parts.push('GHL');
+    if (googleActive) parts.push('Google Calendar');
+    return `Appointment created in ${parts.join(', ')}`;
+  }
+
+  /**
+   * Create appointment in BOTH RinglyPro and GHL (if dual mode enabled), plus Google Calendar
    * @param {number} clientId - Client ID
    * @param {object} appointmentData - Appointment details
-   * @returns {Promise<object>} { success, ringlyProAppointment, ghlAppointment, dualModeActive }
+   * @returns {Promise<object>} { success, ringlyProAppointment, ghlAppointment, googleEvent, dualModeActive }
    */
   async createDualAppointment(clientId, appointmentData) {
     try {
@@ -338,15 +495,21 @@ class DualCalendarService {
           : appointmentData.notes
       });
 
+      // Sync to Google Calendar (if enabled for this client, excludes Client 32)
+      let googleEvent = null;
+      if (clientId !== 32) {
+        googleEvent = await this.syncToGoogleCalendar(clientId, ringlyProAppointment);
+      }
+
       return {
         success: true,
         ringlyProAppointment,
         ghlAppointment: ghlResult?.appointment || null,
         ghlContact: ghlResult?.contact || null,
+        googleEvent,
         dualModeActive: dualMode.enabled,
-        message: dualMode.enabled
-          ? 'Appointment created in both RinglyPro and GHL'
-          : 'Appointment created in RinglyPro'
+        googleCalendarActive: !!googleEvent,
+        message: this.buildResultMessage(dualMode.enabled, !!googleEvent)
       };
 
     } catch (error) {
@@ -354,7 +517,8 @@ class DualCalendarService {
       return {
         success: false,
         error: error.message,
-        dualModeActive: false
+        dualModeActive: false,
+        googleCalendarActive: false
       };
     }
   }

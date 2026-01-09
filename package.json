@@ -65,6 +65,8 @@
     "express-rate-limit": "^7.1.5",
     "express-session": "^1.18.2",
     "express-validator": "^7.0.1",
+    "google-auth-library": "^10.5.0",
+    "googleapis": "^170.0.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",

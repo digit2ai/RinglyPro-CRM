@@ -173,6 +173,10 @@ console.log('✅ Photo Studio routes loaded successfully');
 const photoUploadRoutes = require('./routes/photo-uploads'); // Photo upload handling for all services
 console.log('✅ Photo Upload routes loaded successfully');
 
+// Import Google Calendar OAuth routes
+const googleOAuthRoutes = require('./routes/google-oauth'); // Google Calendar OAuth integration
+console.log('✅ Google Calendar OAuth routes loaded successfully');
+
 // Import PixlyPro routes
 const pixlyproRoutes = require('./routes/pixlypro'); // PixlyPro AI-assisted photo enhancement
 const vagaroRoutes = require('./routes/vagaro'); // Vagaro salon/spa scheduling integration
@@ -240,6 +244,10 @@ console.log('🧪 E2E Test routes mounted at /api/e2e-test');
 // Mount Photo Upload routes
 app.use('/api/photo-uploads', photoUploadRoutes); // Photo upload handling for all services
 console.log('✅ Photo Upload routes mounted at /api/photo-uploads');
+
+// Mount Google Calendar OAuth routes
+app.use('/api/google-oauth', googleOAuthRoutes); // Google Calendar OAuth integration
+console.log('🗓️ Google Calendar OAuth routes mounted at /api/google-oauth');
 
 // Mount Storefront routes
 app.use('/api/storefront', storefrontRoutes); // Online storefront & menu system
@@ -680,6 +688,13 @@ app.get('/settings/calendar', (req, res) => {
 app.get('/settings/business', (req, res) => {
   res.render('settings-business', {
     title: 'Business Settings - RinglyPro'
+  });
+});
+
+// Google Calendar Integration Settings
+app.get('/settings/google-calendar', (req, res) => {
+  res.render('settings-google-calendar', {
+    title: 'Google Calendar Integration - RinglyPro Settings'
   });
 });
 

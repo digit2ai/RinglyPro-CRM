@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Calendar Integration - RinglyPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header p {
+            color: #6e6e73;
+            font-size: 1rem;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e5e7;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-google {
+            background: #4285f4;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn-google:hover {
+            background: #3367d6;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-secondary {
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8ed;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f5f5f7;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #ff6b35;
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .google-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .connection-info {
+            background: #f9fafb;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .connection-info p {
+            margin-bottom: 0.5rem;
+        }
+
+        .connection-info strong {
+            color: #1d1d1f;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            font-size: 1rem;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .sync-options label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            padding: 0.5rem 0;
+        }
+
+        .sync-options input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .calendar-option {
+            padding: 1rem;
+            border: 1px solid #e5e5e7;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .calendar-option:hover {
+            border-color: #4285f4;
+            background: #f0f7ff;
+        }
+
+        .calendar-option.selected {
+            border-color: #4285f4;
+            background: #e8f4fd;
+        }
+
+        .calendar-color {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">
+            ← Back to Dashboard
+        </a>
+
+        <div class="header">
+            <h1>
+                <svg class="google-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Google Calendar Integration
+            </h1>
+            <p>Connect your Google Calendar to automatically sync appointments and check availability</p>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <!-- Status Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Integration Status</div>
+                <div id="status-badge" class="status-badge status-disconnected">
+                    <span>●</span>
+                    <span id="status-text">Not connected</span>
+                </div>
+            </div>
+
+            <ul class="feature-list">
+                <li>
+                    <span>📅</span>
+                    <span>Automatic appointment sync - New bookings appear in Google Calendar</span>
+                </li>
+                <li>
+                    <span>🔒</span>
+                    <span>Availability blocking - Shows busy times from your Google Calendar</span>
+                </li>
+                <li>
+                    <span>🔄</span>
+                    <span>Two-way sync - RinglyPro reads Google Calendar for scheduling conflicts</span>
+                </li>
+                <li>
+                    <span>🔔</span>
+                    <span>Reminders - Get Google Calendar reminders for appointments</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Not Connected State -->
+        <div id="not-connected-card" class="card">
+            <div class="card-header">
+                <div class="card-title">Connect Google Calendar</div>
+            </div>
+
+            <p style="margin-bottom: 1.5rem; color: #6e6e73;">
+                Click the button below to securely connect your Google Calendar. You'll be redirected to Google to authorize RinglyPro access.
+            </p>
+
+            <button onclick="connectGoogleCalendar()" class="btn btn-google">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="white"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="white"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="white"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="white"/>
+                </svg>
+                Connect with Google
+            </button>
+
+            <div style="background: #fff7ed; padding: 1rem; border-radius: 8px; margin-top: 1.5rem;">
+                <strong>What permissions are requested?</strong>
+                <ul style="margin-top: 0.5rem; padding-left: 1.5rem; color: #6e6e73;">
+                    <li>View your calendars</li>
+                    <li>Create and edit calendar events</li>
+                    <li>Access your email address (to identify your account)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Connected State -->
+        <div id="connected-card" class="card hidden">
+            <div class="card-header">
+                <div class="card-title">Connected Account</div>
+            </div>
+
+            <div class="connection-info">
+                <p><strong>Email:</strong> <span id="google-email">-</span></p>
+                <p><strong>Calendar:</strong> <span id="google-calendar">Primary</span></p>
+                <p><strong>Last synced:</strong> <span id="last-synced">Never</span></p>
+            </div>
+
+            <!-- Calendar Selection -->
+            <div class="form-group">
+                <label class="form-label">Select Calendar</label>
+                <div id="calendar-list">
+                    <p style="color: #6e6e73;">Loading calendars...</p>
+                </div>
+            </div>
+
+            <!-- Sync Options -->
+            <div class="form-group">
+                <label class="form-label">Sync Options</label>
+                <div class="sync-options">
+                    <label>
+                        <input type="checkbox" id="syncAppointments" checked onchange="updateSyncSettings()">
+                        <span><strong>Sync appointments to Google</strong> - New RinglyPro bookings create Google Calendar events</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" id="syncBlockedTimes" checked onchange="updateSyncSettings()">
+                        <span><strong>Check Google for busy times</strong> - Block time slots that conflict with Google Calendar</span>
+                    </label>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button onclick="disconnectGoogleCalendar()" class="btn btn-danger">Disconnect</button>
+                <button onclick="testGoogleCalendar()" class="btn btn-secondary">Test Connection</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get auth token
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        // Get client ID from token
+        let clientId = null;
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            clientId = payload.clientId;
+        } catch (e) {
+            console.error('Failed to parse token');
+        }
+
+        // Check URL params for connection result
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('google_connected') === 'true') {
+            showAlert('Google Calendar connected successfully!', 'success');
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (urlParams.get('google_error')) {
+            showAlert('Failed to connect Google Calendar: ' + urlParams.get('google_error'), 'error');
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        async function loadStatus() {
+            if (!clientId) {
+                showAlert('Unable to identify client', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/google-oauth/status/${clientId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.connected) {
+                    // Show connected state
+                    document.getElementById('not-connected-card').classList.add('hidden');
+                    document.getElementById('connected-card').classList.remove('hidden');
+
+                    document.getElementById('status-badge').className = 'status-badge status-connected';
+                    document.getElementById('status-text').textContent = 'Connected';
+
+                    document.getElementById('google-email').textContent = data.email || '-';
+                    document.getElementById('google-calendar').textContent = data.calendarName || 'Primary';
+                    document.getElementById('last-synced').textContent = data.lastSyncedAt ?
+                        new Date(data.lastSyncedAt).toLocaleString() : 'Never';
+
+                    document.getElementById('syncAppointments').checked = data.syncAppointments !== false;
+                    document.getElementById('syncBlockedTimes').checked = data.syncBlockedTimes !== false;
+
+                    // Load calendars
+                    loadCalendars();
+                } else {
+                    // Show not connected state
+                    document.getElementById('not-connected-card').classList.remove('hidden');
+                    document.getElementById('connected-card').classList.add('hidden');
+
+                    document.getElementById('status-badge').className = 'status-badge status-disconnected';
+                    document.getElementById('status-text').textContent = 'Not connected';
+                }
+            } catch (error) {
+                console.error('Failed to load status:', error);
+                showAlert('Failed to load connection status', 'error');
+            }
+        }
+
+        async function loadCalendars() {
+            try {
+                const response = await fetch(`/api/google-oauth/calendars/${clientId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.calendars && data.calendars.length > 0) {
+                    const currentCalendarName = document.getElementById('google-calendar').textContent;
+
+                    const listHtml = data.calendars.map(cal => `
+                        <div class="calendar-option ${cal.name === currentCalendarName || (cal.primary && currentCalendarName === 'Primary') ? 'selected' : ''}"
+                             onclick="selectCalendar('${cal.id}', '${cal.name.replace(/'/g, "\\'")}')">
+                            <span class="calendar-color" style="background: ${cal.backgroundColor || '#4285f4'}"></span>
+                            ${cal.name} ${cal.primary ? '(Primary)' : ''}
+                        </div>
+                    `).join('');
+
+                    document.getElementById('calendar-list').innerHTML = listHtml;
+                } else {
+                    document.getElementById('calendar-list').innerHTML = '<p style="color: #6e6e73;">No calendars found</p>';
+                }
+            } catch (error) {
+                console.error('Failed to load calendars:', error);
+                document.getElementById('calendar-list').innerHTML = '<p style="color: #ef4444;">Failed to load calendars</p>';
+            }
+        }
+
+        function connectGoogleCalendar() {
+            if (!clientId) {
+                showAlert('Unable to identify client', 'error');
+                return;
+            }
+            window.location.href = `/api/google-oauth/authorize/${clientId}`;
+        }
+
+        async function disconnectGoogleCalendar() {
+            if (!confirm('Are you sure you want to disconnect Google Calendar? This will stop syncing appointments.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/google-oauth/disconnect/${clientId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Google Calendar disconnected', 'success');
+                    loadStatus();
+                } else {
+                    showAlert(data.error || 'Failed to disconnect', 'error');
+                }
+            } catch (error) {
+                showAlert('Failed to disconnect', 'error');
+            }
+        }
+
+        async function selectCalendar(calendarId, calendarName) {
+            try {
+                const response = await fetch(`/api/google-oauth/select-calendar/${clientId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ calendarId, calendarName })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert(`Calendar changed to "${calendarName}"`, 'success');
+                    document.getElementById('google-calendar').textContent = calendarName;
+                    loadCalendars(); // Refresh to show selected state
+                } else {
+                    showAlert(data.error || 'Failed to select calendar', 'error');
+                }
+            } catch (error) {
+                showAlert('Failed to select calendar', 'error');
+            }
+        }
+
+        async function updateSyncSettings() {
+            const syncAppointments = document.getElementById('syncAppointments').checked;
+            const syncBlockedTimes = document.getElementById('syncBlockedTimes').checked;
+
+            try {
+                const response = await fetch(`/api/google-oauth/settings/${clientId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ syncAppointments, syncBlockedTimes })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Settings updated', 'success');
+                } else {
+                    showAlert(data.error || 'Failed to update settings', 'error');
+                }
+            } catch (error) {
+                showAlert('Failed to update settings', 'error');
+            }
+        }
+
+        async function testGoogleCalendar() {
+            showAlert('Testing connection...', 'info');
+
+            try {
+                const response = await fetch(`/api/google-oauth/calendars/${clientId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.calendars) {
+                    showAlert(`Connection successful! Found ${data.calendars.length} calendar(s).`, 'success');
+                } else if (data.error) {
+                    showAlert('Connection failed: ' + data.error, 'error');
+                } else {
+                    showAlert('Connection test completed', 'success');
+                }
+            } catch (error) {
+                showAlert('Connection test failed', 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('alert-container');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Load initial status
+        loadStatus();
+    </script>
+</body>
+</html>
