@@ -5381,13 +5381,17 @@
 
             console.log('📅 appointmentsByDate:', Object.keys(appointmentsByDate));
 
-            // Place each appointment
+            // Place each appointment with overlap detection
             Object.keys(appointmentsByDate).forEach(dateKey => {
                 const dayColumn = document.querySelector(`.day-column[data-date="${dateKey}"]`);
                 console.log(`📅 Looking for dayColumn with date ${dateKey}:`, dayColumn ? 'found' : 'NOT FOUND');
                 if (!dayColumn) return;
 
-                appointmentsByDate[dateKey].forEach(apt => {
+                // Calculate overlap groups for this day's appointments
+                const dayApts = appointmentsByDate[dateKey];
+                const overlapGroups = calculateOverlapGroups(dayApts);
+
+                dayApts.forEach((apt, aptIndex) => {
                     // Handle both snake_case and camelCase field names
                     const timeString = apt.appointmentTime || apt.appointment_time || '09:00:00';
                     const [hours, minutes] = timeString.split(':').map(Number);
@@ -5474,9 +5478,18 @@
 
                     // Include calendar name in title for multi-calendar view
                     const calendarInfo = apt.calendarName && CLIENT_ID == 32 ? ` [${apt.calendarName}]` : '';
+
+                    // Calculate overlap positioning for side-by-side display
+                    const overlapInfo = overlapGroups.get(apt.id || aptIndex) || { column: 0, totalColumns: 1 };
+                    const widthPercent = 100 / overlapInfo.totalColumns;
+                    const leftPercent = overlapInfo.column * widthPercent;
+                    const overlapStyle = overlapInfo.totalColumns > 1
+                        ? `width: calc(${widthPercent}% - 2px); left: ${leftPercent}%;`
+                        : '';
+
                     const eventHtml = `
                         <div class="${eventClass}"
-                             style="top: ${topOffset}px; height: ${eventHeight}px; ${customStyle}"
+                             style="top: ${topOffset}px; height: ${eventHeight}px; ${customStyle} ${overlapStyle}"
                              onclick="${onClickHandler}"
                              title="${name} at ${displayTime}${calendarInfo}${isGoogleCalendarEvent ? ' (Google Calendar)' : ''}">
                             <div class="event-title">${name}</div>
@@ -5487,6 +5500,64 @@
                     dayColumn.insertAdjacentHTML('beforeend', eventHtml);
                 });
             });
+        }
+
+        // Calculate overlap groups for appointments on the same day
+        // Returns a Map with appointment id/index -> { column, totalColumns }
+        function calculateOverlapGroups(appointments) {
+            const result = new Map();
+
+            if (!appointments || appointments.length === 0) return result;
+
+            // Convert appointments to time ranges
+            const events = appointments.map((apt, index) => {
+                const timeString = apt.appointmentTime || apt.appointment_time || '09:00';
+                const [hours, minutes] = timeString.split(':').map(Number);
+                const startMinutes = hours * 60 + minutes;
+                const duration = apt.duration || 60;
+                const endMinutes = startMinutes + duration;
+
+                return {
+                    id: apt.id || index,
+                    index,
+                    start: startMinutes,
+                    end: endMinutes
+                };
+            });
+
+            // Sort by start time
+            events.sort((a, b) => a.start - b.start);
+
+            // Find overlapping groups using a greedy column assignment
+            const columns = []; // Array of { end: number } for each column
+
+            events.forEach(event => {
+                // Find first available column (where event doesn't overlap)
+                let assignedColumn = -1;
+                for (let col = 0; col < columns.length; col++) {
+                    if (columns[col].end <= event.start) {
+                        assignedColumn = col;
+                        columns[col].end = event.end;
+                        break;
+                    }
+                }
+
+                // If no column available, create new one
+                if (assignedColumn === -1) {
+                    assignedColumn = columns.length;
+                    columns.push({ end: event.end });
+                }
+
+                result.set(event.id, { column: assignedColumn, totalColumns: 1 });
+            });
+
+            // Update totalColumns based on actual number of columns needed
+            const maxColumns = columns.length;
+            result.forEach((info) => {
+                info.totalColumns = maxColumns;
+            });
+
+            return result;
         }
 
         // Current appointment being viewed in details modal
