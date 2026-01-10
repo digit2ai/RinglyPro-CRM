@@ -422,7 +422,21 @@ app.post('/api/mcp/copilot/chat', async (req, res) => {
   }
 });
 
-// CRM operations
+// Webhook endpoints (must be before generic :crm/:operation route)
+app.post('/api/mcp/webhooks/:source', async (req, res) => {
+  const { source } = req.params;
+  const event = req.headers['x-webhook-event'] || 'unknown';
+  const signature = req.headers['x-webhook-signature'];
+
+  try {
+    await webhookManager.processWebhook(source, event, req.body, signature);
+    res.json({ success: true, message: 'Webhook processed' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// CRM operations (generic catch-all - must be LAST)
 app.post('/api/mcp/:crm/:operation', async (req, res) => {
   const { sessionId } = req.body;
   const { crm, operation } = req.params;
@@ -450,20 +464,6 @@ app.post('/api/mcp/:crm/:operation', async (req, res) => {
     }
 
     res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Webhook endpoints
-app.post('/api/mcp/webhooks/:source', async (req, res) => {
-  const { source } = req.params;
-  const event = req.headers['x-webhook-event'] || 'unknown';
-  const signature = req.headers['x-webhook-signature'];
-
-  try {
-    await webhookManager.processWebhook(source, event, req.body, signature);
-    res.json({ success: true, message: 'Webhook processed' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
