@@ -272,7 +272,10 @@ class ElevenLabsConvAIService {
                 sampleConversation: conversations[0] ? {
                     conversation_id: conversations[0].conversation_id,
                     status: conversations[0].status,
-                    start_time: conversations[0].start_time
+                    start_time: conversations[0].start_time,
+                    // Debug: include all keys to find the timestamp field
+                    all_keys: Object.keys(conversations[0]),
+                    raw_preview: JSON.stringify(conversations[0]).substring(0, 800)
                 } : null
             };
 
