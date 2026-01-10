@@ -1234,11 +1234,12 @@ router.get('/quick-backup-client/:clientId', async (req, res) => {
 
         console.log(`📦 Quick Admin: Creating backup for client ${clientId}`);
 
-        // Get all client data
-        const [client] = await sequelize.query(
+        // Get all client data (QueryTypes.SELECT returns array directly)
+        const clients = await sequelize.query(
             'SELECT * FROM clients WHERE id = $1',
             { bind: [clientId], type: sequelize.QueryTypes.SELECT }
         );
+        const client = clients[0] || null;
 
         const messages = await sequelize.query(
             'SELECT * FROM messages WHERE client_id = $1 ORDER BY created_at DESC',
@@ -1250,7 +1251,7 @@ router.get('/quick-backup-client/:clientId', async (req, res) => {
             { bind: [clientId], type: sequelize.QueryTypes.SELECT }
         );
 
-        const gcalIntegration = await sequelize.query(
+        const gcalIntegrations = await sequelize.query(
             'SELECT * FROM google_calendar_integrations WHERE client_id = $1',
             { bind: [clientId], type: sequelize.QueryTypes.SELECT }
         );
@@ -1265,16 +1266,16 @@ router.get('/quick-backup-client/:clientId', async (req, res) => {
             clientId: parseInt(clientId),
             businessName: client?.business_name || 'Unknown',
             data: {
-                client: client || null,
-                messages: messages[0] || [],
-                appointments: appointments[0] || [],
-                googleCalendarIntegration: gcalIntegration[0]?.[0] || null,
-                contacts: contacts[0] || []
+                client: client,
+                messages: messages || [],
+                appointments: appointments || [],
+                googleCalendarIntegration: gcalIntegrations[0] || null,
+                contacts: contacts || []
             },
             counts: {
-                messages: messages[0]?.length || 0,
-                appointments: appointments[0]?.length || 0,
-                contacts: contacts[0]?.length || 0
+                messages: messages?.length || 0,
+                appointments: appointments?.length || 0,
+                contacts: contacts?.length || 0
             }
         };
 
