@@ -5425,13 +5425,13 @@
                         // Use specific colors for Client 32 calendars
                         const calName = apt.calendarName.toLowerCase();
                         if (calName.includes('recovery') || calName === 'recovery') {
-                            // Recovery calendar = RED (like screenshot)
+                            // Recovery calendar = VIBRANT RED/PINK (matching Google Calendar)
                             eventClass += ' google-calendar-event google-calendar-custom-color';
-                            customStyle = `background: #fee2e2; border-left-color: #dc2626;`;
+                            customStyle = `background: #f691b2; border-left-color: #e91e63; color: #000;`;
                         } else if (calName.includes('hyperbaric') || calName.includes('oxygen')) {
-                            // Hyperbaric Oxygen Therapy = ORANGE (like screenshot)
+                            // Hyperbaric Oxygen Therapy = VIBRANT ORANGE (matching Google Calendar)
                             eventClass += ' google-calendar-event google-calendar-custom-color';
-                            customStyle = `background: #ffedd5; border-left-color: #ea580c;`;
+                            customStyle = `background: #ff7537; border-left-color: #e65100; color: #000;`;
                         } else {
                             // Other calendars use Google's color
                             eventClass += ' google-calendar-event google-calendar-custom-color';
