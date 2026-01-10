@@ -410,33 +410,31 @@
             </p>
 
             <div class="form-group">
-                <label class="form-label">Appointments Webhook</label>
-                <div class="webhook-url" id="appointmentWebhook">
-                    <%= APP_URL || 'https://your-domain.com' %>/api/vagaro/webhooks/appointment
+                <label class="form-label">Unified Webhook URL</label>
+                <div class="webhook-url" id="webhookUrl">
+                    <%= APP_URL || 'https://aiagent.ringlypro.com' %>/api/mcp/webhooks/vagaro
                 </div>
+                <p class="form-hint">Use this single URL for all Vagaro webhook events</p>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Customers Webhook</label>
-                <div class="webhook-url" id="customerWebhook">
-                    <%= APP_URL || 'https://your-domain.com' %>/api/vagaro/webhooks/customer
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Transactions Webhook</label>
-                <div class="webhook-url" id="transactionWebhook">
-                    <%= APP_URL || 'https://your-domain.com' %>/api/vagaro/webhooks/transaction
-                </div>
+                <label class="form-label">Recommended Events to Subscribe</label>
+                <ul style="padding-left: 1.25rem; color: #6e6e73; font-size: 0.9rem;">
+                    <li>appointment.created, appointment.updated, appointment.cancelled</li>
+                    <li>customer.created, customer.updated</li>
+                    <li>transaction.created (optional)</li>
+                </ul>
             </div>
 
             <div class="setup-steps">
                 <strong>Setup Steps:</strong>
                 <ol>
                     <li>Go to Vagaro → Settings → Developers → APIs & Webhooks</li>
-                    <li>Click "Create Webhook" for each event type</li>
-                    <li>Copy the webhook URLs above</li>
-                    <li>Paste the verification token from Vagaro into the field above</li>
+                    <li>Click "Create Webhook"</li>
+                    <li>Paste the webhook URL above</li>
+                    <li>Select the events you want to receive</li>
+                    <li>Copy the verification token Vagaro provides</li>
+                    <li>Paste the token in the "Webhook Verification Token" field on this page</li>
                     <li>Click "Save Settings"</li>
                 </ol>
             </div>
@@ -476,21 +474,31 @@
         // Load current settings
         async function loadSettings() {
             try {
-                const response = await fetch('/api/client-settings/current', {
+                const response = await fetch('/api/client-settings/vagaro', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
 
                 const data = await response.json();
-                if (data.success && data.settings) {
-                    const vagaro = data.settings.integration?.vagaro || {};
+                if (data.success && data.vagaro) {
+                    const vagaro = data.vagaro;
 
                     document.getElementById('enableToggle').checked = vagaro.enabled || false;
-                    document.getElementById('clientId').value = vagaro.clientId || '';
-                    document.getElementById('clientSecretKey').value = vagaro.clientSecretKey || '';
+
+                    // Show masked placeholders for set credentials
+                    if (vagaro.clientIdSet) {
+                        document.getElementById('clientId').placeholder = 'Client ID is set (enter new value to change)';
+                    }
+                    if (vagaro.clientSecretKeySet) {
+                        document.getElementById('clientSecretKey').placeholder = 'Secret is set (enter new value to change)';
+                    }
+                    if (vagaro.webhookTokenSet) {
+                        document.getElementById('webhookToken').placeholder = 'Token is set (enter new value to change)';
+                    }
+
+                    // Safe values to show
                     document.getElementById('merchantId').value = vagaro.merchantId || '';
-                    document.getElementById('webhookToken').value = vagaro.webhookToken || '';
                     document.getElementById('region').value = vagaro.region || 'us01';
 
                     updateStatus(vagaro);
@@ -516,11 +524,17 @@
             event.preventDefault();
 
             const enabled = document.getElementById('enableToggle').checked;
-            const clientId = document.getElementById('clientId').value;
-            const clientSecretKey = document.getElementById('clientSecretKey').value;
-            const merchantId = document.getElementById('merchantId').value;
-            const webhookToken = document.getElementById('webhookToken').value;
+            const clientIdValue = document.getElementById('clientId').value.trim();
+            const clientSecretKeyValue = document.getElementById('clientSecretKey').value.trim();
+            const merchantId = document.getElementById('merchantId').value.trim();
+            const webhookTokenValue = document.getElementById('webhookToken').value.trim();
             const region = document.getElementById('region').value;
+
+            // Validate required field
+            if (!merchantId) {
+                showAlert('Merchant ID is required', 'error');
+                return;
+            }
 
             try {
                 const response = await fetch('/api/client-settings/vagaro', {
@@ -531,10 +545,11 @@
                     },
                     body: JSON.stringify({
                         enabled,
-                        clientId,
-                        clientSecretKey,
+                        // Only send if user entered new values
+                        clientId: clientIdValue || null,
+                        clientSecretKey: clientSecretKeyValue || null,
                         merchantId,
-                        webhookToken,
+                        webhookToken: webhookTokenValue || null,
                         region
                     })
                 });
@@ -543,7 +558,7 @@
 
                 if (data.success) {
                     showAlert('Settings saved successfully!', 'success');
-                    updateStatus({ enabled, clientId, clientSecretKey, merchantId });
+                    loadSettings(); // Reload to show updated status
                 } else {
                     showAlert(data.error || 'Failed to save settings', 'error');
                 }
@@ -555,8 +570,11 @@
 
         // Test connection
         async function testConnection() {
+            showAlert('Testing connection...', 'info');
+
             try {
-                const response = await fetch('/api/vagaro/status', {
+                const response = await fetch('/api/client-settings/vagaro/test', {
+                    method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -564,12 +582,10 @@
 
                 const data = await response.json();
 
-                if (data.connected) {
-                    showAlert('✅ Connection successful! Vagaro integration is working.', 'success');
-                } else if (!data.configured) {
-                    showAlert('⚠️ Please configure API credentials first.', 'error');
+                if (data.success) {
+                    showAlert('Connection successful! Vagaro API is accessible.', 'success');
                 } else {
-                    showAlert(`❌ Connection failed: ${data.message}`, 'error');
+                    showAlert('Connection failed: ' + (data.error || 'Unknown error'), 'error');
                 }
             } catch (error) {
                 console.error('Test error:', error);
@@ -581,24 +597,29 @@
         function updateStatus(vagaro) {
             const badge = document.getElementById('status-badge');
             const enabled = vagaro.enabled;
-            const configured = !!(vagaro.clientId && vagaro.clientSecretKey && vagaro.merchantId);
+            const configured = vagaro.credentialsSet;
 
             if (enabled && configured) {
                 badge.className = 'status-badge status-connected';
-                badge.innerHTML = '<span>●</span><span>Connected</span>';
+                badge.innerHTML = '<span>&#9679;</span><span>Connected</span>';
             } else if (enabled && !configured) {
                 badge.className = 'status-badge status-disconnected';
-                badge.innerHTML = '<span>●</span><span>Needs Configuration</span>';
+                badge.innerHTML = '<span>&#9679;</span><span>Needs Configuration</span>';
             } else {
                 badge.className = 'status-badge status-disabled';
-                badge.innerHTML = '<span>●</span><span>Disabled</span>';
+                badge.innerHTML = '<span>&#9679;</span><span>Disabled</span>';
             }
         }
 
         // Show alert
         function showAlert(message, type) {
             const container = document.getElementById('alert-container');
-            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.style.display = 'block';
+            alertDiv.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(alertDiv);
 
             setTimeout(() => {
                 container.innerHTML = '';

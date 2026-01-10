@@ -319,6 +319,37 @@ app.post('/api/mcp/vagaro/book-appointment', async (req, res) => {
   }
 });
 
+// Vagaro register webhook token (for multi-tenant webhook verification)
+app.post('/api/mcp/vagaro/register-webhook', async (req, res) => {
+  const { businessId, webhookToken, apiKey } = req.body;
+
+  // Basic validation
+  if (!businessId || !webhookToken) {
+    return res.status(400).json({
+      success: false,
+      error: 'businessId and webhookToken are required',
+      code: 'MISSING_PARAMS'
+    });
+  }
+
+  // Optional: Verify API key for security (prevent unauthorized registrations)
+  const adminApiKey = process.env.RINGLYPRO_ADMIN_API_KEY;
+  if (adminApiKey && apiKey !== adminApiKey) {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid API key',
+      code: 'UNAUTHORIZED'
+    });
+  }
+
+  registerTenantWebhookToken(businessId, webhookToken);
+
+  res.json({
+    success: true,
+    message: `Webhook token registered for business ${businessId}`
+  });
+});
+
 // Vagaro cancel appointment
 app.post('/api/mcp/vagaro/cancel-appointment', async (req, res) => {
   const { sessionId, appointmentId } = req.body;
@@ -422,18 +453,113 @@ app.post('/api/mcp/copilot/chat', async (req, res) => {
   }
 });
 
+// Vagaro webhook IP whitelist (from docs.vagaro.com/public/docs/securing-webhook-endpoint)
+const VAGARO_WEBHOOK_IPS = [
+  '20.220.12.83',
+  '13.67.143.68',
+  '13.70.105.4',
+  '20.62.123.184',
+  '51.140.65.108',
+  '51.143.95.2'
+];
+
+/**
+ * Multi-tenant webhook token storage
+ * In production, this would be backed by a database (e.g., MongoDB, PostgreSQL)
+ * Keyed by Vagaro businessId -> webhook verification token
+ */
+const tenantWebhookTokens = new Map();
+
+/**
+ * Register a tenant's Vagaro webhook token (called during onboarding)
+ * @param {string} businessId - Vagaro business ID
+ * @param {string} webhookToken - Verification token from Vagaro webhook setup
+ */
+function registerTenantWebhookToken(businessId, webhookToken) {
+  tenantWebhookTokens.set(businessId, webhookToken);
+  console.log(`[Vagaro] Registered webhook token for business: ${businessId}`);
+}
+
+/**
+ * Verify Vagaro webhook signature for multi-tenant
+ * Vagaro uses X-Vagaro-Signature header with a verification token
+ * @param {string} signature - The signature from X-Vagaro-Signature header
+ * @param {object} payload - The webhook payload (to extract businessId)
+ * @returns {boolean} Whether signature is valid
+ */
+function verifyVagaroSignature(signature, payload) {
+  // Extract businessId from payload (present in all Vagaro webhook events)
+  const businessId = payload?.payload?.businessId || payload?.businessId;
+
+  // Look up tenant-specific token
+  const tenantToken = businessId ? tenantWebhookTokens.get(businessId) : null;
+
+  if (tenantToken) {
+    return signature === tenantToken;
+  }
+
+  // Fallback: Check global token (for single-tenant or development)
+  const globalToken = process.env.VAGARO_WEBHOOK_TOKEN;
+  if (globalToken) {
+    return signature === globalToken;
+  }
+
+  // No token configured - skip verification (development mode)
+  console.warn('[Vagaro Webhook] No webhook token configured - skipping signature verification');
+  return true;
+}
+
+/**
+ * Get client IP from request (handles proxies)
+ */
+function getClientIp(req) {
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+         req.headers['x-real-ip'] ||
+         req.connection?.remoteAddress ||
+         req.socket?.remoteAddress;
+}
+
 // Webhook endpoints (must be before generic :crm/:operation route)
 app.post('/api/mcp/webhooks/:source', async (req, res) => {
   const { source } = req.params;
-  const event = req.headers['x-webhook-event'] || 'unknown';
-  const signature = req.headers['x-webhook-signature'];
+  const event = req.headers['x-webhook-event'] || req.body?.type || 'unknown';
+  const signature = req.headers['x-vagaro-signature'] || req.headers['x-webhook-signature'];
 
-  try {
-    await webhookManager.processWebhook(source, event, req.body, signature);
-    res.json({ success: true, message: 'Webhook processed' });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+  // Vagaro-specific security checks
+  if (source === 'vagaro') {
+    // Verify signature if configured (pass payload for multi-tenant lookup)
+    if (!verifyVagaroSignature(signature, req.body)) {
+      console.warn('[Vagaro Webhook] Invalid signature rejected');
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid webhook signature',
+        code: 'INVALID_SIGNATURE'
+      });
+    }
+
+    // Optional: IP whitelist check (can be enabled via env var)
+    if (process.env.VAGARO_ENFORCE_IP_WHITELIST === 'true') {
+      const clientIp = getClientIp(req);
+      if (!VAGARO_WEBHOOK_IPS.includes(clientIp)) {
+        console.warn(`[Vagaro Webhook] Rejected request from non-whitelisted IP: ${clientIp}`);
+        return res.status(403).json({
+          success: false,
+          error: 'IP not whitelisted',
+          code: 'IP_NOT_WHITELISTED'
+        });
+      }
+    }
   }
+
+  // Best practice: Respond immediately with 2xx, process async
+  // Ref: https://docs.vagaro.com/public/docs/best-practices
+  res.json({ success: true, message: 'Webhook received' });
+
+  // Process webhook asynchronously (don't block response)
+  webhookManager.processWebhook(source, event, req.body, signature)
+    .catch(error => {
+      console.error(`[Webhook] Error processing ${source}:${event}:`, error.message);
+    });
 });
 
 // CRM operations (generic catch-all - must be LAST)

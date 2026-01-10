@@ -339,7 +339,7 @@ router.post('/vagaro', authenticateToken, async (req, res) => {
       });
     }
 
-    // Get current settings
+    // Get current settings to preserve existing values if not provided
     const [client] = await sequelize.query(
       'SELECT settings FROM clients WHERE id = :clientId',
       {
@@ -349,19 +349,20 @@ router.post('/vagaro', authenticateToken, async (req, res) => {
     );
 
     const currentSettings = client?.settings || {};
+    const currentVagaro = currentSettings.integration?.vagaro || {};
 
-    // Update Vagaro settings with OAuth credentials
+    // Only update credentials if new values are provided (preserve existing if null)
     const updatedSettings = {
       ...currentSettings,
       integration: {
         ...(currentSettings.integration || {}),
         vagaro: {
           enabled: enabled === true,
-          clientId: vagaroClientId || null,
-          clientSecretKey: clientSecretKey || null,
-          merchantId: merchantId || null,
-          webhookToken: webhookToken || null,
-          region: region || 'us01',
+          clientId: vagaroClientId || currentVagaro.clientId || null,
+          clientSecretKey: clientSecretKey || currentVagaro.clientSecretKey || null,
+          merchantId: merchantId || currentVagaro.merchantId || null,
+          webhookToken: webhookToken || currentVagaro.webhookToken || null,
+          region: region || currentVagaro.region || 'us01',
           updatedAt: new Date().toISOString()
         }
       }
@@ -379,12 +380,39 @@ router.post('/vagaro', authenticateToken, async (req, res) => {
       }
     );
 
+    // Register webhook token with MCP server for multi-tenant verification
+    const finalMerchantId = updatedSettings.integration.vagaro.merchantId;
+    const finalWebhookToken = updatedSettings.integration.vagaro.webhookToken;
+
+    if (finalMerchantId && finalWebhookToken) {
+      try {
+        const mcpUrl = process.env.MCP_SERVER_URL || 'https://aiagent.ringlypro.com';
+        const registerResponse = await fetch(`${mcpUrl}/api/mcp/vagaro/register-webhook`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            businessId: finalMerchantId,
+            webhookToken: finalWebhookToken,
+            apiKey: process.env.RINGLYPRO_ADMIN_API_KEY
+          })
+        });
+
+        if (registerResponse.ok) {
+          logger.info(`[VAGARO] Registered webhook token with MCP server for merchant ${finalMerchantId}`);
+        } else {
+          logger.warn(`[VAGARO] Failed to register webhook token with MCP server: ${registerResponse.status}`);
+        }
+      } catch (mcpError) {
+        // Non-fatal - log but don't fail the request
+        logger.warn(`[VAGARO] Could not register webhook token with MCP server: ${mcpError.message}`);
+      }
+    }
+
     logger.info(`[CLIENT SETTINGS] Updated Vagaro settings for client ${ringlyproClientId}`);
 
     res.json({
       success: true,
-      message: 'Vagaro settings updated successfully',
-      settings: updatedSettings
+      message: 'Vagaro settings updated successfully'
     });
 
   } catch (error) {
@@ -398,7 +426,7 @@ router.post('/vagaro', authenticateToken, async (req, res) => {
 
 /**
  * GET /api/client-settings/vagaro
- * Get Vagaro integration settings
+ * Get Vagaro integration settings (with masked credentials for security)
  */
 router.get('/vagaro', authenticateToken, async (req, res) => {
   try {
@@ -421,22 +449,24 @@ router.get('/vagaro', authenticateToken, async (req, res) => {
       }
     );
 
+    const vagaro = client?.settings?.integration?.vagaro || {};
+
     // Check if credentials exist
-    const hasCredentials = !!(client?.settings?.integration?.vagaro?.clientId &&
-                              client?.settings?.integration?.vagaro?.clientSecretKey &&
-                              client?.settings?.integration?.vagaro?.merchantId);
-    const enabledSetting = client?.settings?.integration?.vagaro?.enabled;
-    // If enabled setting exists, use it; otherwise default to true if credentials exist (backwards compatibility)
+    const hasCredentials = !!(vagaro.clientId && vagaro.clientSecretKey && vagaro.merchantId);
+    const enabledSetting = vagaro.enabled;
     const isEnabled = enabledSetting !== undefined ? enabledSetting : hasCredentials;
 
+    // Return masked credentials (never expose secrets to frontend)
     const vagaroSettings = {
-      enabled: isEnabled && hasCredentials, // Must have credentials AND be enabled
-      clientId: client?.settings?.integration?.vagaro?.clientId || null,
-      clientSecretKey: client?.settings?.integration?.vagaro?.clientSecretKey || null,
-      merchantId: client?.settings?.integration?.vagaro?.merchantId || null,
-      webhookToken: client?.settings?.integration?.vagaro?.webhookToken || null,
-      region: client?.settings?.integration?.vagaro?.region || 'us01',
-      credentialsSet: hasCredentials // Flag for frontend
+      enabled: isEnabled && hasCredentials,
+      // Only return masked indicators, not actual values
+      clientIdSet: !!vagaro.clientId,
+      clientSecretKeySet: !!vagaro.clientSecretKey,
+      webhookTokenSet: !!vagaro.webhookToken,
+      // These are safe to return
+      merchantId: vagaro.merchantId || null,
+      region: vagaro.region || 'us01',
+      credentialsSet: hasCredentials
     };
 
     res.json({
@@ -449,6 +479,87 @@ router.get('/vagaro', authenticateToken, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to get Vagaro settings'
+    });
+  }
+});
+
+/**
+ * POST /api/client-settings/vagaro/test
+ * Test Vagaro API connection
+ */
+router.post('/vagaro/test', authenticateToken, async (req, res) => {
+  try {
+    const clientId = await getClientIdForUser(req);
+
+    if (!clientId) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found for user'
+      });
+    }
+
+    // Get client settings
+    const [client] = await sequelize.query(
+      'SELECT settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const vagaro = client?.settings?.integration?.vagaro || {};
+
+    if (!vagaro.clientId || !vagaro.clientSecretKey || !vagaro.merchantId) {
+      return res.json({
+        success: false,
+        error: 'Vagaro credentials not configured. Please save your API credentials first.'
+      });
+    }
+
+    // Test connection by attempting to generate an OAuth token
+    const baseUrl = {
+      'us01': 'https://us01-api.vagaro.com',
+      'us02': 'https://us02-api.vagaro.com',
+      'us03': 'https://us03-api.vagaro.com',
+      'us04': 'https://us04-api.vagaro.com',
+      'us05': 'https://us05-api.vagaro.com'
+    }[vagaro.region] || 'https://us01-api.vagaro.com';
+
+    const tokenUrl = `${baseUrl}/v1/oauth/token`;
+
+    const response = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: vagaro.clientId,
+        client_secret: vagaro.clientSecretKey,
+        scope: 'business:read appointment:read',
+        grant_type: 'client_credentials'
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      logger.info(`[VAGARO TEST] Connection successful for client ${clientId}`);
+      res.json({
+        success: true,
+        message: 'Connection successful! Vagaro API is accessible.',
+        expiresIn: data.expires_in
+      });
+    } else {
+      const errorText = await response.text();
+      logger.warn(`[VAGARO TEST] Connection failed for client ${clientId}: ${response.status} - ${errorText}`);
+      res.json({
+        success: false,
+        error: `API returned ${response.status}: ${errorText}`
+      });
+    }
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Test Vagaro connection error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to test connection: ' + error.message
     });
   }
 });
