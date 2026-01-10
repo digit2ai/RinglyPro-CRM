@@ -5523,6 +5523,14 @@
 
             if (!appointments || appointments.length === 0) return result;
 
+            // Helper to get calendar sort order (for Client 32: Hyperbaric=0, Recovery=1, others=2)
+            function getCalendarOrder(apt) {
+                const calName = (apt.calendarName || '').toLowerCase();
+                if (calName.includes('hyperbaric') || calName.includes('oxygen')) return 0; // Orange - LEFT
+                if (calName.includes('recovery') || calName === 'recovery') return 1; // Pink/Red - RIGHT
+                return 2; // Others
+            }
+
             // Convert appointments to time ranges
             const events = appointments.map((apt, index) => {
                 const timeString = apt.appointmentTime || apt.appointment_time || '09:00';
@@ -5535,12 +5543,16 @@
                     id: apt.id || index,
                     index,
                     start: startMinutes,
-                    end: endMinutes
+                    end: endMinutes,
+                    calendarOrder: CLIENT_ID == 32 ? getCalendarOrder(apt) : 0
                 };
             });
 
-            // Sort by start time
-            events.sort((a, b) => a.start - b.start);
+            // Sort by start time, then by calendar order (Hyperbaric first, Recovery second)
+            events.sort((a, b) => {
+                if (a.start !== b.start) return a.start - b.start;
+                return a.calendarOrder - b.calendarOrder;
+            });
 
             // Find overlapping groups using a greedy column assignment
             const columns = []; // Array of { end: number } for each column
