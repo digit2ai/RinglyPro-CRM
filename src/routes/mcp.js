@@ -6567,40 +6567,10 @@ No text in image.`;
   }
 });
 
-// CRM operations
-router.post('/:crm/:operation', async (req, res) => {
-  const { sessionId } = req.body;
-  const { crm, operation } = req.params;
+// ============= WEBHOOK ENDPOINTS (MUST BE BEFORE CATCH-ALL /:crm/:operation) =============
+// These routes MUST come before the generic /:crm/:operation catch-all route
+// otherwise /webhooks/vagaro would match as :crm=webhooks, :operation=vagaro
 
-  const session = sessions.get(sessionId);
-  if (!session || session.type !== crm) {
-    return res.status(401).json({ error: 'Invalid session' });
-  }
-
-  try {
-    let result;
-    switch (operation) {
-      case 'search-contacts':
-        result = await session.proxy.searchContacts(req.body.query, req.body.limit);
-        break;
-      case 'create-contact':
-        result = await session.proxy.createContact(req.body);
-        break;
-      case 'get-deals':
-        result = await session.proxy.getDeals ? await session.proxy.getDeals(req.body.filters) :
-                 await session.proxy.getOpportunities(req.body.filters);
-        break;
-      default:
-        return res.status(400).json({ error: 'Unknown operation' });
-    }
-
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Webhook endpoints
 router.post('/webhooks/:source', async (req, res) => {
   const { source } = req.params;
   const event = req.headers['x-webhook-event'] || req.body?.type || 'unknown';
@@ -6640,6 +6610,40 @@ router.post('/webhooks/:source', async (req, res) => {
     .catch(error => {
       console.error(`[Webhook] Error processing ${source}:${event}:`, error.message);
     });
+});
+
+// ============= CATCH-ALL CRM OPERATIONS (MUST BE LAST) =============
+// CRM operations
+router.post('/:crm/:operation', async (req, res) => {
+  const { sessionId } = req.body;
+  const { crm, operation } = req.params;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== crm) {
+    return res.status(401).json({ error: 'Invalid session' });
+  }
+
+  try {
+    let result;
+    switch (operation) {
+      case 'search-contacts':
+        result = await session.proxy.searchContacts(req.body.query, req.body.limit);
+        break;
+      case 'create-contact':
+        result = await session.proxy.createContact(req.body);
+        break;
+      case 'get-deals':
+        result = await session.proxy.getDeals ? await session.proxy.getDeals(req.body.filters) :
+                 await session.proxy.getOpportunities(req.body.filters);
+        break;
+      default:
+        return res.status(400).json({ error: 'Unknown operation' });
+    }
+
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 // Workflow endpoints
