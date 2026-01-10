@@ -1234,32 +1234,34 @@ router.get('/quick-backup-client/:clientId', async (req, res) => {
 
         console.log(`📦 Quick Admin: Creating backup for client ${clientId}`);
 
-        // Get all client data (QueryTypes.SELECT returns array directly)
-        const clients = await sequelize.query(
+        // Get all client data using raw query (returns [results, metadata])
+        const [clientRows] = await sequelize.query(
             'SELECT * FROM clients WHERE id = $1',
-            { bind: [clientId], type: sequelize.QueryTypes.SELECT }
+            { bind: [clientId] }
         );
-        const client = clients[0] || null;
+        const client = clientRows[0] || null;
 
-        const messages = await sequelize.query(
+        const [messageRows] = await sequelize.query(
             'SELECT * FROM messages WHERE client_id = $1 ORDER BY created_at DESC',
-            { bind: [clientId], type: sequelize.QueryTypes.SELECT }
+            { bind: [clientId] }
         );
 
-        const appointments = await sequelize.query(
+        const [appointmentRows] = await sequelize.query(
             'SELECT * FROM appointments WHERE client_id = $1 ORDER BY created_at DESC',
-            { bind: [clientId], type: sequelize.QueryTypes.SELECT }
+            { bind: [clientId] }
         );
 
-        const gcalIntegrations = await sequelize.query(
+        const [gcalRows] = await sequelize.query(
             'SELECT * FROM google_calendar_integrations WHERE client_id = $1',
-            { bind: [clientId], type: sequelize.QueryTypes.SELECT }
+            { bind: [clientId] }
         );
 
-        const contacts = await sequelize.query(
+        const [contactRows] = await sequelize.query(
             'SELECT * FROM contacts WHERE client_id = $1',
-            { bind: [clientId], type: sequelize.QueryTypes.SELECT }
+            { bind: [clientId] }
         );
+
+        console.log(`📊 Backup data: ${messageRows.length} messages, ${appointmentRows.length} appointments, ${contactRows.length} contacts`);
 
         const backup = {
             backupDate: new Date().toISOString(),
@@ -1267,15 +1269,15 @@ router.get('/quick-backup-client/:clientId', async (req, res) => {
             businessName: client?.business_name || 'Unknown',
             data: {
                 client: client,
-                messages: messages || [],
-                appointments: appointments || [],
-                googleCalendarIntegration: gcalIntegrations[0] || null,
-                contacts: contacts || []
+                messages: messageRows || [],
+                appointments: appointmentRows || [],
+                googleCalendarIntegration: gcalRows[0] || null,
+                contacts: contactRows || []
             },
             counts: {
-                messages: messages?.length || 0,
-                appointments: appointments?.length || 0,
-                contacts: contacts?.length || 0
+                messages: messageRows?.length || 0,
+                appointments: appointmentRows?.length || 0,
+                contacts: contactRows?.length || 0
             }
         };
 
