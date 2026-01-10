@@ -1219,6 +1219,75 @@ router.post('/run-elevenlabs-migrations', async (req, res) => {
     }
 });
 
+// ============= QUICK BACKUP CLIENT DATA =============
+// GET /api/admin/quick-backup-client/:clientId
+// Exports all client data for backup purposes (API key auth)
+router.get('/quick-backup-client/:clientId', async (req, res) => {
+    try {
+        const { clientId } = req.params;
+        const { apiKey } = req.query;
+
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+        if (apiKey !== expectedKey) {
+            return res.status(401).json({ success: false, error: 'Invalid API key' });
+        }
+
+        console.log(`📦 Quick Admin: Creating backup for client ${clientId}`);
+
+        // Get all client data
+        const [client] = await sequelize.query(
+            'SELECT * FROM clients WHERE id = $1',
+            { bind: [clientId], type: sequelize.QueryTypes.SELECT }
+        );
+
+        const messages = await sequelize.query(
+            'SELECT * FROM messages WHERE client_id = $1 ORDER BY created_at DESC',
+            { bind: [clientId], type: sequelize.QueryTypes.SELECT }
+        );
+
+        const appointments = await sequelize.query(
+            'SELECT * FROM appointments WHERE client_id = $1 ORDER BY created_at DESC',
+            { bind: [clientId], type: sequelize.QueryTypes.SELECT }
+        );
+
+        const gcalIntegration = await sequelize.query(
+            'SELECT * FROM google_calendar_integrations WHERE client_id = $1',
+            { bind: [clientId], type: sequelize.QueryTypes.SELECT }
+        );
+
+        const contacts = await sequelize.query(
+            'SELECT * FROM contacts WHERE client_id = $1',
+            { bind: [clientId], type: sequelize.QueryTypes.SELECT }
+        );
+
+        const backup = {
+            backupDate: new Date().toISOString(),
+            clientId: parseInt(clientId),
+            businessName: client?.business_name || 'Unknown',
+            data: {
+                client: client || null,
+                messages: messages[0] || [],
+                appointments: appointments[0] || [],
+                googleCalendarIntegration: gcalIntegration[0]?.[0] || null,
+                contacts: contacts[0] || []
+            },
+            counts: {
+                messages: messages[0]?.length || 0,
+                appointments: appointments[0]?.length || 0,
+                contacts: contacts[0]?.length || 0
+            }
+        };
+
+        console.log(`✅ Backup created for client ${clientId}: ${backup.counts.messages} messages, ${backup.counts.appointments} appointments`);
+
+        res.json(backup);
+
+    } catch (error) {
+        console.error('❌ Backup error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // ============= QUICK FIX ELEVENLABS TIMESTAMPS =============
 // POST /api/admin/quick-fix-elevenlabs-timestamps/:clientId
 // Updates created_at and call_start_time to use actual ElevenLabs timestamps (API key auth)
