@@ -1219,6 +1219,81 @@ router.post('/run-elevenlabs-migrations', async (req, res) => {
     }
 });
 
+// ============= QUICK FIX ELEVENLABS TIMESTAMPS =============
+// POST /api/admin/quick-fix-elevenlabs-timestamps/:clientId
+// Updates created_at and call_start_time to use actual ElevenLabs timestamps (API key auth)
+router.post('/quick-fix-elevenlabs-timestamps/:clientId', async (req, res) => {
+    try {
+        const { clientId } = req.params;
+        const { apiKey } = req.body;
+
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+        if (apiKey !== expectedKey) {
+            return res.status(401).json({ success: false, error: 'Invalid API key' });
+        }
+
+        console.log(`🕐 Quick Admin: Fixing ElevenLabs timestamps for client ${clientId}`);
+
+        // Get existing ElevenLabs messages for this client
+        const existingMessages = await sequelize.query(
+            `SELECT id, twilio_sid, call_start_time, created_at
+             FROM messages
+             WHERE client_id = $1 AND message_source = 'elevenlabs'
+             ORDER BY created_at DESC`,
+            { bind: [clientId], type: sequelize.QueryTypes.SELECT }
+        );
+
+        console.log(`📋 Found ${existingMessages.length} ElevenLabs messages to check`);
+
+        const elevenLabsConvAI = require('../services/elevenLabsConvAIService');
+        let updated = 0;
+        let errors = [];
+
+        for (const msg of existingMessages) {
+            try {
+                // Get conversation details from ElevenLabs
+                const details = await elevenLabsConvAI.getConversation(msg.twilio_sid);
+
+                // Get the actual start time from ElevenLabs
+                const elevenLabsStartTime = details.start_time || details.metadata?.start_time;
+
+                if (elevenLabsStartTime) {
+                    const actualTimestamp = new Date(elevenLabsStartTime);
+
+                    // Update both created_at and call_start_time to match ElevenLabs
+                    await sequelize.query(
+                        `UPDATE messages
+                         SET created_at = $1, call_start_time = $1, updated_at = NOW()
+                         WHERE id = $2`,
+                        { bind: [actualTimestamp, msg.id] }
+                    );
+                    updated++;
+                    console.log(`✅ Fixed timestamp for ${msg.twilio_sid}: ${actualTimestamp.toISOString()}`);
+                } else {
+                    console.log(`⚠️ No start_time found for ${msg.twilio_sid}`);
+                }
+            } catch (e) {
+                console.log(`⚠️ Could not fix timestamp for ${msg.twilio_sid}: ${e.message}`);
+                errors.push({ id: msg.id, conversationId: msg.twilio_sid, error: e.message });
+            }
+        }
+
+        res.json({
+            success: true,
+            total: existingMessages.length,
+            updated,
+            errors: errors.slice(0, 5)
+        });
+
+    } catch (error) {
+        console.error('❌ Error fixing ElevenLabs timestamps:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Apply admin authentication to all routes AFTER quick endpoints
 router.use(authenticateAdmin);
 
