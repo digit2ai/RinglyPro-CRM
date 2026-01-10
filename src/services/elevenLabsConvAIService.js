@@ -202,22 +202,23 @@ class ElevenLabsConvAIService {
                         summary = firstMessages.substring(0, 500) || 'AI Phone Call';
                     }
 
-                    // Calculate duration - ElevenLabs API uses call_duration_secs
-                    const duration = conv.call_duration_secs ||
+                    // Calculate duration - ElevenLabs API uses call_duration_secs in metadata
+                    const duration = details.metadata?.call_duration_secs ||
+                                   conv.call_duration_secs ||
                                    conv.duration_seconds ||
                                    details.call_duration_secs ||
                                    details.duration_seconds ||
-                                   (conv.end_time && conv.start_time ?
-                                    Math.round((new Date(conv.end_time) - new Date(conv.start_time)) / 1000) : null);
+                                   null;
 
                     // Use proxy URL for audio (signed URLs require auth, proxy handles it)
                     const audioUrl = `/api/admin/elevenlabs-audio/${conv.conversation_id}`;
 
                     // Insert into messages table
-                    // Use ElevenLabs timestamp for both call_start_time AND created_at
+                    // Use ElevenLabs timestamp from metadata.start_time_unix_secs (unix seconds)
                     // This ensures the dashboard displays the actual call time, not sync time
                     const confirmationCode = `EL${Date.now().toString().slice(-8)}`;
-                    const elevenLabsTimestamp = conv.start_time ? new Date(conv.start_time) : new Date();
+                    const startTimeUnix = details.metadata?.start_time_unix_secs;
+                    const elevenLabsTimestamp = startTimeUnix ? new Date(startTimeUnix * 1000) : new Date();
 
                     await sequelize.query(
                         `INSERT INTO messages (
@@ -246,12 +247,12 @@ class ElevenLabsConvAIService {
                     );
 
                     inserted++;
-                    console.log(`✅ Inserted: ${conv.conversation_id} | Phone: ${phoneNumber} | Duration: ${duration}s`);
+                    console.log(`✅ Inserted: ${conv.conversation_id} | Phone: ${phoneNumber} | Duration: ${duration}s | Time: ${elevenLabsTimestamp.toISOString()}`);
                     synced.push({
                         conversationId: conv.conversation_id,
                         phone: phoneNumber,
                         duration,
-                        startTime: conv.start_time
+                        startTime: elevenLabsTimestamp.toISOString()
                     });
 
                 } catch (insertError) {
@@ -268,15 +269,7 @@ class ElevenLabsConvAIService {
                 inserted,
                 skipped,
                 synced,
-                errors: errors.slice(0, 5), // Return first 5 errors for debugging
-                sampleConversation: conversations[0] ? {
-                    conversation_id: conversations[0].conversation_id,
-                    status: conversations[0].status,
-                    start_time: conversations[0].start_time,
-                    // Debug: include all keys to find the timestamp field
-                    all_keys: Object.keys(conversations[0]),
-                    raw_preview: JSON.stringify(conversations[0]).substring(0, 800)
-                } : null
+                errors: errors.slice(0, 5) // Return first 5 errors for debugging
             };
 
         } catch (error) {

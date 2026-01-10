@@ -1234,22 +1234,6 @@ router.post('/quick-fix-elevenlabs-timestamps/:clientId', async (req, res) => {
 
         console.log(`🕐 Quick Admin: Fixing ElevenLabs timestamps for client ${clientId}`);
 
-        // Get client's ElevenLabs agent ID
-        const [client] = await sequelize.query(
-            `SELECT elevenlabs_agent_id FROM clients WHERE id = $1`,
-            { bind: [clientId], type: sequelize.QueryTypes.SELECT }
-        );
-
-        if (!client || !client.elevenlabs_agent_id) {
-            return res.status(400).json({
-                success: false,
-                error: 'Client does not have ElevenLabs agent configured'
-            });
-        }
-
-        const agentId = client.elevenlabs_agent_id;
-        console.log(`📞 Using agent ID: ${agentId}`);
-
         // Get existing ElevenLabs messages for this client
         const existingMessages = await sequelize.query(
             `SELECT id, twilio_sid, call_start_time, created_at
@@ -1261,47 +1245,34 @@ router.post('/quick-fix-elevenlabs-timestamps/:clientId', async (req, res) => {
 
         console.log(`📋 Found ${existingMessages.length} ElevenLabs messages to check`);
 
-        // Fetch conversations list from ElevenLabs (has start_time)
+        // Get conversation details for each message to fetch timestamp from metadata.start_time_unix_secs
         const elevenLabsConvAI = require('../services/elevenLabsConvAIService');
-        const conversationsData = await elevenLabsConvAI.listConversations(agentId, { limit: 100 });
-        const conversations = conversationsData.conversations || [];
-
-        console.log(`📋 Fetched ${conversations.length} conversations from ElevenLabs`);
-
-        // Build lookup map: conversation_id -> start_time
-        const timestampMap = {};
-        for (const conv of conversations) {
-            if (conv.conversation_id && conv.start_time) {
-                timestampMap[conv.conversation_id] = conv.start_time;
-            }
-        }
-
-        console.log(`📋 Built timestamp map with ${Object.keys(timestampMap).length} entries`);
-
         let updated = 0;
         let noTimestamp = 0;
         let errors = [];
 
         for (const msg of existingMessages) {
             try {
-                // Look up the start_time from the conversations list
-                const elevenLabsStartTime = timestampMap[msg.twilio_sid];
+                // Get conversation details (which includes metadata.start_time_unix_secs)
+                const details = await elevenLabsConvAI.getConversation(msg.twilio_sid);
+
+                // Get the actual start time from metadata (unix seconds)
+                const startTimeUnix = details.metadata?.start_time_unix_secs;
+                const elevenLabsStartTime = startTimeUnix ? new Date(startTimeUnix * 1000) : null;
 
                 if (elevenLabsStartTime) {
-                    const actualTimestamp = new Date(elevenLabsStartTime);
-
                     // Update both created_at and call_start_time to match ElevenLabs
                     await sequelize.query(
                         `UPDATE messages
                          SET created_at = $1, call_start_time = $1, updated_at = NOW()
                          WHERE id = $2`,
-                        { bind: [actualTimestamp, msg.id] }
+                        { bind: [elevenLabsStartTime, msg.id] }
                     );
                     updated++;
-                    console.log(`✅ Fixed timestamp for ${msg.twilio_sid}: ${actualTimestamp.toISOString()}`);
+                    console.log(`✅ Fixed timestamp for ${msg.twilio_sid}: ${elevenLabsStartTime.toISOString()}`);
                 } else {
                     noTimestamp++;
-                    console.log(`⚠️ No start_time found for ${msg.twilio_sid} (may not be in recent 100)`);
+                    console.log(`⚠️ No metadata.start_time_unix_secs found for ${msg.twilio_sid}`);
                 }
             } catch (e) {
                 console.log(`⚠️ Could not fix timestamp for ${msg.twilio_sid}: ${e.message}`);
@@ -1314,7 +1285,6 @@ router.post('/quick-fix-elevenlabs-timestamps/:clientId', async (req, res) => {
             total: existingMessages.length,
             updated,
             noTimestamp,
-            conversationsFetched: conversations.length,
             errors: errors.slice(0, 5)
         });
 
