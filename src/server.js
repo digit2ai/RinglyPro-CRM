@@ -72,7 +72,7 @@ async function startServer() {
       console.log(`💬 SMS Webhook: ${process.env.WEBHOOK_BASE_URL || `http://localhost:${PORT}`}/webhook/twilio/sms`);
       console.log(`🔐 Auth API: http://localhost:${PORT}/api/auth/register`);
       console.log(`💳 Credits API: http://localhost:${PORT}/api/credits/test/client/1`);
-      
+
       if (process.env.NODE_ENV === 'production') {
         console.log(`🔗 Production URL: ${process.env.WEBHOOK_BASE_URL}`);
       }
@@ -82,6 +82,15 @@ async function startServer() {
         console.log('✅ Twilio Voice Bot CRM is ready! (Database mode)');
         console.log('✅ User authentication system active');
         console.log('✅ Credit system active');
+
+        // Start ElevenLabs call sync job (every 5 minutes)
+        try {
+          const { startScheduledSync } = require('./jobs/elevenLabsSyncJob');
+          startScheduledSync();
+          console.log('✅ ElevenLabs call sync job started');
+        } catch (error) {
+          console.log('⚠️ ElevenLabs sync job skipped:', error.message);
+        }
       } else {
         console.log('✅ Twilio Voice Bot CRM is ready! (Memory mode)');
       }

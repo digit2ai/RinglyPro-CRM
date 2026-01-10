@@ -2154,4 +2154,132 @@ router.get('/leads-stats/:clientId', authenticateAdmin, async (req, res) => {
     }
 });
 
+// ============= ELEVENLABS SYNC STATUS =============
+// GET /api/admin/elevenlabs-sync/status
+// Get the current status of the ElevenLabs call sync job
+router.get('/elevenlabs-sync/status', async (req, res) => {
+    try {
+        const apiKey = req.query.apiKey || req.headers['x-api-key'];
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+
+        if (apiKey !== expectedKey) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid API key'
+            });
+        }
+
+        const { getSyncStatus } = require('../jobs/elevenLabsSyncJob');
+        const status = getSyncStatus();
+
+        res.json({
+            success: true,
+            ...status
+        });
+
+    } catch (error) {
+        console.error('❌ Error getting sync status:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// POST /api/admin/elevenlabs-sync/trigger
+// Manually trigger an ElevenLabs call sync
+router.post('/elevenlabs-sync/trigger', async (req, res) => {
+    try {
+        const { apiKey } = req.body;
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+
+        if (apiKey !== expectedKey) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid API key'
+            });
+        }
+
+        console.log('🔄 Admin: Manually triggering ElevenLabs sync...');
+
+        const { triggerSync } = require('../jobs/elevenLabsSyncJob');
+        const result = await triggerSync();
+
+        res.json({
+            success: true,
+            message: 'Sync triggered successfully',
+            ...result
+        });
+
+    } catch (error) {
+        console.error('❌ Error triggering sync:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// POST /api/admin/elevenlabs-sync/client/:clientId
+// Sync ElevenLabs calls for a specific client
+router.post('/elevenlabs-sync/client/:clientId', async (req, res) => {
+    try {
+        const { clientId } = req.params;
+        const { apiKey } = req.body;
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+
+        if (apiKey !== expectedKey) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid API key'
+            });
+        }
+
+        console.log(`🔄 Admin: Syncing ElevenLabs calls for client ${clientId}...`);
+
+        // Get client's ElevenLabs agent ID
+        const clientResult = await sequelize.query(
+            'SELECT id, business_name, elevenlabs_agent_id FROM clients WHERE id = $1',
+            { bind: [parseInt(clientId)], type: sequelize.QueryTypes.SELECT }
+        );
+
+        if (!clientResult || clientResult.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Client not found'
+            });
+        }
+
+        const client = clientResult[0];
+
+        if (!client.elevenlabs_agent_id) {
+            return res.status(400).json({
+                success: false,
+                error: 'Client does not have ElevenLabs agent configured'
+            });
+        }
+
+        const elevenLabsConvAI = require('../services/elevenLabsConvAIService');
+        const result = await elevenLabsConvAI.syncConversationsToMessages(
+            client.id,
+            client.elevenlabs_agent_id,
+            sequelize
+        );
+
+        res.json({
+            success: result.success,
+            clientId: parseInt(clientId),
+            businessName: client.business_name,
+            ...result
+        });
+
+    } catch (error) {
+        console.error('❌ Error syncing client:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;
