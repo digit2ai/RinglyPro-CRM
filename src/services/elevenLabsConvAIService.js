@@ -214,14 +214,18 @@ class ElevenLabsConvAIService {
                     const audioUrl = `/api/admin/elevenlabs-audio/${conv.conversation_id}`;
 
                     // Insert into messages table
+                    // Use ElevenLabs timestamp for both call_start_time AND created_at
+                    // This ensures the dashboard displays the actual call time, not sync time
                     const confirmationCode = `EL${Date.now().toString().slice(-8)}`;
+                    const elevenLabsTimestamp = conv.start_time ? new Date(conv.start_time) : new Date();
+
                     await sequelize.query(
                         `INSERT INTO messages (
                             client_id, twilio_sid, recording_url, direction,
                             from_number, to_number, body, status,
                             message_type, call_duration, call_start_time,
                             message_source, created_at, updated_at
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())`,
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())`,
                         {
                             bind: [
                                 clientId,
@@ -234,8 +238,9 @@ class ElevenLabsConvAIService {
                                 'received',
                                 'call',
                                 duration,
-                                conv.start_time ? new Date(conv.start_time) : new Date(),
-                                'elevenlabs'
+                                elevenLabsTimestamp,  // call_start_time
+                                'elevenlabs',
+                                elevenLabsTimestamp   // created_at - use ElevenLabs timestamp instead of NOW()
                             ]
                         }
                     );
