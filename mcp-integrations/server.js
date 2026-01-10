@@ -4,6 +4,7 @@ const cors = require('cors');
 const HubSpotMCPProxy = require('./api/hubspot-proxy');
 const GoHighLevelMCPProxy = require('./api/gohighlevel-proxy');
 const BusinessCollectorMCPProxy = require('./api/business-collector-proxy');
+const VagaroMCPProxy = require('./api/vagaro-proxy');
 const { ClaudeIntegration } = require('./api/claude-integration');
 const VoiceHandler = require('./voice/voice-handler');
 const TTSService = require('./voice/tts-service');
@@ -11,6 +12,7 @@ const STTService = require('./voice/stt-service');
 const WebhookManager = require('./webhooks/webhook-manager');
 const HubSpotWebhooks = require('./webhooks/hubspot-webhooks');
 const GoHighLevelWebhooks = require('./webhooks/ghl-webhooks');
+const VagaroWebhooks = require('./webhooks/vagaro-webhooks');
 const WorkflowEngine = require('./workflows/workflow-engine');
 
 const app = express();
@@ -26,6 +28,10 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 const sessions = new Map();
 const webhookManager = new WebhookManager();
 const workflowEngine = new WorkflowEngine();
+
+// Initialize webhook handlers
+// Vagaro webhooks don't need a proxy - they just handle incoming events
+const vagaroWebhooks = new VagaroWebhooks(webhookManager);
 
 // Health check
 app.get('/api/mcp/health', (req, res) => {
@@ -183,6 +189,170 @@ app.get('/api/mcp/business-collector/quick', async (req, res) => {
     });
   }
 });
+
+// ===========================================
+// VAGARO INTEGRATION ENDPOINTS
+// ===========================================
+
+// Vagaro connection
+app.post('/api/mcp/vagaro/connect', async (req, res) => {
+  const { clientId, clientSecretKey, merchantId, region } = req.body;
+
+  try {
+    const proxy = new VagaroMCPProxy({
+      clientId,
+      clientSecretKey,
+      merchantId,
+      region: region || 'us01'
+    });
+
+    const sessionId = `vag_${Date.now()}`;
+
+    sessions.set(sessionId, {
+      type: 'vagaro',
+      proxy,
+      createdAt: new Date()
+    });
+
+    res.json({
+      success: true,
+      sessionId,
+      message: 'Vagaro connected successfully'
+    });
+  } catch (error) {
+    const statusCode = error.code === 'VAGARO_CREDENTIALS_MISSING' ? 400 : 500;
+    res.status(statusCode).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'VAGARO_CONNECTION_ERROR'
+    });
+  }
+});
+
+// Vagaro check availability
+app.post('/api/mcp/vagaro/check-availability', async (req, res) => {
+  const { sessionId, serviceId, date, employeeId, locationId } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'vagaro') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Vagaro session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  try {
+    const slots = await session.proxy.getAvailability({
+      serviceId,
+      date,
+      employeeId,
+      locationId
+    });
+
+    const response = {
+      success: true,
+      slots: slots || []
+    };
+
+    if (!slots || slots.length === 0) {
+      response.code = 'NO_AVAILABILITY';
+    }
+
+    res.json(response);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'AVAILABILITY_CHECK_ERROR'
+    });
+  }
+});
+
+// Vagaro book appointment
+app.post('/api/mcp/vagaro/book-appointment', async (req, res) => {
+  const { sessionId, customer, appointment } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'vagaro') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Vagaro session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  try {
+    // Normalize phone before lookup
+    const customerInfo = { ...customer };
+    if (customerInfo.phone) {
+      customerInfo.phone = customerInfo.phone.replace(/\D/g, '');
+    }
+
+    // Find or create customer
+    const { customer: foundCustomer, isNew } = await session.proxy.findOrCreateCustomer(customerInfo);
+
+    // Create appointment
+    const created = await session.proxy.createAppointment({
+      customerId: foundCustomer.customerId || foundCustomer.id,
+      serviceId: appointment.serviceId,
+      startTime: appointment.startTime,
+      employeeId: appointment.employeeId,
+      locationId: appointment.locationId,
+      notes: appointment.notes
+    });
+
+    res.json({
+      success: true,
+      booked: true,
+      appointment: created,
+      customer: foundCustomer,
+      isNewCustomer: isNew
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      booked: false,
+      error: error.message,
+      code: error.code || 'BOOKING_ERROR'
+    });
+  }
+});
+
+// Vagaro cancel appointment
+app.post('/api/mcp/vagaro/cancel-appointment', async (req, res) => {
+  const { sessionId, appointmentId } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'vagaro') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Vagaro session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  try {
+    await session.proxy.cancelAppointment(appointmentId);
+
+    res.json({
+      success: true,
+      cancelled: true,
+      appointmentId
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      cancelled: false,
+      error: error.message,
+      code: error.code || 'CANCELLATION_ERROR'
+    });
+  }
+});
+
+// ===========================================
+// AI COPILOT
+// ===========================================
 
 // AI Copilot chat
 app.post('/api/mcp/copilot/chat', async (req, res) => {
