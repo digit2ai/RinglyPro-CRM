@@ -65,7 +65,9 @@ class ZohoCalendarService {
         refreshToken: zohoSettings.refreshToken,
         region: zohoSettings.region || 'com',
         enabled: zohoSettings.enabled !== false,
-        syncCalendar: zohoSettings.syncCalendar !== false,
+        // syncCalendar defaults to true when Zoho is enabled - pull Zoho events into availability checking
+        syncCalendar: zohoSettings.enabled !== false,
+        // createEvents controls whether bookings sync TO Zoho (defaults to true)
         createEvents: zohoSettings.createEvents !== false
       };
     } catch (error) {
@@ -191,24 +193,33 @@ class ZohoCalendarService {
         return { success: false, events: [], error: 'Zoho not configured' };
       }
 
-      // Build date filter for Zoho API
-      const startISO = `${startDate}T00:00:00+00:00`;
-      const endISO = `${endDate}T23:59:59+00:00`;
+      // Build date filter for Zoho API - use simple date format (Zoho v5 API)
+      // First try without criteria to see all events, then filter client-side
+      logger.info(`[ZohoCalendar] Fetching events for client ${clientId} from ${startDate} to ${endDate}`);
 
       const response = await this.callAPI(clientId, settings, 'GET', '/Events', null, {
         per_page: 100,
-        fields: 'Event_Title,Start_DateTime,End_DateTime,Venue,Description,Who_Id',
-        criteria: `(Start_DateTime:greater_equal:${startISO})and(Start_DateTime:less_equal:${endISO})`
+        fields: 'Event_Title,Start_DateTime,End_DateTime,Venue,Description,Who_Id,Created_Time'
       });
 
-      const events = (response.data || []).map(event => this.normalizeEvent(event));
+      // Filter events by date range client-side for reliability
+      const startDt = new Date(`${startDate}T00:00:00`);
+      const endDt = new Date(`${endDate}T23:59:59`);
 
-      logger.info(`[ZohoCalendar] Client ${clientId}: Found ${events.length} Zoho events from ${startDate} to ${endDate}`);
+      const allEvents = response.data || [];
+      const filteredEvents = allEvents.filter(event => {
+        const eventStart = new Date(event.Start_DateTime);
+        return eventStart >= startDt && eventStart <= endDt;
+      });
+
+      const events = filteredEvents.map(event => this.normalizeEvent(event));
+
+      logger.info(`[ZohoCalendar] Client ${clientId}: Found ${events.length} Zoho events (of ${allEvents.length} total) from ${startDate} to ${endDate}`);
 
       return {
         success: true,
         events,
-        total: response.info?.count || events.length
+        total: events.length
       };
     } catch (error) {
       logger.error(`[ZohoCalendar] Error fetching events for client ${clientId}:`, error.message);
