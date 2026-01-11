@@ -223,8 +223,11 @@ async function handleCheckAvailability(params) {
     let googleCalendarActive = false;
     let source = 'ringlypro';
 
+    // Parse start date and iterate from there
+    const startDateObj = new Date(startDate + 'T00:00:00');
+
     for (let i = 0; i < numDays; i++) {
-      const currentDate = new Date(Date.now() + i * 86400000);
+      const currentDate = new Date(startDateObj.getTime() + i * 86400000);
       const dateStr = currentDate.toISOString().split('T')[0];
 
       // Use dualCalendarService which now checks RinglyPro + Zoho + Google + GHL
