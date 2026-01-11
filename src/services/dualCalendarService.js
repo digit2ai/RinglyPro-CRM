@@ -399,7 +399,7 @@ class DualCalendarService {
           :ghlAppointmentId, :ghlContactId,
           NOW(), NOW()
         )
-        ON CONFLICT (client_id, appointment_date, appointment_time)
+        ON CONFLICT ON CONSTRAINT unique_time_slot_per_client
         DO UPDATE SET
           customer_name = EXCLUDED.customer_name,
           customer_phone = EXCLUDED.customer_phone,
