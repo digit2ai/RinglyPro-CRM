@@ -419,10 +419,18 @@ class DualCalendarService {
 
       logger.info(`[DualCal] [${callId}] INSERT completed successfully`);
     } catch (sqlError) {
+      // Log full error details to understand what's happening
+      logger.error(`[DualCal] [${callId}] Caught error in INSERT block`);
+      logger.error(`[DualCal] [${callId}] Error name: ${sqlError.name}`);
+      logger.error(`[DualCal] [${callId}] Error message: ${sqlError.message}`);
+      logger.error(`[DualCal] [${callId}] Error parent: ${sqlError.parent?.message}`);
+      logger.error(`[DualCal] [${callId}] Error parent code: ${sqlError.parent?.code}`);
+      logger.error(`[DualCal] [${callId}] Error fields: ${JSON.stringify(sqlError.fields)}`);
+
       // Check if this is a unique constraint violation
       if (sqlError.name === 'SequelizeUniqueConstraintError' ||
           (sqlError.parent && sqlError.parent.code === '23505')) {
-        logger.warn(`[DualCal] [${callId}] Unique constraint violation - slot is taken`);
+        logger.warn(`[DualCal] [${callId}] Unique constraint violation detected - slot is taken`);
 
         // Check if the existing appointment is cancelled/completed - if so, update it
         const existing = await sequelize.query(
