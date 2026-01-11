@@ -619,15 +619,28 @@ class DualCalendarService {
 
     } catch (error) {
       logger.error(`[DualCal] Dual appointment creation error: ${error.message}`);
+      logger.error(`[DualCal] Error name: ${error.name}`);
       logger.error(`[DualCal] Error stack: ${error.stack}`);
-      if (error.name === 'SequelizeValidationError') {
-        logger.error(`[DualCal] Validation errors: ${error.errors?.map(e => e.message).join(', ')}`);
+      if (error.errors) {
+        logger.error(`[DualCal] Error.errors: ${JSON.stringify(error.errors)}`);
+      }
+      if (error.parent) {
+        logger.error(`[DualCal] Parent error: ${error.parent.message}`);
+      }
+      if (error.original) {
+        logger.error(`[DualCal] Original error: ${error.original.message}`);
       }
       return {
         success: false,
         error: error.name === 'SequelizeValidationError'
           ? `Validation error: ${error.errors?.map(e => e.message).join(', ')}`
-          : error.message,
+          : `${error.name || 'Error'}: ${error.message}`,
+        errorDetails: {
+          name: error.name,
+          message: error.message,
+          parent: error.parent?.message,
+          original: error.original?.message
+        },
         dualModeActive: false,
         googleCalendarActive: false,
         zohoCalendarActive: false
