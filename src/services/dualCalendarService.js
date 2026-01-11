@@ -380,9 +380,73 @@ class DualCalendarService {
     });
 
     let result;
-    try {
-      // Simple INSERT - if it fails with unique constraint, the slot is taken
-      logger.info(`[DualCal] [${callId}] Attempting INSERT...`);
+
+    // IMPORTANT: The unique constraint doesn't have a WHERE clause, so cancelled appointments
+    // still block new insertions. We must check for and handle them BEFORE attempting INSERT.
+    logger.info(`[DualCal] [${callId}] Checking for existing appointment at this slot...`);
+
+    const existingAppointment = await sequelize.query(
+      `SELECT id, status, customer_name FROM appointments
+       WHERE client_id = :clientId
+         AND appointment_date = :appointmentDate
+         AND appointment_time = :appointmentTime
+       LIMIT 1`,
+      {
+        replacements: { clientId, appointmentDate, appointmentTime },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    logger.info(`[DualCal] [${callId}] Existing appointment check: ${JSON.stringify(existingAppointment)}`);
+
+    if (existingAppointment.length > 0) {
+      const existing = existingAppointment[0];
+
+      if (['cancelled', 'completed', 'no-show'].includes(existing.status)) {
+        // Reuse the cancelled slot - UPDATE instead of INSERT
+        logger.info(`[DualCal] [${callId}] Found reusable slot (status: ${existing.status}), updating appointment ${existing.id}...`);
+
+        result = await sequelize.query(
+          `UPDATE appointments SET
+            customer_name = :customerName,
+            customer_phone = :customerPhone,
+            customer_email = :customerEmail,
+            duration = :duration,
+            purpose = :purpose,
+            status = 'confirmed',
+            source = 'voice_booking',
+            confirmation_code = :confirmationCode,
+            notes = :notes,
+            ghl_appointment_id = :ghlAppointmentId,
+            ghl_contact_id = :ghlContactId,
+            updated_at = NOW()
+          WHERE id = :existingId
+          RETURNING *`,
+          {
+            replacements: {
+              existingId: existing.id,
+              customerName,
+              customerPhone,
+              customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@booking.ringlypro.com`,
+              duration,
+              purpose,
+              confirmationCode,
+              notes,
+              ghlAppointmentId,
+              ghlContactId
+            },
+            type: QueryTypes.UPDATE
+          }
+        );
+        logger.info(`[DualCal] [${callId}] Updated existing appointment successfully`);
+      } else {
+        // Active appointment at this slot - cannot book
+        logger.error(`[DualCal] [${callId}] Slot blocked by active appointment ${existing.id} (status: ${existing.status})`);
+        throw new Error(`Time slot already booked by ${existing.customer_name}. Please choose a different time.`);
+      }
+    } else {
+      // No existing appointment - safe to INSERT
+      logger.info(`[DualCal] [${callId}] No existing appointment, proceeding with INSERT...`);
 
       result = await sequelize.query(
         `INSERT INTO appointments (
@@ -416,85 +480,7 @@ class DualCalendarService {
           type: QueryTypes.INSERT
         }
       );
-
       logger.info(`[DualCal] [${callId}] INSERT completed successfully`);
-    } catch (sqlError) {
-      // Log full error details to understand what's happening
-      logger.error(`[DualCal] [${callId}] Caught error in INSERT block`);
-      logger.error(`[DualCal] [${callId}] Error name: ${sqlError.name}`);
-      logger.error(`[DualCal] [${callId}] Error message: ${sqlError.message}`);
-      logger.error(`[DualCal] [${callId}] Error parent: ${sqlError.parent?.message}`);
-      logger.error(`[DualCal] [${callId}] Error parent code: ${sqlError.parent?.code}`);
-      logger.error(`[DualCal] [${callId}] Error fields: ${JSON.stringify(sqlError.fields)}`);
-
-      // Check if this is a unique constraint violation
-      if (sqlError.name === 'SequelizeUniqueConstraintError' ||
-          (sqlError.parent && sqlError.parent.code === '23505')) {
-        logger.warn(`[DualCal] [${callId}] Unique constraint violation detected - slot is taken`);
-
-        // Check if the existing appointment is cancelled/completed - if so, update it
-        const existing = await sequelize.query(
-          `SELECT id, status, customer_name FROM appointments
-           WHERE client_id = :clientId
-             AND appointment_date = :appointmentDate
-             AND appointment_time = :appointmentTime
-           LIMIT 1`,
-          {
-            replacements: { clientId, appointmentDate, appointmentTime },
-            type: QueryTypes.SELECT
-          }
-        );
-
-        if (existing.length > 0 && ['cancelled', 'completed', 'no-show'].includes(existing[0].status)) {
-          // Can reuse this slot - update the existing cancelled appointment
-          logger.info(`[DualCal] [${callId}] Found cancelled appointment ${existing[0].id}, updating...`);
-
-          result = await sequelize.query(
-            `UPDATE appointments SET
-              customer_name = :customerName,
-              customer_phone = :customerPhone,
-              customer_email = :customerEmail,
-              duration = :duration,
-              purpose = :purpose,
-              status = 'confirmed',
-              source = 'voice_booking',
-              confirmation_code = :confirmationCode,
-              notes = :notes,
-              ghl_appointment_id = :ghlAppointmentId,
-              ghl_contact_id = :ghlContactId,
-              updated_at = NOW()
-            WHERE id = :existingId
-            RETURNING *`,
-            {
-              replacements: {
-                existingId: existing[0].id,
-                customerName,
-                customerPhone,
-                customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@booking.ringlypro.com`,
-                duration,
-                purpose,
-                confirmationCode,
-                notes,
-                ghlAppointmentId,
-                ghlContactId
-              },
-              type: QueryTypes.UPDATE
-            }
-          );
-          logger.info(`[DualCal] [${callId}] Updated existing cancelled appointment`);
-        } else if (existing.length > 0) {
-          // Active appointment exists - slot is truly unavailable
-          throw new Error(`Time slot already booked by ${existing[0].customer_name}. Please choose a different time.`);
-        } else {
-          // Shouldn't happen - constraint violation but no matching row?
-          throw new Error(`Time slot unavailable - please choose a different time.`);
-        }
-      } else {
-        // Some other database error
-        logger.error(`[DualCal] [${callId}] SQL error: ${sqlError.message}`);
-        logger.error(`[DualCal] [${callId}] SQL error name: ${sqlError.name}`);
-        throw sqlError;
-      }
     }
 
     const appointment = result[0]?.[0];
