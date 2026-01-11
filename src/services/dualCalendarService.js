@@ -381,112 +381,88 @@ class DualCalendarService {
 
     let result;
     try {
-      // First, check if there's ANY existing appointment at this slot
-      // The unique constraint doesn't have a WHERE clause, so we need to handle this case
-      logger.info(`[DualCal] [${callId}] Checking for existing appointment BEFORE insert...`);
-      const existingAppointment = await sequelize.query(
-        `SELECT id, status, customer_name FROM appointments
-         WHERE client_id = :clientId
-           AND appointment_date = :appointmentDate
-           AND appointment_time = :appointmentTime
-         LIMIT 1`,
+      // Use INSERT with ON CONFLICT to handle race conditions and existing cancelled appointments
+      // This is atomic and avoids the check-then-insert race condition
+      logger.info(`[DualCal] [${callId}] Attempting INSERT with ON CONFLICT handling...`);
+
+      result = await sequelize.query(
+        `INSERT INTO appointments (
+          client_id, customer_name, customer_phone, customer_email,
+          appointment_date, appointment_time, duration, purpose,
+          status, source, confirmation_code, notes,
+          ghl_appointment_id, ghl_contact_id,
+          created_at, updated_at
+        ) VALUES (
+          :clientId, :customerName, :customerPhone, :customerEmail,
+          :appointmentDate, :appointmentTime, :duration, :purpose,
+          'confirmed', 'voice_booking', :confirmationCode, :notes,
+          :ghlAppointmentId, :ghlContactId,
+          NOW(), NOW()
+        )
+        ON CONFLICT (client_id, appointment_date, appointment_time)
+        DO UPDATE SET
+          customer_name = EXCLUDED.customer_name,
+          customer_phone = EXCLUDED.customer_phone,
+          customer_email = EXCLUDED.customer_email,
+          duration = EXCLUDED.duration,
+          purpose = EXCLUDED.purpose,
+          status = 'confirmed',
+          source = 'voice_booking',
+          confirmation_code = EXCLUDED.confirmation_code,
+          notes = EXCLUDED.notes,
+          ghl_appointment_id = EXCLUDED.ghl_appointment_id,
+          ghl_contact_id = EXCLUDED.ghl_contact_id,
+          updated_at = NOW()
+        WHERE appointments.status IN ('cancelled', 'completed', 'no-show')
+        RETURNING *`,
         {
-          replacements: { clientId, appointmentDate, appointmentTime },
-          type: QueryTypes.SELECT
+          replacements: {
+            clientId,
+            customerName,
+            customerPhone,
+            customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@booking.ringlypro.com`,
+            appointmentDate,
+            appointmentTime,
+            duration,
+            purpose,
+            confirmationCode,
+            notes,
+            ghlAppointmentId,
+            ghlContactId
+          },
+          type: QueryTypes.INSERT
         }
       );
 
-      logger.info(`[DualCal] [${callId}] Checked for existing appointment: clientId=${clientId}, date=${appointmentDate}, time=${appointmentTime}`);
-      logger.info(`[DualCal] [${callId}] Found existing: ${JSON.stringify(existingAppointment)}`);
-
-      if (existingAppointment.length > 0) {
-        const existing = existingAppointment[0];
-
-        // If the existing appointment is cancelled/completed/no-show, we can reuse it
-        if (['cancelled', 'completed', 'no-show'].includes(existing.status)) {
-          // Update the existing cancelled appointment instead of inserting
-          logger.info(`[DualCal] [${callId}] Found cancelled/completed appointment ${existing.id} at this slot, updating instead of inserting`);
-
-          result = await sequelize.query(
-            `UPDATE appointments SET
-              customer_name = :customerName,
-              customer_phone = :customerPhone,
-              customer_email = :customerEmail,
-              duration = :duration,
-              purpose = :purpose,
-              status = 'confirmed',
-              source = 'voice_booking',
-              confirmation_code = :confirmationCode,
-              notes = :notes,
-              ghl_appointment_id = :ghlAppointmentId,
-              ghl_contact_id = :ghlContactId,
-              updated_at = NOW()
-            WHERE id = :existingId
-            RETURNING *`,
-            {
-              replacements: {
-                existingId: existing.id,
-                customerName,
-                customerPhone,
-                customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@booking.ringlypro.com`,
-                duration,
-                purpose,
-                confirmationCode,
-                notes,
-                ghlAppointmentId,
-                ghlContactId
-              },
-              type: QueryTypes.UPDATE
-            }
-          );
-        } else {
-          // Active appointment exists - this slot is not actually available
-          logger.error(`[DualCal] [${callId}] Slot conflict: active appointment ${existing.id} (status: ${existing.status}) exists at ${appointmentDate} ${appointmentTime}`);
-          throw new Error(`Time slot already booked by ${existing.customer_name}. Please choose a different time.`);
-        }
-      } else {
-        // No existing appointment at this slot, do a normal insert
-        logger.info(`[DualCal] [${callId}] No existing appointment found, proceeding with INSERT`);
-        result = await sequelize.query(
-          `INSERT INTO appointments (
-            client_id, customer_name, customer_phone, customer_email,
-            appointment_date, appointment_time, duration, purpose,
-            status, source, confirmation_code, notes,
-            ghl_appointment_id, ghl_contact_id,
-            created_at, updated_at
-          ) VALUES (
-            :clientId, :customerName, :customerPhone, :customerEmail,
-            :appointmentDate, :appointmentTime, :duration, :purpose,
-            'confirmed', 'voice_booking', :confirmationCode, :notes,
-            :ghlAppointmentId, :ghlContactId,
-            NOW(), NOW()
-          ) RETURNING *`,
+      // Check if we actually inserted/updated - if not, the slot is taken by an active appointment
+      if (!result[0] || result[0].length === 0) {
+        // The ON CONFLICT DO UPDATE didn't run (status wasn't cancelled/completed/no-show)
+        // Check what's blocking us
+        const existing = await sequelize.query(
+          `SELECT id, status, customer_name FROM appointments
+           WHERE client_id = :clientId
+             AND appointment_date = :appointmentDate
+             AND appointment_time = :appointmentTime
+           LIMIT 1`,
           {
-            replacements: {
-              clientId,
-              customerName,
-              customerPhone,
-              customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@booking.ringlypro.com`,
-              appointmentDate,
-              appointmentTime,
-              duration,
-              purpose,
-              confirmationCode,
-              notes,
-              ghlAppointmentId,
-              ghlContactId
-            },
-            type: QueryTypes.INSERT
+            replacements: { clientId, appointmentDate, appointmentTime },
+            type: QueryTypes.SELECT
           }
         );
+
+        if (existing.length > 0) {
+          logger.error(`[DualCal] [${callId}] Slot blocked by active appointment: ${existing[0].id} (${existing[0].status})`);
+          throw new Error(`Time slot already booked by ${existing[0].customer_name}. Please choose a different time.`);
+        }
+        throw new Error(`Failed to create appointment - unknown conflict`);
       }
+
+      logger.info(`[DualCal] [${callId}] INSERT/UPSERT completed successfully`);
     } catch (sqlError) {
-      logger.error(`[DualCal] SQL error: ${sqlError.message}`);
-      logger.error(`[DualCal] SQL error name: ${sqlError.name}`);
-      logger.error(`[DualCal] SQL error parent: ${sqlError.parent?.message || 'none'}`);
-      logger.error(`[DualCal] SQL error original: ${sqlError.original?.message || 'none'}`);
-      logger.error(`[DualCal] SQL error detail: ${sqlError.original?.detail || sqlError.parent?.detail || 'none'}`);
-      logger.error(`[DualCal] Appointment data: clientId=${clientId}, date=${appointmentDate}, time=${appointmentTime}`);
+      logger.error(`[DualCal] [${callId}] SQL error: ${sqlError.message}`);
+      logger.error(`[DualCal] [${callId}] SQL error name: ${sqlError.name}`);
+      logger.error(`[DualCal] [${callId}] SQL error parent: ${sqlError.parent?.message || 'none'}`);
+      logger.error(`[DualCal] [${callId}] Appointment data: clientId=${clientId}, date=${appointmentDate}, time=${appointmentTime}`);
       throw sqlError;
     }
 
