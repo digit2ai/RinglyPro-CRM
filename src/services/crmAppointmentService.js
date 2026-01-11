@@ -10,6 +10,7 @@ const { QueryTypes } = require('sequelize');
 const ghlBookingService = require('./ghlBookingService');
 const hubspotBookingService = require('./hubspotBookingService');
 const vagaroService = require('./vagaroService');
+const zohoCalendarService = require('./zohoCalendarService');
 
 /**
  * Get enabled CRM integrations for a client
@@ -429,8 +430,42 @@ async function getDashboardAppointments(clientId, options = {}) {
   // Add source badge info to each appointment
   const appointmentsWithBadges = appointments.map(appt => ({
     ...appt,
-    sourceBadge: getSourceBadge(appt.source)
+    sourceBadge: getSourceBadge(appt.source),
+    _zohoEvent: false
   }));
+
+  // Fetch Zoho events if enabled
+  let zohoEvents = [];
+  let zohoCalendarActive = false;
+  try {
+    const zohoStatus = await zohoCalendarService.isZohoCalendarEnabled(clientId);
+    if (zohoStatus.enabled) {
+      const zohoResult = await zohoCalendarService.getEventsForCalendarDisplay(clientId, startDate, endDate);
+      if (zohoResult.success && zohoResult.events.length > 0) {
+        zohoEvents = zohoResult.events.map(evt => ({
+          ...evt,
+          sourceBadge: getSourceBadge('zoho')
+        }));
+        zohoCalendarActive = true;
+        logger.info(`[CRMAppointmentService] Client ${clientId}: Added ${zohoEvents.length} Zoho events to dashboard`);
+      }
+    }
+  } catch (zohoError) {
+    logger.warn(`[CRMAppointmentService] Zoho events skipped for client ${clientId}: ${zohoError.message}`);
+  }
+
+  // Merge RinglyPro appointments with Zoho events
+  const allAppointments = [...appointmentsWithBadges, ...zohoEvents];
+
+  // Sort by date and time
+  allAppointments.sort((a, b) => {
+    const dateA = a.appointment_date;
+    const dateB = b.appointment_date;
+    const timeA = a.appointment_time;
+    const timeB = b.appointment_time;
+    if (dateA !== dateB) return dateA.localeCompare(dateB);
+    return timeA.localeCompare(timeB);
+  });
 
   // Get last sync time
   const lastSyncResult = await sequelize.query(
@@ -442,12 +477,14 @@ async function getDashboardAppointments(clientId, options = {}) {
 
   return {
     success: true,
-    appointments: appointmentsWithBadges,
-    count: appointmentsWithBadges.length,
+    appointments: allAppointments,
+    count: allAppointments.length,
     dateRange: { startDate, endDate },
     lastSync: lastSyncResult[0]?.last_sync || null,
     syncResults,
-    integrations
+    integrations,
+    zohoCalendarActive,
+    zohoEventsCount: zohoEvents.length
   };
 }
 
@@ -462,6 +499,8 @@ function getSourceBadge(source) {
     'whatsapp_hubspot': { label: 'HubSpot', color: '#ff7a59', bgColor: '#ffe8e2' },
     'vagaro_sync': { label: 'Vagaro', color: '#8b5cf6', bgColor: '#ede9fe' },
     'whatsapp_vagaro': { label: 'Vagaro', color: '#8b5cf6', bgColor: '#ede9fe' },
+    'zoho': { label: 'Zoho', color: '#dc2626', bgColor: '#fee2e2' },
+    'zoho_sync': { label: 'Zoho', color: '#dc2626', bgColor: '#fee2e2' },
     'voice_booking': { label: 'Voice', color: '#3b82f6', bgColor: '#dbeafe' },
     'whatsapp': { label: 'WhatsApp', color: '#25D366', bgColor: '#dcfce7' },
     'online': { label: 'Online', color: '#0ea5e9', bgColor: '#e0f2fe' },
