@@ -602,9 +602,15 @@ class DualCalendarService {
 
     } catch (error) {
       logger.error(`[DualCal] Dual appointment creation error: ${error.message}`);
+      logger.error(`[DualCal] Error stack: ${error.stack}`);
+      if (error.name === 'SequelizeValidationError') {
+        logger.error(`[DualCal] Validation errors: ${error.errors?.map(e => e.message).join(', ')}`);
+      }
       return {
         success: false,
-        error: error.message,
+        error: error.name === 'SequelizeValidationError'
+          ? `Validation error: ${error.errors?.map(e => e.message).join(', ')}`
+          : error.message,
         dualModeActive: false,
         googleCalendarActive: false,
         zohoCalendarActive: false
