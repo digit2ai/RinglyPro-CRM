@@ -12,6 +12,7 @@
  * Bookings can be synced to all enabled calendars.
  *
  * @module dualCalendarService
+ * @version 2026.01.11
  */
 
 const axios = require('axios');
