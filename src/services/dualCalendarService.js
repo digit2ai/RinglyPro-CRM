@@ -466,7 +466,11 @@ class DualCalendarService {
       }
     } catch (sqlError) {
       logger.error(`[DualCal] SQL error: ${sqlError.message}`);
-      logger.error(`[DualCal] SQL error details:`, sqlError);
+      logger.error(`[DualCal] SQL error name: ${sqlError.name}`);
+      logger.error(`[DualCal] SQL error parent: ${sqlError.parent?.message || 'none'}`);
+      logger.error(`[DualCal] SQL error original: ${sqlError.original?.message || 'none'}`);
+      logger.error(`[DualCal] SQL error detail: ${sqlError.original?.detail || sqlError.parent?.detail || 'none'}`);
+      logger.error(`[DualCal] Appointment data: clientId=${clientId}, date=${appointmentDate}, time=${appointmentTime}`);
       throw sqlError;
     }
 
