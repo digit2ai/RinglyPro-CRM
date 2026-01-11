@@ -6,9 +6,12 @@
  *
  * Tools available:
  * - get_business_info: Get client business details
- * - check_availability: Get available appointment slots
- * - book_appointment: Create appointment in RinglyPro + sync to GHL
+ * - check_availability: Get available appointment slots (uses RinglyPro calendar)
+ * - book_appointment: Create appointment in RinglyPro calendar
  * - send_sms: Send SMS confirmation
+ *
+ * NOTE: This now uses RinglyPro's native calendar system instead of GHL.
+ * Appointments are stored in the RinglyPro database and shown on the dashboard.
  */
 
 const express = require('express');
@@ -17,7 +20,7 @@ const logger = require('../utils/logger');
 const { sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 const appointmentService = require('../services/appointmentService');
-const ghlBookingService = require('../services/ghlBookingService');
+const availabilityService = require('../services/availabilityService');
 const twilio = require('twilio');
 
 // Initialize Twilio client for SMS
@@ -120,6 +123,7 @@ router.post('/', async (req, res) => {
 
 /**
  * Get business information for personalization
+ * Returns client's business details and calendar configuration.
  */
 async function handleGetBusinessInfo(params) {
   const { client_id, called_number } = params;
@@ -154,8 +158,7 @@ async function handleGetBusinessInfo(params) {
         business_days,
         timezone,
         appointment_duration,
-        booking_url,
-        settings->'integration'->'ghl' as ghl_settings
+        booking_url
       FROM clients
       WHERE ${whereClause} AND active = true
     `, { replacements, type: QueryTypes.SELECT });
@@ -165,7 +168,6 @@ async function handleGetBusinessInfo(params) {
     }
 
     const client = clients[0];
-    const ghlSettings = client.ghl_settings || {};
 
     return {
       success: true,
@@ -178,8 +180,7 @@ async function handleGetBusinessInfo(params) {
       appointment_duration: client.appointment_duration || 30,
       booking_url: client.booking_url,
       client_id: client.id,
-      ghl_calendar_id: ghlSettings.calendarId,
-      ghl_location_id: ghlSettings.locationId
+      calendar_type: 'ringlypro'  // Indicates we're using RinglyPro calendar
     };
 
   } catch (error) {
@@ -190,18 +191,15 @@ async function handleGetBusinessInfo(params) {
 
 /**
  * Check availability for appointments
- * UPDATED: Now returns all slots without artificial limits,
- * respecting the actual GHL calendar availability
+ * UPDATED: Now uses RinglyPro's native calendar system instead of GHL.
+ * Checks against appointments stored in the RinglyPro database.
  */
 async function handleCheckAvailability(params) {
   const {
     client_id,
     date,
-    days_ahead = 30,  // Changed from 7 to 30 to match user expectations
-    timezone = 'America/New_York',
-    ghl_calendar_id,
-    ghl_location_id,
-    ghl_api_key  // Allow passing API key directly for flexibility
+    days_ahead = 7,
+    timezone = 'America/New_York'
   } = params;
 
   try {
@@ -209,93 +207,40 @@ async function handleCheckAvailability(params) {
       return { success: false, error: 'Missing client_id' };
     }
 
-    // Get client's GHL settings if not provided
-    let calendarId = ghl_calendar_id;
-    let locationId = ghl_location_id;
+    logger.info(`[ElevenLabs Tools] Checking RinglyPro calendar availability for client ${client_id}`);
 
-    if (!calendarId) {
-      const clients = await sequelize.query(`
-        SELECT
-          settings->'integration'->'ghl'->>'calendarId' as calendar_id,
-          settings->'integration'->'ghl'->>'locationId' as location_id,
-          ghl_api_key
-        FROM clients WHERE id = :clientId
-      `, { replacements: { clientId: client_id }, type: QueryTypes.SELECT });
+    // Calculate date range
+    const startDate = date || new Date().toISOString().split('T')[0];
+    const endDate = new Date(Date.now() + (parseInt(days_ahead) || 7) * 86400000).toISOString().split('T')[0];
 
-      if (clients && clients.length > 0) {
-        calendarId = clients[0].calendar_id;
-        locationId = clients[0].location_id;
-      }
-    }
-
-    if (!calendarId) {
-      return { success: false, error: 'No GHL calendar configured for this client' };
-    }
-
-    // Calculate date range - GHL API requires Unix timestamps in milliseconds
-    const startTimestamp = date ? new Date(date).getTime() : Date.now();
-    const endTimestamp = startTimestamp + (parseInt(days_ahead) || 30) * 86400000;
-
-    // Get API key - prefer passed key, then from credentials
-    let apiKey = ghl_api_key;
-    if (!apiKey) {
-      const credentials = await ghlBookingService.getClientCredentials(client_id);
-      apiKey = credentials?.apiKey;
-    }
-
-    if (!apiKey) {
-      return { success: false, error: 'GHL API key not configured' };
-    }
-
-    // Call GHL API directly for availability
-    // NOTE: This API uses the calendar's openHours settings, NOT the user's Schedule availability
-    // The GHL Calendar View uses Schedule availability, but the API uses openHours (which may be cached)
-    const response = await fetch(
-      `https://services.leadconnectorhq.com/calendars/${calendarId}/free-slots?startDate=${startTimestamp}&endDate=${endTimestamp}&timezone=${timezone}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Version': '2021-07-28'
-        }
-      }
+    // Use RinglyPro's availability service
+    const result = await availabilityService.getAvailableSlotsForRange(
+      client_id,
+      startDate,
+      endDate
     );
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      return { success: false, error: data.message || 'Failed to fetch slots' };
+    if (!result.success) {
+      return { success: false, error: result.error || 'Failed to fetch availability' };
     }
 
-    // Flatten slots - GHL returns { "YYYY-MM-DD": { "slots": [...] }, ... }
-    // UPDATED: Return ALL slots instead of limiting to 2 per day
-    const slots = [];
-    const sortedDates = Object.keys(data || {}).filter(k => k !== 'traceId' && data[k]).sort();
+    // Format slots for ElevenLabs
+    const slots = result.slots.map(slot => ({
+      date: slot.date,
+      time: slot.time,
+      datetime: slot.datetime || `${slot.date}T${slot.time}`,
+      displayDate: slot.displayDate,
+      displayTime: slot.displayTime
+    }));
 
-    for (const dateKey of sortedDates) {
-      const dayData = data[dateKey];
-      // Handle both formats: { slots: [...] } or direct array
-      const timeSlots = dayData.slots || (Array.isArray(dayData) ? dayData : []);
-
-      if (Array.isArray(timeSlots)) {
-        for (const slot of timeSlots) {
-          const time = typeof slot === 'string' ? slot : slot.startTime || slot.start;
-          if (time) {
-            slots.push({
-              date: dateKey,
-              time: time,
-              datetime: time
-            });
-          }
-        }
-      }
-    }
+    logger.info(`[ElevenLabs Tools] Found ${slots.length} available slots from RinglyPro calendar`);
 
     return {
       success: true,
-      calendar_id: calendarId,
+      calendar_type: 'ringlypro',
       timezone,
-      start_date: new Date(startTimestamp).toISOString().split('T')[0],
-      end_date: new Date(endTimestamp).toISOString().split('T')[0],
+      start_date: startDate,
+      end_date: endDate,
       slots,
       slot_count: slots.length
     };
@@ -308,6 +253,8 @@ async function handleCheckAvailability(params) {
 
 /**
  * Book an appointment
+ * UPDATED: Now books directly to RinglyPro calendar only (no GHL sync).
+ * Appointments appear on the RinglyPro dashboard.
  */
 async function handleBookAppointment(params) {
   const {
@@ -326,9 +273,7 @@ async function handleBookAppointment(params) {
     start_time,
     startTime,
     duration = 30,
-    purpose = 'Phone booking via AI Assistant',
-    ghl_calendar_id,
-    ghl_contact_id
+    purpose = 'Phone booking via AI Assistant'
   } = params;
 
   try {
@@ -361,6 +306,15 @@ async function handleBookAppointment(params) {
       finalTime = dt.toISOString().split('T')[1].substring(0, 5);
     }
 
+    // Verify the slot is still available before booking
+    const isAvailable = await availabilityService.isSlotAvailable(client_id, finalDate, finalTime);
+    if (!isAvailable) {
+      return {
+        success: false,
+        error: `Sorry, the ${finalTime} slot on ${finalDate} is no longer available. Please choose another time.`
+      };
+    }
+
     // Build appointment data
     const appointmentData = {
       customer_name: name,
@@ -370,47 +324,19 @@ async function handleBookAppointment(params) {
       appointment_time: finalTime,
       duration: parseInt(duration),
       purpose,
-      source: 'voice_booking'  // Use valid enum value (elevenlabs_voice not in enum)
+      source: 'voice_booking'
     };
 
-    logger.info(`[ElevenLabs Tools] Booking appointment for client ${client_id}:`, appointmentData);
+    logger.info(`[ElevenLabs Tools] Booking RinglyPro appointment for client ${client_id}:`, appointmentData);
 
-    // Use the appointment service to create the appointment
+    // Use the appointment service to create the appointment in RinglyPro
     const result = await appointmentService.bookAppointment(client_id, appointmentData);
 
     if (!result.success) {
       return { success: false, error: result.error || 'Failed to book appointment' };
     }
 
-    // Also sync to GHL if configured
-    try {
-      logger.info(`[ElevenLabs Tools] Attempting GHL sync with:`, {
-        clientId: client_id,
-        customerName: name,
-        customerPhone: phoneNum,
-        date: finalDate,
-        time: finalTime,
-        calendarId: ghl_calendar_id
-      });
-
-      const ghlResult = await ghlBookingService.bookFromWhatsApp(client_id, {
-        customerName: name,
-        customerPhone: phoneNum,
-        customerEmail: emailAddr,
-        date: finalDate,
-        time: finalTime,
-        service: purpose,
-        calendarId: ghl_calendar_id
-      });
-
-      if (ghlResult.success) {
-        logger.info(`[ElevenLabs Tools] GHL sync SUCCESS: ${ghlResult.appointment?.id}`);
-      } else {
-        logger.error(`[ElevenLabs Tools] GHL sync FAILED: ${ghlResult.error}`, ghlResult);
-      }
-    } catch (ghlError) {
-      logger.error(`[ElevenLabs Tools] GHL sync EXCEPTION: ${ghlError.message}`, ghlError.stack);
-    }
+    logger.info(`[ElevenLabs Tools] RinglyPro appointment created: ${result.appointment?.id}`);
 
     return {
       success: true,
@@ -420,7 +346,8 @@ async function handleBookAppointment(params) {
       appointment_date: finalDate,
       appointment_time: finalTime,
       customer_name: name,
-      customer_phone: phoneNum
+      customer_phone: phoneNum,
+      calendar_type: 'ringlypro'
     };
 
   } catch (error) {
