@@ -1,13 +1,15 @@
 /**
  * Dual Calendar Service
- * Handles dual-mode calendar integration for Client 15
+ * Handles multi-calendar integration for RinglyPro
  *
- * When GHL toggle is ON:
- *   - Check availability in BOTH RinglyPro database AND GHL calendar
- *   - Book appointments in BOTH systems
+ * Supports:
+ *   - RinglyPro database calendar (always active)
+ *   - GHL calendar sync (when enabled)
+ *   - Google Calendar sync (when connected)
+ *   - Zoho CRM Events sync (when connected)
  *
- * When GHL toggle is OFF (default):
- *   - Only use RinglyPro database calendar
+ * Availability checking respects ALL enabled calendar sources.
+ * Bookings can be synced to all enabled calendars.
  *
  * @module dualCalendarService
  */
@@ -18,6 +20,7 @@ const { sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 const ghlBookingService = require('./ghlBookingService');
 const googleCalendarService = require('./googleCalendarService');
+const zohoCalendarService = require('./zohoCalendarService');
 const GoogleCalendarIntegration = require('../models/GoogleCalendarIntegration');
 
 const GHL_BASE_URL = 'https://services.leadconnectorhq.com';
@@ -218,12 +221,29 @@ class DualCalendarService {
   }
 
   /**
-   * Get COMBINED availability from RinglyPro, GHL, and Google Calendar
+   * Get Zoho CRM blocked slots for a date
+   * @param {number} clientId - Client ID
+   * @param {string} date - Date (YYYY-MM-DD)
+   * @param {object} businessHours - { start: number, end: number, slotDuration: number }
+   * @returns {Promise<string[]>} Array of BLOCKED time slots (HH:MM:SS format)
+   */
+  async getZohoBlockedSlots(clientId, date, businessHours = { start: 9, end: 17, slotDuration: 60 }) {
+    try {
+      return await zohoCalendarService.getBlockedSlots(clientId, date, businessHours);
+    } catch (error) {
+      logger.error(`[DualCal] Zoho Calendar availability error: ${error.message}`);
+      // Fail open - don't block slots if Zoho check fails
+      return [];
+    }
+  }
+
+  /**
+   * Get COMBINED availability from RinglyPro, GHL, Google Calendar, and Zoho CRM
    * Only returns slots that are available in ALL applicable systems
    * @param {number} clientId - Client ID
    * @param {string} date - Date (YYYY-MM-DD)
    * @param {object} options - { businessHours, calendarId }
-   * @returns {Promise<object>} { availableSlots, ringlyProSlots, ghlSlots, googleBlockedSlots, dualModeActive }
+   * @returns {Promise<object>} { availableSlots, ringlyProSlots, ghlSlots, googleBlockedSlots, zohoBlockedSlots, dualModeActive }
    */
   async getCombinedAvailability(clientId, date, options = {}) {
     const { businessHours = { start: 9, end: 17, slotDuration: 60 }, calendarId } = options;
@@ -247,40 +267,60 @@ class DualCalendarService {
         googleCalendarActive = !!(googleIntegration && googleIntegration.syncBlockedTimes);
       }
 
-      // Filter out Google Calendar blocked slots from RinglyPro slots
-      let availableAfterGoogle = ringlyProSlots.filter(slot => !googleBlockedSlots.includes(slot));
+      // Get Zoho CRM blocked slots
+      let zohoBlockedSlots = [];
+      let zohoCalendarActive = false;
+      const zohoStatus = await zohoCalendarService.isZohoCalendarEnabled(clientId);
+      if (zohoStatus.enabled && zohoStatus.syncCalendar) {
+        zohoBlockedSlots = await this.getZohoBlockedSlots(clientId, date, businessHours);
+        zohoCalendarActive = true;
+        logger.info(`[DualCal] Zoho Calendar: ${zohoBlockedSlots.length} slots blocked on ${date} for client ${clientId}`);
+      }
+
+      // Filter out Google Calendar and Zoho blocked slots from RinglyPro slots
+      let availableAfterExternal = ringlyProSlots
+        .filter(slot => !googleBlockedSlots.includes(slot))
+        .filter(slot => !zohoBlockedSlots.includes(slot));
 
       if (!dualMode.enabled) {
-        // Dual mode OFF - use RinglyPro filtered by Google Calendar
-        logger.info(`[DualCal] Client ${clientId}: Dual mode OFF, using RinglyPro + Google Calendar`);
+        // GHL dual mode OFF - use RinglyPro filtered by Google Calendar + Zoho
+        const sources = ['ringlypro'];
+        if (googleCalendarActive) sources.push('google');
+        if (zohoCalendarActive) sources.push('zoho');
+
+        logger.info(`[DualCal] Client ${clientId}: GHL dual mode OFF, using ${sources.join(' + ')}`);
         return {
-          availableSlots: availableAfterGoogle,
+          availableSlots: availableAfterExternal,
           ringlyProSlots,
           ghlSlots: [],
           googleBlockedSlots,
+          zohoBlockedSlots,
           googleCalendarActive,
+          zohoCalendarActive,
           dualModeActive: false,
-          source: googleCalendarActive ? 'ringlypro_google' : 'ringlypro_only'
+          source: sources.join('_')
         };
       }
 
-      // Dual mode ON - get GHL availability too
+      // GHL Dual mode ON - get GHL availability too
       const effectiveCalendarId = calendarId || dualMode.calendarId;
       const ghlSlots = await this.getGHLAvailability(clientId, date, effectiveCalendarId);
 
       // Find intersection - slots available in ALL systems
-      const combinedSlots = availableAfterGoogle.filter(slot => ghlSlots.includes(slot));
+      const combinedSlots = availableAfterExternal.filter(slot => ghlSlots.includes(slot));
 
-      logger.info(`[DualCal] Client ${clientId}: Combined availability: ${combinedSlots.length} slots (RP: ${ringlyProSlots.length}, GHL: ${ghlSlots.length}, Google blocked: ${googleBlockedSlots.length})`);
+      logger.info(`[DualCal] Client ${clientId}: Combined availability: ${combinedSlots.length} slots (RP: ${ringlyProSlots.length}, GHL: ${ghlSlots.length}, Google blocked: ${googleBlockedSlots.length}, Zoho blocked: ${zohoBlockedSlots.length})`);
 
       return {
         availableSlots: combinedSlots,
         ringlyProSlots,
         ghlSlots,
         googleBlockedSlots,
+        zohoBlockedSlots,
         googleCalendarActive,
+        zohoCalendarActive,
         dualModeActive: true,
-        source: googleCalendarActive ? 'dual_calendar_google' : 'dual_calendar'
+        source: zohoCalendarActive ? 'dual_calendar_zoho' : (googleCalendarActive ? 'dual_calendar_google' : 'dual_calendar')
       };
     } catch (error) {
       logger.error(`[DualCal] Combined availability error: ${error.message}`);
@@ -292,7 +332,9 @@ class DualCalendarService {
         ringlyProSlots,
         ghlSlots: [],
         googleBlockedSlots: [],
+        zohoBlockedSlots: [],
         googleCalendarActive: false,
+        zohoCalendarActive: false,
         dualModeActive: false,
         source: 'ringlypro_fallback',
         error: error.message
@@ -427,18 +469,70 @@ class DualCalendarService {
   /**
    * Build human-readable result message
    */
-  buildResultMessage(ghlActive, googleActive) {
+  buildResultMessage(ghlActive, googleActive, zohoActive) {
     const parts = ['RinglyPro'];
     if (ghlActive) parts.push('GHL');
     if (googleActive) parts.push('Google Calendar');
+    if (zohoActive) parts.push('Zoho CRM');
     return `Appointment created in ${parts.join(', ')}`;
   }
 
   /**
-   * Create appointment in BOTH RinglyPro and GHL (if dual mode enabled), plus Google Calendar
+   * Sync appointment to Zoho CRM as an Event
+   * @param {number} clientId - Client ID
+   * @param {object} appointment - Appointment data (from RinglyPro database)
+   * @returns {Promise<object|null>} Zoho event or null
+   */
+  async syncToZohoCalendar(clientId, appointment) {
+    try {
+      // Check if Zoho is enabled for creating events
+      const zohoStatus = await zohoCalendarService.isZohoCalendarEnabled(clientId);
+      if (!zohoStatus.enabled || !zohoStatus.createEvents) {
+        logger.info(`[DualCal] Client ${clientId}: Zoho event creation not enabled`);
+        return null;
+      }
+
+      // Parse appointment date and time
+      const appointmentDate = appointment.appointmentDate || appointment.appointment_date;
+      const appointmentTime = appointment.appointmentTime || appointment.appointment_time;
+      const duration = appointment.duration || 60;
+
+      const startTime = new Date(`${appointmentDate}T${appointmentTime}`);
+      const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
+
+      const eventResult = await zohoCalendarService.createEvent(clientId, {
+        appointmentId: appointment.id,
+        title: appointment.purpose || 'RinglyPro Appointment',
+        customerName: appointment.customerName || appointment.customer_name,
+        customerPhone: appointment.customerPhone || appointment.customer_phone,
+        customerEmail: appointment.customerEmail || appointment.customer_email,
+        startTime,
+        endTime,
+        duration,
+        purpose: appointment.purpose,
+        description: appointment.notes,
+        confirmationCode: appointment.confirmationCode || appointment.confirmation_code
+      });
+
+      if (eventResult.success) {
+        logger.info(`[DualCal] Zoho event created: ${eventResult.event.id} for appointment ${appointment.id}`);
+        return eventResult.event;
+      }
+
+      logger.warn(`[DualCal] Zoho event creation failed: ${eventResult.error}`);
+      return null;
+
+    } catch (error) {
+      logger.error(`[DualCal] Zoho Calendar sync error: ${error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Create appointment in BOTH RinglyPro and GHL (if dual mode enabled), plus Google Calendar and Zoho
    * @param {number} clientId - Client ID
    * @param {object} appointmentData - Appointment details
-   * @returns {Promise<object>} { success, ringlyProAppointment, ghlAppointment, googleEvent, dualModeActive }
+   * @returns {Promise<object>} { success, ringlyProAppointment, ghlAppointment, googleEvent, zohoEvent, dualModeActive }
    */
   async createDualAppointment(clientId, appointmentData) {
     try {
@@ -448,9 +542,9 @@ class DualCalendarService {
       let ghlContactId = null;
       let ghlResult = null;
 
-      // If dual mode is ON, create in GHL first
+      // If GHL dual mode is ON, create in GHL first
       if (dualMode.enabled) {
-        logger.info(`[DualCal] Client ${clientId}: Dual mode ON, creating in GHL first`);
+        logger.info(`[DualCal] Client ${clientId}: GHL dual mode ON, creating in GHL first`);
 
         ghlResult = await ghlBookingService.bookFromWhatsApp(clientId, {
           customerName: appointmentData.customerName,
@@ -489,15 +583,21 @@ class DualCalendarService {
         googleEvent = await this.syncToGoogleCalendar(clientId, ringlyProAppointment);
       }
 
+      // Sync to Zoho CRM (if enabled)
+      let zohoEvent = null;
+      zohoEvent = await this.syncToZohoCalendar(clientId, ringlyProAppointment);
+
       return {
         success: true,
         ringlyProAppointment,
         ghlAppointment: ghlResult?.appointment || null,
         ghlContact: ghlResult?.contact || null,
         googleEvent,
+        zohoEvent,
         dualModeActive: dualMode.enabled,
         googleCalendarActive: !!googleEvent,
-        message: this.buildResultMessage(dualMode.enabled, !!googleEvent)
+        zohoCalendarActive: !!zohoEvent,
+        message: this.buildResultMessage(dualMode.enabled, !!googleEvent, !!zohoEvent)
       };
 
     } catch (error) {
@@ -506,7 +606,8 @@ class DualCalendarService {
         success: false,
         error: error.message,
         dualModeActive: false,
-        googleCalendarActive: false
+        googleCalendarActive: false,
+        zohoCalendarActive: false
       };
     }
   }

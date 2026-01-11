@@ -21,6 +21,7 @@ const { sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 const appointmentService = require('../services/appointmentService');
 const availabilityService = require('../services/availabilityService');
+const dualCalendarService = require('../services/dualCalendarService');
 const twilio = require('twilio');
 
 // Initialize Twilio client for SMS
@@ -191,8 +192,11 @@ async function handleGetBusinessInfo(params) {
 
 /**
  * Check availability for appointments
- * UPDATED: Now uses RinglyPro's native calendar system instead of GHL.
- * Checks against appointments stored in the RinglyPro database.
+ * UPDATED: Now uses dualCalendarService which checks:
+ * - RinglyPro database appointments
+ * - Google Calendar blocked times (if connected)
+ * - Zoho CRM Events (if connected)
+ * - GHL calendar (if dual mode enabled)
  */
 async function handleCheckAvailability(params) {
   const {
@@ -207,42 +211,66 @@ async function handleCheckAvailability(params) {
       return { success: false, error: 'Missing client_id' };
     }
 
-    logger.info(`[ElevenLabs Tools] Checking RinglyPro calendar availability for client ${client_id}`);
+    logger.info(`[ElevenLabs Tools] Checking combined calendar availability for client ${client_id}`);
 
     // Calculate date range
     const startDate = date || new Date().toISOString().split('T')[0];
-    const endDate = new Date(Date.now() + (parseInt(days_ahead) || 7) * 86400000).toISOString().split('T')[0];
+    const numDays = parseInt(days_ahead) || 7;
 
-    // Use RinglyPro's availability service
-    const result = await availabilityService.getAvailableSlotsForRange(
-      client_id,
-      startDate,
-      endDate
-    );
+    // Get combined availability from all calendar sources
+    const allSlots = [];
+    let zohoCalendarActive = false;
+    let googleCalendarActive = false;
+    let source = 'ringlypro';
 
-    if (!result.success) {
-      return { success: false, error: result.error || 'Failed to fetch availability' };
+    for (let i = 0; i < numDays; i++) {
+      const currentDate = new Date(Date.now() + i * 86400000);
+      const dateStr = currentDate.toISOString().split('T')[0];
+
+      // Use dualCalendarService which now checks RinglyPro + Zoho + Google + GHL
+      const dayAvailability = await dualCalendarService.getCombinedAvailability(client_id, dateStr, {
+        businessHours: { start: 9, end: 17, slotDuration: 60 }
+      });
+
+      // Track which calendars are active
+      if (dayAvailability.zohoCalendarActive) zohoCalendarActive = true;
+      if (dayAvailability.googleCalendarActive) googleCalendarActive = true;
+      source = dayAvailability.source || source;
+
+      // Convert time slots to full slot objects
+      dayAvailability.availableSlots.forEach(timeStr => {
+        const hour = parseInt(timeStr.split(':')[0]);
+        const minute = parseInt(timeStr.split(':')[1]);
+        const displayTime = new Date(2000, 0, 1, hour, minute).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+
+        allSlots.push({
+          date: dateStr,
+          time: timeStr,
+          datetime: `${dateStr}T${timeStr}`,
+          displayDate: currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
+          displayTime
+        });
+      });
     }
 
-    // Format slots for ElevenLabs
-    const slots = result.slots.map(slot => ({
-      date: slot.date,
-      time: slot.time,
-      datetime: slot.datetime || `${slot.date}T${slot.time}`,
-      displayDate: slot.displayDate,
-      displayTime: slot.displayTime
-    }));
+    const endDate = new Date(Date.now() + numDays * 86400000).toISOString().split('T')[0];
 
-    logger.info(`[ElevenLabs Tools] Found ${slots.length} available slots from RinglyPro calendar`);
+    logger.info(`[ElevenLabs Tools] Found ${allSlots.length} available slots (source: ${source}, zoho: ${zohoCalendarActive}, google: ${googleCalendarActive})`);
 
     return {
       success: true,
-      calendar_type: 'ringlypro',
+      calendar_type: source,
       timezone,
       start_date: startDate,
       end_date: endDate,
-      slots,
-      slot_count: slots.length
+      slots: allSlots,
+      slot_count: allSlots.length,
+      zohoCalendarActive,
+      googleCalendarActive
     };
 
   } catch (error) {
@@ -253,8 +281,11 @@ async function handleCheckAvailability(params) {
 
 /**
  * Book an appointment
- * UPDATED: Now books directly to RinglyPro calendar only (no GHL sync).
- * Appointments appear on the RinglyPro dashboard.
+ * UPDATED: Now uses dualCalendarService which syncs to:
+ * - RinglyPro database (always)
+ * - Google Calendar (if connected)
+ * - Zoho CRM Events (if connected)
+ * - GHL calendar (if dual mode enabled)
  */
 async function handleBookAppointment(params) {
   const {
@@ -306,48 +337,54 @@ async function handleBookAppointment(params) {
       finalTime = dt.toISOString().split('T')[1].substring(0, 5);
     }
 
-    // Verify the slot is still available before booking
-    const isAvailable = await availabilityService.isSlotAvailable(client_id, finalDate, finalTime);
-    if (!isAvailable) {
+    // Normalize time to HH:MM:SS format for dualCalendarService
+    const normalizedTime = finalTime.length === 5 ? `${finalTime}:00` : finalTime;
+
+    // Verify the slot is still available in ALL connected calendars before booking
+    const slotCheck = await dualCalendarService.isSlotAvailable(client_id, finalDate, normalizedTime);
+    if (!slotCheck.available) {
       return {
         success: false,
         error: `Sorry, the ${finalTime} slot on ${finalDate} is no longer available. Please choose another time.`
       };
     }
 
-    // Build appointment data
+    // Build appointment data for dualCalendarService
     const appointmentData = {
-      customer_name: name,
-      customer_phone: phoneNum,
-      customer_email: emailAddr || `${phoneNum.replace(/\D/g, '')}@phone.ringlypro.com`,
-      appointment_date: finalDate,
-      appointment_time: finalTime,
+      customerName: name,
+      customerPhone: phoneNum,
+      customerEmail: emailAddr || `${phoneNum.replace(/\D/g, '')}@phone.ringlypro.com`,
+      appointmentDate: finalDate,
+      appointmentTime: normalizedTime,
       duration: parseInt(duration),
       purpose,
-      source: 'voice_booking'
+      notes: 'Booked via ElevenLabs AI Voice Assistant'
     };
 
-    logger.info(`[ElevenLabs Tools] Booking RinglyPro appointment for client ${client_id}:`, appointmentData);
+    logger.info(`[ElevenLabs Tools] Booking appointment for client ${client_id}:`, appointmentData);
 
-    // Use the appointment service to create the appointment in RinglyPro
-    const result = await appointmentService.bookAppointment(client_id, appointmentData);
+    // Use dualCalendarService to create appointment in all connected calendars
+    const result = await dualCalendarService.createDualAppointment(client_id, appointmentData);
 
     if (!result.success) {
       return { success: false, error: result.error || 'Failed to book appointment' };
     }
 
-    logger.info(`[ElevenLabs Tools] RinglyPro appointment created: ${result.appointment?.id}`);
+    logger.info(`[ElevenLabs Tools] Appointment created: ${result.ringlyProAppointment?.id} (Zoho: ${result.zohoCalendarActive}, Google: ${result.googleCalendarActive})`);
 
     return {
       success: true,
-      message: `Appointment booked successfully for ${name}`,
-      appointment_id: result.appointment?.id,
-      confirmation_code: result.confirmation_code || result.appointment?.confirmation_code,
+      message: result.message || `Appointment booked successfully for ${name}`,
+      appointment_id: result.ringlyProAppointment?.id,
+      confirmation_code: result.ringlyProAppointment?.confirmation_code || result.ringlyProAppointment?.confirmationCode,
       appointment_date: finalDate,
       appointment_time: finalTime,
       customer_name: name,
       customer_phone: phoneNum,
-      calendar_type: 'ringlypro'
+      calendar_type: result.zohoCalendarActive ? 'ringlypro_zoho' : 'ringlypro',
+      zohoCalendarActive: result.zohoCalendarActive,
+      googleCalendarActive: result.googleCalendarActive,
+      zohoEventId: result.zohoEvent?.id
     };
 
   } catch (error) {

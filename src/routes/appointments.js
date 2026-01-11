@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { Appointment, sequelize } = require('../models');
 const crmAppointmentService = require('../services/crmAppointmentService');
 const dualCalendarService = require('../services/dualCalendarService');
+const zohoCalendarService = require('../services/zohoCalendarService');
 const router = express.Router();
 
 // Middleware to extract and verify client_id from JWT token
@@ -76,7 +77,7 @@ router.get('/dual-calendar-status', async (req, res) => {
 });
 
 // Get all appointments FOR THIS CLIENT ONLY
-// Includes auto-sync from GHL if configured
+// Includes auto-sync from GHL if configured and Zoho events
 router.get('/', async (req, res) => {
   try {
     // Auto-sync from GHL in background (non-blocking) - only sync 7 days
@@ -100,6 +101,7 @@ router.get('/', async (req, res) => {
       });
     }
 
+    // Get RinglyPro appointments
     const appointments = await Appointment.findAll({
       where: {
         clientId: req.clientId
@@ -107,12 +109,63 @@ router.get('/', async (req, res) => {
       order: [['appointmentDate', 'ASC'], ['appointmentTime', 'ASC']]
     });
 
-    console.log(`📋 Client ${req.clientId}: Found ${appointments.length} total appointments`);
+    console.log(`📋 Client ${req.clientId}: Found ${appointments.length} RinglyPro appointments`);
+
+    // Check if we should include Zoho events
+    const includeZoho = req.query.includeZoho !== 'false';
+    let zohoEvents = [];
+    let zohoCalendarActive = false;
+
+    if (includeZoho) {
+      try {
+        const zohoStatus = await zohoCalendarService.isZohoCalendarEnabled(req.clientId);
+        if (zohoStatus.enabled) {
+          // Get Zoho events for the next 30 days
+          const today = new Date();
+          const startDate = today.toISOString().split('T')[0];
+          const endDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+          const zohoResult = await zohoCalendarService.getEventsForCalendarDisplay(req.clientId, startDate, endDate);
+          if (zohoResult.success) {
+            zohoEvents = zohoResult.events;
+            zohoCalendarActive = true;
+            console.log(`📆 Client ${req.clientId}: Found ${zohoEvents.length} Zoho events`);
+          }
+        }
+      } catch (zohoError) {
+        console.log(`⚠️ Zoho sync skipped for client ${req.clientId}:`, zohoError.message);
+      }
+    }
+
+    // Merge RinglyPro appointments with Zoho events
+    const allAppointments = [
+      ...appointments.map(apt => ({
+        ...apt.get({ plain: true }),
+        source: apt.source || 'ringlypro',
+        _zohoEvent: false
+      })),
+      ...zohoEvents
+    ];
+
+    // Sort by date and time
+    allAppointments.sort((a, b) => {
+      const dateA = a.appointment_date || a.appointmentDate;
+      const dateB = b.appointment_date || b.appointmentDate;
+      const timeA = a.appointment_time || a.appointmentTime;
+      const timeB = b.appointment_time || b.appointmentTime;
+
+      if (dateA !== dateB) {
+        return dateA.localeCompare(dateB);
+      }
+      return timeA.localeCompare(timeB);
+    });
 
     res.json({
       success: true,
-      count: appointments.length,
-      appointments: appointments
+      count: allAppointments.length,
+      appointments: allAppointments,
+      zohoCalendarActive,
+      zohoEventsCount: zohoEvents.length
     });
   } catch (error) {
     console.error('Error fetching appointments:', error);
