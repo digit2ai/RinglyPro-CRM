@@ -381,9 +381,8 @@ class DualCalendarService {
 
     let result;
     try {
-      // Use INSERT with ON CONFLICT to handle race conditions and existing cancelled appointments
-      // This is atomic and avoids the check-then-insert race condition
-      logger.info(`[DualCal] [${callId}] Attempting INSERT with ON CONFLICT handling...`);
+      // Simple INSERT - if it fails with unique constraint, the slot is taken
+      logger.info(`[DualCal] [${callId}] Attempting INSERT...`);
 
       result = await sequelize.query(
         `INSERT INTO appointments (
@@ -398,23 +397,7 @@ class DualCalendarService {
           'confirmed', 'voice_booking', :confirmationCode, :notes,
           :ghlAppointmentId, :ghlContactId,
           NOW(), NOW()
-        )
-        ON CONFLICT ON CONSTRAINT unique_time_slot_per_client
-        DO UPDATE SET
-          customer_name = EXCLUDED.customer_name,
-          customer_phone = EXCLUDED.customer_phone,
-          customer_email = EXCLUDED.customer_email,
-          duration = EXCLUDED.duration,
-          purpose = EXCLUDED.purpose,
-          status = 'confirmed',
-          source = 'voice_booking',
-          confirmation_code = EXCLUDED.confirmation_code,
-          notes = EXCLUDED.notes,
-          ghl_appointment_id = EXCLUDED.ghl_appointment_id,
-          ghl_contact_id = EXCLUDED.ghl_contact_id,
-          updated_at = NOW()
-        WHERE appointments.status IN ('cancelled', 'completed', 'no-show')
-        RETURNING *`,
+        ) RETURNING *`,
         {
           replacements: {
             clientId,
@@ -434,21 +417,14 @@ class DualCalendarService {
         }
       );
 
-      // Log raw result to understand structure
-      logger.info(`[DualCal] [${callId}] Raw INSERT result type: ${typeof result}, isArray: ${Array.isArray(result)}`);
-      logger.info(`[DualCal] [${callId}] Result[0] type: ${typeof result?.[0]}, isArray: ${Array.isArray(result?.[0])}, length: ${result?.[0]?.length}`);
-      if (result?.[0]?.[0]) {
-        logger.info(`[DualCal] [${callId}] First row: ${JSON.stringify(result[0][0])}`);
-      }
+      logger.info(`[DualCal] [${callId}] INSERT completed successfully`);
+    } catch (sqlError) {
+      // Check if this is a unique constraint violation
+      if (sqlError.name === 'SequelizeUniqueConstraintError' ||
+          (sqlError.parent && sqlError.parent.code === '23505')) {
+        logger.warn(`[DualCal] [${callId}] Unique constraint violation - slot is taken`);
 
-      // Sequelize INSERT with RETURNING returns [rows, metadata] - rows are in result[0]
-      // But on INSERT (no conflict), we should have rows. On conflict with no update, empty.
-      const insertedRows = result?.[0] || [];
-
-      if (!insertedRows || insertedRows.length === 0) {
-        // The INSERT failed or ON CONFLICT skipped the update (active appointment exists)
-        logger.warn(`[DualCal] [${callId}] No rows returned from INSERT - checking for conflict`);
-
+        // Check if the existing appointment is cancelled/completed - if so, update it
         const existing = await sequelize.query(
           `SELECT id, status, customer_name FROM appointments
            WHERE client_id = :clientId
@@ -461,20 +437,56 @@ class DualCalendarService {
           }
         );
 
-        if (existing.length > 0) {
-          logger.error(`[DualCal] [${callId}] Slot blocked by active appointment: ${existing[0].id} (${existing[0].status})`);
-          throw new Error(`Time slot already booked by ${existing[0].customer_name}. Please choose a different time.`);
-        }
-        throw new Error(`Failed to create appointment - unknown conflict`);
-      }
+        if (existing.length > 0 && ['cancelled', 'completed', 'no-show'].includes(existing[0].status)) {
+          // Can reuse this slot - update the existing cancelled appointment
+          logger.info(`[DualCal] [${callId}] Found cancelled appointment ${existing[0].id}, updating...`);
 
-      logger.info(`[DualCal] [${callId}] INSERT/UPSERT completed successfully with ${insertedRows.length} row(s)`);
-    } catch (sqlError) {
-      logger.error(`[DualCal] [${callId}] SQL error: ${sqlError.message}`);
-      logger.error(`[DualCal] [${callId}] SQL error name: ${sqlError.name}`);
-      logger.error(`[DualCal] [${callId}] SQL error parent: ${sqlError.parent?.message || 'none'}`);
-      logger.error(`[DualCal] [${callId}] Appointment data: clientId=${clientId}, date=${appointmentDate}, time=${appointmentTime}`);
-      throw sqlError;
+          result = await sequelize.query(
+            `UPDATE appointments SET
+              customer_name = :customerName,
+              customer_phone = :customerPhone,
+              customer_email = :customerEmail,
+              duration = :duration,
+              purpose = :purpose,
+              status = 'confirmed',
+              source = 'voice_booking',
+              confirmation_code = :confirmationCode,
+              notes = :notes,
+              ghl_appointment_id = :ghlAppointmentId,
+              ghl_contact_id = :ghlContactId,
+              updated_at = NOW()
+            WHERE id = :existingId
+            RETURNING *`,
+            {
+              replacements: {
+                existingId: existing[0].id,
+                customerName,
+                customerPhone,
+                customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@booking.ringlypro.com`,
+                duration,
+                purpose,
+                confirmationCode,
+                notes,
+                ghlAppointmentId,
+                ghlContactId
+              },
+              type: QueryTypes.UPDATE
+            }
+          );
+          logger.info(`[DualCal] [${callId}] Updated existing cancelled appointment`);
+        } else if (existing.length > 0) {
+          // Active appointment exists - slot is truly unavailable
+          throw new Error(`Time slot already booked by ${existing[0].customer_name}. Please choose a different time.`);
+        } else {
+          // Shouldn't happen - constraint violation but no matching row?
+          throw new Error(`Time slot unavailable - please choose a different time.`);
+        }
+      } else {
+        // Some other database error
+        logger.error(`[DualCal] [${callId}] SQL error: ${sqlError.message}`);
+        logger.error(`[DualCal] [${callId}] SQL error name: ${sqlError.name}`);
+        throw sqlError;
+      }
     }
 
     const appointment = result[0]?.[0];
