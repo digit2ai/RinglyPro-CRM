@@ -396,19 +396,24 @@ class ZohoCalendarService {
         const duration = Math.round((end - start) / (1000 * 60)); // minutes
 
         // Extract local date and time from the Zoho datetime string
-        // Zoho returns: "2026-01-14T11:00:00-05:00" - we want to keep the local time (11:00)
+        // Zoho returns: "2026-01-14T11:00:00-05:00" - we want to keep the local time (11:00 EST)
         let appointmentDate, appointmentTime;
 
-        if (event.startTime && event.startTime.includes('T')) {
-          // Parse the datetime string directly to preserve local time
-          const [datePart, timePart] = event.startTime.split('T');
+        const rawStartTime = event.startTime;
+        if (rawStartTime && rawStartTime.includes('T')) {
+          // Parse the datetime string directly to preserve local time (EST)
+          const [datePart, timePart] = rawStartTime.split('T');
           appointmentDate = datePart;
           // Remove timezone offset from time (e.g., "11:00:00-05:00" -> "11:00:00")
-          appointmentTime = timePart.substring(0, 8);
+          // Handle both formats: "11:00:00-05:00" and "11:00:00+00:00"
+          const timeOnly = timePart.replace(/[+-]\d{2}:\d{2}$/, '').substring(0, 8);
+          appointmentTime = timeOnly;
+          logger.info(`[ZohoCalendar] Parsed time: ${rawStartTime} -> ${appointmentDate} ${appointmentTime}`);
         } else {
-          // Fallback to Date object (converts to UTC)
+          // Fallback to Date object (converts to UTC) - not ideal
           appointmentDate = start.toISOString().split('T')[0];
           appointmentTime = start.toISOString().split('T')[1].substring(0, 8);
+          logger.warn(`[ZohoCalendar] Using UTC fallback for: ${rawStartTime}`);
         }
 
         return {
