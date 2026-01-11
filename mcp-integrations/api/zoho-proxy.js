@@ -200,22 +200,21 @@ class ZohoMCPProxy {
 
   /**
    * Test connection to Zoho CRM
+   * Uses Contacts endpoint instead of users (works with modules.ALL scope only)
    */
   async testConnection() {
     try {
-      // Get current user info to validate connection
-      const response = await this.callAPI('GET', '/users?type=CurrentUser');
+      // Test with Contacts endpoint - works with ZohoCRM.modules.ALL scope
+      const response = await this.callAPI('GET', '/Contacts', null, { per_page: 1 });
 
-      if (response.users && response.users.length > 0) {
-        const user = response.users[0];
+      if (response.data || response.info) {
+        const contactCount = response.info?.count || 0;
         return {
           success: true,
           message: 'Successfully connected to Zoho CRM',
           user: {
-            id: user.id,
-            name: user.full_name,
-            email: user.email,
-            role: user.role?.name
+            contactsFound: contactCount,
+            status: 'Connected'
           }
         };
       }

@@ -2405,25 +2405,27 @@ router.post('/zoho/test', authenticateToken, async (req, res) => {
     const tokenData = await tokenResponse.json();
 
     if (tokenData.access_token) {
-      // Test with a simple API call
+      // Test with a simple API call - use Contacts endpoint (works with modules.ALL scope)
       const apiDomain = zohoSettings.region === 'com' ? 'www.zohoapis.com' : `www.zohoapis.${zohoSettings.region}`;
-      const testResponse = await fetch(`https://${apiDomain}/crm/v2/users?type=CurrentUser`, {
+      const testResponse = await fetch(`https://${apiDomain}/crm/v2/Contacts?per_page=1`, {
         headers: {
           'Authorization': `Zoho-oauthtoken ${tokenData.access_token}`
         }
       });
 
       if (testResponse.ok) {
-        const userData = await testResponse.json();
+        const contactData = await testResponse.json();
+        const contactCount = contactData.info?.count || 0;
         res.json({
           success: true,
           message: 'Connection successful',
-          user: userData.users?.[0]?.full_name || 'Connected'
+          user: `Connected (${contactCount} contacts found)`
         });
       } else {
+        const errorData = await testResponse.json().catch(() => ({}));
         res.json({
           success: false,
-          error: 'API access failed - check your scopes'
+          error: errorData.message || 'API access failed - check your scopes'
         });
       }
     } else {
