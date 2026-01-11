@@ -364,38 +364,55 @@ class DualCalendarService {
 
     const confirmationCode = `RP${Date.now().toString().slice(-6).toUpperCase()}`;
 
-    const result = await sequelize.query(
-      `INSERT INTO appointments (
-        client_id, customer_name, customer_phone, customer_email,
-        appointment_date, appointment_time, duration, purpose,
-        status, source, confirmation_code, notes,
-        ghl_appointment_id, ghl_contact_id,
-        created_at, updated_at
-      ) VALUES (
-        :clientId, :customerName, :customerPhone, :customerEmail,
-        :appointmentDate, :appointmentTime, :duration, :purpose,
-        'confirmed', 'manual', :confirmationCode, :notes,
-        :ghlAppointmentId, :ghlContactId,
-        NOW(), NOW()
-      ) RETURNING *`,
-      {
-        replacements: {
-          clientId,
-          customerName,
-          customerPhone,
-          customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@booking.ringlypro.com`,
-          appointmentDate,
-          appointmentTime,
-          duration,
-          purpose,
-          confirmationCode,
-          notes,
-          ghlAppointmentId,
-          ghlContactId
-        },
-        type: QueryTypes.INSERT
-      }
-    );
+    logger.info(`[DualCal] Creating RinglyPro appointment:`, {
+      clientId,
+      customerName,
+      customerPhone,
+      appointmentDate,
+      appointmentTime,
+      duration,
+      purpose: purpose?.substring(0, 50)
+    });
+
+    let result;
+    try {
+      result = await sequelize.query(
+        `INSERT INTO appointments (
+          client_id, customer_name, customer_phone, customer_email,
+          appointment_date, appointment_time, duration, purpose,
+          status, source, confirmation_code, notes,
+          ghl_appointment_id, ghl_contact_id,
+          created_at, updated_at
+        ) VALUES (
+          :clientId, :customerName, :customerPhone, :customerEmail,
+          :appointmentDate, :appointmentTime, :duration, :purpose,
+          'confirmed', 'manual', :confirmationCode, :notes,
+          :ghlAppointmentId, :ghlContactId,
+          NOW(), NOW()
+        ) RETURNING *`,
+        {
+          replacements: {
+            clientId,
+            customerName,
+            customerPhone,
+            customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@booking.ringlypro.com`,
+            appointmentDate,
+            appointmentTime,
+            duration,
+            purpose,
+            confirmationCode,
+            notes,
+            ghlAppointmentId,
+            ghlContactId
+          },
+          type: QueryTypes.INSERT
+        }
+      );
+    } catch (sqlError) {
+      logger.error(`[DualCal] SQL INSERT error: ${sqlError.message}`);
+      logger.error(`[DualCal] SQL error details:`, sqlError);
+      throw sqlError;
+    }
 
     const appointment = result[0]?.[0];
     logger.info(`[DualCal] RinglyPro appointment created: ${appointment?.id}`);
