@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
+const zohoCalendarService = require('../services/zohoCalendarService');
 
 // DEBUG: Get all clients (temporary for debugging)
 router.get('/debug/all-clients', async (req, res) => {
@@ -225,6 +226,51 @@ router.get('/debug/appointments/:client_id', async (req, res) => {
 
     } catch (error) {
         console.error('Debug appointments error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// DEBUG: Get Zoho events for a client
+router.get('/debug/zoho-events/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { startDate, endDate } = req.query;
+
+        // Default to next 7 days if not specified
+        const start = startDate || new Date().toISOString().split('T')[0];
+        const end = endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+        // Check if Zoho is enabled
+        const zohoStatus = await zohoCalendarService.isZohoCalendarEnabled(client_id);
+
+        if (!zohoStatus.enabled) {
+            return res.json({
+                success: false,
+                error: 'Zoho integration not enabled for this client',
+                zohoStatus
+            });
+        }
+
+        // Fetch Zoho events
+        const eventsResult = await zohoCalendarService.getEvents(client_id, start, end);
+
+        // Also get calendar display format
+        const calendarEvents = await zohoCalendarService.getEventsForCalendarDisplay(client_id, start, end);
+
+        res.json({
+            success: true,
+            client_id: parseInt(client_id),
+            dateRange: { start, end },
+            zohoStatus,
+            rawEvents: eventsResult,
+            calendarEvents: calendarEvents
+        });
+
+    } catch (error) {
+        console.error('Debug Zoho events error:', error);
         res.status(500).json({
             success: false,
             error: error.message
