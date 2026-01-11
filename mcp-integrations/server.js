@@ -382,6 +382,362 @@ app.post('/api/mcp/vagaro/cancel-appointment', async (req, res) => {
 });
 
 // ===========================================
+// ZOHO CRM INTEGRATION
+// ===========================================
+
+const ZohoMCPProxy = require('./api/zoho-proxy');
+const ZohoWebhooks = require('./webhooks/zoho-webhooks');
+
+// Initialize Zoho webhook handlers
+const zohoWebhooks = new ZohoWebhooks(webhookManager);
+
+// Zoho CRM connection
+app.post('/api/mcp/zoho/connect', async (req, res) => {
+  const { clientId, clientSecret, refreshToken, accessToken, region } = req.body;
+
+  try {
+    const proxy = new ZohoMCPProxy({
+      clientId,
+      clientSecret,
+      refreshToken,
+      accessToken,
+      region: region || 'com'
+    });
+
+    // Test the connection
+    const testResult = await proxy.testConnection();
+    if (!testResult.success) {
+      return res.status(400).json({
+        success: false,
+        error: testResult.error || 'Failed to connect to Zoho CRM',
+        code: testResult.code || 'ZOHO_CONNECTION_ERROR'
+      });
+    }
+
+    const sessionId = `zoho_${Date.now()}`;
+
+    sessions.set(sessionId, {
+      type: 'zoho',
+      proxy,
+      createdAt: new Date(),
+      user: testResult.user
+    });
+
+    res.json({
+      success: true,
+      sessionId,
+      message: 'Zoho CRM connected successfully',
+      user: testResult.user
+    });
+  } catch (error) {
+    const statusCode = error.code === 'ZOHO_CREDENTIALS_MISSING' ? 400 : 500;
+    res.status(statusCode).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_CONNECTION_ERROR'
+    });
+  }
+});
+
+// Zoho find or create contact (primary tool for ElevenLabs)
+app.post('/api/mcp/zoho/find-or-create-contact', async (req, res) => {
+  const { sessionId, firstName, lastName, phone, email } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  try {
+    const result = await session.proxy.findOrCreateContact({
+      firstName,
+      lastName,
+      phone,
+      email
+    });
+
+    res.json({
+      success: result.success,
+      contact: result.contact,
+      isNewContact: result.isNew,
+      matchedOn: result.matchedOn,
+      error: result.error,
+      code: result.code
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// Zoho search contacts
+app.post('/api/mcp/zoho/search-contacts', async (req, res) => {
+  const { sessionId, query, limit } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  try {
+    const result = await session.proxy.searchContacts(query, limit || 10);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// Zoho update contact
+app.post('/api/mcp/zoho/update-contact', async (req, res) => {
+  const { sessionId, contactId, updates } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  if (!contactId) {
+    return res.status(400).json({
+      success: false,
+      error: 'contactId is required',
+      code: 'MISSING_PARAMS'
+    });
+  }
+
+  try {
+    const result = await session.proxy.updateContact(contactId, updates);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// Zoho log call (for call disposition/summary)
+app.post('/api/mcp/zoho/log-call', async (req, res) => {
+  const { sessionId, whoId, direction, durationSeconds, summary, callTime, subject } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  if (!whoId) {
+    return res.status(400).json({
+      success: false,
+      error: 'whoId (contact ID) is required',
+      code: 'MISSING_PARAMS'
+    });
+  }
+
+  try {
+    const result = await session.proxy.logCall({
+      whoId,
+      direction: direction || 'Inbound',
+      durationSeconds: durationSeconds || 0,
+      summary: summary || '',
+      callTime: callTime || new Date().toISOString(),
+      subject
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// Zoho create task (for follow-ups)
+app.post('/api/mcp/zoho/create-task', async (req, res) => {
+  const { sessionId, whoId, subject, dueDate, notes, priority } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  if (!subject) {
+    return res.status(400).json({
+      success: false,
+      error: 'subject is required',
+      code: 'MISSING_PARAMS'
+    });
+  }
+
+  try {
+    const result = await session.proxy.createTask({
+      subject,
+      dueDate: dueDate || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default: tomorrow
+      whoId,
+      notes: notes || '',
+      priority: priority || 'Normal'
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// Zoho add note
+app.post('/api/mcp/zoho/add-note', async (req, res) => {
+  const { sessionId, parentId, noteTitle, noteContent } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  if (!parentId || !noteContent) {
+    return res.status(400).json({
+      success: false,
+      error: 'parentId and noteContent are required',
+      code: 'MISSING_PARAMS'
+    });
+  }
+
+  try {
+    const result = await session.proxy.addNote({
+      parentId,
+      noteTitle: noteTitle || 'Note',
+      noteContent
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// Zoho search leads
+app.post('/api/mcp/zoho/search-leads', async (req, res) => {
+  const { sessionId, query, limit } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  try {
+    const result = await session.proxy.searchLeads(query, limit || 10);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// Zoho create lead
+app.post('/api/mcp/zoho/create-lead', async (req, res) => {
+  const { sessionId, firstName, lastName, phone, email, company, source } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  try {
+    const result = await session.proxy.createLead({
+      firstName,
+      lastName: lastName || 'Unknown',
+      phone,
+      email,
+      company: company || 'Unknown',
+      source: source || 'Phone'
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// Zoho get deals
+app.post('/api/mcp/zoho/get-deals', async (req, res) => {
+  const { sessionId, contactId, limit } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  try {
+    const result = await session.proxy.getDeals({ contactId, limit });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// ===========================================
 // AI COPILOT
 // ===========================================
 
