@@ -344,6 +344,7 @@ class DualCalendarService {
 
   /**
    * Create appointment in RinglyPro database
+   * Handles unique constraint by updating cancelled/completed appointments if they exist at the same slot
    * @param {number} clientId - Client ID
    * @param {object} appointmentData - Appointment details
    * @returns {Promise<object>} Created appointment
@@ -376,46 +377,100 @@ class DualCalendarService {
 
     let result;
     try {
-      result = await sequelize.query(
-        `INSERT INTO appointments (
-          client_id, customer_name, customer_phone, customer_email,
-          appointment_date, appointment_time, duration, purpose,
-          status, source, confirmation_code, notes,
-          ghl_appointment_id, ghl_contact_id,
-          created_at, updated_at
-        ) VALUES (
-          :clientId, :customerName, :customerPhone, :customerEmail,
-          :appointmentDate, :appointmentTime, :duration, :purpose,
-          'confirmed', 'manual', :confirmationCode, :notes,
-          :ghlAppointmentId, :ghlContactId,
-          NOW(), NOW()
-        ) RETURNING *`,
+      // First, check if there's a cancelled/completed appointment at this slot
+      // The unique constraint doesn't have a WHERE clause, so we need to handle this case
+      const existingCancelled = await sequelize.query(
+        `SELECT id FROM appointments
+         WHERE client_id = :clientId
+           AND appointment_date = :appointmentDate
+           AND appointment_time = :appointmentTime
+           AND status IN ('cancelled', 'completed', 'no-show')
+         LIMIT 1`,
         {
-          replacements: {
-            clientId,
-            customerName,
-            customerPhone,
-            customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@booking.ringlypro.com`,
-            appointmentDate,
-            appointmentTime,
-            duration,
-            purpose,
-            confirmationCode,
-            notes,
-            ghlAppointmentId,
-            ghlContactId
-          },
-          type: QueryTypes.INSERT
+          replacements: { clientId, appointmentDate, appointmentTime },
+          type: QueryTypes.SELECT
         }
       );
+
+      if (existingCancelled.length > 0) {
+        // Update the existing cancelled appointment instead of inserting
+        logger.info(`[DualCal] Found cancelled appointment ${existingCancelled[0].id} at this slot, updating instead of inserting`);
+
+        result = await sequelize.query(
+          `UPDATE appointments SET
+            customer_name = :customerName,
+            customer_phone = :customerPhone,
+            customer_email = :customerEmail,
+            duration = :duration,
+            purpose = :purpose,
+            status = 'confirmed',
+            source = 'voice_booking',
+            confirmation_code = :confirmationCode,
+            notes = :notes,
+            ghl_appointment_id = :ghlAppointmentId,
+            ghl_contact_id = :ghlContactId,
+            updated_at = NOW()
+          WHERE id = :existingId
+          RETURNING *`,
+          {
+            replacements: {
+              existingId: existingCancelled[0].id,
+              customerName,
+              customerPhone,
+              customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@booking.ringlypro.com`,
+              duration,
+              purpose,
+              confirmationCode,
+              notes,
+              ghlAppointmentId,
+              ghlContactId
+            },
+            type: QueryTypes.UPDATE
+          }
+        );
+      } else {
+        // No cancelled appointment at this slot, do a normal insert
+        result = await sequelize.query(
+          `INSERT INTO appointments (
+            client_id, customer_name, customer_phone, customer_email,
+            appointment_date, appointment_time, duration, purpose,
+            status, source, confirmation_code, notes,
+            ghl_appointment_id, ghl_contact_id,
+            created_at, updated_at
+          ) VALUES (
+            :clientId, :customerName, :customerPhone, :customerEmail,
+            :appointmentDate, :appointmentTime, :duration, :purpose,
+            'confirmed', 'voice_booking', :confirmationCode, :notes,
+            :ghlAppointmentId, :ghlContactId,
+            NOW(), NOW()
+          ) RETURNING *`,
+          {
+            replacements: {
+              clientId,
+              customerName,
+              customerPhone,
+              customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@booking.ringlypro.com`,
+              appointmentDate,
+              appointmentTime,
+              duration,
+              purpose,
+              confirmationCode,
+              notes,
+              ghlAppointmentId,
+              ghlContactId
+            },
+            type: QueryTypes.INSERT
+          }
+        );
+      }
     } catch (sqlError) {
-      logger.error(`[DualCal] SQL INSERT error: ${sqlError.message}`);
+      logger.error(`[DualCal] SQL error: ${sqlError.message}`);
       logger.error(`[DualCal] SQL error details:`, sqlError);
       throw sqlError;
     }
 
     const appointment = result[0]?.[0];
-    logger.info(`[DualCal] RinglyPro appointment created: ${appointment?.id}`);
+    logger.info(`[DualCal] RinglyPro appointment created/updated: ${appointment?.id}`);
 
     return appointment;
   }
