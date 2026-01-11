@@ -434,10 +434,21 @@ class DualCalendarService {
         }
       );
 
-      // Check if we actually inserted/updated - if not, the slot is taken by an active appointment
-      if (!result[0] || result[0].length === 0) {
-        // The ON CONFLICT DO UPDATE didn't run (status wasn't cancelled/completed/no-show)
-        // Check what's blocking us
+      // Log raw result to understand structure
+      logger.info(`[DualCal] [${callId}] Raw INSERT result type: ${typeof result}, isArray: ${Array.isArray(result)}`);
+      logger.info(`[DualCal] [${callId}] Result[0] type: ${typeof result?.[0]}, isArray: ${Array.isArray(result?.[0])}, length: ${result?.[0]?.length}`);
+      if (result?.[0]?.[0]) {
+        logger.info(`[DualCal] [${callId}] First row: ${JSON.stringify(result[0][0])}`);
+      }
+
+      // Sequelize INSERT with RETURNING returns [rows, metadata] - rows are in result[0]
+      // But on INSERT (no conflict), we should have rows. On conflict with no update, empty.
+      const insertedRows = result?.[0] || [];
+
+      if (!insertedRows || insertedRows.length === 0) {
+        // The INSERT failed or ON CONFLICT skipped the update (active appointment exists)
+        logger.warn(`[DualCal] [${callId}] No rows returned from INSERT - checking for conflict`);
+
         const existing = await sequelize.query(
           `SELECT id, status, customer_name FROM appointments
            WHERE client_id = :clientId
@@ -457,7 +468,7 @@ class DualCalendarService {
         throw new Error(`Failed to create appointment - unknown conflict`);
       }
 
-      logger.info(`[DualCal] [${callId}] INSERT/UPSERT completed successfully`);
+      logger.info(`[DualCal] [${callId}] INSERT/UPSERT completed successfully with ${insertedRows.length} row(s)`);
     } catch (sqlError) {
       logger.error(`[DualCal] [${callId}] SQL error: ${sqlError.message}`);
       logger.error(`[DualCal] [${callId}] SQL error name: ${sqlError.name}`);
