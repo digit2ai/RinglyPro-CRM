@@ -264,18 +264,41 @@ class ZohoCalendarService {
 
       const blockedSlots = [];
 
-      // Generate all possible time slots
+      // Extract event times in HH:MM format (ignoring timezone, using local time from Zoho)
+      // Zoho returns times like "2026-02-02T09:00:00-05:00" - we extract the local time part
+      const eventTimeRanges = eventsResult.events.map(event => {
+        // Parse start time - extract HH:MM from datetime string
+        const startMatch = event.startTime.match(/T(\d{2}):(\d{2})/);
+        const endMatch = event.endTime.match(/T(\d{2}):(\d{2})/);
+
+        if (!startMatch || !endMatch) {
+          logger.warn(`[ZohoCalendar] Could not parse event times: ${event.startTime} - ${event.endTime}`);
+          return null;
+        }
+
+        const startHour = parseInt(startMatch[1]);
+        const startMin = parseInt(startMatch[2]);
+        const endHour = parseInt(endMatch[1]);
+        const endMin = parseInt(endMatch[2]);
+
+        // Convert to minutes since midnight for easy comparison
+        const startMinutes = startHour * 60 + startMin;
+        const endMinutes = endHour * 60 + endMin;
+
+        return { startMinutes, endMinutes, title: event.title };
+      }).filter(Boolean);
+
+      // Generate all possible time slots and check for overlaps
       for (let hour = businessHours.start; hour < businessHours.end; hour++) {
         for (let minute = 0; minute < 60; minute += businessHours.slotDuration) {
-          const slotStart = new Date(`${date}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`);
-          const slotEnd = new Date(slotStart.getTime() + businessHours.slotDuration * 60 * 1000);
+          const slotStartMinutes = hour * 60 + minute;
+          const slotEndMinutes = slotStartMinutes + businessHours.slotDuration;
           const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
 
           // Check if this slot overlaps with any Zoho event
-          const isBlocked = eventsResult.events.some(event => {
-            const eventStart = new Date(event.startTime);
-            const eventEnd = new Date(event.endTime);
-            return slotStart < eventEnd && slotEnd > eventStart;
+          const isBlocked = eventTimeRanges.some(event => {
+            // Overlap occurs if slot starts before event ends AND slot ends after event starts
+            return slotStartMinutes < event.endMinutes && slotEndMinutes > event.startMinutes;
           });
 
           if (isBlocked) {
@@ -284,7 +307,7 @@ class ZohoCalendarService {
         }
       }
 
-      logger.info(`[ZohoCalendar] Client ${clientId}: ${blockedSlots.length} slots blocked by Zoho events on ${date}`);
+      logger.info(`[ZohoCalendar] Client ${clientId}: ${blockedSlots.length} slots blocked by Zoho events on ${date} (${eventTimeRanges.length} events)`);
       return blockedSlots;
 
     } catch (error) {
