@@ -278,6 +278,93 @@ router.get('/debug/zoho-events/:client_id', async (req, res) => {
     }
 });
 
+// POST /api/client/debug/zoho-create-test-events/:client_id - Create test events in Zoho for sync testing
+router.post('/debug/zoho-create-test-events/:client_id', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { startDate, endDate } = req.query;
+
+        // Parse date range (default Feb 2-5, 2026)
+        const start = startDate ? new Date(startDate) : new Date('2026-02-02');
+        const end = endDate ? new Date(endDate) : new Date('2026-02-05');
+
+        // Check if Zoho is enabled
+        const zohoStatus = await zohoCalendarService.isZohoCalendarEnabled(client_id);
+
+        if (!zohoStatus.enabled) {
+            return res.json({
+                success: false,
+                error: 'Zoho integration not enabled for this client',
+                zohoStatus
+            });
+        }
+
+        // Test events to create
+        const TEST_EVENTS = [
+            { title: 'Client Meeting - Acme Corp', date: '2026-02-02', time: '09:00', duration: 60 },
+            { title: 'Product Demo - Beta Features', date: '2026-02-02', time: '14:00', duration: 90 },
+            { title: 'Team Standup', date: '2026-02-03', time: '10:00', duration: 30 },
+            { title: 'Sales Call - New Lead', date: '2026-02-03', time: '15:30', duration: 45 },
+            { title: 'Project Review - Q1 Goals', date: '2026-02-04', time: '11:00', duration: 60 },
+            { title: 'Training Session - New Hires', date: '2026-02-04', time: '13:00', duration: 120 },
+            { title: 'Investor Meeting', date: '2026-02-05', time: '09:30', duration: 60 },
+            { title: 'Strategy Planning - 2026', date: '2026-02-05', time: '16:00', duration: 90 }
+        ];
+
+        const results = [];
+
+        for (const event of TEST_EVENTS) {
+            try {
+                const startTime = `${event.date}T${event.time}:00-05:00`;
+
+                const result = await zohoCalendarService.createEvent(client_id, {
+                    title: event.title,
+                    customerName: 'Test Event',
+                    customerPhone: '555-0100',
+                    customerEmail: 'test@example.com',
+                    startTime: startTime,
+                    duration: event.duration,
+                    description: `Test event for RinglyPro-Zoho sync testing`,
+                    confirmationCode: 'TEST-' + Math.random().toString(36).substring(7).toUpperCase()
+                });
+
+                results.push({
+                    event: event.title,
+                    date: event.date,
+                    time: event.time,
+                    success: result.success,
+                    zohoEventId: result.event?.id,
+                    error: result.error
+                });
+            } catch (err) {
+                results.push({
+                    event: event.title,
+                    date: event.date,
+                    time: event.time,
+                    success: false,
+                    error: err.message
+                });
+            }
+        }
+
+        const successCount = results.filter(r => r.success).length;
+
+        res.json({
+            success: true,
+            client_id: parseInt(client_id),
+            summary: `Created ${successCount}/${TEST_EVENTS.length} test events in Zoho`,
+            results
+        });
+
+    } catch (error) {
+        console.error('Debug Zoho create test events error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // GET /api/client/rachel-status/:client_id - Multi-tenant by client ID
 router.get('/rachel-status/:client_id', async (req, res) => {
     try {
