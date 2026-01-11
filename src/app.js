@@ -177,6 +177,10 @@ console.log('✅ Photo Upload routes loaded successfully');
 const googleOAuthRoutes = require('./routes/google-oauth'); // Google Calendar OAuth integration
 console.log('✅ Google Calendar OAuth routes loaded successfully');
 
+// Import Zoho OAuth routes
+const zohoOAuthRoutes = require('./routes/zoho-oauth'); // Zoho CRM OAuth integration
+console.log('✅ Zoho OAuth routes loaded successfully');
+
 // Import PixlyPro routes
 const pixlyproRoutes = require('./routes/pixlypro'); // PixlyPro AI-assisted photo enhancement
 const vagaroRoutes = require('./routes/vagaro'); // Vagaro salon/spa scheduling integration
@@ -248,6 +252,10 @@ console.log('✅ Photo Upload routes mounted at /api/photo-uploads');
 // Mount Google Calendar OAuth routes
 app.use('/api/google-oauth', googleOAuthRoutes); // Google Calendar OAuth integration
 console.log('🗓️ Google Calendar OAuth routes mounted at /api/google-oauth');
+
+// Mount Zoho OAuth routes
+app.use('/zoho', zohoOAuthRoutes); // Zoho CRM OAuth integration
+console.log('🔗 Zoho OAuth routes mounted at /zoho');
 
 // Mount Storefront routes
 app.use('/api/storefront', storefrontRoutes); // Online storefront & menu system
