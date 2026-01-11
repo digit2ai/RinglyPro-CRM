@@ -541,6 +541,112 @@ class ZohoMCPProxy {
     }
   }
 
+  // ==================== EVENT/APPOINTMENT OPERATIONS ====================
+
+  /**
+   * Create an event/appointment in Zoho CRM
+   * Uses the Events module for calendar appointments
+   */
+  async createEvent({ title, startTime, endTime, contactId, description, location, reminderMinutes }) {
+    // Calculate duration if endTime not provided (default 1 hour)
+    const startDate = new Date(startTime);
+    const endDate = endTime ? new Date(endTime) : new Date(startDate.getTime() + 60 * 60 * 1000);
+
+    const eventData = {
+      Event_Title: title,
+      Start_DateTime: startDate.toISOString(),
+      End_DateTime: endDate.toISOString(),
+      Description: description || '',
+      Venue: location || ''
+    };
+
+    // Associate with contact if provided
+    if (contactId) {
+      eventData.Participants = [{
+        participant: contactId,
+        type: 'contact'
+      }];
+      eventData.Who_Id = { id: contactId, module: 'Contacts' };
+    }
+
+    // Add reminder if specified
+    if (reminderMinutes) {
+      eventData.Remind_At = new Date(startDate.getTime() - reminderMinutes * 60 * 1000).toISOString();
+    }
+
+    try {
+      const response = await this.callAPI('POST', '/Events', { data: [eventData] });
+
+      if (response.data?.[0]?.status === 'success') {
+        return {
+          success: true,
+          event: {
+            id: response.data[0].details.id,
+            title,
+            startTime: startDate.toISOString(),
+            endTime: endDate.toISOString(),
+            contactId,
+            location,
+            description
+          }
+        };
+      }
+
+      return { success: false, error: response.data?.[0]?.message || 'Failed to create event' };
+    } catch (error) {
+      return { success: false, error: error.message, code: error.code };
+    }
+  }
+
+  /**
+   * Get events/appointments
+   */
+  async getEvents(filters = {}) {
+    try {
+      const params = {
+        per_page: filters.limit || 20,
+        fields: 'Event_Title,Start_DateTime,End_DateTime,Venue,Description,Who_Id'
+      };
+
+      // Filter by date range if provided
+      if (filters.startDate) {
+        params.criteria = `(Start_DateTime:greater_than:${filters.startDate})`;
+        if (filters.endDate) {
+          params.criteria += `and(Start_DateTime:less_than:${filters.endDate})`;
+        }
+      }
+
+      const response = await this.callAPI('GET', '/Events', null, params);
+
+      return {
+        success: true,
+        events: (response.data || []).map(e => this.normalizeEvent(e)),
+        total: response.info?.count || 0
+      };
+    } catch (error) {
+      return { success: false, events: [], error: error.message };
+    }
+  }
+
+  /**
+   * Normalize Zoho event to standard format
+   */
+  normalizeEvent(zohoEvent) {
+    return {
+      id: zohoEvent.id,
+      title: zohoEvent.Event_Title,
+      startTime: zohoEvent.Start_DateTime,
+      endTime: zohoEvent.End_DateTime,
+      location: zohoEvent.Venue,
+      description: zohoEvent.Description,
+      contactId: zohoEvent.Who_Id?.id,
+      contactName: zohoEvent.Who_Id?.name,
+      createdAt: zohoEvent.Created_Time,
+      updatedAt: zohoEvent.Modified_Time,
+      raw: zohoEvent
+    };
+  }
+
   // ==================== NOTE OPERATIONS ====================
 
   /**
