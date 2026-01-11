@@ -641,6 +641,13 @@ app.get('/settings/vagaro', (req, res) => {
   });
 });
 
+// Vagaro Setup Guide (self-service integration help)
+app.get('/settings/vagaro/guide', (req, res) => {
+  res.render('vagaro-setup-guide', {
+    title: 'Vagaro Setup Guide - RinglyPro'
+  });
+});
+
 // WhatsApp Integration Settings
 app.get('/settings/whatsapp', (req, res) => {
   res.render('settings-whatsapp', {

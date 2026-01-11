@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vagaro Integration Setup Guide - RinglyPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .step-number {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            color: #1a1a2e;
+        }
+
+        .card-subtitle {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        h3 {
+            color: #1a1a2e;
+            margin: 1.5rem 0 1rem;
+            font-size: 1.1rem;
+        }
+
+        p {
+            color: #444;
+            margin-bottom: 1rem;
+        }
+
+        .info-box {
+            background: #e8f4fd;
+            border-left: 4px solid #2196F3;
+            padding: 1rem 1.25rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        .info-box.warning {
+            background: #fff3e0;
+            border-left-color: #ff9800;
+        }
+
+        .info-box.success {
+            background: #e8f5e9;
+            border-left-color: #4caf50;
+        }
+
+        .info-box p {
+            margin: 0;
+            color: #333;
+        }
+
+        .email-template {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .email-template-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .email-template-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .copy-btn.copied {
+            background: #4caf50;
+        }
+
+        .email-content {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            color: #333;
+            line-height: 1.8;
+        }
+
+        .email-field {
+            margin-bottom: 0.5rem;
+        }
+
+        .email-field strong {
+            color: #666;
+        }
+
+        .steps-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .steps-list li {
+            padding: 1rem;
+            margin: 0.75rem 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .steps-list .step-icon {
+            width: 28px;
+            height: 28px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .steps-list .step-content {
+            flex: 1;
+        }
+
+        .steps-list .step-content strong {
+            display: block;
+            color: #1a1a2e;
+            margin-bottom: 0.25rem;
+        }
+
+        .steps-list .step-content span {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .credential-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .credential-table th,
+        .credential-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .credential-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .credential-table td {
+            color: #555;
+        }
+
+        .credential-table code {
+            background: #e8e8e8;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .screenshot-placeholder {
+            background: #f0f0f0;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            color: #888;
+            margin: 1rem 0;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            border: 2px solid #667eea;
+            margin-left: 1rem;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid #e0e0e0;
+            padding: 1rem 0;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+        }
+
+        .faq-question {
+            font-weight: 600;
+            color: #1a1a2e;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-answer {
+            color: #666;
+            margin-top: 0.75rem;
+            padding-left: 0;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e0e0e0;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            background: #667eea;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #667eea;
+        }
+
+        .timeline-item h4 {
+            color: #1a1a2e;
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-item p {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .timeline-item .time-estimate {
+            display: inline-block;
+            background: #e8f4fd;
+            color: #1976d2;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            text-decoration: none;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border: 1px solid #667eea40;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .highlight-box h4 {
+            color: #667eea;
+            margin-bottom: 0.75rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn-secondary {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/settings/vagaro" class="back-link">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back to Vagaro Settings
+        </a>
+
+        <div class="header">
+            <h1>Vagaro Integration Setup Guide</h1>
+            <p>Follow these steps to connect your Vagaro account with RinglyPro AI</p>
+        </div>
+
+        <!-- Overview Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="step-number">i</div>
+                <div>
+                    <div class="card-title">Before You Begin</div>
+                    <div class="card-subtitle">What you'll need and estimated time</div>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <h4>Requirements</h4>
+                <ul style="margin-left: 1.5rem; color: #444;">
+                    <li>An active Vagaro Pro business account</li>
+                    <li>Admin access to your Vagaro dashboard</li>
+                    <li>A business email address</li>
+                    <li>About 10-15 minutes to complete the setup</li>
+                </ul>
+            </div>
+
+            <h3>Timeline Overview</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>Step 1: Request API Access</h4>
+                    <p>Send a request to Vagaro's developer team</p>
+                    <span class="time-estimate">5 minutes + 1-3 business days wait</span>
+                </div>
+                <div class="timeline-item">
+                    <h4>Step 2: Receive Credentials</h4>
+                    <p>Vagaro will email your API credentials</p>
+                    <span class="time-estimate">Automatic after approval</span>
+                </div>
+                <div class="timeline-item">
+                    <h4>Step 3: Configure RinglyPro</h4>
+                    <p>Enter your credentials in RinglyPro settings</p>
+                    <span class="time-estimate">5 minutes</span>
+                </div>
+                <div class="timeline-item">
+                    <h4>Step 4: Set Up Webhooks</h4>
+                    <p>Configure real-time updates in Vagaro</p>
+                    <span class="time-estimate">5 minutes</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Request API Access -->
+        <div class="card" id="step1">
+            <div class="card-header">
+                <div class="step-number">1</div>
+                <div>
+                    <div class="card-title">Request API Access from Vagaro</div>
+                    <div class="card-subtitle">Send an email to Vagaro's developer team</div>
+                </div>
+            </div>
+
+            <p>Vagaro requires businesses to request API access before they can integrate with third-party platforms like RinglyPro. Use the email template below to speed up your approval.</p>
+
+            <div class="info-box">
+                <p><strong>Tip:</strong> Send this email from your business email address that's associated with your Vagaro account for faster processing.</p>
+            </div>
+
+            <div class="email-template">
+                <div class="email-template-header">
+                    <span class="email-template-title">Email Template - API Access Request</span>
+                    <button class="copy-btn" onclick="copyEmailTemplate('api-request')">Copy Email</button>
+                </div>
+                <div class="email-field"><strong>To:</strong> api@vagaro.com</div>
+                <div class="email-field"><strong>Subject:</strong> API Access Request - [Your Business Name]</div>
+                <div class="email-content" id="api-request-template">Hello Vagaro Developer Team,
+
+I am requesting API access for my business to integrate with RinglyPro, an AI-powered appointment booking and customer management platform.
+
+Business Information:
+- Business Name: [YOUR BUSINESS NAME]
+- Vagaro Account Email: [YOUR VAGARO EMAIL]
+- Business Type: [Salon/Spa/Fitness/etc.]
+- Location: [City, State]
+
+Integration Purpose:
+We want to use RinglyPro's AI phone assistant to:
+- Allow customers to book appointments via phone calls
+- Sync appointment data in real-time
+- Receive webhook notifications for appointment changes
+
+API Features Needed:
+- OAuth 2.0 authentication (client_credentials)
+- Appointments API (create, read, update, cancel)
+- Customers API (create, read, update)
+- Services API (read)
+- Employees/Staff API (read)
+- Webhooks for real-time notifications
+
+RinglyPro Integration Details:
+- Company: RinglyPro (https://ringlypro.com)
+- Webhook URL: https://aiagent.ringlypro.com/api/mcp/webhooks/vagaro
+- This is a trusted SaaS platform serving multiple businesses
+
+Please let me know the next steps to obtain my API credentials.
+
+Thank you,
+[YOUR NAME]
+[YOUR PHONE NUMBER]
+[YOUR BUSINESS NAME]</div>
+            </div>
+
+            <div class="action-buttons">
+                <a href="mailto:api@vagaro.com?subject=API%20Access%20Request%20-%20%5BYour%20Business%20Name%5D" class="btn-primary">
+                    Open Email Client
+                </a>
+                <button class="btn-secondary" onclick="copyEmailTemplate('api-request')">
+                    Copy Template
+                </button>
+            </div>
+
+            <div class="info-box warning" style="margin-top: 1.5rem;">
+                <p><strong>Processing Time:</strong> Vagaro typically responds within 1-3 business days. If you don't hear back within 5 business days, follow up with another email or call Vagaro support.</p>
+            </div>
+        </div>
+
+        <!-- Step 2: Receive and Locate Credentials -->
+        <div class="card" id="step2">
+            <div class="card-header">
+                <div class="step-number">2</div>
+                <div>
+                    <div class="card-title">Receive Your API Credentials</div>
+                    <div class="card-subtitle">Understanding what Vagaro will send you</div>
+                </div>
+            </div>
+
+            <p>Once approved, Vagaro will send you an email with your API credentials. Here's what to look for:</p>
+
+            <table class="credential-table">
+                <thead>
+                    <tr>
+                        <th>Credential</th>
+                        <th>What It Looks Like</th>
+                        <th>Where to Enter in RinglyPro</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Client ID</strong></td>
+                        <td><code>abc123def456...</code> (long alphanumeric string)</td>
+                        <td>Vagaro Client ID (OAuth)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Client Secret Key</strong></td>
+                        <td><code>xyz789secret...</code> (long alphanumeric string)</td>
+                        <td>Vagaro Client Secret Key (OAuth)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Merchant ID</strong></td>
+                        <td><code>12345678</code> (numeric, 6-10 digits)</td>
+                        <td>Vagaro Merchant ID</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box success">
+                <p><strong>Security Note:</strong> Your Client Secret Key is like a password. Never share it publicly or include it in emails. RinglyPro stores it securely and encrypted.</p>
+            </div>
+
+            <h3>Finding Your Merchant ID</h3>
+            <p>If Vagaro didn't include your Merchant ID in the email, you can find it in your Vagaro dashboard:</p>
+
+            <ol class="steps-list">
+                <li>
+                    <span class="step-icon">1</span>
+                    <div class="step-content">
+                        <strong>Log into Vagaro Pro</strong>
+                        <span>Go to vagaro.com and sign in to your business account</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-icon">2</span>
+                    <div class="step-content">
+                        <strong>Open Settings</strong>
+                        <span>Click the gear icon in the top right corner</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-icon">3</span>
+                    <div class="step-content">
+                        <strong>Go to Business Info</strong>
+                        <span>Your Merchant ID is usually displayed here, or in the URL of your booking page</span>
+                    </div>
+                </li>
+            </ol>
+        </div>
+
+        <!-- Step 3: Configure RinglyPro -->
+        <div class="card" id="step3">
+            <div class="card-header">
+                <div class="step-number">3</div>
+                <div>
+                    <div class="card-title">Enter Credentials in RinglyPro</div>
+                    <div class="card-subtitle">Configure your Vagaro integration</div>
+                </div>
+            </div>
+
+            <p>Now that you have your credentials, enter them in RinglyPro:</p>
+
+            <ol class="steps-list">
+                <li>
+                    <span class="step-icon">1</span>
+                    <div class="step-content">
+                        <strong>Go to Vagaro Settings</strong>
+                        <span>From your RinglyPro dashboard, click Settings > Vagaro Integration</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-icon">2</span>
+                    <div class="step-content">
+                        <strong>Enable the Integration</strong>
+                        <span>Toggle "Enable Vagaro Integration" to ON</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-icon">3</span>
+                    <div class="step-content">
+                        <strong>Enter Your Credentials</strong>
+                        <span>Copy and paste each credential from Vagaro's email into the corresponding field</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-icon">4</span>
+                    <div class="step-content">
+                        <strong>Select Your Region</strong>
+                        <span>Choose your Vagaro region (usually US-01 for United States)</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-icon">5</span>
+                    <div class="step-content">
+                        <strong>Save and Test</strong>
+                        <span>Click "Save Settings" then "Test Connection" to verify everything works</span>
+                    </div>
+                </li>
+            </ol>
+
+            <div class="action-buttons">
+                <a href="/settings/vagaro" class="btn-primary">
+                    Go to Vagaro Settings
+                </a>
+            </div>
+        </div>
+
+        <!-- Step 4: Set Up Webhooks -->
+        <div class="card" id="step4">
+            <div class="card-header">
+                <div class="step-number">4</div>
+                <div>
+                    <div class="card-title">Set Up Webhooks in Vagaro</div>
+                    <div class="card-subtitle">Enable real-time appointment updates</div>
+                </div>
+            </div>
+
+            <p>Webhooks allow Vagaro to notify RinglyPro instantly when appointments are created, changed, or cancelled. This keeps everything in sync automatically.</p>
+
+            <div class="highlight-box">
+                <h4>Your Webhook URL</h4>
+                <div style="background: white; padding: 1rem; border-radius: 8px; margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <code id="webhook-url" style="color: #667eea; font-size: 0.9rem;">https://aiagent.ringlypro.com/api/mcp/webhooks/vagaro</code>
+                    <button class="copy-btn" onclick="copyToClipboard('webhook-url')" style="margin-left: 1rem;">Copy</button>
+                </div>
+            </div>
+
+            <h3>Configure Webhooks in Vagaro</h3>
+            <ol class="steps-list">
+                <li>
+                    <span class="step-icon">1</span>
+                    <div class="step-content">
+                        <strong>Open Vagaro Settings</strong>
+                        <span>Log into your Vagaro Pro account and click the Settings gear icon</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-icon">2</span>
+                    <div class="step-content">
+                        <strong>Navigate to Developers</strong>
+                        <span>Go to Settings > Developers > APIs & Webhooks</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-icon">3</span>
+                    <div class="step-content">
+                        <strong>Create New Webhook</strong>
+                        <span>Click "Create Webhook" or "Add Webhook"</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-icon">4</span>
+                    <div class="step-content">
+                        <strong>Enter Webhook URL</strong>
+                        <span>Paste the URL shown above: https://aiagent.ringlypro.com/api/mcp/webhooks/vagaro</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-icon">5</span>
+                    <div class="step-content">
+                        <strong>Select Events</strong>
+                        <span>Choose these events to subscribe to:</span>
+                        <ul style="margin-top: 0.5rem; margin-left: 1rem; color: #666; font-size: 0.85rem;">
+                            <li>Appointment Created</li>
+                            <li>Appointment Updated</li>
+                            <li>Appointment Cancelled</li>
+                            <li>Customer Created (optional)</li>
+                            <li>Customer Updated (optional)</li>
+                        </ul>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-icon">6</span>
+                    <div class="step-content">
+                        <strong>Copy Verification Token</strong>
+                        <span>Vagaro will generate a verification token. Copy this token - you'll need it for RinglyPro</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-icon">7</span>
+                    <div class="step-content">
+                        <strong>Save Webhook in Vagaro</strong>
+                        <span>Click Save to activate the webhook</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-icon">8</span>
+                    <div class="step-content">
+                        <strong>Enter Token in RinglyPro</strong>
+                        <span>Go back to RinglyPro Vagaro settings and paste the verification token, then save</span>
+                    </div>
+                </li>
+            </ol>
+
+            <div class="info-box success">
+                <p><strong>You're Done!</strong> Once webhooks are configured, RinglyPro's AI assistant can book appointments directly into your Vagaro calendar, and you'll receive real-time updates.</p>
+            </div>
+        </div>
+
+        <!-- Troubleshooting & FAQ -->
+        <div class="card" id="faq">
+            <div class="card-header">
+                <div class="step-number">?</div>
+                <div>
+                    <div class="card-title">Frequently Asked Questions</div>
+                    <div class="card-subtitle">Common questions and troubleshooting</div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    How long does API approval take?
+                </div>
+                <div class="faq-answer">
+                    Vagaro typically responds within 1-3 business days. If you haven't heard back in 5 business days, send a follow-up email or contact Vagaro support directly.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    What if my API request is denied?
+                </div>
+                <div class="faq-answer">
+                    This is rare, but if it happens, contact RinglyPro support. We can help you draft a more detailed request or explore alternative integration options.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    The "Test Connection" button shows an error. What should I do?
+                </div>
+                <div class="faq-answer">
+                    Double-check that you've entered all credentials correctly, including the region setting. The most common issues are:
+                    <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                        <li>Typos in the Client ID or Secret Key</li>
+                        <li>Wrong region selected</li>
+                        <li>Credentials haven't been activated by Vagaro yet</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    Do I need to pay extra for API access?
+                </div>
+                <div class="faq-answer">
+                    Vagaro's API access is typically included with Vagaro Pro subscriptions at no additional cost. Check with Vagaro if you're unsure about your plan.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    Can I disconnect the integration later?
+                </div>
+                <div class="faq-answer">
+                    Yes, you can disable the integration at any time from your RinglyPro Vagaro settings page. Your Vagaro data and appointments will remain intact.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    I don't see the Developers section in my Vagaro dashboard
+                </div>
+                <div class="faq-answer">
+                    The Developers section may only appear after your API access has been approved. If you've received your credentials but still don't see it, contact Vagaro support.
+                </div>
+            </div>
+        </div>
+
+        <!-- Need Help Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="step-number" style="background: #4caf50;">
+                    <svg width="24" height="24" fill="none" stroke="white" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="card-title">Need Help?</div>
+                    <div class="card-subtitle">We're here to assist you</div>
+                </div>
+            </div>
+
+            <p>If you run into any issues during setup, our support team is ready to help:</p>
+
+            <div class="action-buttons">
+                <a href="mailto:support@ringlypro.com?subject=Vagaro%20Integration%20Help" class="btn-primary">
+                    Email Support
+                </a>
+                <a href="https://ringlypro.com/support" class="btn-secondary" target="_blank">
+                    Help Center
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copyEmailTemplate(templateId) {
+            const template = document.getElementById(templateId + '-template');
+            const button = event.target;
+
+            navigator.clipboard.writeText(template.textContent.trim()).then(() => {
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+
+                setTimeout(() => {
+                    button.textContent = 'Copy Email';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const button = event.target;
+
+            navigator.clipboard.writeText(element.textContent.trim()).then(() => {
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
