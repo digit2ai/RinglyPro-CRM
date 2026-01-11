@@ -620,33 +620,27 @@ class DualCalendarService {
    * @returns {Promise<object>} { available, ringlyProAvailable, ghlAvailable }
    */
   async isSlotAvailable(clientId, date, time) {
-    const dualMode = await this.isDualModeEnabled(clientId);
-
-    // Normalize time to HH:MM:SS format (getRinglyProAvailability uses HH:MM:SS)
+    // Normalize time to HH:MM:SS format
     const normalizedTime = time.length === 5 ? `${time}:00` : time;
 
-    // Check RinglyPro
-    const rpSlots = await this.getRinglyProAvailability(clientId, date);
-    const ringlyProAvailable = rpSlots.includes(normalizedTime);
+    // Use getCombinedAvailability which checks ALL calendar sources (RinglyPro, GHL, Google, Zoho)
+    const availability = await this.getCombinedAvailability(clientId, date, {
+      businessHours: { start: 9, end: 17, slotDuration: 60 }
+    });
 
-    if (!dualMode.enabled) {
-      return {
-        available: ringlyProAvailable,
-        ringlyProAvailable,
-        ghlAvailable: null,
-        dualModeActive: false
-      };
-    }
+    const slotAvailable = availability.availableSlots.includes(normalizedTime);
 
-    // Check GHL (use normalized time for consistency)
-    const ghlSlots = await this.getGHLAvailability(clientId, date, dualMode.calendarId);
-    const ghlAvailable = ghlSlots.includes(normalizedTime);
+    logger.info(`[DualCal] isSlotAvailable: ${date} ${normalizedTime} = ${slotAvailable} (available slots: ${availability.availableSlots.length})`);
 
     return {
-      available: ringlyProAvailable && ghlAvailable,
-      ringlyProAvailable,
-      ghlAvailable,
-      dualModeActive: true
+      available: slotAvailable,
+      ringlyProAvailable: availability.ringlyProSlots.includes(normalizedTime),
+      ghlAvailable: availability.ghlSlots.length > 0 ? availability.ghlSlots.includes(normalizedTime) : null,
+      googleBlocked: availability.googleBlockedSlots.includes(normalizedTime),
+      zohoBlocked: availability.zohoBlockedSlots.includes(normalizedTime),
+      dualModeActive: availability.dualModeActive,
+      googleCalendarActive: availability.googleCalendarActive,
+      zohoCalendarActive: availability.zohoCalendarActive
     };
   }
 }
