@@ -343,8 +343,11 @@ async function handleBookAppointment(params) {
     // Normalize time to HH:MM:SS format for dualCalendarService
     const normalizedTime = finalTime.length === 5 ? `${finalTime}:00` : finalTime;
 
+    // Ensure client_id is an integer early
+    const clientIdInt = parseInt(client_id, 10);
+
     // Verify the slot is still available in ALL connected calendars before booking
-    const slotCheck = await dualCalendarService.isSlotAvailable(client_id, finalDate, normalizedTime);
+    const slotCheck = await dualCalendarService.isSlotAvailable(clientIdInt, finalDate, normalizedTime);
     if (!slotCheck.available) {
       return {
         success: false,
@@ -363,9 +366,6 @@ async function handleBookAppointment(params) {
       purpose,
       notes: 'Booked via ElevenLabs AI Voice Assistant'
     };
-
-    // Ensure client_id is an integer
-    const clientIdInt = parseInt(client_id, 10);
     logger.info(`[ElevenLabs Tools] Booking appointment for client ${clientIdInt}:`, appointmentData);
 
     // Use dualCalendarService to create appointment in all connected calendars
