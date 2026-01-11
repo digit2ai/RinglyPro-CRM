@@ -199,7 +199,7 @@ class ZohoCalendarService {
 
       const response = await this.callAPI(clientId, settings, 'GET', '/Events', null, {
         per_page: 100,
-        fields: 'Event_Title,Start_DateTime,End_DateTime,Venue,Description,Who_Id,Created_Time'
+        fields: 'Event_Title,Start_DateTime,End_DateTime,Venue,Description,Created_Time'
       });
 
       // Filter events by date range client-side for reliability
