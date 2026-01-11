@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoho CRM Integration - RinglyPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header p {
+            color: #6e6e73;
+            font-size: 1rem;
+        }
+
+        .zoho-logo {
+            color: #dc2626;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e5e7;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 51px;
+            height: 31px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 31px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 23px;
+            width: 23px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #dc2626;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            font-size: 1rem;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #dc2626;
+        }
+
+        .form-hint {
+            color: #6e6e73;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #b91c1c;
+        }
+
+        .btn-secondary {
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8ed;
+        }
+
+        .btn-oauth {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-oauth:hover {
+            background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .alert-info {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f5f5f7;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .setup-steps {
+            background: #fef2f2;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+        }
+
+        .setup-steps ol {
+            padding-left: 1.5rem;
+        }
+
+        .setup-steps li {
+            margin-bottom: 0.75rem;
+            color: #1d1d1f;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #dc2626;
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        #alert-container .alert {
+            display: block;
+        }
+
+        .oauth-section {
+            background: #fef2f2;
+            border: 2px dashed #fca5a5;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .oauth-section.connected {
+            background: #d1fae5;
+            border-color: #6ee7b7;
+        }
+
+        .oauth-section h4 {
+            margin-bottom: 0.5rem;
+            color: #1d1d1f;
+        }
+
+        .oauth-section p {
+            color: #6b7280;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .region-select {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .region-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid #d2d2d7;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+
+        .region-btn:hover {
+            border-color: #dc2626;
+        }
+
+        .region-btn.active {
+            background: #dc2626;
+            color: white;
+            border-color: #dc2626;
+        }
+
+        code {
+            background: #f3f4f6;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">
+            &larr; Back to Dashboard
+        </a>
+
+        <div class="header">
+            <h1><span class="zoho-logo">Z</span> Zoho CRM Integration</h1>
+            <p>Connect your Zoho CRM to sync contacts, log calls, and create appointments via AI Agent</p>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <!-- Status Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Integration Status</div>
+                <div id="status-badge" class="status-badge status-disconnected">
+                    <span>&bull;</span>
+                    <span>Not configured</span>
+                </div>
+            </div>
+
+            <ul class="feature-list">
+                <li>
+                    <span>&#128222;</span>
+                    <span>Call logging - Automatically log AI agent calls to Zoho CRM</span>
+                </li>
+                <li>
+                    <span>&#128101;</span>
+                    <span>Contact sync - Create and update contacts from phone calls</span>
+                </li>
+                <li>
+                    <span>&#128197;</span>
+                    <span>Appointment booking - Create events/meetings in Zoho CRM</span>
+                </li>
+                <li>
+                    <span>&#128221;</span>
+                    <span>Notes & Tasks - Add notes and follow-up tasks automatically</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- OAuth Configuration Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">API Configuration</div>
+                <label class="toggle">
+                    <input type="checkbox" id="enableToggle" onchange="handleToggleChange()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <form id="zohoForm" onsubmit="handleSaveSettings(event)">
+                <div class="form-group">
+                    <label class="form-label">Zoho Data Center Region</label>
+                    <div class="region-select" id="regionSelect">
+                        <button type="button" class="region-btn active" data-region="com" onclick="selectRegion('com')">US (.com)</button>
+                        <button type="button" class="region-btn" data-region="eu" onclick="selectRegion('eu')">EU (.eu)</button>
+                        <button type="button" class="region-btn" data-region="in" onclick="selectRegion('in')">India (.in)</button>
+                        <button type="button" class="region-btn" data-region="com.au" onclick="selectRegion('com.au')">Australia (.au)</button>
+                        <button type="button" class="region-btn" data-region="jp" onclick="selectRegion('jp')">Japan (.jp)</button>
+                    </div>
+                    <input type="hidden" id="region" value="com">
+                    <p class="form-hint">Select the region where your Zoho account is hosted</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="clientId">Client ID</label>
+                    <input type="text"
+                           id="clientId"
+                           class="form-input"
+                           placeholder="1000.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                           autocomplete="off">
+                    <p class="form-hint">From Zoho API Console &rarr; Self Client</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="clientSecret">Client Secret</label>
+                    <input type="password"
+                           id="clientSecret"
+                           class="form-input"
+                           placeholder="Your client secret"
+                           autocomplete="off">
+                    <p class="form-hint">Keep this secret - never share it publicly</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="refreshToken">Refresh Token</label>
+                    <input type="password"
+                           id="refreshToken"
+                           class="form-input"
+                           placeholder="1000.xxxxxxxx.xxxxxxxx"
+                           autocomplete="off">
+                    <p class="form-hint">Generated via OAuth flow (see setup steps below)</p>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                    <button type="button" class="btn btn-secondary" onclick="testConnection()">Test Connection</button>
+                </div>
+            </form>
+
+            <div class="setup-steps">
+                <strong>How to get your Zoho API credentials:</strong>
+                <ol>
+                    <li>Go to <a href="https://api-console.zoho.com/" target="_blank" style="color: #dc2626;">Zoho API Console</a></li>
+                    <li>Click <strong>"Add Client"</strong> &rarr; Select <strong>"Self Client"</strong></li>
+                    <li>Copy your <strong>Client ID</strong> and <strong>Client Secret</strong></li>
+                    <li>Click <strong>"Generate Code"</strong> with these scopes:
+                        <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                            <li><code>ZohoCRM.modules.ALL</code></li>
+                            <li><code>ZohoCRM.settings.ALL</code></li>
+                            <li><code>ZohoCRM.users.READ</code></li>
+                        </ul>
+                    </li>
+                    <li>Use the authorization code to get a refresh token via OAuth</li>
+                    <li>Enter the refresh token above</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Sync Options Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Sync Options</div>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                    <input type="checkbox" id="syncContacts" checked style="width: 18px; height: 18px;">
+                    <span><strong>Sync Contacts</strong> - Create contacts in Zoho from phone calls</span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                    <input type="checkbox" id="logCalls" checked style="width: 18px; height: 18px;">
+                    <span><strong>Log Calls</strong> - Record AI agent call history in Zoho</span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                    <input type="checkbox" id="createEvents" checked style="width: 18px; height: 18px;">
+                    <span><strong>Create Events</strong> - Book appointments as Zoho CRM Events</span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                    <input type="checkbox" id="createTasks" style="width: 18px; height: 18px;">
+                    <span><strong>Create Follow-up Tasks</strong> - Auto-create tasks for follow-ups</span>
+                </label>
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="saveSyncOptions()">Save Sync Options</button>
+        </div>
+    </div>
+
+    <script>
+        // Get auth token (stored as 'token' from login)
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        let currentSettings = {};
+        let selectedRegion = 'com';
+
+        function selectRegion(region) {
+            selectedRegion = region;
+            document.getElementById('region').value = region;
+
+            // Update button states
+            document.querySelectorAll('.region-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.region === region) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/client-settings/zoho', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success && data.zoho) {
+                    currentSettings = data.zoho;
+
+                    document.getElementById('enableToggle').checked = data.zoho.enabled || false;
+
+                    // Show masked values if credentials exist
+                    if (data.zoho.clientId) {
+                        document.getElementById('clientId').value = data.zoho.clientId.substring(0, 10) + '...';
+                    }
+                    if (data.zoho.hasClientSecret) {
+                        document.getElementById('clientSecret').value = '************';
+                    }
+                    if (data.zoho.hasRefreshToken) {
+                        document.getElementById('refreshToken').value = '************';
+                    }
+
+                    // Set region
+                    if (data.zoho.region) {
+                        selectRegion(data.zoho.region);
+                    }
+
+                    // Sync options
+                    document.getElementById('syncContacts').checked = data.zoho.syncContacts !== false;
+                    document.getElementById('logCalls').checked = data.zoho.logCalls !== false;
+                    document.getElementById('createEvents').checked = data.zoho.createEvents !== false;
+                    document.getElementById('createTasks').checked = data.zoho.createTasks || false;
+
+                    updateStatus(data.zoho);
+                    handleToggleChange();
+                }
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+                showAlert('Failed to load settings', 'error');
+            }
+        }
+
+        function handleToggleChange() {
+            const enabled = document.getElementById('enableToggle').checked;
+            const inputs = document.querySelectorAll('#zohoForm .form-input');
+            inputs.forEach(input => {
+                input.disabled = !enabled;
+            });
+            document.querySelectorAll('.region-btn').forEach(btn => {
+                btn.disabled = !enabled;
+            });
+        }
+
+        async function handleSaveSettings(event) {
+            event.preventDefault();
+
+            const clientIdValue = document.getElementById('clientId').value;
+            const clientSecretValue = document.getElementById('clientSecret').value;
+            const refreshTokenValue = document.getElementById('refreshToken').value;
+
+            const settings = {
+                enabled: document.getElementById('enableToggle').checked,
+                region: selectedRegion,
+                syncContacts: document.getElementById('syncContacts').checked,
+                logCalls: document.getElementById('logCalls').checked,
+                createEvents: document.getElementById('createEvents').checked,
+                createTasks: document.getElementById('createTasks').checked
+            };
+
+            // Only include credentials if they're new values (not masked)
+            if (clientIdValue && !clientIdValue.includes('...')) {
+                settings.clientId = clientIdValue;
+            }
+            if (clientSecretValue && clientSecretValue !== '************') {
+                settings.clientSecret = clientSecretValue;
+            }
+            if (refreshTokenValue && refreshTokenValue !== '************') {
+                settings.refreshToken = refreshTokenValue;
+            }
+
+            try {
+                const response = await fetch('/api/client-settings/zoho', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentSettings = { ...currentSettings, ...settings };
+                    showAlert('Zoho settings saved successfully!', 'success');
+                    updateStatus(settings);
+                } else {
+                    showAlert(data.error || 'Failed to save settings', 'error');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showAlert('Failed to save settings', 'error');
+            }
+        }
+
+        async function saveSyncOptions() {
+            const settings = {
+                enabled: document.getElementById('enableToggle').checked,
+                region: selectedRegion,
+                syncContacts: document.getElementById('syncContacts').checked,
+                logCalls: document.getElementById('logCalls').checked,
+                createEvents: document.getElementById('createEvents').checked,
+                createTasks: document.getElementById('createTasks').checked
+            };
+
+            try {
+                const response = await fetch('/api/client-settings/zoho', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Sync options saved!', 'success');
+                } else {
+                    showAlert(data.error || 'Failed to save', 'error');
+                }
+            } catch (error) {
+                showAlert('Failed to save sync options', 'error');
+            }
+        }
+
+        async function testConnection() {
+            showAlert('Testing connection...', 'info');
+
+            try {
+                const response = await fetch('/api/client-settings/zoho/test', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Connection successful! Zoho CRM is connected.', 'success');
+                } else {
+                    showAlert(data.error || 'Connection failed. Please check your credentials.', 'error');
+                }
+            } catch (error) {
+                showAlert('Connection test failed', 'error');
+            }
+        }
+
+        function updateStatus(settings) {
+            const badge = document.getElementById('status-badge');
+            const hasCredentials = settings.clientId || settings.hasClientSecret || settings.hasRefreshToken;
+            const isEnabled = settings.enabled;
+
+            if (isEnabled && hasCredentials) {
+                badge.className = 'status-badge status-connected';
+                badge.innerHTML = '<span>&bull;</span><span>Connected</span>';
+            } else if (hasCredentials && !isEnabled) {
+                badge.className = 'status-badge status-disconnected';
+                badge.innerHTML = '<span>&bull;</span><span>Disabled</span>';
+            } else {
+                badge.className = 'status-badge status-disconnected';
+                badge.innerHTML = '<span>&bull;</span><span>Not configured</span>';
+            }
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('alert-container');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        loadSettings();
+    </script>
+</body>
+</html>

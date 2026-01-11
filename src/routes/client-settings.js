@@ -2204,4 +2204,242 @@ router.post('/business', authenticateToken, async (req, res) => {
   }
 });
 
+// =====================================================
+// ZOHO CRM INTEGRATION SETTINGS
+// =====================================================
+
+/**
+ * GET /api/client-settings/zoho
+ * Get Zoho CRM integration settings
+ */
+router.get('/zoho', authenticateToken, async (req, res) => {
+  try {
+    const clientId = await getClientIdForUser(req);
+
+    if (!clientId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client not found for user'
+      });
+    }
+
+    const [client] = await sequelize.query(
+      'SELECT settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    const settings = client.settings || {};
+    const zohoSettings = settings?.integration?.zoho || {};
+
+    res.json({
+      success: true,
+      zoho: {
+        enabled: zohoSettings.enabled || false,
+        clientId: zohoSettings.clientId || null,
+        hasClientSecret: !!zohoSettings.clientSecret,
+        hasRefreshToken: !!zohoSettings.refreshToken,
+        region: zohoSettings.region || 'com',
+        syncContacts: zohoSettings.syncContacts !== false,
+        logCalls: zohoSettings.logCalls !== false,
+        createEvents: zohoSettings.createEvents !== false,
+        createTasks: zohoSettings.createTasks || false
+      }
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Get Zoho settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get Zoho settings'
+    });
+  }
+});
+
+/**
+ * POST /api/client-settings/zoho
+ * Update Zoho CRM integration settings
+ */
+router.post('/zoho', authenticateToken, async (req, res) => {
+  try {
+    const {
+      enabled,
+      clientId: zohoClientId,
+      clientSecret,
+      refreshToken,
+      region,
+      syncContacts,
+      logCalls,
+      createEvents,
+      createTasks
+    } = req.body;
+
+    const clientId = await getClientIdForUser(req);
+
+    if (!clientId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Client not found for user'
+      });
+    }
+
+    // Get current settings
+    const [client] = await sequelize.query(
+      'SELECT settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    const settings = client.settings || {};
+    if (!settings.integration) {
+      settings.integration = {};
+    }
+    if (!settings.integration.zoho) {
+      settings.integration.zoho = {};
+    }
+
+    // Update only provided fields
+    if (enabled !== undefined) settings.integration.zoho.enabled = enabled;
+    if (zohoClientId !== undefined) settings.integration.zoho.clientId = zohoClientId;
+    if (clientSecret !== undefined) settings.integration.zoho.clientSecret = clientSecret;
+    if (refreshToken !== undefined) settings.integration.zoho.refreshToken = refreshToken;
+    if (region !== undefined) settings.integration.zoho.region = region;
+    if (syncContacts !== undefined) settings.integration.zoho.syncContacts = syncContacts;
+    if (logCalls !== undefined) settings.integration.zoho.logCalls = logCalls;
+    if (createEvents !== undefined) settings.integration.zoho.createEvents = createEvents;
+    if (createTasks !== undefined) settings.integration.zoho.createTasks = createTasks;
+
+    // Save settings
+    await sequelize.query(
+      'UPDATE clients SET settings = :settings, updated_at = NOW() WHERE id = :clientId',
+      {
+        replacements: {
+          clientId,
+          settings: JSON.stringify(settings)
+        },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`[CLIENT SETTINGS] Updated Zoho settings for client ${clientId}`);
+
+    res.json({
+      success: true,
+      message: 'Zoho settings saved successfully'
+    });
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Update Zoho settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update Zoho settings'
+    });
+  }
+});
+
+/**
+ * POST /api/client-settings/zoho/test
+ * Test Zoho CRM connection
+ */
+router.post('/zoho/test', authenticateToken, async (req, res) => {
+  try {
+    const clientId = await getClientIdForUser(req);
+
+    const [client] = await sequelize.query(
+      'SELECT settings FROM clients WHERE id = :clientId',
+      {
+        replacements: { clientId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const zohoSettings = client?.settings?.integration?.zoho;
+
+    if (!zohoSettings?.clientId || !zohoSettings?.clientSecret || !zohoSettings?.refreshToken) {
+      return res.json({
+        success: false,
+        error: 'Zoho credentials are not configured'
+      });
+    }
+
+    // Test connection by getting a new access token
+    const fetch = require('node-fetch');
+    const regionDomains = {
+      'com': 'accounts.zoho.com',
+      'eu': 'accounts.zoho.eu',
+      'in': 'accounts.zoho.in',
+      'com.au': 'accounts.zoho.com.au',
+      'jp': 'accounts.zoho.jp'
+    };
+    const domain = regionDomains[zohoSettings.region] || 'accounts.zoho.com';
+
+    const tokenResponse = await fetch(`https://${domain}/oauth/v2/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        client_id: zohoSettings.clientId,
+        client_secret: zohoSettings.clientSecret,
+        refresh_token: zohoSettings.refreshToken
+      })
+    });
+
+    const tokenData = await tokenResponse.json();
+
+    if (tokenData.access_token) {
+      // Test with a simple API call
+      const apiDomain = zohoSettings.region === 'com' ? 'www.zohoapis.com' : `www.zohoapis.${zohoSettings.region}`;
+      const testResponse = await fetch(`https://${apiDomain}/crm/v2/users?type=CurrentUser`, {
+        headers: {
+          'Authorization': `Zoho-oauthtoken ${tokenData.access_token}`
+        }
+      });
+
+      if (testResponse.ok) {
+        const userData = await testResponse.json();
+        res.json({
+          success: true,
+          message: 'Connection successful',
+          user: userData.users?.[0]?.full_name || 'Connected'
+        });
+      } else {
+        res.json({
+          success: false,
+          error: 'API access failed - check your scopes'
+        });
+      }
+    } else {
+      res.json({
+        success: false,
+        error: tokenData.error || 'Failed to refresh access token'
+      });
+    }
+
+  } catch (error) {
+    logger.error('[CLIENT SETTINGS] Zoho test error:', error);
+    res.json({
+      success: false,
+      error: 'Connection test failed'
+    });
+  }
+});
+
 module.exports = router;

@@ -685,10 +685,10 @@ app.get('/settings/sendgrid', (req, res) => {
   });
 });
 
-// Zelle Deposit Collection Settings
-app.get('/settings/zelle', (req, res) => {
-  res.render('settings-zelle', {
-    title: 'Zelle Deposit Collection - RinglyPro Settings'
+// Zoho CRM Integration Settings
+app.get('/settings/zoho', (req, res) => {
+  res.render('settings-zoho', {
+    title: 'Zoho CRM Integration - RinglyPro Settings'
   });
 });
 
