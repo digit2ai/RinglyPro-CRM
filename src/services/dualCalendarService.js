@@ -378,14 +378,13 @@ class DualCalendarService {
 
     let result;
     try {
-      // First, check if there's a cancelled/completed appointment at this slot
+      // First, check if there's ANY existing appointment at this slot
       // The unique constraint doesn't have a WHERE clause, so we need to handle this case
-      const existingCancelled = await sequelize.query(
-        `SELECT id FROM appointments
+      const existingAppointment = await sequelize.query(
+        `SELECT id, status, customer_name FROM appointments
          WHERE client_id = :clientId
            AND appointment_date = :appointmentDate
            AND appointment_time = :appointmentTime
-           AND status IN ('cancelled', 'completed', 'no-show')
          LIMIT 1`,
         {
           replacements: { clientId, appointmentDate, appointmentTime },
@@ -393,44 +392,57 @@ class DualCalendarService {
         }
       );
 
-      if (existingCancelled.length > 0) {
-        // Update the existing cancelled appointment instead of inserting
-        logger.info(`[DualCal] Found cancelled appointment ${existingCancelled[0].id} at this slot, updating instead of inserting`);
+      logger.info(`[DualCal] Checking for existing appointment: clientId=${clientId}, date=${appointmentDate}, time=${appointmentTime}`);
+      logger.info(`[DualCal] Found existing: ${JSON.stringify(existingAppointment)}`);
 
-        result = await sequelize.query(
-          `UPDATE appointments SET
-            customer_name = :customerName,
-            customer_phone = :customerPhone,
-            customer_email = :customerEmail,
-            duration = :duration,
-            purpose = :purpose,
-            status = 'confirmed',
-            source = 'voice_booking',
-            confirmation_code = :confirmationCode,
-            notes = :notes,
-            ghl_appointment_id = :ghlAppointmentId,
-            ghl_contact_id = :ghlContactId,
-            updated_at = NOW()
-          WHERE id = :existingId
-          RETURNING *`,
-          {
-            replacements: {
-              existingId: existingCancelled[0].id,
-              customerName,
-              customerPhone,
-              customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@booking.ringlypro.com`,
-              duration,
-              purpose,
-              confirmationCode,
-              notes,
-              ghlAppointmentId,
-              ghlContactId
-            },
-            type: QueryTypes.UPDATE
-          }
-        );
+      if (existingAppointment.length > 0) {
+        const existing = existingAppointment[0];
+
+        // If the existing appointment is cancelled/completed/no-show, we can reuse it
+        if (['cancelled', 'completed', 'no-show'].includes(existing.status)) {
+          // Update the existing cancelled appointment instead of inserting
+          logger.info(`[DualCal] Found cancelled/completed appointment ${existing.id} at this slot, updating instead of inserting`);
+
+          result = await sequelize.query(
+            `UPDATE appointments SET
+              customer_name = :customerName,
+              customer_phone = :customerPhone,
+              customer_email = :customerEmail,
+              duration = :duration,
+              purpose = :purpose,
+              status = 'confirmed',
+              source = 'voice_booking',
+              confirmation_code = :confirmationCode,
+              notes = :notes,
+              ghl_appointment_id = :ghlAppointmentId,
+              ghl_contact_id = :ghlContactId,
+              updated_at = NOW()
+            WHERE id = :existingId
+            RETURNING *`,
+            {
+              replacements: {
+                existingId: existing.id,
+                customerName,
+                customerPhone,
+                customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@booking.ringlypro.com`,
+                duration,
+                purpose,
+                confirmationCode,
+                notes,
+                ghlAppointmentId,
+                ghlContactId
+              },
+              type: QueryTypes.UPDATE
+            }
+          );
+        } else {
+          // Active appointment exists - this slot is not actually available
+          logger.error(`[DualCal] Slot conflict: active appointment ${existing.id} (status: ${existing.status}) exists at ${appointmentDate} ${appointmentTime}`);
+          throw new Error(`Time slot already booked by ${existing.customer_name}. Please choose a different time.`);
+        }
       } else {
-        // No cancelled appointment at this slot, do a normal insert
+        // No existing appointment at this slot, do a normal insert
+        logger.info(`[DualCal] No existing appointment found, proceeding with INSERT`);
         result = await sequelize.query(
           `INSERT INTO appointments (
             client_id, customer_name, customer_phone, customer_email,
