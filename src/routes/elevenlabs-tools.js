@@ -364,10 +364,12 @@ async function handleBookAppointment(params) {
       notes: 'Booked via ElevenLabs AI Voice Assistant'
     };
 
-    logger.info(`[ElevenLabs Tools] Booking appointment for client ${client_id}:`, appointmentData);
+    // Ensure client_id is an integer
+    const clientIdInt = parseInt(client_id, 10);
+    logger.info(`[ElevenLabs Tools] Booking appointment for client ${clientIdInt}:`, appointmentData);
 
     // Use dualCalendarService to create appointment in all connected calendars
-    const result = await dualCalendarService.createDualAppointment(client_id, appointmentData);
+    const result = await dualCalendarService.createDualAppointment(clientIdInt, appointmentData);
 
     if (!result.success) {
       return { success: false, error: result.error || 'Failed to book appointment' };
