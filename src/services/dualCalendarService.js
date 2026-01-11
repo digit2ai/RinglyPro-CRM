@@ -366,7 +366,10 @@ class DualCalendarService {
 
     const confirmationCode = `RP${Date.now().toString().slice(-6).toUpperCase()}`;
 
-    logger.info(`[DualCal] Creating RinglyPro appointment:`, {
+    // Generate unique call ID for tracing
+    const callId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    logger.info(`[DualCal] [${callId}] Creating RinglyPro appointment:`, {
       clientId,
       customerName,
       customerPhone,
@@ -380,6 +383,7 @@ class DualCalendarService {
     try {
       // First, check if there's ANY existing appointment at this slot
       // The unique constraint doesn't have a WHERE clause, so we need to handle this case
+      logger.info(`[DualCal] [${callId}] Checking for existing appointment BEFORE insert...`);
       const existingAppointment = await sequelize.query(
         `SELECT id, status, customer_name FROM appointments
          WHERE client_id = :clientId
@@ -392,8 +396,8 @@ class DualCalendarService {
         }
       );
 
-      logger.info(`[DualCal] Checking for existing appointment: clientId=${clientId}, date=${appointmentDate}, time=${appointmentTime}`);
-      logger.info(`[DualCal] Found existing: ${JSON.stringify(existingAppointment)}`);
+      logger.info(`[DualCal] [${callId}] Checked for existing appointment: clientId=${clientId}, date=${appointmentDate}, time=${appointmentTime}`);
+      logger.info(`[DualCal] [${callId}] Found existing: ${JSON.stringify(existingAppointment)}`);
 
       if (existingAppointment.length > 0) {
         const existing = existingAppointment[0];
@@ -401,7 +405,7 @@ class DualCalendarService {
         // If the existing appointment is cancelled/completed/no-show, we can reuse it
         if (['cancelled', 'completed', 'no-show'].includes(existing.status)) {
           // Update the existing cancelled appointment instead of inserting
-          logger.info(`[DualCal] Found cancelled/completed appointment ${existing.id} at this slot, updating instead of inserting`);
+          logger.info(`[DualCal] [${callId}] Found cancelled/completed appointment ${existing.id} at this slot, updating instead of inserting`);
 
           result = await sequelize.query(
             `UPDATE appointments SET
@@ -437,12 +441,12 @@ class DualCalendarService {
           );
         } else {
           // Active appointment exists - this slot is not actually available
-          logger.error(`[DualCal] Slot conflict: active appointment ${existing.id} (status: ${existing.status}) exists at ${appointmentDate} ${appointmentTime}`);
+          logger.error(`[DualCal] [${callId}] Slot conflict: active appointment ${existing.id} (status: ${existing.status}) exists at ${appointmentDate} ${appointmentTime}`);
           throw new Error(`Time slot already booked by ${existing.customer_name}. Please choose a different time.`);
         }
       } else {
         // No existing appointment at this slot, do a normal insert
-        logger.info(`[DualCal] No existing appointment found, proceeding with INSERT`);
+        logger.info(`[DualCal] [${callId}] No existing appointment found, proceeding with INSERT`);
         result = await sequelize.query(
           `INSERT INTO appointments (
             client_id, customer_name, customer_phone, customer_email,
@@ -487,7 +491,7 @@ class DualCalendarService {
     }
 
     const appointment = result[0]?.[0];
-    logger.info(`[DualCal] RinglyPro appointment created/updated: ${appointment?.id}`);
+    logger.info(`[DualCal] [${callId}] RinglyPro appointment created/updated: ${appointment?.id}`);
 
     return appointment;
   }
