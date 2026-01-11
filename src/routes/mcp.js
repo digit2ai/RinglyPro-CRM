@@ -6613,43 +6613,8 @@ router.post('/webhooks/:source', async (req, res) => {
     });
 });
 
-// ============= CATCH-ALL CRM OPERATIONS (MUST BE LAST) =============
-// CRM operations
-router.post('/:crm/:operation', async (req, res) => {
-  const { sessionId } = req.body;
-  const { crm, operation } = req.params;
-
-  const session = sessions.get(sessionId);
-  if (!session || session.type !== crm) {
-    return res.status(401).json({ error: 'Invalid session' });
-  }
-
-  try {
-    let result;
-    switch (operation) {
-      case 'search-contacts':
-        result = await session.proxy.searchContacts(req.body.query, req.body.limit);
-        break;
-      case 'create-contact':
-        result = await session.proxy.createContact(req.body);
-        break;
-      case 'get-deals':
-        result = await session.proxy.getDeals ? await session.proxy.getDeals(req.body.filters) :
-                 await session.proxy.getOpportunities(req.body.filters);
-        break;
-      default:
-        return res.status(400).json({ error: 'Unknown operation' });
-    }
-
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Workflow endpoints
 // ===========================================
-// ZOHO CRM INTEGRATION
+// ZOHO CRM INTEGRATION (MUST BE BEFORE CATCH-ALL)
 // ===========================================
 
 // Zoho connection
@@ -6939,6 +6904,40 @@ router.post('/zoho/add-note', async (req, res) => {
       error: error.message,
       code: error.code || 'ZOHO_API_ERROR'
     });
+  }
+});
+
+// ============= CATCH-ALL CRM OPERATIONS (MUST BE LAST) =============
+// CRM operations
+router.post('/:crm/:operation', async (req, res) => {
+  const { sessionId } = req.body;
+  const { crm, operation } = req.params;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== crm) {
+    return res.status(401).json({ error: 'Invalid session' });
+  }
+
+  try {
+    let result;
+    switch (operation) {
+      case 'search-contacts':
+        result = await session.proxy.searchContacts(req.body.query, req.body.limit);
+        break;
+      case 'create-contact':
+        result = await session.proxy.createContact(req.body);
+        break;
+      case 'get-deals':
+        result = await session.proxy.getDeals ? await session.proxy.getDeals(req.body.filters) :
+                 await session.proxy.getOpportunities(req.body.filters);
+        break;
+      default:
+        return res.status(400).json({ error: 'Unknown operation' });
+    }
+
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
