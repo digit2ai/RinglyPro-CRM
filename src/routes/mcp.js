@@ -14,6 +14,7 @@ const projectRoot = path.join(__dirname, '../..');
 const HubSpotMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/hubspot-proxy'));
 const GoHighLevelMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/gohighlevel-proxy'));
 const VagaroMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/vagaro-proxy'));
+const ZohoMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/zoho-proxy'));
 const BusinessCollectorMCPProxy = require(path.join(projectRoot, 'mcp-integrations/api/business-collector-proxy'));
 const WebhookManager = require(path.join(projectRoot, 'mcp-integrations/webhooks/webhook-manager'));
 const WorkflowEngine = require(path.join(projectRoot, 'mcp-integrations/workflows/workflow-engine'));
@@ -6647,6 +6648,304 @@ router.post('/:crm/:operation', async (req, res) => {
 });
 
 // Workflow endpoints
+// ===========================================
+// ZOHO CRM INTEGRATION
+// ===========================================
+
+// Zoho connection
+router.post('/zoho/connect', async (req, res) => {
+  console.log('🔗 Zoho CRM connection request received');
+  const { clientId, clientSecret, refreshToken, accessToken, region } = req.body;
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    return res.status(400).json({
+      success: false,
+      error: 'Zoho OAuth credentials are required: clientId, clientSecret, and refreshToken',
+      code: 'ZOHO_CREDENTIALS_MISSING'
+    });
+  }
+
+  try {
+    const proxy = new ZohoMCPProxy({
+      clientId,
+      clientSecret,
+      refreshToken,
+      accessToken,
+      region: region || 'com'
+    });
+
+    // Test connection
+    const testResult = await proxy.testConnection();
+    if (!testResult.success) {
+      return res.status(400).json({
+        success: false,
+        error: testResult.error || 'Failed to connect to Zoho CRM',
+        code: testResult.code || 'ZOHO_CONNECTION_ERROR'
+      });
+    }
+
+    const sessionId = `zoho_${Date.now()}`;
+
+    sessions.set(sessionId, {
+      type: 'zoho',
+      proxy,
+      createdAt: new Date()
+    });
+
+    console.log('✅ Zoho CRM connected, session:', sessionId);
+
+    res.json({
+      success: true,
+      sessionId,
+      message: 'Zoho CRM connected successfully',
+      user: testResult.user
+    });
+  } catch (error) {
+    console.error('❌ Zoho CRM connection error:', error);
+    res.status(400).json({
+      success: false,
+      error: error.message || 'Failed to connect to Zoho CRM',
+      code: error.code || 'ZOHO_CONNECTION_ERROR'
+    });
+  }
+});
+
+// Zoho find or create contact
+router.post('/zoho/find-or-create-contact', async (req, res) => {
+  const { sessionId, firstName, lastName, phone, email } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  try {
+    const result = await session.proxy.findOrCreateContact({ firstName, lastName, phone, email });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// Zoho search contacts
+router.post('/zoho/search-contacts', async (req, res) => {
+  const { sessionId, query, limit } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  try {
+    const result = await session.proxy.searchContacts(query, limit || 10);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// Zoho log call
+router.post('/zoho/log-call', async (req, res) => {
+  const { sessionId, whoId, direction, durationSeconds, summary, callTime, subject } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  if (!whoId) {
+    return res.status(400).json({
+      success: false,
+      error: 'whoId (contact ID) is required',
+      code: 'MISSING_PARAMS'
+    });
+  }
+
+  try {
+    const result = await session.proxy.logCall({
+      whoId,
+      direction: direction || 'Inbound',
+      durationSeconds: durationSeconds || 0,
+      summary: summary || '',
+      callTime: callTime || new Date().toISOString(),
+      subject
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// Zoho create task
+router.post('/zoho/create-task', async (req, res) => {
+  const { sessionId, whoId, subject, dueDate, notes, priority } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  if (!subject) {
+    return res.status(400).json({
+      success: false,
+      error: 'subject is required',
+      code: 'MISSING_PARAMS'
+    });
+  }
+
+  try {
+    const result = await session.proxy.createTask({
+      subject,
+      dueDate: dueDate || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      whoId,
+      notes: notes || '',
+      priority: priority || 'Normal'
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// Zoho create event/appointment
+router.post('/zoho/create-event', async (req, res) => {
+  const { sessionId, title, startTime, endTime, contactId, description, location, reminderMinutes } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  if (!title || !startTime) {
+    return res.status(400).json({
+      success: false,
+      error: 'title and startTime are required',
+      code: 'MISSING_PARAMS'
+    });
+  }
+
+  try {
+    const result = await session.proxy.createEvent({
+      title,
+      startTime,
+      endTime,
+      contactId,
+      description,
+      location,
+      reminderMinutes
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// Zoho get events
+router.post('/zoho/get-events', async (req, res) => {
+  const { sessionId, startDate, endDate, limit } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  try {
+    const result = await session.proxy.getEvents({ startDate, endDate, limit });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// Zoho add note
+router.post('/zoho/add-note', async (req, res) => {
+  const { sessionId, parentId, noteTitle, noteContent } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session || session.type !== 'zoho') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or expired Zoho session',
+      code: 'INVALID_SESSION'
+    });
+  }
+
+  if (!parentId || !noteContent) {
+    return res.status(400).json({
+      success: false,
+      error: 'parentId and noteContent are required',
+      code: 'MISSING_PARAMS'
+    });
+  }
+
+  try {
+    const result = await session.proxy.addNote({
+      parentId,
+      noteTitle: noteTitle || 'Note',
+      noteContent
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code || 'ZOHO_API_ERROR'
+    });
+  }
+});
+
+// ===========================================
+// WORKFLOW ENGINE
+// ===========================================
+
 router.post('/workflows', async (req, res) => {
   try {
     const workflow = workflowEngine.createWorkflow(req.body);
