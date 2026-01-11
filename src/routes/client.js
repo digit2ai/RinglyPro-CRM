@@ -278,8 +278,8 @@ router.get('/debug/zoho-events/:client_id', async (req, res) => {
     }
 });
 
-// POST /api/client/debug/zoho-create-test-events/:client_id - Create test events in Zoho for sync testing
-router.post('/debug/zoho-create-test-events/:client_id', async (req, res) => {
+// GET /api/client/debug/zoho-create-test-events/:client_id - Create test events in Zoho for sync testing
+router.get('/debug/zoho-create-test-events/:client_id', async (req, res) => {
     try {
         const { client_id } = req.params;
         const { startDate, endDate } = req.query;
