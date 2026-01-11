@@ -395,11 +395,27 @@ class ZohoCalendarService {
         const end = new Date(event.endTime);
         const duration = Math.round((end - start) / (1000 * 60)); // minutes
 
+        // Extract local date and time from the Zoho datetime string
+        // Zoho returns: "2026-01-14T11:00:00-05:00" - we want to keep the local time (11:00)
+        let appointmentDate, appointmentTime;
+
+        if (event.startTime && event.startTime.includes('T')) {
+          // Parse the datetime string directly to preserve local time
+          const [datePart, timePart] = event.startTime.split('T');
+          appointmentDate = datePart;
+          // Remove timezone offset from time (e.g., "11:00:00-05:00" -> "11:00:00")
+          appointmentTime = timePart.substring(0, 8);
+        } else {
+          // Fallback to Date object (converts to UTC)
+          appointmentDate = start.toISOString().split('T')[0];
+          appointmentTime = start.toISOString().split('T')[1].substring(0, 8);
+        }
+
         return {
           id: `zoho_${event.id}`,
           customer_name: event.title,
-          appointment_date: start.toISOString().split('T')[0],
-          appointment_time: start.toISOString().split('T')[1].substring(0, 8),
+          appointment_date: appointmentDate,
+          appointment_time: appointmentTime,
           duration,
           purpose: event.description || 'Zoho Calendar Event',
           status: 'confirmed',
