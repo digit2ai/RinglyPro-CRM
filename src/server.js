@@ -56,6 +56,19 @@ async function startServer() {
         } catch (error) {
           console.log('⚠️ website_url migration skipped:', error.message);
         }
+
+        // AUTO-MIGRATE CALENDAR SYNC COLUMNS
+        try {
+          await sequelize.query(`
+            ALTER TABLE appointments ADD COLUMN IF NOT EXISTS google_event_id VARCHAR(255)
+          `);
+          await sequelize.query(`
+            ALTER TABLE appointments ADD COLUMN IF NOT EXISTS zoho_event_id VARCHAR(255)
+          `);
+          console.log('✅ Calendar sync columns ready (google_event_id, zoho_event_id)');
+        } catch (error) {
+          console.log('⚠️ Calendar sync columns migration skipped:', error.message);
+        }
       } else {
         console.log('⚠️ No DATABASE_URL provided, running without database');
       }
