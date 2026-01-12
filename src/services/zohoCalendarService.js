@@ -359,7 +359,9 @@ class ZohoCalendarService {
         Venue: location || ''
       };
 
+      logger.info(`[ZohoCalendar] Calling Zoho API to create event for client ${clientId}, data: ${JSON.stringify(zohoEventData)}`);
       const response = await this.callAPI(clientId, settings, 'POST', '/Events', { data: [zohoEventData] });
+      logger.info(`[ZohoCalendar] Zoho API response: ${JSON.stringify(response)}`);
 
       if (response.data?.[0]?.status === 'success') {
         const eventId = response.data[0].details.id;

@@ -592,6 +592,8 @@ class DualCalendarService {
       const startTime = new Date(`${appointmentDate}T${appointmentTime}`);
       const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
 
+      logger.info(`[DualCal] Client ${clientId}: Calling Zoho createEvent with startTime=${startTime.toISOString()}, endTime=${endTime.toISOString()}`);
+
       const eventResult = await zohoCalendarService.createEvent(clientId, {
         appointmentId: appointment.id,
         title: appointment.purpose || 'RinglyPro Appointment',
@@ -605,6 +607,8 @@ class DualCalendarService {
         description: appointment.notes,
         confirmationCode: appointment.confirmationCode || appointment.confirmation_code
       });
+
+      logger.info(`[DualCal] Client ${clientId}: Zoho createEvent result: ${JSON.stringify(eventResult)}`);
 
       if (eventResult.success) {
         logger.info(`[DualCal] Zoho event created: ${eventResult.event.id} for appointment ${appointment.id}`);
