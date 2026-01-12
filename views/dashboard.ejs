@@ -5004,10 +5004,10 @@
             }
 
             try {
-                const response = await authenticatedFetch(`/api/appointments/${appointmentId}/deposit`, {
-                    method: 'PATCH',
+                const response = await authenticatedFetch(`/api/appointments/${appointmentId}/deposit-status`, {
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ depositStatus: 'confirmed' })
+                    body: JSON.stringify({ status: 'confirmed' })
                 });
 
                 if (response && response.ok) {
