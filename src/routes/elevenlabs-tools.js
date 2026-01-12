@@ -129,6 +129,10 @@ router.post('/', async (req, res) => {
         // Quick admin tool to get client's ElevenLabs configuration
         result = await handleAdminGetClientConfig(params);
         break;
+      case 'admin_set_deposit_required':
+        // Quick admin tool to enable/disable deposit requirement
+        result = await handleAdminSetDepositRequired(params);
+        break;
       default:
         result = {
           success: false,
@@ -748,6 +752,36 @@ async function handleAdminGetClientConfig(params) {
         rachel_enabled: clientData.rachel_enabled
       }
     };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Admin tool to enable/disable deposit requirement for a client
+ */
+async function handleAdminSetDepositRequired(params) {
+  const { client_id, enabled, api_key } = params;
+
+  const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+  if (api_key !== expectedKey) {
+    return { success: false, error: 'Invalid API key' };
+  }
+
+  if (!client_id) {
+    return { success: false, error: 'client_id required' };
+  }
+
+  const depositRequired = enabled !== false && enabled !== 'false';
+
+  try {
+    await sequelize.query(
+      'UPDATE clients SET deposit_required = :depositRequired WHERE id = :clientId',
+      { replacements: { depositRequired, clientId: client_id }, type: QueryTypes.UPDATE }
+    );
+
+    logger.info(`✅ Set deposit_required for client ${client_id}: ${depositRequired}`);
+    return { success: true, client_id, deposit_required: depositRequired };
   } catch (error) {
     return { success: false, error: error.message };
   }
