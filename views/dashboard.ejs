@@ -4511,25 +4511,18 @@
         // Load Dashboard Data
         async function loadDashboard() {
             try {
-                // Client 15: Show Calendar header and calendar grid view
-                // Other clients: Show Schedule header and use GHL Calendar Cards
-                if (isClient15()) {
-                    // Show Calendar header, hide Schedule header for Client 15
-                    document.getElementById('calendarHeaderClient15').style.display = 'flex';
-                    document.getElementById('scheduleHeaderOthers').style.display = 'none';
-                    // Show refresh button for Client 15
-                    document.getElementById('refreshAppointmentsBtn').style.display = 'flex';
-                    // Load calendar grid view directly (no list view)
-                    setAppointmentView('calendar');
-                } else {
-                    // Show Schedule header, hide Calendar header for other clients
-                    document.getElementById('calendarHeaderClient15').style.display = 'none';
-                    document.getElementById('scheduleHeaderOthers').style.display = 'flex';
-                    // Hide refresh button for other clients
-                    document.getElementById('refreshAppointmentsBtn').style.display = 'none';
-                    // Load GHL Calendar Cards on initial load
-                    loadGHLCards();
-                }
+                // ALL clients now use RinglyPro native calendar as default
+                // GHL/Zoho/Google are optional integrations that sync in background
+
+                // Show Calendar header for all clients
+                document.getElementById('calendarHeaderClient15').style.display = 'flex';
+                document.getElementById('scheduleHeaderOthers').style.display = 'none';
+                // Show refresh button for all clients
+                document.getElementById('refreshAppointmentsBtn').style.display = 'flex';
+                // Hide GHL Cards view, show Calendar view
+                document.getElementById('ghlCardsView').style.display = 'none';
+                // Load calendar grid view for all clients (RinglyPro native calendar)
+                setAppointmentView('calendar');
 
                 // Show Pending Deposits button for Client 32 (no calendar dropdown - uses Google Calendar like Client 15)
                 // Keep Settings visible so client can access Google Calendar integration
@@ -4696,7 +4689,7 @@
         // CALENDAR VIEW FUNCTIONS
         // =====================================================
 
-        let currentView = 'ghlCards'; // 'ghlCards' is the default (Schedule view)
+        let currentView = 'calendar'; // 'calendar' is the default (RinglyPro native calendar)
         let calendarWeekOffset = 0; // 0 = current week, -1 = last week, 1 = next week
         let ghlCardsData = null; // Cache for GHL cards data
 
@@ -4706,7 +4699,7 @@
             return CLIENT_ID == 15 || CLIENT_ID == 32;
         }
 
-        // Set appointment view - Client 15 uses list/calendar, others use GHL Cards
+        // Set appointment view - ALL clients now use RinglyPro native calendar by default
         function setAppointmentView(view) {
             const listView = document.getElementById('appointmentsList');
             const calendarView = document.getElementById('calendarView');
@@ -4714,40 +4707,39 @@
             const listViewBtn = document.getElementById('listViewBtn');
             const calendarViewBtn = document.getElementById('calendarViewBtn');
 
-            // Client 15 uses traditional list/calendar views
-            if (isClient15()) {
-                currentView = view || 'calendar';
+            // ALL clients now use RinglyPro native calendar
+            currentView = view || 'calendar';
 
-                // Hide GHL Cards view
-                ghlCardsView.style.display = 'none';
+            // Always hide GHL Cards view - RinglyPro calendar is now the default
+            ghlCardsView.style.display = 'none';
 
-                if (currentView === 'list') {
-                    listView.style.display = 'block';
-                    listView.style.removeProperty('display'); // Remove !important
-                    calendarView.style.display = 'none';
+            if (currentView === 'list') {
+                listView.style.display = 'block';
+                listView.style.removeProperty('display'); // Remove !important
+                calendarView.style.display = 'none';
+                if (listViewBtn) {
                     listViewBtn.style.background = '#3b82f6';
                     listViewBtn.style.color = 'white';
+                }
+                if (calendarViewBtn) {
                     calendarViewBtn.style.background = 'transparent';
                     calendarViewBtn.style.color = '#6b7280';
-                    loadAppointmentsForList();
-                } else if (currentView === 'calendar') {
-                    listView.style.display = 'none';
-                    calendarView.style.display = 'block';
-                    calendarView.style.removeProperty('display'); // Remove !important
+                }
+                loadAppointmentsForList();
+            } else if (currentView === 'calendar') {
+                listView.style.display = 'none';
+                calendarView.style.display = 'block';
+                calendarView.style.removeProperty('display'); // Remove !important
+                if (listViewBtn) {
                     listViewBtn.style.background = 'transparent';
                     listViewBtn.style.color = '#6b7280';
+                }
+                if (calendarViewBtn) {
                     calendarViewBtn.style.background = '#3b82f6';
                     calendarViewBtn.style.color = 'white';
-                    // Load appointments first, then render calendar
-                    loadAppointmentsForCalendar();
                 }
-            } else {
-                // All other clients use GHL Cards (Schedule) view
-                currentView = 'ghlCards';
-                listView.style.display = 'none';
-                calendarView.style.display = 'none';
-                ghlCardsView.style.display = 'block';
-                loadGHLCards();
+                // Load appointments first, then render calendar
+                loadAppointmentsForCalendar();
             }
         }
 
