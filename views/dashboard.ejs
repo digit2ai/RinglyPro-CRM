@@ -5117,10 +5117,11 @@
                 const data = await response.json();
                 ghlCardsData = data;
 
-                if (!data.success || !data.calendars || data.calendars.length === 0) {
+                if (!data.calendars || data.calendars.length === 0) {
                     grid.innerHTML = `
                         <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #6b7280;">
-                            <p>No GHL calendars configured for this client.</p>
+                            <p>No GHL calendars configured.</p>
+                            <p style="font-size: 0.875rem; margin-top: 0.5rem;">Connect GHL in Settings to enable calendar sync.</p>
                         </div>
                     `;
                     return;

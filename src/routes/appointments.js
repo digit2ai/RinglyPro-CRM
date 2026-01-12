@@ -227,22 +227,40 @@ router.get('/ghl-calendar-slots', async (req, res) => {
 
     console.log(`📆 Fetching live GHL calendar slots for client ${clientId}`);
 
-    // Get client's GHL credentials
+    // Get client's GHL credentials - check both legacy (clients table) and OAuth (ghl_integrations table)
     const clientResults = await sequelize.query(
       'SELECT ghl_api_key, ghl_location_id FROM clients WHERE id = :clientId',
       { replacements: { clientId }, type: sequelize.QueryTypes.SELECT }
     );
 
-    if (!clientResults || clientResults.length === 0 || !clientResults[0].ghl_api_key) {
+    // Also check ghl_integrations table for OAuth tokens
+    const oauthResults = await sequelize.query(
+      'SELECT access_token, ghl_location_id FROM ghl_integrations WHERE client_id = :clientId AND is_active = true ORDER BY updated_at DESC LIMIT 1',
+      { replacements: { clientId }, type: sequelize.QueryTypes.SELECT }
+    );
+
+    // Determine which credentials to use (prefer OAuth, fallback to legacy)
+    let apiKey = null;
+    let locationId = null;
+
+    if (oauthResults && oauthResults.length > 0 && oauthResults[0].access_token) {
+      apiKey = oauthResults[0].access_token;
+      locationId = oauthResults[0].ghl_location_id;
+      console.log(`📆 Using OAuth GHL credentials for client ${clientId}`);
+    } else if (clientResults && clientResults.length > 0 && clientResults[0].ghl_api_key) {
+      apiKey = clientResults[0].ghl_api_key;
+      locationId = clientResults[0].ghl_location_id;
+      console.log(`📆 Using legacy GHL credentials for client ${clientId}`);
+    }
+
+    if (!apiKey) {
+      console.log(`📆 No GHL credentials found for client ${clientId}`);
       return res.json({
-        success: false,
-        error: 'GHL not configured for this client',
+        success: true,  // Changed to true so frontend doesn't show error
+        message: 'GHL not configured for this client',
         calendars: []
       });
     }
-
-    const apiKey = clientResults[0].ghl_api_key;
-    const locationId = clientResults[0].ghl_location_id;
 
     // Get all calendars for this location
     const calendarsRes = await axios.get(
