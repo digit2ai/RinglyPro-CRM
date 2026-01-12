@@ -4,6 +4,7 @@ const { Appointment, sequelize } = require('../models');
 const crmAppointmentService = require('../services/crmAppointmentService');
 const dualCalendarService = require('../services/dualCalendarService');
 const zohoCalendarService = require('../services/zohoCalendarService');
+const googleCalendarService = require('../services/googleCalendarService');
 const router = express.Router();
 
 // Middleware to extract and verify client_id from JWT token
@@ -876,8 +877,22 @@ router.delete('/:id', async (req, res) => {
       customerPhone: appointment.customerPhone,
       appointmentDate: appointment.appointmentDate,
       appointmentTime: appointment.appointmentTime,
-      confirmationCode: appointment.confirmationCode
+      confirmationCode: appointment.confirmationCode,
+      googleEventId: appointment.googleEventId
     };
+
+    // Delete from Google Calendar if connected (do this BEFORE deleting from RinglyPro)
+    let googleDeleted = false;
+    if (appointment.googleEventId) {
+      try {
+        await googleCalendarService.deleteEvent(req.clientId, appointment.googleEventId);
+        console.log(`📅 Deleted Google Calendar event: ${appointment.googleEventId}`);
+        googleDeleted = true;
+      } catch (gcalError) {
+        console.error(`⚠️ Failed to delete Google Calendar event:`, gcalError.message);
+        // Continue with RinglyPro deletion even if Google Calendar fails
+      }
+    }
 
     // Permanently delete the appointment from the database
     await appointment.destroy();
@@ -907,6 +922,10 @@ router.delete('/:id', async (req, res) => {
         id: appointmentData.id,
         customerName: appointmentData.customerName,
         deleted: true
+      },
+      googleCalendar: {
+        deleted: googleDeleted,
+        eventId: appointmentData.googleEventId || null
       },
       smsNotification: smsResult ? {
         sent: true,
