@@ -556,10 +556,22 @@ async function handleDebugZohoCreateEvent(params) {
       }
     };
   } catch (error) {
+    // Capture full error details
+    let errorDetails = {
+      message: error.message,
+      name: error.name
+    };
+
+    if (error.response) {
+      errorDetails.status = error.response.status;
+      errorDetails.statusText = error.response.statusText;
+      errorDetails.data = error.response.data;
+    }
+
     return {
       success: false,
       error: error.message,
-      stack: error.stack?.substring(0, 500)
+      errorDetails
     };
   }
 }

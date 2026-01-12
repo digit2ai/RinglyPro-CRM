@@ -351,10 +351,25 @@ class ZohoCalendarService {
       const start = new Date(startTime);
       const end = endTime ? new Date(endTime) : new Date(start.getTime() + duration * 60 * 1000);
 
+      // Format datetime for Zoho CRM - use format: YYYY-MM-DDTHH:MM:SS-HH:MM (with timezone offset)
+      // Zoho expects datetime without milliseconds and with proper timezone offset
+      const formatZohoDateTime = (date) => {
+        const pad = (n) => n.toString().padStart(2, '0');
+        const year = date.getFullYear();
+        const month = pad(date.getMonth() + 1);
+        const day = pad(date.getDate());
+        const hours = pad(date.getHours());
+        const minutes = pad(date.getMinutes());
+        const seconds = pad(date.getSeconds());
+        // Use Eastern Time offset (EST = -05:00, EDT = -04:00)
+        // For simplicity, assume EST (-05:00) - adjust if needed
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}-05:00`;
+      };
+
       const zohoEventData = {
         Event_Title: title || `Appointment: ${customerName}`,
-        Start_DateTime: start.toISOString(),
-        End_DateTime: end.toISOString(),
+        Start_DateTime: formatZohoDateTime(start),
+        End_DateTime: formatZohoDateTime(end),
         Description: `${description || ''}\n\nCustomer: ${customerName}\nPhone: ${customerPhone}\nEmail: ${customerEmail || 'N/A'}\nConfirmation: ${confirmationCode || 'N/A'}\n\nBooked via RinglyPro AI Assistant`.trim(),
         Venue: location || ''
       };
@@ -397,11 +412,17 @@ class ZohoCalendarService {
 
     } catch (error) {
       logger.error(`[ZohoCalendar] Error creating event for client ${clientId}:`, error.message);
+      let errorMessage = error.message;
       if (error.response) {
         logger.error(`[ZohoCalendar] Response status: ${error.response.status}`);
         logger.error(`[ZohoCalendar] Response data: ${JSON.stringify(error.response.data)}`);
+        // Include Zoho's error message in the response
+        const zohoError = error.response.data?.data?.[0]?.message || error.response.data?.message || error.response.data?.error;
+        if (zohoError) {
+          errorMessage = `${error.message}: ${zohoError}`;
+        }
       }
-      return { success: false, error: error.message };
+      return { success: false, error: errorMessage };
     }
   }
 
