@@ -1444,6 +1444,80 @@ router.post('/quick-fix-elevenlabs-timestamps/:clientId', async (req, res) => {
     }
 });
 
+// ============= SYNC APPOINTMENT TO GOOGLE CALENDAR =============
+// POST /api/admin/sync-appointment-to-google/:appointmentId
+// Syncs an existing appointment to Google Calendar (NO JWT - API KEY ONLY)
+router.post('/sync-appointment-to-google/:appointmentId', async (req, res) => {
+    try {
+        const { appointmentId } = req.params;
+        const { api_key } = req.body;
+
+        // Verify API key
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+        if (api_key !== expectedKey) {
+            return res.status(401).json({ success: false, error: 'Invalid API key' });
+        }
+
+        // Get appointment details
+        const [appointments] = await sequelize.query(
+            `SELECT a.*, c.business_name
+             FROM appointments a
+             JOIN clients c ON a.client_id = c.id
+             WHERE a.id = :appointmentId`,
+            { replacements: { appointmentId }, type: sequelize.QueryTypes.SELECT }
+        );
+
+        if (!appointments) {
+            return res.status(404).json({ success: false, error: 'Appointment not found' });
+        }
+
+        const apt = appointments;
+
+        // Format appointment data for Google Calendar sync
+        const appointmentData = {
+            id: apt.id,
+            customerName: apt.customer_name,
+            customerPhone: apt.customer_phone,
+            customerEmail: apt.customer_email,
+            appointmentDate: apt.appointment_date,
+            appointmentTime: apt.appointment_time,
+            duration: apt.duration || 60,
+            purpose: apt.purpose,
+            notes: apt.notes,
+            confirmationCode: apt.confirmation_code
+        };
+
+        // Sync to Google Calendar
+        const dualCalendarService = require('../services/dualCalendarService');
+        const googleEvent = await dualCalendarService.syncToGoogleCalendar(apt.client_id, appointmentData);
+
+        if (googleEvent) {
+            res.json({
+                success: true,
+                appointmentId: apt.id,
+                clientId: apt.client_id,
+                businessName: apt.business_name,
+                googleEventId: googleEvent.googleEventId,
+                message: 'Appointment synced to Google Calendar'
+            });
+        } else {
+            res.json({
+                success: false,
+                appointmentId: apt.id,
+                clientId: apt.client_id,
+                message: 'Google Calendar sync not enabled for this client'
+            });
+        }
+
+    } catch (error) {
+        console.error('❌ Error syncing appointment to Google Calendar:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Apply admin authentication to all routes AFTER quick endpoints
 router.use(authenticateAdmin);
 
@@ -2350,79 +2424,6 @@ router.post('/elevenlabs-sync/client/:clientId', async (req, res) => {
 
     } catch (error) {
         console.error('❌ Error syncing client:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-// ============= SYNC APPOINTMENT TO GOOGLE CALENDAR =============
-// POST /api/admin/sync-appointment-to-google/:appointmentId
-// Syncs an existing appointment to Google Calendar
-router.post('/sync-appointment-to-google/:appointmentId', async (req, res) => {
-    try {
-        const { appointmentId } = req.params;
-        const { api_key } = req.body;
-
-        // Verify API key
-        if (api_key !== process.env.ADMIN_API_KEY) {
-            return res.status(401).json({ success: false, error: 'Invalid API key' });
-        }
-
-        // Get appointment details
-        const [appointments] = await sequelize.query(
-            `SELECT a.*, c.business_name
-             FROM appointments a
-             JOIN clients c ON a.client_id = c.id
-             WHERE a.id = :appointmentId`,
-            { replacements: { appointmentId }, type: sequelize.QueryTypes.SELECT }
-        );
-
-        if (!appointments) {
-            return res.status(404).json({ success: false, error: 'Appointment not found' });
-        }
-
-        const apt = appointments;
-
-        // Format appointment data for Google Calendar sync
-        const appointmentData = {
-            id: apt.id,
-            customerName: apt.customer_name,
-            customerPhone: apt.customer_phone,
-            customerEmail: apt.customer_email,
-            appointmentDate: apt.appointment_date,
-            appointmentTime: apt.appointment_time,
-            duration: apt.duration || 60,
-            purpose: apt.purpose,
-            notes: apt.notes,
-            confirmationCode: apt.confirmation_code
-        };
-
-        // Sync to Google Calendar
-        const dualCalendarService = require('../services/dualCalendarService');
-        const googleEvent = await dualCalendarService.syncToGoogleCalendar(apt.client_id, appointmentData);
-
-        if (googleEvent) {
-            res.json({
-                success: true,
-                appointmentId: apt.id,
-                clientId: apt.client_id,
-                businessName: apt.business_name,
-                googleEventId: googleEvent.googleEventId,
-                message: 'Appointment synced to Google Calendar'
-            });
-        } else {
-            res.json({
-                success: false,
-                appointmentId: apt.id,
-                clientId: apt.client_id,
-                message: 'Google Calendar sync not enabled for this client'
-            });
-        }
-
-    } catch (error) {
-        console.error('❌ Error syncing appointment to Google Calendar:', error);
         res.status(500).json({
             success: false,
             error: error.message
