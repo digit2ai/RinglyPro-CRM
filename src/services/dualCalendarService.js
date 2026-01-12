@@ -369,6 +369,14 @@ class DualCalendarService {
     // Generate unique call ID for tracing
     const callId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+    // Check if client requires deposit
+    const clientCheck = await sequelize.query(
+      'SELECT deposit_required FROM clients WHERE id = :clientId',
+      { replacements: { clientId }, type: QueryTypes.SELECT }
+    );
+    const depositRequired = clientCheck?.[0]?.deposit_required || false;
+    const depositStatus = depositRequired ? 'pending' : 'not_required';
+
     logger.info(`[DualCal] [${callId}] Creating RinglyPro appointment:`, {
       clientId,
       customerName,
@@ -376,7 +384,9 @@ class DualCalendarService {
       appointmentDate,
       appointmentTime,
       duration,
-      purpose: purpose?.substring(0, 50)
+      purpose: purpose?.substring(0, 50),
+      depositRequired,
+      depositStatus
     });
 
     let result;
@@ -414,6 +424,7 @@ class DualCalendarService {
             duration = :duration,
             purpose = :purpose,
             status = 'confirmed',
+            deposit_status = :depositStatus,
             source = 'voice_booking',
             confirmation_code = :confirmationCode,
             notes = :notes,
@@ -430,6 +441,7 @@ class DualCalendarService {
               customerEmail: customerEmail || `${customerPhone.replace(/\D/g, '')}@booking.ringlypro.com`,
               duration,
               purpose,
+              depositStatus,
               confirmationCode,
               notes,
               ghlAppointmentId,
@@ -452,13 +464,13 @@ class DualCalendarService {
         `INSERT INTO appointments (
           client_id, customer_name, customer_phone, customer_email,
           appointment_date, appointment_time, duration, purpose,
-          status, source, confirmation_code, notes,
+          status, deposit_status, source, confirmation_code, notes,
           ghl_appointment_id, ghl_contact_id,
           created_at, updated_at
         ) VALUES (
           :clientId, :customerName, :customerPhone, :customerEmail,
           :appointmentDate, :appointmentTime, :duration, :purpose,
-          'confirmed', 'voice_booking', :confirmationCode, :notes,
+          'confirmed', :depositStatus, 'voice_booking', :confirmationCode, :notes,
           :ghlAppointmentId, :ghlContactId,
           NOW(), NOW()
         ) RETURNING *`,
@@ -472,6 +484,7 @@ class DualCalendarService {
             appointmentTime,
             duration,
             purpose,
+            depositStatus,
             confirmationCode,
             notes,
             ghlAppointmentId,
