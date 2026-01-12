@@ -115,6 +115,56 @@
             </details>
         </div>
 
+        <!-- CSV Upload Panel -->
+        <div class="upload-panel">
+            <h2>📤 Upload Prospects</h2>
+            <div class="upload-section">
+                <div class="upload-instructions">
+                    <p><strong>CSV Format:</strong> business_name, phone_number, email, location, category</p>
+                    <p class="upload-note">Phone numbers should include country code (e.g., +18135551234)</p>
+                </div>
+                <div class="upload-controls">
+                    <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="handleFileSelect(event)">
+                    <button class="btn btn-upload" onclick="document.getElementById('csvFileInput').click()">
+                        📁 Select CSV File
+                    </button>
+                    <span id="selectedFileName" class="file-name"></span>
+                </div>
+                <div id="uploadPreview" class="upload-preview" style="display: none;">
+                    <div class="preview-header">
+                        <span id="previewCount">0 prospects ready to upload</span>
+                        <button class="btn btn-sm btn-cancel" onclick="cancelUpload()">Cancel</button>
+                    </div>
+                    <div class="preview-table-container">
+                        <table class="preview-table" id="previewTable">
+                            <thead>
+                                <tr>
+                                    <th>Business Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Location</th>
+                                    <th>Category</th>
+                                    <th>Valid</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="upload-actions">
+                        <button class="btn btn-start" id="uploadBtn" onclick="uploadProspects()">
+                            ⬆️ Upload Prospects
+                        </button>
+                    </div>
+                </div>
+                <div id="uploadProgress" class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="uploadProgressFill" style="width: 0%"></div>
+                    </div>
+                    <span id="uploadProgressText">Uploading...</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Prospect List -->
         <div class="prospect-list-panel">
             <div class="panel-header">

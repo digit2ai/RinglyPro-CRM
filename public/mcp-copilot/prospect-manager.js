@@ -422,6 +422,261 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+// ============================================
+// CSV Upload Functions
+// ============================================
+
+let pendingUploadData = [];
+
+/**
+ * Handle CSV file selection
+ */
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    document.getElementById('selectedFileName').textContent = file.name;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const csvText = e.target.result;
+        parseCSV(csvText);
+    };
+    reader.readAsText(file);
+}
+
+/**
+ * Parse CSV text into prospect data
+ */
+function parseCSV(csvText) {
+    const lines = csvText.trim().split('\n');
+    if (lines.length < 2) {
+        showNotification('❌ CSV file must have a header row and at least one data row', 'error');
+        return;
+    }
+
+    // Parse header to find column indices
+    const header = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
+
+    const colMap = {
+        business_name: findColumnIndex(header, ['business_name', 'businessname', 'name', 'company', 'business']),
+        phone_number: findColumnIndex(header, ['phone_number', 'phonenumber', 'phone', 'tel', 'telephone', 'mobile']),
+        email: findColumnIndex(header, ['email', 'e-mail', 'emailaddress']),
+        location: findColumnIndex(header, ['location', 'city', 'address', 'area']),
+        category: findColumnIndex(header, ['category', 'type', 'industry', 'service'])
+    };
+
+    if (colMap.phone_number === -1) {
+        showNotification('❌ CSV must have a phone_number column', 'error');
+        return;
+    }
+
+    // Parse data rows
+    pendingUploadData = [];
+    for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]);
+        if (values.length === 0) continue;
+
+        const phone = normalizePhone(values[colMap.phone_number] || '');
+        const prospect = {
+            business_name: colMap.business_name >= 0 ? values[colMap.business_name]?.trim() : '',
+            phone_number: phone,
+            email: colMap.email >= 0 ? values[colMap.email]?.trim() : '',
+            location: colMap.location >= 0 ? values[colMap.location]?.trim() : '',
+            category: colMap.category >= 0 ? values[colMap.category]?.trim() : '',
+            valid: isValidPhone(phone)
+        };
+
+        if (phone) {
+            pendingUploadData.push(prospect);
+        }
+    }
+
+    // Show preview
+    showUploadPreview();
+}
+
+/**
+ * Parse a single CSV line (handles quoted values)
+ */
+function parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+            inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+            result.push(current.trim());
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    result.push(current.trim());
+    return result;
+}
+
+/**
+ * Find column index by possible names
+ */
+function findColumnIndex(header, possibleNames) {
+    for (const name of possibleNames) {
+        const idx = header.indexOf(name);
+        if (idx >= 0) return idx;
+    }
+    return -1;
+}
+
+/**
+ * Normalize phone number to E.164 format
+ */
+function normalizePhone(phone) {
+    if (!phone) return '';
+
+    // Remove all non-digit characters except +
+    let cleaned = phone.replace(/[^\d+]/g, '');
+
+    // If starts with +, keep it
+    if (cleaned.startsWith('+')) {
+        return cleaned;
+    }
+
+    // Remove leading 1 if 11 digits
+    if (cleaned.length === 11 && cleaned.startsWith('1')) {
+        cleaned = cleaned.substring(1);
+    }
+
+    // Add +1 prefix for US numbers
+    if (cleaned.length === 10) {
+        return '+1' + cleaned;
+    }
+
+    // Return with + prefix if looks like international
+    if (cleaned.length > 10) {
+        return '+' + cleaned;
+    }
+
+    return cleaned;
+}
+
+/**
+ * Validate phone number
+ */
+function isValidPhone(phone) {
+    if (!phone) return false;
+
+    // Must start with + and have at least 10 digits
+    if (!phone.startsWith('+')) return false;
+
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length < 10 || digits.length > 15) return false;
+
+    // Check for invalid patterns
+    const invalidPatterns = ['555', '000', '111', '911'];
+    const areaCode = digits.substring(1, 4);
+    if (invalidPatterns.includes(areaCode)) return false;
+
+    return true;
+}
+
+/**
+ * Show upload preview
+ */
+function showUploadPreview() {
+    const validCount = pendingUploadData.filter(p => p.valid).length;
+    const invalidCount = pendingUploadData.length - validCount;
+
+    document.getElementById('previewCount').textContent =
+        `${validCount} valid prospects ready to upload` +
+        (invalidCount > 0 ? ` (${invalidCount} invalid)` : '');
+
+    const tbody = document.getElementById('previewTableBody');
+    tbody.innerHTML = pendingUploadData.slice(0, 20).map(p => `
+        <tr class="${p.valid ? '' : 'invalid-row'}">
+            <td>${p.business_name || '-'}</td>
+            <td>${p.phone_number || '-'}</td>
+            <td>${p.email || '-'}</td>
+            <td>${p.location || '-'}</td>
+            <td>${p.category || '-'}</td>
+            <td>${p.valid ? '✅' : '❌'}</td>
+        </tr>
+    `).join('');
+
+    if (pendingUploadData.length > 20) {
+        tbody.innerHTML += `
+            <tr>
+                <td colspan="6" style="text-align: center; color: #6b7280;">
+                    ... and ${pendingUploadData.length - 20} more rows
+                </td>
+            </tr>
+        `;
+    }
+
+    document.getElementById('uploadPreview').style.display = 'block';
+    document.getElementById('uploadBtn').disabled = validCount === 0;
+}
+
+/**
+ * Cancel upload
+ */
+function cancelUpload() {
+    pendingUploadData = [];
+    document.getElementById('uploadPreview').style.display = 'none';
+    document.getElementById('csvFileInput').value = '';
+    document.getElementById('selectedFileName').textContent = '';
+}
+
+/**
+ * Upload prospects to server
+ */
+async function uploadProspects() {
+    const validProspects = pendingUploadData.filter(p => p.valid);
+
+    if (validProspects.length === 0) {
+        showNotification('❌ No valid prospects to upload', 'error');
+        return;
+    }
+
+    document.getElementById('uploadPreview').style.display = 'none';
+    document.getElementById('uploadProgress').style.display = 'block';
+    document.getElementById('uploadBtn').disabled = true;
+
+    try {
+        const response = await fetch(`${API_BASE}/api/scheduled-caller/upload-prospects`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                clientId: parseInt(currentClientId),
+                prospects: validProspects.map(p => ({
+                    business_name: p.business_name,
+                    phone_number: p.phone_number,
+                    email: p.email,
+                    location: p.location,
+                    category: p.category
+                }))
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showNotification(`✅ Uploaded ${data.inserted} prospects successfully!`, 'success');
+            cancelUpload();
+            loadProspects();
+        } else {
+            showNotification(`❌ Upload failed: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error uploading prospects:', error);
+        showNotification('❌ Failed to upload prospects', 'error');
+    } finally {
+        document.getElementById('uploadProgress').style.display = 'none';
+    }
+}
+
 // Add CSS animations
 const style = document.createElement('style');
 style.textContent = `
@@ -445,6 +700,11 @@ style.textContent = `
             transform: translateX(400px);
             opacity: 0;
         }
+    }
+
+    .invalid-row {
+        background-color: #fef2f2;
+        color: #dc2626;
     }
 `;
 document.head.appendChild(style);

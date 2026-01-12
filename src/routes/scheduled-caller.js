@@ -261,4 +261,94 @@ router.get('/prospects', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/scheduled-caller/upload-prospects
+ * Upload prospects from CSV data
+ * Body: { clientId, prospects: [{ business_name, phone_number, email, location, category }] }
+ */
+router.post('/upload-prospects', async (req, res) => {
+  try {
+    const { clientId, prospects } = req.body;
+
+    // SECURITY: clientId is REQUIRED
+    if (!clientId) {
+      return res.status(400).json({
+        success: false,
+        error: 'clientId is required'
+      });
+    }
+
+    if (!prospects || !Array.isArray(prospects) || prospects.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'prospects array is required and must not be empty'
+      });
+    }
+
+    logger.info(`📤 Uploading ${prospects.length} prospects for client ${clientId}`);
+
+    let inserted = 0;
+    let skipped = 0;
+    const errors = [];
+
+    // Insert prospects in batches
+    for (const prospect of prospects) {
+      try {
+        // Check if phone number already exists for this client
+        const existing = await sequelize.query(
+          'SELECT id FROM business_directory WHERE client_id = :clientId AND phone_number = :phone',
+          {
+            replacements: { clientId: parseInt(clientId), phone: prospect.phone_number },
+            type: QueryTypes.SELECT
+          }
+        );
+
+        if (existing.length > 0) {
+          skipped++;
+          continue;
+        }
+
+        // Insert new prospect
+        await sequelize.query(
+          `INSERT INTO business_directory
+           (client_id, business_name, phone_number, email, location, category, call_status, created_at, updated_at)
+           VALUES (:clientId, :businessName, :phone, :email, :location, :category, 'TO_BE_CALLED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          {
+            replacements: {
+              clientId: parseInt(clientId),
+              businessName: prospect.business_name || '',
+              phone: prospect.phone_number,
+              email: prospect.email || '',
+              location: prospect.location || '',
+              category: prospect.category || ''
+            },
+            type: QueryTypes.INSERT
+          }
+        );
+
+        inserted++;
+      } catch (insertError) {
+        errors.push({ phone: prospect.phone_number, error: insertError.message });
+      }
+    }
+
+    logger.info(`✅ Upload complete: ${inserted} inserted, ${skipped} skipped (duplicates), ${errors.length} errors`);
+
+    res.json({
+      success: true,
+      inserted,
+      skipped,
+      errors: errors.length,
+      errorDetails: errors.slice(0, 10) // Return first 10 errors only
+    });
+
+  } catch (error) {
+    logger.error('Error uploading prospects:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
