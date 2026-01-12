@@ -78,13 +78,31 @@ function updateSchedulerUI(status) {
     const resumeBtn = document.getElementById('resumeBtn');
     const stopBtn = document.getElementById('stopBtn');
 
+    // Check if scheduler is running for a DIFFERENT client
+    const runningClientId = status.clientId;
+    const isRunningDifferentClient = status.isRunning && runningClientId && String(runningClientId) !== String(currentClientId);
+
     // Update status indicator
-    if (status.isRunning && !status.isPaused) {
+    if (isRunningDifferentClient) {
+        // Scheduler is running but for a different client
+        statusDot.className = 'status-dot status-paused';
+        statusText.textContent = 'Running (Different Client)';
+        statusCard.className = 'status-card status-paused';
+        statusInfo.innerHTML = `
+            <p>⚠️ Scheduler is running for <strong>Client ${runningClientId}</strong></p>
+            <p class="status-detail">You are viewing Client ${currentClientId}. Stop the other scheduler first to start one for this client.</p>
+        `;
+
+        startBtn.disabled = true;
+        pauseBtn.disabled = true;
+        resumeBtn.disabled = true;
+        stopBtn.disabled = false; // Allow stopping the other client's scheduler
+    } else if (status.isRunning && !status.isPaused) {
         statusDot.className = 'status-dot status-running';
         statusText.textContent = 'Running';
         statusCard.className = 'status-card status-running';
         statusInfo.innerHTML = `
-            <p>✅ Scheduler is active and calling prospects</p>
+            <p>✅ Scheduler is active and calling prospects for Client ${currentClientId}</p>
             <p class="status-detail">Within business hours: ${status.isBusinessHours ? '✅ Yes' : '❌ No'}</p>
         `;
 
@@ -96,7 +114,7 @@ function updateSchedulerUI(status) {
         statusDot.className = 'status-dot status-paused';
         statusText.textContent = 'Paused';
         statusCard.className = 'status-card status-paused';
-        statusInfo.innerHTML = `<p>⏸️ Scheduler is paused - click Resume to continue</p>`;
+        statusInfo.innerHTML = `<p>⏸️ Scheduler is paused for Client ${runningClientId || currentClientId} - click Resume to continue</p>`;
 
         startBtn.disabled = true;
         pauseBtn.disabled = true;
@@ -106,7 +124,7 @@ function updateSchedulerUI(status) {
         statusDot.className = 'status-dot status-stopped';
         statusText.textContent = 'Stopped';
         statusCard.className = 'status-card status-stopped';
-        statusInfo.innerHTML = `<p>⏹️ Scheduler is not running</p>`;
+        statusInfo.innerHTML = `<p>⏹️ No scheduler is currently running</p>`;
 
         startBtn.disabled = false;
         pauseBtn.disabled = true;
@@ -114,8 +132,8 @@ function updateSchedulerUI(status) {
         stopBtn.disabled = true;
     }
 
-    // Update stats
-    if (status.stats) {
+    // Update stats - only show if viewing the running client OR scheduler is stopped
+    if (status.stats && !isRunningDifferentClient) {
         document.getElementById('totalProspects').textContent = status.stats.totalProspects || 0;
         document.getElementById('calledToday').textContent = status.stats.calledToday || 0;
         document.getElementById('remainingToday').textContent = status.stats.remainingToday || 0;
@@ -131,6 +149,13 @@ function updateSchedulerUI(status) {
         } else {
             document.getElementById('progressSection').style.display = 'none';
         }
+    } else if (isRunningDifferentClient) {
+        // Clear stats when viewing different client to avoid confusion
+        document.getElementById('totalProspects').textContent = '-';
+        document.getElementById('calledToday').textContent = '-';
+        document.getElementById('remainingToday').textContent = '-';
+        document.getElementById('nextCallTime').textContent = '-';
+        document.getElementById('progressSection').style.display = 'none';
     }
 }
 
