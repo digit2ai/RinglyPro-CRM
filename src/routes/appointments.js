@@ -418,9 +418,11 @@ router.get('/ghl-calendar-slots', async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching GHL calendar slots:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
+    // Return success with empty calendars instead of 500 error
+    // This prevents the frontend from showing error messages for clients without GHL
+    res.json({
+      success: true,
+      message: `GHL calendar unavailable: ${error.message}`,
       calendars: []
     });
   }
