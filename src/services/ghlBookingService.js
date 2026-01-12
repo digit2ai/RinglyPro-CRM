@@ -449,7 +449,8 @@ class GHLBookingService {
         time,
         service,
         calendarId,
-        notes
+        notes,
+        skipLocalInsert = false  // When true, skip inserting to local DB (used by dualCalendarService)
       } = bookingData;
 
       logger.info(`[GHL] WhatsApp booking for client ${clientId}:`, { customerName, date, time, service });
@@ -504,10 +505,12 @@ class GHLBookingService {
       }
 
       // Step 3: Save appointment locally to RinglyPro database for dashboard display
+      // Skip this step when called from dualCalendarService (which handles its own insert)
       let localAppointment = null;
-      try {
-        const confirmationCode = `GHL${Date.now().toString().slice(-6).toUpperCase()}`;
-        const result = await sequelize.query(
+      if (!skipLocalInsert) {
+        try {
+          const confirmationCode = `GHL${Date.now().toString().slice(-6).toUpperCase()}`;
+          const result = await sequelize.query(
           `INSERT INTO appointments (
             client_id, customer_name, customer_phone, customer_email,
             appointment_date, appointment_time, duration, purpose,
@@ -543,11 +546,14 @@ class GHLBookingService {
             type: QueryTypes.INSERT
           }
         );
-        localAppointment = result[0]?.[0];
-        logger.info(`[GHL] Local appointment saved: ${localAppointment?.id}`);
-      } catch (localError) {
-        // Log but don't fail - GHL booking succeeded
-        logger.warn('[GHL] Failed to save local appointment:', localError.message);
+          localAppointment = result[0]?.[0];
+          logger.info(`[GHL] Local appointment saved: ${localAppointment?.id}`);
+        } catch (localError) {
+          // Log but don't fail - GHL booking succeeded
+          logger.warn('[GHL] Failed to save local appointment:', localError.message);
+        }
+      } else {
+        logger.info(`[GHL] Skipping local insert (handled by dualCalendarService)`);
       }
 
       return {

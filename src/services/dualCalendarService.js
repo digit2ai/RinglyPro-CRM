@@ -640,7 +640,8 @@ class DualCalendarService {
           time: appointmentData.appointmentTime.substring(0, 5), // HH:MM format
           service: appointmentData.purpose || 'Appointment',
           calendarId: dualMode.calendarId,
-          notes: appointmentData.notes
+          notes: appointmentData.notes,
+          skipLocalInsert: true  // dualCalendarService handles local DB insert separately
         });
 
         if (ghlResult.success) {
