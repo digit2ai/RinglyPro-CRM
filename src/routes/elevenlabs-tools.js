@@ -105,6 +105,10 @@ router.post('/', async (req, res) => {
         // Temporary debug tool to check Zoho settings
         result = await handleDebugZohoSettings(params);
         break;
+      case 'debug_appointment':
+        // Check appointment details including Zoho event ID
+        result = await handleDebugAppointment(params);
+        break;
       default:
         result = {
           success: false,
@@ -467,6 +471,49 @@ async function handleSendSms(params) {
 
   } catch (error) {
     logger.error('[ElevenLabs Tools] send_sms error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Debug appointment details (temporary)
+ */
+async function handleDebugAppointment(params) {
+  const { appointment_id } = params;
+
+  try {
+    const [appointment] = await sequelize.query(
+      `SELECT id, client_id, customer_name, appointment_date, appointment_time,
+              status, source, zoho_event_id, google_event_id, ghl_appointment_id,
+              created_at
+       FROM appointments WHERE id = :appointmentId`,
+      {
+        replacements: { appointmentId: appointment_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (!appointment) {
+      return { success: false, error: 'Appointment not found' };
+    }
+
+    return {
+      success: true,
+      appointment: {
+        id: appointment.id,
+        client_id: appointment.client_id,
+        customer_name: appointment.customer_name,
+        date: appointment.appointment_date,
+        time: appointment.appointment_time,
+        status: appointment.status,
+        source: appointment.source,
+        zoho_event_id: appointment.zoho_event_id,
+        google_event_id: appointment.google_event_id,
+        ghl_appointment_id: appointment.ghl_appointment_id,
+        created_at: appointment.created_at
+      }
+    };
+  } catch (error) {
     return { success: false, error: error.message };
   }
 }
