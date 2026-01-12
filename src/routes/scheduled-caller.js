@@ -288,15 +288,15 @@ router.post('/upload-prospects', async (req, res) => {
     logger.info(`📤 Uploading ${prospects.length} prospects for client ${clientId}`);
 
     let inserted = 0;
-    let skipped = 0;
+    let updated = 0;
     const errors = [];
 
-    // Insert prospects in batches
+    // Upsert prospects - insert new or update existing to TO_BE_CALLED
     for (const prospect of prospects) {
       try {
         // Check if phone number already exists for this client
         const existing = await sequelize.query(
-          'SELECT id FROM business_directory WHERE client_id = :clientId AND phone_number = :phone',
+          'SELECT id, call_status FROM business_directory WHERE client_id = :clientId AND phone_number = :phone',
           {
             replacements: { clientId: parseInt(clientId), phone: prospect.phone_number },
             type: QueryTypes.SELECT
@@ -304,7 +304,17 @@ router.post('/upload-prospects', async (req, res) => {
         );
 
         if (existing.length > 0) {
-          skipped++;
+          // Update existing prospect - reset to TO_BE_CALLED
+          await sequelize.query(
+            `UPDATE business_directory
+             SET call_status = 'TO_BE_CALLED', call_attempts = 0, call_notes = NULL, last_called_at = NULL, updated_at = CURRENT_TIMESTAMP
+             WHERE client_id = :clientId AND phone_number = :phone`,
+            {
+              replacements: { clientId: parseInt(clientId), phone: prospect.phone_number },
+              type: QueryTypes.UPDATE
+            }
+          );
+          updated++;
           continue;
         }
 
@@ -332,12 +342,12 @@ router.post('/upload-prospects', async (req, res) => {
       }
     }
 
-    logger.info(`✅ Upload complete: ${inserted} inserted, ${skipped} skipped (duplicates), ${errors.length} errors`);
+    logger.info(`✅ Upload complete: ${inserted} inserted, ${updated} updated to TO_BE_CALLED, ${errors.length} errors`);
 
     res.json({
       success: true,
       inserted,
-      skipped,
+      updated,
       errors: errors.length,
       errorDetails: errors.slice(0, 10) // Return first 10 errors only
     });

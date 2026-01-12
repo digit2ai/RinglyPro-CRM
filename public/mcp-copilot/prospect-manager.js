@@ -688,7 +688,10 @@ async function uploadProspects() {
         const data = await response.json();
 
         if (data.success) {
-            showNotification(`✅ Uploaded ${data.inserted} prospects successfully!`, 'success');
+            const msg = data.updated > 0
+                ? `✅ ${data.inserted} inserted, ${data.updated} reset to TO_BE_CALLED`
+                : `✅ Uploaded ${data.inserted} prospects successfully!`;
+            showNotification(msg, 'success');
             cancelUpload();
             loadProspects();
         } else {
