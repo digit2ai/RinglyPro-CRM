@@ -256,17 +256,15 @@ class DualCalendarService {
       // Get RinglyPro availability
       const ringlyProSlots = await this.getRinglyProAvailability(clientId, date, businessHours);
 
-      // Get Google Calendar blocked slots (only for non-Client 32)
+      // Get Google Calendar blocked slots
       let googleBlockedSlots = [];
       let googleCalendarActive = false;
-      if (clientId !== 32) {
-        googleBlockedSlots = await this.getGoogleCalendarBlockedSlots(clientId, date, businessHours);
-        googleCalendarActive = googleBlockedSlots.length >= 0; // Will be true if we checked (even if no blocked slots)
+      googleBlockedSlots = await this.getGoogleCalendarBlockedSlots(clientId, date, businessHours);
+      googleCalendarActive = googleBlockedSlots.length >= 0; // Will be true if we checked (even if no blocked slots)
 
-        // Check if Google Calendar is actually connected
-        const googleIntegration = await GoogleCalendarIntegration.getActiveForClient(clientId);
-        googleCalendarActive = !!(googleIntegration && googleIntegration.syncBlockedTimes);
-      }
+      // Check if Google Calendar is actually connected
+      const googleIntegration = await GoogleCalendarIntegration.getActiveForClient(clientId);
+      googleCalendarActive = !!(googleIntegration && googleIntegration.syncBlockedTimes);
 
       // Get Zoho CRM blocked slots
       let zohoBlockedSlots = [];
@@ -687,11 +685,9 @@ class DualCalendarService {
           : appointmentData.notes
       });
 
-      // Sync to Google Calendar (if enabled for this client, excludes Client 32)
+      // Sync to Google Calendar (if enabled for this client)
       let googleEvent = null;
-      if (clientId !== 32) {
-        googleEvent = await this.syncToGoogleCalendar(clientId, ringlyProAppointment);
-      }
+      googleEvent = await this.syncToGoogleCalendar(clientId, ringlyProAppointment);
 
       // Sync to Zoho CRM (if enabled)
       let zohoEvent = null;
