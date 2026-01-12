@@ -144,6 +144,35 @@ const authenticateAdmin = async (req, res, next) => {
 // ============= QUICK ADMIN ENDPOINTS (NO JWT - API KEY ONLY) =============
 // These endpoints use simple API key auth and must be defined BEFORE router.use(authenticateAdmin)
 
+// Quick set ElevenLabs phone number ID (no JWT required)
+router.post('/quick-set-elevenlabs-phone/:clientId', async (req, res) => {
+    try {
+        const { clientId } = req.params;
+        const { apiKey, phoneNumberId } = req.body;
+
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+        if (apiKey !== expectedKey) {
+            return res.status(401).json({ success: false, error: 'Invalid API key' });
+        }
+
+        if (!phoneNumberId) {
+            return res.status(400).json({ success: false, error: 'phoneNumberId is required' });
+        }
+
+        console.log(`🔧 Quick-setting ElevenLabs phone number ID for client ${clientId}: ${phoneNumberId}`);
+
+        await sequelize.query(
+            'UPDATE clients SET elevenlabs_phone_number_id = $1 WHERE id = $2',
+            { bind: [phoneNumberId, parseInt(clientId)] }
+        );
+
+        res.json({ success: true, clientId: parseInt(clientId), phoneNumberId });
+    } catch (error) {
+        console.error('❌ Error setting ElevenLabs phone number:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Quick disable leads endpoint with API key auth (no JWT required)
 // Used for quick admin operations like Client 15 Vagaro migration
 router.post('/quick-disable-leads/:clientId', async (req, res) => {
