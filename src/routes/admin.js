@@ -720,6 +720,52 @@ router.post('/sync-ghl-appointments/:clientId', async (req, res) => {
     }
 });
 
+// ============= SET ELEVENLABS PHONE NUMBER ID =============
+// POST /api/admin/set-elevenlabs-phone/:clientId
+// Sets the ElevenLabs phone number ID for outbound calls
+router.post('/set-elevenlabs-phone/:clientId', async (req, res) => {
+    try {
+        const { clientId } = req.params;
+        const { apiKey, phoneNumberId } = req.body;
+
+        // Simple API key check
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+        if (apiKey !== expectedKey) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid API key'
+            });
+        }
+
+        if (!phoneNumberId) {
+            return res.status(400).json({
+                success: false,
+                error: 'phoneNumberId is required'
+            });
+        }
+
+        console.log(`🔧 Setting ElevenLabs phone number ID for client ${clientId}: ${phoneNumberId}`);
+
+        await sequelize.query(
+            'UPDATE clients SET elevenlabs_phone_number_id = $1 WHERE id = $2',
+            { bind: [phoneNumberId, parseInt(clientId)] }
+        );
+
+        res.json({
+            success: true,
+            clientId: parseInt(clientId),
+            phoneNumberId
+        });
+
+    } catch (error) {
+        console.error('❌ Error setting ElevenLabs phone number:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // ============= SET ELEVENLABS AGENT ID =============
 // POST /api/admin/set-elevenlabs-agent/:clientId
 // Sets the ElevenLabs agent ID for a client
