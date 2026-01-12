@@ -5420,12 +5420,20 @@
                     // Check if it's a Google Calendar event
                     const isGoogleCalendarEvent = source === 'google_calendar';
 
+                    // Check if it's a RinglyPro synced event (AI Voice booking synced to Google Calendar)
+                    const isRinglyProSyncedEvent = apt.isRinglyProEvent || apt.ringlyproAppointmentId;
+
                     // Check if it's a busy/blocked slot from GHL
                     const isBusySlot = notes.includes('busy/blocked slot') || customerName.toLowerCase() === 'busy' || customerName.toLowerCase().startsWith('busy -');
 
                     // For Client 32 with multi-calendar, use specific colors per calendar
                     let customStyle = '';
-                    if (isGoogleCalendarEvent && CLIENT_ID == 32 && apt.calendarName) {
+
+                    // FIRST: Check if this is a RinglyPro synced event (AI Voice booking) - always BLUE
+                    if (isRinglyProSyncedEvent) {
+                        // AI Voice Booking synced to Google Calendar - BLUE
+                        eventClass += ' voice-booking';
+                    } else if (isGoogleCalendarEvent && CLIENT_ID == 32 && apt.calendarName) {
                         // Use specific colors for Client 32 calendars
                         const calName = apt.calendarName.toLowerCase();
                         if (calName.includes('recovery') || calName === 'recovery') {
