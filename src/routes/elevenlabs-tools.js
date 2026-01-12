@@ -109,6 +109,10 @@ router.post('/', async (req, res) => {
         // Check appointment details including Zoho event ID
         result = await handleDebugAppointment(params);
         break;
+      case 'debug_zoho_create_event':
+        // Try to create a test Zoho event
+        result = await handleDebugZohoCreateEvent(params);
+        break;
       default:
         result = {
           success: false,
@@ -515,6 +519,48 @@ async function handleDebugAppointment(params) {
     };
   } catch (error) {
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Debug Zoho event creation (temporary)
+ */
+async function handleDebugZohoCreateEvent(params) {
+  const { client_id } = params;
+
+  try {
+    const zohoCalendarService = require('../services/zohoCalendarService');
+
+    // Try to create a test event
+    const testEvent = {
+      title: 'Debug Test Event',
+      customerName: 'Debug Customer',
+      customerPhone: '+15551234567',
+      customerEmail: 'debug@test.com',
+      startTime: new Date('2026-02-01T10:00:00'),
+      endTime: new Date('2026-02-01T11:00:00'),
+      duration: 60,
+      description: 'Debug test - can be deleted',
+      confirmationCode: 'DEBUG123'
+    };
+
+    const result = await zohoCalendarService.createEvent(client_id, testEvent);
+
+    return {
+      success: result.success,
+      result,
+      testEvent: {
+        title: testEvent.title,
+        startTime: testEvent.startTime.toISOString(),
+        endTime: testEvent.endTime.toISOString()
+      }
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      stack: error.stack?.substring(0, 500)
+    };
   }
 }
 
