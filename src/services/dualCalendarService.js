@@ -682,7 +682,9 @@ class DualCalendarService {
 
       // Sync to Zoho CRM (if enabled)
       let zohoEvent = null;
+      logger.info(`[DualCal] Client ${clientId}: About to call syncToZohoCalendar, ringlyProAppointment=${JSON.stringify(ringlyProAppointment)}`);
       zohoEvent = await this.syncToZohoCalendar(clientId, ringlyProAppointment);
+      logger.info(`[DualCal] Client ${clientId}: syncToZohoCalendar returned zohoEvent=${JSON.stringify(zohoEvent)}`);
 
       return {
         success: true,
