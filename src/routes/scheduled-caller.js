@@ -351,4 +351,46 @@ router.post('/upload-prospects', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/scheduled-caller/reset-prospect
+ * Reset a prospect's call status back to TO_BE_CALLED
+ * Body: { clientId, phoneNumber }
+ */
+router.post('/reset-prospect', async (req, res) => {
+  try {
+    const { clientId, phoneNumber } = req.body;
+
+    if (!clientId || !phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        error: 'clientId and phoneNumber are required'
+      });
+    }
+
+    const result = await sequelize.query(
+      `UPDATE business_directory
+       SET call_status = 'TO_BE_CALLED', call_attempts = 0, call_notes = NULL, last_called_at = NULL, updated_at = CURRENT_TIMESTAMP
+       WHERE client_id = :clientId AND phone_number = :phoneNumber`,
+      {
+        replacements: { clientId: parseInt(clientId), phoneNumber },
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    logger.info(`🔄 Reset prospect ${phoneNumber} for client ${clientId}`);
+
+    res.json({
+      success: true,
+      message: `Prospect ${phoneNumber} reset to TO_BE_CALLED`
+    });
+
+  } catch (error) {
+    logger.error('Error resetting prospect:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
