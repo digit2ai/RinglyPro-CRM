@@ -59,7 +59,7 @@ class ZohoCalendarService {
         return null;
       }
 
-      return {
+      const result = {
         clientId: zohoSettings.clientId,
         clientSecret: zohoSettings.clientSecret,
         refreshToken: zohoSettings.refreshToken,
@@ -70,6 +70,8 @@ class ZohoCalendarService {
         // createEvents controls whether bookings sync TO Zoho (defaults to true)
         createEvents: zohoSettings.createEvents !== false
       };
+      logger.info(`[ZohoCalendar] Settings for client ${clientId}: enabled=${result.enabled}, syncCalendar=${result.syncCalendar}, createEvents=${result.createEvents} (raw createEvents: ${zohoSettings.createEvents})`);
+      return result;
     } catch (error) {
       logger.error(`[ZohoCalendar] Error getting settings for client ${clientId}:`, error);
       return null;
