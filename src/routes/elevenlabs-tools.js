@@ -113,6 +113,10 @@ router.post('/', async (req, res) => {
         // Try to create a test Zoho event
         result = await handleDebugZohoCreateEvent(params);
         break;
+      case 'admin_set_elevenlabs_phone':
+        // Quick admin tool to set ElevenLabs phone number ID
+        result = await handleAdminSetElevenLabsPhone(params);
+        break;
       default:
         result = {
           success: false,
@@ -601,6 +605,35 @@ async function handleDebugZohoSettings(params) {
       success: false,
       error: error.message
     };
+  }
+}
+
+/**
+ * Admin tool to set ElevenLabs phone number ID
+ */
+async function handleAdminSetElevenLabsPhone(params) {
+  const { client_id, phone_number_id, api_key } = params;
+
+  // Simple API key check
+  const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+  if (api_key !== expectedKey) {
+    return { success: false, error: 'Invalid API key' };
+  }
+
+  if (!client_id || !phone_number_id) {
+    return { success: false, error: 'client_id and phone_number_id required' };
+  }
+
+  try {
+    await sequelize.query(
+      'UPDATE clients SET elevenlabs_phone_number_id = :phoneId WHERE id = :clientId',
+      { replacements: { phoneId: phone_number_id, clientId: client_id }, type: QueryTypes.UPDATE }
+    );
+
+    logger.info(`✅ Set ElevenLabs phone number ID for client ${client_id}: ${phone_number_id}`);
+    return { success: true, client_id, phone_number_id };
+  } catch (error) {
+    return { success: false, error: error.message };
   }
 }
 
