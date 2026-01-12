@@ -142,6 +142,20 @@ const Appointment = sequelize.define('Appointment', {
     field: 'vagaro_contact_id',
     comment: 'Vagaro customer ID associated with this appointment'
   },
+  // Google Calendar integration fields
+  googleEventId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'google_event_id',
+    comment: 'Google Calendar event ID for synced appointments'
+  },
+  // Zoho CRM integration fields
+  zohoEventId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'zoho_event_id',
+    comment: 'Zoho CRM event ID for synced appointments'
+  },
   // CRM sync tracking
   crmLastSyncedAt: {
     type: DataTypes.DATE,
