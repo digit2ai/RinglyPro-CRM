@@ -571,14 +571,18 @@ class DualCalendarService {
    */
   async syncToZohoCalendar(clientId, appointment) {
     try {
+      logger.info(`[DualCal] Client ${clientId}: Starting Zoho sync for appointment ${appointment?.id}`);
+
       // Check if Zoho is enabled for creating events
       const zohoStatus = await zohoCalendarService.isZohoCalendarEnabled(clientId);
-      logger.info(`[DualCal] Client ${clientId}: Zoho status: ${JSON.stringify(zohoStatus)}`);
+      logger.info(`[DualCal] Client ${clientId}: Zoho enabled=${zohoStatus?.enabled}, createEvents=${zohoStatus?.createEvents}, syncCalendar=${zohoStatus?.syncCalendar}`);
 
       if (!zohoStatus.enabled || !zohoStatus.createEvents) {
-        logger.info(`[DualCal] Client ${clientId}: Zoho event creation not enabled (enabled=${zohoStatus.enabled}, createEvents=${zohoStatus.createEvents})`);
+        logger.info(`[DualCal] Client ${clientId}: Zoho event creation SKIPPED - enabled=${zohoStatus?.enabled}, createEvents=${zohoStatus?.createEvents}`);
         return null;
       }
+
+      logger.info(`[DualCal] Client ${clientId}: Zoho event creation ENABLED, proceeding...`);
 
       // Parse appointment date and time
       const appointmentDate = appointment.appointmentDate || appointment.appointment_date;
