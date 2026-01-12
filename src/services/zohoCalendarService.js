@@ -397,6 +397,10 @@ class ZohoCalendarService {
 
     } catch (error) {
       logger.error(`[ZohoCalendar] Error creating event for client ${clientId}:`, error.message);
+      if (error.response) {
+        logger.error(`[ZohoCalendar] Response status: ${error.response.status}`);
+        logger.error(`[ZohoCalendar] Response data: ${JSON.stringify(error.response.data)}`);
+      }
       return { success: false, error: error.message };
     }
   }
