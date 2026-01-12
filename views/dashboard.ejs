@@ -3700,12 +3700,13 @@
             loadRachelStatus();
             loadDashboard();
             loadCreditsBalance();
-            // Load messages based on client - Client 32 uses ElevenLabs, others use regular messages
-            // Use == for type coercion (CLIENT_ID might be string "32" or number 32)
-            console.log('CLIENT_ID check:', CLIENT_ID, typeof CLIENT_ID, CLIENT_ID == 32);
-            if (CLIENT_ID == 32) {
-                // Show ElevenLabs UI for Client 32 - keep refresh button, hide sync and voicemail/conversation toggle
-                console.log('Showing ElevenLabs UI for Client 32');
+            // Load messages based on client - Clients 15 and 32 use ElevenLabs, others use regular messages
+            // Use == for type coercion (CLIENT_ID might be string or number)
+            const usesElevenLabs = CLIENT_ID == 15 || CLIENT_ID == 32;
+            console.log('CLIENT_ID check:', CLIENT_ID, typeof CLIENT_ID, 'usesElevenLabs:', usesElevenLabs);
+            if (usesElevenLabs) {
+                // Show ElevenLabs UI - keep refresh button, hide sync and voicemail/conversation toggle
+                console.log('Showing ElevenLabs UI for Client ' + CLIENT_ID);
                 document.getElementById('elevenLabsHeader').style.display = 'none';
                 document.getElementById('syncElevenLabsBtn').style.display = 'none';
                 document.getElementById('regularMessagesHeader').style.display = 'none';
@@ -6225,8 +6226,8 @@
             btnText.textContent = 'Refreshing...';
 
             try {
-                // Client 32 uses ElevenLabs calls, others use regular messages
-                if (CLIENT_ID == 32) {
+                // Clients 15 and 32 use ElevenLabs calls, others use regular messages
+                if (CLIENT_ID == 15 || CLIENT_ID == 32) {
                     await loadElevenLabsCalls();
                 } else {
                     await loadMessages();
@@ -6261,9 +6262,9 @@
             // Refresh every 10 minutes (600 seconds) - silent refresh (no loading spinner)
             messagesAutoRefreshInterval = setInterval(async () => {
                 try {
-                    // Client 32 uses ElevenLabs calls, others use regular messages
+                    // Clients 15 and 32 use ElevenLabs calls, others use regular messages
                     // Pass false to skip loading spinner for auto-refresh
-                    if (CLIENT_ID == 32) {
+                    if (CLIENT_ID == 15 || CLIENT_ID == 32) {
                         await loadElevenLabsCalls(false);
                     } else {
                         await loadMessages();
