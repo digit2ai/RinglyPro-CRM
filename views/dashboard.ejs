@@ -4827,12 +4827,12 @@
                     console.log('📅 Google Calendar not connected or error:', gcalError.message);
                 }
 
-                // Client 32: Uses GHL calendar (not Google Calendar) - show RinglyPro appointments
+                // Client 32: Show ONLY Google Calendar events (no RinglyPro database mixing)
                 // Other clients: Merge RinglyPro + Google Calendar
                 if (CLIENT_ID == 32) {
-                    // Client 32 uses GHL integration, display RinglyPro appointments (which sync to GHL)
-                    allAppointments = ringlyProAppointments;
-                    console.log('📅 Client 32: Using RinglyPro appointments (synced with GHL)');
+                    // Client 32 uses Google Calendar as source of truth - no mixing
+                    allAppointments = googleCalendarEvents;
+                    console.log('📅 Client 32: Using Google Calendar only, no RinglyPro mixing');
                 } else {
                     // Other clients: Merge appointments - Google Calendar events first, then RinglyPro
                     // Filter out Google events that are already synced from RinglyPro (to avoid duplicates)
