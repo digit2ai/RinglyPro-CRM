@@ -121,6 +121,14 @@ router.post('/', async (req, res) => {
         // Quick admin tool to set ElevenLabs agent ID
         result = await handleAdminSetElevenLabsAgent(params);
         break;
+      case 'admin_enable_elevenlabs_outbound':
+        // Quick admin tool to enable ElevenLabs for outbound calling
+        result = await handleAdminEnableElevenLabsOutbound(params);
+        break;
+      case 'admin_get_client_config':
+        // Quick admin tool to get client's ElevenLabs configuration
+        result = await handleAdminGetClientConfig(params);
+        break;
       default:
         result = {
           success: false,
@@ -664,6 +672,82 @@ async function handleAdminSetElevenLabsPhone(params) {
 
     logger.info(`✅ Set ElevenLabs phone number ID for client ${client_id}: ${phone_number_id}`);
     return { success: true, client_id, phone_number_id };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Admin tool to enable/disable ElevenLabs outbound calling
+ */
+async function handleAdminEnableElevenLabsOutbound(params) {
+  const { client_id, enabled, api_key } = params;
+
+  const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+  if (api_key !== expectedKey) {
+    return { success: false, error: 'Invalid API key' };
+  }
+
+  if (!client_id) {
+    return { success: false, error: 'client_id required' };
+  }
+
+  const enableOutbound = enabled !== false && enabled !== 'false';
+
+  try {
+    await sequelize.query(
+      'UPDATE clients SET use_elevenlabs_outbound = :enabled WHERE id = :clientId',
+      { replacements: { enabled: enableOutbound, clientId: client_id }, type: QueryTypes.UPDATE }
+    );
+
+    logger.info(`✅ Set use_elevenlabs_outbound for client ${client_id}: ${enableOutbound}`);
+    return { success: true, client_id, use_elevenlabs_outbound: enableOutbound };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Admin tool to get client's complete ElevenLabs configuration
+ */
+async function handleAdminGetClientConfig(params) {
+  const { client_id, api_key } = params;
+
+  const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+  if (api_key !== expectedKey) {
+    return { success: false, error: 'Invalid API key' };
+  }
+
+  if (!client_id) {
+    return { success: false, error: 'client_id required' };
+  }
+
+  try {
+    const [clientData] = await sequelize.query(
+      `SELECT
+        id, business_name, ringlypro_number,
+        elevenlabs_agent_id, elevenlabs_phone_number_id,
+        use_elevenlabs_outbound, rachel_enabled
+       FROM clients WHERE id = :clientId`,
+      { replacements: { clientId: client_id }, type: QueryTypes.SELECT }
+    );
+
+    if (!clientData) {
+      return { success: false, error: `Client ${client_id} not found` };
+    }
+
+    return {
+      success: true,
+      client_id,
+      config: {
+        business_name: clientData.business_name,
+        ringlypro_number: clientData.ringlypro_number,
+        elevenlabs_agent_id: clientData.elevenlabs_agent_id,
+        elevenlabs_phone_number_id: clientData.elevenlabs_phone_number_id,
+        use_elevenlabs_outbound: clientData.use_elevenlabs_outbound,
+        rachel_enabled: clientData.rachel_enabled
+      }
+    };
   } catch (error) {
     return { success: false, error: error.message };
   }

@@ -1,83 +1,54 @@
-# Client 15 System Architecture
-## Model Configuration for New Client Onboarding
+# RinglyPro Voice Booking Architecture
+## Standard Configuration for All Clients
 
-This document describes the complete system architecture for Client 15, which serves as the reference model for onboarding new clients with full multi-calendar integration.
+RinglyPro native calendar is the **default** for all clients. GHL, Google Calendar, and Zoho CRM are **optional** integrations that sync in the background.
 
 ---
 
 ## Quick Reference: Developer Prompt
 
-### For Existing Clients (Mirror Client 15 Setup)
+### Quick Activation Prompt
 
-Use this prompt to enable full multi-calendar integration for an existing client:
+**Before using this prompt:**
+1. Create ElevenLabs agent at https://elevenlabs.io/conversational-ai
+2. Configure 3 tools (all POST to https://aiagent.ringlypro.com/api/elevenlabs/tools):
+   - check_availability
+   - book_appointment
+   - send_sms
+3. (Optional) Client configures integrations via Settings UI (GHL, Google, Zoho)
+
+**Then use this prompt:**
+```
+Activate Client [ID] for voice booking.
+ElevenLabs Agent ID: [AGENT_ID]
+
+Reference: docs/CLIENT_15_ARCHITECTURE.md
+```
+
+The developer agent will:
+- Store the ElevenLabs agent ID
+- Enable rachel_enabled = true
+- Enable any configured integrations (GHL, Zoho, Google) - if present
+- Test with booking to verify RinglyPro calendar works
+
+### For Clients WITH External Integrations
+
+If client has configured GHL, Google, or Zoho in Settings:
 
 ```
-Enable full multi-calendar integration for Client [ID] (same as Client 15).
+Activate Client [ID] for voice booking with calendar sync.
+ElevenLabs Agent ID: [AGENT_ID]
 
 Reference: docs/CLIENT_15_ARCHITECTURE.md
 
-The system will automatically fetch from database:
-- Business name, timezone, hours (from clients table)
-- Twilio number (assigned at signup)
-- GHL credentials (from ghl_integrations table)
-- Google Calendar tokens (from google_calendar_integrations table)
-- Zoho settings (from clients.settings.integration.zoho)
+Enable integrations the client has configured:
+- GHL: settings.integration.ghl.enabled = true (if ghl_integrations exists)
+- Google: google_calendar_integrations.is_active = true (if configured)
+- Zoho: settings.integration.zoho.enabled = true (if configured)
 
-Tasks:
-1. Verify client exists and has required integrations configured
-2. Enable rachel_enabled = true
-3. Configure Twilio webhook → /voice/rachel/
-4. Enable GHL calendar sync (settings.integration.ghl.enabled = true)
-5. Enable Google Calendar sync (is_active = true)
-6. Enable Zoho Events sync (settings.integration.zoho.enabled = true)
-7. Book a test appointment and verify all IDs are returned
-
-Expected test result:
-- RinglyPro: appointment_id
-- GHL: ghl_appointment_id
-- Google: google_event_id
-- Zoho: zoho_event_id
-- Confirmation: RP######
-```
-
-### For New Client Onboarding
-
-Use this prompt during new client signup:
-
-```
-Onboard new client with full multi-calendar integration (Client 15 model).
-
-Reference: docs/CLIENT_15_ARCHITECTURE.md
-
-Client will provide via signup/integration forms:
-- Business name, phone, email
-- Business hours (default: 9AM-5PM EST)
-- GHL credentials (via OAuth flow)
-- Google Calendar (via OAuth flow)
-- Zoho CRM (via Self-Client app setup)
-
-System auto-assigns:
-- Client ID (auto-increment)
-- Twilio number (from pool or provisioned)
-- Timezone (default: America/New_York)
-
-After onboarding, verify with test booking.
-```
-
-### Quick Enable Command
-
-For clients who already have all integrations configured but just need activation:
-
-```
-Activate Client [ID] for voice booking (Client 15 model).
-
-Enable:
-- rachel_enabled = true
-- settings.integration.ghl.enabled = true
-- settings.integration.zoho.enabled = true
-- google_calendar_integrations.is_active = true
-
-Test with booking to verify all 4 calendar IDs returned.
+Test booking should return:
+- RinglyPro: appointment_id (always)
+- Plus any enabled integrations
 ```
 
 ---
