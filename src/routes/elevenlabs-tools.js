@@ -101,6 +101,10 @@ router.post('/', async (req, res) => {
       case 'send_sms_recovery':
         result = await handleSendSms(params);
         break;
+      case 'debug_zoho_settings':
+        // Temporary debug tool to check Zoho settings
+        result = await handleDebugZohoSettings(params);
+        break;
       default:
         result = {
           success: false,
@@ -464,6 +468,34 @@ async function handleSendSms(params) {
   } catch (error) {
     logger.error('[ElevenLabs Tools] send_sms error:', error);
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Debug Zoho settings (temporary)
+ */
+async function handleDebugZohoSettings(params) {
+  const { client_id } = params;
+
+  try {
+    const zohoCalendarService = require('../services/zohoCalendarService');
+    const zohoStatus = await zohoCalendarService.isZohoCalendarEnabled(client_id);
+
+    return {
+      success: true,
+      client_id,
+      zohoStatus: {
+        enabled: zohoStatus?.enabled,
+        createEvents: zohoStatus?.createEvents,
+        syncCalendar: zohoStatus?.syncCalendar,
+        hasSettings: !!zohoStatus?.settings
+      }
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
   }
 }
 
