@@ -5421,7 +5421,11 @@
                     const isGoogleCalendarEvent = source === 'google_calendar';
 
                     // Check if it's a RinglyPro synced event (AI Voice booking synced to Google Calendar)
-                    const isRinglyProSyncedEvent = apt.isRinglyProEvent || apt.ringlyproAppointmentId;
+                    // Also check for GHL-created phone bookings which have "Phone booking via AI Assistant" as customer name
+                    const isRinglyProSyncedEvent = apt.isRinglyProEvent || apt.ringlyproAppointmentId ||
+                        customerName.toLowerCase().includes('phone booking via ai') ||
+                        customerName.toLowerCase().includes('ai voice') ||
+                        customerName.toLowerCase().includes('ai assistant');
 
                     // Check if it's a busy/blocked slot from GHL
                     const isBusySlot = notes.includes('busy/blocked slot') || customerName.toLowerCase() === 'busy' || customerName.toLowerCase().startsWith('busy -');
