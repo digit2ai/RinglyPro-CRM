@@ -573,8 +573,10 @@ class DualCalendarService {
     try {
       // Check if Zoho is enabled for creating events
       const zohoStatus = await zohoCalendarService.isZohoCalendarEnabled(clientId);
+      logger.info(`[DualCal] Client ${clientId}: Zoho status: ${JSON.stringify(zohoStatus)}`);
+
       if (!zohoStatus.enabled || !zohoStatus.createEvents) {
-        logger.info(`[DualCal] Client ${clientId}: Zoho event creation not enabled`);
+        logger.info(`[DualCal] Client ${clientId}: Zoho event creation not enabled (enabled=${zohoStatus.enabled}, createEvents=${zohoStatus.createEvents})`);
         return null;
       }
 
