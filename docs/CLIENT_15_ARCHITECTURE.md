@@ -151,6 +151,51 @@ For clients needing a dedicated agent with custom voice/personality:
 2. Configure tools to point to `https://aiagent.ringlypro.com/api/elevenlabs/tools`
 3. Store agent ID in `clients.elevenlabs_agent_id`
 4. Update Twilio webhook to use custom agent
+5. Configure post-call webhook (see below)
+
+### ElevenLabs Agent IDs
+
+| Client | Agent ID | Description |
+|--------|----------|-------------|
+| Client 15 | `agent_1001kdds1676ekrbdmd9jh918jkc` | RinglyPro Phone Voice Agent |
+| Client 32 | `agent_1801kdnq8avcews9r9rrvf7k0vh1` | Corvita Recovery & Nutrition |
+
+**Important:** The agent ID stored in `clients.elevenlabs_agent_id` must match the actual ElevenLabs agent handling calls. If messages aren't appearing, verify the agent ID is correct.
+
+### Post-Call Webhook Configuration
+
+To automatically save call records to the Messages tab, configure a post-call webhook in ElevenLabs:
+
+1. Go to ElevenLabs Dashboard → Conversational AI → Settings → Webhooks
+2. Add post-call webhook URL: `https://aiagent.ringlypro.com/voice/elevenlabs/post-call-webhook`
+3. Enable "Transcription webhook" type
+4. Save
+
+This webhook automatically:
+- Saves call records to the Messages table
+- Extracts phone number, duration, and transcript summary
+- Associates calls with the correct client via agent ID
+
+### Manual ElevenLabs Sync (Admin)
+
+If the webhook isn't configured or calls need to be re-synced:
+
+```bash
+# Sync calls from ElevenLabs to Messages table
+curl -X POST "https://aiagent.ringlypro.com/api/admin/sync-elevenlabs-calls/15" \
+  -H "Content-Type: application/json" \
+  -d '{"apiKey": "YOUR_ADMIN_API_KEY"}'
+
+# Update agent ID for a client
+curl -X POST "https://aiagent.ringlypro.com/api/admin/set-elevenlabs-agent/15" \
+  -H "Content-Type: application/json" \
+  -d '{"apiKey": "YOUR_ADMIN_API_KEY", "agentId": "agent_1001kdds1676ekrbdmd9jh918jkc"}'
+
+# Delete all ElevenLabs messages for a client (to re-sync fresh)
+curl -X DELETE "https://aiagent.ringlypro.com/api/admin/elevenlabs-calls/15?all=true" \
+  -H "Content-Type: application/json" \
+  -d '{"apiKey": "YOUR_ADMIN_API_KEY"}'
+```
 
 ### Required ElevenLabs Tools Configuration
 
@@ -583,6 +628,9 @@ curl -X POST https://aiagent.ringlypro.com/api/elevenlabs/tools \
 
 | Date | Change |
 |------|--------|
+| 2026-01-12 | Added ElevenLabs post-call webhook for automatic message saving |
+| 2026-01-12 | Fixed Client 15 & 32 ElevenLabs agent IDs |
+| 2026-01-12 | Added admin endpoints for ElevenLabs sync management |
 | 2026-01-12 | Added Zoho CRM Events integration |
 | 2026-01-12 | Fixed datetime format for Zoho API |
 | 2026-01-12 | Added google_event_id and zoho_event_id columns |
