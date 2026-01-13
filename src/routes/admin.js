@@ -1165,10 +1165,38 @@ router.post('/fix-elevenlabs-recordings/:clientId', async (req, res) => {
 router.delete('/elevenlabs-calls/:clientId', async (req, res) => {
     try {
         const { clientId } = req.params;
-        const { phone } = req.query;
+        const { phone, all } = req.query;
+        const { apiKey } = req.body;
+
+        // API key auth for admin operations
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+        if (apiKey !== expectedKey) {
+            return res.status(401).json({ success: false, error: 'Invalid API key' });
+        }
+
+        // If 'all=true', delete ALL ElevenLabs messages for this client
+        if (all === 'true') {
+            console.log(`🗑️ Admin: Deleting ALL ElevenLabs calls for client ${clientId}`);
+
+            const [, meta] = await sequelize.query(
+                `DELETE FROM messages
+                 WHERE client_id = $1
+                 AND message_source = 'elevenlabs'`,
+                { bind: [clientId] }
+            );
+
+            console.log(`✅ Deleted all ElevenLabs calls for client ${clientId}`);
+
+            res.json({
+                success: true,
+                message: `Deleted all ElevenLabs calls for client ${clientId}`,
+                clientId: parseInt(clientId)
+            });
+            return;
+        }
 
         if (!phone) {
-            return res.status(400).json({ success: false, error: 'Phone number required' });
+            return res.status(400).json({ success: false, error: 'Phone number required (or use all=true)' });
         }
 
         console.log(`🗑️ Admin: Deleting ElevenLabs calls for client ${clientId} from phone ${phone}`);
