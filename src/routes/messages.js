@@ -56,6 +56,35 @@ router.get('/recording/:recordingSid', async (req, res) => {
   }
 });
 
+// GET /api/messages/elevenlabs-audio/:conversationId - Proxy ElevenLabs call recording
+router.get('/elevenlabs-audio/:conversationId', async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+
+    if (!conversationId) {
+      return res.status(400).json({ error: 'Invalid conversation ID' });
+    }
+
+    console.log(`🎵 Proxying ElevenLabs audio: ${conversationId}`);
+
+    // Use the ElevenLabs service to get the audio
+    const elevenLabsConvAI = require('../services/elevenLabsConvAIService');
+    const audioData = await elevenLabsConvAI.getConversationAudio(conversationId);
+
+    res.set('Content-Type', audioData.contentType || 'audio/mpeg');
+    res.send(Buffer.from(audioData.audioData));
+
+    console.log(`✅ ElevenLabs audio ${conversationId} streamed successfully`);
+
+  } catch (error) {
+    console.error('❌ Error proxying ElevenLabs audio:', error);
+    res.status(500).json({
+      error: 'Failed to load ElevenLabs recording',
+      details: error.message
+    });
+  }
+});
+
 // GET /api/messages/today - Get today's messages from database
 router.get('/today', async (req, res) => {
   try {

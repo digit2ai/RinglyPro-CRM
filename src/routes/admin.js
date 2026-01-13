@@ -1055,8 +1055,8 @@ router.post('/update-elevenlabs-calls/:clientId', async (req, res) => {
                                 details.metadata?.call_duration_secs ||
                                 null;
 
-                // Proxy URL for audio
-                const audioProxyUrl = `/api/admin/elevenlabs-audio/${msg.twilio_sid}`;
+                // Proxy URL for audio (using messages route which doesn't require admin auth)
+                const audioProxyUrl = `/api/messages/elevenlabs-audio/${msg.twilio_sid}`;
 
                 // Update if we have new data
                 if (phoneNumber || duration || !msg.recording_url) {
@@ -1232,13 +1232,13 @@ router.post('/fix-elevenlabs-recordings/:clientId', async (req, res) => {
         console.log(`🔄 Admin: Fixing ElevenLabs recording URLs for client ${clientId}`);
 
         // Update all ElevenLabs messages to set the recording URL based on twilio_sid
+        // Using /api/messages/ route which doesn't require admin auth
         const result = await sequelize.query(
             `UPDATE messages
-             SET recording_url = '/api/admin/elevenlabs-audio/' || twilio_sid,
+             SET recording_url = '/api/messages/elevenlabs-audio/' || twilio_sid,
                  updated_at = NOW()
              WHERE client_id = $1
-             AND message_source = 'elevenlabs'
-             AND (recording_url IS NULL OR recording_url = '')`,
+             AND message_source = 'elevenlabs'`,
             { bind: [clientId] }
         );
 

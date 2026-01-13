@@ -229,8 +229,8 @@ router.post('/post-call-webhook', async (req, res) => {
       return res.status(200).json({ success: true, message: 'Already synced' });
     }
 
-    // Audio URL via proxy
-    const audioUrl = `/api/admin/elevenlabs-audio/${conversationId}`;
+    // Audio URL via proxy (using messages route which doesn't require admin auth)
+    const audioUrl = `/api/messages/elevenlabs-audio/${conversationId}`;
 
     // Insert into messages table
     await sequelize.query(
