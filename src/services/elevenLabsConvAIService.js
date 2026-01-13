@@ -210,8 +210,8 @@ class ElevenLabsConvAIService {
                                    details.duration_seconds ||
                                    null;
 
-                    // Use proxy URL for audio (signed URLs require auth, proxy handles it)
-                    const audioUrl = `/api/admin/elevenlabs-audio/${conv.conversation_id}`;
+                    // Use proxy URL for audio (using messages route which doesn't require admin auth)
+                    const audioUrl = `/api/messages/elevenlabs-audio/${conv.conversation_id}`;
 
                     // Insert into messages table
                     // Use ElevenLabs timestamp from metadata.start_time_unix_secs (unix seconds)
