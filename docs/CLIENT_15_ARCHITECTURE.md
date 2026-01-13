@@ -9,35 +9,48 @@ RinglyPro native calendar is the **default** for all clients. GHL, Google Calend
 
 ### Quick Activation Prompt
 
-**Before using this prompt:**
-1. Create ElevenLabs agent at https://elevenlabs.io/conversational-ai
-2. Configure 3 tools (all POST to https://aiagent.ringlypro.com/api/elevenlabs/tools):
-   - check_availability
-   - book_appointment
-   - send_sms
-3. (Optional) Client configures integrations via Settings UI (GHL, Google, Zoho)
+**Before using this prompt (ElevenLabs Setup):**
+
+1. **Create ElevenLabs agent** at https://elevenlabs.io/conversational-ai
+   - Note the Agent ID (e.g., `agent_1001kdge3jz0ejj8a8g5d7vkqr8f`)
+
+2. **Configure 4 tools** (all POST to `https://aiagent.ringlypro.com/api/elevenlabs/tools`):
+   - `get_business_info` - Gets client's business details
+   - `check_availability` - Checks available time slots
+   - `book_appointment` - Books an appointment
+   - `send_sms` - Sends confirmation SMS
+
+3. **Get a phone number** (optional) in ElevenLabs
+   - Note the Phone Number ID (e.g., `phnum_8201kdkff2qvetathjqa92x46wr4`)
+
+4. **(Optional)** Client configures integrations via Settings UI (GHL, Google, Zoho)
 
 **Then use this prompt:**
 ```
-Activate Client [ID] for voice booking.
+/ringlypro-dev Activate Client [ID] for voice booking.
 ElevenLabs Agent ID: [AGENT_ID]
+ElevenLabs Phone Number ID: [PHONE_NUMBER_ID] (optional)
 
 Reference: docs/CLIENT_15_ARCHITECTURE.md
 ```
 
 The developer agent will:
-- Store the ElevenLabs agent ID
-- Enable rachel_enabled = true
-- Enable any configured integrations (GHL, Zoho, Google) - if present
-- Test with booking to verify RinglyPro calendar works
+1. Store the ElevenLabs agent ID (`elevenlabs_agent_id`)
+2. Store the phone number ID (`elevenlabs_phone_number_id`) if provided
+3. Enable `rachel_enabled = true`
+4. **Add client ID to dashboard UI** in `views/dashboard.ejs`
+5. Sync existing calls from ElevenLabs
+6. Fix recording URLs for audio playback
+7. Enable any configured integrations (GHL, Zoho, Google) - if present
 
 ### For Clients WITH External Integrations
 
 If client has configured GHL, Google, or Zoho in Settings:
 
 ```
-Activate Client [ID] for voice booking with calendar sync.
+/ringlypro-dev Activate Client [ID] for voice booking with calendar sync.
 ElevenLabs Agent ID: [AGENT_ID]
+ElevenLabs Phone Number ID: [PHONE_NUMBER_ID]
 
 Reference: docs/CLIENT_15_ARCHITECTURE.md
 
