@@ -69,6 +69,22 @@ router.get('/elevenlabs-audio/:conversationId', async (req, res) => {
 
     const elevenLabsConvAI = require('../services/elevenLabsConvAIService');
 
+    // First check if conversation has audio available
+    try {
+      const details = await elevenLabsConvAI.getConversation(conversationId);
+      console.log(`📋 Conversation ${conversationId} has_audio: ${details.has_audio}, has_response_audio: ${details.has_response_audio}`);
+
+      if (!details.has_audio && !details.has_response_audio) {
+        return res.status(404).json({
+          error: 'No audio available for this conversation',
+          conversationId
+        });
+      }
+    } catch (detailsError) {
+      console.log(`⚠️ Could not fetch conversation details: ${detailsError.message}`);
+      // Continue anyway - audio might still be available
+    }
+
     // Try signed URL first (redirects to ElevenLabs CDN)
     const signedUrl = await elevenLabsConvAI.getSignedAudioUrl(conversationId);
     if (signedUrl) {
