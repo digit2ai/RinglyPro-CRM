@@ -6308,11 +6308,13 @@
                 if (!response) return;
 
                 const messages = await response.json();
+                console.log('Total messages from API:', messages.length);
 
                 // Filter to only ElevenLabs calls (message_source = 'elevenlabs')
                 const elevenLabsCalls = messages.filter(msg =>
                     (msg.messageSource || msg.message_source) === 'elevenlabs'
                 );
+                console.log('ElevenLabs calls after filter:', elevenLabsCalls.length);
 
                 renderElevenLabsCalls(elevenLabsCalls);
             } catch (error) {
