@@ -3700,9 +3700,9 @@
             loadRachelStatus();
             loadDashboard();
             loadCreditsBalance();
-            // Load messages based on client - Clients 15 and 32 use ElevenLabs, others use regular messages
+            // Load messages based on client - Clients with rachel_enabled use ElevenLabs
             // Use == for type coercion (CLIENT_ID might be string or number)
-            const usesElevenLabs = CLIENT_ID == 15 || CLIENT_ID == 32;
+            const usesElevenLabs = CLIENT_ID == 15 || CLIENT_ID == 17 || CLIENT_ID == 32;
             console.log('CLIENT_ID check:', CLIENT_ID, typeof CLIENT_ID, 'usesElevenLabs:', usesElevenLabs);
             if (usesElevenLabs) {
                 // Show ElevenLabs UI - keep refresh button, hide sync and voicemail/conversation toggle
