@@ -159,6 +159,123 @@ router.post('/status', async (req, res) => {
 });
 
 /**
+ * ElevenLabs Post-Call Webhook
+ * Called by ElevenLabs when a conversation ends
+ * POST /voice/elevenlabs/post-call-webhook
+ *
+ * This saves the call to the Messages table automatically
+ */
+router.post('/post-call-webhook', async (req, res) => {
+  try {
+    const body = req.body;
+
+    logger.info(`[ElevenLabs] Post-call webhook received:`, JSON.stringify(body).substring(0, 500));
+
+    // Extract data from webhook payload
+    const conversationId = body.conversation_id || body.id;
+    const agentId = body.agent_id;
+    const status = body.status; // 'done', 'failed', etc.
+    const transcript = body.transcript || [];
+    const metadata = body.metadata || {};
+    const analysis = body.analysis || {};
+
+    // Get call details
+    const phoneNumber = metadata.phone_number ||
+                       body.call?.phone_number ||
+                       body.user_id ||
+                       analysis.user_id ||
+                       'Unknown';
+
+    const duration = metadata.call_duration_secs ||
+                    body.call_duration_secs ||
+                    body.duration_seconds ||
+                    null;
+
+    const callType = body.call_type || 'inbound';
+    const startTimeUnix = metadata.start_time_unix_secs;
+    const callTimestamp = startTimeUnix ? new Date(startTimeUnix * 1000) : new Date();
+
+    // Build summary from transcript
+    let summary = 'AI Phone Call';
+    if (transcript && transcript.length > 0) {
+      const firstMessages = transcript.slice(0, 4)
+        .map(t => t.message || t.text)
+        .filter(Boolean)
+        .join(' | ');
+      summary = firstMessages.substring(0, 500) || 'AI Phone Call';
+    }
+
+    // Find client by agent ID
+    const [clientData] = await sequelize.query(
+      'SELECT id, business_name FROM clients WHERE elevenlabs_agent_id = :agentId',
+      { replacements: { agentId }, type: QueryTypes.SELECT }
+    );
+
+    if (!clientData) {
+      logger.warn(`[ElevenLabs] Post-call webhook: No client found for agent ${agentId}`);
+      return res.status(200).json({ success: true, message: 'No client found for agent' });
+    }
+
+    const clientId = clientData.id;
+
+    // Check if this conversation already exists
+    const [existing] = await sequelize.query(
+      'SELECT id FROM messages WHERE twilio_sid = :conversationId',
+      { replacements: { conversationId }, type: QueryTypes.SELECT }
+    );
+
+    if (existing) {
+      logger.info(`[ElevenLabs] Post-call webhook: Conversation ${conversationId} already exists, skipping`);
+      return res.status(200).json({ success: true, message: 'Already synced' });
+    }
+
+    // Audio URL via proxy
+    const audioUrl = `/api/admin/elevenlabs-audio/${conversationId}`;
+
+    // Insert into messages table
+    await sequelize.query(
+      `INSERT INTO messages (
+        client_id, twilio_sid, recording_url, direction,
+        from_number, to_number, body, status,
+        message_type, call_duration, call_start_time,
+        message_source, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())`,
+      {
+        bind: [
+          clientId,
+          conversationId,
+          audioUrl,
+          callType === 'outbound' ? 'outgoing' : 'incoming',
+          phoneNumber,
+          '', // to_number
+          summary,
+          'received',
+          'call',
+          duration,
+          callTimestamp,
+          'elevenlabs',
+          callTimestamp
+        ]
+      }
+    );
+
+    logger.info(`[ElevenLabs] Post-call webhook: Saved call ${conversationId} for client ${clientId} (${clientData.business_name})`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Call saved',
+      conversationId,
+      clientId
+    });
+
+  } catch (error) {
+    logger.error(`[ElevenLabs] Post-call webhook error:`, error);
+    // Return 200 to prevent ElevenLabs from retrying
+    res.status(200).json({ success: false, error: error.message });
+  }
+});
+
+/**
  * Health check
  */
 router.get('/health', (req, res) => {
