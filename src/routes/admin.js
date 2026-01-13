@@ -802,7 +802,7 @@ router.post('/set-elevenlabs-phone/:clientId', async (req, res) => {
 router.post('/set-elevenlabs-agent/:clientId', async (req, res) => {
     try {
         const { clientId } = req.params;
-        const { apiKey, agentId } = req.body;
+        const { apiKey, agentId, enableRachel } = req.body;
 
         // Simple API key check
         const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
@@ -822,19 +822,76 @@ router.post('/set-elevenlabs-agent/:clientId', async (req, res) => {
 
         console.log(`🔧 Setting ElevenLabs agent ID for client ${clientId}: ${agentId}`);
 
+        // Update agent ID and optionally enable rachel
+        if (enableRachel) {
+            await sequelize.query(
+                'UPDATE clients SET elevenlabs_agent_id = $1, rachel_enabled = true WHERE id = $2',
+                { bind: [agentId, parseInt(clientId)] }
+            );
+            console.log(`✅ Enabled rachel_enabled for client ${clientId}`);
+        } else {
+            await sequelize.query(
+                'UPDATE clients SET elevenlabs_agent_id = $1 WHERE id = $2',
+                { bind: [agentId, parseInt(clientId)] }
+            );
+        }
+
+        res.json({
+            success: true,
+            clientId: parseInt(clientId),
+            agentId,
+            rachelEnabled: enableRachel || false
+        });
+
+    } catch (error) {
+        console.error('❌ Error setting ElevenLabs agent:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// ============= ENABLE RACHEL FOR CLIENT =============
+// POST /api/admin/enable-rachel/:clientId
+// Enables rachel_enabled for a client (API key auth)
+router.post('/enable-rachel/:clientId', async (req, res) => {
+    try {
+        const { clientId } = req.params;
+        const { apiKey } = req.body;
+
+        // Simple API key check
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+        if (apiKey !== expectedKey) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid API key'
+            });
+        }
+
+        console.log(`🔧 Enabling rachel for client ${clientId}`);
+
         await sequelize.query(
-            'UPDATE clients SET elevenlabs_agent_id = $1 WHERE id = $2',
-            { bind: [agentId, parseInt(clientId)] }
+            'UPDATE clients SET rachel_enabled = true WHERE id = $1',
+            { bind: [parseInt(clientId)] }
+        );
+
+        // Get updated client info
+        const [client] = await sequelize.query(
+            'SELECT id, business_name, rachel_enabled, elevenlabs_agent_id FROM clients WHERE id = $1',
+            { bind: [parseInt(clientId)], type: sequelize.QueryTypes.SELECT }
         );
 
         res.json({
             success: true,
             clientId: parseInt(clientId),
-            agentId
+            businessName: client?.business_name,
+            rachelEnabled: true,
+            agentId: client?.elevenlabs_agent_id
         });
 
     } catch (error) {
-        console.error('❌ Error setting ElevenLabs agent:', error);
+        console.error('❌ Error enabling rachel:', error);
         res.status(500).json({
             success: false,
             error: error.message

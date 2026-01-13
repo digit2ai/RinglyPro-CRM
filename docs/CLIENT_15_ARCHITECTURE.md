@@ -158,6 +158,7 @@ For clients needing a dedicated agent with custom voice/personality:
 | Client | Agent ID | Description |
 |--------|----------|-------------|
 | Client 15 | `agent_1001kdds1676ekrbdmd9jh918jkc` | RinglyPro Phone Voice Agent |
+| Client 17 | `agent_1001kdge3jz0ejj8a8g5d7vkqr8f` | Voice Booking Agent |
 | Client 32 | `agent_1801kdnq8avcews9r9rrvf7k0vh1` | Corvita Recovery & Nutrition |
 
 **Important:** The agent ID stored in `clients.elevenlabs_agent_id` must match the actual ElevenLabs agent handling calls. If messages aren't appearing, verify the agent ID is correct.
