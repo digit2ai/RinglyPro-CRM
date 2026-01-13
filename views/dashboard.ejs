@@ -6308,13 +6308,11 @@
                 if (!response) return;
 
                 const messages = await response.json();
-                console.log('Total messages from API:', messages.length);
 
                 // Filter to only ElevenLabs calls (message_source = 'elevenlabs')
                 const elevenLabsCalls = messages.filter(msg =>
                     (msg.messageSource || msg.message_source) === 'elevenlabs'
                 );
-                console.log('ElevenLabs calls after filter:', elevenLabsCalls.length);
 
                 renderElevenLabsCalls(elevenLabsCalls);
             } catch (error) {
@@ -6344,7 +6342,6 @@
             }
 
             container.innerHTML = calls.map((call, index) => {
-                console.log('Call data:', call.id, 'recordingUrl:', call.recordingUrl, 'recording_url:', call.recording_url);
                 const createdDate = new Date(call.callStartTime || call.call_start_time || call.createdAt || call.created_at);
                 const callTime = createdDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
                 const callDate = createdDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
