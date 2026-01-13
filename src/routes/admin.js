@@ -144,6 +144,49 @@ const authenticateAdmin = async (req, res, next) => {
 // ============= QUICK ADMIN ENDPOINTS (NO JWT - API KEY ONLY) =============
 // These endpoints use simple API key auth and must be defined BEFORE router.use(authenticateAdmin)
 
+// Quick enable rachel for a client (no JWT required)
+router.post('/quick-enable-rachel/:clientId', async (req, res) => {
+    try {
+        const { clientId } = req.params;
+        const { apiKey } = req.body;
+
+        const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+        if (apiKey !== expectedKey) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid API key'
+            });
+        }
+
+        console.log(`🔧 Quick Admin: Enabling rachel for client ${clientId}`);
+
+        await sequelize.query(
+            'UPDATE clients SET rachel_enabled = true WHERE id = $1',
+            { bind: [parseInt(clientId)] }
+        );
+
+        const [client] = await sequelize.query(
+            'SELECT id, business_name, rachel_enabled, elevenlabs_agent_id FROM clients WHERE id = $1',
+            { bind: [parseInt(clientId)], type: sequelize.QueryTypes.SELECT }
+        );
+
+        res.json({
+            success: true,
+            clientId: parseInt(clientId),
+            businessName: client?.business_name,
+            rachelEnabled: true,
+            agentId: client?.elevenlabs_agent_id
+        });
+
+    } catch (error) {
+        console.error('❌ Error enabling rachel:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Quick set ElevenLabs phone number ID (no JWT required)
 router.post('/quick-set-elevenlabs-phone/:clientId', async (req, res) => {
     try {
