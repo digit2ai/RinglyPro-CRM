@@ -67,8 +67,16 @@ router.get('/elevenlabs-audio/:conversationId', async (req, res) => {
 
     console.log(`🎵 Proxying ElevenLabs audio: ${conversationId}`);
 
-    // Use the ElevenLabs service to get the audio
     const elevenLabsConvAI = require('../services/elevenLabsConvAIService');
+
+    // Try signed URL first (redirects to ElevenLabs CDN)
+    const signedUrl = await elevenLabsConvAI.getSignedAudioUrl(conversationId);
+    if (signedUrl) {
+      console.log(`✅ Redirecting to signed audio URL for ${conversationId}`);
+      return res.redirect(signedUrl);
+    }
+
+    // Fall back to direct audio fetch
     const audioData = await elevenLabsConvAI.getConversationAudio(conversationId);
 
     res.set('Content-Type', audioData.contentType || 'audio/mpeg');
