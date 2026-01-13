@@ -6394,7 +6394,7 @@
                             <div class="message-content">
                                 <div style="color: #374151; line-height: 1.6;">${call.body || 'AI Phone Call - No transcript available'}</div>
                                 ${recordingUrl ? `
-                                    <div style="margin-top: 1rem; padding: 1rem; background: #f5f3ff; border-radius: 0.5rem; border: 1px solid #ddd6fe;">
+                                    <div style="margin-top: 1rem; padding: 1rem; background: #f5f3ff; border-radius: 0.5rem; border: 1px solid #ddd6fe;" id="audio-container-${call.id}">
                                         <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
                                             <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" style="color: #8b5cf6;">
                                                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
@@ -6402,7 +6402,7 @@
                                             </svg>
                                             <strong style="color: #5b21b6;">Call Recording${durationDisplay ? ` (${durationDisplay})` : ''}</strong>
                                         </div>
-                                        <audio controls style="width: 100%; max-width: 400px;">
+                                        <audio controls style="width: 100%; max-width: 400px;" onerror="document.getElementById('audio-container-${call.id}').innerHTML='<p style=\\'color: #9ca3af; font-style: italic;\\'>Recording not available</p>'">
                                             <source src="${recordingUrl}" type="audio/mpeg">
                                             Your browser does not support audio playback.
                                         </audio>
