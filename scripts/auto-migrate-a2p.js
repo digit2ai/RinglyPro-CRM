@@ -1,7 +1,7 @@
 // =====================================================
 // Auto-Migrate A2P 10DLC Table
 // This runs on server startup to ensure the table exists
-// Updated: 2026-01-13 - Added Twilio/GHL compliance columns
+// Updated: 2026-01-14 - Added STOP response, double opt-in, data attestation fields
 // =====================================================
 
 const { Sequelize } = require('sequelize');
@@ -38,7 +38,14 @@ async function autoMigrateA2P() {
                 { name: 'consent_process_description', type: 'TEXT' },
                 { name: 'opt_in_confirmation_message', type: 'TEXT' },
                 { name: 'message_frequency', type: 'VARCHAR(50)' },
-                { name: 'help_keyword_response', type: 'TEXT' }
+                { name: 'help_keyword_response', type: 'TEXT' },
+                // New fields added 2026-01-14
+                { name: 'support_contact_info', type: 'VARCHAR(500)' },
+                { name: 'stop_keyword_response', type: 'TEXT' },
+                { name: 'use_double_opt_in', type: 'BOOLEAN DEFAULT false' },
+                { name: 'double_opt_in_message', type: 'TEXT' },
+                { name: 'opt_in_checkbox_default', type: 'BOOLEAN DEFAULT false' },
+                { name: 'no_data_sharing', type: 'BOOLEAN DEFAULT false' }
             ];
 
             for (const col of newColumns) {
@@ -96,6 +103,7 @@ async function autoMigrateA2P() {
                 business_state VARCHAR(50),
                 business_postal_code VARCHAR(20),
                 business_website VARCHAR(500),
+                support_contact_info VARCHAR(500),
 
                 -- Authorized Representative
                 authorized_rep_first_name VARCHAR(100),
@@ -120,6 +128,11 @@ async function autoMigrateA2P() {
                 opt_in_confirmation_message TEXT,
                 message_frequency VARCHAR(50),
                 help_keyword_response TEXT,
+                stop_keyword_response TEXT,
+                use_double_opt_in BOOLEAN DEFAULT false,
+                double_opt_in_message TEXT,
+                opt_in_checkbox_default BOOLEAN DEFAULT false,
+                no_data_sharing BOOLEAN DEFAULT false,
                 opt_out_acknowledged BOOLEAN NOT NULL DEFAULT false,
                 opt_in_disclosure_url VARCHAR(500),
                 privacy_policy_url VARCHAR(500),

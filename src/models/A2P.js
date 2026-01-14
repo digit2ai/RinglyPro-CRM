@@ -163,6 +163,12 @@ const A2P = sequelize.define('A2P', {
     allowNull: true,
     field: 'business_website'
   },
+  supportContactInfo: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    field: 'support_contact_info',
+    comment: 'Support email or URL for customer inquiries'
+  },
 
   // ========================
   // Authorized Representative
@@ -274,6 +280,39 @@ const A2P = sequelize.define('A2P', {
     allowNull: true,
     field: 'help_keyword_response',
     comment: 'Response sent when user texts HELP'
+  },
+  stopKeywordResponse: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'stop_keyword_response',
+    comment: 'Response sent when user texts STOP'
+  },
+  useDoubleOptIn: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+    defaultValue: false,
+    field: 'use_double_opt_in',
+    comment: 'Whether double opt-in is used'
+  },
+  doubleOptInMessage: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'double_opt_in_message',
+    comment: 'Confirmation message sent for double opt-in'
+  },
+  optInCheckboxDefault: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+    defaultValue: false,
+    field: 'opt_in_checkbox_default',
+    comment: 'Attestation that opt-in checkbox is unchecked by default'
+  },
+  noDataSharing: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+    defaultValue: false,
+    field: 'no_data_sharing',
+    comment: 'Attestation that phone data is not shared with third parties'
   },
   optOutAcknowledged: {
     type: DataTypes.BOOLEAN,

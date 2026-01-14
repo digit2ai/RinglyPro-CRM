@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Verification & Compliance Review Document | RinglyPro</title>
+    <style>
+        @media print {
+            body { font-size: 11pt; }
+            .no-print { display: none !important; }
+            .page-break { page-break-before: always; }
+            input, textarea, select { border: 1px solid #ccc !important; }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            line-height: 1.6;
+            color: #121c2d;
+            padding: 40px;
+            max-width: 850px;
+            margin: 0 auto;
+            background: #fff;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #0263e0;
+        }
+
+        .header h1 {
+            color: #0263e0;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #606b85;
+            font-size: 14px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e1e3e9;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .section h2 {
+            color: #0263e0;
+            font-size: 16px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e1e3e9;
+        }
+
+        .section h2 span {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background: #0263e0;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            flex: 1;
+            margin-bottom: 15px;
+        }
+
+        .form-group.full { flex: 100%; }
+
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 5px;
+            color: #121c2d;
+        }
+
+        label .required { color: #cc1421; }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e1e3e9;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+
+        textarea { min-height: 80px; resize: vertical; }
+
+        .help-text {
+            font-size: 11px;
+            color: #606b85;
+            margin-top: 4px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #e1e3e9;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .checkbox-item input { width: auto; }
+
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-left: 4px solid #0263e0;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+
+        .info-box strong { color: #0263e0; }
+        .info-box ul { margin: 10px 0 0 20px; font-size: 13px; }
+
+        .warning-box {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+
+        .attestation {
+            background: white;
+            border: 1px solid #e1e3e9;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .attestation input { width: auto; margin-top: 3px; }
+
+        .signature-section {
+            margin-top: 30px;
+            padding: 20px;
+            border: 2px solid #0263e0;
+            border-radius: 8px;
+        }
+
+        .signature-line {
+            border-bottom: 1px solid #000;
+            height: 40px;
+            margin: 20px 0 5px;
+        }
+
+        .download-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #0263e0;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .download-btn:hover { background: #0150b5; }
+
+        @media (max-width: 600px) {
+            body { padding: 20px; }
+            .form-row { flex-direction: column; gap: 0; }
+        }
+    </style>
+</head>
+<body>
+    <button class="download-btn no-print" onclick="window.print()">Print / Save as PDF</button>
+
+    <div class="header">
+        <h1>SMS VERIFICATION & COMPLIANCE REVIEW DOCUMENT</h1>
+        <p>Twilio A2P 10DLC / Toll-Free SMS Registration</p>
+        <p style="margin-top: 10px; font-size: 12px; color: #606b85;">
+            Complete this document before submitting your A2P registration. All fields marked with <span style="color: #cc1421;">*</span> are required.
+        </p>
+    </div>
+
+    <!-- Section 1: Business & Service Overview -->
+    <div class="section">
+        <h2><span>1</span> Business & Service Overview</h2>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Company Name <span class="required">*</span></label>
+                <input type="text" placeholder="Legal business name as registered with IRS">
+            </div>
+            <div class="form-group">
+                <label>DBA Name (if different)</label>
+                <input type="text" placeholder="Doing Business As name">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Website <span class="required">*</span></label>
+                <input type="text" placeholder="https://www.yourcompany.com">
+            </div>
+            <div class="form-group">
+                <label>Support Contact <span class="required">*</span></label>
+                <input type="text" placeholder="support@company.com or support URL">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Service Description <span class="required">*</span></label>
+            <textarea placeholder="Example: Our service provides home services scheduling and customer communication. SMS is used solely to communicate directly with customers regarding appointment reminders and service updates after they have explicitly opted in."></textarea>
+            <p class="help-text">Plain language, 1-2 sentences. No marketing language. Clear end-user benefit.</p>
+        </div>
+
+        <div class="warning-box">
+            <strong>Reviewer Checklist:</strong>
+            <ul>
+                <li>No marketing language (avoid "grow your business", "increase sales")</li>
+                <li>No "lead generation" wording</li>
+                <li>Clear end-user benefit stated</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Section 2: SMS Use Case Classification -->
+    <div class="section">
+        <h2><span>2</span> SMS Use Case Classification</h2>
+
+        <div class="form-group">
+            <label>Primary Message Type <span class="required">*</span> (select one)</label>
+            <div class="checkbox-group">
+                <label class="checkbox-item"><input type="checkbox"> One-Time Passcodes (OTP)</label>
+                <label class="checkbox-item"><input type="checkbox"> Account/Security Alerts</label>
+                <label class="checkbox-item"><input type="checkbox"> Transactional Notifications</label>
+                <label class="checkbox-item"><input type="checkbox"> Appointment Reminders</label>
+                <label class="checkbox-item"><input type="checkbox"> Marketing/Promotions</label>
+                <label class="checkbox-item"><input type="checkbox"> Mixed (multiple types)</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Detailed Use Case Description <span class="required">*</span></label>
+            <textarea placeholder="Example: We send SMS messages to customers who have created an account with [Company Name]. Messages are triggered by appointment bookings, missed calls during business hours, and service reminders. Messages are relevant only to the customer's interaction with our service."></textarea>
+            <p class="help-text">Explain WHO sends, WHO receives, and WHY messages are sent.</p>
+        </div>
+
+        <div class="info-box">
+            <strong>Important:</strong> If OTP + marketing are both present, they must be described as separate message categories.
+        </div>
+    </div>
+
+    <!-- Section 3: Opt-In Flow -->
+    <div class="section page-break">
+        <h2><span>3</span> Opt-In Flow (CRITICAL SECTION)</h2>
+
+        <div class="form-group">
+            <label>Opt-In Method(s) <span class="required">*</span></label>
+            <div class="checkbox-group">
+                <label class="checkbox-item"><input type="checkbox"> Website/App checkbox</label>
+                <label class="checkbox-item"><input type="checkbox"> SMS keyword</label>
+                <label class="checkbox-item"><input type="checkbox"> Account settings toggle</label>
+                <label class="checkbox-item"><input type="checkbox"> Paper/in-person form</label>
+                <label class="checkbox-item"><input type="checkbox"> Verbal consent</label>
+                <label class="checkbox-item"><input type="checkbox"> Inbound text/call</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Exact Opt-In Language <span class="required">*</span></label>
+            <textarea placeholder='Example: "I agree to receive SMS messages from [Company Name] at the phone number provided. Message & data rates may apply. Reply STOP to unsubscribe. Reply HELP for help. Consent is not a condition of purchase."'></textarea>
+            <p class="help-text">Copy the exact text shown to users when they opt in.</p>
+        </div>
+
+        <div class="form-group">
+            <label>Consent Process Description <span class="required">*</span></label>
+            <textarea placeholder="Example: Customers provide consent by checking an optional SMS opt-in checkbox on our website contact form. The checkbox is NOT pre-selected. They can also opt-in by texting our business number first, or by verbally agreeing during a phone call."></textarea>
+        </div>
+
+        <div class="info-box">
+            <strong>Opt-In Characteristics Checklist:</strong>
+            <div style="margin-top: 10px;">
+                <label class="attestation">
+                    <input type="checkbox"> Checkbox is unchecked by default
+                </label>
+                <label class="attestation">
+                    <input type="checkbox"> Consent is explicit and affirmative
+                </label>
+                <label class="attestation">
+                    <input type="checkbox"> Phone number belongs to the user
+                </label>
+                <label class="attestation">
+                    <input type="checkbox"> Opt-in is logged and auditable
+                </label>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <strong>Do NOT say:</strong> "Users may receive messages"<br>
+            <strong>DO say:</strong> "Users explicitly opt in"
+        </div>
+    </div>
+
+    <!-- Section 4: Double Opt-In -->
+    <div class="section">
+        <h2><span>4</span> Double Opt-In</h2>
+
+        <div class="form-group">
+            <label>Do you use Double Opt-In?</label>
+            <div class="checkbox-group">
+                <label class="checkbox-item"><input type="checkbox" name="doubleOptIn"> Yes</label>
+                <label class="checkbox-item"><input type="checkbox" name="doubleOptIn"> No</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>If yes, provide confirmation message:</label>
+            <textarea placeholder='Example: "You\'re subscribed to [Company Name] SMS alerts. Reply YES to confirm. Msg & data rates may apply. Reply STOP to cancel."'></textarea>
+        </div>
+    </div>
+
+    <!-- Section 5: Opt-Out & Help Handling -->
+    <div class="section">
+        <h2><span>5</span> Opt-Out & Help Handling</h2>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>STOP Response Message <span class="required">*</span></label>
+                <textarea placeholder='Example: "You have been unsubscribed from [Company Name] SMS. You will not receive any more messages. Reply START to resubscribe."'></textarea>
+            </div>
+            <div class="form-group">
+                <label>HELP Response Message <span class="required">*</span></label>
+                <textarea placeholder='Example: "For help with [Company Name] SMS, contact support@company.com or call (555) 123-4567. Reply STOP to unsubscribe."'></textarea>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>Requirements:</strong>
+            <ul>
+                <li>STOP is honored immediately - no further messages after opt-out</li>
+                <li>Opt-out confirmation includes your brand name</li>
+                <li>HELP provides support contact information</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Section 6: Message Frequency -->
+    <div class="section">
+        <h2><span>6</span> Message Frequency Disclosure</h2>
+
+        <div class="form-group">
+            <label>Message Frequency <span class="required">*</span></label>
+            <div class="checkbox-group">
+                <label class="checkbox-item"><input type="checkbox"> Frequency varies by user activity</label>
+                <label class="checkbox-item"><input type="checkbox"> Up to 1/week</label>
+                <label class="checkbox-item"><input type="checkbox"> 2-4/month</label>
+                <label class="checkbox-item"><input type="checkbox"> Up to 1/day</label>
+                <label class="checkbox-item"><input type="checkbox"> Multiple/day</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Frequency Description</label>
+            <textarea placeholder="Example: Message frequency varies based on user activity. Typical volume is 2-4 messages per month, with additional messages only when triggered by user actions such as appointment bookings or service requests."></textarea>
+        </div>
+
+        <div class="warning-box">
+            <strong>Avoid:</strong> "Recurring messages"<br>
+            <strong>Use:</strong> "Triggered by user actions"
+        </div>
+    </div>
+
+    <!-- Section 7: Sample SMS Messages -->
+    <div class="section page-break">
+        <h2><span>7</span> Sample SMS Messages (REALISTIC & FINAL)</h2>
+
+        <div class="info-box">
+            <strong>Sample Message Requirements:</strong>
+            <ul>
+                <li>Include your <strong>business name</strong> in messages</li>
+                <li>Use placeholders like [Customer Name] instead of real names</li>
+                <li>At least one message must include <strong>"Reply STOP to unsubscribe"</strong></li>
+                <li>Do NOT include personal information</li>
+                <li>Messages should match your declared use cases</li>
+                <li>No URL shorteners - use full company domain</li>
+            </ul>
+        </div>
+
+        <div class="form-group">
+            <label>Sample Message 1 - Transactional/Reminder <span class="required">*</span></label>
+            <textarea placeholder='Example: "Hi [Customer Name], this is [Company Name]. Your appointment is confirmed for tomorrow at 2:00 PM. Reply STOP to opt out."'></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Sample Message 2 - Account Alert/Follow-up <span class="required">*</span></label>
+            <textarea placeholder='Example: "[Company Name]: We missed your call! How can we help you today? Visit https://yourcompany.com/contact or reply to this message. Reply STOP to unsubscribe."'></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Sample Message 3 (Optional)</label>
+            <textarea placeholder='Example: "Thanks for choosing [Company Name]! Your service is scheduled for [Date]. Questions? Call us at [Business Phone]. Msg & data rates may apply. Reply STOP to opt out."'></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Sample Message 4 - Marketing (ONLY if applicable)</label>
+            <textarea placeholder='Example: "[Company Name]: Get 20% off your next service with code SAVE20. Offer ends Sunday. https://yourcompany.com/deals. Msg & data rates may apply. Reply STOP to unsubscribe."'></textarea>
+        </div>
+    </div>
+
+    <!-- Section 8: Traffic Estimates -->
+    <div class="section">
+        <h2><span>8</span> Traffic Estimates</h2>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Daily Volume <span class="required">*</span></label>
+                <input type="text" placeholder="e.g., Under 50, 50-200, 200-1000, Over 1000">
+            </div>
+            <div class="form-group">
+                <label>Monthly Volume</label>
+                <input type="text" placeholder="e.g., 500">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Peak Scenarios</label>
+            <textarea placeholder="Example: Traffic increases during seasonal promotions (holidays) and when we run marketing campaigns. Peak volume may reach 2x normal during these periods."></textarea>
+        </div>
+    </div>
+
+    <!-- Section 9: Data Handling & Privacy -->
+    <div class="section">
+        <h2><span>9</span> Data Handling & Privacy</h2>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Privacy Policy URL <span class="required">*</span></label>
+                <input type="text" placeholder="https://yourcompany.com/privacy">
+            </div>
+            <div class="form-group">
+                <label>Terms of Service URL <span class="required">*</span></label>
+                <input type="text" placeholder="https://yourcompany.com/terms">
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>Privacy Policy Must Include:</strong>
+            <ul>
+                <li>Statement that you do not sell, rent, or share SMS opt-in data with third parties</li>
+                <li>Phone numbers are used only for stated messaging purposes</li>
+                <li>Data is securely stored</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <strong>Terms of Service Must Include:</strong>
+            <ul>
+                <li>Program/product description</li>
+                <li>STOP/HELP instructions</li>
+                <li>Carrier disclaimer ("Carriers are not liable for delayed or undelivered messages")</li>
+                <li>Message & data rates notice</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Section 10: Compliance Attestation -->
+    <div class="section">
+        <h2><span>10</span> Compliance Attestation</h2>
+
+        <p style="margin-bottom: 15px;">By signing below, I attest that:</p>
+
+        <div class="attestation">
+            <input type="checkbox">
+            <span>Users explicitly opt in to receive SMS messages</span>
+        </div>
+
+        <div class="attestation">
+            <input type="checkbox">
+            <span>Opt-in checkboxes are unchecked by default and consent is not pre-selected</span>
+        </div>
+
+        <div class="attestation">
+            <input type="checkbox">
+            <span>STOP and HELP keywords are fully supported and honored immediately</span>
+        </div>
+
+        <div class="attestation">
+            <input type="checkbox">
+            <span>All messages match the stated use case and sample messages</span>
+        </div>
+
+        <div class="attestation">
+            <input type="checkbox">
+            <span>No cold messaging or purchased contact lists are used</span>
+        </div>
+
+        <div class="attestation">
+            <input type="checkbox">
+            <span>All links use the company's primary domain (no URL shorteners)</span>
+        </div>
+
+        <div class="attestation">
+            <input type="checkbox">
+            <span>We do NOT sell, rent, or share SMS opt-in data with third parties for marketing</span>
+        </div>
+
+        <div class="signature-section">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Authorized Representative Name</label>
+                    <div class="signature-line"></div>
+                </div>
+                <div class="form-group">
+                    <label>Title/Position</label>
+                    <div class="signature-line"></div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Signature</label>
+                    <div class="signature-line"></div>
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <div class="signature-line"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px; padding: 20px; background: #f4f4f6; border-radius: 8px;" class="no-print">
+        <p style="color: #606b85; font-size: 14px;">
+            After completing this document, use it as a reference when filling out the online A2P registration form.<br>
+            <strong>Save this document for your records.</strong>
+        </p>
+        <button onclick="window.print()" style="margin-top: 15px; background: #0263e0; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+            Print / Save as PDF
+        </button>
+    </div>
+</body>
+</html>

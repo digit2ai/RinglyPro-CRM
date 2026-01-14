@@ -479,6 +479,20 @@
             <div class="header">
                 <h1>A2P 10DLC Business Verification</h1>
                 <p>SMS Enablement for <span id="businessName">Your Business</span></p>
+                <div style="margin-top: 12px;">
+                    <a href="/templates/a2p-verification-template.html" target="_blank"
+                       style="display: inline-flex; align-items: center; gap: 6px; color: var(--primary-color); font-size: 0.875rem; text-decoration: none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Download Preparation Template (PDF)
+                    </a>
+                    <span style="color: var(--text-secondary); font-size: 0.75rem; margin-left: 8px;">
+                        - Fill out offline before completing this form
+                    </span>
+                </div>
             </div>
 
             <!-- Progress Indicator -->
@@ -658,10 +672,18 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="businessWebsite">Business Website <span class="required">*</span></label>
-                        <input type="url" id="businessWebsite" name="businessWebsite" placeholder="https://www.example.com" required>
-                        <span class="error-text">Please enter a valid website URL (https://...)</span>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="businessWebsite">Business Website <span class="required">*</span></label>
+                            <input type="url" id="businessWebsite" name="businessWebsite" placeholder="https://www.example.com" required>
+                            <span class="error-text">Please enter a valid website URL (https://...)</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="supportContactInfo">Support Contact <span class="required">*</span></label>
+                            <input type="text" id="supportContactInfo" name="supportContactInfo" placeholder="support@company.com or https://company.com/contact" required>
+                            <span class="help-text">Email or URL where customers can get help</span>
+                            <span class="error-text">Please enter support contact info</span>
+                        </div>
                     </div>
                 </div>
 
@@ -880,25 +902,50 @@
                         <span class="error-text">Please provide your opt-in confirmation message</span>
                     </div>
 
+                    <div class="form-group">
+                        <label for="messageFrequency">Message Frequency <span class="required">*</span></label>
+                        <select id="messageFrequency" name="messageFrequency" required>
+                            <option value="">Select frequency...</option>
+                            <option value="varies">Message frequency varies</option>
+                            <option value="1_per_week">Up to 1 message per week</option>
+                            <option value="2_4_per_month">2-4 messages per month</option>
+                            <option value="1_per_day">Up to 1 message per day</option>
+                            <option value="multiple_per_day">Multiple messages per day</option>
+                        </select>
+                        <span class="error-text">Please select message frequency</span>
+                    </div>
+
                     <div class="form-row">
-                        <div class="form-group">
-                            <label for="messageFrequency">Message Frequency <span class="required">*</span></label>
-                            <select id="messageFrequency" name="messageFrequency" required>
-                                <option value="">Select frequency...</option>
-                                <option value="varies">Message frequency varies</option>
-                                <option value="1_per_week">Up to 1 message per week</option>
-                                <option value="2_4_per_month">2-4 messages per month</option>
-                                <option value="1_per_day">Up to 1 message per day</option>
-                                <option value="multiple_per_day">Multiple messages per day</option>
-                            </select>
-                            <span class="error-text">Please select message frequency</span>
-                        </div>
                         <div class="form-group">
                             <label for="helpKeywordResponse">HELP Keyword Response <span class="required">*</span></label>
                             <input type="text" id="helpKeywordResponse" name="helpKeywordResponse"
                                 placeholder="For help, contact support@company.com or call (555) 123-4567" required>
                             <span class="help-text">What users see when they text HELP</span>
                             <span class="error-text">Please provide HELP response</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="stopKeywordResponse">STOP Keyword Response <span class="required">*</span></label>
+                            <input type="text" id="stopKeywordResponse" name="stopKeywordResponse"
+                                placeholder="You've been unsubscribed from [Business Name] SMS. You will not receive any more messages." required>
+                            <span class="help-text">What users see when they text STOP</span>
+                            <span class="error-text">Please provide STOP response</span>
+                        </div>
+                    </div>
+
+                    <!-- Double Opt-In Section -->
+                    <div style="background: var(--bg-color); border-radius: 8px; padding: 16px; margin: 16px 0;">
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" id="useDoubleOptIn" name="useDoubleOptIn" style="width: 18px; height: 18px;">
+                                <span>Use Double Opt-In (Recommended)</span>
+                            </label>
+                            <span class="help-text" style="margin-left: 28px;">Users receive a confirmation SMS and must confirm before messaging begins</span>
+                        </div>
+                        <div class="form-group" id="doubleOptInMessageGroup" style="display: none; margin-bottom: 0;">
+                            <label for="doubleOptInMessage">Double Opt-In Confirmation Message</label>
+                            <textarea id="doubleOptInMessage" name="doubleOptInMessage"
+                                placeholder="Example: Reply YES to confirm your subscription to [Business Name] SMS alerts. Msg & data rates may apply. Reply STOP to cancel."></textarea>
+                            <span class="help-text">The message sent to confirm subscription</span>
                         </div>
                     </div>
 
@@ -923,19 +970,32 @@
                         <span class="error-text">Terms of service URL is required</span>
                     </div>
 
-                    <div class="single-checkbox">
-                        <input type="checkbox" id="optOutAcknowledged" name="optOutAcknowledged">
-                        <label for="optOutAcknowledged">
-                            <strong>I acknowledge that:</strong>
-                            <ul style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 8px;">
-                                <li>SMS messages will include STOP opt-out instructions</li>
-                                <li>Recipients can reply STOP to unsubscribe at any time</li>
-                                <li>Consent checkboxes are optional and NOT pre-selected</li>
-                                <li>We do NOT share mobile information with third parties for marketing</li>
-                            </ul>
-                        </label>
+                    <!-- Compliance Attestations -->
+                    <div style="background: var(--bg-color); border-radius: 8px; padding: 16px; margin-top: 16px;">
+                        <strong style="display: block; margin-bottom: 12px;">Compliance Attestations <span class="required">*</span></strong>
+
+                        <div class="single-checkbox" style="margin: 0; padding: 12px; background: white; border-radius: 4px; margin-bottom: 8px;">
+                            <input type="checkbox" id="optInCheckboxDefault" name="optInCheckboxDefault">
+                            <label for="optInCheckboxDefault">
+                                Our opt-in checkboxes are <strong>unchecked by default</strong> and consent is explicit and affirmative
+                            </label>
+                        </div>
+
+                        <div class="single-checkbox" style="margin: 0; padding: 12px; background: white; border-radius: 4px; margin-bottom: 8px;">
+                            <input type="checkbox" id="noDataSharing" name="noDataSharing">
+                            <label for="noDataSharing">
+                                We do <strong>NOT sell, rent, or share</strong> SMS opt-in data with third parties for marketing purposes
+                            </label>
+                        </div>
+
+                        <div class="single-checkbox" style="margin: 0; padding: 12px; background: white; border-radius: 4px;">
+                            <input type="checkbox" id="optOutAcknowledged" name="optOutAcknowledged">
+                            <label for="optOutAcknowledged">
+                                STOP is honored immediately and all messages include opt-out instructions
+                            </label>
+                        </div>
                     </div>
-                    <span class="error-text" id="optOutError">You must acknowledge these compliance requirements</span>
+                    <span class="error-text" id="optOutError">You must acknowledge all compliance requirements</span>
                 </div>
 
                 <!-- Section 5: Sample Messages -->
@@ -1168,11 +1228,12 @@
                 'legalBusinessName', 'dbaName', 'businessType', 'companyType', 'businessVertical',
                 'regionsOfOperation', 'stockExchange', 'stockTicker',
                 'taxIdType', 'taxIdNumber', 'businessAddressLine1', 'businessAddressLine2',
-                'businessCity', 'businessState', 'businessPostalCode', 'businessWebsite',
+                'businessCity', 'businessState', 'businessPostalCode', 'businessWebsite', 'supportContactInfo',
                 'authorizedRepFirstName', 'authorizedRepLastName', 'authorizedRepEmail',
                 'businessContactEmail', 'authorizedRepPhoneE164', 'authorizedRepTitle', 'jobPosition',
                 'campaignUseCase', 'useCaseOtherDescription', 'useCaseDescription',
-                'consentProcessDescription', 'optInConfirmationMessage', 'messageFrequency', 'helpKeywordResponse',
+                'consentProcessDescription', 'optInConfirmationMessage', 'messageFrequency',
+                'helpKeywordResponse', 'stopKeywordResponse', 'doubleOptInMessage',
                 'consentOtherDescription', 'optInDisclosureUrl', 'privacyPolicyUrl', 'termsOfServiceUrl',
                 'sampleMessage1', 'sampleMessage2', 'sampleMessage3', 'estimatedSmsPerDay', 'estimatedSmsPerMonth'
             ];
@@ -1229,9 +1290,19 @@
                 });
             }
 
-            // Opt-out checkbox
+            // Boolean checkboxes
             if (data.optOutAcknowledged) {
                 document.getElementById('optOutAcknowledged').checked = true;
+            }
+            if (data.optInCheckboxDefault) {
+                document.getElementById('optInCheckboxDefault').checked = true;
+            }
+            if (data.noDataSharing) {
+                document.getElementById('noDataSharing').checked = true;
+            }
+            if (data.useDoubleOptIn) {
+                document.getElementById('useDoubleOptIn').checked = true;
+                document.getElementById('doubleOptInMessageGroup').style.display = 'block';
             }
 
             // Check STOP language in sample messages
@@ -1251,11 +1322,12 @@
                 'legalBusinessName', 'dbaName', 'businessType', 'companyType', 'businessVertical',
                 'regionsOfOperation', 'stockExchange', 'stockTicker',
                 'taxIdType', 'taxIdNumber', 'businessAddressLine1', 'businessAddressLine2',
-                'businessCity', 'businessState', 'businessPostalCode', 'businessWebsite',
+                'businessCity', 'businessState', 'businessPostalCode', 'businessWebsite', 'supportContactInfo',
                 'authorizedRepFirstName', 'authorizedRepLastName', 'authorizedRepEmail',
                 'businessContactEmail', 'authorizedRepPhoneE164', 'authorizedRepTitle', 'jobPosition',
                 'campaignUseCase', 'useCaseOtherDescription', 'useCaseDescription',
-                'consentProcessDescription', 'optInConfirmationMessage', 'messageFrequency', 'helpKeywordResponse',
+                'consentProcessDescription', 'optInConfirmationMessage', 'messageFrequency',
+                'helpKeywordResponse', 'stopKeywordResponse', 'doubleOptInMessage',
                 'consentOtherDescription', 'optInDisclosureUrl', 'privacyPolicyUrl', 'termsOfServiceUrl',
                 'sampleMessage1', 'sampleMessage2', 'sampleMessage3', 'estimatedSmsPerDay'
             ];
@@ -1287,8 +1359,11 @@
                 data.contentAttributes.push(cb.value);
             });
 
-            // Single checkbox
+            // Boolean checkboxes
             data.optOutAcknowledged = document.getElementById('optOutAcknowledged').checked;
+            data.optInCheckboxDefault = document.getElementById('optInCheckboxDefault').checked;
+            data.noDataSharing = document.getElementById('noDataSharing').checked;
+            data.useDoubleOptIn = document.getElementById('useDoubleOptIn').checked;
 
             return data;
         }
@@ -1430,9 +1505,14 @@
             if (!data.optInConfirmationMessage) errors.push('Opt-in confirmation message is required');
             if (!data.messageFrequency) errors.push('Message frequency is required');
             if (!data.helpKeywordResponse) errors.push('HELP keyword response is required');
+            if (!data.stopKeywordResponse) errors.push('STOP keyword response is required');
             if (!data.privacyPolicyUrl) errors.push('Privacy policy URL is required');
             if (!data.termsOfServiceUrl) errors.push('Terms of service URL is required');
-            if (!data.optOutAcknowledged) errors.push('Compliance acknowledgement is required');
+            if (!data.supportContactInfo) errors.push('Support contact info is required');
+            // Compliance attestations
+            if (!data.optOutAcknowledged) errors.push('You must acknowledge STOP compliance');
+            if (!data.optInCheckboxDefault) errors.push('You must confirm opt-in checkbox is unchecked by default');
+            if (!data.noDataSharing) errors.push('You must confirm no data sharing with third parties');
 
             // Sample Messages
             if (!data.sampleMessage1) errors.push('Sample message 1 is required');
@@ -1478,6 +1558,7 @@
                 'ZIP code is required': 'businessPostalCode',
                 'Business website is required': 'businessWebsite',
                 'Business website must be a valid URL': 'businessWebsite',
+                'Support contact info is required': 'supportContactInfo',
                 'Representative first name is required': 'authorizedRepFirstName',
                 'Representative last name is required': 'authorizedRepLastName',
                 'Representative email is required': 'authorizedRepEmail',
@@ -1494,6 +1575,7 @@
                 'Opt-in confirmation message is required': 'optInConfirmationMessage',
                 'Message frequency is required': 'messageFrequency',
                 'HELP keyword response is required': 'helpKeywordResponse',
+                'STOP keyword response is required': 'stopKeywordResponse',
                 'Privacy policy URL is required': 'privacyPolicyUrl',
                 'Terms of service URL is required': 'termsOfServiceUrl',
                 'Sample message 1 is required': 'sampleMessage1',
@@ -1513,8 +1595,13 @@
                 }
             });
 
-            // Special handling for opt-out checkbox
-            if (errors.includes('Compliance acknowledgement is required')) {
+            // Special handling for compliance checkboxes
+            const complianceErrors = [
+                'You must acknowledge STOP compliance',
+                'You must confirm opt-in checkbox is unchecked by default',
+                'You must confirm no data sharing with third parties'
+            ];
+            if (errors.some(e => complianceErrors.includes(e))) {
                 document.getElementById('optOutError').classList.add('visible');
             }
         }
@@ -1613,6 +1700,11 @@
             document.getElementById('companyType').addEventListener('change', function() {
                 const stockRow = document.getElementById('stockInfoRow');
                 stockRow.style.display = this.value === 'public' ? 'flex' : 'none';
+            });
+
+            // Show/hide double opt-in message field
+            document.getElementById('useDoubleOptIn').addEventListener('change', function() {
+                document.getElementById('doubleOptInMessageGroup').style.display = this.checked ? 'block' : 'none';
             });
 
             // Clear errors on input
