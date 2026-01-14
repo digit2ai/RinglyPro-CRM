@@ -406,10 +406,21 @@ const syncDatabase = async (options = {}) => {
     await sequelize.authenticate();
     console.log('Database connection verified');
 
+    // Helper function to sync with timeout
+    const syncWithTimeout = async (model, modelName, timeoutMs = 15000) => {
+      return Promise.race([
+        model.sync({ ...options, alter: false }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error(`${modelName} sync timed out after ${timeoutMs}ms`)), timeoutMs)
+        )
+      ]);
+    };
+
     // Sync User table for authentication - CRITICAL FOR MVP
     if (User) {
       try {
-        await User.sync({ ...options, alter: false });
+        console.log('🔄 Syncing User table...');
+        await syncWithTimeout(User, 'User');
         console.log('User table synchronized - Authentication system ready');
       } catch (error) {
         console.log('User table sync issues:', error.message);
@@ -419,7 +430,8 @@ const syncDatabase = async (options = {}) => {
     // Sync Client table for multi-tenant system - CRITICAL FOR MVP
     if (Client) {
       try {
-        await Client.sync({ ...options, alter: false });
+        console.log('🔄 Syncing Client table...');
+        await syncWithTimeout(Client, 'Client');
         console.log('Client table synchronized - Multi-tenant system ready');
       } catch (error) {
         console.log('Client table sync issues:', error.message);
@@ -429,7 +441,8 @@ const syncDatabase = async (options = {}) => {
     // Sync CreditAccount table for billing - CRITICAL FOR MVP
     if (CreditAccount) {
       try {
-        await CreditAccount.sync({ ...options, alter: false });
+        console.log('🔄 Syncing CreditAccount table...');
+        await syncWithTimeout(CreditAccount, 'CreditAccount');
         console.log('CreditAccount table synchronized - Billing system ready');
       } catch (error) {
         console.log('CreditAccount table sync issues:', error.message);
@@ -439,7 +452,8 @@ const syncDatabase = async (options = {}) => {
     // Sync Contact table for CRM functionality
     if (Contact) {
       try {
-        await Contact.sync({ ...options, alter: false });
+        console.log('🔄 Syncing Contact table...');
+        await syncWithTimeout(Contact, 'Contact');
         console.log('Contact table synchronized - CRM contact management ready');
       } catch (error) {
         console.log('Contact table sync issues:', error.message);
@@ -449,7 +463,8 @@ const syncDatabase = async (options = {}) => {
     // Sync Message table for SMS history
     if (Message) {
       try {
-        await Message.sync({ ...options, alter: false });
+        console.log('🔄 Syncing Message table...');
+        await syncWithTimeout(Message, 'Message');
         console.log('Message table synchronized - SMS history ready');
       } catch (error) {
         console.log('Message table sync issues:', error.message);
@@ -459,7 +474,8 @@ const syncDatabase = async (options = {}) => {
     // Sync Call table for call history
     if (Call) {
       try {
-        await Call.sync({ ...options, alter: false });
+        console.log('🔄 Syncing Call table...');
+        await syncWithTimeout(Call, 'Call');
         console.log('Call table synchronized - Call history ready');
       } catch (error) {
         console.log('Call table sync issues:', error.message);
@@ -469,7 +485,8 @@ const syncDatabase = async (options = {}) => {
     // Sync Appointment table for Rachel voice booking - CRITICAL FOR INTEGRATION
     if (Appointment) {
       try {
-        await Appointment.sync({ ...options, alter: false });
+        console.log('🔄 Syncing Appointment table...');
+        await syncWithTimeout(Appointment, 'Appointment');
         console.log('Appointment table synchronized - Rachel voice booking ready');
       } catch (error) {
         console.log('Appointment table sync issues:', error.message);
@@ -479,7 +496,8 @@ const syncDatabase = async (options = {}) => {
     // Sync GoogleCalendarIntegration table for Google Calendar OAuth
     if (GoogleCalendarIntegration) {
       try {
-        await GoogleCalendarIntegration.sync({ ...options, alter: false });
+        console.log('🔄 Syncing GoogleCalendarIntegration table...');
+        await syncWithTimeout(GoogleCalendarIntegration, 'GoogleCalendarIntegration');
         console.log('GoogleCalendarIntegration table synchronized - Google Calendar OAuth ready');
       } catch (error) {
         console.log('GoogleCalendarIntegration table sync issues:', error.message);
