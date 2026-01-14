@@ -683,6 +683,44 @@ router.post('/clients/:clientId/a2p/submit', validateClientAccess, async (req, r
 });
 
 /**
+ * DELETE /api/clients/:clientId/a2p
+ * Delete A2P record (allows re-prefill with standard content)
+ */
+router.delete('/clients/:clientId/a2p', validateClientAccess, async (req, res) => {
+  try {
+    const a2p = await A2P.findByClientId(req.clientId);
+
+    if (!a2p) {
+      return res.status(404).json({
+        success: false,
+        error: 'No A2P record found for this client'
+      });
+    }
+
+    // Only allow deletion of draft records (not submitted/approved)
+    if (a2p.status !== 'draft') {
+      return res.status(400).json({
+        success: false,
+        error: 'Can only delete draft A2P records. Submitted or approved records cannot be deleted.'
+      });
+    }
+
+    await a2p.destroy();
+
+    res.json({
+      success: true,
+      message: 'A2P record deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting A2P record:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete A2P record'
+    });
+  }
+});
+
+/**
  * POST /api/clients/:clientId/a2p/reset-to-draft
  * Reset A2P record to draft status (admin only)
  */
