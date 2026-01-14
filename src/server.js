@@ -56,12 +56,23 @@ async function startServer() {
           console.log('⚠️ A2P auto-migration skipped:', error.message);
         }
 
+        // Helper function to run query with timeout
+        const queryWithTimeout = async (sql, name, timeoutMs = 10000) => {
+          return Promise.race([
+            sequelize.query(sql),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error(`${name} timed out after ${timeoutMs}ms`)), timeoutMs)
+            )
+          ]);
+        };
+
         // AUTO-MIGRATE WEBSITE_URL COLUMN
         console.log('🔄 Running website_url migration...');
         try {
-          await sequelize.query(`
-            ALTER TABLE clients ADD COLUMN IF NOT EXISTS website_url VARCHAR(500)
-          `);
+          await queryWithTimeout(
+            `ALTER TABLE clients ADD COLUMN IF NOT EXISTS website_url VARCHAR(500)`,
+            'website_url migration'
+          );
           console.log('✅ website_url column ready');
         } catch (error) {
           console.log('⚠️ website_url migration skipped:', error.message);
@@ -70,12 +81,14 @@ async function startServer() {
         // AUTO-MIGRATE CALENDAR SYNC COLUMNS
         console.log('🔄 Running calendar sync columns migration...');
         try {
-          await sequelize.query(`
-            ALTER TABLE appointments ADD COLUMN IF NOT EXISTS google_event_id VARCHAR(255)
-          `);
-          await sequelize.query(`
-            ALTER TABLE appointments ADD COLUMN IF NOT EXISTS zoho_event_id VARCHAR(255)
-          `);
+          await queryWithTimeout(
+            `ALTER TABLE appointments ADD COLUMN IF NOT EXISTS google_event_id VARCHAR(255)`,
+            'google_event_id migration'
+          );
+          await queryWithTimeout(
+            `ALTER TABLE appointments ADD COLUMN IF NOT EXISTS zoho_event_id VARCHAR(255)`,
+            'zoho_event_id migration'
+          );
           console.log('✅ Calendar sync columns ready (google_event_id, zoho_event_id)');
         } catch (error) {
           console.log('⚠️ Calendar sync columns migration skipped:', error.message);
