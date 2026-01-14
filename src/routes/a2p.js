@@ -313,8 +313,12 @@ router.get('/clients/:clientId/a2p/prefill', validateClientAccess, async (req, r
       }
     }
 
-    // Build prefill data from client record
+    // Business name for templates
+    const businessName = client.business_name || '[Business Name]';
+
+    // Build prefill data from client record with standard pre-approved A2P content
     const prefillData = {
+      // From client onboarding data
       legalBusinessName: client.business_name || '',
       businessWebsite: client.website_url || '',
       authorizedRepFirstName: firstName,
@@ -323,12 +327,28 @@ router.get('/clients/:clientId/a2p/prefill', validateClientAccess, async (req, r
       businessContactEmail: client.owner_email || '',
       authorizedRepPhoneE164: phoneE164,
       supportContactInfo: client.owner_email || '',
-      // Default some common values
+
+      // Default values
       businessRegistrationCountry: 'US',
       regionsOfOperation: 'US_ONLY',
       taxIdType: 'EIN',
       campaignUseCase: 'CUSTOMER_CARE',
-      messageFrequency: 'varies'
+      messageFrequency: 'varies',
+
+      // Standard pre-approved A2P content (carrier-compliant templates)
+      useCaseDescription: `${businessName} uses SMS messaging to communicate with customers who have opted in through our website, phone calls, or in-person interactions. We send appointment reminders, confirmations, follow-up messages for missed calls, and customer service responses. All recipients are existing customers or individuals who have explicitly requested to receive SMS communications from us.`,
+
+      consentProcessDescription: `Customers provide consent to receive SMS messages through multiple methods: (1) By checking an unchecked-by-default SMS opt-in checkbox on our website contact or booking form, (2) By verbally agreeing during a phone call when scheduling appointments, or (3) By signing a written consent form in person. We maintain records of all consent and honor opt-out requests immediately.`,
+
+      optInConfirmationMessage: `Thanks for opting in to SMS from ${businessName}! You'll receive appointment reminders, confirmations, and service updates. Msg frequency varies. Msg & data rates may apply. Reply HELP for help, STOP to cancel.`,
+
+      sampleMessage1: `Hi [Customer Name], this is ${businessName}. Your appointment is confirmed for [Date] at [Time]. Reply STOP to opt out.`,
+
+      sampleMessage2: `${businessName}: We missed your call! How can we help you today? Visit our website or call us back. Reply STOP to unsubscribe.`,
+
+      helpKeywordResponse: `${businessName}: For help, contact us at ${client.owner_email || 'support@example.com'} or call ${client.owner_phone || 'our office'}. Msg & data rates may apply.`,
+
+      stopKeywordResponse: `You've been unsubscribed from ${businessName} SMS messages. You will not receive any more texts from us. Reply START to re-subscribe.`
     };
 
     res.json({
