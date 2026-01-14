@@ -51,11 +51,13 @@ async function startServer() {
         try {
           const { autoMigrateA2P } = require('../scripts/auto-migrate-a2p');
           await autoMigrateA2P();
+          console.log('🔄 A2P migration complete, continuing startup...');
         } catch (error) {
           console.log('⚠️ A2P auto-migration skipped:', error.message);
         }
 
         // AUTO-MIGRATE WEBSITE_URL COLUMN
+        console.log('🔄 Running website_url migration...');
         try {
           await sequelize.query(`
             ALTER TABLE clients ADD COLUMN IF NOT EXISTS website_url VARCHAR(500)
@@ -66,6 +68,7 @@ async function startServer() {
         }
 
         // AUTO-MIGRATE CALENDAR SYNC COLUMNS
+        console.log('🔄 Running calendar sync columns migration...');
         try {
           await sequelize.query(`
             ALTER TABLE appointments ADD COLUMN IF NOT EXISTS google_event_id VARCHAR(255)
@@ -77,6 +80,7 @@ async function startServer() {
         } catch (error) {
           console.log('⚠️ Calendar sync columns migration skipped:', error.message);
         }
+        console.log('✅ All migrations complete, ready to start server');
       } else {
         console.log('⚠️ No DATABASE_URL provided, running without database');
       }
@@ -85,6 +89,7 @@ async function startServer() {
     }
 
     // Start server
+    console.log(`🚀 Starting HTTP server on port ${PORT}...`);
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/health`);
