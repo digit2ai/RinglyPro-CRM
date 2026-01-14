@@ -6,19 +6,19 @@
     <title>A2P 10DLC Business Verification | RinglyPro</title>
     <style>
         :root {
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --secondary-color: #10b981;
-            --danger-color: #ef4444;
-            --warning-color: #f59e0b;
-            --bg-color: #1e293b;
-            --card-bg: #0f172a;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --border-color: #334155;
-            --success-bg: #064e3b;
-            --warning-bg: #78350f;
-            --error-bg: #7f1d1d;
+            --primary-color: #0263e0;
+            --primary-hover: #0150b5;
+            --secondary-color: #0cce6b;
+            --danger-color: #cc1421;
+            --warning-color: #e46216;
+            --bg-color: #f4f4f6;
+            --card-bg: #ffffff;
+            --text-primary: #121c2d;
+            --text-secondary: #606b85;
+            --border-color: #e1e3e9;
+            --success-bg: #d5f5e3;
+            --warning-bg: #fff3cd;
+            --error-bg: #fce4e4;
         }
 
         * {
@@ -42,22 +42,27 @@
 
         /* Header */
         .header {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-            margin-bottom: 30px;
-            border-radius: 12px;
+            background: #ffffff;
+            color: var(--text-primary);
+            padding: 32px 24px;
+            text-align: left;
+            margin-bottom: 24px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
         }
 
         .header h1 {
-            font-size: 1.75rem;
+            font-size: 1.5rem;
+            font-weight: 600;
             margin-bottom: 8px;
+            color: var(--text-primary);
         }
 
         .header p {
-            opacity: 0.9;
-            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
         /* Progress Indicator */
@@ -125,30 +130,33 @@
         /* Form Sections */
         .form-section {
             background: var(--card-bg);
-            border-radius: 12px;
+            border-radius: 8px;
             padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
         }
 
         .form-section h2 {
-            font-size: 1.25rem;
+            font-size: 1rem;
+            font-weight: 600;
             margin-bottom: 20px;
             padding-bottom: 12px;
-            border-bottom: 2px solid var(--primary-color);
-            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
         }
 
         .form-section h2 .section-number {
             display: inline-flex;
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             background: var(--primary-color);
             color: white;
             border-radius: 50%;
             align-items: center;
             justify-content: center;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
+            font-weight: 600;
             margin-right: 10px;
         }
 
@@ -179,18 +187,18 @@
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 10px 14px;
+            padding: 10px 12px;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 1rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
             transition: border-color 0.2s, box-shadow 0.2s;
-            background-color: #1e293b;
+            background-color: #ffffff;
             color: var(--text-primary);
         }
 
         .form-group input::placeholder,
         .form-group textarea::placeholder {
-            color: #64748b;
+            color: #8891a4;
         }
 
         .form-group input:focus,
@@ -198,7 +206,7 @@
         .form-group textarea:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+            box-shadow: 0 0 0 3px rgba(2, 99, 224, 0.15);
         }
 
         .form-group input.error,
@@ -258,7 +266,7 @@
         }
 
         .checkbox-item.checked {
-            background: rgba(79, 70, 229, 0.1);
+            background: rgba(2, 99, 224, 0.08);
             border: 1px solid var(--primary-color);
         }
 
@@ -295,20 +303,21 @@
         }
 
         .btn {
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
             cursor: pointer;
             border: none;
-            transition: all 0.2s;
+            transition: all 0.15s ease;
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            letter-spacing: 0.025em;
         }
 
         .btn:disabled {
-            opacity: 0.6;
+            opacity: 0.5;
             cursor: not-allowed;
         }
 
@@ -319,25 +328,28 @@
 
         .btn-primary:hover:not(:disabled) {
             background: var(--primary-hover);
+            box-shadow: 0 2px 4px rgba(2, 99, 224, 0.25);
         }
 
         .btn-secondary {
-            background: var(--bg-color);
+            background: #ffffff;
             color: var(--text-primary);
             border: 1px solid var(--border-color);
         }
 
         .btn-secondary:hover:not(:disabled) {
-            background: var(--border-color);
+            background: var(--bg-color);
+            border-color: #c8cdd7;
         }
 
         .btn-success {
-            background: var(--secondary-color);
+            background: var(--primary-color);
             color: white;
         }
 
         .btn-success:hover:not(:disabled) {
-            background: #059669;
+            background: var(--primary-hover);
+            box-shadow: 0 2px 4px rgba(2, 99, 224, 0.25);
         }
 
         /* Messages */
@@ -929,9 +941,9 @@
                 <!-- Section 5: Sample Messages -->
                 <div class="form-section" id="section5">
                     <h2><span class="section-number">5</span> Sample Messages</h2>
-                    <div style="background: #1e3a5f; border: 1px solid #2563eb; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-                        <strong style="color: #60a5fa;">Sample Message Requirements:</strong>
-                        <ul style="font-size: 0.875rem; color: #93c5fd; margin: 8px 0 0 20px;">
+                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid var(--primary-color); border-radius: 4px; padding: 16px; margin-bottom: 20px;">
+                        <strong style="color: var(--primary-color);">Sample Message Requirements:</strong>
+                        <ul style="font-size: 0.875rem; color: var(--text-secondary); margin: 8px 0 0 20px;">
                             <li>Include your <strong>business name</strong> in messages</li>
                             <li>Use placeholders like [Customer Name] instead of real names</li>
                             <li>At least one message must include <strong>"Reply STOP to unsubscribe"</strong></li>
