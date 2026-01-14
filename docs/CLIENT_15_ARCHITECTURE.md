@@ -162,6 +162,20 @@ The ElevenLabs Conversational AI agent (Rachel) is the front-end for all custome
 
 **Use this checklist to activate any client for ElevenLabs voice booking, similar to Client 15.**
 
+### Database Requirements Summary
+
+**ALL of these fields MUST be set for voice messages to work on the dashboard:**
+
+| Field | Required Value | API to Set |
+|-------|----------------|------------|
+| `rachel_enabled` | `true` | `/api/admin/set-elevenlabs-agent/{id}` with `enableRachel: true` |
+| `elevenlabs_agent_id` | Agent ID from ElevenLabs | `/api/admin/set-elevenlabs-agent/{id}` |
+| `elevenlabs_phone_number_id` | Phone Number ID from ElevenLabs | `/api/admin/quick-set-elevenlabs-phone/{id}` |
+| `use_elevenlabs_outbound` | `true` | `/api/elevenlabs/tools` with `admin_enable_elevenlabs_outbound` |
+
+**ALSO REQUIRED - Code Change:**
+- Add client ID to `usesElevenLabs` check in `views/dashboard.ejs` (line ~3769)
+
 ### Prerequisites
 
 Before activating a client, you need:
@@ -189,6 +203,19 @@ curl -X POST "https://aiagent.ringlypro.com/api/admin/quick-set-elevenlabs-phone
   -H "Content-Type: application/json" \
   -d '{"apiKey": "ringlypro-quick-admin-2024", "phoneNumberId": "[PHONE_NUMBER_ID]"}'
 ```
+
+### Step 2.5: Enable ElevenLabs Outbound (REQUIRED for Voice Messages)
+
+**CRITICAL:** This step is required for voice message audio playback on the dashboard.
+
+```bash
+curl -X POST "https://aiagent.ringlypro.com/api/elevenlabs/tools" \
+  -H "Content-Type: application/json" \
+  -d '{"tool_name": "admin_enable_elevenlabs_outbound", "parameters": {"client_id": "[CLIENT_ID]", "api_key": "ringlypro-quick-admin-2024", "enabled": true}}'
+```
+
+This sets:
+- `use_elevenlabs_outbound` = true
 
 ### Step 3: Add Client to Dashboard UI
 
