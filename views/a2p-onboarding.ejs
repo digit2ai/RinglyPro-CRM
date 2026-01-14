@@ -757,7 +757,18 @@
 
                 <!-- Section 3: Messaging Use Case -->
                 <div class="form-section" id="section3">
-                    <h2><span class="section-number">3</span> Messaging Use Case</h2>
+                    <h2 style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                        <span><span class="section-number">3</span> Messaging Use Case</span>
+                        <button type="button" id="generateAIBtn" class="btn btn-primary" onclick="generateWithAI()" style="font-size: 0.75rem; padding: 6px 12px;">
+                            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                            Generate with AI
+                        </button>
+                    </h2>
+                    <p style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; padding: 12px; margin-bottom: 16px; font-size: 0.875rem; color: #1e40af;">
+                        <strong>Save time:</strong> Click "Generate with AI" to auto-fill Use Case Description, Consent Process, Sample Messages, and more based on your business info.
+                    </p>
 
                     <div class="form-group">
                         <label for="campaignUseCase">Primary Campaign Use Case <span class="required">*</span></label>
@@ -1118,8 +1129,23 @@
                         }
                     }
                 } else if (response.status === 404) {
-                    // No existing record - that's ok, show empty form
-                    console.log('No existing A2P record, starting fresh');
+                    // No existing A2P record - fetch prefill data from client onboarding
+                    console.log('No existing A2P record, loading prefill data from client...');
+                    try {
+                        const prefillResponse = await fetch(`${API_BASE}/clients/${clientId}/a2p/prefill`);
+                        if (prefillResponse.ok) {
+                            const prefillResult = await prefillResponse.json();
+                            if (prefillResult.success) {
+                                populateForm(prefillResult.prefillData);
+                                if (prefillResult.client) {
+                                    document.getElementById('businessName').textContent = prefillResult.client.businessName || 'Your Business';
+                                }
+                                console.log('Form pre-populated with client data');
+                            }
+                        }
+                    } catch (prefillError) {
+                        console.log('Could not load prefill data:', prefillError);
+                    }
                 } else {
                     throw new Error('Failed to load A2P data');
                 }
@@ -1639,6 +1665,78 @@
                            messages.includes('text stop');
 
             document.getElementById('stopWarning').style.display = hasStop ? 'none' : 'block';
+        }
+
+        // ========================
+        // AI Content Generation
+        // ========================
+        async function generateWithAI() {
+            const btn = document.getElementById('generateAIBtn');
+            const originalText = btn.innerHTML;
+
+            try {
+                // Update button to show loading state
+                btn.disabled = true;
+                btn.innerHTML = `
+                    <svg style="width: 14px; height: 14px; animation: spin 1s linear infinite;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Generating...
+                `;
+
+                // Call the AI generation endpoint
+                const response = await fetch(`${API_BASE}/clients/${clientId}/a2p/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({}) // Could pass websiteContent if scraped
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.generatedContent) {
+                    const content = result.generatedContent;
+
+                    // Fill in the generated fields
+                    if (content.useCaseDescription) {
+                        document.getElementById('useCaseDescription').value = content.useCaseDescription;
+                    }
+                    if (content.consentProcessDescription) {
+                        document.getElementById('consentProcessDescription').value = content.consentProcessDescription;
+                    }
+                    if (content.optInConfirmationMessage) {
+                        document.getElementById('optInConfirmationMessage').value = content.optInConfirmationMessage;
+                    }
+                    if (content.sampleMessage1) {
+                        document.getElementById('sampleMessage1').value = content.sampleMessage1;
+                    }
+                    if (content.sampleMessage2) {
+                        document.getElementById('sampleMessage2').value = content.sampleMessage2;
+                    }
+                    if (content.helpKeywordResponse) {
+                        document.getElementById('helpKeywordResponse').value = content.helpKeywordResponse;
+                    }
+                    if (content.stopKeywordResponse) {
+                        document.getElementById('stopKeywordResponse').value = content.stopKeywordResponse;
+                    }
+
+                    // Check STOP language after filling
+                    checkStopLanguage();
+
+                    // Show success message
+                    showMessage('success', 'AI-generated content added! Please review and adjust as needed before submitting.');
+
+                    // Scroll to show the first filled field
+                    document.getElementById('useCaseDescription').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    throw new Error(result.error || 'Failed to generate content');
+                }
+            } catch (error) {
+                console.error('Error generating AI content:', error);
+                showMessage('error', 'Failed to generate content. Please fill in the fields manually.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
         }
 
         // ========================

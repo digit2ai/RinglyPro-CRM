@@ -9,6 +9,7 @@ const router = express.Router();
 const { A2P, Client } = require('../models');
 const { authenticateToken, getUserClient } = require('../middleware/auth');
 const validator = require('validator');
+const Anthropic = require('@anthropic-ai/sdk');
 
 // ========================
 // Middleware for Client ID Validation
@@ -282,6 +283,161 @@ router.get('/clients/:clientId/a2p/status', validateClientAccess, async (req, re
     res.status(500).json({
       success: false,
       error: 'Failed to fetch A2P status'
+    });
+  }
+});
+
+/**
+ * GET /api/clients/:clientId/a2p/prefill
+ * Get client data for A2P form pre-population (from client onboarding)
+ */
+router.get('/clients/:clientId/a2p/prefill', validateClientAccess, async (req, res) => {
+  try {
+    const client = req.clientRecord;
+
+    // Parse owner name into first/last
+    const ownerNameParts = (client.owner_name || '').trim().split(/\s+/);
+    const firstName = ownerNameParts[0] || '';
+    const lastName = ownerNameParts.slice(1).join(' ') || '';
+
+    // Format phone to E.164 if not already
+    let phoneE164 = client.owner_phone || '';
+    if (phoneE164 && !phoneE164.startsWith('+')) {
+      // Remove non-digits and add +1 for US numbers
+      const digits = phoneE164.replace(/\D/g, '');
+      if (digits.length === 10) {
+        phoneE164 = '+1' + digits;
+      } else if (digits.length === 11 && digits.startsWith('1')) {
+        phoneE164 = '+' + digits;
+      }
+    }
+
+    // Build prefill data from client record
+    const prefillData = {
+      legalBusinessName: client.business_name || '',
+      businessWebsite: client.website_url || '',
+      authorizedRepFirstName: firstName,
+      authorizedRepLastName: lastName,
+      authorizedRepEmail: client.owner_email || '',
+      businessContactEmail: client.owner_email || '',
+      authorizedRepPhoneE164: phoneE164,
+      supportContactInfo: client.owner_email || '',
+      // Default some common values
+      businessRegistrationCountry: 'US',
+      regionsOfOperation: 'US_ONLY',
+      taxIdType: 'EIN',
+      campaignUseCase: 'CUSTOMER_CARE',
+      messageFrequency: 'varies'
+    };
+
+    res.json({
+      success: true,
+      prefillData,
+      client: {
+        id: client.id,
+        businessName: client.business_name,
+        customGreeting: client.custom_greeting // May contain business context
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching prefill data:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch prefill data'
+    });
+  }
+});
+
+/**
+ * POST /api/clients/:clientId/a2p/generate
+ * Generate A2P content using AI based on business info
+ */
+router.post('/clients/:clientId/a2p/generate', validateClientAccess, async (req, res) => {
+  try {
+    const client = req.clientRecord;
+    const { websiteContent } = req.body; // Optional: scraped website content from frontend
+
+    // Build context about the business
+    const businessName = client.business_name || 'the business';
+    const website = client.website_url || '';
+    const greeting = client.custom_greeting || '';
+
+    // Initialize Anthropic client
+    const anthropic = new Anthropic();
+
+    const prompt = `You are helping a business complete their A2P 10DLC SMS verification. Based on the following business information, generate compliant SMS messaging content.
+
+BUSINESS INFORMATION:
+- Business Name: ${businessName}
+- Website: ${website}
+- Custom Greeting/Description: ${greeting}
+${websiteContent ? `- Website Content Summary: ${websiteContent.substring(0, 2000)}` : ''}
+
+Please generate the following 5 items in JSON format:
+
+1. "useCaseDescription" - A detailed description (2-3 sentences) of how this business will use SMS messaging. Focus on appointment reminders, confirmations, and customer service communications. Be specific about the types of messages.
+
+2. "consentProcessDescription" - Describe how customers opt-in to receive SMS messages (2-3 sentences). Include: website form checkbox, verbal confirmation during booking, and written consent. Mention that opt-in checkbox is unchecked by default.
+
+3. "optInConfirmationMessage" - The welcome SMS sent when someone opts in. MUST include: business name, what messages they'll receive, message frequency statement, "Msg & data rates may apply", and "Reply HELP for help, STOP to cancel."
+
+4. "sampleMessage1" - An appointment reminder example. Include [Customer Name] placeholder, business name, date/time placeholder, and "Reply STOP to opt out."
+
+5. "sampleMessage2" - A different type of message (confirmation, follow-up, or service update). Include business name and opt-out instruction.
+
+Requirements:
+- All messages must be under 160 characters if possible
+- Always include business name in messages
+- Use [Customer Name] or similar placeholders, never real names
+- At least one sample must include "Reply STOP to opt out" or similar
+- Be professional and match the business tone
+
+Return ONLY valid JSON with these 5 keys, no markdown or explanation.`;
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      messages: [
+        { role: 'user', content: prompt }
+      ]
+    });
+
+    // Parse the AI response
+    let generatedContent;
+    try {
+      const responseText = message.content[0].text;
+      // Clean up response - remove markdown code blocks if present
+      const cleanedResponse = responseText
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
+      generatedContent = JSON.parse(cleanedResponse);
+    } catch (parseError) {
+      console.error('Error parsing AI response:', parseError);
+      console.error('Raw response:', message.content[0].text);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to parse AI-generated content'
+      });
+    }
+
+    // Also generate HELP and STOP responses
+    const helpResponse = `For help with ${businessName} SMS, contact ${client.owner_email || 'support'} or visit ${website || 'our website'}.`;
+    const stopResponse = `You've been unsubscribed from ${businessName} SMS. You will not receive any more messages.`;
+
+    res.json({
+      success: true,
+      generatedContent: {
+        ...generatedContent,
+        helpKeywordResponse: helpResponse,
+        stopKeywordResponse: stopResponse
+      }
+    });
+  } catch (error) {
+    console.error('Error generating A2P content:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate A2P content: ' + error.message
     });
   }
 });
