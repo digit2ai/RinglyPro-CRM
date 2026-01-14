@@ -477,8 +477,18 @@
         <!-- Main form container -->
         <div id="formContainer" style="display: none;">
             <div class="header">
-                <h1>A2P 10DLC Business Verification</h1>
-                <p>SMS Enablement for <span id="businessName">Your Business</span></p>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <h1>A2P 10DLC Business Verification</h1>
+                        <p>SMS Enablement for <span id="businessName">Your Business</span></p>
+                    </div>
+                    <a href="#" onclick="goBackToDashboard()" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); font-size: 0.875rem; text-decoration: none; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; background: white;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        Back to Dashboard
+                    </a>
+                </div>
                 <div style="margin-top: 12px;">
                     <a href="/templates/a2p-verification-template.html" target="_blank"
                        style="display: inline-flex; align-items: center; gap: 6px; color: var(--primary-color); font-size: 0.875rem; text-decoration: none;">
@@ -1072,18 +1082,59 @@
                     </div>
                 </div>
 
-                <!-- Section 7: Review & Submit -->
+                <!-- Section 7: Payment & Submit -->
                 <div class="form-section" id="section7">
-                    <h2><span class="section-number">7</span> Review & Submit</h2>
+                    <h2><span class="section-number">7</span> Payment & Submit</h2>
                     <p style="margin-bottom: 16px;">
                         Please review all information above before submitting. Once submitted, your application will be reviewed for A2P 10DLC verification.
                     </p>
+
+                    <!-- Payment Section -->
+                    <div id="paymentSection" style="background: var(--bg-color); border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                            <div>
+                                <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: var(--text-primary);">A2P Processing Fee</h3>
+                                <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">
+                                    One-time fee for carrier registration and verification processing
+                                </p>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 2rem; font-weight: 700; color: var(--primary-color);">$149</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">One-time payment</div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Status Banner -->
+                        <div id="paymentPaidBanner" style="display: none; margin-top: 16px; padding: 12px; background: var(--success-bg); border-radius: 4px; border: 1px solid #a7f3d0;">
+                            <div style="display: flex; align-items: center; gap: 8px; color: #065f46;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                    <polyline points="22 4 12 14.01 9 11.01"/>
+                                </svg>
+                                <span style="font-weight: 600;">Payment Complete</span>
+                            </div>
+                        </div>
+
+                        <!-- Pay Now Button -->
+                        <div id="paymentButtonContainer" style="margin-top: 16px;">
+                            <button type="button" id="payNowBtn" onclick="processPayment()" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px 24px; font-size: 1rem;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                                    <line x1="1" y1="10" x2="23" y2="10"/>
+                                </svg>
+                                Pay $149 to Continue
+                            </button>
+                            <p style="margin: 8px 0 0; font-size: 0.75rem; color: var(--text-secondary); text-align: center;">
+                                Secure payment powered by Stripe. You will be redirected to complete payment.
+                            </p>
+                        </div>
+                    </div>
 
                     <div class="button-group">
                         <button type="button" class="btn btn-secondary" id="saveDraftBtn">
                             Save Draft
                         </button>
-                        <button type="submit" class="btn btn-success" id="submitBtn">
+                        <button type="submit" class="btn btn-success" id="submitBtn" disabled title="Pay the processing fee first to submit">
                             Submit for Verification
                         </button>
                     </div>
@@ -1100,6 +1151,7 @@
         let clientId = null;
         let currentStatus = 'draft';
         let isReadOnly = false;
+        let isPaid = false;
 
         // ========================
         // Initialize
@@ -1117,6 +1169,30 @@
             showLoading(true);
 
             try {
+                // Check for payment success return
+                const paymentStatus = urlParams.get('payment');
+                const sessionId = urlParams.get('session_id');
+
+                if (paymentStatus === 'success' && sessionId) {
+                    // Verify payment with backend
+                    try {
+                        const verifyResponse = await fetch(`${API_BASE}/clients/${clientId}/a2p/verify-payment?session_id=${sessionId}`);
+                        const verifyResult = await verifyResponse.json();
+                        if (verifyResult.success && verifyResult.paid) {
+                            isPaid = true;
+                            updatePaymentUI(true);
+                            showMessage('success', 'Payment successful! You can now submit your A2P application.');
+                            // Clean up URL
+                            window.history.replaceState({}, document.title, `/a2p?clientId=${clientId}`);
+                        }
+                    } catch (verifyError) {
+                        console.error('Error verifying payment:', verifyError);
+                    }
+                } else if (paymentStatus === 'canceled') {
+                    showMessage('warning', 'Payment was canceled. Please complete the payment to submit your application.');
+                    window.history.replaceState({}, document.title, `/a2p?clientId=${clientId}`);
+                }
+
                 // Fetch existing A2P record
                 const response = await fetch(`${API_BASE}/clients/${clientId}/a2p`);
 
@@ -1148,6 +1224,11 @@
                     }
                 } else {
                     throw new Error('Failed to load A2P data');
+                }
+
+                // Check payment status if not already verified
+                if (!isPaid) {
+                    await checkPaymentStatus();
                 }
 
                 document.getElementById('formContainer').style.display = 'block';
@@ -1227,9 +1308,10 @@
                 section.classList.toggle('readonly', readonly);
             });
 
-            // Hide buttons if readonly
+            // Hide buttons and payment section if readonly
             document.getElementById('saveDraftBtn').style.display = readonly ? 'none' : 'inline-flex';
             document.getElementById('submitBtn').style.display = readonly ? 'none' : 'inline-flex';
+            document.getElementById('paymentSection').style.display = readonly ? 'none' : 'block';
         }
 
         // ========================
@@ -1665,6 +1747,102 @@
                            messages.includes('text stop');
 
             document.getElementById('stopWarning').style.display = hasStop ? 'none' : 'block';
+        }
+
+        // ========================
+        // Payment Functions
+        // ========================
+
+        /**
+         * Navigate back to the client dashboard
+         */
+        function goBackToDashboard() {
+            if (clientId) {
+                window.location.href = `/?client_id=${clientId}`;
+            } else {
+                window.history.back();
+            }
+        }
+
+        /**
+         * Check if the A2P processing fee has been paid
+         */
+        async function checkPaymentStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/clients/${clientId}/a2p/payment-status`);
+                const result = await response.json();
+
+                if (result.success && result.paid) {
+                    isPaid = true;
+                    updatePaymentUI(true);
+                }
+            } catch (error) {
+                console.error('Error checking payment status:', error);
+            }
+        }
+
+        /**
+         * Update the payment UI based on payment status
+         */
+        function updatePaymentUI(paid) {
+            isPaid = paid;
+            const paymentPaidBanner = document.getElementById('paymentPaidBanner');
+            const paymentButtonContainer = document.getElementById('paymentButtonContainer');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (paid) {
+                paymentPaidBanner.style.display = 'block';
+                paymentButtonContainer.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.title = '';
+            } else {
+                paymentPaidBanner.style.display = 'none';
+                paymentButtonContainer.style.display = 'block';
+                submitBtn.disabled = true;
+                submitBtn.title = 'Pay the processing fee first to submit';
+            }
+        }
+
+        /**
+         * Process payment - redirect to Stripe checkout
+         */
+        async function processPayment() {
+            const btn = document.getElementById('payNowBtn');
+            const originalText = btn.innerHTML;
+
+            try {
+                // Save draft first
+                await saveDraft();
+
+                // Update button to show loading
+                btn.disabled = true;
+                btn.innerHTML = `
+                    <svg style="width: 20px; height: 20px; animation: spin 1s linear infinite;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Processing...
+                `;
+
+                // Create checkout session
+                const response = await fetch(`${API_BASE}/clients/${clientId}/a2p/create-checkout`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.url) {
+                    // Redirect to Stripe checkout
+                    window.location.href = result.url;
+                } else {
+                    throw new Error(result.error || 'Failed to create checkout session');
+                }
+            } catch (error) {
+                console.error('Error processing payment:', error);
+                showMessage('error', 'Failed to process payment. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
         }
 
         // ========================

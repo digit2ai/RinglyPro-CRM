@@ -10,6 +10,7 @@ const { A2P, Client } = require('../models');
 const { authenticateToken, getUserClient } = require('../middleware/auth');
 const validator = require('validator');
 const Anthropic = require('@anthropic-ai/sdk');
+const logger = require('../utils/logger');
 
 // ========================
 // Middleware for Client ID Validation
@@ -848,6 +849,171 @@ router.get('/admin/a2p', authenticateToken, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to list A2P records'
+    });
+  }
+});
+
+// ========================
+// A2P Payment Endpoints
+// ========================
+
+/**
+ * POST /api/clients/:clientId/a2p/create-checkout
+ * Create Stripe Checkout Session for $149 A2P processing fee
+ */
+router.post('/clients/:clientId/a2p/create-checkout', validateClientAccess, async (req, res) => {
+  try {
+    const { clientId, clientRecord } = req;
+
+    // Check if Stripe is configured
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(503).json({
+        success: false,
+        error: 'Payment processing not configured'
+      });
+    }
+
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+    // Check if A2P record exists
+    const a2p = await A2P.findByClientId(clientId);
+
+    // A2P fee is $149 one-time
+    const A2P_FEE = 149;
+
+    // Create Stripe Checkout Session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'A2P 10DLC Verification Processing Fee',
+              description: `One-time fee for ${clientRecord.business_name || 'your business'} SMS verification and carrier registration`,
+            },
+            unit_amount: A2P_FEE * 100, // Stripe expects cents
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'}/a2p?clientId=${clientId}&payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'}/a2p?clientId=${clientId}&payment=canceled`,
+      client_reference_id: clientId.toString(),
+      metadata: {
+        clientId: clientId.toString(),
+        type: 'a2p_processing_fee',
+        amount: A2P_FEE.toString(),
+        businessName: clientRecord.business_name || ''
+      }
+    });
+
+    logger.info(`[A2P] Created checkout session for client ${clientId}: ${session.id}`);
+
+    res.json({
+      success: true,
+      url: session.url,
+      sessionId: session.id
+    });
+
+  } catch (error) {
+    logger.error('[A2P] Create checkout error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to create checkout session'
+    });
+  }
+});
+
+/**
+ * GET /api/clients/:clientId/a2p/verify-payment
+ * Verify Stripe Checkout Session for A2P fee
+ */
+router.get('/clients/:clientId/a2p/verify-payment', validateClientAccess, async (req, res) => {
+  try {
+    const { clientId } = req;
+    const { session_id } = req.query;
+
+    if (!session_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Session ID is required'
+      });
+    }
+
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+    // Retrieve the session
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+
+    // Verify the session belongs to this client
+    if (session.client_reference_id !== clientId.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: 'Unauthorized - session does not match client'
+      });
+    }
+
+    // Check if payment was successful
+    if (session.payment_status !== 'paid') {
+      return res.status(400).json({
+        success: false,
+        error: 'Payment not completed',
+        status: session.payment_status
+      });
+    }
+
+    // Update A2P record to mark payment as complete
+    const a2p = await A2P.findByClientId(clientId);
+    if (a2p) {
+      await a2p.update({
+        notesInternal: (a2p.notesInternal || '') + `\n[${new Date().toISOString()}] A2P fee paid: $149, Stripe session: ${session_id}`
+      });
+    }
+
+    logger.info(`[A2P] Payment verified for client ${clientId}, session: ${session_id}`);
+
+    res.json({
+      success: true,
+      paid: true,
+      amount: 149,
+      paymentIntent: session.payment_intent
+    });
+
+  } catch (error) {
+    logger.error('[A2P] Verify payment error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to verify payment'
+    });
+  }
+});
+
+/**
+ * GET /api/clients/:clientId/a2p/payment-status
+ * Check if A2P fee has been paid for this client
+ */
+router.get('/clients/:clientId/a2p/payment-status', validateClientAccess, async (req, res) => {
+  try {
+    const { clientId } = req;
+
+    const a2p = await A2P.findByClientId(clientId);
+
+    // Check if payment has been recorded in internal notes
+    const isPaid = a2p?.notesInternal?.includes('A2P fee paid:') || false;
+
+    res.json({
+      success: true,
+      paid: isPaid,
+      clientId
+    });
+
+  } catch (error) {
+    logger.error('[A2P] Payment status error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check payment status'
     });
   }
 });
