@@ -160,141 +160,140 @@ The ElevenLabs Conversational AI agent (Rachel) is the front-end for all custome
 
 ## Client Activation Checklist (Voice Booking)
 
-**Use this checklist to activate any client for ElevenLabs voice booking, similar to Client 15.**
+**Use this checklist to activate any client for ElevenLabs voice booking.**
 
-### Database Requirements Summary
+---
 
-**ALL of these fields MUST be set for voice messages to work on the dashboard:**
+### QUICK START - Developer Agent Prompt
 
-| Field | Required Value | API to Set |
-|-------|----------------|------------|
-| `rachel_enabled` | `true` | `/api/admin/set-elevenlabs-agent/{id}` with `enableRachel: true` |
-| `elevenlabs_agent_id` | Agent ID from ElevenLabs | `/api/admin/set-elevenlabs-agent/{id}` |
-| `elevenlabs_phone_number_id` | Phone Number ID from ElevenLabs | `/api/admin/quick-set-elevenlabs-phone/{id}` |
-| `use_elevenlabs_outbound` | `true` | `/api/elevenlabs/tools` with `admin_enable_elevenlabs_outbound` |
+**Copy this prompt to activate a new client (replace values in brackets):**
 
-**ALSO REQUIRED - Code Change:**
-- Add client ID to `usesElevenLabs` check in `views/dashboard.ejs` (line ~3769)
+```
+/ringlypro-dev Activate Client [CLIENT_ID] for voice booking.
+ElevenLabs Agent ID: [AGENT_ID]. [PHONE_NUMBER_ID]
 
-### Prerequisites
-
-Before activating a client, you need:
-- ElevenLabs Agent ID (e.g., `agent_1001kdge3jz0ejj8a8g5d7vkqr8f`)
-- ElevenLabs Phone Number ID (e.g., `phnum_8201kdkff2qvetathjqa92x46wr4`)
-- Client ID in RinglyPro
-
-### Step 1: Configure ElevenLabs Agent ID and Enable Rachel
-
-```bash
-# Replace [CLIENT_ID] and [AGENT_ID] with actual values
-curl -X POST "https://aiagent.ringlypro.com/api/admin/set-elevenlabs-agent/[CLIENT_ID]" \
-  -H "Content-Type: application/json" \
-  -d '{"apiKey": "ringlypro-quick-admin-2024", "agentId": "[AGENT_ID]", "enableRachel": true}'
+Reference: docs/CLIENT_15_ARCHITECTURE.md
 ```
 
-This sets:
-- `elevenlabs_agent_id` = your agent ID
-- `rachel_enabled` = true
+The developer agent will execute ALL steps automatically.
 
-### Step 2: Configure ElevenLabs Phone Number ID
+---
+
+### Database Requirements (ALL REQUIRED)
+
+| Field | Required Value | What It Does |
+|-------|----------------|--------------|
+| `rachel_enabled` | `true` | Enables voice AI for inbound calls |
+| `elevenlabs_agent_id` | `agent_xxx...` | Links to ElevenLabs agent |
+| `elevenlabs_phone_number_id` | `phnum_xxx...` | ElevenLabs phone number for outbound |
+| `use_elevenlabs_outbound` | `true` | **CRITICAL: Enables voice message audio playback** |
+
+**Code Change Required:**
+- Add client ID to `usesElevenLabs` in `views/dashboard.ejs` (line ~3769)
+
+---
+
+### Complete Activation Script
+
+**Replace `[CLIENT_ID]`, `[AGENT_ID]`, and `[PHONE_NUMBER_ID]` then run ALL commands:**
 
 ```bash
-curl -X POST "https://aiagent.ringlypro.com/api/admin/quick-set-elevenlabs-phone/[CLIENT_ID]" \
+# ============================================
+# ELEVENLABS CLIENT ACTIVATION - ALL 5 STEPS
+# ============================================
+# Replace these values:
+CLIENT_ID="[CLIENT_ID]"
+AGENT_ID="[AGENT_ID]"
+PHONE_NUMBER_ID="[PHONE_NUMBER_ID]"
+
+# Step 1: Set Agent ID + Enable Rachel
+curl -X POST "https://aiagent.ringlypro.com/api/admin/set-elevenlabs-agent/${CLIENT_ID}" \
   -H "Content-Type: application/json" \
-  -d '{"apiKey": "ringlypro-quick-admin-2024", "phoneNumberId": "[PHONE_NUMBER_ID]"}'
-```
+  -d "{\"apiKey\": \"ringlypro-quick-admin-2024\", \"agentId\": \"${AGENT_ID}\", \"enableRachel\": true}"
 
-### Step 2.5: Enable ElevenLabs Outbound (REQUIRED for Voice Messages)
+# Step 2: Set Phone Number ID
+curl -X POST "https://aiagent.ringlypro.com/api/admin/quick-set-elevenlabs-phone/${CLIENT_ID}" \
+  -H "Content-Type: application/json" \
+  -d "{\"apiKey\": \"ringlypro-quick-admin-2024\", \"phoneNumberId\": \"${PHONE_NUMBER_ID}\"}"
 
-**CRITICAL:** This step is required for voice message audio playback on the dashboard.
-
-```bash
+# Step 3: Enable Outbound (REQUIRED FOR AUDIO PLAYBACK!)
 curl -X POST "https://aiagent.ringlypro.com/api/elevenlabs/tools" \
   -H "Content-Type: application/json" \
-  -d '{"tool_name": "admin_enable_elevenlabs_outbound", "parameters": {"client_id": "[CLIENT_ID]", "api_key": "ringlypro-quick-admin-2024", "enabled": true}}'
+  -d "{\"tool_name\": \"admin_enable_elevenlabs_outbound\", \"parameters\": {\"client_id\": \"${CLIENT_ID}\", \"api_key\": \"ringlypro-quick-admin-2024\", \"enabled\": true}}"
+
+# Step 4: Sync Existing Calls
+curl -X POST "https://aiagent.ringlypro.com/api/admin/sync-elevenlabs-calls/${CLIENT_ID}" \
+  -H "Content-Type: application/json" \
+  -d '{"apiKey": "ringlypro-quick-admin-2024"}'
+
+# Step 5: Fix Recording URLs
+curl -X POST "https://aiagent.ringlypro.com/api/admin/fix-elevenlabs-recordings/${CLIENT_ID}" \
+  -H "Content-Type: application/json" \
+  -d '{"apiKey": "ringlypro-quick-admin-2024"}'
+
+echo "✅ Database configuration complete for Client ${CLIENT_ID}"
+echo "⚠️  IMPORTANT: You must also add CLIENT_ID == ${CLIENT_ID} to usesElevenLabs in views/dashboard.ejs"
 ```
 
-This sets:
-- `use_elevenlabs_outbound` = true
+---
 
-### Step 3: Add Client to Dashboard UI
+### Step-by-Step Code Change (REQUIRED)
 
-**IMPORTANT:** You must add the client ID to the dashboard JavaScript:
-
-**File:** `views/dashboard.ejs` (line ~3705)
+**File:** `views/dashboard.ejs` (line ~3769)
 
 ```javascript
 // Find this line:
-const usesElevenLabs = CLIENT_ID == 15 || CLIENT_ID == 17 || CLIENT_ID == 32;
+const usesElevenLabs = CLIENT_ID == 15 || CLIENT_ID == 17 || CLIENT_ID == 32 || CLIENT_ID == 44;
 
 // Add the new client ID:
-const usesElevenLabs = CLIENT_ID == 15 || CLIENT_ID == 17 || CLIENT_ID == 32 || CLIENT_ID == [NEW_CLIENT_ID];
+const usesElevenLabs = CLIENT_ID == 15 || CLIENT_ID == 17 || CLIENT_ID == 32 || CLIENT_ID == 44 || CLIENT_ID == [NEW_CLIENT_ID];
 ```
 
-Commit and deploy the change.
-
-### Step 4: Sync Existing Calls (Optional)
-
-If the agent already has call history, sync it to the Messages table:
-
+**Then commit and push:**
 ```bash
-curl -X POST "https://aiagent.ringlypro.com/api/admin/sync-elevenlabs-calls/[CLIENT_ID]" \
-  -H "Content-Type: application/json" \
-  -d '{"apiKey": "ringlypro-quick-admin-2024"}'
+git add views/dashboard.ejs
+git commit -m "Add Client [NEW_CLIENT_ID] to ElevenLabs dashboard UI"
+git push origin main
 ```
 
-### Step 5: Fix Recording URLs
+---
 
-Ensure audio playback works:
+### Verification Checklist
 
+After activation, verify ALL of these:
+
+- [ ] **Database check** - Run this to confirm all fields are set:
 ```bash
-curl -X POST "https://aiagent.ringlypro.com/api/admin/fix-elevenlabs-recordings/[CLIENT_ID]" \
+curl -s "https://aiagent.ringlypro.com/api/elevenlabs/tools" \
   -H "Content-Type: application/json" \
-  -d '{"apiKey": "ringlypro-quick-admin-2024"}'
+  -d '{"tool_name": "admin_get_client_config", "parameters": {"client_id": "[CLIENT_ID]", "api_key": "ringlypro-quick-admin-2024"}}'
 ```
 
-### Step 6: Verify Activation
-
-1. Log into the client's dashboard
-2. Go to Messages tab → Voicemails
-3. Should see all synced calls with audio players
-4. Console should show: `usesElevenLabs: true`
-
-### Complete Example: Activating Client 99
-
-```bash
-# Step 1: Set agent ID and enable rachel
-curl -X POST "https://aiagent.ringlypro.com/api/admin/set-elevenlabs-agent/99" \
-  -H "Content-Type: application/json" \
-  -d '{"apiKey": "ringlypro-quick-admin-2024", "agentId": "agent_XXXX", "enableRachel": true}'
-
-# Step 2: Set phone number ID
-curl -X POST "https://aiagent.ringlypro.com/api/admin/quick-set-elevenlabs-phone/99" \
-  -H "Content-Type: application/json" \
-  -d '{"apiKey": "ringlypro-quick-admin-2024", "phoneNumberId": "phnum_XXXX"}'
-
-# Step 3: Edit views/dashboard.ejs - add CLIENT_ID == 99 to usesElevenLabs check
-# Then commit and deploy
-
-# Step 4: Sync calls
-curl -X POST "https://aiagent.ringlypro.com/api/admin/sync-elevenlabs-calls/99" \
-  -H "Content-Type: application/json" \
-  -d '{"apiKey": "ringlypro-quick-admin-2024"}'
-
-# Step 5: Fix recording URLs
-curl -X POST "https://aiagent.ringlypro.com/api/admin/fix-elevenlabs-recordings/99" \
-  -H "Content-Type: application/json" \
-  -d '{"apiKey": "ringlypro-quick-admin-2024"}'
+Expected response should show:
+```json
+{
+  "rachel_enabled": true,
+  "elevenlabs_agent_id": "agent_xxx...",
+  "elevenlabs_phone_number_id": "phnum_xxx...",
+  "use_elevenlabs_outbound": true
+}
 ```
+
+- [ ] **Dashboard UI** - Client sees "Voicemails" tab (not regular messages)
+- [ ] **Audio playback** - Clicking a voicemail shows audio player
+- [ ] **Recording plays** - Audio actually plays when clicking play button
+
+---
 
 ### Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Dashboard shows "regular messages UI" | Add client ID to `usesElevenLabs` check in dashboard.ejs |
-| No calls appearing | Verify `elevenlabs_agent_id` matches actual ElevenLabs agent |
-| Audio not playing | Run fix-elevenlabs-recordings endpoint |
-| `rachel_enabled` keeps resetting | Use `enableRachel: true` in set-elevenlabs-agent call |
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| No audio player visible | `use_elevenlabs_outbound = false` | Run Step 3 (enable outbound) |
+| Shows regular messages UI | Client ID not in `usesElevenLabs` | Add to dashboard.ejs |
+| No calls appearing | Wrong `elevenlabs_agent_id` | Verify agent ID matches ElevenLabs |
+| "Recording not available" | Recording URLs not fixed | Run Step 5 |
+| Audio player but no sound | API proxy issue | Check browser console for errors |
 
 ---
 
