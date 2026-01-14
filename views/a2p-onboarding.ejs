@@ -514,39 +514,99 @@
                             <span class="error-text">Please select your business type</span>
                         </div>
                         <div class="form-group">
-                            <label for="businessVertical">Business Vertical</label>
-                            <select id="businessVertical" name="businessVertical">
-                                <option value="">Select vertical...</option>
-                                <option value="healthcare">Healthcare</option>
-                                <option value="home_services">Home Services</option>
-                                <option value="legal">Legal</option>
-                                <option value="real_estate">Real Estate</option>
-                                <option value="automotive">Automotive</option>
-                                <option value="beauty_wellness">Beauty & Wellness</option>
-                                <option value="fitness">Fitness</option>
-                                <option value="restaurant">Restaurant/Food</option>
-                                <option value="retail">Retail</option>
-                                <option value="professional_services">Professional Services</option>
-                                <option value="other">Other</option>
+                            <label for="companyType">Company Type <span class="required">*</span></label>
+                            <select id="companyType" name="companyType" required>
+                                <option value="">Select company type...</option>
+                                <option value="private">Private</option>
+                                <option value="public">Public (Stock Exchange Listed)</option>
+                                <option value="non_profit">Non-Profit</option>
+                                <option value="government">Government</option>
                             </select>
+                            <span class="error-text">Please select company type</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row" id="stockInfoRow" style="display: none;">
+                        <div class="form-group">
+                            <label for="stockExchange">Stock Exchange <span class="required">*</span></label>
+                            <select id="stockExchange" name="stockExchange">
+                                <option value="">Select exchange...</option>
+                                <option value="NYSE">NYSE</option>
+                                <option value="NASDAQ">NASDAQ</option>
+                                <option value="AMEX">AMEX</option>
+                                <option value="TSX">TSX (Toronto)</option>
+                                <option value="LSE">LSE (London)</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                            <span class="error-text">Stock exchange is required for public companies</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="stockTicker">Stock Ticker Symbol <span class="required">*</span></label>
+                            <input type="text" id="stockTicker" name="stockTicker" placeholder="e.g., AAPL" maxlength="10">
+                            <span class="error-text">Stock ticker is required for public companies</span>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="taxIdType">Tax ID Type <span class="required">*</span></label>
+                            <label for="businessVertical">Business Industry <span class="required">*</span></label>
+                            <select id="businessVertical" name="businessVertical" required>
+                                <option value="">Select industry...</option>
+                                <option value="AGRICULTURE">Agriculture</option>
+                                <option value="AUTOMOTIVE">Automotive</option>
+                                <option value="BANKING">Banking/Financial</option>
+                                <option value="CONSTRUCTION">Construction</option>
+                                <option value="CONSUMER">Consumer Services</option>
+                                <option value="EDUCATION">Education</option>
+                                <option value="ENERGY">Energy/Utilities</option>
+                                <option value="ENTERTAINMENT">Entertainment</option>
+                                <option value="GOVERNMENT">Government</option>
+                                <option value="HEALTHCARE">Healthcare</option>
+                                <option value="HOSPITALITY">Hospitality</option>
+                                <option value="INSURANCE">Insurance</option>
+                                <option value="LEGAL">Legal</option>
+                                <option value="MANUFACTURING">Manufacturing</option>
+                                <option value="NOT_FOR_PROFIT">Not for Profit</option>
+                                <option value="REAL_ESTATE">Real Estate</option>
+                                <option value="RETAIL">Retail</option>
+                                <option value="TECHNOLOGY">Technology</option>
+                                <option value="TRANSPORTATION">Transportation</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                            <span class="error-text">Please select business industry</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="regionsOfOperation">Regions of Operation <span class="required">*</span></label>
+                            <select id="regionsOfOperation" name="regionsOfOperation" required>
+                                <option value="">Select region...</option>
+                                <option value="US_ONLY">United States Only</option>
+                                <option value="US_AND_CANADA">US and Canada</option>
+                                <option value="INTERNATIONAL">International</option>
+                            </select>
+                            <span class="error-text">Please select regions of operation</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="taxIdType">Business Registration ID Type <span class="required">*</span></label>
                             <select id="taxIdType" name="taxIdType" required>
                                 <option value="">Select...</option>
                                 <option value="EIN">EIN (Employer Identification Number)</option>
-                                <option value="SSN">SSN (Social Security Number)</option>
+                                <option value="DUNS">DUNS Number</option>
+                                <option value="GIIN">GIIN (Global Intermediary ID)</option>
+                                <option value="LEI">LEI (Legal Entity Identifier)</option>
+                                <option value="CBN">CBN (Canadian Business Number)</option>
+                                <option value="OTHER">Other Tax ID</option>
                             </select>
-                            <span class="error-text">Please select tax ID type</span>
+                            <span class="help-text">US businesses typically use EIN</span>
+                            <span class="error-text">Please select registration ID type</span>
                         </div>
                         <div class="form-group">
-                            <label for="taxIdLast4">Tax ID (Last 4 Digits Only) <span class="required">*</span></label>
-                            <input type="text" id="taxIdLast4" name="taxIdLast4" maxlength="4" pattern="\d{4}" placeholder="XXXX" required>
-                            <span class="help-text">For security, we only store the last 4 digits</span>
-                            <span class="error-text">Please enter exactly 4 digits</span>
+                            <label for="taxIdNumber">Business Registration Number <span class="required">*</span></label>
+                            <input type="text" id="taxIdNumber" name="taxIdNumber" placeholder="XX-XXXXXXX" required>
+                            <span class="help-text">Enter full EIN (XX-XXXXXXX) - must match IRS records exactly</span>
+                            <span class="error-text">Please enter your full registration number</span>
                         </div>
                     </div>
 
@@ -589,6 +649,9 @@
                 <!-- Section 2: Authorized Representative -->
                 <div class="form-section" id="section2">
                     <h2><span class="section-number">2</span> Authorized Representative</h2>
+                    <p style="margin-bottom: 16px; color: var(--text-secondary);">
+                        This person must be authorized to represent the business and will receive verification emails.
+                    </p>
 
                     <div class="form-row">
                         <div class="form-group">
@@ -605,22 +668,49 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="authorizedRepEmail">Email <span class="required">*</span></label>
+                            <label for="authorizedRepEmail">Representative Email <span class="required">*</span></label>
                             <input type="email" id="authorizedRepEmail" name="authorizedRepEmail" required>
+                            <span class="help-text">Personal email for this representative</span>
                             <span class="error-text">Please enter a valid email address</span>
                         </div>
+                        <div class="form-group">
+                            <label for="businessContactEmail">Business Contact Email <span class="required">*</span></label>
+                            <input type="email" id="businessContactEmail" name="businessContactEmail" required>
+                            <span class="help-text">Company email for OTP verification (e.g., info@company.com)</span>
+                            <span class="error-text">Please enter a valid business email</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
                         <div class="form-group">
                             <label for="authorizedRepPhoneE164">Phone Number <span class="required">*</span></label>
                             <input type="tel" id="authorizedRepPhoneE164" name="authorizedRepPhoneE164" placeholder="+15551234567" required>
                             <span class="help-text">Format: +1XXXXXXXXXX (E.164)</span>
                             <span class="error-text">Please enter phone in E.164 format (+15551234567)</span>
                         </div>
+                        <div class="form-group">
+                            <label for="authorizedRepTitle">Job Title <span class="required">*</span></label>
+                            <input type="text" id="authorizedRepTitle" name="authorizedRepTitle" placeholder="e.g., Owner, Marketing Director" required>
+                            <span class="error-text">Please enter job title</span>
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="authorizedRepTitle">Job Title <span class="required">*</span></label>
-                        <input type="text" id="authorizedRepTitle" name="authorizedRepTitle" placeholder="e.g., Owner, CEO, Manager" required>
-                        <span class="error-text">Please enter job title</span>
+                        <label for="jobPosition">Job Position <span class="required">*</span></label>
+                        <select id="jobPosition" name="jobPosition" required>
+                            <option value="">Select position...</option>
+                            <option value="CEO">CEO / Owner</option>
+                            <option value="CFO">CFO</option>
+                            <option value="COO">COO</option>
+                            <option value="CTO">CTO</option>
+                            <option value="CMO">CMO</option>
+                            <option value="VP">Vice President</option>
+                            <option value="DIRECTOR">Director</option>
+                            <option value="GM">General Manager</option>
+                            <option value="MANAGER">Manager</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                        <span class="error-text">Please select job position</span>
                     </div>
                 </div>
 
@@ -629,11 +719,32 @@
                     <h2><span class="section-number">3</span> Messaging Use Case</h2>
 
                     <div class="form-group">
-                        <label>What will you use SMS for? <span class="required">*</span></label>
+                        <label for="campaignUseCase">Primary Campaign Use Case <span class="required">*</span></label>
+                        <select id="campaignUseCase" name="campaignUseCase" required>
+                            <option value="">Select use case...</option>
+                            <option value="CUSTOMER_CARE">Customer Care - Support messages</option>
+                            <option value="ACCOUNT_NOTIFICATION">Account Notifications - Alerts and updates</option>
+                            <option value="DELIVERY_NOTIFICATION">Delivery Notifications - Order/shipping updates</option>
+                            <option value="FRAUD_ALERT">Fraud Alerts - Security notifications</option>
+                            <option value="2FA">2FA / OTP - Authentication codes</option>
+                            <option value="MARKETING">Marketing - Promotional messages</option>
+                            <option value="MIXED">Mixed - Multiple purposes</option>
+                            <option value="LOW_VOLUME">Low Volume Mixed - Under 6,000/day</option>
+                        </select>
+                        <span class="help-text">Select the primary purpose of your SMS messages</span>
+                        <span class="error-text">Please select a campaign use case</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Additional Use Cases (select all that apply)</label>
                         <div class="checkbox-group" id="useCaseCategories">
                             <label class="checkbox-item">
                                 <input type="checkbox" name="useCaseCategories" value="missed_call_followups">
                                 <span>Missed Call Follow-ups</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="useCaseCategories" value="appointment_reminders">
+                                <span>Appointment Reminders</span>
                             </label>
                             <label class="checkbox-item">
                                 <input type="checkbox" name="useCaseCategories" value="appointment_scheduling">
@@ -652,7 +763,6 @@
                                 <span>Other</span>
                             </label>
                         </div>
-                        <span class="error-text">Please select at least one use case</span>
                     </div>
 
                     <div class="form-group" id="useCaseOtherGroup" style="display: none;">
@@ -661,11 +771,37 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="useCaseDescription">Describe how you'll use SMS messaging <span class="required">*</span></label>
+                        <label for="useCaseDescription">Detailed Use Case Description <span class="required">*</span></label>
                         <textarea id="useCaseDescription" name="useCaseDescription"
-                            placeholder="Example: We use SMS to send appointment reminders, follow up on missed calls, and respond to customer inquiries about our services." required></textarea>
-                        <span class="help-text">1-2 sentences describing your SMS use case</span>
+                            placeholder="Example: We send SMS to clients who have opted in via our website. Messages include appointment reminders 24 hours before scheduled visits, follow-ups for missed calls during business hours, and responses to customer service inquiries. Recipients are existing customers and leads who request information." required></textarea>
+                        <span class="help-text">Explain WHO receives messages, WHAT type of content, and WHEN/WHY they're sent</span>
                         <span class="error-text">Please describe your SMS use case</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Message Content Attributes <span class="required">*</span></label>
+                        <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 12px;">
+                            Check all that apply to your message content:
+                        </p>
+                        <div class="checkbox-group" id="contentAttributes">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="contentAttributes" value="embedded_links">
+                                <span>Embedded Links (URLs)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="contentAttributes" value="embedded_phone">
+                                <span>Embedded Phone Numbers</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="contentAttributes" value="age_gated">
+                                <span>Age-Gated Content (21+)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="contentAttributes" value="loan_lending">
+                                <span>Loan/Lending Content</span>
+                            </label>
+                        </div>
+                        <span class="help-text">Be honest - incorrect declarations can lead to campaign rejection</span>
                     </div>
                 </div>
 
@@ -709,63 +845,116 @@
                         <input type="text" id="consentOtherDescription" name="consentOtherDescription">
                     </div>
 
+                    <div class="form-group">
+                        <label for="consentProcessDescription">Consent Process Description <span class="required">*</span></label>
+                        <textarea id="consentProcessDescription" name="consentProcessDescription"
+                            placeholder="Example: Customers provide consent by checking an optional SMS opt-in checkbox on our website contact form. The checkbox is not pre-selected. They can also opt-in by texting our business number first, or by verbally agreeing during a phone call." required></textarea>
+                        <span class="help-text">Explain how customers explicitly agree to receive SMS from you</span>
+                        <span class="error-text">Please describe your consent process</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="optInConfirmationMessage">Opt-in Confirmation Message <span class="required">*</span></label>
+                        <textarea id="optInConfirmationMessage" name="optInConfirmationMessage"
+                            placeholder="Example: Thanks for opting in to SMS from [Business Name]! You'll receive appointment reminders and service updates. Msg frequency varies. Msg & data rates may apply. Reply HELP for help, STOP to cancel." required></textarea>
+                        <span class="help-text">The message sent to confirm SMS opt-in. Must include: business name, message type, frequency, rates disclaimer, HELP & STOP instructions</span>
+                        <span class="error-text">Please provide your opt-in confirmation message</span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="messageFrequency">Message Frequency <span class="required">*</span></label>
+                            <select id="messageFrequency" name="messageFrequency" required>
+                                <option value="">Select frequency...</option>
+                                <option value="varies">Message frequency varies</option>
+                                <option value="1_per_week">Up to 1 message per week</option>
+                                <option value="2_4_per_month">2-4 messages per month</option>
+                                <option value="1_per_day">Up to 1 message per day</option>
+                                <option value="multiple_per_day">Multiple messages per day</option>
+                            </select>
+                            <span class="error-text">Please select message frequency</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="helpKeywordResponse">HELP Keyword Response <span class="required">*</span></label>
+                            <input type="text" id="helpKeywordResponse" name="helpKeywordResponse"
+                                placeholder="For help, contact support@company.com or call (555) 123-4567" required>
+                            <span class="help-text">What users see when they text HELP</span>
+                            <span class="error-text">Please provide HELP response</span>
+                        </div>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="optInDisclosureUrl">Opt-in Disclosure URL</label>
                             <input type="url" id="optInDisclosureUrl" name="optInDisclosureUrl" placeholder="https://...">
-                            <span class="help-text">Link to your SMS terms/consent page (if available)</span>
+                            <span class="help-text">Link to your SMS terms/consent page (recommended)</span>
                         </div>
                         <div class="form-group">
-                            <label for="privacyPolicyUrl">Privacy Policy URL</label>
-                            <input type="url" id="privacyPolicyUrl" name="privacyPolicyUrl" placeholder="https://...">
+                            <label for="privacyPolicyUrl">Privacy Policy URL <span class="required">*</span></label>
+                            <input type="url" id="privacyPolicyUrl" name="privacyPolicyUrl" placeholder="https://..." required>
+                            <span class="help-text">Must state you don't share mobile info with third parties for marketing</span>
+                            <span class="error-text">Privacy policy URL is required</span>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="termsOfServiceUrl">Terms of Service URL</label>
-                        <input type="url" id="termsOfServiceUrl" name="termsOfServiceUrl" placeholder="https://...">
+                        <label for="termsOfServiceUrl">Terms of Service URL <span class="required">*</span></label>
+                        <input type="url" id="termsOfServiceUrl" name="termsOfServiceUrl" placeholder="https://..." required>
+                        <span class="help-text">Must include: program description, STOP/HELP instructions, carrier disclaimer, rates notice</span>
+                        <span class="error-text">Terms of service URL is required</span>
                     </div>
 
                     <div class="single-checkbox">
                         <input type="checkbox" id="optOutAcknowledged" name="optOutAcknowledged">
                         <label for="optOutAcknowledged">
-                            <strong>I acknowledge that my SMS messages will include STOP opt-out instructions</strong>
-                            <br><span style="font-size: 0.875rem; color: var(--text-secondary);">
-                                Recipients must be able to reply STOP to unsubscribe from messages.
-                            </span>
+                            <strong>I acknowledge that:</strong>
+                            <ul style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 8px;">
+                                <li>SMS messages will include STOP opt-out instructions</li>
+                                <li>Recipients can reply STOP to unsubscribe at any time</li>
+                                <li>Consent checkboxes are optional and NOT pre-selected</li>
+                                <li>We do NOT share mobile information with third parties for marketing</li>
+                            </ul>
                         </label>
                     </div>
-                    <span class="error-text" id="optOutError">You must acknowledge the STOP opt-out requirement</span>
+                    <span class="error-text" id="optOutError">You must acknowledge these compliance requirements</span>
                 </div>
 
                 <!-- Section 5: Sample Messages -->
                 <div class="form-section" id="section5">
                     <h2><span class="section-number">5</span> Sample Messages</h2>
-                    <p style="margin-bottom: 16px; color: var(--text-secondary);">
-                        Provide examples of SMS messages you'll send. At least one message should include STOP language.
-                    </p>
+                    <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                        <strong style="color: #0369a1;">Sample Message Requirements:</strong>
+                        <ul style="font-size: 0.875rem; color: #0c4a6e; margin: 8px 0 0 20px;">
+                            <li>Include your <strong>business name</strong> in messages</li>
+                            <li>Use placeholders like [Customer Name] instead of real names</li>
+                            <li>At least one message must include <strong>"Reply STOP to unsubscribe"</strong></li>
+                            <li>Do NOT include personal information (real names, phone numbers, addresses)</li>
+                            <li>Messages should match your declared use cases</li>
+                        </ul>
+                    </div>
 
                     <div class="form-group">
                         <label for="sampleMessage1">Sample Message 1 <span class="required">*</span></label>
                         <textarea id="sampleMessage1" name="sampleMessage1"
-                            placeholder="Example: Hi {name}, this is a reminder about your appointment tomorrow at 2:00 PM. Reply STOP to unsubscribe." required></textarea>
+                            placeholder="Example: Hi [Customer Name], this is [Business Name]. Your appointment is confirmed for tomorrow at 2:00 PM. Reply STOP to opt out." required></textarea>
                         <span class="error-text">Please provide at least one sample message</span>
                     </div>
 
                     <div class="form-group">
-                        <label for="sampleMessage2">Sample Message 2</label>
+                        <label for="sampleMessage2">Sample Message 2 <span class="required">*</span></label>
                         <textarea id="sampleMessage2" name="sampleMessage2"
-                            placeholder="Example: Thanks for calling! We missed you. How can we help today?"></textarea>
+                            placeholder="Example: [Business Name]: We missed your call! How can we help you today? Reply STOP to unsubscribe." required></textarea>
+                        <span class="error-text">Please provide a second sample message</span>
                     </div>
 
                     <div class="form-group">
                         <label for="sampleMessage3">Sample Message 3</label>
                         <textarea id="sampleMessage3" name="sampleMessage3"
-                            placeholder="Example: Your appointment is confirmed for {date} at {time}. See you then!"></textarea>
+                            placeholder="Example: Thanks for choosing [Business Name]! Your service is scheduled for [Date]. Questions? Call us at [Business Phone]. Msg & data rates may apply."></textarea>
                     </div>
 
                     <div class="message warning" id="stopWarning" style="display: block;">
-                        <strong>Tip:</strong> Include "Reply STOP to unsubscribe" in at least one sample message.
+                        <strong>Required:</strong> At least one sample message must include "Reply STOP to unsubscribe" or similar opt-out language.
                     </div>
                 </div>
 
@@ -957,15 +1146,22 @@
 
             // Populate text fields
             const textFields = [
-                'legalBusinessName', 'dbaName', 'businessType', 'businessVertical',
-                'taxIdType', 'taxIdLast4', 'businessAddressLine1', 'businessAddressLine2',
+                'legalBusinessName', 'dbaName', 'businessType', 'companyType', 'businessVertical',
+                'regionsOfOperation', 'stockExchange', 'stockTicker',
+                'taxIdType', 'taxIdNumber', 'businessAddressLine1', 'businessAddressLine2',
                 'businessCity', 'businessState', 'businessPostalCode', 'businessWebsite',
                 'authorizedRepFirstName', 'authorizedRepLastName', 'authorizedRepEmail',
-                'authorizedRepPhoneE164', 'authorizedRepTitle', 'useCaseOtherDescription',
-                'useCaseDescription', 'consentOtherDescription', 'optInDisclosureUrl',
-                'privacyPolicyUrl', 'termsOfServiceUrl', 'sampleMessage1', 'sampleMessage2',
-                'sampleMessage3', 'estimatedSmsPerDay', 'estimatedSmsPerMonth'
+                'businessContactEmail', 'authorizedRepPhoneE164', 'authorizedRepTitle', 'jobPosition',
+                'campaignUseCase', 'useCaseOtherDescription', 'useCaseDescription',
+                'consentProcessDescription', 'optInConfirmationMessage', 'messageFrequency', 'helpKeywordResponse',
+                'consentOtherDescription', 'optInDisclosureUrl', 'privacyPolicyUrl', 'termsOfServiceUrl',
+                'sampleMessage1', 'sampleMessage2', 'sampleMessage3', 'estimatedSmsPerDay', 'estimatedSmsPerMonth'
             ];
+
+            // Show stock info if public company
+            if (data.companyType === 'public') {
+                document.getElementById('stockInfoRow').style.display = 'flex';
+            }
 
             textFields.forEach(field => {
                 const el = document.getElementById(field);
@@ -1003,6 +1199,17 @@
                 }
             }
 
+            // Content attributes checkboxes
+            if (data.contentAttributes && Array.isArray(data.contentAttributes)) {
+                data.contentAttributes.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="contentAttributes"][value="${value}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        checkbox.closest('.checkbox-item').classList.add('checked');
+                    }
+                });
+            }
+
             // Opt-out checkbox
             if (data.optOutAcknowledged) {
                 document.getElementById('optOutAcknowledged').checked = true;
@@ -1022,14 +1229,16 @@
 
             // Text fields
             const textFields = [
-                'legalBusinessName', 'dbaName', 'businessType', 'businessVertical',
-                'taxIdType', 'taxIdLast4', 'businessAddressLine1', 'businessAddressLine2',
+                'legalBusinessName', 'dbaName', 'businessType', 'companyType', 'businessVertical',
+                'regionsOfOperation', 'stockExchange', 'stockTicker',
+                'taxIdType', 'taxIdNumber', 'businessAddressLine1', 'businessAddressLine2',
                 'businessCity', 'businessState', 'businessPostalCode', 'businessWebsite',
                 'authorizedRepFirstName', 'authorizedRepLastName', 'authorizedRepEmail',
-                'authorizedRepPhoneE164', 'authorizedRepTitle', 'useCaseOtherDescription',
-                'useCaseDescription', 'consentOtherDescription', 'optInDisclosureUrl',
-                'privacyPolicyUrl', 'termsOfServiceUrl', 'sampleMessage1', 'sampleMessage2',
-                'sampleMessage3', 'estimatedSmsPerDay'
+                'businessContactEmail', 'authorizedRepPhoneE164', 'authorizedRepTitle', 'jobPosition',
+                'campaignUseCase', 'useCaseOtherDescription', 'useCaseDescription',
+                'consentProcessDescription', 'optInConfirmationMessage', 'messageFrequency', 'helpKeywordResponse',
+                'consentOtherDescription', 'optInDisclosureUrl', 'privacyPolicyUrl', 'termsOfServiceUrl',
+                'sampleMessage1', 'sampleMessage2', 'sampleMessage3', 'estimatedSmsPerDay'
             ];
 
             textFields.forEach(field => {
@@ -1052,6 +1261,11 @@
             data.consentMethods = [];
             document.querySelectorAll('input[name="consentMethods"]:checked').forEach(cb => {
                 data.consentMethods.push(cb.value);
+            });
+
+            data.contentAttributes = [];
+            document.querySelectorAll('input[name="contentAttributes"]:checked').forEach(cb => {
+                data.contentAttributes.push(cb.value);
             });
 
             // Single checkbox
@@ -1154,43 +1368,65 @@
             // Business Identity
             if (!data.legalBusinessName) errors.push('Legal business name is required');
             if (!data.businessType) errors.push('Business type is required');
-            if (!data.taxIdType) errors.push('Tax ID type is required');
-            if (!data.taxIdLast4 || !/^\d{4}$/.test(data.taxIdLast4)) errors.push('Tax ID last 4 must be exactly 4 digits');
+            if (!data.companyType) errors.push('Company type is required');
+            if (!data.businessVertical) errors.push('Business industry is required');
+            if (!data.regionsOfOperation) errors.push('Regions of operation is required');
+            if (!data.taxIdType) errors.push('Business registration ID type is required');
+            if (!data.taxIdNumber) errors.push('Business registration number is required');
+            // Validate EIN format (XX-XXXXXXX)
+            if (data.taxIdType === 'EIN' && data.taxIdNumber && !/^\d{2}-?\d{7}$/.test(data.taxIdNumber)) {
+                errors.push('EIN must be in format XX-XXXXXXX (9 digits)');
+            }
             if (!data.businessAddressLine1) errors.push('Business address is required');
             if (!data.businessCity) errors.push('City is required');
             if (!data.businessState) errors.push('State is required');
             if (!data.businessPostalCode) errors.push('ZIP code is required');
             if (!data.businessWebsite) errors.push('Business website is required');
             if (data.businessWebsite && !isValidUrl(data.businessWebsite)) errors.push('Business website must be a valid URL');
+            // Public company validation
+            if (data.companyType === 'public') {
+                if (!data.stockExchange) errors.push('Stock exchange is required for public companies');
+                if (!data.stockTicker) errors.push('Stock ticker is required for public companies');
+            }
 
             // Authorized Representative
             if (!data.authorizedRepFirstName) errors.push('Representative first name is required');
             if (!data.authorizedRepLastName) errors.push('Representative last name is required');
             if (!data.authorizedRepEmail) errors.push('Representative email is required');
-            if (data.authorizedRepEmail && !isValidEmail(data.authorizedRepEmail)) errors.push('Invalid email format');
+            if (data.authorizedRepEmail && !isValidEmail(data.authorizedRepEmail)) errors.push('Invalid representative email format');
+            if (!data.businessContactEmail) errors.push('Business contact email is required');
+            if (data.businessContactEmail && !isValidEmail(data.businessContactEmail)) errors.push('Invalid business email format');
             if (!data.authorizedRepPhoneE164) errors.push('Representative phone is required');
             if (data.authorizedRepPhoneE164 && !isValidE164(data.authorizedRepPhoneE164)) errors.push('Phone must be in E.164 format (+15551234567)');
             if (!data.authorizedRepTitle) errors.push('Representative job title is required');
+            if (!data.jobPosition) errors.push('Job position is required');
 
             // Use Case
-            if (!data.useCaseCategories || data.useCaseCategories.length === 0) errors.push('At least one use case is required');
+            if (!data.campaignUseCase) errors.push('Primary campaign use case is required');
             if (!data.useCaseDescription) errors.push('Use case description is required');
 
             // Consent
             if (!data.consentMethods || data.consentMethods.length === 0) errors.push('At least one consent method is required');
-            if (!data.optOutAcknowledged) errors.push('STOP opt-out acknowledgement is required');
+            if (!data.consentProcessDescription) errors.push('Consent process description is required');
+            if (!data.optInConfirmationMessage) errors.push('Opt-in confirmation message is required');
+            if (!data.messageFrequency) errors.push('Message frequency is required');
+            if (!data.helpKeywordResponse) errors.push('HELP keyword response is required');
+            if (!data.privacyPolicyUrl) errors.push('Privacy policy URL is required');
+            if (!data.termsOfServiceUrl) errors.push('Terms of service URL is required');
+            if (!data.optOutAcknowledged) errors.push('Compliance acknowledgement is required');
 
             // Sample Messages
-            if (!data.sampleMessage1) errors.push('At least one sample message is required');
+            if (!data.sampleMessage1) errors.push('Sample message 1 is required');
+            if (!data.sampleMessage2) errors.push('Sample message 2 is required');
 
             // Volume
             if (!data.estimatedSmsPerDay) errors.push('Estimated SMS volume is required');
 
-            // Validate optional URLs
-            const urlFields = ['optInDisclosureUrl', 'privacyPolicyUrl', 'termsOfServiceUrl'];
+            // Validate URLs
+            const urlFields = ['optInDisclosureUrl', 'privacyPolicyUrl', 'termsOfServiceUrl', 'businessWebsite'];
             urlFields.forEach(field => {
                 if (data[field] && !isValidUrl(data[field])) {
-                    errors.push(`${field} must be a valid URL`);
+                    errors.push(`${field.replace(/([A-Z])/g, ' $1').toLowerCase()} must be a valid URL`);
                 }
             });
 
@@ -1209,8 +1445,14 @@
             const fieldMap = {
                 'Legal business name is required': 'legalBusinessName',
                 'Business type is required': 'businessType',
-                'Tax ID type is required': 'taxIdType',
-                'Tax ID last 4 must be exactly 4 digits': 'taxIdLast4',
+                'Company type is required': 'companyType',
+                'Business industry is required': 'businessVertical',
+                'Regions of operation is required': 'regionsOfOperation',
+                'Business registration ID type is required': 'taxIdType',
+                'Business registration number is required': 'taxIdNumber',
+                'EIN must be in format XX-XXXXXXX (9 digits)': 'taxIdNumber',
+                'Stock exchange is required for public companies': 'stockExchange',
+                'Stock ticker is required for public companies': 'stockTicker',
                 'Business address is required': 'businessAddressLine1',
                 'City is required': 'businessCity',
                 'State is required': 'businessState',
@@ -1220,12 +1462,23 @@
                 'Representative first name is required': 'authorizedRepFirstName',
                 'Representative last name is required': 'authorizedRepLastName',
                 'Representative email is required': 'authorizedRepEmail',
-                'Invalid email format': 'authorizedRepEmail',
+                'Invalid representative email format': 'authorizedRepEmail',
+                'Business contact email is required': 'businessContactEmail',
+                'Invalid business email format': 'businessContactEmail',
                 'Representative phone is required': 'authorizedRepPhoneE164',
                 'Phone must be in E.164 format (+15551234567)': 'authorizedRepPhoneE164',
                 'Representative job title is required': 'authorizedRepTitle',
+                'Job position is required': 'jobPosition',
+                'Primary campaign use case is required': 'campaignUseCase',
                 'Use case description is required': 'useCaseDescription',
-                'At least one sample message is required': 'sampleMessage1',
+                'Consent process description is required': 'consentProcessDescription',
+                'Opt-in confirmation message is required': 'optInConfirmationMessage',
+                'Message frequency is required': 'messageFrequency',
+                'HELP keyword response is required': 'helpKeywordResponse',
+                'Privacy policy URL is required': 'privacyPolicyUrl',
+                'Terms of service URL is required': 'termsOfServiceUrl',
+                'Sample message 1 is required': 'sampleMessage1',
+                'Sample message 2 is required': 'sampleMessage2',
                 'Estimated SMS volume is required': 'estimatedSmsPerDay'
             };
 
@@ -1242,7 +1495,7 @@
             });
 
             // Special handling for opt-out checkbox
-            if (errors.includes('STOP opt-out acknowledgement is required')) {
+            if (errors.includes('Compliance acknowledgement is required')) {
                 document.getElementById('optOutError').classList.add('visible');
             }
         }
@@ -1327,9 +1580,20 @@
                 }
             });
 
-            // Tax ID last 4 - only digits
-            document.getElementById('taxIdLast4').addEventListener('input', function() {
-                this.value = this.value.replace(/\D/g, '').slice(0, 4);
+            // EIN formatting (XX-XXXXXXX)
+            document.getElementById('taxIdNumber').addEventListener('input', function() {
+                let value = this.value.replace(/\D/g, '');
+                if (value.length > 2) {
+                    this.value = value.slice(0, 2) + '-' + value.slice(2, 9);
+                } else {
+                    this.value = value;
+                }
+            });
+
+            // Show/hide stock info based on company type
+            document.getElementById('companyType').addEventListener('change', function() {
+                const stockRow = document.getElementById('stockInfoRow');
+                stockRow.style.display = this.value === 'public' ? 'flex' : 'none';
             });
 
             // Clear errors on input

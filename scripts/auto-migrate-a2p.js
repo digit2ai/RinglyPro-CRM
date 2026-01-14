@@ -1,6 +1,7 @@
 // =====================================================
 // Auto-Migrate A2P 10DLC Table
 // This runs on server startup to ensure the table exists
+// Updated: 2026-01-13 - Added Twilio/GHL compliance columns
 // =====================================================
 
 const { Sequelize } = require('sequelize');
@@ -21,13 +22,42 @@ async function autoMigrateA2P() {
         `);
 
         if (tableExists[0].exists) {
-            console.log('✅ A2P table already exists');
+            console.log('✅ A2P table already exists, checking for new columns...');
+
+            // Add new columns if they don't exist (for existing deployments)
+            const newColumns = [
+                { name: 'company_type', type: 'VARCHAR(20)' },
+                { name: 'regions_of_operation', type: 'VARCHAR(50)' },
+                { name: 'stock_exchange', type: 'VARCHAR(20)' },
+                { name: 'stock_ticker', type: 'VARCHAR(10)' },
+                { name: 'tax_id_number', type: 'VARCHAR(50)' },
+                { name: 'business_contact_email', type: 'VARCHAR(255)' },
+                { name: 'job_position', type: 'VARCHAR(50)' },
+                { name: 'campaign_use_case', type: 'VARCHAR(50)' },
+                { name: 'content_attributes', type: 'JSONB' },
+                { name: 'consent_process_description', type: 'TEXT' },
+                { name: 'opt_in_confirmation_message', type: 'TEXT' },
+                { name: 'message_frequency', type: 'VARCHAR(50)' },
+                { name: 'help_keyword_response', type: 'TEXT' }
+            ];
+
+            for (const col of newColumns) {
+                try {
+                    await sequelize.query(`
+                        ALTER TABLE a2p ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}
+                    `);
+                } catch (e) {
+                    // Column might already exist, that's ok
+                }
+            }
+
+            console.log('✅ A2P table columns updated');
             return true;
         }
 
         console.log('🔄 Creating A2P table...');
 
-        // Create the a2p table
+        // Create the a2p table with ALL columns including new ones
         await sequelize.query(`
             CREATE TABLE IF NOT EXISTS a2p (
                 id SERIAL PRIMARY KEY,
@@ -50,7 +80,13 @@ async function autoMigrateA2P() {
                 legal_business_name VARCHAR(255),
                 dba_name VARCHAR(255),
                 business_type VARCHAR(50),
+                company_type VARCHAR(20),
+                business_vertical VARCHAR(100),
+                regions_of_operation VARCHAR(50),
+                stock_exchange VARCHAR(20),
+                stock_ticker VARCHAR(10),
                 tax_id_type VARCHAR(10),
+                tax_id_number VARCHAR(50),
                 tax_id_last4 VARCHAR(4),
                 tax_id_full_encrypted TEXT,
                 business_registration_country VARCHAR(10) NOT NULL DEFAULT 'US',
@@ -60,23 +96,30 @@ async function autoMigrateA2P() {
                 business_state VARCHAR(50),
                 business_postal_code VARCHAR(20),
                 business_website VARCHAR(500),
-                business_vertical VARCHAR(100),
 
                 -- Authorized Representative
                 authorized_rep_first_name VARCHAR(100),
                 authorized_rep_last_name VARCHAR(100),
                 authorized_rep_email VARCHAR(255),
+                business_contact_email VARCHAR(255),
                 authorized_rep_phone_e164 VARCHAR(20),
                 authorized_rep_title VARCHAR(100),
+                job_position VARCHAR(50),
 
                 -- Messaging Use Case
+                campaign_use_case VARCHAR(50),
                 use_case_categories JSONB,
                 use_case_other_description TEXT,
                 use_case_description TEXT,
+                content_attributes JSONB,
 
                 -- Consent & Opt-Out
                 consent_methods JSONB,
                 consent_other_description TEXT,
+                consent_process_description TEXT,
+                opt_in_confirmation_message TEXT,
+                message_frequency VARCHAR(50),
+                help_keyword_response TEXT,
                 opt_out_acknowledged BOOLEAN NOT NULL DEFAULT false,
                 opt_in_disclosure_url VARCHAR(500),
                 privacy_policy_url VARCHAR(500),
