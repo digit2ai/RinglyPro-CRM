@@ -466,6 +466,7 @@ Return ONLY valid JSON with these 5 keys, no markdown or explanation.`;
 /**
  * GET /api/clients/:clientId/a2p
  * Get A2P record for a client
+ * For draft records, merges standard prefill content for any empty fields
  */
 router.get('/clients/:clientId/a2p', validateClientAccess, async (req, res) => {
   try {
@@ -484,6 +485,59 @@ router.get('/clients/:clientId/a2p', validateClientAccess, async (req, res) => {
     if (!req.user?.isAdmin) {
       delete response.notesInternal;
       delete response.taxIdFullEncrypted;
+    }
+
+    // For draft records, fill in empty fields with standard prefill content
+    if (a2p.status === 'draft') {
+      const client = req.clientRecord;
+      const businessName = client.business_name || '[Business Name]';
+
+      // Parse owner name into first/last
+      const ownerNameParts = (client.owner_name || '').trim().split(/\s+/);
+      const firstName = ownerNameParts[0] || '';
+      const lastName = ownerNameParts.slice(1).join(' ') || '';
+
+      // Format phone to E.164
+      let phoneE164 = client.owner_phone || '';
+      if (phoneE164 && !phoneE164.startsWith('+')) {
+        const digits = phoneE164.replace(/\D/g, '');
+        if (digits.length === 10) {
+          phoneE164 = '+1' + digits;
+        } else if (digits.length === 11 && digits.startsWith('1')) {
+          phoneE164 = '+' + digits;
+        }
+      }
+
+      // Standard prefill content for empty fields
+      const prefillDefaults = {
+        legalBusinessName: client.business_name || '',
+        businessWebsite: client.website_url || '',
+        authorizedRepFirstName: firstName,
+        authorizedRepLastName: lastName,
+        authorizedRepEmail: client.owner_email || '',
+        businessContactEmail: client.owner_email || '',
+        authorizedRepPhoneE164: phoneE164,
+        supportContactInfo: client.owner_email || '',
+        businessRegistrationCountry: 'US',
+        regionsOfOperation: 'US_ONLY',
+        taxIdType: 'EIN',
+        campaignUseCase: 'CUSTOMER_CARE',
+        messageFrequency: 'varies',
+        useCaseDescription: `${businessName} uses SMS messaging to communicate with customers who have opted in through our website, phone calls, or in-person interactions. We send appointment reminders, confirmations, follow-up messages for missed calls, and customer service responses. All recipients are existing customers or individuals who have explicitly requested to receive SMS communications from us.`,
+        consentProcessDescription: `Customers provide consent to receive SMS messages through multiple methods: (1) By checking an unchecked-by-default SMS opt-in checkbox on our website contact or booking form, (2) By verbally agreeing during a phone call when scheduling appointments, or (3) By signing a written consent form in person. We maintain records of all consent and honor opt-out requests immediately.`,
+        optInConfirmationMessage: `Thanks for opting in to SMS from ${businessName}! You'll receive appointment reminders, confirmations, and service updates. Msg frequency varies. Msg & data rates may apply. Reply HELP for help, STOP to cancel.`,
+        sampleMessage1: `Hi [Customer Name], this is ${businessName}. Your appointment is confirmed for [Date] at [Time]. Reply STOP to opt out.`,
+        sampleMessage2: `${businessName}: We missed your call! How can we help you today? Visit our website or call us back. Reply STOP to unsubscribe.`,
+        helpKeywordResponse: `${businessName}: For help, contact us at ${client.owner_email || 'support@example.com'} or call ${client.owner_phone || 'our office'}. Msg & data rates may apply.`,
+        stopKeywordResponse: `You've been unsubscribed from ${businessName} SMS messages. You will not receive any more texts from us. Reply START to re-subscribe.`
+      };
+
+      // Merge prefill defaults for any empty/null fields
+      for (const [key, defaultValue] of Object.entries(prefillDefaults)) {
+        if (!response[key] || response[key] === '') {
+          response[key] = defaultValue;
+        }
+      }
     }
 
     res.json({
