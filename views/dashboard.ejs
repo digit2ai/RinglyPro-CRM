@@ -203,6 +203,62 @@
             transform: translateY(-1px);
         }
 
+        /* A2P Verify Button */
+        .a2p-verify-btn {
+            background: linear-gradient(135deg, #0263e0, #0150b5);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .a2p-verify-btn:hover {
+            background: linear-gradient(135deg, #0150b5, #013d8a);
+            transform: translateY(-1px);
+        }
+
+        .a2p-status-badge {
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.25rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .a2p-status-not-started {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .a2p-status-draft {
+            background: #fbbf24;
+            color: #78350f;
+        }
+
+        .a2p-status-submitted {
+            background: #60a5fa;
+            color: #1e3a5f;
+        }
+
+        .a2p-status-approved {
+            background: #34d399;
+            color: #064e3b;
+        }
+
+        .a2p-status-rejected {
+            background: #f87171;
+            color: #7f1d1d;
+        }
+
         /* Rachel Toggle Card */
         .rachel-card {
             background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
@@ -2448,6 +2504,13 @@
             <div class="header-top">
                 <div></div>
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <a href="#" id="a2pVerifyBtn" class="a2p-verify-btn" onclick="openA2PVerification(event)">
+                        <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                        A2P Verify
+                        <span id="a2pStatusBadge" class="a2p-status-badge a2p-status-not-started">Loading...</span>
+                    </a>
                     <a href="https://api.leadconnectorhq.com/widget/bookings/missed-call-text-back-bde9451d-56fc-4189-bf4e-beb0f6661258-7e52ccdb-45c2-4ce8-99f6-a7bf13669fc4-3cc62e97-695d-4cf4-85ba-9f47ac4af26f" target="_blank" class="training-btn">
                         <svg style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -3700,6 +3763,7 @@
             loadRachelStatus();
             loadDashboard();
             loadCreditsBalance();
+            loadA2PStatus();
             // Load messages based on client - Clients with rachel_enabled use ElevenLabs
             // Use == for type coercion (CLIENT_ID might be string or number)
             const usesElevenLabs = CLIENT_ID == 15 || CLIENT_ID == 17 || CLIENT_ID == 32;
@@ -3918,6 +3982,66 @@
                 console.error('Error loading Rachel status:', error);
                 document.getElementById('rachelStatusText').textContent = 'Status unavailable';
             }
+        }
+
+        // =====================================================
+        // A2P Verification Status
+        // =====================================================
+
+        async function loadA2PStatus() {
+            try {
+                if (!CLIENT_ID) {
+                    console.warn('No CLIENT_ID available for A2P status');
+                    updateA2PStatusBadge('not_started');
+                    return;
+                }
+
+                const response = await authenticatedFetch(`/api/a2p/clients/${CLIENT_ID}/a2p/status`);
+                if (!response) {
+                    updateA2PStatusBadge('not_started');
+                    return;
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    updateA2PStatusBadge(data.status);
+                } else {
+                    updateA2PStatusBadge('not_started');
+                }
+            } catch (error) {
+                console.error('Error loading A2P status:', error);
+                updateA2PStatusBadge('not_started');
+            }
+        }
+
+        function updateA2PStatusBadge(status) {
+            const badge = document.getElementById('a2pStatusBadge');
+            if (!badge) return;
+
+            // Remove all status classes
+            badge.classList.remove('a2p-status-not-started', 'a2p-status-draft', 'a2p-status-submitted', 'a2p-status-approved', 'a2p-status-rejected');
+
+            // Map status to display text and class
+            const statusMap = {
+                'not_started': { text: 'Not Started', class: 'a2p-status-not-started' },
+                'draft': { text: 'In Progress', class: 'a2p-status-draft' },
+                'submitted': { text: 'Submitted', class: 'a2p-status-submitted' },
+                'approved': { text: 'Verified', class: 'a2p-status-approved' },
+                'rejected': { text: 'Rejected', class: 'a2p-status-rejected' }
+            };
+
+            const statusInfo = statusMap[status] || statusMap['not_started'];
+            badge.textContent = statusInfo.text;
+            badge.classList.add(statusInfo.class);
+        }
+
+        function openA2PVerification(event) {
+            event.preventDefault();
+            if (!CLIENT_ID) {
+                alert('Client ID not available. Please refresh the page.');
+                return;
+            }
+            window.open(`/a2p?clientId=${CLIENT_ID}`, '_blank');
         }
 
         // Update Rachel UI

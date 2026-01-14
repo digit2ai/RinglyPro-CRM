@@ -253,6 +253,40 @@ const validateA2PData = (data, requireAll = false) => {
 // ========================
 
 /**
+ * GET /api/clients/:clientId/a2p/status
+ * Get A2P status only (lightweight endpoint for dashboard)
+ */
+router.get('/clients/:clientId/a2p/status', validateClientAccess, async (req, res) => {
+  try {
+    const a2p = await A2P.findByClientId(req.clientId);
+
+    if (!a2p) {
+      return res.json({
+        success: true,
+        status: 'not_started',
+        clientId: req.clientId
+      });
+    }
+
+    res.json({
+      success: true,
+      status: a2p.status, // draft, submitted, approved, rejected
+      clientId: req.clientId,
+      updatedAt: a2p.updatedAt,
+      submittedAt: a2p.submittedAt,
+      approvedAt: a2p.approvedAt,
+      rejectedAt: a2p.rejectedAt
+    });
+  } catch (error) {
+    console.error('Error fetching A2P status:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch A2P status'
+    });
+  }
+});
+
+/**
  * GET /api/clients/:clientId/a2p
  * Get A2P record for a client
  */
