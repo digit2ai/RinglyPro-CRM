@@ -511,6 +511,7 @@
                     <button class="tab" onclick="switchTab('sms')">SMS</button>
                     <button class="tab" onclick="switchTab('notes')">Notes</button>
                     <button class="tab" onclick="switchTab('activity')">Activity</button>
+                    <button class="tab" onclick="switchTab('a2p')" style="background: linear-gradient(135deg, #0263e0, #0150b5); color: white;">A2P</button>
                 </div>
 
                 <!-- Tab Contents -->
@@ -552,6 +553,13 @@
                 <div id="tab-activity" class="tab-content">
                     <div id="activityList">
                         <div class="loading">Loading activity...</div>
+                    </div>
+                </div>
+
+                <!-- A2P Tab Content -->
+                <div id="tab-a2p" class="tab-content">
+                    <div id="a2pContent">
+                        <div class="loading">Loading A2P information...</div>
                     </div>
                 </div>
             </div>
@@ -900,6 +908,11 @@
             if (tabName === 'sms' && currentClient) {
                 loadSMSHistory(currentClient);
             }
+
+            // Load A2P data when switching to A2P tab
+            if (tabName === 'a2p' && currentClient) {
+                loadA2PData(currentClient);
+            }
         }
 
         // Render client info
@@ -1042,6 +1055,231 @@
 
             container.innerHTML = html;
             container.scrollTop = container.scrollHeight;
+        }
+
+        // ========================
+        // A2P Functions
+        // ========================
+        async function loadA2PData(clientId) {
+            try {
+                document.getElementById('a2pContent').innerHTML = '<div class="loading">Loading A2P information...</div>';
+
+                const response = await authenticatedFetch(`/api/admin/clients/${clientId}/a2p`);
+                if (!response) return;
+
+                const data = await response.json();
+                if (data.success && data.a2p) {
+                    renderA2PData(data.a2p, clientId);
+                } else {
+                    renderA2PEmpty(clientId);
+                }
+            } catch (error) {
+                console.error('Error loading A2P data:', error);
+                renderA2PEmpty(currentClient);
+            }
+        }
+
+        function renderA2PEmpty(clientId) {
+            document.getElementById('a2pContent').innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📝</div>
+                    <h3 style="margin-bottom: 12px; color: #333;">No A2P Registration Found</h3>
+                    <p style="color: #666; margin-bottom: 24px;">This client hasn't started their A2P 10DLC verification yet.</p>
+                    <a href="/a2p?clientId=${clientId}" target="_blank"
+                       style="display: inline-block; padding: 12px 24px; background: #0263e0; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">
+                        Start A2P Registration
+                    </a>
+                </div>
+            `;
+        }
+
+        function renderA2PData(a2p, clientId) {
+            const statusColors = {
+                draft: '#f59e0b',
+                submitted: '#3b82f6',
+                approved: '#10b981',
+                rejected: '#ef4444'
+            };
+
+            const statusLabels = {
+                draft: 'Draft',
+                submitted: 'Submitted - Under Review',
+                approved: 'Approved',
+                rejected: 'Rejected'
+            };
+
+            const formatDate = (dateStr) => {
+                if (!dateStr) return 'N/A';
+                return new Date(dateStr).toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+            };
+
+            const formatValue = (val) => val || '<span style="color: #999;">Not provided</span>';
+            const formatBoolean = (val) => val ? '✅ Yes' : '❌ No';
+            const formatArray = (arr) => {
+                if (!arr || arr.length === 0) return '<span style="color: #999;">None selected</span>';
+                return arr.map(v => `<span style="display: inline-block; background: #e5e7eb; padding: 2px 8px; border-radius: 4px; margin: 2px; font-size: 12px;">${v.replace(/_/g, ' ')}</span>`).join('');
+            };
+
+            const html = `
+                <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <span style="display: inline-block; padding: 8px 16px; background: ${statusColors[a2p.status]}; color: white; border-radius: 20px; font-weight: 600; font-size: 14px;">
+                            ${statusLabels[a2p.status] || a2p.status}
+                        </span>
+                        <span style="margin-left: 12px; color: #666; font-size: 13px;">
+                            Last updated: ${formatDate(a2p.updated_at)}
+                        </span>
+                    </div>
+                    <a href="/a2p?clientId=${clientId}" target="_blank"
+                       style="padding: 8px 16px; background: #0263e0; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 13px;">
+                        Open Full Form →
+                    </a>
+                </div>
+
+                ${a2p.status === 'rejected' && a2p.rejection_reason ? `
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #ef4444; padding: 16px; border-radius: 6px; margin-bottom: 20px;">
+                        <strong style="color: #dc2626;">Rejection Reason:</strong>
+                        <p style="margin-top: 8px; color: #7f1d1d;">${a2p.rejection_reason}</p>
+                    </div>
+                ` : ''}
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <!-- Business Information -->
+                    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
+                        <h4 style="margin-bottom: 12px; color: #0263e0; border-bottom: 2px solid #0263e0; padding-bottom: 8px;">Business Information</h4>
+                        <div style="display: grid; gap: 8px; font-size: 13px;">
+                            <div><strong>Legal Name:</strong> ${formatValue(a2p.legal_business_name)}</div>
+                            <div><strong>DBA:</strong> ${formatValue(a2p.dba_name)}</div>
+                            <div><strong>Business Type:</strong> ${formatValue(a2p.business_type)}</div>
+                            <div><strong>Company Type:</strong> ${formatValue(a2p.company_type)}</div>
+                            <div><strong>Industry:</strong> ${formatValue(a2p.business_vertical)}</div>
+                            <div><strong>Tax ID Type:</strong> ${formatValue(a2p.tax_id_type)}</div>
+                            <div><strong>Tax ID:</strong> ${formatValue(a2p.tax_id_number)}</div>
+                            <div><strong>Website:</strong> ${a2p.business_website ? `<a href="${a2p.business_website}" target="_blank">${a2p.business_website}</a>` : formatValue(null)}</div>
+                            <div><strong>Support Contact:</strong> ${formatValue(a2p.support_contact_info)}</div>
+                        </div>
+                    </div>
+
+                    <!-- Business Address -->
+                    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
+                        <h4 style="margin-bottom: 12px; color: #0263e0; border-bottom: 2px solid #0263e0; padding-bottom: 8px;">Business Address</h4>
+                        <div style="display: grid; gap: 8px; font-size: 13px;">
+                            <div><strong>Address:</strong> ${formatValue(a2p.business_address_line1)}</div>
+                            ${a2p.business_address_line2 ? `<div><strong>Address 2:</strong> ${a2p.business_address_line2}</div>` : ''}
+                            <div><strong>City:</strong> ${formatValue(a2p.business_city)}</div>
+                            <div><strong>State:</strong> ${formatValue(a2p.business_state)}</div>
+                            <div><strong>ZIP:</strong> ${formatValue(a2p.business_postal_code)}</div>
+                            <div><strong>Country:</strong> ${formatValue(a2p.business_registration_country)}</div>
+                        </div>
+                    </div>
+
+                    <!-- Authorized Representative -->
+                    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
+                        <h4 style="margin-bottom: 12px; color: #0263e0; border-bottom: 2px solid #0263e0; padding-bottom: 8px;">Authorized Representative</h4>
+                        <div style="display: grid; gap: 8px; font-size: 13px;">
+                            <div><strong>Name:</strong> ${formatValue(a2p.authorized_rep_first_name)} ${a2p.authorized_rep_last_name || ''}</div>
+                            <div><strong>Title:</strong> ${formatValue(a2p.authorized_rep_title)}</div>
+                            <div><strong>Position:</strong> ${formatValue(a2p.job_position)}</div>
+                            <div><strong>Email:</strong> ${formatValue(a2p.authorized_rep_email)}</div>
+                            <div><strong>Business Email:</strong> ${formatValue(a2p.business_contact_email)}</div>
+                            <div><strong>Phone:</strong> ${formatValue(a2p.authorized_rep_phone_e164)}</div>
+                        </div>
+                    </div>
+
+                    <!-- Messaging Use Case -->
+                    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
+                        <h4 style="margin-bottom: 12px; color: #0263e0; border-bottom: 2px solid #0263e0; padding-bottom: 8px;">Messaging Use Case</h4>
+                        <div style="display: grid; gap: 8px; font-size: 13px;">
+                            <div><strong>Primary Use Case:</strong> ${formatValue(a2p.campaign_use_case)}</div>
+                            <div><strong>Categories:</strong> ${formatArray(a2p.use_case_categories)}</div>
+                            <div><strong>Content Attributes:</strong> ${formatArray(a2p.content_attributes)}</div>
+                            <div><strong>Description:</strong></div>
+                            <div style="background: white; padding: 8px; border-radius: 4px; font-style: italic;">${formatValue(a2p.use_case_description)}</div>
+                        </div>
+                    </div>
+
+                    <!-- Consent & Compliance -->
+                    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
+                        <h4 style="margin-bottom: 12px; color: #0263e0; border-bottom: 2px solid #0263e0; padding-bottom: 8px;">Consent & Compliance</h4>
+                        <div style="display: grid; gap: 8px; font-size: 13px;">
+                            <div><strong>Consent Methods:</strong> ${formatArray(a2p.consent_methods)}</div>
+                            <div><strong>Message Frequency:</strong> ${formatValue(a2p.message_frequency)}</div>
+                            <div><strong>Double Opt-In:</strong> ${formatBoolean(a2p.use_double_opt_in)}</div>
+                            <div><strong>Checkbox Unchecked Default:</strong> ${formatBoolean(a2p.opt_in_checkbox_default)}</div>
+                            <div><strong>No Data Sharing:</strong> ${formatBoolean(a2p.no_data_sharing)}</div>
+                            <div><strong>STOP Acknowledged:</strong> ${formatBoolean(a2p.opt_out_acknowledged)}</div>
+                        </div>
+                    </div>
+
+                    <!-- Keyword Responses -->
+                    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
+                        <h4 style="margin-bottom: 12px; color: #0263e0; border-bottom: 2px solid #0263e0; padding-bottom: 8px;">Keyword Responses</h4>
+                        <div style="display: grid; gap: 8px; font-size: 13px;">
+                            <div><strong>HELP Response:</strong></div>
+                            <div style="background: white; padding: 8px; border-radius: 4px;">${formatValue(a2p.help_keyword_response)}</div>
+                            <div><strong>STOP Response:</strong></div>
+                            <div style="background: white; padding: 8px; border-radius: 4px;">${formatValue(a2p.stop_keyword_response)}</div>
+                        </div>
+                    </div>
+
+                    <!-- URLs -->
+                    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
+                        <h4 style="margin-bottom: 12px; color: #0263e0; border-bottom: 2px solid #0263e0; padding-bottom: 8px;">Policy URLs</h4>
+                        <div style="display: grid; gap: 8px; font-size: 13px;">
+                            <div><strong>Privacy Policy:</strong> ${a2p.privacy_policy_url ? `<a href="${a2p.privacy_policy_url}" target="_blank">${a2p.privacy_policy_url}</a>` : formatValue(null)}</div>
+                            <div><strong>Terms of Service:</strong> ${a2p.terms_of_service_url ? `<a href="${a2p.terms_of_service_url}" target="_blank">${a2p.terms_of_service_url}</a>` : formatValue(null)}</div>
+                            <div><strong>Opt-In Disclosure:</strong> ${a2p.opt_in_disclosure_url ? `<a href="${a2p.opt_in_disclosure_url}" target="_blank">${a2p.opt_in_disclosure_url}</a>` : formatValue(null)}</div>
+                        </div>
+                    </div>
+
+                    <!-- Volume -->
+                    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
+                        <h4 style="margin-bottom: 12px; color: #0263e0; border-bottom: 2px solid #0263e0; padding-bottom: 8px;">Volume Estimates</h4>
+                        <div style="display: grid; gap: 8px; font-size: 13px;">
+                            <div><strong>Daily Volume:</strong> ${formatValue(a2p.estimated_sms_per_day)}</div>
+                            <div><strong>Monthly Volume:</strong> ${formatValue(a2p.estimated_sms_per_month)}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sample Messages -->
+                <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-top: 20px;">
+                    <h4 style="margin-bottom: 12px; color: #0263e0; border-bottom: 2px solid #0263e0; padding-bottom: 8px;">Sample Messages</h4>
+                    <div style="display: grid; gap: 12px;">
+                        ${a2p.sample_message_1 ? `
+                            <div style="background: white; padding: 12px; border-radius: 6px; border-left: 3px solid #0263e0;">
+                                <strong style="font-size: 12px; color: #666;">Sample 1:</strong>
+                                <p style="margin-top: 4px;">${a2p.sample_message_1}</p>
+                            </div>
+                        ` : ''}
+                        ${a2p.sample_message_2 ? `
+                            <div style="background: white; padding: 12px; border-radius: 6px; border-left: 3px solid #0263e0;">
+                                <strong style="font-size: 12px; color: #666;">Sample 2:</strong>
+                                <p style="margin-top: 4px;">${a2p.sample_message_2}</p>
+                            </div>
+                        ` : ''}
+                        ${a2p.sample_message_3 ? `
+                            <div style="background: white; padding: 12px; border-radius: 6px; border-left: 3px solid #0263e0;">
+                                <strong style="font-size: 12px; color: #666;">Sample 3:</strong>
+                                <p style="margin-top: 4px;">${a2p.sample_message_3}</p>
+                            </div>
+                        ` : ''}
+                        ${!a2p.sample_message_1 && !a2p.sample_message_2 && !a2p.sample_message_3 ? '<p style="color: #999;">No sample messages provided</p>' : ''}
+                    </div>
+                </div>
+
+                <!-- Timestamps -->
+                <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #666;">
+                    <strong>Created:</strong> ${formatDate(a2p.created_at)} |
+                    <strong>Updated:</strong> ${formatDate(a2p.updated_at)}
+                    ${a2p.submitted_at ? ` | <strong>Submitted:</strong> ${formatDate(a2p.submitted_at)}` : ''}
+                    ${a2p.approved_at ? ` | <strong>Approved:</strong> ${formatDate(a2p.approved_at)}` : ''}
+                </div>
+            `;
+
+            document.getElementById('a2pContent').innerHTML = html;
         }
 
         // Send SMS

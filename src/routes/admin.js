@@ -1926,6 +1926,43 @@ router.get('/clients/:client_id', async (req, res) => {
     }
 });
 
+// ============= GET CLIENT A2P DATA =============
+
+router.get('/clients/:client_id/a2p', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+
+        // Fetch A2P record for this client
+        const [a2pRecords] = await sequelize.query(`
+            SELECT * FROM a2p WHERE client_id = :clientId
+        `, {
+            replacements: { clientId: parseInt(client_id) },
+            type: sequelize.QueryTypes.SELECT
+        });
+
+        if (!a2pRecords) {
+            return res.json({
+                success: true,
+                a2p: null,
+                message: 'No A2P record found for this client'
+            });
+        }
+
+        res.json({
+            success: true,
+            a2p: a2pRecords
+        });
+
+    } catch (error) {
+        console.error('Error fetching A2P data:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to load A2P data',
+            details: error.message
+        });
+    }
+});
+
 // ============= SEND SMS TO CLIENT =============
 
 router.post('/clients/:client_id/send-sms', async (req, res) => {
