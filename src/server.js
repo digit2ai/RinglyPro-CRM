@@ -47,6 +47,14 @@ async function startServer() {
           console.log('⚠️ Project Tracker auto-migration skipped:', error.message);
         }
 
+        // AUTO-MIGRATE A2P 10DLC TABLE
+        try {
+          const { autoMigrateA2P } = require('../scripts/auto-migrate-a2p');
+          await autoMigrateA2P();
+        } catch (error) {
+          console.log('⚠️ A2P auto-migration skipped:', error.message);
+        }
+
         // AUTO-MIGRATE WEBSITE_URL COLUMN
         try {
           await sequelize.query(`
