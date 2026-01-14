@@ -2229,41 +2229,43 @@ router.get('/reports/overview', async (req, res) => {
     try {
         console.log('📊 Admin loading overview report');
 
-        // Get overview statistics
-        const overview = await sequelize.query(`
-            WITH client_stats AS (
-                SELECT
-                    c.id,
-                    c.active,
-                    c.rachel_enabled,
-                    COALESCE(SUM(calls.duration) / 60.0, 0) as client_minutes,
-                    COUNT(DISTINCT calls.id) as client_calls
-                FROM clients c
-                LEFT JOIN calls ON calls.client_id = c.id
-                GROUP BY c.id, c.active, c.rachel_enabled
-            )
+        // Get overview statistics - optimized with separate queries (no JOINs)
+        const [clientStats] = await sequelize.query(`
             SELECT
                 COUNT(*) as total_clients,
                 COUNT(CASE WHEN active = TRUE THEN 1 END) as active_clients,
-                COUNT(CASE WHEN rachel_enabled = TRUE THEN 1 END) as rachel_enabled_clients,
-                ROUND(COALESCE(SUM(client_minutes), 0), 2) as total_minutes_used,
-                SUM(client_calls) as total_calls
-            FROM client_stats
-        `, {
-            type: sequelize.QueryTypes.SELECT
-        });
+                COUNT(CASE WHEN rachel_enabled = TRUE THEN 1 END) as rachel_enabled_clients
+            FROM clients
+        `, { type: sequelize.QueryTypes.SELECT });
 
-        // Get total appointments and messages separately (simpler query)
-        const [activityStats] = await sequelize.query(`
+        const [callStats] = await sequelize.query(`
             SELECT
-                COUNT(DISTINCT appointments.id) as total_appointments,
-                COUNT(DISTINCT messages.id) as total_messages
-            FROM clients c
-            LEFT JOIN appointments ON appointments.client_id = c.id
-            LEFT JOIN messages ON messages.client_id = c.id
-        `, {
-            type: sequelize.QueryTypes.SELECT
-        });
+                ROUND(COALESCE(SUM(duration) / 60.0, 0), 2) as total_minutes_used,
+                COUNT(*) as total_calls
+            FROM calls
+        `, { type: sequelize.QueryTypes.SELECT });
+
+        const [appointmentStats] = await sequelize.query(`
+            SELECT COUNT(*) as total_appointments FROM appointments
+        `, { type: sequelize.QueryTypes.SELECT });
+
+        const [messageStats] = await sequelize.query(`
+            SELECT COUNT(*) as total_messages FROM messages
+        `, { type: sequelize.QueryTypes.SELECT });
+
+        // Combine all stats
+        const overview = [{
+            total_clients: clientStats.total_clients,
+            active_clients: clientStats.active_clients,
+            rachel_enabled_clients: clientStats.rachel_enabled_clients,
+            total_minutes_used: callStats.total_minutes_used,
+            total_calls: callStats.total_calls
+        }];
+
+        const activityStats = {
+            total_appointments: appointmentStats.total_appointments,
+            total_messages: messageStats.total_messages
+        };
 
         // Merge the stats together
         res.json({
