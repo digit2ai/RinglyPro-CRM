@@ -6,19 +6,19 @@
     <title>A2P 10DLC Business Verification | RinglyPro</title>
     <style>
         :root {
-            --primary-color: #4f46e5;
-            --primary-hover: #4338ca;
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
             --secondary-color: #10b981;
             --danger-color: #ef4444;
             --warning-color: #f59e0b;
-            --bg-color: #f9fafb;
-            --card-bg: #ffffff;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --border-color: #e5e7eb;
-            --success-bg: #ecfdf5;
-            --warning-bg: #fffbeb;
-            --error-bg: #fef2f2;
+            --bg-color: #1e293b;
+            --card-bg: #0f172a;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --success-bg: #064e3b;
+            --warning-bg: #78350f;
+            --error-bg: #7f1d1d;
         }
 
         * {
@@ -42,7 +42,7 @@
 
         /* Header */
         .header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, #7c3aed 100%);
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
             color: white;
             padding: 30px 20px;
             text-align: center;
@@ -184,6 +184,13 @@
             border-radius: 8px;
             font-size: 1rem;
             transition: border-color 0.2s, box-shadow 0.2s;
+            background-color: #1e293b;
+            color: var(--text-primary);
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: #64748b;
         }
 
         .form-group input:focus,
@@ -191,7 +198,7 @@
         .form-group textarea:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
         }
 
         .form-group input.error,
@@ -922,9 +929,9 @@
                 <!-- Section 5: Sample Messages -->
                 <div class="form-section" id="section5">
                     <h2><span class="section-number">5</span> Sample Messages</h2>
-                    <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-                        <strong style="color: #0369a1;">Sample Message Requirements:</strong>
-                        <ul style="font-size: 0.875rem; color: #0c4a6e; margin: 8px 0 0 20px;">
+                    <div style="background: #1e3a5f; border: 1px solid #2563eb; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                        <strong style="color: #60a5fa;">Sample Message Requirements:</strong>
+                        <ul style="font-size: 0.875rem; color: #93c5fd; margin: 8px 0 0 20px;">
                             <li>Include your <strong>business name</strong> in messages</li>
                             <li>Use placeholders like [Customer Name] instead of real names</li>
                             <li>At least one message must include <strong>"Reply STOP to unsubscribe"</strong></li>
