@@ -1657,7 +1657,8 @@ router.get('/clients', async (req, res) => {
 
         console.log(`📊 Admin loading clients list (search: ${search || 'none'})`);
 
-        // Build query
+        // Build optimized query using subqueries instead of JOINs to avoid cartesian product
+        // This is MUCH faster than joining all tables together
         let query = `
             SELECT
                 c.id,
@@ -1672,30 +1673,27 @@ router.get('/clients', async (req, res) => {
                 c.monthly_free_minutes,
                 c.per_minute_rate,
 
-                -- Calculate last activity (most recent call, message, or appointment)
+                -- Calculate last activity using subqueries
                 GREATEST(
-                    COALESCE(MAX(calls.created_at), c.created_at),
-                    COALESCE(MAX(messages.created_at), c.created_at),
-                    COALESCE(MAX(appointments.created_at), c.created_at),
+                    COALESCE((SELECT MAX(created_at) FROM calls WHERE client_id = c.id), c.created_at),
+                    COALESCE((SELECT MAX(created_at) FROM messages WHERE client_id = c.id), c.created_at),
+                    COALESCE((SELECT MAX(created_at) FROM appointments WHERE client_id = c.id), c.created_at),
                     c.created_at
                 ) as last_activity_at,
 
-                -- Calculate minutes used from calls table (duration is in seconds, convert to minutes)
-                COALESCE(SUM(calls.duration) / 60.0, 0) as total_minutes_used,
+                -- Calculate minutes used (duration in seconds -> minutes)
+                COALESCE((SELECT SUM(duration) / 60.0 FROM calls WHERE client_id = c.id), 0) as total_minutes_used,
 
                 -- Count appointments
-                COUNT(DISTINCT appointments.id) as total_appointments,
+                COALESCE((SELECT COUNT(*) FROM appointments WHERE client_id = c.id), 0) as total_appointments,
 
                 -- Count messages
-                COUNT(DISTINCT messages.id) as total_messages,
+                COALESCE((SELECT COUNT(*) FROM messages WHERE client_id = c.id), 0) as total_messages,
 
                 -- Count calls
-                COUNT(DISTINCT calls.id) as total_calls
+                COALESCE((SELECT COUNT(*) FROM calls WHERE client_id = c.id), 0) as total_calls
 
             FROM clients c
-            LEFT JOIN calls ON calls.client_id = c.id
-            LEFT JOIN appointments ON appointments.client_id = c.id
-            LEFT JOIN messages ON messages.client_id = c.id
         `;
 
         // Add search filter
@@ -1709,8 +1707,6 @@ router.get('/clients', async (req, res) => {
             )`;
             replacements.search = `%${search}%`;
         }
-
-        query += ` GROUP BY c.id`;
 
         // Add sorting (default to signup_date which is aliased from c.created_at)
         const validSortColumns = ['business_name', 'signup_date', 'last_activity_at', 'total_minutes_used', 'dollar_amount'];
