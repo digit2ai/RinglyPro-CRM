@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A2P 10DLC Business Verification | RinglyPro</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --secondary-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --bg-color: #f9fafb;
+            --card-bg: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --success-bg: #ecfdf5;
+            --warning-bg: #fffbeb;
+            --error-bg: #fef2f2;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            border-radius: 12px;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        /* Progress Indicator */
+        .progress-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-step.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .progress-step.completed {
+            background: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-draft { background: var(--warning-bg); color: var(--warning-color); }
+        .status-submitted { background: #dbeafe; color: #2563eb; }
+        .status-approved { background: var(--success-bg); color: var(--secondary-color); }
+        .status-rejected { background: var(--error-bg); color: var(--danger-color); }
+
+        /* Error State */
+        .error-container {
+            background: var(--error-bg);
+            border: 1px solid var(--danger-color);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin: 50px auto;
+            max-width: 500px;
+        }
+
+        .error-container h2 {
+            color: var(--danger-color);
+            margin-bottom: 10px;
+        }
+
+        /* Form Sections */
+        .form-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .form-section h2 .section-number {
+            display: inline-flex;
+            width: 28px;
+            height: 28px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            margin-right: 10px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .form-group label .required {
+            color: var(--danger-color);
+            margin-left: 2px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-group input.error,
+        .form-group select.error,
+        .form-group textarea.error {
+            border-color: var(--danger-color);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-group .help-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .form-group .error-text {
+            font-size: 0.75rem;
+            color: var(--danger-color);
+            margin-top: 4px;
+            display: none;
+        }
+
+        .form-group .error-text.visible {
+            display: block;
+        }
+
+        /* Checkboxes */
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--bg-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .checkbox-item:hover {
+            background: var(--border-color);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-item.checked {
+            background: rgba(79, 70, 229, 0.1);
+            border: 1px solid var(--primary-color);
+        }
+
+        /* Single Checkbox */
+        .single-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 16px;
+            background: var(--bg-color);
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .single-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+
+        .single-checkbox label {
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg-color);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--border-color);
+        }
+
+        .btn-success {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+        }
+
+        /* Messages */
+        .message {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.visible {
+            display: block;
+        }
+
+        .message.success {
+            background: var(--success-bg);
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .message.error {
+            background: var(--error-bg);
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .message.warning {
+            background: var(--warning-bg);
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+
+        .message ul {
+            margin: 8px 0 0 20px;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading.visible {
+            display: flex;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Read-only state */
+        .form-section.readonly input,
+        .form-section.readonly select,
+        .form-section.readonly textarea {
+            background: var(--bg-color);
+            cursor: not-allowed;
+        }
+
+        .form-section.readonly .checkbox-item {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px 15px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .form-section {
+                padding: 16px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container">
+        <!-- Error state (no clientId) -->
+        <div class="error-container" id="errorContainer" style="display: none;">
+            <h2>Missing Client ID</h2>
+            <p>Please access this page with a valid client ID.</p>
+            <p style="margin-top: 10px; font-size: 0.875rem; color: var(--text-secondary);">
+                Example: /a2p?clientId=123
+            </p>
+        </div>
+
+        <!-- Main form container -->
+        <div id="formContainer" style="display: none;">
+            <div class="header">
+                <h1>A2P 10DLC Business Verification</h1>
+                <p>SMS Enablement for <span id="businessName">Your Business</span></p>
+            </div>
+
+            <!-- Progress Indicator -->
+            <div class="progress-indicator">
+                <div class="progress-step" id="progressStatus">
+                    <span>Status:</span>
+                    <span class="status-badge status-draft" id="statusBadge">DRAFT</span>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="message success" id="successMessage"></div>
+            <div class="message error" id="errorMessage"></div>
+            <div class="message warning" id="warningMessage"></div>
+
+            <!-- Rejection Banner -->
+            <div class="message error" id="rejectionBanner" style="display: none;">
+                <strong>Application Rejected</strong>
+                <p id="rejectionReason"></p>
+            </div>
+
+            <form id="a2pForm" novalidate>
+                <!-- Section 1: Business Identity -->
+                <div class="form-section" id="section1">
+                    <h2><span class="section-number">1</span> Business Identity</h2>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="legalBusinessName">Legal Business Name <span class="required">*</span></label>
+                            <input type="text" id="legalBusinessName" name="legalBusinessName" required>
+                            <span class="error-text">Please enter your legal business name</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="dbaName">DBA Name (if different)</label>
+                            <input type="text" id="dbaName" name="dbaName">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="businessType">Business Type <span class="required">*</span></label>
+                            <select id="businessType" name="businessType" required>
+                                <option value="">Select business type...</option>
+                                <option value="LLC">LLC</option>
+                                <option value="Corporation">Corporation</option>
+                                <option value="Sole Proprietor">Sole Proprietor</option>
+                                <option value="Partnership">Partnership</option>
+                                <option value="Non-profit">Non-profit</option>
+                                <option value="Government">Government</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <span class="error-text">Please select your business type</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="businessVertical">Business Vertical</label>
+                            <select id="businessVertical" name="businessVertical">
+                                <option value="">Select vertical...</option>
+                                <option value="healthcare">Healthcare</option>
+                                <option value="home_services">Home Services</option>
+                                <option value="legal">Legal</option>
+                                <option value="real_estate">Real Estate</option>
+                                <option value="automotive">Automotive</option>
+                                <option value="beauty_wellness">Beauty & Wellness</option>
+                                <option value="fitness">Fitness</option>
+                                <option value="restaurant">Restaurant/Food</option>
+                                <option value="retail">Retail</option>
+                                <option value="professional_services">Professional Services</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="taxIdType">Tax ID Type <span class="required">*</span></label>
+                            <select id="taxIdType" name="taxIdType" required>
+                                <option value="">Select...</option>
+                                <option value="EIN">EIN (Employer Identification Number)</option>
+                                <option value="SSN">SSN (Social Security Number)</option>
+                            </select>
+                            <span class="error-text">Please select tax ID type</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="taxIdLast4">Tax ID (Last 4 Digits Only) <span class="required">*</span></label>
+                            <input type="text" id="taxIdLast4" name="taxIdLast4" maxlength="4" pattern="\d{4}" placeholder="XXXX" required>
+                            <span class="help-text">For security, we only store the last 4 digits</span>
+                            <span class="error-text">Please enter exactly 4 digits</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="businessAddressLine1">Business Address <span class="required">*</span></label>
+                        <input type="text" id="businessAddressLine1" name="businessAddressLine1" placeholder="Street address" required>
+                        <span class="error-text">Please enter your business address</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="businessAddressLine2">Address Line 2</label>
+                        <input type="text" id="businessAddressLine2" name="businessAddressLine2" placeholder="Suite, unit, floor, etc.">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="businessCity">City <span class="required">*</span></label>
+                            <input type="text" id="businessCity" name="businessCity" required>
+                            <span class="error-text">Please enter city</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="businessState">State <span class="required">*</span></label>
+                            <input type="text" id="businessState" name="businessState" placeholder="e.g., CA, NY, TX" required>
+                            <span class="error-text">Please enter state</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="businessPostalCode">ZIP Code <span class="required">*</span></label>
+                            <input type="text" id="businessPostalCode" name="businessPostalCode" required>
+                            <span class="error-text">Please enter ZIP code</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="businessWebsite">Business Website <span class="required">*</span></label>
+                        <input type="url" id="businessWebsite" name="businessWebsite" placeholder="https://www.example.com" required>
+                        <span class="error-text">Please enter a valid website URL (https://...)</span>
+                    </div>
+                </div>
+
+                <!-- Section 2: Authorized Representative -->
+                <div class="form-section" id="section2">
+                    <h2><span class="section-number">2</span> Authorized Representative</h2>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="authorizedRepFirstName">First Name <span class="required">*</span></label>
+                            <input type="text" id="authorizedRepFirstName" name="authorizedRepFirstName" required>
+                            <span class="error-text">Please enter first name</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="authorizedRepLastName">Last Name <span class="required">*</span></label>
+                            <input type="text" id="authorizedRepLastName" name="authorizedRepLastName" required>
+                            <span class="error-text">Please enter last name</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="authorizedRepEmail">Email <span class="required">*</span></label>
+                            <input type="email" id="authorizedRepEmail" name="authorizedRepEmail" required>
+                            <span class="error-text">Please enter a valid email address</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="authorizedRepPhoneE164">Phone Number <span class="required">*</span></label>
+                            <input type="tel" id="authorizedRepPhoneE164" name="authorizedRepPhoneE164" placeholder="+15551234567" required>
+                            <span class="help-text">Format: +1XXXXXXXXXX (E.164)</span>
+                            <span class="error-text">Please enter phone in E.164 format (+15551234567)</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="authorizedRepTitle">Job Title <span class="required">*</span></label>
+                        <input type="text" id="authorizedRepTitle" name="authorizedRepTitle" placeholder="e.g., Owner, CEO, Manager" required>
+                        <span class="error-text">Please enter job title</span>
+                    </div>
+                </div>
+
+                <!-- Section 3: Messaging Use Case -->
+                <div class="form-section" id="section3">
+                    <h2><span class="section-number">3</span> Messaging Use Case</h2>
+
+                    <div class="form-group">
+                        <label>What will you use SMS for? <span class="required">*</span></label>
+                        <div class="checkbox-group" id="useCaseCategories">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="useCaseCategories" value="missed_call_followups">
+                                <span>Missed Call Follow-ups</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="useCaseCategories" value="appointment_scheduling">
+                                <span>Appointment Scheduling</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="useCaseCategories" value="customer_care">
+                                <span>Customer Care</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="useCaseCategories" value="lead_response">
+                                <span>Lead Response</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="useCaseCategories" value="other">
+                                <span>Other</span>
+                            </label>
+                        </div>
+                        <span class="error-text">Please select at least one use case</span>
+                    </div>
+
+                    <div class="form-group" id="useCaseOtherGroup" style="display: none;">
+                        <label for="useCaseOtherDescription">Describe your "Other" use case</label>
+                        <input type="text" id="useCaseOtherDescription" name="useCaseOtherDescription">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="useCaseDescription">Describe how you'll use SMS messaging <span class="required">*</span></label>
+                        <textarea id="useCaseDescription" name="useCaseDescription"
+                            placeholder="Example: We use SMS to send appointment reminders, follow up on missed calls, and respond to customer inquiries about our services." required></textarea>
+                        <span class="help-text">1-2 sentences describing your SMS use case</span>
+                        <span class="error-text">Please describe your SMS use case</span>
+                    </div>
+                </div>
+
+                <!-- Section 4: Consent & Compliance -->
+                <div class="form-section" id="section4">
+                    <h2><span class="section-number">4</span> Consent & Compliance</h2>
+
+                    <div class="form-group">
+                        <label>How do you obtain consent to send SMS? <span class="required">*</span></label>
+                        <div class="checkbox-group" id="consentMethods">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="consentMethods" value="inbound_text_or_call">
+                                <span>Inbound Text or Call</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="consentMethods" value="web_form">
+                                <span>Web Form</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="consentMethods" value="existing_customer">
+                                <span>Existing Customer Relationship</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="consentMethods" value="verbal_consent">
+                                <span>Verbal Consent</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="consentMethods" value="paper_form">
+                                <span>Paper Form</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="consentMethods" value="other">
+                                <span>Other</span>
+                            </label>
+                        </div>
+                        <span class="error-text">Please select at least one consent method</span>
+                    </div>
+
+                    <div class="form-group" id="consentOtherGroup" style="display: none;">
+                        <label for="consentOtherDescription">Describe your "Other" consent method</label>
+                        <input type="text" id="consentOtherDescription" name="consentOtherDescription">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="optInDisclosureUrl">Opt-in Disclosure URL</label>
+                            <input type="url" id="optInDisclosureUrl" name="optInDisclosureUrl" placeholder="https://...">
+                            <span class="help-text">Link to your SMS terms/consent page (if available)</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="privacyPolicyUrl">Privacy Policy URL</label>
+                            <input type="url" id="privacyPolicyUrl" name="privacyPolicyUrl" placeholder="https://...">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="termsOfServiceUrl">Terms of Service URL</label>
+                        <input type="url" id="termsOfServiceUrl" name="termsOfServiceUrl" placeholder="https://...">
+                    </div>
+
+                    <div class="single-checkbox">
+                        <input type="checkbox" id="optOutAcknowledged" name="optOutAcknowledged">
+                        <label for="optOutAcknowledged">
+                            <strong>I acknowledge that my SMS messages will include STOP opt-out instructions</strong>
+                            <br><span style="font-size: 0.875rem; color: var(--text-secondary);">
+                                Recipients must be able to reply STOP to unsubscribe from messages.
+                            </span>
+                        </label>
+                    </div>
+                    <span class="error-text" id="optOutError">You must acknowledge the STOP opt-out requirement</span>
+                </div>
+
+                <!-- Section 5: Sample Messages -->
+                <div class="form-section" id="section5">
+                    <h2><span class="section-number">5</span> Sample Messages</h2>
+                    <p style="margin-bottom: 16px; color: var(--text-secondary);">
+                        Provide examples of SMS messages you'll send. At least one message should include STOP language.
+                    </p>
+
+                    <div class="form-group">
+                        <label for="sampleMessage1">Sample Message 1 <span class="required">*</span></label>
+                        <textarea id="sampleMessage1" name="sampleMessage1"
+                            placeholder="Example: Hi {name}, this is a reminder about your appointment tomorrow at 2:00 PM. Reply STOP to unsubscribe." required></textarea>
+                        <span class="error-text">Please provide at least one sample message</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sampleMessage2">Sample Message 2</label>
+                        <textarea id="sampleMessage2" name="sampleMessage2"
+                            placeholder="Example: Thanks for calling! We missed you. How can we help today?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sampleMessage3">Sample Message 3</label>
+                        <textarea id="sampleMessage3" name="sampleMessage3"
+                            placeholder="Example: Your appointment is confirmed for {date} at {time}. See you then!"></textarea>
+                    </div>
+
+                    <div class="message warning" id="stopWarning" style="display: block;">
+                        <strong>Tip:</strong> Include "Reply STOP to unsubscribe" in at least one sample message.
+                    </div>
+                </div>
+
+                <!-- Section 6: Volume Estimates -->
+                <div class="form-section" id="section6">
+                    <h2><span class="section-number">6</span> Volume Estimates</h2>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="estimatedSmsPerDay">Expected SMS Volume per Day <span class="required">*</span></label>
+                            <select id="estimatedSmsPerDay" name="estimatedSmsPerDay" required>
+                                <option value="">Select volume...</option>
+                                <option value="under_50">Under 50 messages</option>
+                                <option value="50_200">50 - 200 messages</option>
+                                <option value="200_1000">200 - 1,000 messages</option>
+                                <option value="over_1000">Over 1,000 messages</option>
+                            </select>
+                            <span class="error-text">Please select expected volume</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="estimatedSmsPerMonth">Estimated Monthly Volume</label>
+                            <input type="number" id="estimatedSmsPerMonth" name="estimatedSmsPerMonth" placeholder="e.g., 500" min="0">
+                            <span class="help-text">Optional: approximate number per month</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 7: Review & Submit -->
+                <div class="form-section" id="section7">
+                    <h2><span class="section-number">7</span> Review & Submit</h2>
+                    <p style="margin-bottom: 16px;">
+                        Please review all information above before submitting. Once submitted, your application will be reviewed for A2P 10DLC verification.
+                    </p>
+
+                    <div class="button-group">
+                        <button type="button" class="btn btn-secondary" id="saveDraftBtn">
+                            Save Draft
+                        </button>
+                        <button type="submit" class="btn btn-success" id="submitBtn">
+                            Submit for Verification
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ========================
+        // Configuration
+        // ========================
+        const API_BASE = '/api';
+        let clientId = null;
+        let currentStatus = 'draft';
+        let isReadOnly = false;
+
+        // ========================
+        // Initialize
+        // ========================
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Get clientId from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            clientId = urlParams.get('clientId');
+
+            if (!clientId) {
+                showError();
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                // Fetch existing A2P record
+                const response = await fetch(`${API_BASE}/clients/${clientId}/a2p`);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        populateForm(result.data);
+                        if (result.client) {
+                            document.getElementById('businessName').textContent = result.client.businessName || 'Your Business';
+                        }
+                    }
+                } else if (response.status === 404) {
+                    // No existing record - that's ok, show empty form
+                    console.log('No existing A2P record, starting fresh');
+                } else {
+                    throw new Error('Failed to load A2P data');
+                }
+
+                document.getElementById('formContainer').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading A2P data:', error);
+                showMessage('error', 'Failed to load A2P data. Please try again.');
+                document.getElementById('formContainer').style.display = 'block';
+            } finally {
+                showLoading(false);
+            }
+
+            // Set up event listeners
+            setupEventListeners();
+        });
+
+        // ========================
+        // UI Functions
+        // ========================
+        function showError() {
+            document.getElementById('errorContainer').style.display = 'block';
+            document.getElementById('formContainer').style.display = 'none';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('visible', show);
+        }
+
+        function showMessage(type, message, list = []) {
+            // Hide all messages first
+            ['success', 'error', 'warning'].forEach(t => {
+                document.getElementById(`${t}Message`).classList.remove('visible');
+            });
+
+            const el = document.getElementById(`${type}Message`);
+            let html = message;
+            if (list.length > 0) {
+                html += '<ul>' + list.map(item => `<li>${item}</li>`).join('') + '</ul>';
+            }
+            el.innerHTML = html;
+            el.classList.add('visible');
+
+            // Scroll to message
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function hideMessages() {
+            ['success', 'error', 'warning'].forEach(t => {
+                document.getElementById(`${t}Message`).classList.remove('visible');
+            });
+        }
+
+        function updateStatus(status) {
+            currentStatus = status;
+            const badge = document.getElementById('statusBadge');
+            badge.textContent = status.toUpperCase();
+            badge.className = `status-badge status-${status}`;
+
+            // Set read-only mode for non-draft status
+            isReadOnly = status !== 'draft';
+            setFormReadOnly(isReadOnly);
+        }
+
+        function setFormReadOnly(readonly) {
+            const form = document.getElementById('a2pForm');
+            const inputs = form.querySelectorAll('input, select, textarea');
+            const sections = form.querySelectorAll('.form-section');
+
+            inputs.forEach(input => {
+                if (readonly) {
+                    input.setAttribute('disabled', 'disabled');
+                } else {
+                    input.removeAttribute('disabled');
+                }
+            });
+
+            sections.forEach(section => {
+                section.classList.toggle('readonly', readonly);
+            });
+
+            // Hide buttons if readonly
+            document.getElementById('saveDraftBtn').style.display = readonly ? 'none' : 'inline-flex';
+            document.getElementById('submitBtn').style.display = readonly ? 'none' : 'inline-flex';
+        }
+
+        // ========================
+        // Form Population
+        // ========================
+        function populateForm(data) {
+            if (!data) return;
+
+            // Update status
+            if (data.status) {
+                updateStatus(data.status);
+            }
+
+            // Show rejection banner if rejected
+            if (data.status === 'rejected' && data.rejectionReason) {
+                document.getElementById('rejectionBanner').style.display = 'block';
+                document.getElementById('rejectionReason').textContent = data.rejectionReason;
+            }
+
+            // Populate text fields
+            const textFields = [
+                'legalBusinessName', 'dbaName', 'businessType', 'businessVertical',
+                'taxIdType', 'taxIdLast4', 'businessAddressLine1', 'businessAddressLine2',
+                'businessCity', 'businessState', 'businessPostalCode', 'businessWebsite',
+                'authorizedRepFirstName', 'authorizedRepLastName', 'authorizedRepEmail',
+                'authorizedRepPhoneE164', 'authorizedRepTitle', 'useCaseOtherDescription',
+                'useCaseDescription', 'consentOtherDescription', 'optInDisclosureUrl',
+                'privacyPolicyUrl', 'termsOfServiceUrl', 'sampleMessage1', 'sampleMessage2',
+                'sampleMessage3', 'estimatedSmsPerDay', 'estimatedSmsPerMonth'
+            ];
+
+            textFields.forEach(field => {
+                const el = document.getElementById(field);
+                if (el && data[field] !== undefined && data[field] !== null) {
+                    el.value = data[field];
+                }
+            });
+
+            // Populate checkboxes
+            if (data.useCaseCategories && Array.isArray(data.useCaseCategories)) {
+                data.useCaseCategories.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="useCaseCategories"][value="${value}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        checkbox.closest('.checkbox-item').classList.add('checked');
+                    }
+                });
+                // Show "other" field if selected
+                if (data.useCaseCategories.includes('other')) {
+                    document.getElementById('useCaseOtherGroup').style.display = 'block';
+                }
+            }
+
+            if (data.consentMethods && Array.isArray(data.consentMethods)) {
+                data.consentMethods.forEach(value => {
+                    const checkbox = document.querySelector(`input[name="consentMethods"][value="${value}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        checkbox.closest('.checkbox-item').classList.add('checked');
+                    }
+                });
+                // Show "other" field if selected
+                if (data.consentMethods.includes('other')) {
+                    document.getElementById('consentOtherGroup').style.display = 'block';
+                }
+            }
+
+            // Opt-out checkbox
+            if (data.optOutAcknowledged) {
+                document.getElementById('optOutAcknowledged').checked = true;
+            }
+
+            // Check STOP language in sample messages
+            checkStopLanguage();
+        }
+
+        // ========================
+        // Form Submission
+        // ========================
+        function getFormData() {
+            const form = document.getElementById('a2pForm');
+            const formData = new FormData(form);
+            const data = {};
+
+            // Text fields
+            const textFields = [
+                'legalBusinessName', 'dbaName', 'businessType', 'businessVertical',
+                'taxIdType', 'taxIdLast4', 'businessAddressLine1', 'businessAddressLine2',
+                'businessCity', 'businessState', 'businessPostalCode', 'businessWebsite',
+                'authorizedRepFirstName', 'authorizedRepLastName', 'authorizedRepEmail',
+                'authorizedRepPhoneE164', 'authorizedRepTitle', 'useCaseOtherDescription',
+                'useCaseDescription', 'consentOtherDescription', 'optInDisclosureUrl',
+                'privacyPolicyUrl', 'termsOfServiceUrl', 'sampleMessage1', 'sampleMessage2',
+                'sampleMessage3', 'estimatedSmsPerDay'
+            ];
+
+            textFields.forEach(field => {
+                const el = document.getElementById(field);
+                if (el) {
+                    data[field] = el.value || null;
+                }
+            });
+
+            // Numeric fields
+            const monthlyVolume = document.getElementById('estimatedSmsPerMonth').value;
+            data.estimatedSmsPerMonth = monthlyVolume ? parseInt(monthlyVolume) : null;
+
+            // Checkbox arrays
+            data.useCaseCategories = [];
+            document.querySelectorAll('input[name="useCaseCategories"]:checked').forEach(cb => {
+                data.useCaseCategories.push(cb.value);
+            });
+
+            data.consentMethods = [];
+            document.querySelectorAll('input[name="consentMethods"]:checked').forEach(cb => {
+                data.consentMethods.push(cb.value);
+            });
+
+            // Single checkbox
+            data.optOutAcknowledged = document.getElementById('optOutAcknowledged').checked;
+
+            return data;
+        }
+
+        async function saveDraft() {
+            hideMessages();
+            showLoading(true);
+
+            try {
+                const data = getFormData();
+
+                const response = await fetch(`${API_BASE}/clients/${clientId}/a2p`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage('success', 'Draft saved successfully!');
+                    if (result.data) {
+                        updateStatus(result.data.status || 'draft');
+                    }
+                } else {
+                    showMessage('error', 'Failed to save draft', result.errors || [result.error]);
+                }
+            } catch (error) {
+                console.error('Error saving draft:', error);
+                showMessage('error', 'Failed to save draft. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function submitForm() {
+            hideMessages();
+
+            // Client-side validation
+            const errors = validateForm();
+            if (errors.length > 0) {
+                showMessage('error', 'Please fix the following errors:', errors);
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                // First save the current data
+                const data = getFormData();
+                const saveResponse = await fetch(`${API_BASE}/clients/${clientId}/a2p`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!saveResponse.ok) {
+                    const saveResult = await saveResponse.json();
+                    throw new Error(saveResult.error || 'Failed to save data');
+                }
+
+                // Then submit
+                const response = await fetch(`${API_BASE}/clients/${clientId}/a2p/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    let message = 'Your A2P application has been submitted for verification!';
+                    if (result.warnings && result.warnings.length > 0) {
+                        showMessage('warning', message + '<br><br>' + result.warnings.join('<br>'));
+                    } else {
+                        showMessage('success', message);
+                    }
+                    updateStatus('submitted');
+                } else {
+                    showMessage('error', result.message || 'Submission failed', result.errors || []);
+                }
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                showMessage('error', 'Failed to submit. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // ========================
+        // Validation
+        // ========================
+        function validateForm() {
+            const errors = [];
+            const data = getFormData();
+
+            // Business Identity
+            if (!data.legalBusinessName) errors.push('Legal business name is required');
+            if (!data.businessType) errors.push('Business type is required');
+            if (!data.taxIdType) errors.push('Tax ID type is required');
+            if (!data.taxIdLast4 || !/^\d{4}$/.test(data.taxIdLast4)) errors.push('Tax ID last 4 must be exactly 4 digits');
+            if (!data.businessAddressLine1) errors.push('Business address is required');
+            if (!data.businessCity) errors.push('City is required');
+            if (!data.businessState) errors.push('State is required');
+            if (!data.businessPostalCode) errors.push('ZIP code is required');
+            if (!data.businessWebsite) errors.push('Business website is required');
+            if (data.businessWebsite && !isValidUrl(data.businessWebsite)) errors.push('Business website must be a valid URL');
+
+            // Authorized Representative
+            if (!data.authorizedRepFirstName) errors.push('Representative first name is required');
+            if (!data.authorizedRepLastName) errors.push('Representative last name is required');
+            if (!data.authorizedRepEmail) errors.push('Representative email is required');
+            if (data.authorizedRepEmail && !isValidEmail(data.authorizedRepEmail)) errors.push('Invalid email format');
+            if (!data.authorizedRepPhoneE164) errors.push('Representative phone is required');
+            if (data.authorizedRepPhoneE164 && !isValidE164(data.authorizedRepPhoneE164)) errors.push('Phone must be in E.164 format (+15551234567)');
+            if (!data.authorizedRepTitle) errors.push('Representative job title is required');
+
+            // Use Case
+            if (!data.useCaseCategories || data.useCaseCategories.length === 0) errors.push('At least one use case is required');
+            if (!data.useCaseDescription) errors.push('Use case description is required');
+
+            // Consent
+            if (!data.consentMethods || data.consentMethods.length === 0) errors.push('At least one consent method is required');
+            if (!data.optOutAcknowledged) errors.push('STOP opt-out acknowledgement is required');
+
+            // Sample Messages
+            if (!data.sampleMessage1) errors.push('At least one sample message is required');
+
+            // Volume
+            if (!data.estimatedSmsPerDay) errors.push('Estimated SMS volume is required');
+
+            // Validate optional URLs
+            const urlFields = ['optInDisclosureUrl', 'privacyPolicyUrl', 'termsOfServiceUrl'];
+            urlFields.forEach(field => {
+                if (data[field] && !isValidUrl(data[field])) {
+                    errors.push(`${field} must be a valid URL`);
+                }
+            });
+
+            // Mark invalid fields
+            markInvalidFields(errors);
+
+            return errors;
+        }
+
+        function markInvalidFields(errors) {
+            // Clear previous errors
+            document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+            document.querySelectorAll('.error-text').forEach(el => el.classList.remove('visible'));
+
+            // Mark fields based on errors
+            const fieldMap = {
+                'Legal business name is required': 'legalBusinessName',
+                'Business type is required': 'businessType',
+                'Tax ID type is required': 'taxIdType',
+                'Tax ID last 4 must be exactly 4 digits': 'taxIdLast4',
+                'Business address is required': 'businessAddressLine1',
+                'City is required': 'businessCity',
+                'State is required': 'businessState',
+                'ZIP code is required': 'businessPostalCode',
+                'Business website is required': 'businessWebsite',
+                'Business website must be a valid URL': 'businessWebsite',
+                'Representative first name is required': 'authorizedRepFirstName',
+                'Representative last name is required': 'authorizedRepLastName',
+                'Representative email is required': 'authorizedRepEmail',
+                'Invalid email format': 'authorizedRepEmail',
+                'Representative phone is required': 'authorizedRepPhoneE164',
+                'Phone must be in E.164 format (+15551234567)': 'authorizedRepPhoneE164',
+                'Representative job title is required': 'authorizedRepTitle',
+                'Use case description is required': 'useCaseDescription',
+                'At least one sample message is required': 'sampleMessage1',
+                'Estimated SMS volume is required': 'estimatedSmsPerDay'
+            };
+
+            errors.forEach(error => {
+                const fieldId = fieldMap[error];
+                if (fieldId) {
+                    const field = document.getElementById(fieldId);
+                    if (field) {
+                        field.classList.add('error');
+                        const errorText = field.parentElement.querySelector('.error-text');
+                        if (errorText) errorText.classList.add('visible');
+                    }
+                }
+            });
+
+            // Special handling for opt-out checkbox
+            if (errors.includes('STOP opt-out acknowledgement is required')) {
+                document.getElementById('optOutError').classList.add('visible');
+            }
+        }
+
+        // ========================
+        // Validation Helpers
+        // ========================
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function isValidUrl(url) {
+            try {
+                new URL(url);
+                return url.startsWith('http://') || url.startsWith('https://');
+            } catch {
+                return false;
+            }
+        }
+
+        function isValidE164(phone) {
+            return /^\+[1-9]\d{1,14}$/.test(phone);
+        }
+
+        function checkStopLanguage() {
+            const messages = [
+                document.getElementById('sampleMessage1').value,
+                document.getElementById('sampleMessage2').value,
+                document.getElementById('sampleMessage3').value
+            ].join(' ').toLowerCase();
+
+            const hasStop = messages.includes('stop') ||
+                           messages.includes('opt out') ||
+                           messages.includes('unsubscribe') ||
+                           messages.includes('text stop');
+
+            document.getElementById('stopWarning').style.display = hasStop ? 'none' : 'block';
+        }
+
+        // ========================
+        // Event Listeners
+        // ========================
+        function setupEventListeners() {
+            // Form submission
+            document.getElementById('a2pForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                submitForm();
+            });
+
+            // Save draft button
+            document.getElementById('saveDraftBtn').addEventListener('click', saveDraft);
+
+            // Checkbox styling
+            document.querySelectorAll('.checkbox-item input[type="checkbox"]').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    this.closest('.checkbox-item').classList.toggle('checked', this.checked);
+
+                    // Handle "other" fields
+                    if (this.value === 'other') {
+                        const parent = this.closest('.form-group');
+                        const isUseCase = this.name === 'useCaseCategories';
+                        const otherGroup = document.getElementById(isUseCase ? 'useCaseOtherGroup' : 'consentOtherGroup');
+                        otherGroup.style.display = this.checked ? 'block' : 'none';
+                    }
+                });
+            });
+
+            // Sample message STOP language check
+            ['sampleMessage1', 'sampleMessage2', 'sampleMessage3'].forEach(id => {
+                document.getElementById(id).addEventListener('input', checkStopLanguage);
+            });
+
+            // Phone number formatting
+            document.getElementById('authorizedRepPhoneE164').addEventListener('blur', function() {
+                let value = this.value.replace(/\D/g, '');
+                if (value && !value.startsWith('+')) {
+                    if (value.startsWith('1') && value.length === 11) {
+                        this.value = '+' + value;
+                    } else if (value.length === 10) {
+                        this.value = '+1' + value;
+                    }
+                }
+            });
+
+            // Tax ID last 4 - only digits
+            document.getElementById('taxIdLast4').addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').slice(0, 4);
+            });
+
+            // Clear errors on input
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                el.addEventListener('input', function() {
+                    this.classList.remove('error');
+                    const errorText = this.parentElement.querySelector('.error-text');
+                    if (errorText) errorText.classList.remove('visible');
+                });
+            });
+        }
+    </script>
+</body>
+</html>

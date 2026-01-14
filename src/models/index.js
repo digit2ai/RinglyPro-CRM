@@ -119,6 +119,16 @@ try {
   console.log('ProjectMessage model not found:', error.message);
 }
 
+// Import A2P model for 10DLC business verification
+let A2P;
+try {
+  A2P = require('./A2P');
+  console.log('A2P model imported successfully');
+} catch (error) {
+  console.log('A2P model not found:', error.message);
+  console.log('Note: A2P model needed for 10DLC SMS verification');
+}
+
 // Initialize models object
 const models = {
   sequelize
@@ -138,6 +148,7 @@ if (GoogleCalendarIntegration) models.GoogleCalendarIntegration = GoogleCalendar
 if (Project) models.Project = Project;
 if (ProjectMilestone) models.ProjectMilestone = ProjectMilestone;
 if (ProjectMessage) models.ProjectMessage = ProjectMessage;
+if (A2P) models.A2P = A2P;
 
 // Set up associations if models exist
 if (Contact && Message) {
@@ -741,6 +752,9 @@ module.exports.GoogleCalendarIntegration = GoogleCalendarIntegration;
 module.exports.Project = Project;
 module.exports.ProjectMilestone = ProjectMilestone;
 module.exports.ProjectMessage = ProjectMessage;
+
+// Export A2P model for 10DLC verification
+module.exports.A2P = A2P;
 
 // Export AI services
 module.exports.BusinessAICustomizer = BusinessAICustomizer;

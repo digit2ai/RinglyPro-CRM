@@ -394,6 +394,11 @@ const ghlWebhookRoutes = require('./routes/ghl-webhook');
 app.use('/api/webhooks/gohighlevel', ghlWebhookRoutes);
 console.log('🔄 GoHighLevel Webhook routes mounted at /api/webhooks/gohighlevel');
 
+// A2P 10DLC Business Verification routes
+const a2pRoutes = require('./routes/a2p');
+app.use('/api', a2pRoutes);
+console.log('📝 A2P 10DLC verification routes mounted at /api/clients/:clientId/a2p');
+
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 
@@ -473,6 +478,18 @@ app.get('/admin', async (req, res) => {
 // =====================================================
 // PUBLIC ROUTES - No authentication required
 // =====================================================
+
+// A2P 10DLC Onboarding page - public with clientId query param
+app.get('/a2p', async (req, res) => {
+  try {
+    res.render('a2p-onboarding', {
+      title: 'A2P 10DLC Business Verification | RinglyPro'
+    });
+  } catch (error) {
+    console.error('A2P onboarding page error:', error);
+    res.status(500).send('Error loading A2P onboarding page');
+  }
+});
 
 // GHL Signup page - for users without GoHighLevel account
 app.get('/ghl-signup', async (req, res) => {
