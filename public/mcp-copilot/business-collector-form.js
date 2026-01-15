@@ -232,6 +232,33 @@ function getCategoryDropdownHTML() {
                     <option value="resort shop">Resort Shops</option>
                     <option value="museum gift shop">Museum Gift Shops</option>
                 </optgroup>
+                <optgroup label="🏎️ Motorsports B2B (Sponsors & Partners)">
+                    <option value="private jet charter">Private Jet Charter</option>
+                    <option value="wealth management firm">Wealth Management Firms</option>
+                    <option value="private equity firm">Private Equity Firms</option>
+                    <option value="venture capital firm">Venture Capital Firms</option>
+                    <option value="investment firm">Investment Firms</option>
+                    <option value="corporate law firm">Corporate Law Firms</option>
+                    <option value="commercial insurance agency">Commercial Insurance</option>
+                    <option value="luxury real estate agent">Luxury Real Estate</option>
+                    <option value="commercial real estate broker">Commercial Real Estate</option>
+                    <option value="marketing agency">Marketing Agencies</option>
+                    <option value="advertising agency">Advertising Agencies</option>
+                    <option value="public relations firm">PR Firms</option>
+                    <option value="event planning company">Event Planning Companies</option>
+                    <option value="corporate event planner">Corporate Event Planners</option>
+                    <option value="management consulting firm">Management Consulting</option>
+                    <option value="executive recruiting firm">Executive Recruiters</option>
+                    <option value="manufacturing company">Manufacturing Companies</option>
+                    <option value="automotive parts manufacturer">Auto Parts Manufacturers</option>
+                    <option value="aerospace company">Aerospace Companies</option>
+                    <option value="engineering firm">Engineering Firms</option>
+                    <option value="performance auto shop">Performance Auto Shops</option>
+                    <option value="exotic car dealer">Exotic Car Dealers</option>
+                    <option value="luxury car dealer">Luxury Car Dealers</option>
+                    <option value="motorsports shop">Motorsports Shops</option>
+                    <option value="car auction house">Car Auction Houses</option>
+                </optgroup>
             </select>
         </div>`;
 }
