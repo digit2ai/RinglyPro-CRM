@@ -106,6 +106,13 @@ const Call = sequelize.define('Call', {
     type: DataTypes.TEXT,
     allowNull: true,
     comment: 'Call notes or summary'
+  },
+  elevenlabsConversationId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true,
+    field: 'elevenlabs_conversation_id',
+    comment: 'ElevenLabs conversation ID for fetching audio recordings'
   }
 }, {
   tableName: 'calls',
@@ -137,9 +144,20 @@ const Call = sequelize.define('Call', {
     },
     {
       fields: ['callStatus']
+    },
+    {
+      fields: ['elevenlabsConversationId']
     }
   ]
 });
+
+// Method to get audio URL for ElevenLabs calls
+Call.prototype.getAudioUrl = function() {
+  if (this.elevenlabsConversationId) {
+    return `/api/elevenlabs/tools/conversations/${this.elevenlabsConversationId}/audio`;
+  }
+  return this.recordingUrl || null;
+};
 
 // Instance methods
 Call.prototype.getFormattedDuration = function() {

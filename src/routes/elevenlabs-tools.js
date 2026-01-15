@@ -804,4 +804,236 @@ router.get('/health', (req, res) => {
   });
 });
 
+// =============================================================================
+// CONVERSATION AUDIO & HISTORY ENDPOINTS
+// =============================================================================
+
+const elevenlabsConversationService = require('../services/elevenlabsConversationService');
+
+/**
+ * Get conversation audio recording
+ * GET /api/elevenlabs/tools/conversations/:conversationId/audio
+ *
+ * Proxies the audio from ElevenLabs API to avoid CORS issues
+ * and keep API key secure on backend
+ */
+router.get('/conversations/:conversationId/audio', async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+
+    if (!conversationId) {
+      return res.status(400).json({ success: false, error: 'Missing conversationId' });
+    }
+
+    logger.info(`[ElevenLabs Tools] Fetching audio for conversation: ${conversationId}`);
+
+    const audioBuffer = await elevenlabsConversationService.getConversationAudio(conversationId);
+
+    // Set appropriate headers for audio streaming
+    res.set({
+      'Content-Type': 'audio/mpeg',
+      'Content-Length': audioBuffer.length,
+      'Content-Disposition': `inline; filename="conversation-${conversationId}.mp3"`,
+      'Cache-Control': 'public, max-age=3600'
+    });
+
+    return res.send(audioBuffer);
+
+  } catch (error) {
+    logger.error(`[ElevenLabs Tools] Error fetching conversation audio:`, error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to fetch audio'
+    });
+  }
+});
+
+/**
+ * Get conversation details (transcript, metadata)
+ * GET /api/elevenlabs/tools/conversations/:conversationId
+ */
+router.get('/conversations/:conversationId', async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+
+    if (!conversationId) {
+      return res.status(400).json({ success: false, error: 'Missing conversationId' });
+    }
+
+    logger.info(`[ElevenLabs Tools] Fetching details for conversation: ${conversationId}`);
+
+    const details = await elevenlabsConversationService.getConversationDetails(conversationId);
+
+    return res.json({
+      success: true,
+      conversation: details
+    });
+
+  } catch (error) {
+    logger.error(`[ElevenLabs Tools] Error fetching conversation details:`, error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to fetch conversation details'
+    });
+  }
+});
+
+/**
+ * List conversations for an agent (with optional client filtering)
+ * GET /api/elevenlabs/tools/conversations?agentId=xxx&clientId=xxx
+ */
+router.get('/conversations', async (req, res) => {
+  try {
+    const { agentId, clientId, cursor } = req.query;
+
+    // If clientId provided, get the agent ID from the client record
+    let targetAgentId = agentId;
+
+    if (clientId && !agentId) {
+      const clients = await sequelize.query(`
+        SELECT elevenlabs_agent_id FROM clients WHERE id = :clientId
+      `, { replacements: { clientId }, type: QueryTypes.SELECT });
+
+      if (clients && clients.length > 0 && clients[0].elevenlabs_agent_id) {
+        targetAgentId = clients[0].elevenlabs_agent_id;
+      }
+    }
+
+    if (!targetAgentId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing agentId or clientId with ElevenLabs configuration'
+      });
+    }
+
+    logger.info(`[ElevenLabs Tools] Listing conversations for agent: ${targetAgentId}`);
+
+    const result = await elevenlabsConversationService.listConversations(targetAgentId, { cursor });
+
+    return res.json({
+      success: true,
+      agent_id: targetAgentId,
+      conversations: result.conversations || [],
+      next_cursor: result.next_cursor || null
+    });
+
+  } catch (error) {
+    logger.error(`[ElevenLabs Tools] Error listing conversations:`, error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to list conversations'
+    });
+  }
+});
+
+/**
+ * Webhook endpoint for ElevenLabs post-call events
+ * POST /api/elevenlabs/tools/webhook/call-complete
+ *
+ * ElevenLabs can be configured to send webhooks when conversations end.
+ * This stores the conversation data in our calls table for dashboard access.
+ */
+router.post('/webhook/call-complete', async (req, res) => {
+  try {
+    const body = req.body || {};
+
+    logger.info(`[ElevenLabs Webhook] Received call-complete event:`, JSON.stringify(body).substring(0, 500));
+
+    const {
+      conversation_id,
+      agent_id,
+      status,
+      call_duration_secs,
+      from_number,
+      to_number,
+      transcript,
+      metadata
+    } = body;
+
+    if (!conversation_id) {
+      logger.warn('[ElevenLabs Webhook] Missing conversation_id in webhook');
+      return res.status(400).json({ success: false, error: 'Missing conversation_id' });
+    }
+
+    // Find the client by agent_id or to_number
+    let clientId = metadata?.client_id;
+
+    if (!clientId && to_number) {
+      const clients = await sequelize.query(`
+        SELECT id FROM clients WHERE ringlypro_number = :phone OR elevenlabs_agent_id = :agentId
+      `, {
+        replacements: { phone: to_number, agentId: agent_id },
+        type: QueryTypes.SELECT
+      });
+
+      if (clients && clients.length > 0) {
+        clientId = clients[0].id;
+      }
+    }
+
+    if (!clientId) {
+      logger.warn(`[ElevenLabs Webhook] Could not find client for conversation ${conversation_id}`);
+      // Still return 200 to acknowledge receipt
+      return res.json({ success: true, message: 'Received but client not found' });
+    }
+
+    // Store or update call record
+    // First check if call already exists
+    const existingCalls = await sequelize.query(`
+      SELECT id FROM calls WHERE elevenlabs_conversation_id = :conversationId
+    `, { replacements: { conversationId: conversation_id }, type: QueryTypes.SELECT });
+
+    if (existingCalls && existingCalls.length > 0) {
+      // Update existing call
+      await sequelize.query(`
+        UPDATE calls SET
+          status = :status,
+          call_status = 'completed',
+          duration = :duration,
+          notes = :notes,
+          updated_at = NOW()
+        WHERE elevenlabs_conversation_id = :conversationId
+      `, {
+        replacements: {
+          status: status === 'done' ? 'completed' : status,
+          duration: call_duration_secs || 0,
+          notes: transcript ? JSON.stringify(transcript).substring(0, 2000) : null,
+          conversationId: conversation_id
+        }
+      });
+
+      logger.info(`[ElevenLabs Webhook] Updated call record for conversation ${conversation_id}`);
+    } else {
+      // Insert new call record
+      await sequelize.query(`
+        INSERT INTO calls (
+          client_id, direction, from_number, to_number, status, call_status,
+          duration, elevenlabs_conversation_id, notes, created_at, updated_at
+        ) VALUES (
+          :clientId, 'incoming', :fromNumber, :toNumber, :status, 'completed',
+          :duration, :conversationId, :notes, NOW(), NOW()
+        )
+      `, {
+        replacements: {
+          clientId,
+          fromNumber: from_number || 'unknown',
+          toNumber: to_number || 'unknown',
+          status: status === 'done' ? 'completed' : (status || 'completed'),
+          duration: call_duration_secs || 0,
+          conversationId: conversation_id,
+          notes: transcript ? JSON.stringify(transcript).substring(0, 2000) : null
+        }
+      });
+
+      logger.info(`[ElevenLabs Webhook] Created call record for conversation ${conversation_id}`);
+    }
+
+    return res.json({ success: true, message: 'Call record saved' });
+
+  } catch (error) {
+    logger.error(`[ElevenLabs Webhook] Error processing call-complete:`, error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;
