@@ -8416,7 +8416,37 @@
                 const credsData = await credsResponse.json();
 
                 if (!credsData.success || !credsData.credentials) {
-                    console.log('📇 No GHL integration configured for this client');
+                    console.log('📇 No GHL integration - trying local database contacts');
+                    // Fallback to local database contacts
+                    try {
+                        const localResponse = await authenticatedFetch(`/api/client/${CLIENT_ID}/contacts`);
+                        const localData = await localResponse.json();
+
+                        if (localData.success && localData.contacts && localData.contacts.length > 0) {
+                            console.log('📇 Loaded local contacts:', localData.contacts.length);
+                            // Map local contacts to match GHL contact format
+                            allContacts = localData.contacts.map(c => ({
+                                id: c.id,
+                                firstName: c.first_name || c.firstName,
+                                lastName: c.last_name || c.lastName || '',
+                                phone: c.phone,
+                                email: c.email,
+                                tags: ['Local'],
+                                source: c.source || 'database'
+                            }));
+
+                            const countEl = document.getElementById('contactsCount');
+                            if (countEl) countEl.textContent = allContacts.length;
+
+                            document.getElementById('contactsLoading').style.display = 'none';
+                            renderContacts(allContacts);
+                            document.getElementById('contactsList').style.display = 'block';
+                            return;
+                        }
+                    } catch (localErr) {
+                        console.log('📇 Local contacts fetch failed:', localErr.message);
+                    }
+
                     document.getElementById('contactsLoading').style.display = 'none';
                     document.getElementById('contactsError').style.display = 'block';
                     document.getElementById('contactsError').innerHTML = `
@@ -8424,8 +8454,8 @@
                             <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                             </svg>
-                            <p style="font-weight: 600; margin-bottom: 0.5rem;">GoHighLevel Not Connected</p>
-                            <p style="font-size: 0.875rem;">Please configure your GHL integration in Settings to view contacts.</p>
+                            <p style="font-weight: 600; margin-bottom: 0.5rem;">No Contacts Found</p>
+                            <p style="font-size: 0.875rem;">Configure GHL integration or add contacts to the database.</p>
                         </div>
                     `;
                     return;

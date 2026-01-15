@@ -1190,4 +1190,52 @@ router.get('/ghl-credentials/:client_id', async (req, res) => {
     }
 });
 
+// GET /api/client/:client_id/contacts - Get contacts from local database for a specific client
+router.get('/:client_id/contacts', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { search = '', limit = 500 } = req.query;
+        const { sequelize } = require('../models');
+
+        let query = `
+            SELECT id, first_name, last_name, phone, email, source, status, created_at
+            FROM contacts
+            WHERE client_id = :client_id
+        `;
+
+        const replacements = { client_id, limit: parseInt(limit) };
+
+        if (search) {
+            query += ` AND (
+                first_name ILIKE :search OR
+                last_name ILIKE :search OR
+                phone LIKE :searchPhone OR
+                email ILIKE :search
+            )`;
+            replacements.search = `%${search}%`;
+            replacements.searchPhone = `%${search}%`;
+        }
+
+        query += ` ORDER BY first_name ASC LIMIT :limit`;
+
+        const contacts = await sequelize.query(query, {
+            replacements,
+            type: sequelize.QueryTypes.SELECT
+        });
+
+        res.json({
+            success: true,
+            contacts,
+            total: contacts.length
+        });
+
+    } catch (error) {
+        console.error('Error fetching client contacts:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch contacts'
+        });
+    }
+});
+
 module.exports = router;
