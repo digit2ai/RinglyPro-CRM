@@ -1190,6 +1190,78 @@ router.get('/ghl-credentials/:client_id', async (req, res) => {
     }
 });
 
+// POST /api/client/:client_id/contacts/save - Save a contact to client's local database
+router.post('/:client_id/contacts/save', async (req, res) => {
+    try {
+        const { client_id } = req.params;
+        const { firstName, lastName, phone, source = 'manual' } = req.body;
+        const { sequelize } = require('../models');
+
+        if (!firstName || !phone) {
+            return res.status(400).json({
+                success: false,
+                error: 'firstName and phone are required'
+            });
+        }
+
+        // Normalize phone - remove non-digits
+        const normalizedPhone = phone.replace(/\D/g, '');
+
+        // Check if contact already exists for this client (by phone)
+        const [existing] = await sequelize.query(
+            `SELECT id, first_name, last_name FROM contacts WHERE client_id = :client_id AND phone = :phone`,
+            { replacements: { client_id, phone: normalizedPhone }, type: sequelize.QueryTypes.SELECT }
+        );
+
+        if (existing) {
+            return res.json({
+                success: false,
+                exists: true,
+                existingName: `${existing.first_name} ${existing.last_name}`.trim(),
+                contactId: existing.id
+            });
+        }
+
+        // Generate a placeholder email (required by contacts table)
+        const emailSlug = `${firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}-${normalizedPhone.slice(-4)}`;
+        const email = `${emailSlug}@contact-c${client_id}.local`;
+
+        // Insert new contact
+        const [result] = await sequelize.query(
+            `INSERT INTO contacts (client_id, first_name, last_name, phone, email, source, status, created_at, updated_at)
+             VALUES (:client_id, :firstName, :lastName, :phone, :email, :source, 'active', NOW(), NOW())
+             RETURNING id, first_name, last_name, phone`,
+            {
+                replacements: {
+                    client_id,
+                    firstName: firstName.trim(),
+                    lastName: (lastName || '').trim() || 'Customer',
+                    phone: normalizedPhone,
+                    email,
+                    source
+                },
+                type: sequelize.QueryTypes.INSERT
+            }
+        );
+
+        const newContact = result[0] || result;
+        console.log(`Contact saved for client ${client_id}: ${firstName} ${lastName || ''} - ${normalizedPhone}`);
+
+        res.json({
+            success: true,
+            contact: newContact,
+            message: `Contact saved successfully`
+        });
+
+    } catch (error) {
+        console.error('Error saving contact:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to save contact'
+        });
+    }
+});
+
 // GET /api/client/:client_id/contacts - Get contacts from local database for a specific client
 router.get('/:client_id/contacts', async (req, res) => {
     try {

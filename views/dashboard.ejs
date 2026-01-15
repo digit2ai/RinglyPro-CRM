@@ -5884,6 +5884,14 @@
                     // Confirm the appointment
                     confirmAppointment(apt.id, name);
                     break;
+                case 'saveContact':
+                    // Save customer as contact in local database
+                    if (phone) {
+                        saveContactFromAppointment(name, phone);
+                    } else {
+                        showToast('No phone number available for this appointment', 'error');
+                    }
+                    break;
             }
         }
 
@@ -5931,6 +5939,60 @@
                 const confirmBtn = document.getElementById('aptDetailsConfirmBtn');
                 confirmBtn.disabled = false;
                 confirmBtn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Confirm Appointment';
+            }
+        }
+
+        // Save contact from appointment to local database
+        async function saveContactFromAppointment(name, phone) {
+            const saveBtn = document.getElementById('aptDetailsSaveContactBtn');
+            const originalContent = saveBtn.innerHTML;
+
+            try {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<svg class="animate-spin" fill="none" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"></circle><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="4" stroke-linecap="round"></path></svg> Saving...';
+
+                // Parse name into first/last name
+                const nameParts = name.trim().split(' ');
+                const firstName = nameParts[0] || 'Unknown';
+                const lastName = nameParts.slice(1).join(' ') || 'Customer';
+
+                // Normalize phone - remove non-digits
+                const normalizedPhone = phone.replace(/\D/g, '');
+
+                const response = await authenticatedFetch(`/api/client/${CLIENT_ID}/contacts/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        firstName,
+                        lastName,
+                        phone: normalizedPhone,
+                        source: 'ai_voice_booking'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(`Contact "${name}" saved successfully!`, 'success');
+                    // Update button to show saved state
+                    saveBtn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Contact Saved';
+                    saveBtn.style.background = '#059669';
+                    // Refresh contacts count if visible
+                    if (typeof loadContactsCount === 'function') {
+                        loadContactsCount();
+                    }
+                } else if (data.exists) {
+                    showToast(`Contact already exists: ${data.existingName || name}`, 'info');
+                    saveBtn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Already Saved';
+                    saveBtn.style.background = '#6b7280';
+                } else {
+                    throw new Error(data.error || 'Failed to save contact');
+                }
+            } catch (error) {
+                console.error('Error saving contact:', error);
+                showToast('Failed to save contact: ' + error.message, 'error');
+                saveBtn.innerHTML = originalContent;
+                saveBtn.disabled = false;
             }
         }
 
@@ -8266,6 +8328,12 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                         </svg>
                         Call Customer
+                    </button>
+                    <button type="button" id="aptDetailsSaveContactBtn" onclick="aptDetailsAction('saveContact')" style="padding: 0.75rem 1rem; background: #8b5cf6; color: white; border: none; border-radius: 0.5rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                        </svg>
+                        Save Contact
                     </button>
                     <button type="button" id="aptDetailsDeleteBtn" onclick="aptDetailsAction('delete')" style="padding: 0.75rem 1rem; background: #ef4444; color: white; border: none; border-radius: 0.5rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
