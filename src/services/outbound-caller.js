@@ -68,8 +68,9 @@ class OutboundCallerService {
 
   /**
    * Check if current time is within business hours (8am-6pm EST, Mon-Fri)
+   * Client 15 and 43 have extended hours: Mon-Sat 8am-6pm EST
    */
-  isBusinessHours() {
+  isBusinessHours(clientId = null) {
     try {
       const now = new Date();
 
@@ -85,12 +86,19 @@ class OutboundCallerService {
       const weekday = parts.find(p => p.type === 'weekday')?.value;
       const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0');
 
-      logger.info(`📅 Business hours check: ${weekday} ${hour}:00 EST`);
+      logger.info(`📅 Business hours check: ${weekday} ${hour}:00 EST (clientId: ${clientId})`);
 
-      // Check if Monday-Friday
-      const validDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+      // Client 15 and 43 get extended days: Mon-Sat (includes Saturday)
+      const extendedClients = [15, 43];
+      const isExtendedClient = clientId && extendedClients.includes(parseInt(clientId));
+
+      // Set valid days based on client
+      const validDays = isExtendedClient
+        ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']  // Mon-Sat for clients 15 & 43
+        : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];         // Mon-Fri for all others
+
       if (!validDays.includes(weekday)) {
-        logger.info(`❌ Outside business days: ${weekday}`);
+        logger.info(`❌ Outside business days: ${weekday} (allowed: ${validDays.join(', ')})`);
         return false;
       }
 
@@ -100,7 +108,7 @@ class OutboundCallerService {
         return false;
       }
 
-      logger.info(`✅ Within business hours: ${weekday} ${hour}:00 EST`);
+      logger.info(`✅ Within business hours: ${weekday} ${hour}:00 EST${isExtendedClient ? ' (extended client)' : ''}`);
       return true;
     } catch (error) {
       logger.error('Error checking business hours:', error.message);
@@ -136,7 +144,7 @@ class OutboundCallerService {
     // Allow bypass for testing with bypassBusinessHours flag
     const bypassHours = leadData?.bypassBusinessHours === true;
 
-    if (!bypassHours && !this.isBusinessHours()) {
+    if (!bypassHours && !this.isBusinessHours(clientId)) {
       // Get current time for better error message
       const now = new Date();
       const estFormatter = new Intl.DateTimeFormat('en-US', {
