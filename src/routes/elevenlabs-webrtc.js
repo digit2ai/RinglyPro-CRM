@@ -209,9 +209,9 @@ router.post('/demo-token', async (req, res) => {
 /**
  * POST /api/elevenlabs-webrtc/create-demo-agent
  *
- * Create a temporary personalized agent for demo purposes.
- * This creates a new agent with the customer's company info baked into
- * the first message and prompt, then returns a signed URL for that agent.
+ * Get a signed URL for the demo agent with personalization info.
+ * The demo agent has overrides enabled, so the frontend can customize
+ * the first_message and prompt at connection time.
  *
  * Request body:
  * {
@@ -224,7 +224,10 @@ router.post('/demo-token', async (req, res) => {
  * {
  *   "success": true,
  *   "signed_url": "wss://api.elevenlabs.io/...",
- *   "agent_id": "agent_xxxxx"
+ *   "agent_id": "agent_xxxxx",
+ *   "company_name": "Tampa Lawn Pro",
+ *   "first_message": "Hi, thanks for calling Tampa Lawn Pro!...",
+ *   "system_prompt": "You are Lina, a receptionist for Tampa Lawn Pro..."
  * }
  */
 router.post('/create-demo-agent', async (req, res) => {
@@ -239,72 +242,16 @@ router.post('/create-demo-agent', async (req, res) => {
       });
     }
 
-    logger.info(`[ElevenLabs Demo Agent] Creating personalized agent for: ${company_name}`);
+    logger.info(`[ElevenLabs Demo] Getting signed URL for personalized demo: ${company_name}`);
 
-    // Build the personalized first message
+    // Build the personalized first message for the frontend to use as override
     const firstMessage = `Hi, thanks for calling ${company_name}! This is Lina, your AI receptionist. How can I help you today?`;
 
-    // Build the personalized system prompt
+    // Build the personalized system prompt for the frontend to use as override
     const systemPrompt = buildDemoAgentPrompt(company_name, website_url, knowledge_base);
 
-    // Create the agent via ElevenLabs API
-    // Note: The API uses "conversational_config" (not "conversation_config")
-    const createAgentPayload = {
-      name: `RinglyPro Demo - ${company_name}`,
-      conversational_config: {
-        agent: {
-          first_message: firstMessage,
-          language: 'en',
-          prompt: {
-            prompt: systemPrompt,
-            llm: 'gpt-4o-mini'
-          }
-        },
-        tts: {
-          model_id: 'eleven_turbo_v2_5',
-          voice_id: 'cgSgspJ2msm6clMCkdW9' // Jessica voice (warm, professional)
-        }
-      }
-    };
-
-    logger.info(`[ElevenLabs Demo Agent] Sending create request to ElevenLabs API`);
-    logger.info(`[ElevenLabs Demo Agent] Payload: ${JSON.stringify(createAgentPayload, null, 2)}`);
-
-    // ElevenLabs API endpoint for creating agents is POST /convai/agents (not /convai/agents/create)
-    const createResponse = await fetch(`${ELEVENLABS_API_BASE}/convai/agents`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'xi-api-key': DEMO_API_KEY
-      },
-      body: JSON.stringify(createAgentPayload)
-    });
-
-    if (!createResponse.ok) {
-      const errorText = await createResponse.text();
-      logger.error(`[ElevenLabs Demo Agent] Failed to create agent: ${createResponse.status} - ${errorText}`);
-
-      let errorMessage = 'Failed to create demo agent';
-      try {
-        const errorJson = JSON.parse(errorText);
-        errorMessage = errorJson.detail?.message || errorJson.error || errorMessage;
-      } catch (e) {
-        // Keep default error message
-      }
-
-      return res.status(createResponse.status).json({
-        success: false,
-        error: errorMessage
-      });
-    }
-
-    const agentData = await createResponse.json();
-    const newAgentId = agentData.agent_id;
-
-    logger.info(`[ElevenLabs Demo Agent] Successfully created agent: ${newAgentId}`);
-
-    // Now get a signed URL for the newly created agent
-    const signedUrlResponse = await fetch(`${ELEVENLABS_API_BASE}/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(newAgentId)}`, {
+    // Get signed URL from the existing demo agent (overrides are enabled on this agent)
+    const signedUrlResponse = await fetch(`${ELEVENLABS_API_BASE}/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(DEMO_AGENT_ID)}`, {
       method: 'GET',
       headers: {
         'xi-api-key': DEMO_API_KEY
@@ -313,43 +260,39 @@ router.post('/create-demo-agent', async (req, res) => {
 
     if (!signedUrlResponse.ok) {
       const errorText = await signedUrlResponse.text();
-      logger.error(`[ElevenLabs Demo Agent] Failed to get signed URL: ${signedUrlResponse.status} - ${errorText}`);
+      logger.error(`[ElevenLabs Demo] Failed to get signed URL: ${signedUrlResponse.status} - ${errorText}`);
+
+      let errorMessage = 'Failed to start demo';
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.detail?.message || errorJson.error || errorMessage;
+      } catch (e) {
+        // Keep default error message
+      }
 
       return res.status(signedUrlResponse.status).json({
         success: false,
-        error: 'Failed to get conversation URL for new agent'
+        error: errorMessage
       });
     }
 
     const signedUrlData = await signedUrlResponse.json();
 
-    logger.info(`[ElevenLabs Demo Agent] Got signed URL for: ${company_name}`);
+    logger.info(`[ElevenLabs Demo] Got signed URL for: ${company_name}`);
 
-    // Schedule cleanup of the temporary agent after 30 minutes
-    setTimeout(async () => {
-      try {
-        logger.info(`[ElevenLabs Demo Agent] Cleaning up temporary agent: ${newAgentId}`);
-        await fetch(`${ELEVENLABS_API_BASE}/convai/agents/${newAgentId}`, {
-          method: 'DELETE',
-          headers: {
-            'xi-api-key': DEMO_API_KEY
-          }
-        });
-        logger.info(`[ElevenLabs Demo Agent] Successfully deleted agent: ${newAgentId}`);
-      } catch (cleanupError) {
-        logger.error(`[ElevenLabs Demo Agent] Failed to cleanup agent: ${newAgentId}`, cleanupError);
-      }
-    }, 30 * 60 * 1000); // 30 minutes
-
+    // Return signed URL along with the override data for the frontend
     return res.json({
       success: true,
       signed_url: signedUrlData.signed_url,
-      agent_id: newAgentId,
-      company_name: company_name
+      agent_id: DEMO_AGENT_ID,
+      company_name: company_name,
+      // Provide override data for the frontend to apply at connection time
+      first_message: firstMessage,
+      system_prompt: systemPrompt
     });
 
   } catch (error) {
-    logger.error(`[ElevenLabs Demo Agent] Error creating demo agent:`, error);
+    logger.error(`[ElevenLabs Demo] Error:`, error);
     return res.status(500).json({
       success: false,
       error: 'Internal server error'
