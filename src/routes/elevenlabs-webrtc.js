@@ -207,6 +207,219 @@ router.post('/demo-token', async (req, res) => {
 });
 
 /**
+ * POST /api/elevenlabs-webrtc/create-demo-agent
+ *
+ * Create a temporary personalized agent for demo purposes.
+ * This creates a new agent with the customer's company info baked into
+ * the first message and prompt, then returns a signed URL for that agent.
+ *
+ * Request body:
+ * {
+ *   "company_name": "Tampa Lawn Pro",
+ *   "website_url": "https://tampalawnpro.com",
+ *   "knowledge_base": "We offer lawn mowing, landscaping..."
+ * }
+ *
+ * Response:
+ * {
+ *   "success": true,
+ *   "signed_url": "wss://api.elevenlabs.io/...",
+ *   "agent_id": "agent_xxxxx"
+ * }
+ */
+router.post('/create-demo-agent', async (req, res) => {
+  try {
+    const { company_name, website_url, knowledge_base } = req.body;
+
+    // Validate required fields
+    if (!company_name) {
+      return res.status(400).json({
+        success: false,
+        error: 'Company name is required'
+      });
+    }
+
+    logger.info(`[ElevenLabs Demo Agent] Creating personalized agent for: ${company_name}`);
+
+    // Build the personalized first message
+    const firstMessage = `Hi, thanks for calling ${company_name}! This is Lina, your AI receptionist. How can I help you today?`;
+
+    // Build the personalized system prompt
+    const systemPrompt = buildDemoAgentPrompt(company_name, website_url, knowledge_base);
+
+    // Create the agent via ElevenLabs API
+    // Note: The API uses "conversational_config" (not "conversation_config")
+    const createAgentPayload = {
+      name: `RinglyPro Demo - ${company_name}`,
+      conversational_config: {
+        agent: {
+          first_message: firstMessage,
+          language: 'en',
+          prompt: {
+            prompt: systemPrompt,
+            llm: 'gpt-4o-mini'
+          }
+        },
+        tts: {
+          model_id: 'eleven_turbo_v2_5',
+          voice_id: 'cgSgspJ2msm6clMCkdW9' // Jessica voice (warm, professional)
+        }
+      }
+    };
+
+    logger.info(`[ElevenLabs Demo Agent] Sending create request to ElevenLabs API`);
+    logger.info(`[ElevenLabs Demo Agent] Payload: ${JSON.stringify(createAgentPayload, null, 2)}`);
+
+    // ElevenLabs API endpoint for creating agents is POST /convai/agents (not /convai/agents/create)
+    const createResponse = await fetch(`${ELEVENLABS_API_BASE}/convai/agents`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'xi-api-key': DEMO_API_KEY
+      },
+      body: JSON.stringify(createAgentPayload)
+    });
+
+    if (!createResponse.ok) {
+      const errorText = await createResponse.text();
+      logger.error(`[ElevenLabs Demo Agent] Failed to create agent: ${createResponse.status} - ${errorText}`);
+
+      let errorMessage = 'Failed to create demo agent';
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.detail?.message || errorJson.error || errorMessage;
+      } catch (e) {
+        // Keep default error message
+      }
+
+      return res.status(createResponse.status).json({
+        success: false,
+        error: errorMessage
+      });
+    }
+
+    const agentData = await createResponse.json();
+    const newAgentId = agentData.agent_id;
+
+    logger.info(`[ElevenLabs Demo Agent] Successfully created agent: ${newAgentId}`);
+
+    // Now get a signed URL for the newly created agent
+    const signedUrlResponse = await fetch(`${ELEVENLABS_API_BASE}/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(newAgentId)}`, {
+      method: 'GET',
+      headers: {
+        'xi-api-key': DEMO_API_KEY
+      }
+    });
+
+    if (!signedUrlResponse.ok) {
+      const errorText = await signedUrlResponse.text();
+      logger.error(`[ElevenLabs Demo Agent] Failed to get signed URL: ${signedUrlResponse.status} - ${errorText}`);
+
+      return res.status(signedUrlResponse.status).json({
+        success: false,
+        error: 'Failed to get conversation URL for new agent'
+      });
+    }
+
+    const signedUrlData = await signedUrlResponse.json();
+
+    logger.info(`[ElevenLabs Demo Agent] Got signed URL for: ${company_name}`);
+
+    // Schedule cleanup of the temporary agent after 30 minutes
+    setTimeout(async () => {
+      try {
+        logger.info(`[ElevenLabs Demo Agent] Cleaning up temporary agent: ${newAgentId}`);
+        await fetch(`${ELEVENLABS_API_BASE}/convai/agents/${newAgentId}`, {
+          method: 'DELETE',
+          headers: {
+            'xi-api-key': DEMO_API_KEY
+          }
+        });
+        logger.info(`[ElevenLabs Demo Agent] Successfully deleted agent: ${newAgentId}`);
+      } catch (cleanupError) {
+        logger.error(`[ElevenLabs Demo Agent] Failed to cleanup agent: ${newAgentId}`, cleanupError);
+      }
+    }, 30 * 60 * 1000); // 30 minutes
+
+    return res.json({
+      success: true,
+      signed_url: signedUrlData.signed_url,
+      agent_id: newAgentId,
+      company_name: company_name
+    });
+
+  } catch (error) {
+    logger.error(`[ElevenLabs Demo Agent] Error creating demo agent:`, error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
+ * Build the system prompt for a demo agent
+ * @param {string} companyName - The company name
+ * @param {string} websiteUrl - The company website (optional)
+ * @param {string} knowledgeBase - Business information (optional)
+ * @returns {string} The complete system prompt
+ */
+function buildDemoAgentPrompt(companyName, websiteUrl, knowledgeBase) {
+  let prompt = `You are Lina, a friendly and professional AI receptionist for ${companyName}. You are bilingual and can speak fluently in both English and Spanish - respond in whatever language the caller uses.
+
+## YOUR ROLE
+You handle incoming calls for ${companyName}. Your job is to:
+- Greet callers warmly and professionally
+- Answer questions about the business
+- Collect caller information for callbacks
+- Schedule appointments when possible
+- Provide helpful information
+
+## PERSONALITY
+- Warm, friendly, and professional
+- Patient and understanding
+- Helpful and proactive
+- Natural conversational style (use "um", "let me check", etc. occasionally)
+
+## COMPANY INFORMATION
+Company Name: ${companyName}`;
+
+  if (websiteUrl) {
+    prompt += `\nWebsite: ${websiteUrl}`;
+  }
+
+  if (knowledgeBase) {
+    prompt += `\n\n## BUSINESS DETAILS\n${knowledgeBase}`;
+  }
+
+  prompt += `
+
+## CONVERSATION RULES
+1. Always greet with the company name
+2. If you don't know something specific, offer to take a message or have someone call back
+3. Be concise - this is a phone call, not a text chat
+4. Ask one question at a time
+5. Confirm important details (phone numbers, names, appointment times)
+6. If the caller speaks Spanish, respond entirely in Spanish
+
+## COLLECTING INFORMATION
+When the caller wants to leave a message or schedule a callback, collect:
+- Their name
+- Phone number (repeat it back to confirm)
+- Brief reason for calling
+- Best time to reach them
+
+## ENDING CALLS
+- Thank them for calling ${companyName}
+- Confirm any next steps
+- Wish them a great day
+
+Remember: You are demonstrating RinglyPro's AI receptionist capabilities. Be impressive but natural!`;
+
+  return prompt;
+}
+
+/**
  * GET /api/elevenlabs-webrtc/health
  *
  * Health check endpoint to verify the service is running

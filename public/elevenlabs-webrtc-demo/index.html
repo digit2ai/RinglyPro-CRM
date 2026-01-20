@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RinglyPro Voice AI Demo | Experience Your AI Receptionist</title>
+  <title class="lang-en">RinglyPro Voice AI Demo | Experience Your AI Receptionist</title>
+  <title class="lang-es">RinglyPro Demo de Voz IA | Experimenta Tu Recepcionista IA</title>
   <meta name="description" content="Try RinglyPro's AI Voice Agent with your business info. Experience real-time voice conversations powered by ElevenLabs.">
 
   <style>
@@ -42,17 +43,72 @@
       padding: 40px 20px;
     }
 
+    /* Language toggle classes */
+    .lang-en, .lang-es { display: none; }
+    body.show-en .lang-en { display: block; }
+    body.show-es .lang-es { display: block; }
+    body.show-en .lang-en-inline { display: inline; }
+    body.show-es .lang-es-inline { display: inline; }
+    body.show-en .lang-es, body.show-en .lang-es-inline { display: none !important; }
+    body.show-es .lang-en, body.show-es .lang-en-inline { display: none !important; }
+
+    /* Language switcher */
+    .lang-switcher {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      display: flex;
+      gap: 8px;
+      background: rgba(0,0,0,.8);
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid #333;
+    }
+    .lang-switcher button {
+      background: transparent;
+      border: 1px solid #444;
+      color: #888;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .lang-switcher button:hover {
+      border-color: var(--accent-blue);
+      color: #fff;
+    }
+    .lang-switcher button.active {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      color: #fff;
+      font-weight: bold;
+    }
+
     /* Logo */
     .logo {
       max-width: 220px;
       height: auto;
-      margin-bottom: 32px;
+      margin-bottom: 16px;
+    }
+
+    /* Description under logo */
+    .logo-description {
+      color: var(--text-light);
+      font-size: 14px;
+      margin-bottom: 24px;
+      text-align: center;
+      max-width: 400px;
+      line-height: 1.5;
     }
 
     /* Subtitle */
     .subtitle {
-      color: var(--text-light);
-      font-size: 18px;
+      color: var(--text-on-dark);
+      font-size: 20px;
+      font-weight: 600;
       margin-bottom: 32px;
       text-align: center;
     }
@@ -412,21 +468,43 @@
       .transcript-entry.agent {
         margin-right: 16px;
       }
+
+      .lang-switcher {
+        top: auto;
+        bottom: 20px;
+        right: 20px;
+      }
     }
   </style>
 </head>
-<body>
+<body class="show-en">
+  <!-- Language Switcher -->
+  <div class="lang-switcher">
+    <button onclick="setLanguage('en')" id="btn-en" class="active">EN</button>
+    <button onclick="setLanguage('es')" id="btn-es">ES</button>
+  </div>
+
   <!-- Logo -->
   <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1d01be1be509a4f79755b.png" alt="RinglyPro" class="logo">
 
+  <!-- Description under logo -->
+  <p class="logo-description lang-en">
+    AI-powered phone receptionist that answers calls, books appointments, and never misses a lead.
+  </p>
+  <p class="logo-description lang-es">
+    Recepcionista telefónica con IA que contesta llamadas, agenda citas y nunca pierde un cliente potencial.
+  </p>
+
   <!-- Subtitle -->
-  <p class="subtitle">Try Your AI Voice Agent</p>
+  <p class="subtitle lang-en">Try Your AI Voice Agent</p>
+  <p class="subtitle lang-es">Prueba Tu Agente de Voz IA</p>
 
   <!-- Main Voice Card -->
   <div class="voice-card">
     <!-- Company Name -->
     <div class="form-group">
-      <label for="companyName">Company Name</label>
+      <label for="companyName" class="lang-en">Company Name</label>
+      <label for="companyName" class="lang-es">Nombre de la Empresa</label>
       <div class="input-wrapper">
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"/>
@@ -434,6 +512,8 @@
         <input
           type="text"
           id="companyName"
+          data-placeholder-en="e.g., Acme Plumbing Services"
+          data-placeholder-es="ej., Servicios de Plomería Acme"
           placeholder="e.g., Acme Plumbing Services"
           autocomplete="organization"
           required
@@ -443,7 +523,8 @@
 
     <!-- Website URL -->
     <div class="form-group">
-      <label for="websiteUrl">Website URL (Optional)</label>
+      <label for="websiteUrl" class="lang-en">Website URL (Optional)</label>
+      <label for="websiteUrl" class="lang-es">URL del Sitio Web (Opcional)</label>
       <div class="input-wrapper">
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/>
@@ -453,6 +534,8 @@
         <input
           type="url"
           id="websiteUrl"
+          data-placeholder-en="e.g., https://www.yourcompany.com"
+          data-placeholder-es="ej., https://www.tuempresa.com"
           placeholder="e.g., https://www.yourcompany.com"
           autocomplete="url"
         >
@@ -461,9 +544,12 @@
 
     <!-- Knowledge Base -->
     <div class="form-group">
-      <label for="knowledgeBase">Business Info (Optional)</label>
+      <label for="knowledgeBase" class="lang-en">Business Info (Optional)</label>
+      <label for="knowledgeBase" class="lang-es">Información del Negocio (Opcional)</label>
       <textarea
         id="knowledgeBase"
+        data-placeholder-en="Services, hours, pricing, FAQs..."
+        data-placeholder-es="Servicios, horarios, precios, preguntas frecuentes..."
         placeholder="Services, hours, pricing, FAQs..."
       ></textarea>
     </div>
@@ -479,7 +565,8 @@
     <!-- Audio Level -->
     <div class="audio-level-container" id="audioLevelContainer">
       <div class="audio-level-header">
-        <span class="audio-level-label">Audio Level</span>
+        <span class="audio-level-label lang-en">Audio Level</span>
+        <span class="audio-level-label lang-es">Nivel de Audio</span>
         <span class="speaking-indicator" id="speakingIndicator">Listening</span>
       </div>
       <div class="audio-level-bar">
@@ -496,7 +583,8 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/>
         </svg>
-        <div>Click "Start Demo Call" to begin</div>
+        <div class="lang-en">Click "Start Demo Call" to begin</div>
+        <div class="lang-es">Haz clic en "Iniciar Llamada Demo" para comenzar</div>
       </div>
     </div>
 
@@ -506,23 +594,85 @@
         <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
         <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
       </svg>
-      Start Demo Call
+      <span class="lang-en">Start Demo Call</span>
+      <span class="lang-es">Iniciar Llamada Demo</span>
     </button>
     <button class="btn btn-stop" id="stopBtn" style="display: none;">
       <svg viewBox="0 0 24 24" fill="currentColor">
         <rect x="6" y="6" width="12" height="12" rx="2"/>
       </svg>
-      End Call
+      <span class="lang-en">End Call</span>
+      <span class="lang-es">Terminar Llamada</span>
     </button>
   </div>
 
   <!-- Footer Link -->
-  <div class="footer-link">
+  <div class="footer-link lang-en">
     Don't have an account? <a href="https://ringlypro.com/signup" target="_blank">Sign up for free</a>
+  </div>
+  <div class="footer-link lang-es">
+    ¿No tienes cuenta? <a href="https://ringlypro.com/signup" target="_blank">Regístrate gratis</a>
   </div>
 
   <!-- Load ElevenLabs Client SDK from CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.32.1/dist/index.global.min.js" onerror="console.log('Anthropic SDK not needed')"></script>
+
+  <!-- Language Detection and Switching Script (runs before module) -->
+  <script>
+    // Language switching function
+    function setLanguage(lang) {
+      document.body.classList.remove('show-en', 'show-es');
+      document.body.classList.add('show-' + lang);
+      document.documentElement.lang = lang;
+
+      // Update button states
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+
+      // Update placeholders
+      document.querySelectorAll('[data-placeholder-' + lang + ']').forEach(el => {
+        el.placeholder = el.getAttribute('data-placeholder-' + lang);
+      });
+
+      // Save preference
+      localStorage.setItem('ringlypro_demo_lang', lang);
+
+      // Update current language for status text
+      window.currentLang = lang;
+    }
+
+    // IP-based geolocation detection
+    async function detectCountry() {
+      // Check if user has a saved preference
+      const savedLang = localStorage.getItem('ringlypro_demo_lang');
+      if (savedLang) {
+        setLanguage(savedLang);
+        return;
+      }
+
+      try {
+        // Use ipapi.co for free geolocation (no API key required for limited requests)
+        const response = await fetch('https://ipapi.co/json/', { timeout: 3000 });
+        const data = await response.json();
+
+        // If user is from US, show English; otherwise show Spanish
+        if (data.country_code === 'US') {
+          setLanguage('en');
+        } else {
+          // Colombia and all other countries get Spanish
+          setLanguage('es');
+        }
+      } catch (error) {
+        // If geolocation fails, default to Spanish
+        console.log('Geolocation failed, defaulting to Spanish');
+        setLanguage('es');
+      }
+    }
+
+    // Initialize language detection
+    detectCountry();
+  </script>
+
   <script type="module">
     // Import ElevenLabs Conversation from CDN
     import { Conversation } from 'https://cdn.jsdelivr.net/npm/@11labs/client@0.2.0/+esm';
@@ -549,18 +699,38 @@
     let conversation = null;
     let volumeInterval = null;
 
-    // Status configurations
+    // Bilingual status configurations
     const statusConfig = {
-      disconnected: { label: 'Ready', class: '' },
-      connecting: { label: 'Connecting...', class: 'connecting' },
-      connected: { label: 'Call Active', class: 'connected' },
-      error: { label: 'Error', class: 'error' }
+      disconnected: { en: 'Ready', es: 'Listo', class: '' },
+      creating: { en: 'Creating your agent...', es: 'Creando tu agente...', class: 'connecting' },
+      connecting: { en: 'Connecting...', es: 'Conectando...', class: 'connecting' },
+      connected: { en: 'Call Active', es: 'Llamada Activa', class: 'connected' },
+      error: { en: 'Error', es: 'Error', class: 'error' }
     };
+
+    // Bilingual speaking indicators
+    const speakingLabels = {
+      aiSpeaking: { en: 'AI Speaking', es: 'IA Hablando' },
+      youSpeaking: { en: 'You Speaking', es: 'Tú Hablando' },
+      listening: { en: 'Listening', es: 'Escuchando' }
+    };
+
+    // Bilingual transcript labels
+    const transcriptLabels = {
+      you: { en: 'You', es: 'Tú' },
+      ai: { en: 'AI', es: 'IA' }
+    };
+
+    // Get current language
+    function getLang() {
+      return window.currentLang || 'en';
+    }
 
     // Update status UI
     function updateStatus(status) {
       const config = statusConfig[status] || statusConfig.disconnected;
-      statusText.textContent = config.label;
+      const lang = getLang();
+      statusText.textContent = config[lang];
       statusBadge.className = 'status-badge ' + config.class;
 
       // Show/hide audio level when connected
@@ -577,12 +747,16 @@
         startBtn.style.display = 'flex';
         startBtn.disabled = false;
         startBtn.className = 'btn btn-start';
+        stopBtn.style.display = 'none';
+      } else if (status === 'creating') {
+        startBtn.disabled = true;
+        startBtn.className = 'btn btn-connecting';
         startBtn.innerHTML = `
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+          <svg viewBox="0 0 24 24" fill="currentColor" style="animation: spin 1s linear infinite">
+            <path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z"/>
           </svg>
-          Start Demo Call
+          <span class="lang-en">${statusConfig.creating.en}</span>
+          <span class="lang-es">${statusConfig.creating.es}</span>
         `;
         stopBtn.style.display = 'none';
       } else if (status === 'connecting') {
@@ -592,7 +766,8 @@
           <svg viewBox="0 0 24 24" fill="currentColor" style="animation: spin 1s linear infinite">
             <path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z"/>
           </svg>
-          Connecting...
+          <span class="lang-en">${statusConfig.connecting.en}</span>
+          <span class="lang-es">${statusConfig.connecting.es}</span>
         `;
         stopBtn.style.display = 'none';
       } else if (status === 'connected') {
@@ -612,15 +787,16 @@
             const level = Math.max(inputVol, outputVol);
             audioLevelFill.style.width = `${Math.min(level * 100, 100)}%`;
 
+            const lang = getLang();
             // Update speaking indicator
             if (outputVol > 0.1) {
-              speakingIndicator.textContent = 'AI Speaking';
+              speakingIndicator.textContent = speakingLabels.aiSpeaking[lang];
               speakingIndicator.classList.add('speaking');
             } else if (inputVol > 0.1) {
-              speakingIndicator.textContent = 'You Speaking';
+              speakingIndicator.textContent = speakingLabels.youSpeaking[lang];
               speakingIndicator.classList.remove('speaking');
             } else {
-              speakingIndicator.textContent = 'Listening';
+              speakingIndicator.textContent = speakingLabels.listening[lang];
               speakingIndicator.classList.remove('speaking');
             }
           } catch (e) {
@@ -652,6 +828,8 @@
     function addTranscript(role, text, isFinal = true) {
       if (!text) return;
 
+      const lang = getLang();
+
       // Hide empty message
       transcriptEmpty.style.display = 'none';
 
@@ -667,10 +845,11 @@
           existingInterim.remove();
         }
 
+        const roleLabel = role === 'user' ? transcriptLabels.you[lang] : transcriptLabels.ai[lang];
         const entry = document.createElement('div');
         entry.className = `transcript-entry ${role}${isFinal ? '' : ' interim'}`;
         entry.innerHTML = `
-          <div class="transcript-role">${role === 'user' ? 'You' : 'AI'}</div>
+          <div class="transcript-role">${roleLabel}</div>
           <div class="transcript-text">${text}</div>
         `;
         transcriptContainer.appendChild(entry);
@@ -685,73 +864,64 @@
       transcriptEmpty.style.display = 'flex';
     }
 
-    // Get signed URL from backend
-    async function getSignedUrl() {
+    // Create a personalized demo agent and get signed URL
+    async function createDemoAgent() {
       const companyName = companyNameInput.value.trim();
       const websiteUrl = websiteUrlInput.value.trim();
       const knowledgeBase = knowledgeBaseInput.value.trim();
 
-      const response = await fetch(`${PRODUCTION_URL}/api/elevenlabs-webrtc/demo-token`, {
+      // Call the new endpoint that creates a personalized agent
+      const response = await fetch(`${PRODUCTION_URL}/api/elevenlabs-webrtc/create-demo-agent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          dynamicVariables: {
-            company_name: companyName || 'Demo Company',
-            website_url: websiteUrl,
-            knowledge_base: knowledgeBase
-          }
+          company_name: companyName || 'Demo Company',
+          website_url: websiteUrl,
+          knowledge_base: knowledgeBase
         })
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to get conversation token');
+        throw new Error(error.error || 'Failed to create demo agent');
       }
 
       const data = await response.json();
+      console.log('[Demo] Created personalized agent:', data.agent_id);
       return data.signed_url;
     }
 
     // Start conversation
     async function startConversation() {
       const companyName = companyNameInput.value.trim();
+      const lang = getLang();
 
       if (!companyName) {
-        showError('Please enter your company name');
+        const errorMsg = lang === 'es' ? 'Por favor ingresa el nombre de tu empresa' : 'Please enter your company name';
+        showError(errorMsg);
         companyNameInput.focus();
         return;
       }
 
       hideError();
       clearTranscript();
-      updateStatus('connecting');
+      updateStatus('creating');
 
       try {
         // Request microphone permission
         await navigator.mediaDevices.getUserMedia({ audio: true });
 
-        // Get signed URL from backend
-        const signedUrl = await getSignedUrl();
+        // Create personalized agent and get signed URL
+        // This creates a new agent with the company name baked into the greeting
+        console.log('[Demo] Creating personalized agent for:', companyName);
+        const signedUrl = await createDemoAgent();
 
-        // Get form values for dynamic variables
-        const websiteUrl = websiteUrlInput.value.trim();
-        const knowledgeBase = knowledgeBaseInput.value.trim();
+        updateStatus('connecting');
 
-        // Start conversation using ElevenLabs SDK with client tools
-        // The agent will call get_business_context to get the company info
+        // Start conversation using ElevenLabs SDK
+        // No need for clientTools - the agent already has the personalized greeting
         conversation = await Conversation.startSession({
           signedUrl: signedUrl,
-          clientTools: {
-            get_business_context: async () => {
-              console.log('[ClientTool] get_business_context called');
-              return JSON.stringify({
-                company_name: companyName,
-                website_url: websiteUrl || 'Not provided',
-                business_info: knowledgeBase || 'Not provided',
-                greeting: `Hi, thanks for calling ${companyName}! This is Lina, how can I help you today?`
-              });
-            }
-          },
           onConnect: () => {
             console.log('[ElevenLabs] Connected');
             updateStatus('connected');
@@ -781,7 +951,9 @@
 
       } catch (error) {
         console.error('[Demo] Connection failed:', error);
-        showError(error.message || 'Failed to start conversation');
+        const lang = getLang();
+        const errorMsg = lang === 'es' ? (error.message || 'Error al iniciar la conversación') : (error.message || 'Failed to start conversation');
+        showError(errorMsg);
         updateStatus('error');
       }
     }
