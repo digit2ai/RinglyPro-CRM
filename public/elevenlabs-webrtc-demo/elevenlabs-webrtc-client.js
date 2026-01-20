@@ -138,15 +138,20 @@ class ElevenLabsWebRTCClient {
       },
       body: JSON.stringify({
         agent_id: this.agentId,
-        conversation_initiation_data: {
-          dynamic_variables: this.dynamicVariables
-        }
+        // Dynamic variables are now sent via WebSocket after connection
+        dynamicVariables: this.dynamicVariables
       })
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to get conversation token');
+      let errorMsg = 'Failed to get conversation token';
+      try {
+        const error = await response.json();
+        errorMsg = error.error || errorMsg;
+      } catch (e) {
+        // Response wasn't JSON
+      }
+      throw new Error(errorMsg);
     }
 
     const data = await response.json();
@@ -265,6 +270,15 @@ class ElevenLabsWebRTCClient {
 
       this.websocket.onopen = () => {
         console.log('[WebRTC] WebSocket connected');
+
+        // Send conversation initiation data with dynamic variables
+        if (Object.keys(this.dynamicVariables).length > 0) {
+          console.log('[WebRTC] Sending conversation initiation data:', this.dynamicVariables);
+          this.websocket.send(JSON.stringify({
+            type: 'conversation_initiation_client_data',
+            dynamic_variables: this.dynamicVariables
+          }));
+        }
       };
 
       this.websocket.onmessage = async (event) => {

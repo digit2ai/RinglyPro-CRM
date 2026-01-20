@@ -75,20 +75,13 @@ router.post('/token', async (req, res) => {
     logger.info(`[ElevenLabs WebRTC] Requesting conversation token for agent: ${agent_id}`);
 
     // Request signed URL from ElevenLabs
-    // This endpoint returns a WebSocket URL that's valid for ~60 seconds
-    const response = await fetch(`${ELEVENLABS_API_BASE}/convai/conversation/get_signed_url`, {
-      method: 'POST',
+    // This endpoint returns a WebSocket URL that's valid for ~15 minutes
+    // Note: This is a GET request with agent_id as query parameter
+    const response = await fetch(`${ELEVENLABS_API_BASE}/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(agent_id)}`, {
+      method: 'GET',
       headers: {
-        'xi-api-key': ELEVENLABS_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        agent_id: agent_id,
-        // Optional: Pass dynamic variables to personalize the conversation
-        ...(conversation_initiation_data && {
-          conversation_initiation_client_data: conversation_initiation_data
-        })
-      })
+        'xi-api-key': ELEVENLABS_API_KEY
+      }
     });
 
     if (!response.ok) {
@@ -163,28 +156,16 @@ router.post('/demo-token', async (req, res) => {
 
     logger.info(`[ElevenLabs WebRTC Demo] Generating token for: ${companyName}`);
 
-    // Build the conversation context for the agent
-    const conversationContext = {
-      dynamic_variables: {
-        company_name: companyName,
-        website_url: websiteUrl,
-        knowledge_base: knowledgeBase,
-        demo_mode: 'true',
-        greeting: `Thank you for calling ${companyName}. This is a demo of the RinglyPro AI receptionist. How can I help you today?`
-      }
-    };
+    // Note: Dynamic variables are passed via WebSocket after connection,
+    // not through the signed URL endpoint
 
     // Request signed URL from ElevenLabs using DEMO credentials
-    const response = await fetch(`${ELEVENLABS_API_BASE}/convai/conversation/get_signed_url`, {
-      method: 'POST',
+    // Note: This is a GET request with agent_id as query parameter
+    const response = await fetch(`${ELEVENLABS_API_BASE}/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(DEMO_AGENT_ID)}`, {
+      method: 'GET',
       headers: {
-        'xi-api-key': DEMO_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        agent_id: DEMO_AGENT_ID,
-        conversation_initiation_client_data: conversationContext
-      })
+        'xi-api-key': DEMO_API_KEY
+      }
     });
 
     if (!response.ok) {
