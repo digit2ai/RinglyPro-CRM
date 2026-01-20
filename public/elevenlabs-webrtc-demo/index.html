@@ -13,134 +13,107 @@
     }
 
     :root {
-      --bg-primary: #ffffff;
-      --bg-secondary: #f8fafc;
-      --bg-card: #ffffff;
-      --text-primary: #1e293b;
-      --text-secondary: #64748b;
-      --text-muted: #94a3b8;
-      --accent-primary: #4F46E5;
-      --accent-primary-light: #818cf8;
+      --bg-primary: #1a2234;
+      --bg-card: #d1d5db;
+      --bg-input: #ffffff;
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --text-light: #9ca3af;
+      --text-on-dark: #ffffff;
+      --accent-blue: #3b82f6;
+      --accent-blue-hover: #2563eb;
       --accent-green: #10b981;
-      --accent-green-light: #d1fae5;
       --accent-red: #ef4444;
-      --accent-red-light: #fee2e2;
-      --accent-amber: #f59e0b;
-      --border-color: #e2e8f0;
-      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      --border-color: #e5e7eb;
+      --border-focus: #3b82f6;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
     body {
       margin: 0;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: var(--bg-secondary);
+      background: var(--bg-primary);
       min-height: 100vh;
       color: var(--text-primary);
       line-height: 1.6;
-    }
-
-    /* Container */
-    .container {
-      max-width: 680px;
-      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       padding: 40px 20px;
     }
 
-    /* Header with Logo */
-    .header {
-      text-align: center;
+    /* Logo */
+    .logo {
+      max-width: 220px;
+      height: auto;
       margin-bottom: 32px;
     }
 
-    .logo {
-      max-width: 200px;
-      height: auto;
-      margin-bottom: 16px;
-    }
-
-    .header h1 {
-      margin: 0 0 8px;
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--text-primary);
-      letter-spacing: -0.5px;
-    }
-
-    .header p {
-      margin: 0;
-      color: var(--text-secondary);
-      font-size: 16px;
+    /* Subtitle */
+    .subtitle {
+      color: var(--text-light);
+      font-size: 18px;
+      margin-bottom: 32px;
+      text-align: center;
     }
 
     /* Main Card */
     .voice-card {
       background: var(--bg-card);
-      border-radius: 16px;
-      padding: 32px;
-      box-shadow: var(--shadow-lg);
-      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 40px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: var(--shadow);
     }
 
-    /* Configuration Section */
-    .config-section {
-      margin-bottom: 28px;
-      padding-bottom: 28px;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .config-section h3 {
-      margin: 0 0 20px;
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .config-section h3 svg {
-      color: var(--accent-primary);
-    }
-
+    /* Form Groups */
     .form-group {
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
 
-    .form-group:last-child {
-      margin-bottom: 0;
+    .form-group:last-of-type {
+      margin-bottom: 28px;
     }
 
     .form-group label {
       display: block;
-      margin-bottom: 6px;
-      font-size: 14px;
+      margin-bottom: 8px;
+      font-size: 15px;
       font-weight: 500;
       color: var(--text-primary);
     }
 
-    .form-group .hint {
-      display: block;
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 4px;
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 16px;
+      width: 20px;
+      height: 20px;
+      color: var(--text-light);
+      pointer-events: none;
     }
 
     .form-group input,
     .form-group textarea {
       width: 100%;
-      padding: 12px 14px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
+      padding: 14px 16px 14px 48px;
+      background: var(--bg-input);
+      border: 2px solid transparent;
+      border-radius: 12px;
       color: var(--text-primary);
-      font-size: 14px;
+      font-size: 15px;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .form-group textarea {
-      min-height: 100px;
+      padding: 14px 16px;
+      min-height: 120px;
       resize: vertical;
       font-family: inherit;
     }
@@ -148,18 +121,13 @@
     .form-group input:focus,
     .form-group textarea:focus {
       outline: none;
-      border-color: var(--accent-primary);
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
     }
 
     .form-group input::placeholder,
     .form-group textarea::placeholder {
-      color: var(--text-muted);
-    }
-
-    /* Required indicator */
-    .required {
-      color: var(--accent-red);
+      color: var(--text-light);
     }
 
     /* Status Badge */
@@ -177,27 +145,23 @@
       border-radius: 9999px;
       font-size: 13px;
       font-weight: 600;
-      background: var(--bg-secondary);
+      background: rgba(255, 255, 255, 0.8);
       color: var(--text-secondary);
-      border: 1px solid var(--border-color);
     }
 
     .status-badge.connected {
-      background: var(--accent-green-light);
+      background: rgba(16, 185, 129, 0.15);
       color: #065f46;
-      border-color: #a7f3d0;
     }
 
     .status-badge.connecting {
-      background: #fef3c7;
+      background: rgba(245, 158, 11, 0.15);
       color: #92400e;
-      border-color: #fde68a;
     }
 
     .status-badge.error {
-      background: var(--accent-red-light);
+      background: rgba(239, 68, 68, 0.15);
       color: #991b1b;
-      border-color: #fecaca;
     }
 
     .status-dot {
@@ -220,9 +184,8 @@
     .audio-level-container {
       margin-bottom: 20px;
       padding: 16px;
-      background: var(--bg-secondary);
+      background: rgba(255, 255, 255, 0.6);
       border-radius: 12px;
-      border: 1px solid var(--border-color);
       display: none;
     }
 
@@ -248,7 +211,7 @@
       font-weight: 600;
       padding: 4px 10px;
       border-radius: 6px;
-      background: var(--accent-green-light);
+      background: rgba(16, 185, 129, 0.15);
       color: #065f46;
     }
 
@@ -261,7 +224,7 @@
 
     .audio-level-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--accent-primary), var(--accent-green));
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
       border-radius: 3px;
       transition: width 0.05s linear;
       width: 0%;
@@ -269,13 +232,12 @@
 
     /* Transcript */
     .transcript-container {
-      height: 280px;
+      height: 200px;
       overflow-y: auto;
-      background: var(--bg-secondary);
+      background: rgba(255, 255, 255, 0.6);
       border-radius: 12px;
       padding: 16px;
-      margin-bottom: 20px;
-      border: 1px solid var(--border-color);
+      margin-bottom: 24px;
     }
 
     .transcript-empty {
@@ -284,21 +246,21 @@
       align-items: center;
       justify-content: center;
       height: 100%;
-      color: var(--text-muted);
+      color: var(--text-light);
       font-size: 14px;
       text-align: center;
       gap: 12px;
     }
 
     .transcript-empty svg {
-      width: 48px;
-      height: 48px;
+      width: 40px;
+      height: 40px;
       opacity: 0.5;
     }
 
     .transcript-entry {
-      margin-bottom: 14px;
-      padding: 12px 14px;
+      margin-bottom: 12px;
+      padding: 10px 12px;
       border-radius: 10px;
       animation: fadeIn 0.2s ease-out;
     }
@@ -309,16 +271,13 @@
     }
 
     .transcript-entry.user {
-      background: rgba(79, 70, 229, 0.1);
-      margin-left: 40px;
-      border: 1px solid rgba(79, 70, 229, 0.2);
+      background: rgba(59, 130, 246, 0.15);
+      margin-left: 32px;
     }
 
     .transcript-entry.agent {
-      background: var(--bg-card);
-      margin-right: 40px;
-      border: 1px solid var(--border-color);
-      box-shadow: var(--shadow-sm);
+      background: rgba(255, 255, 255, 0.8);
+      margin-right: 32px;
     }
 
     .transcript-entry.interim {
@@ -331,11 +290,11 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 4px;
-      color: var(--text-muted);
+      color: var(--text-light);
     }
 
     .transcript-entry.user .transcript-role {
-      color: var(--accent-primary);
+      color: var(--accent-blue);
     }
 
     .transcript-entry.agent .transcript-role {
@@ -351,8 +310,8 @@
     /* Error Display */
     .error-box {
       padding: 14px 16px;
-      background: var(--accent-red-light);
-      border: 1px solid #fecaca;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
       border-radius: 10px;
       margin-bottom: 20px;
       font-size: 13px;
@@ -364,22 +323,17 @@
       display: block;
     }
 
-    /* Controls */
-    .controls {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-    }
-
+    /* Buttons */
     .btn {
-      display: inline-flex;
+      display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      padding: 14px 32px;
+      width: 100%;
+      padding: 16px 24px;
       border: none;
       border-radius: 12px;
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -391,29 +345,25 @@
     }
 
     .btn-start {
-      background: linear-gradient(135deg, var(--accent-primary), var(--accent-primary-light));
+      background: var(--accent-blue);
       color: white;
-      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
     }
 
     .btn-start:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 28px rgba(79, 70, 229, 0.4);
+      background: var(--accent-blue-hover);
     }
 
     .btn-stop {
-      background: linear-gradient(135deg, var(--accent-red), #f87171);
+      background: var(--accent-red);
       color: white;
-      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35);
     }
 
     .btn-stop:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 28px rgba(239, 68, 68, 0.4);
+      background: #dc2626;
     }
 
     .btn-connecting {
-      background: linear-gradient(135deg, var(--accent-amber), #fbbf24);
+      background: #f59e0b;
       color: white;
     }
 
@@ -422,274 +372,148 @@
       height: 20px;
     }
 
-    /* Footer */
-    .footer {
+    /* Footer Link */
+    .footer-link {
       margin-top: 24px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border-color);
       text-align: center;
+      color: var(--text-light);
+      font-size: 14px;
     }
 
-    .footer p {
-      margin: 0;
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    .footer a {
-      color: var(--accent-primary);
+    .footer-link a {
+      color: var(--accent-blue);
       text-decoration: none;
       font-weight: 500;
     }
 
-    .footer a:hover {
+    .footer-link a:hover {
       text-decoration: underline;
-    }
-
-    /* Info Box */
-    .info-box {
-      margin-top: 32px;
-      padding: 24px;
-      background: var(--bg-card);
-      border-radius: 16px;
-      border: 1px solid var(--border-color);
-      box-shadow: var(--shadow);
-    }
-
-    .info-box h3 {
-      margin: 0 0 16px;
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .info-box ul {
-      margin: 0;
-      padding-left: 0;
-      list-style: none;
-    }
-
-    .info-box li {
-      margin-bottom: 12px;
-      font-size: 14px;
-      color: var(--text-secondary);
-      padding-left: 28px;
-      position: relative;
-    }
-
-    .info-box li:before {
-      content: "✓";
-      position: absolute;
-      left: 0;
-      color: var(--accent-green);
-      font-weight: bold;
-    }
-
-    .info-box li:last-child {
-      margin-bottom: 0;
-    }
-
-    /* CTA Box */
-    .cta-box {
-      margin-top: 24px;
-      padding: 20px;
-      background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(129, 140, 248, 0.1));
-      border-radius: 12px;
-      border: 1px solid rgba(79, 70, 229, 0.2);
-      text-align: center;
-    }
-
-    .cta-box p {
-      margin: 0 0 12px;
-      font-size: 14px;
-      color: var(--text-primary);
-    }
-
-    .cta-box .btn-cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 24px;
-      background: var(--accent-primary);
-      color: white;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 14px;
-      transition: all 0.2s;
-    }
-
-    .cta-box .btn-cta:hover {
-      background: var(--accent-primary-light);
-      transform: translateY(-1px);
     }
 
     /* Responsive */
     @media (max-width: 480px) {
-      .container {
-        padding: 20px 16px;
+      body {
+        padding: 24px 16px;
       }
 
       .voice-card {
-        padding: 20px;
+        padding: 28px 24px;
       }
 
       .transcript-entry.user {
-        margin-left: 20px;
+        margin-left: 16px;
       }
 
       .transcript-entry.agent {
-        margin-right: 20px;
-      }
-
-      .header h1 {
-        font-size: 24px;
+        margin-right: 16px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Header with Logo -->
-    <div class="header">
-      <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/692f57c22b865e4e4a6c8a63.png" alt="RinglyPro" class="logo">
-      <h1>Try Your AI Voice Agent</h1>
-      <p>Experience how RinglyPro can answer calls for your business</p>
-    </div>
+  <!-- Logo -->
+  <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1d01be1be509a4f79755b.png" alt="RinglyPro" class="logo">
 
-    <!-- Main Voice Card -->
-    <div class="voice-card">
-      <!-- Business Configuration -->
-      <div class="config-section">
-        <h3>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"/>
-          </svg>
-          Your Business Info
-        </h3>
+  <!-- Subtitle -->
+  <p class="subtitle">Try Your AI Voice Agent</p>
 
-        <div class="form-group">
-          <label for="companyName">Company Name <span class="required">*</span></label>
-          <input
-            type="text"
-            id="companyName"
-            placeholder="e.g., Acme Plumbing Services"
-            autocomplete="organization"
-            required
-          >
-          <span class="hint">The AI will greet callers with your company name</span>
-        </div>
-
-        <div class="form-group">
-          <label for="websiteUrl">Website URL (Optional)</label>
-          <input
-            type="url"
-            id="websiteUrl"
-            placeholder="e.g., https://www.yourcompany.com"
-            autocomplete="url"
-          >
-          <span class="hint">Helps the AI understand your services and business</span>
-        </div>
-
-        <div class="form-group">
-          <label for="knowledgeBase">Additional Business Info (Optional)</label>
-          <textarea
-            id="knowledgeBase"
-            placeholder="Add any specific information about your business:&#10;&#10;- Services you offer&#10;- Business hours&#10;- Pricing information&#10;- Frequently asked questions&#10;- Special instructions for callers"
-          ></textarea>
-          <span class="hint">The more context you provide, the better the AI can represent your business</span>
-        </div>
-      </div>
-
-      <!-- Status -->
-      <div class="status-container">
-        <div class="status-badge" id="statusBadge">
-          <span class="status-dot"></span>
-          <span id="statusText">Ready to Demo</span>
-        </div>
-      </div>
-
-      <!-- Audio Level -->
-      <div class="audio-level-container" id="audioLevelContainer">
-        <div class="audio-level-header">
-          <span class="audio-level-label">Audio Level</span>
-          <span class="speaking-indicator" id="speakingIndicator">Listening</span>
-        </div>
-        <div class="audio-level-bar">
-          <div class="audio-level-fill" id="audioLevelFill"></div>
-        </div>
-      </div>
-
-      <!-- Error -->
-      <div class="error-box" id="errorBox"></div>
-
-      <!-- Transcript -->
-      <div class="transcript-container" id="transcriptContainer">
-        <div class="transcript-empty" id="transcriptEmpty">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/>
-          </svg>
-          <div>
-            <strong>Enter your business info above</strong><br>
-            Then click "Start Demo Call" to talk with your AI receptionist
-          </div>
-        </div>
-      </div>
-
-      <!-- Controls -->
-      <div class="controls">
-        <button class="btn btn-start" id="startBtn">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-          </svg>
-          Start Demo Call
-        </button>
-        <button class="btn btn-stop" id="stopBtn" style="display: none;">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <rect x="6" y="6" width="12" height="12" rx="2"/>
-          </svg>
-          End Call
-        </button>
-      </div>
-
-      <!-- Footer -->
-      <div class="footer">
-        <p>Powered by <a href="https://ringlypro.com" target="_blank">RinglyPro</a> AI Voice Technology</p>
-      </div>
-    </div>
-
-    <!-- Info Box -->
-    <div class="info-box">
-      <h3>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 16v-4M12 8h.01"/>
+  <!-- Main Voice Card -->
+  <div class="voice-card">
+    <!-- Company Name -->
+    <div class="form-group">
+      <label for="companyName">Company Name</label>
+      <div class="input-wrapper">
+        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"/>
         </svg>
-        What You'll Experience
-      </h3>
-      <ul>
-        <li><strong>Natural voice conversations</strong> - Talk naturally like you would on a phone call</li>
-        <li><strong>Personalized responses</strong> - The AI uses your business info to answer questions</li>
-        <li><strong>Real-time transcription</strong> - See the conversation as it happens</li>
-        <li><strong>Appointment booking</strong> - Experience how callers can schedule appointments</li>
-        <li><strong>Professional greeting</strong> - Hear your custom company welcome message</li>
-      </ul>
-
-      <!-- CTA -->
-      <div class="cta-box">
-        <p><strong>Ready to get started?</strong> Sign up for RinglyPro and have your AI receptionist live in minutes.</p>
-        <a href="https://ringlypro.com/signup" class="btn-cta" target="_blank">
-          Get Started Free
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
-        </a>
+        <input
+          type="text"
+          id="companyName"
+          placeholder="e.g., Acme Plumbing Services"
+          autocomplete="organization"
+          required
+        >
       </div>
     </div>
+
+    <!-- Website URL -->
+    <div class="form-group">
+      <label for="websiteUrl">Website URL (Optional)</label>
+      <div class="input-wrapper">
+        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        <input
+          type="url"
+          id="websiteUrl"
+          placeholder="e.g., https://www.yourcompany.com"
+          autocomplete="url"
+        >
+      </div>
+    </div>
+
+    <!-- Knowledge Base -->
+    <div class="form-group">
+      <label for="knowledgeBase">Business Info (Optional)</label>
+      <textarea
+        id="knowledgeBase"
+        placeholder="Services, hours, pricing, FAQs..."
+      ></textarea>
+    </div>
+
+    <!-- Status -->
+    <div class="status-container">
+      <div class="status-badge" id="statusBadge">
+        <span class="status-dot"></span>
+        <span id="statusText">Ready</span>
+      </div>
+    </div>
+
+    <!-- Audio Level -->
+    <div class="audio-level-container" id="audioLevelContainer">
+      <div class="audio-level-header">
+        <span class="audio-level-label">Audio Level</span>
+        <span class="speaking-indicator" id="speakingIndicator">Listening</span>
+      </div>
+      <div class="audio-level-bar">
+        <div class="audio-level-fill" id="audioLevelFill"></div>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-box" id="errorBox"></div>
+
+    <!-- Transcript -->
+    <div class="transcript-container" id="transcriptContainer">
+      <div class="transcript-empty" id="transcriptEmpty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/>
+        </svg>
+        <div>Click "Start Demo Call" to begin</div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <button class="btn btn-start" id="startBtn">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+      </svg>
+      Start Demo Call
+    </button>
+    <button class="btn btn-stop" id="stopBtn" style="display: none;">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <rect x="6" y="6" width="12" height="12" rx="2"/>
+      </svg>
+      End Call
+    </button>
+  </div>
+
+  <!-- Footer Link -->
+  <div class="footer-link">
+    Don't have an account? <a href="https://ringlypro.com/signup" target="_blank">Sign up for free</a>
   </div>
 
   <!-- Load WebRTC Client -->
@@ -721,7 +545,7 @@
 
     // Status configurations
     const statusConfig = {
-      disconnected: { label: 'Ready to Demo', class: '' },
+      disconnected: { label: 'Ready', class: '' },
       connecting: { label: 'Connecting...', class: 'connecting' },
       connected: { label: 'Call Active', class: 'connected' },
       error: { label: 'Error', class: 'error' }
@@ -742,7 +566,7 @@
 
       // Update buttons
       if (status === 'disconnected' || status === 'error') {
-        startBtn.style.display = 'inline-flex';
+        startBtn.style.display = 'flex';
         startBtn.disabled = false;
         startBtn.className = 'btn btn-start';
         startBtn.innerHTML = `
@@ -765,7 +589,7 @@
         stopBtn.style.display = 'none';
       } else if (status === 'connected') {
         startBtn.style.display = 'none';
-        stopBtn.style.display = 'inline-flex';
+        stopBtn.style.display = 'flex';
       }
     }
 
@@ -803,7 +627,7 @@
         const entry = document.createElement('div');
         entry.className = `transcript-entry ${role}${isFinal ? '' : ' interim'}`;
         entry.innerHTML = `
-          <div class="transcript-role">${role === 'user' ? 'You' : 'AI Receptionist'}</div>
+          <div class="transcript-role">${role === 'user' ? 'You' : 'AI'}</div>
           <div class="transcript-text">${text}</div>
         `;
         transcriptContainer.appendChild(entry);
