@@ -363,6 +363,253 @@ Remember: You are demonstrating RinglyPro's AI receptionist capabilities. Be imp
 }
 
 /**
+ * POST /api/elevenlabs-webrtc/scrape-website
+ *
+ * Scrape a website to extract business information for the demo.
+ * Returns company description, services, contact info, etc.
+ *
+ * Request body:
+ * {
+ *   "url": "https://example.com"
+ * }
+ *
+ * Response:
+ * {
+ *   "success": true,
+ *   "content": "Business description and services..."
+ * }
+ */
+router.post('/scrape-website', async (req, res) => {
+  try {
+    const { url } = req.body;
+
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        error: 'URL is required'
+      });
+    }
+
+    // Validate URL format
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(url.startsWith('http') ? url : `https://${url}`);
+    } catch (e) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid URL format'
+      });
+    }
+
+    logger.info(`[Website Scraper] Scraping: ${parsedUrl.href}`);
+
+    // Fetch the website with a timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+    try {
+      const response = await fetch(parsedUrl.href, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; RinglyProBot/1.0; +https://ringlypro.com)',
+          'Accept': 'text/html,application/xhtml+xml',
+          'Accept-Language': 'en-US,en;q=0.9,es;q=0.8'
+        }
+      });
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const html = await response.text();
+
+      // Extract useful content from HTML
+      const content = extractBusinessInfo(html, parsedUrl.hostname);
+
+      logger.info(`[Website Scraper] Successfully extracted ${content.length} chars from ${parsedUrl.hostname}`);
+
+      return res.json({
+        success: true,
+        content: content,
+        source: parsedUrl.hostname
+      });
+
+    } catch (fetchError) {
+      clearTimeout(timeout);
+
+      if (fetchError.name === 'AbortError') {
+        logger.error(`[Website Scraper] Timeout fetching ${parsedUrl.href}`);
+        return res.status(408).json({
+          success: false,
+          error: 'Website took too long to respond'
+        });
+      }
+
+      logger.error(`[Website Scraper] Failed to fetch ${parsedUrl.href}: ${fetchError.message}`);
+      return res.status(502).json({
+        success: false,
+        error: 'Could not access website'
+      });
+    }
+
+  } catch (error) {
+    logger.error(`[Website Scraper] Error:`, error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
+ * Extract business information from HTML
+ * @param {string} html - Raw HTML content
+ * @param {string} hostname - Website hostname for context
+ * @returns {string} Extracted business information
+ */
+function extractBusinessInfo(html, hostname) {
+  const info = [];
+
+  // Remove script and style tags
+  let cleanHtml = html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<noscript[^>]*>[\s\S]*?<\/noscript>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '');
+
+  // Extract meta description
+  const metaDescMatch = cleanHtml.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i) ||
+                        cleanHtml.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i);
+  if (metaDescMatch && metaDescMatch[1]) {
+    info.push(`Description: ${metaDescMatch[1].trim()}`);
+  }
+
+  // Extract OG description as fallback
+  const ogDescMatch = cleanHtml.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i);
+  if (ogDescMatch && ogDescMatch[1] && !metaDescMatch) {
+    info.push(`Description: ${ogDescMatch[1].trim()}`);
+  }
+
+  // Extract title
+  const titleMatch = cleanHtml.match(/<title[^>]*>([^<]+)<\/title>/i);
+  if (titleMatch && titleMatch[1]) {
+    const title = titleMatch[1].trim();
+    if (title && !title.toLowerCase().includes('home') && title.length > 5) {
+      info.push(`Business: ${title}`);
+    }
+  }
+
+  // Extract headings (h1, h2) for services/features
+  const headings = [];
+  const h1Matches = cleanHtml.matchAll(/<h1[^>]*>([^<]+)<\/h1>/gi);
+  for (const match of h1Matches) {
+    const text = match[1].trim().replace(/\s+/g, ' ');
+    if (text && text.length > 3 && text.length < 200) {
+      headings.push(text);
+    }
+  }
+  const h2Matches = cleanHtml.matchAll(/<h2[^>]*>([^<]+)<\/h2>/gi);
+  for (const match of h2Matches) {
+    const text = match[1].trim().replace(/\s+/g, ' ');
+    if (text && text.length > 3 && text.length < 200) {
+      headings.push(text);
+    }
+  }
+  if (headings.length > 0) {
+    info.push(`Key Services/Features: ${headings.slice(0, 8).join(', ')}`);
+  }
+
+  // Extract phone numbers
+  const phoneMatches = cleanHtml.match(/(?:tel:|href="tel:)?[\+]?[(]?[0-9]{1,3}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,4}[-\s\.]?[0-9]{1,9}/g);
+  if (phoneMatches) {
+    const phones = [...new Set(phoneMatches.map(p => p.replace(/tel:|href="|"/g, '').trim()))];
+    const validPhones = phones.filter(p => p.replace(/\D/g, '').length >= 10);
+    if (validPhones.length > 0) {
+      info.push(`Phone: ${validPhones[0]}`);
+    }
+  }
+
+  // Extract email addresses
+  const emailMatches = cleanHtml.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+  if (emailMatches) {
+    const emails = [...new Set(emailMatches)].filter(e =>
+      !e.includes('example') && !e.includes('test') && !e.includes('your')
+    );
+    if (emails.length > 0) {
+      info.push(`Email: ${emails[0]}`);
+    }
+  }
+
+  // Extract address (look for common patterns)
+  const addressPatterns = [
+    /\d+\s+[\w\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct)[,.\s]+[\w\s]+,?\s*[A-Z]{2}\s*\d{5}/gi,
+    /\d+\s+[\w\s]+,\s*[\w\s]+,\s*[A-Z]{2}\s*\d{5}/gi
+  ];
+  for (const pattern of addressPatterns) {
+    const addressMatch = cleanHtml.match(pattern);
+    if (addressMatch) {
+      info.push(`Address: ${addressMatch[0].trim()}`);
+      break;
+    }
+  }
+
+  // Extract hours of operation
+  const hoursPatterns = [
+    /(?:hours?|open|schedule)[:\s]*([^<]{10,100}(?:am|pm|AM|PM)[^<]{0,50})/gi,
+    /(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)[:\s-]*\d{1,2}[:\d]*\s*(?:am|pm)[^<]{0,100}/gi
+  ];
+  for (const pattern of hoursPatterns) {
+    const hoursMatch = cleanHtml.match(pattern);
+    if (hoursMatch) {
+      const hours = hoursMatch[0].replace(/<[^>]+>/g, '').trim();
+      if (hours.length > 10 && hours.length < 200) {
+        info.push(`Hours: ${hours}`);
+        break;
+      }
+    }
+  }
+
+  // Extract main paragraph content (first meaningful paragraphs)
+  const paragraphs = [];
+  const pMatches = cleanHtml.matchAll(/<p[^>]*>([^<]+(?:<[^>]+>[^<]*)*)<\/p>/gi);
+  for (const match of pMatches) {
+    let text = match[1]
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // Only keep meaningful paragraphs
+    if (text && text.length > 50 && text.length < 500 &&
+        !text.toLowerCase().includes('cookie') &&
+        !text.toLowerCase().includes('privacy') &&
+        !text.toLowerCase().includes('copyright') &&
+        !text.toLowerCase().includes('all rights reserved')) {
+      paragraphs.push(text);
+    }
+  }
+  if (paragraphs.length > 0) {
+    info.push(`About: ${paragraphs.slice(0, 3).join(' ')}`);
+  }
+
+  // Combine and limit output
+  let result = info.join('\n\n');
+
+  // Limit to ~2000 chars to keep prompt reasonable
+  if (result.length > 2000) {
+    result = result.substring(0, 2000) + '...';
+  }
+
+  return result || `Website: ${hostname} (Could not extract detailed information)`;
+}
+
+/**
  * GET /api/elevenlabs-webrtc/health
  *
  * Health check endpoint to verify the service is running

@@ -1,0 +1,1570 @@
+<!doctype html>
+<html lang="es" style="background-color: #0a0a0a;">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title class="lang-en" style="display:none;">Óscar Tunjo — Sponsorship & Partnerships | IMSA 2026</title>
+  <title class="lang-es">Óscar Tunjo — Patrocinio y Alianzas | IMSA 2026</title>
+  <meta name="description" content="Partner with Óscar Tunjo in IMSA 2026. Accelerate your brand through passion, performance, and global visibility at every race." />
+
+  <style>
+    /* Base */
+    :root{
+      --bg: #0a0a0a;
+      --panel: #1a1a1a;
+      --panel-2: #222222;
+      --text: #ffffff;
+      --muted: #888888;
+      --line: #333333;
+      --accent: #e31837;
+      --accent-hover: #ff1f41;
+      --shadow: 0 18px 55px rgba(0,0,0,.6);
+      --radius: 18px;
+      --radius-sm: 14px;
+      --max: 1120px;
+    }
+
+    *{ box-sizing: border-box; }
+    html{
+      scroll-behavior: smooth;
+      background-color: #0a0a0a;
+    }
+    body{
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background-color: #0a0a0a;
+      background: #0a0a0a;
+      color: #ffffff;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    a{ color: #ffffff; text-underline-offset: 3px; }
+    a:hover{ color: #e31837; }
+
+    img{ max-width: 100%; height: auto; display: block; border-radius: 14px; }
+
+    .container{ width: min(var(--max), calc(100% - 40px)); margin: 0 auto; }
+
+    /* Language toggle */
+    .lang-en, .lang-es { display: none; }
+    body.show-en .lang-en { display: block; }
+    body.show-es .lang-es { display: block; }
+    body.show-en .lang-en-inline { display: inline; }
+    body.show-es .lang-es-inline { display: inline; }
+    body.show-en .lang-es, body.show-en .lang-es-inline { display: none !important; }
+    body.show-es .lang-en, body.show-es .lang-en-inline { display: none !important; }
+
+    .lang-switcher {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      z-index: 100;
+      display: flex;
+      gap: 8px;
+      background: rgba(0,0,0,.9);
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid #333;
+    }
+    .lang-switcher button {
+      background: transparent;
+      border: 1px solid #444;
+      color: #888;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    .lang-switcher button:hover {
+      border-color: #e31837;
+      color: #fff;
+    }
+    .lang-switcher button.active {
+      background: #e31837;
+      border-color: #e31837;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .skip-link{
+      position:absolute; left:-999px; top:auto; width:1px; height:1px; overflow:hidden;
+    }
+    .skip-link:focus{ left: 16px; top: 16px; width:auto; height:auto; padding: 10px 12px; background:#000; border:1px solid #333; border-radius: 10px; z-index: 9999; }
+
+    /* Header / Nav */
+    .site-header{
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(14px);
+      background: rgba(10,10,10,.95);
+      border-bottom: 1px solid #333;
+    }
+    .header-inner{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 14px 0;
+      gap: 18px;
+    }
+    .brand{ display:flex; align-items:center; gap: 12px; min-width: 240px; }
+    .brand-mark{
+      width: 34px; height: 34px; border-radius: 12px;
+      background: linear-gradient(135deg, #e31837, #8b0000);
+      border: 1px solid #e31837;
+    }
+    .brand-title{ letter-spacing:.12em; font-size: 13px; color: #ffffff; }
+    .brand-sub{ display:block; font-size: 12px; color: #888888; }
+
+    .nav{ display:flex; align-items:center; }
+    .nav-menu{
+      display:flex; align-items:center; gap: 16px;
+      list-style:none; padding:0; margin:0;
+    }
+    .nav-menu a{ text-decoration:none; font-size: 13px; color: #888888; }
+    .nav-menu a:hover{ color: #e31837; }
+
+    .nav-toggle{
+      display:none;
+      background: transparent; border: 1px solid #333;
+      border-radius: 12px; padding: 10px 12px; color: #ffffff;
+      cursor: pointer;
+    }
+    .nav-toggle-lines{
+      width: 18px; height: 14px; display:inline-block; position: relative;
+    }
+    .nav-toggle-lines:before,
+    .nav-toggle-lines:after,
+    .nav-toggle-lines span{
+      content:""; position:absolute; left:0; right:0; height:2px; background: #ffffff; border-radius: 2px;
+      transition: all 0.3s ease;
+    }
+    .nav-toggle-lines:before{ top: 0; }
+    .nav-toggle-lines span{ top: 50%; transform: translateY(-50%); }
+    .nav-toggle-lines:after{ bottom: 0; }
+    .sr-only{ position:absolute; left:-9999px; }
+
+    /* Hide nav menus by default on mobile - controlled via JS */
+    .nav-menu { display: flex; }
+
+    /* Buttons */
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding: 12px 20px; border-radius: 999px;
+      border: none;
+      background: #e31837;
+      color: #000000;
+      text-decoration:none;
+      font-weight: 800;
+      box-shadow: 0 14px 34px rgba(227,24,55,.3);
+      transition: all 0.2s ease;
+    }
+    .btn:hover{ background: #ff1f41; transform: translateY(-1px); color: #000000; }
+    .btn:active{ transform: translateY(0px); }
+    .btn-small{ padding: 10px 14px; font-size: 13px; }
+    .btn-ghost{
+      background: transparent;
+      color: #ffffff;
+      border: 2px solid #444;
+      box-shadow: none;
+    }
+    .btn-ghost:hover{ background: transparent; border-color: #e31837; color: #e31837; }
+
+    /* Sections */
+    .section{ padding: 72px 0; }
+    .section-alt{
+      background: #111111;
+      border-top: 1px solid #333;
+      border-bottom: 1px solid #333;
+    }
+    .section-head{ margin-bottom: 24px; }
+    .section-head h2{ margin: 0 0 8px; font-size: clamp(22px, 3vw, 34px); letter-spacing: -0.02em; color: #ffffff; }
+    h2, h3{ color: #ffffff; }
+    p{ color: #cccccc; }
+    .muted{ color: #888888; }
+    .small-note{ font-size: 13px; }
+
+    .card{
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .media-card{ padding: 14px; }
+    .media-card figcaption{ margin-top: 10px; color: #888888; font-size: 13px; }
+
+    /* Hero */
+    .hero{
+      position: relative;
+      padding: 64px 0 44px;
+      min-height: 85vh;
+      overflow: hidden;
+    }
+    .hero-media{
+      position:absolute; inset: 0;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.3) 0%, rgba(0,0,0,.5) 60%, rgba(0,0,0,.95) 100%),
+        url("https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696cf718439b6bf938457268.png") 95% top/cover no-repeat;
+      filter: saturate(1.05) contrast(1.05);
+    }
+    .hero-inner{ position: relative; padding-top: 18px; }
+    .hero-card{
+      width: min(640px, 100%);
+      padding: 22px;
+      border-radius: 22px;
+      background: rgba(0,0,0,.85);
+      border: 1px solid #333;
+      box-shadow: 0 24px 80px rgba(0,0,0,.7);
+    }
+    .pill{
+      display:inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #e31837;
+      background: rgba(227,24,55,.1);
+      color: #e31837;
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .hero h1{
+      margin: 14px 0 10px;
+      font-size: clamp(30px, 4.2vw, 54px);
+      line-height: 1.06;
+      letter-spacing: -0.03em;
+    }
+    .accent{ color: #e31837; text-decoration: underline; text-underline-offset: 6px; }
+    .lead{ font-size: 16px; color: #cccccc; margin: 10px 0 16px; }
+
+    .proof{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 10px;
+      margin: 16px 0 16px;
+    }
+    .proof-item{
+      padding: 12px;
+      border-radius: 14px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+    }
+    .proof-kpi{ display:block; font-size: 18px; font-weight: 760; letter-spacing: -0.02em; color: #ffffff; }
+    .proof-label{ display:block; font-size: 12px; color: #888888; margin-top: 2px; }
+
+    .hero-actions{ display:flex; gap: 10px; flex-wrap: wrap; }
+    .fineprint{ margin-top: 12px; font-size: 12px; color: #888888; }
+
+    /* Layout helpers */
+    .grid-2{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
+      align-items:start;
+    }
+
+    .cards-3{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 14px;
+    }
+
+    .bullets{ padding-left: 18px; margin: 12px 0 0; }
+    .bullets li{ margin: 8px 0; }
+    .checklist{ list-style: none; padding: 0; margin: 12px 0 0; }
+    .checklist li{
+      margin: 10px 0;
+      padding-left: 26px;
+      position: relative;
+      color: #cccccc;
+    }
+    .checklist li:before{
+      content: "✓";
+      position:absolute; left: 0; top: 0;
+      color: #e31837;
+    }
+
+    /* CTA band */
+    .cta-band{
+      margin-top: 18px;
+      display:flex; align-items:center; justify-content:space-between; gap: 14px;
+      padding: 18px;
+      border-radius: var(--radius);
+      border: 1px solid #e31837;
+      background: rgba(227,24,55,.05);
+    }
+    .cta-band h3{ color: #ffffff; margin: 0 0 4px; }
+    .cta-band p{ margin: 0; }
+
+    /* Stats */
+    .stats{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 12px;
+      margin: 16px 0 18px;
+    }
+    .stat{
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid #333;
+      background: #1a1a1a;
+    }
+    .stat-num{ font-size: 22px; font-weight: 800; letter-spacing: -0.03em; color: #e31837; }
+    .stat-label{ font-size: 12px; color: #888888; margin-top: 4px; }
+
+    /* Benefits grid */
+    .benefits{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 14px;
+    }
+
+    /* Packages */
+    .tiers{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 14px;
+    }
+    .tier-top{
+      display:flex; align-items:baseline; justify-content:space-between; gap: 10px;
+    }
+    .tier-price{ color: #e31837; font-weight: 600; }
+
+    /* Calendar table */
+    .table-card{ padding: 0; overflow:hidden; }
+    .table{ display:grid; }
+    .row{
+      display:grid;
+      grid-template-columns: 120px 1.2fr 1fr 1fr;
+      gap: 12px;
+      padding: 14px 16px;
+      border-top: 1px solid #333;
+    }
+    .row.head{
+      background: #1a1a1a;
+      border-top: none;
+      color: #e31837;
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    /* Gallery */
+    .gallery{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 18px;
+    }
+    .gallery img{ width: 100%; height: auto; object-fit: contain; }
+
+    /* Partners */
+    .logo-grid{
+      display:grid;
+      grid-template-columns: repeat(6, minmax(0,1fr));
+      gap: 14px;
+      padding: 18px;
+    }
+    .logo-grid img{
+      background: #1a1a1a;
+      border: 1px solid #333;
+      padding: 12px;
+      border-radius: 16px;
+      height: 64px;
+      object-fit: contain;
+    }
+
+    /* Contact */
+    .contact{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 14px;
+      align-items:start;
+    }
+    .contact-cards{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .social{ display:flex; gap: 10px; flex-wrap: wrap; }
+    .form label{ display:block; margin: 10px 0; color: #cccccc; font-size: 13px; }
+    input, textarea{
+      width: 100%;
+      margin-top: 6px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid #333;
+      background: #0a0a0a;
+      color: #ffffff;
+    }
+    input:focus, textarea:focus{ outline: none; border-color: #e31837; }
+    input::placeholder, textarea::placeholder{ color: #666666; }
+    textarea{ resize: vertical; }
+
+    /* Footer */
+    .site-footer{
+      border-top: 1px solid #333;
+      padding: 22px 0;
+      background: #0a0a0a;
+    }
+    .footer-inner{
+      display:flex; align-items:center; justify-content:space-between; gap: 12px;
+      color: #888888;
+      font-size: 13px;
+    }
+    .footer-inner a:hover{ color: #e31837; }
+
+    /* Responsive */
+    @media (max-width: 980px){
+      .grid-2, .contact{ grid-template-columns: 1fr; }
+      .cards-3, .benefits, .tiers{ grid-template-columns: 1fr; }
+      .stats{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .gallery{ grid-template-columns: 1fr; }
+      .logo-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+
+      /* Hamburger menu button */
+      .nav-toggle{
+        display:inline-flex;
+        align-items:center;
+        gap: 10px;
+        z-index: 60;
+      }
+
+      /* Hide nav menus by default on mobile */
+      .nav-menu{
+        position: fixed;
+        top: 0;
+        right: -280px;
+        width: 260px;
+        height: 100vh;
+        display: flex !important;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 80px 20px 30px;
+        background: rgba(10,10,10,0.98);
+        border-left: 1px solid #333;
+        transition: right 0.3s ease;
+        z-index: 55;
+        gap: 8px;
+      }
+      .nav-menu.open{
+        right: 0;
+      }
+      .nav-menu li {
+        border-bottom: 1px solid #222;
+        padding: 12px 0;
+      }
+      .nav-menu li:last-child {
+        border-bottom: none;
+      }
+      .nav-menu a {
+        font-size: 15px;
+        color: #fff;
+      }
+
+      /* Overlay when menu is open */
+      .nav-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 54;
+      }
+      .nav-overlay.open {
+        display: block;
+      }
+
+      /* Larger brand logo on mobile to show driver face */
+      .brand-logo{ height: 60px !important; }
+      .brand{ min-width: auto; flex-shrink: 0; }
+      .brand-text{ display: none; }
+
+      /* Push hero card down on mobile to show driver face above */
+      .hero{ min-height: 100vh; padding: 0 0 30px; }
+      .hero-media{ background-position: 70% top !important; }
+      .hero-inner{ padding-top: 280px; }
+      .hero-card{ background: rgba(0,0,0,.8); }
+
+      .lang-switcher {
+        top: auto;
+        bottom: 20px;
+        right: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body style="background-color: #0a0a0a; color: #ffffff;" class="show-es">
+
+  <!-- Language Switcher -->
+  <div class="lang-switcher">
+    <button onclick="setLanguage('en')" id="btn-en">EN</button>
+    <button onclick="setLanguage('es')" id="btn-es" class="active">ES</button>
+  </div>
+
+  <a class="skip-link lang-en" href="#main">Skip to content</a>
+  <a class="skip-link lang-es" href="#main">Ir al contenido</a>
+
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <div class="brand">
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696e4f86ccb051efad7076a6.png" alt="Óscar Tunjo" class="brand-logo" style="width: auto; height: 100px; border-radius: 8px; object-fit: contain; border: 2px solid #e31837;" />
+        <div class="brand-text">
+          <strong class="brand-title">ÓSCAR TUNJO</strong>
+          <span class="brand-sub">Powered by <a href="https://ringlypro.com" target="_blank" rel="noopener" style="color: #e31837; text-decoration: none; font-weight: bold;">RinglyPro</a></span>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Primary">
+        <button class="nav-toggle" aria-expanded="false" aria-controls="navMenu" id="navToggle">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="nav-toggle-lines" aria-hidden="true"><span></span></span>
+        </button>
+
+        <!-- Overlay for mobile menu -->
+        <div class="nav-overlay" id="navOverlay"></div>
+
+        <!-- English Nav -->
+        <ul class="nav-menu lang-en" id="navMenuEn">
+          <li><a href="#about">About</a></li>
+          <li><a href="#value">Partnership Value</a></li>
+          <li><a href="#reach">Stats</a></li>
+          <li><a href="#benefits">Benefits</a></li>
+          <li><a href="#packages">Packages</a></li>
+          <li><a href="#calendar">Calendar</a></li>
+          <li><a href="#vip">VIP</a></li>
+          <li><a href="#partners">Partners</a></li>
+        </ul>
+
+        <!-- Spanish Nav -->
+        <ul class="nav-menu lang-es" id="navMenu">
+          <li><a href="#about">Acerca de</a></li>
+          <li><a href="#value">Valor de Alianza</a></li>
+          <li><a href="#reach">Estadísticas</a></li>
+          <li><a href="#benefits">Beneficios</a></li>
+          <li><a href="#packages">Paquetes</a></li>
+          <li><a href="#calendar">Calendario</a></li>
+          <li><a href="#vip">VIP</a></li>
+          <li><a href="#partners">Socios</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- HERO -->
+    <section class="hero" aria-label="Hero">
+      <div class="hero-media" role="img" aria-label="Driver racing action photo"></div>
+
+      <div class="container hero-inner">
+        <!-- English Hero -->
+        <div class="hero-card lang-en">
+          <p class="pill">2026 Sponsorship & Partnership Program</p>
+          <h1>Accelerate Your Brand with <span class="accent">ÓSCAR TUNJO</span></h1>
+          <p class="lead">
+            Through passion, performance, and global visibility at every race, your company will connect with motorsport fans worldwide. Let's drive together towards victory!
+          </p>
+
+          <div class="proof">
+            <div class="proof-item">
+              <span class="proof-kpi">50+</span>
+              <span class="proof-label">Career Wins & Podiums</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-kpi">15+</span>
+              <span class="proof-label">Pro Seasons</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-kpi">540M</span>
+              <span class="proof-label">Global Viewers</span>
+            </div>
+          </div>
+
+          <div class="hero-actions">
+            <a class="btn" href="#contact">Become a Partner</a>
+            <a class="btn btn-ghost" href="#packages">View Packages</a>
+          </div>
+
+          <p class="fineprint">
+            Media kit + deliverables available upon request.
+          </p>
+        </div>
+
+        <!-- Spanish Hero -->
+        <div class="hero-card lang-es">
+          <p class="pill">Programa de Patrocinio y Alianzas 2026</p>
+          <h1>Acelera Tu Marca con <span class="accent">ÓSCAR TUNJO</span></h1>
+          <p class="lead">
+            A través de la pasión, el rendimiento y la visibilidad global en cada carrera, tu empresa conectará con fanáticos del automovilismo en todo el mundo. ¡Conduzcamos juntos hacia la victoria!
+          </p>
+
+          <div class="proof">
+            <div class="proof-item">
+              <span class="proof-kpi">50+</span>
+              <span class="proof-label">Victorias y Podios</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-kpi">15+</span>
+              <span class="proof-label">Temporadas Pro</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-kpi">540M</span>
+              <span class="proof-label">Espectadores Globales</span>
+            </div>
+          </div>
+
+          <div class="hero-actions">
+            <a class="btn" href="#contact">Ser Patrocinador</a>
+            <a class="btn btn-ghost" href="#packages">Ver Paquetes</a>
+          </div>
+
+          <p class="fineprint">
+            Media kit + entregables disponibles bajo solicitud.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="section" id="about">
+      <div class="container grid-2">
+        <!-- English About -->
+        <div class="lang-en">
+          <h2>About Óscar Tunjo</h2>
+          <p>
+            Óscar Andrés Tunjo is a Colombian professional racing driver with over 15 years of international motorsport experience. From multiple Karting Championships across Colombia, Latin America, Spain, USA, and Italy to competing at the highest levels of European and American prototype racing.
+          </p>
+          <p>
+            At the heart of his career are three core values: <strong>performance, dedication, and passion</strong>. These values are the driving force behind every race, every lap, and every victory achieved with Gebhardt Motorsport.
+          </p>
+
+          <ul class="bullets">
+            <li><strong>2025:</strong> IMSA VP Winner Mid-Ohio, Norisring Winner, Lap Record Spa-Francorchamps LMP3</li>
+            <li><strong>2021:</strong> GT World Challenge Winner England, 2nd 24 Hours of Spa-Francorchamps</li>
+            <li><strong>2015-2016:</strong> GP3 Series Winner Austria, 2nd Place Barcelona</li>
+            <li><strong>Team:</strong> Gebhardt Motorsport</li>
+            <li><strong>Car:</strong> LMP3 Prototype</li>
+            <li><strong>Nationality:</strong> Colombian</li>
+          </ul>
+
+          <div style="margin-top: 24px;">
+            <a href="https://ringlypro.com" target="_blank" rel="noopener">
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696e7672eecbfae3623c1042.png" alt="RinglyPro" style="width: 100%; height: auto; border: 4px solid #e31837; border-radius: 14px;" loading="lazy" />
+            </a>
+            <p style="margin-top: 12px; font-size: 13px; color: #888;">
+              <strong style="color: #e31837;">RinglyPro</strong> — AI-powered voice booking and customer engagement platform. Automate calls, capture leads, and grow your business 24/7 with intelligent conversational AI.
+            </p>
+          </div>
+        </div>
+
+        <!-- Spanish About -->
+        <div class="lang-es">
+          <h2>Acerca de Óscar Tunjo</h2>
+          <p>
+            Óscar Andrés Tunjo es un piloto profesional colombiano con más de 15 años de experiencia en el automovilismo internacional. Desde múltiples Campeonatos de Karting en Colombia, Latinoamérica, España, EE.UU. e Italia hasta competir en los más altos niveles de las carreras de prototipos europeos y americanos.
+          </p>
+          <p>
+            En el corazón de su carrera hay tres valores fundamentales: <strong>rendimiento, dedicación y pasión</strong>. Estos valores son la fuerza impulsora detrás de cada carrera, cada vuelta y cada victoria lograda con Gebhardt Motorsport.
+          </p>
+
+          <ul class="bullets">
+            <li><strong>2025:</strong> Ganador IMSA VP Mid-Ohio, Ganador Norisring, Récord de vuelta Spa-Francorchamps LMP3</li>
+            <li><strong>2021:</strong> Ganador GT World Challenge Inglaterra, 2do 24 Horas de Spa-Francorchamps</li>
+            <li><strong>2015-2016:</strong> Ganador GP3 Series Austria, 2do Lugar Barcelona</li>
+            <li><strong>Equipo:</strong> Gebhardt Motorsport</li>
+            <li><strong>Auto:</strong> Prototipo LMP3</li>
+            <li><strong>Nacionalidad:</strong> Colombiano</li>
+          </ul>
+
+          <div style="margin-top: 24px;">
+            <a href="https://ringlypro.com" target="_blank" rel="noopener">
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696e7672eecbfae3623c1042.png" alt="RinglyPro" style="width: 100%; height: auto; border: 4px solid #e31837; border-radius: 14px;" loading="lazy" />
+            </a>
+          </div>
+        </div>
+
+        <figure class="card media-card">
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c12cc439b6bb3782f8255.png" alt="Óscar Tunjo portrait" loading="lazy" />
+          <figcaption class="lang-en">Óscar Tunjo • IMSA & Le Mans Cup Driver • Born January 5, 1996</figcaption>
+          <figcaption class="lang-es">Óscar Tunjo • Piloto IMSA & Le Mans Cup • Nacido el 5 de enero de 1996</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- VALUE -->
+    <section class="section section-alt" id="value">
+      <div class="container">
+        <!-- English Value -->
+        <div class="lang-en">
+          <div class="section-head">
+            <h2>Why Branding Matters in Motorsport</h2>
+            <p class="muted">Go further, faster. Modern sponsorships integrate digital storytelling, fan engagement, and exclusive experiences.</p>
+          </div>
+
+          <div class="cards-3">
+            <article class="card">
+              <h3>Visibility & Recognition</h3>
+              <p>Racing cars, team gear, and digital channels serve as powerful canvases for brand exposure. Every race attracts thousands of live spectators and millions of online viewers, ensuring continuous visibility.</p>
+            </article>
+            <article class="card">
+              <h3>Association with Excellence</h3>
+              <p>By partnering with Gebhardt Motorsport, companies align their brand with precision engineering, speed, and innovation—values that strengthen brand reputation and position you as forward-thinking.</p>
+            </article>
+            <article class="card">
+              <h3>Emotional Connection</h3>
+              <p>Fans are loyal and emotionally invested in their teams and drivers. Associating your brand with Óscar Tunjo allows you to benefit from that loyalty and transfer it to your products or services.</p>
+            </article>
+          </div>
+
+          <div class="cta-band">
+            <div>
+              <h3>Market Activation on a Global Scale</h3>
+              <p class="muted">North America & Europe coverage with IMSA and Le Mans Cup. Custom packages available.</p>
+            </div>
+            <a class="btn" href="#contact">Request the Media Kit</a>
+          </div>
+        </div>
+
+        <!-- Spanish Value -->
+        <div class="lang-es">
+          <div class="section-head">
+            <h2>Por Qué el Branding Importa en el Automovilismo</h2>
+            <p class="muted">Llega más lejos, más rápido. Los patrocinios modernos integran narrativa digital, engagement con fans y experiencias exclusivas.</p>
+          </div>
+
+          <div class="cards-3">
+            <article class="card">
+              <h3>Visibilidad y Reconocimiento</h3>
+              <p>Los autos de carrera, el equipo del team y los canales digitales sirven como poderosos lienzos para la exposición de marca. Cada carrera atrae miles de espectadores en vivo y millones de viewers online, asegurando visibilidad continua.</p>
+            </article>
+            <article class="card">
+              <h3>Asociación con la Excelencia</h3>
+              <p>Al aliarte con Gebhardt Motorsport, las empresas alinean su marca con ingeniería de precisión, velocidad e innovación—valores que fortalecen la reputación de marca y te posicionan como vanguardista.</p>
+            </article>
+            <article class="card">
+              <h3>Conexión Emocional</h3>
+              <p>Los fans son leales y están emocionalmente comprometidos con sus equipos y pilotos. Asociar tu marca con Óscar Tunjo te permite beneficiarte de esa lealtad y transferirla a tus productos o servicios.</p>
+            </article>
+          </div>
+
+          <div class="cta-band">
+            <div>
+              <h3>Activación de Mercado a Escala Global</h3>
+              <p class="muted">Cobertura en Norteamérica y Europa con IMSA y Le Mans Cup. Paquetes personalizados disponibles.</p>
+            </div>
+            <a class="btn" href="#contact">Solicitar Media Kit</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REACH / STATS -->
+    <section class="section" id="reach">
+      <div class="container">
+        <!-- English Stats -->
+        <div class="lang-en">
+          <div class="section-head">
+            <h2>Live Race Broadcast Metrics</h2>
+            <p class="muted">Global reach across 156 countries through TV, broadcast, and streaming platforms.</p>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-num">3.9M</div>
+              <div class="stat-label">US Viewership (Daytona)</div>
+            </div>
+            <div class="stat">
+              <div class="stat-num">584M</div>
+              <div class="stat-label">Global Households</div>
+            </div>
+            <div class="stat">
+              <div class="stat-num">18</div>
+              <div class="stat-label">Race Events in 2026</div>
+            </div>
+            <div class="stat">
+              <div class="stat-num">156</div>
+              <div class="stat-label">Countries Reached</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Spanish Stats -->
+        <div class="lang-es">
+          <div class="section-head">
+            <h2>Métricas de Transmisión en Vivo</h2>
+            <p class="muted">Alcance global en 156 países a través de TV, transmisión y plataformas de streaming.</p>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-num">3.9M</div>
+              <div class="stat-label">Audiencia EE.UU. (Daytona)</div>
+            </div>
+            <div class="stat">
+              <div class="stat-num">584M</div>
+              <div class="stat-label">Hogares Globales</div>
+            </div>
+            <div class="stat">
+              <div class="stat-num">18</div>
+              <div class="stat-label">Eventos en 2026</div>
+            </div>
+            <div class="stat">
+              <div class="stat-num">156</div>
+              <div class="stat-label">Países Alcanzados</div>
+            </div>
+          </div>
+        </div>
+
+        <figure class="card media-card" style="margin-bottom: 18px;">
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696d2a7ce125ef09b3101e98.png" alt="IMSA Racing broadcast coverage" style="width: 100%; border-radius: 14px;" loading="lazy" />
+        </figure>
+
+        <div class="grid-2">
+          <!-- English Broadcast -->
+          <article class="card lang-en">
+            <h3>Broadcast Coverage</h3>
+            <ul class="bullets">
+              <li><strong>NBC Sports:</strong> 3.5 million unique viewers</li>
+              <li><strong>Peacock Streaming:</strong> 438,000 unique viewers</li>
+              <li><strong>IMSA.TV:</strong> 687,000 total unique viewers globally</li>
+              <li>Bilingual reach (English & Spanish) connecting US and LATAM audiences</li>
+            </ul>
+          </article>
+
+          <!-- Spanish Broadcast -->
+          <article class="card lang-es">
+            <h3>Cobertura de Transmisión</h3>
+            <ul class="bullets">
+              <li><strong>NBC Sports:</strong> 3.5 millones de espectadores únicos</li>
+              <li><strong>Peacock Streaming:</strong> 438,000 espectadores únicos</li>
+              <li><strong>IMSA.TV:</strong> 687,000 espectadores únicos totales globalmente</li>
+              <li>Alcance bilingüe (Inglés y Español) conectando audiencias de EE.UU. y LATAM</li>
+            </ul>
+          </article>
+
+          <!-- English Social -->
+          <article class="card lang-en">
+            <h3>Digital & Social Media</h3>
+            <ul class="bullets">
+              <li>Branded content on Instagram, Facebook, LinkedIn</li>
+              <li>Race-week content: training, preparation, behind-the-scenes</li>
+              <li>Brand integration in Reels, Stories, Posts</li>
+              <li>Professional photo & video assets for campaigns</li>
+            </ul>
+          </article>
+
+          <!-- Spanish Social -->
+          <article class="card lang-es">
+            <h3>Digital y Redes Sociales</h3>
+            <ul class="bullets">
+              <li>Contenido de marca en Instagram, Facebook, LinkedIn</li>
+              <li>Contenido de semana de carrera: entrenamiento, preparación, detrás de cámaras</li>
+              <li>Integración de marca en Reels, Stories, Posts</li>
+              <li>Activos profesionales de foto y video para campañas</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIVE BROADCAST -->
+    <section class="section section-alt" id="broadcast">
+      <div class="container">
+        <!-- English Broadcast Section -->
+        <div class="section-head lang-en">
+          <h2>Watch Live: IMSA Racing Broadcasts</h2>
+          <p class="muted">Experience the action live from IMSA.TV - Official streaming partner of IMSA racing.</p>
+        </div>
+
+        <!-- Spanish Broadcast Section -->
+        <div class="section-head lang-es">
+          <h2>Mira en Vivo: Transmisiones de Carreras IMSA</h2>
+          <p class="muted">Experimenta la acción en vivo desde IMSA.TV - Socio oficial de streaming de IMSA racing.</p>
+        </div>
+
+        <a href="https://www.imsa.tv" target="_blank" rel="noopener" style="display: block; text-decoration: none; border-radius: 12px; overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease; border: 2px solid #333333;">
+          <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%); padding: 60px 40px; text-align: center;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#e31837" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 20px;">
+              <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+              <polyline points="17 2 12 7 7 2"></polyline>
+            </svg>
+            <h3 style="font-size: 32px; margin: 0 0 12px; color: #ffffff; font-weight: 700;">IMSA.TV</h3>
+            <p class="lang-en" style="color: #888888; margin: 0 0 24px; font-size: 18px;">Click to watch live race broadcasts, replays, and exclusive content</p>
+            <p class="lang-es" style="color: #888888; margin: 0 0 24px; font-size: 18px;">Haz clic para ver transmisiones en vivo, repeticiones y contenido exclusivo</p>
+            <span class="btn lang-en" style="display: inline-block; padding: 16px 40px; font-size: 18px;">Watch Now on IMSA.TV</span>
+            <span class="btn lang-es" style="display: inline-block; padding: 16px 40px; font-size: 18px;">Ver Ahora en IMSA.TV</span>
+          </div>
+        </a>
+
+        <div class="stats" style="margin-top: 24px;">
+          <div class="stat">
+            <div class="stat-num">LIVE</div>
+            <div class="stat-label lang-en">Race Broadcasts</div>
+            <div class="stat-label lang-es">Transmisiones en Vivo</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">156</div>
+            <div class="stat-label lang-en">Countries Streaming</div>
+            <div class="stat-label lang-es">Países con Streaming</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">687K</div>
+            <div class="stat-label lang-en">Global Viewers</div>
+            <div class="stat-label lang-es">Espectadores Globales</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">24/7</div>
+            <div class="stat-label lang-en">On-Demand Content</div>
+            <div class="stat-label lang-es">Contenido On-Demand</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BENEFITS -->
+    <section class="section" id="benefits">
+      <div class="container">
+        <!-- English Benefits -->
+        <div class="lang-en">
+          <div class="section-head">
+            <h2>Partner Benefits</h2>
+            <p class="muted">Comprehensive sponsorship deliverables across visibility, content, and experiences.</p>
+          </div>
+
+          <div class="benefits">
+            <article class="card">
+              <h3>International Brand Visibility</h3>
+              <ul class="checklist">
+                <li>Logo on racing suit and helmet</li>
+                <li>Logo on team apparel</li>
+                <li>Digital content and media assets</li>
+                <li>Exposure at major US markets: Daytona, COTA, Road America, Virginia, Road Atlanta</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>Digital & Social Media Exposure</h3>
+              <ul class="checklist">
+                <li>Branded content on Instagram, Facebook, LinkedIn</li>
+                <li>Race-week training and preparation content</li>
+                <li>Behind-the-scenes access in the USA</li>
+                <li>Bilingual reach (English & Spanish)</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>Content for Marketing</h3>
+              <ul class="checklist">
+                <li>Professional photo & video assets</li>
+                <li>Training sessions and race-week visuals</li>
+                <li>Content rights for social media, digital campaigns, in-club screens</li>
+                <li>Custom campaigns and engagement initiatives</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>Brand Positioning</h3>
+              <ul class="checklist">
+                <li>Link brand to elite performance</li>
+                <li>Motivate healthy, active lifestyles</li>
+                <li>Professional athlete credibility</li>
+                <li>"Train like a Racing Driver" narrative</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>VIP Experiences</h3>
+              <ul class="checklist">
+                <li>VIP access at selected IMSA races</li>
+                <li>Meet & greet experiences</li>
+                <li>Autograph sessions and brand activations</li>
+                <li>Behind-the-scenes paddock access</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>Added Value</h3>
+              <ul class="checklist">
+                <li>Authentic ambassador relationship</li>
+                <li>Continuous exposure throughout full IMSA season</li>
+                <li>Connection between fitness, discipline, and performance</li>
+                <li>International level representation</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+
+        <!-- Spanish Benefits -->
+        <div class="lang-es">
+          <div class="section-head">
+            <h2>Beneficios para Socios</h2>
+            <p class="muted">Entregables integrales de patrocinio en visibilidad, contenido y experiencias.</p>
+          </div>
+
+          <div class="benefits">
+            <article class="card">
+              <h3>Visibilidad Internacional de Marca</h3>
+              <ul class="checklist">
+                <li>Logo en traje de carrera y casco</li>
+                <li>Logo en indumentaria del equipo</li>
+                <li>Contenido digital y activos de medios</li>
+                <li>Exposición en mercados principales de EE.UU.: Daytona, COTA, Road America, Virginia, Road Atlanta</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>Exposición Digital y Redes Sociales</h3>
+              <ul class="checklist">
+                <li>Contenido de marca en Instagram, Facebook, LinkedIn</li>
+                <li>Contenido de entrenamiento y preparación de semana de carrera</li>
+                <li>Acceso detrás de cámaras en EE.UU.</li>
+                <li>Alcance bilingüe (Inglés y Español)</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>Contenido para Marketing</h3>
+              <ul class="checklist">
+                <li>Activos profesionales de foto y video</li>
+                <li>Sesiones de entrenamiento y visuales de semana de carrera</li>
+                <li>Derechos de contenido para redes sociales, campañas digitales, pantallas en club</li>
+                <li>Campañas personalizadas e iniciativas de engagement</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>Posicionamiento de Marca</h3>
+              <ul class="checklist">
+                <li>Vincula la marca con rendimiento de élite</li>
+                <li>Motiva estilos de vida saludables y activos</li>
+                <li>Credibilidad de atleta profesional</li>
+                <li>Narrativa "Entrena como un Piloto de Carreras"</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>Experiencias VIP</h3>
+              <ul class="checklist">
+                <li>Acceso VIP en carreras IMSA seleccionadas</li>
+                <li>Experiencias de meet & greet</li>
+                <li>Sesiones de autógrafos y activaciones de marca</li>
+                <li>Acceso detrás de cámaras al paddock</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>Valor Agregado</h3>
+              <ul class="checklist">
+                <li>Relación auténtica como embajador</li>
+                <li>Exposición continua durante toda la temporada IMSA</li>
+                <li>Conexión entre fitness, disciplina y rendimiento</li>
+                <li>Representación a nivel internacional</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PACKAGES -->
+    <section class="section" id="packages">
+      <div class="container">
+        <!-- English Packages -->
+        <div class="lang-en">
+          <div class="section-head">
+            <h2>Sponsorship Packages</h2>
+            <p class="muted">Custom partnership programs tailored to your brand goals and activation needs.</p>
+          </div>
+
+          <div class="tiers">
+            <article class="tier card">
+              <div class="tier-top">
+                <h3>Title Partner</h3>
+                <p class="tier-price">Custom</p>
+              </div>
+              <p class="tier-desc">Maximum visibility with primary branding across all assets and exclusive ambassador relationship.</p>
+              <ul class="checklist">
+                <li>Primary logo on car, suit, helmet</li>
+                <li>Full VIP hospitality at all IMSA events</li>
+                <li>Exclusive content creation partnership</li>
+                <li>Full media rights and campaign usage</li>
+              </ul>
+              <a class="btn btn-ghost" href="#contact">Discuss Title Partnership</a>
+            </article>
+
+            <article class="tier card">
+              <div class="tier-top">
+                <h3>Primary Partner</h3>
+                <p class="tier-price">Custom</p>
+              </div>
+              <p class="tier-desc">High-impact visibility with prominent brand placement and comprehensive digital exposure.</p>
+              <ul class="checklist">
+                <li>Logo on suit, helmet, team apparel</li>
+                <li>Social media content integration</li>
+                <li>VIP access at selected events</li>
+                <li>Professional photo/video assets</li>
+              </ul>
+              <a class="btn btn-ghost" href="#contact">Discuss Primary Partner</a>
+            </article>
+
+            <article class="tier card">
+              <div class="tier-top">
+                <h3>Supporting Partner</h3>
+                <p class="tier-price">Custom</p>
+              </div>
+              <p class="tier-desc">Entry-level partnership with digital presence and brand association benefits.</p>
+              <ul class="checklist">
+                <li>Digital content placement</li>
+                <li>Social media mentions</li>
+                <li>Selected event access</li>
+                <li>Branded content deliverables</li>
+              </ul>
+              <a class="btn btn-ghost" href="#contact">Discuss Supporting Partner</a>
+            </article>
+          </div>
+
+          <p class="muted small-note">
+            Optional add-ons: hospitality upgrades, show car appearances, trade show activations, gym visits & special events, custom fitness challenges.
+          </p>
+        </div>
+
+        <!-- Spanish Packages -->
+        <div class="lang-es">
+          <div class="section-head">
+            <h2>Paquetes de Patrocinio</h2>
+            <p class="muted">Programas de alianza personalizados adaptados a tus objetivos de marca y necesidades de activación.</p>
+          </div>
+
+          <div class="tiers">
+            <article class="tier card">
+              <div class="tier-top">
+                <h3>Socio Titular</h3>
+                <p class="tier-price">Personalizado</p>
+              </div>
+              <p class="tier-desc">Máxima visibilidad con branding principal en todos los activos y relación exclusiva como embajador.</p>
+              <ul class="checklist">
+                <li>Logo principal en auto, traje, casco</li>
+                <li>Hospitalidad VIP completa en todos los eventos IMSA</li>
+                <li>Alianza exclusiva de creación de contenido</li>
+                <li>Derechos completos de medios y uso de campañas</li>
+              </ul>
+              <a class="btn btn-ghost" href="#contact">Discutir Sociedad Titular</a>
+            </article>
+
+            <article class="tier card">
+              <div class="tier-top">
+                <h3>Socio Principal</h3>
+                <p class="tier-price">Personalizado</p>
+              </div>
+              <p class="tier-desc">Visibilidad de alto impacto con ubicación prominente de marca y exposición digital integral.</p>
+              <ul class="checklist">
+                <li>Logo en traje, casco, indumentaria del equipo</li>
+                <li>Integración de contenido en redes sociales</li>
+                <li>Acceso VIP en eventos seleccionados</li>
+                <li>Activos profesionales de foto/video</li>
+              </ul>
+              <a class="btn btn-ghost" href="#contact">Discutir Socio Principal</a>
+            </article>
+
+            <article class="tier card">
+              <div class="tier-top">
+                <h3>Socio de Apoyo</h3>
+                <p class="tier-price">Personalizado</p>
+              </div>
+              <p class="tier-desc">Sociedad de nivel inicial con presencia digital y beneficios de asociación de marca.</p>
+              <ul class="checklist">
+                <li>Ubicación de contenido digital</li>
+                <li>Menciones en redes sociales</li>
+                <li>Acceso a eventos seleccionados</li>
+                <li>Entregables de contenido de marca</li>
+              </ul>
+              <a class="btn btn-ghost" href="#contact">Discutir Socio de Apoyo</a>
+            </article>
+          </div>
+
+          <p class="muted small-note">
+            Add-ons opcionales: mejoras de hospitalidad, apariciones del auto de exhibición, activaciones en ferias, visitas al gimnasio y eventos especiales, retos de fitness personalizados.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CALENDAR -->
+    <section class="section section-alt" id="calendar">
+      <div class="container">
+        <!-- English Calendar -->
+        <div class="section-head lang-en">
+          <h2>Gebhardt Motorsport Worldwide Tour 2026</h2>
+          <p class="muted">18 race events across USA, Europe, and Canada. IMSA VP SportsCar Challenge + Le Mans Cup.</p>
+        </div>
+
+        <!-- Spanish Calendar -->
+        <div class="section-head lang-es">
+          <h2>Gira Mundial Gebhardt Motorsport 2026</h2>
+          <p class="muted">18 eventos de carrera en EE.UU., Europa y Canadá. IMSA VP SportsCar Challenge + Le Mans Cup.</p>
+        </div>
+
+        <div class="card table-card">
+          <div class="table">
+            <div class="row head lang-en">
+              <div>Date</div><div>Circuit</div><div>Country</div><div>Series</div>
+            </div>
+            <div class="row head lang-es">
+              <div>Fecha</div><div>Circuito</div><div>País</div><div>Serie</div>
+            </div>
+            <div class="row">
+              <div>Jan 16-19</div><div>Daytona International Speedway</div><div>USA</div><div>IMSA Sprint</div>
+            </div>
+            <div class="row">
+              <div>Feb 27-28</div><div>Circuit of the Americas</div><div>USA</div><div>IMSA Sprint</div>
+            </div>
+            <div class="row">
+              <div>Mar 6-8</div><div>Sebring International Raceway</div><div>USA</div><div>IMSA Endurance</div>
+            </div>
+            <div class="row">
+              <div>Apr 8</div><div>Barcelona – Collective Test</div><div class="lang-en">Spain</div><div class="lang-es">España</div><div>Le Mans Cup Test</div>
+            </div>
+            <div class="row">
+              <div>Apr 11</div><div>Barcelona</div><div class="lang-en">Spain</div><div class="lang-es">España</div><div>Le Mans Cup</div>
+            </div>
+            <div class="row">
+              <div>May 1-2</div><div>Le Castellet</div><div class="lang-en">France</div><div class="lang-es">Francia</div><div>Le Mans Cup</div>
+            </div>
+            <div class="row">
+              <div>May 7-9</div><div>Circuit of the Americas</div><div>USA</div><div>IMSA Endurance</div>
+            </div>
+            <div class="row">
+              <div>Jun 5-7</div><div>Mid-Ohio Sports Car Course</div><div>USA</div><div>IMSA Sprint</div>
+            </div>
+            <div class="row">
+              <div>Jun 12</div><div>Road to Le Mans</div><div class="lang-en">France</div><div class="lang-es">Francia</div><div>Le Mans Cup</div>
+            </div>
+            <div class="row">
+              <div>Jun 19-21</div><div>Virginia International Raceway</div><div>USA</div><div>IMSA Endurance</div>
+            </div>
+            <div class="row">
+              <div>Jul 10-12</div><div>Canadian Tire Motorsport Park</div><div class="lang-en">Canada</div><div class="lang-es">Canadá</div><div>IMSA Sprint</div>
+            </div>
+            <div class="row">
+              <div>Aug 14-16</div><div>Road America</div><div>USA</div><div>IMSA Endurance</div>
+            </div>
+            <div class="row">
+              <div>Aug 21-22</div><div>Virginia International Raceway</div><div>USA</div><div>IMSA Sprint</div>
+            </div>
+            <div class="row">
+              <div>Aug 21-22</div><div>Spa-Francorchamps</div><div class="lang-en">Belgium</div><div class="lang-es">Bélgica</div><div>Le Mans Cup</div>
+            </div>
+            <div class="row">
+              <div>Sept 12</div><div>Silverstone</div><div class="lang-en">UK</div><div class="lang-es">Reino Unido</div><div>Le Mans Cup</div>
+            </div>
+            <div class="row">
+              <div>Oct 1-3</div><div>Michelin Raceway Road Atlanta</div><div>USA</div><div>IMSA Sprint</div>
+            </div>
+            <div class="row">
+              <div>Oct 10</div><div>Portimão</div><div>Portugal</div><div>Le Mans Cup</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIP EXPERIENCE -->
+    <section class="section" id="vip">
+      <div class="container">
+        <!-- English VIP -->
+        <div class="lang-en">
+          <div class="section-head">
+            <h2>VIP Experience</h2>
+            <p class="muted">Exclusive behind-the-scenes access to the world's most prestigious motorsport competitions.</p>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <h3>Once-in-a-Lifetime Access</h3>
+              <p>
+                This exclusive experience offers the opportunity to participate in racing events with unprecedented access to the behind-the-scenes world of the world's most important competitions. Attendees become "part of the team," enjoying thrilling action both on the track and behind the scenes.
+              </p>
+              <ul class="checklist">
+                <li>VIP paddock access and garage tours</li>
+                <li>Meet the driver and engineering team</li>
+                <li>Pre-race grid walk experience</li>
+                <li>Exclusive hospitality and catering</li>
+                <li>Behind-the-scenes content opportunities</li>
+                <li>Autograph sessions and photo opportunities</li>
+              </ul>
+
+              <h3 style="margin-top: 24px;">Emotional Connection</h3>
+              <p>
+                Emotional marketing allows brands to establish deep connections with their audience, using stories and experiences that resonate with consumers' values and passions, resulting in greater loyalty and preference towards the brand.
+              </p>
+            </div>
+
+            <div class="card" style="padding: 0; overflow: hidden;">
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c12ccb34b640a0770f924.png" alt="VIP paddock experience with team and car" style="border-radius: 0; width: 100%; aspect-ratio: 4/3; object-fit: cover;" />
+              <div style="padding: 18px;">
+                <p class="stat-num" style="margin: 0;">540M+</p>
+                <p class="muted" style="margin: 4px 0 0;">Global viewers across 156 countries through TV, broadcast, and YouTube livestream each season.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Spanish VIP -->
+        <div class="lang-es">
+          <div class="section-head">
+            <h2>Experiencia VIP</h2>
+            <p class="muted">Acceso exclusivo detrás de cámaras a las competiciones de automovilismo más prestigiosas del mundo.</p>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <h3>Acceso Único en la Vida</h3>
+              <p>
+                Esta experiencia exclusiva ofrece la oportunidad de participar en eventos de carreras con acceso sin precedentes al mundo detrás de cámaras de las competiciones más importantes del mundo. Los asistentes se convierten en "parte del equipo", disfrutando de la emocionante acción tanto en la pista como detrás de escenas.
+              </p>
+              <ul class="checklist">
+                <li>Acceso VIP al paddock y tours del garaje</li>
+                <li>Conoce al piloto y al equipo de ingeniería</li>
+                <li>Experiencia de caminata pre-carrera en la parrilla</li>
+                <li>Hospitalidad y catering exclusivos</li>
+                <li>Oportunidades de contenido detrás de cámaras</li>
+                <li>Sesiones de autógrafos y oportunidades de fotos</li>
+              </ul>
+
+              <h3 style="margin-top: 24px;">Conexión Emocional</h3>
+              <p>
+                El marketing emocional permite a las marcas establecer conexiones profundas con su audiencia, usando historias y experiencias que resuenan con los valores y pasiones de los consumidores, resultando en mayor lealtad y preferencia hacia la marca.
+              </p>
+            </div>
+
+            <div class="card" style="padding: 0; overflow: hidden;">
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c12ccb34b640a0770f924.png" alt="VIP paddock experience with team and car" style="border-radius: 0; width: 100%; aspect-ratio: 4/3; object-fit: cover;" />
+              <div style="padding: 18px;">
+                <p class="stat-num" style="margin: 0;">540M+</p>
+                <p class="muted" style="margin: 4px 0 0;">Espectadores globales en 156 países a través de TV, transmisión y YouTube livestream cada temporada.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GALLERY -->
+    <section class="section section-alt" id="gallery">
+      <div class="container">
+        <div class="section-head lang-en">
+          <h2>Gallery</h2>
+          <p class="muted">Action shots, podium celebrations, and behind-the-scenes moments.</p>
+        </div>
+        <div class="section-head lang-es">
+          <h2>Galería</h2>
+          <p class="muted">Fotos de acción, celebraciones de podio y momentos detrás de cámaras.</p>
+        </div>
+
+        <div class="gallery">
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696cf718439b6bf938457268.png" alt="Óscar Tunjo racing action" loading="lazy" />
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c12cc439b6bb3782f8255.png" alt="Óscar Tunjo motorsport" loading="lazy" />
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c12ccb34b640a0770f924.png" alt="Gebhardt Motorsport racing" loading="lazy" />
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c12cc4e42b96bfa99d93b.png" alt="LMP3 prototype racing" loading="lazy" />
+        </div>
+      </div>
+    </section>
+
+    <!-- PARTNERS -->
+    <section class="section" id="partners">
+      <div class="container">
+        <div class="section-head lang-en">
+          <h2>Current Partners & Affiliations</h2>
+          <p class="muted">Join these leading brands in supporting international motorsport excellence.</p>
+        </div>
+        <div class="section-head lang-es">
+          <h2>Socios y Afiliaciones Actuales</h2>
+          <p class="muted">Únete a estas marcas líderes apoyando la excelencia del automovilismo internacional.</p>
+        </div>
+
+        <div class="logo-grid card">
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c229ed403b72204d9fcab.png" alt="Gebhardt Motorsport" loading="lazy" />
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c229e4e42b9039e9c0407.png" alt="IMSA" loading="lazy" />
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c229ed403b7b3c9d9fcaa.jpeg" alt="Michelin" loading="lazy" />
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c229ee125ef7051f514ce.png" alt="Pinaxis" loading="lazy" />
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c2352d403b7dfe9da16d9.png" alt="Le Mans Cup" loading="lazy" />
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="section" id="contact">
+      <div class="container">
+        <div class="contact">
+          <div>
+            <!-- English Contact -->
+            <div class="lang-en">
+              <h2>Become a Partner</h2>
+              <p class="lead">
+                A partnership with Óscar Tunjo represents much more than traditional sponsorship—it's a strategic alliance built on performance, health, discipline, and motivation. Let's build a successful partnership together.
+              </p>
+            </div>
+
+            <!-- Spanish Contact -->
+            <div class="lang-es">
+              <h2>Conviértete en Socio</h2>
+              <p class="lead">
+                Una alianza con Óscar Tunjo representa mucho más que un patrocinio tradicional—es una alianza estratégica construida sobre rendimiento, salud, disciplina y motivación. Construyamos juntos una sociedad exitosa.
+              </p>
+            </div>
+
+            <figure class="card media-card" style="margin-bottom: 14px;">
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c12cc4e42b96bfa99d93b.png" alt="Óscar Tunjo with LMP3 race car" loading="lazy" />
+            </figure>
+
+            <div class="contact-cards">
+              <div class="card">
+                <h3>Óscar Tunjo</h3>
+                <p class="muted lang-en">Professional Racing Driver</p>
+                <p class="muted lang-es">Piloto Profesional de Carreras</p>
+                <p>
+                  <a href="mailto:team@tunjoracing.com">team@tunjoracing.com</a><br />
+                  TunjoRacing Motorsport
+                </p>
+              </div>
+
+              <div class="card">
+                <h3 class="lang-en">Follow Óscar</h3>
+                <h3 class="lang-es">Sigue a Óscar</h3>
+                <p class="muted lang-en">Connect on social media</p>
+                <p class="muted lang-es">Conéctate en redes sociales</p>
+                <p class="social">
+                  <a href="https://www.instagram.com/oscartunjo" target="_blank" rel="noopener">Instagram</a>
+                  <a href="https://www.facebook.com/OscarAndresTunjo" target="_blank" rel="noopener">Facebook</a>
+                  <a href="https://x.com/oscartunjo?s=21" target="_blank" rel="noopener">X</a>
+                </p>
+              </div>
+            </div>
+
+            <p class="fineprint lang-en">
+              This partnership delivers measurable value, authentic storytelling, and long-term brand positioning while representing your brand with professionalism, commitment, and pride throughout the entire IMSA season.
+            </p>
+            <p class="fineprint lang-es">
+              Esta sociedad entrega valor medible, narrativa auténtica y posicionamiento de marca a largo plazo mientras representa tu marca con profesionalismo, compromiso y orgullo durante toda la temporada IMSA.
+            </p>
+
+            <div style="margin-top: 18px;">
+              <video autoplay muted loop playsinline style="width: 100%; border-radius: 14px; border: 2px solid #333;">
+                <source src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696eaaa815885e02eccc1579.mp4" type="video/mp4">
+              </video>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="lang-en">Schedule a Partnership Call</h3>
+            <h3 class="lang-es">Agenda una Llamada de Alianza</h3>
+            <iframe src="https://api.leadconnectorhq.com/widget/booking/6tZaRmDJBXFoWu01wD2T" style="width: 100%; min-height: 600px; border:none; overflow: hidden;" scrolling="no" id="6tZaRmDJBXFoWu01wD2T_1768859965896"></iframe>
+            <script src="https://api.leadconnectorhq.com/js/form_embed.js" type="text/javascript"></script>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p class="lang-en">© <span id="year"></span> Óscar Tunjo Racing. All rights reserved.</p>
+      <p class="lang-es">© <span id="year-es"></span> Óscar Tunjo Racing. Todos los derechos reservados.</p>
+      <a href="#top" class="lang-en">Back to top</a>
+      <a href="#top" class="lang-es">Volver arriba</a>
+    </div>
+  </footer>
+
+  <script>
+    // Language detection and switching
+    function setLanguage(lang) {
+      document.body.classList.remove('show-en', 'show-es');
+      document.body.classList.add('show-' + lang);
+      document.documentElement.lang = lang;
+
+      // Update button states
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+
+      // Save preference
+      localStorage.setItem('preferredLang', lang);
+    }
+
+    // IP-based geolocation detection
+    async function detectCountry() {
+      // Check if user has a saved preference
+      const savedLang = localStorage.getItem('preferredLang');
+      if (savedLang) {
+        setLanguage(savedLang);
+        return;
+      }
+
+      try {
+        // Use ipapi.co for free geolocation (no API key required for limited requests)
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+
+        // If user is from US, show English; otherwise show Spanish
+        if (data.country_code === 'US') {
+          setLanguage('en');
+        } else {
+          // Colombia and all other countries get Spanish
+          setLanguage('es');
+        }
+      } catch (error) {
+        // If geolocation fails, default to Spanish
+        console.log('Geolocation failed, defaulting to Spanish');
+        setLanguage('es');
+      }
+    }
+
+    // Initialize
+    detectCountry();
+
+    // Mobile nav toggle
+    const toggle = document.getElementById('navToggle');
+    const menuEn = document.getElementById('navMenuEn');
+    const menuEs = document.getElementById('navMenu');
+    const overlay = document.getElementById('navOverlay');
+
+    function toggleMobileMenu() {
+      const expanded = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', String(!expanded));
+      if (menuEn) menuEn.classList.toggle('open');
+      if (menuEs) menuEs.classList.toggle('open');
+      if (overlay) overlay.classList.toggle('open');
+      document.body.style.overflow = !expanded ? 'hidden' : '';
+    }
+
+    function closeMobileMenu() {
+      toggle.setAttribute('aria-expanded', 'false');
+      if (menuEn) menuEn.classList.remove('open');
+      if (menuEs) menuEs.classList.remove('open');
+      if (overlay) overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    if (toggle) {
+      toggle.addEventListener('click', toggleMobileMenu);
+    }
+
+    if (overlay) {
+      overlay.addEventListener('click', closeMobileMenu);
+    }
+
+    // Close menu when clicking a nav link
+    document.querySelectorAll('.nav-menu a').forEach(link => {
+      link.addEventListener('click', closeMobileMenu);
+    });
+
+    // Year
+    const yearEl = document.getElementById('year');
+    const yearEsEl = document.getElementById('year-es');
+    const currentYear = new Date().getFullYear();
+    if (yearEl) yearEl.textContent = currentYear;
+    if (yearEsEl) yearEsEl.textContent = currentYear;
+  </script>
+</body>
+</html>

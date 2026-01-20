@@ -25,6 +25,7 @@
       --accent-blue-hover: #2563eb;
       --accent-green: #10b981;
       --accent-red: #ef4444;
+      --accent-orange: #f59e0b;
       --border-color: #e5e7eb;
       --border-focus: #3b82f6;
       --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -104,13 +105,48 @@
       line-height: 1.5;
     }
 
-    /* Subtitle */
-    .subtitle {
-      color: var(--text-on-dark);
-      font-size: 20px;
-      font-weight: 600;
+    /* 3-Step Guide */
+    .steps-guide {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
       margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       text-align: center;
+      max-width: 140px;
+    }
+    .step-number {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+    .step-number.completed {
+      background: var(--accent-green);
+    }
+    .step-text {
+      color: var(--text-on-dark);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .step-text a {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+    .step-text a:hover {
+      text-decoration: underline;
     }
 
     /* Main Card */
@@ -184,6 +220,31 @@
     .form-group input::placeholder,
     .form-group textarea::placeholder {
       color: var(--text-light);
+    }
+
+    /* Fetch button for website */
+    .fetch-btn {
+      position: absolute;
+      right: 8px;
+      background: var(--accent-blue);
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .fetch-btn:hover {
+      background: var(--accent-blue-hover);
+    }
+    .fetch-btn:disabled {
+      background: var(--text-light);
+      cursor: not-allowed;
+    }
+    .fetch-btn.loading {
+      background: var(--accent-orange);
     }
 
     /* Status Badge */
@@ -474,6 +535,14 @@
         bottom: 20px;
         right: 20px;
       }
+
+      .steps-guide {
+        gap: 16px;
+      }
+
+      .step {
+        max-width: 100px;
+      }
     }
   </style>
 </head>
@@ -495,9 +564,24 @@
     Recepcionista telefónica con IA que contesta llamadas, agenda citas y nunca pierde un cliente potencial.
   </p>
 
-  <!-- Subtitle -->
-  <p class="subtitle lang-en">Try Your AI Voice Agent</p>
-  <p class="subtitle lang-es">Prueba Tu Agente de Voz IA</p>
+  <!-- 3-Step Guide -->
+  <div class="steps-guide">
+    <div class="step">
+      <div class="step-number">1</div>
+      <div class="step-text lang-en">Try Your AI Voice Agent</div>
+      <div class="step-text lang-es">Prueba Tu Agente de Voz IA</div>
+    </div>
+    <div class="step">
+      <div class="step-number">2</div>
+      <div class="step-text lang-en"><a href="https://ringlypro.com/signup" target="_blank">Sign Up for Free</a></div>
+      <div class="step-text lang-es"><a href="https://ringlypro.com/signup" target="_blank">Regístrate Gratis</a></div>
+    </div>
+    <div class="step">
+      <div class="step-number">3</div>
+      <div class="step-text lang-en"><a href="https://ringlypro.com/login" target="_blank">Login to Dashboard</a></div>
+      <div class="step-text lang-es"><a href="https://ringlypro.com/login" target="_blank">Accede al Panel</a></div>
+    </div>
+  </div>
 
   <!-- Main Voice Card -->
   <div class="voice-card">
@@ -523,8 +607,8 @@
 
     <!-- Website URL -->
     <div class="form-group">
-      <label for="websiteUrl" class="lang-en">Website URL (Optional)</label>
-      <label for="websiteUrl" class="lang-es">URL del Sitio Web (Opcional)</label>
+      <label for="websiteUrl" class="lang-en">Website URL (Optional - we'll fetch your business info)</label>
+      <label for="websiteUrl" class="lang-es">URL del Sitio Web (Opcional - obtendremos info de tu negocio)</label>
       <div class="input-wrapper">
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/>
@@ -539,13 +623,17 @@
           placeholder="e.g., https://www.yourcompany.com"
           autocomplete="url"
         >
+        <button class="fetch-btn" id="fetchBtn" type="button">
+          <span class="lang-en-inline">Fetch</span>
+          <span class="lang-es-inline">Obtener</span>
+        </button>
       </div>
     </div>
 
     <!-- Knowledge Base -->
     <div class="form-group">
-      <label for="knowledgeBase" class="lang-en">Business Info (Optional)</label>
-      <label for="knowledgeBase" class="lang-es">Información del Negocio (Opcional)</label>
+      <label for="knowledgeBase" class="lang-en">Business Info (auto-filled from website or add your own)</label>
+      <label for="knowledgeBase" class="lang-es">Información del Negocio (auto-llenado del sitio web o agrega la tuya)</label>
       <textarea
         id="knowledgeBase"
         data-placeholder-en="Services, hours, pricing, FAQs..."
@@ -614,9 +702,6 @@
     ¿No tienes cuenta? <a href="https://ringlypro.com/signup" target="_blank">Regístrate gratis</a>
   </div>
 
-  <!-- Load ElevenLabs Client SDK from CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.32.1/dist/index.global.min.js" onerror="console.log('Anthropic SDK not needed')"></script>
-
   <!-- Language Detection and Switching Script (runs before module) -->
   <script>
     // Language switching function
@@ -681,6 +766,7 @@
     const companyNameInput = document.getElementById('companyName');
     const websiteUrlInput = document.getElementById('websiteUrl');
     const knowledgeBaseInput = document.getElementById('knowledgeBase');
+    const fetchBtn = document.getElementById('fetchBtn');
     const statusBadge = document.getElementById('statusBadge');
     const statusText = document.getElementById('statusText');
     const audioLevelContainer = document.getElementById('audioLevelContainer');
@@ -702,7 +788,8 @@
     // Bilingual status configurations
     const statusConfig = {
       disconnected: { en: 'Ready', es: 'Listo', class: '' },
-      creating: { en: 'Creating your agent...', es: 'Creando tu agente...', class: 'connecting' },
+      fetching: { en: 'Fetching website...', es: 'Obteniendo sitio web...', class: 'connecting' },
+      creating: { en: 'Preparing your agent...', es: 'Preparando tu agente...', class: 'connecting' },
       connecting: { en: 'Connecting...', es: 'Conectando...', class: 'connecting' },
       connected: { en: 'Call Active', es: 'Llamada Activa', class: 'connected' },
       error: { en: 'Error', es: 'Error', class: 'error' }
@@ -748,15 +835,15 @@
         startBtn.disabled = false;
         startBtn.className = 'btn btn-start';
         stopBtn.style.display = 'none';
-      } else if (status === 'creating') {
+      } else if (status === 'creating' || status === 'fetching') {
         startBtn.disabled = true;
         startBtn.className = 'btn btn-connecting';
         startBtn.innerHTML = `
           <svg viewBox="0 0 24 24" fill="currentColor" style="animation: spin 1s linear infinite">
             <path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z"/>
           </svg>
-          <span class="lang-en">${statusConfig.creating.en}</span>
-          <span class="lang-es">${statusConfig.creating.es}</span>
+          <span class="lang-en">${config.en}</span>
+          <span class="lang-es">${config.es}</span>
         `;
         stopBtn.style.display = 'none';
       } else if (status === 'connecting') {
@@ -864,7 +951,53 @@
       transcriptEmpty.style.display = 'flex';
     }
 
-    // Get signed URL for the demo agent (we'll apply overrides at connection time)
+    // Fetch website content
+    async function fetchWebsiteContent() {
+      const url = websiteUrlInput.value.trim();
+      if (!url) {
+        const lang = getLang();
+        showError(lang === 'es' ? 'Por favor ingresa una URL' : 'Please enter a URL');
+        return;
+      }
+
+      hideError();
+      fetchBtn.disabled = true;
+      fetchBtn.classList.add('loading');
+      fetchBtn.innerHTML = '<span class="lang-en-inline">Loading...</span><span class="lang-es-inline">Cargando...</span>';
+
+      try {
+        const response = await fetch(`${PRODUCTION_URL}/api/elevenlabs-webrtc/scrape-website`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.content) {
+          // Append to existing content or set new
+          const existing = knowledgeBaseInput.value.trim();
+          if (existing) {
+            knowledgeBaseInput.value = existing + '\n\n--- From Website ---\n' + data.content;
+          } else {
+            knowledgeBaseInput.value = data.content;
+          }
+          console.log('[Demo] Fetched website content:', data.content.substring(0, 200) + '...');
+        } else {
+          throw new Error(data.error || 'Failed to fetch website');
+        }
+      } catch (error) {
+        console.error('[Demo] Website fetch error:', error);
+        const lang = getLang();
+        showError(lang === 'es' ? 'No se pudo obtener el contenido del sitio web' : 'Could not fetch website content');
+      } finally {
+        fetchBtn.disabled = false;
+        fetchBtn.classList.remove('loading');
+        fetchBtn.innerHTML = '<span class="lang-en-inline">Fetch</span><span class="lang-es-inline">Obtener</span>';
+      }
+    }
+
+    // Get signed URL for the demo agent
     async function getDemoToken() {
       const companyName = companyNameInput.value.trim();
       const websiteUrl = websiteUrlInput.value.trim();
@@ -928,23 +1061,18 @@
         const websiteUrl = websiteUrlInput.value.trim();
         const knowledgeBase = knowledgeBaseInput.value.trim();
 
-        // Create personalized first message
-        const customFirstMessage = `Hi, thanks for calling ${companyName}! This is Lina, your AI receptionist. How can I help you today?`;
+        // Create personalized first message based on user's selected language
+        let customFirstMessage;
+        if (lang === 'es') {
+          customFirstMessage = `¡Hola, gracias por llamar a ${companyName}! Soy Lina, tu recepcionista de inteligencia artificial. ¿En qué puedo ayudarte hoy?`;
+        } else {
+          customFirstMessage = `Hi, thanks for calling ${companyName}! This is Lina, your AI receptionist. How can I help you today?`;
+        }
 
-        // Build custom prompt with business info
-        let customPromptAddition = `\n\n## DEMO SESSION INFO\nThis demo is for: ${companyName}`;
-        if (websiteUrl) customPromptAddition += `\nWebsite: ${websiteUrl}`;
-        if (knowledgeBase) customPromptAddition += `\n\nBusiness Details:\n${knowledgeBase}`;
+        // Build the system prompt with language awareness
+        const systemPrompt = `You are Lina, a friendly and professional AI receptionist for ${companyName}. You are bilingual and can speak fluently in both English and Spanish - respond in whatever language the caller uses.
 
-        // Start conversation using ElevenLabs SDK with overrides
-        // The demo agent has overrides enabled for first_message and prompt
-        conversation = await Conversation.startSession({
-          signedUrl: demoData.signedUrl,
-          overrides: {
-            agent: {
-              firstMessage: customFirstMessage,
-              prompt: {
-                prompt: `You are Lina, a friendly and professional AI receptionist for ${companyName}. You are bilingual and can speak fluently in both English and Spanish - respond in whatever language the caller uses.
+IMPORTANT: The user started this demo in ${lang === 'es' ? 'SPANISH' : 'ENGLISH'}. Start and continue the conversation in ${lang === 'es' ? 'SPANISH' : 'ENGLISH'} unless they switch languages.
 
 ## YOUR ROLE
 You handle incoming calls for ${companyName}. Your job is to:
@@ -970,6 +1098,7 @@ Company Name: ${companyName}${websiteUrl ? `\nWebsite: ${websiteUrl}` : ''}${kno
 4. Ask one question at a time
 5. Confirm important details (phone numbers, names, appointment times)
 6. If the caller speaks Spanish, respond entirely in Spanish
+7. If the caller speaks English, respond entirely in English
 
 ## COLLECTING INFORMATION
 When the caller wants to leave a message or schedule a callback, collect:
@@ -983,7 +1112,18 @@ When the caller wants to leave a message or schedule a callback, collect:
 - Confirm any next steps
 - Wish them a great day
 
-Remember: You are demonstrating RinglyPro's AI receptionist capabilities. Be impressive but natural!`
+Remember: You are demonstrating RinglyPro's AI receptionist capabilities. Be impressive but natural!`;
+
+        // Start conversation using ElevenLabs SDK with overrides
+        // The demo agent has overrides enabled for first_message and prompt
+        conversation = await Conversation.startSession({
+          signedUrl: demoData.signedUrl,
+          overrides: {
+            agent: {
+              firstMessage: customFirstMessage,
+              language: lang, // Set the language based on user's selection
+              prompt: {
+                prompt: systemPrompt
               }
             }
           },
@@ -1039,6 +1179,17 @@ Remember: You are demonstrating RinglyPro's AI receptionist capabilities. Be imp
     // Event listeners
     startBtn.addEventListener('click', startConversation);
     stopBtn.addEventListener('click', stopConversation);
+    fetchBtn.addEventListener('click', fetchWebsiteContent);
+
+    // Auto-fetch when URL is entered and user leaves field
+    websiteUrlInput.addEventListener('blur', () => {
+      const url = websiteUrlInput.value.trim();
+      const knowledge = knowledgeBaseInput.value.trim();
+      // Auto-fetch if URL is entered and knowledge base is empty
+      if (url && !knowledge) {
+        fetchWebsiteContent();
+      }
+    });
 
     // Add spin animation
     const style = document.createElement('style');
