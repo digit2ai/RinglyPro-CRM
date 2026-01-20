@@ -737,10 +737,21 @@
         const websiteUrl = websiteUrlInput.value.trim();
         const knowledgeBase = knowledgeBaseInput.value.trim();
 
-        // Start conversation using ElevenLabs SDK
-        // Note: overrides don't work with signedUrl, using clientTools instead
+        // Start conversation using ElevenLabs SDK with client tools
+        // The agent will call get_business_context to get the company info
         conversation = await Conversation.startSession({
           signedUrl: signedUrl,
+          clientTools: {
+            get_business_context: async () => {
+              console.log('[ClientTool] get_business_context called');
+              return JSON.stringify({
+                company_name: companyName,
+                website_url: websiteUrl || 'Not provided',
+                business_info: knowledgeBase || 'Not provided',
+                greeting: `Hi, thanks for calling ${companyName}! This is Lina, how can I help you today?`
+              });
+            }
+          },
           onConnect: () => {
             console.log('[ElevenLabs] Connected');
             updateStatus('connected');
