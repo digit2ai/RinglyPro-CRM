@@ -215,6 +215,11 @@
       color: #065f46;
     }
 
+    .speaking-indicator.speaking {
+      background: rgba(59, 130, 246, 0.15);
+      color: #1d4ed8;
+    }
+
     .audio-level-bar {
       height: 6px;
       background: var(--border-color);
@@ -226,7 +231,7 @@
       height: 100%;
       background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
       border-radius: 3px;
-      transition: width 0.05s linear;
+      transition: width 0.1s linear;
       width: 0%;
     }
 
@@ -516,10 +521,12 @@
     Don't have an account? <a href="https://ringlypro.com/signup" target="_blank">Sign up for free</a>
   </div>
 
-  <!-- Load WebRTC Client -->
-  <script src="elevenlabs-webrtc-client.js"></script>
+  <!-- Load ElevenLabs Client SDK from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.32.1/dist/index.global.min.js" onerror="console.log('Anthropic SDK not needed')"></script>
+  <script type="module">
+    // Import ElevenLabs Conversation from CDN
+    import { Conversation } from 'https://cdn.jsdelivr.net/npm/@11labs/client@0.0.4/+esm';
 
-  <script>
     // DOM Elements
     const companyNameInput = document.getElementById('companyName');
     const websiteUrlInput = document.getElementById('websiteUrl');
@@ -535,13 +542,12 @@
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
 
-    // Configuration - Using RinglyPro demo agent
+    // Configuration
     const PRODUCTION_URL = 'https://aiagent.ringlypro.com';
 
     // State
-    let client = null;
-    let isAgentSpeaking = false;
-    let speakingTimeout = null;
+    let conversation = null;
+    let volumeInterval = null;
 
     // Status configurations
     const statusConfig = {
@@ -560,8 +566,10 @@
       // Show/hide audio level when connected
       if (status === 'connected') {
         audioLevelContainer.classList.add('visible');
+        startVolumeMonitoring();
       } else {
         audioLevelContainer.classList.remove('visible');
+        stopVolumeMonitoring();
       }
 
       // Update buttons
@@ -593,6 +601,42 @@
       }
     }
 
+    // Volume monitoring
+    function startVolumeMonitoring() {
+      if (volumeInterval) return;
+      volumeInterval = setInterval(async () => {
+        if (conversation) {
+          try {
+            const inputVol = await conversation.getInputVolume();
+            const outputVol = await conversation.getOutputVolume();
+            const level = Math.max(inputVol, outputVol);
+            audioLevelFill.style.width = `${Math.min(level * 100, 100)}%`;
+
+            // Update speaking indicator
+            if (outputVol > 0.1) {
+              speakingIndicator.textContent = 'AI Speaking';
+              speakingIndicator.classList.add('speaking');
+            } else if (inputVol > 0.1) {
+              speakingIndicator.textContent = 'You Speaking';
+              speakingIndicator.classList.remove('speaking');
+            } else {
+              speakingIndicator.textContent = 'Listening';
+              speakingIndicator.classList.remove('speaking');
+            }
+          } catch (e) {
+            // Ignore errors during monitoring
+          }
+        }
+      }, 100);
+    }
+
+    function stopVolumeMonitoring() {
+      if (volumeInterval) {
+        clearInterval(volumeInterval);
+        volumeInterval = null;
+      }
+    }
+
     // Show error
     function showError(message) {
       errorBox.textContent = message;
@@ -605,7 +649,9 @@
     }
 
     // Add transcript entry
-    function addTranscript(role, text, isFinal) {
+    function addTranscript(role, text, isFinal = true) {
+      if (!text) return;
+
       // Hide empty message
       transcriptEmpty.style.display = 'none';
 
@@ -615,15 +661,12 @@
       );
 
       if (!isFinal && existingInterim) {
-        // Update existing interim
         existingInterim.querySelector('.transcript-text').textContent = text;
       } else {
-        // Remove any interim entries for this role
         if (isFinal && existingInterim) {
           existingInterim.remove();
         }
 
-        // Create new entry
         const entry = document.createElement('div');
         entry.className = `transcript-entry ${role}${isFinal ? '' : ' interim'}`;
         entry.innerHTML = `
@@ -631,20 +674,7 @@
           <div class="transcript-text">${text}</div>
         `;
         transcriptContainer.appendChild(entry);
-
-        // Scroll to bottom
         transcriptContainer.scrollTop = transcriptContainer.scrollHeight;
-      }
-
-      // Update speaking indicator
-      if (role === 'agent') {
-        isAgentSpeaking = true;
-        speakingIndicator.textContent = 'AI Speaking';
-        clearTimeout(speakingTimeout);
-        speakingTimeout = setTimeout(() => {
-          isAgentSpeaking = false;
-          speakingIndicator.textContent = 'Listening';
-        }, 800);
       }
     }
 
@@ -655,77 +685,102 @@
       transcriptEmpty.style.display = 'flex';
     }
 
-    // Update audio level
-    function updateAudioLevel(level) {
-      audioLevelFill.style.width = `${Math.min(level * 100, 100)}%`;
-    }
-
-    // Initialize client with business context
-    function initClient() {
+    // Get signed URL from backend
+    async function getSignedUrl() {
       const companyName = companyNameInput.value.trim();
       const websiteUrl = websiteUrlInput.value.trim();
       const knowledgeBase = knowledgeBaseInput.value.trim();
 
-      if (!companyName) {
-        showError('Please enter your company name');
-        companyNameInput.focus();
-        return null;
+      const response = await fetch(`${PRODUCTION_URL}/api/elevenlabs-webrtc/demo-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dynamicVariables: {
+            company_name: companyName || 'Demo Company',
+            website_url: websiteUrl,
+            knowledge_base: knowledgeBase
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to get conversation token');
       }
 
-      hideError();
-
-      // Build context for the AI agent
-      const businessContext = {
-        company_name: companyName,
-        website_url: websiteUrl || '',
-        knowledge_base: knowledgeBase || '',
-        demo_mode: 'true'
-      };
-
-      return new ElevenLabsWebRTCClient({
-        tokenEndpoint: `${PRODUCTION_URL}/api/elevenlabs-webrtc/demo-token`,
-        agentId: 'demo', // Backend will use the hardcoded agent
-        dynamicVariables: businessContext,
-        onStatusChange: (status) => {
-          console.log('[Demo] Status:', status);
-          updateStatus(status);
-        },
-        onTranscript: (role, text, isFinal) => {
-          console.log(`[Demo] Transcript (${role}):`, text, isFinal ? '[FINAL]' : '[interim]');
-          addTranscript(role, text, isFinal);
-        },
-        onError: (error) => {
-          console.error('[Demo] Error:', error);
-          showError(error.message);
-        },
-        onAudioLevel: (level) => {
-          updateAudioLevel(level);
-        }
-      });
+      const data = await response.json();
+      return data.signed_url;
     }
 
     // Start conversation
     async function startConversation() {
-      client = initClient();
-      if (!client) return;
+      const companyName = companyNameInput.value.trim();
 
-      clearTranscript();
+      if (!companyName) {
+        showError('Please enter your company name');
+        companyNameInput.focus();
+        return;
+      }
+
       hideError();
+      clearTranscript();
+      updateStatus('connecting');
 
       try {
-        await client.connect();
+        // Request microphone permission
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        // Get signed URL from backend
+        const signedUrl = await getSignedUrl();
+
+        // Start conversation using ElevenLabs SDK
+        conversation = await Conversation.startSession({
+          signedUrl: signedUrl,
+          onConnect: () => {
+            console.log('[ElevenLabs] Connected');
+            updateStatus('connected');
+          },
+          onDisconnect: () => {
+            console.log('[ElevenLabs] Disconnected');
+            updateStatus('disconnected');
+            conversation = null;
+          },
+          onMessage: (message) => {
+            console.log('[ElevenLabs] Message:', message);
+            if (message.type === 'user_transcript') {
+              addTranscript('user', message.message, message.isFinal !== false);
+            } else if (message.type === 'agent_response') {
+              addTranscript('agent', message.message, true);
+            }
+          },
+          onError: (error) => {
+            console.error('[ElevenLabs] Error:', error);
+            showError(error.message || 'Connection error');
+            updateStatus('error');
+          },
+          onModeChange: (mode) => {
+            console.log('[ElevenLabs] Mode:', mode.mode);
+          }
+        });
+
       } catch (error) {
         console.error('[Demo] Connection failed:', error);
-        showError(error.message);
+        showError(error.message || 'Failed to start conversation');
+        updateStatus('error');
       }
     }
 
     // Stop conversation
-    function stopConversation() {
-      if (client) {
-        client.disconnect();
-        client = null;
+    async function stopConversation() {
+      if (conversation) {
+        try {
+          await conversation.endSession();
+        } catch (e) {
+          console.warn('Error ending session:', e);
+        }
+        conversation = null;
       }
+      updateStatus('disconnected');
     }
 
     // Event listeners
