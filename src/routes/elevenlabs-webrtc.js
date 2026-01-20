@@ -24,6 +24,10 @@ const logger = require('../utils/logger');
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io/v1';
 
+// RinglyPro Demo Agent Configuration (hardcoded for public demo)
+const DEMO_AGENT_ID = 'agent_1301kfca8m4gfv09pg8pr81mvyv4';
+const DEMO_API_KEY = 'sk_129ff2de60c66f7eb2e98123351c267ad97ee38b480f142c';
+
 /**
  * POST /api/elevenlabs-webrtc/token
  *
@@ -128,6 +132,100 @@ router.post('/token', async (req, res) => {
 });
 
 /**
+ * POST /api/elevenlabs-webrtc/demo-token
+ *
+ * Generate a conversation token for the RinglyPro public demo.
+ * Uses hardcoded demo agent - no API key validation needed from client.
+ *
+ * Request body:
+ * {
+ *   "dynamicVariables": {
+ *     "company_name": "Acme Corp",
+ *     "website_url": "https://acme.com",
+ *     "knowledge_base": "We offer plumbing services..."
+ *   }
+ * }
+ *
+ * Response:
+ * {
+ *   "success": true,
+ *   "signed_url": "wss://api.elevenlabs.io/..."
+ * }
+ */
+router.post('/demo-token', async (req, res) => {
+  try {
+    const { dynamicVariables } = req.body;
+
+    // Extract business context from request
+    const companyName = dynamicVariables?.company_name || 'Demo Company';
+    const websiteUrl = dynamicVariables?.website_url || '';
+    const knowledgeBase = dynamicVariables?.knowledge_base || '';
+
+    logger.info(`[ElevenLabs WebRTC Demo] Generating token for: ${companyName}`);
+
+    // Build the conversation context for the agent
+    const conversationContext = {
+      dynamic_variables: {
+        company_name: companyName,
+        website_url: websiteUrl,
+        knowledge_base: knowledgeBase,
+        demo_mode: 'true',
+        greeting: `Thank you for calling ${companyName}. This is a demo of the RinglyPro AI receptionist. How can I help you today?`
+      }
+    };
+
+    // Request signed URL from ElevenLabs using DEMO credentials
+    const response = await fetch(`${ELEVENLABS_API_BASE}/convai/conversation/get_signed_url`, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': DEMO_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        agent_id: DEMO_AGENT_ID,
+        conversation_initiation_client_data: conversationContext
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      logger.error(`[ElevenLabs WebRTC Demo] Failed to get signed URL: ${response.status} - ${errorText}`);
+
+      let errorMessage = 'Failed to start demo conversation';
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.detail?.message || errorJson.error || errorMessage;
+      } catch (e) {
+        // Keep default error message
+      }
+
+      return res.status(response.status).json({
+        success: false,
+        error: errorMessage
+      });
+    }
+
+    const data = await response.json();
+
+    logger.info(`[ElevenLabs WebRTC Demo] Successfully generated signed URL for: ${companyName}`);
+
+    return res.json({
+      success: true,
+      signed_url: data.signed_url,
+      agent_id: DEMO_AGENT_ID,
+      company_name: companyName
+    });
+
+  } catch (error) {
+    logger.error(`[ElevenLabs WebRTC Demo] Token generation error:`, error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
  * GET /api/elevenlabs-webrtc/health
  *
  * Health check endpoint to verify the service is running
@@ -138,6 +236,7 @@ router.get('/health', (req, res) => {
     status: 'ok',
     service: 'elevenlabs-webrtc',
     api_configured: !!ELEVENLABS_API_KEY,
+    demo_configured: !!DEMO_AGENT_ID && !!DEMO_API_KEY,
     timestamp: new Date().toISOString()
   });
 });

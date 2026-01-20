@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ElevenLabs WebRTC Voice Demo</title>
-  <meta name="description" content="Custom UI for ElevenLabs Conversational AI using WebRTC - No embed widget required">
+  <title>RinglyPro Voice AI Demo | Experience Your AI Receptionist</title>
+  <meta name="description" content="Try RinglyPro's AI Voice Agent with your business info. Experience real-time voice conversations powered by ElevenLabs.">
 
   <style>
     /* CSS Reset & Base */
@@ -13,26 +13,29 @@
     }
 
     :root {
-      --bg-primary: #0f172a;
-      --bg-secondary: #1e293b;
-      --bg-card: #334155;
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8fafc;
+      --bg-card: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --accent-primary: #4F46E5;
+      --accent-primary-light: #818cf8;
       --accent-green: #10b981;
       --accent-green-light: #d1fae5;
       --accent-red: #ef4444;
       --accent-red-light: #fee2e2;
       --accent-amber: #f59e0b;
-      --accent-blue: #3b82f6;
-      --border-color: #475569;
-      --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      --border-color: #e2e8f0;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
     }
 
     body {
       margin: 0;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1a2e 100%);
+      background: var(--bg-secondary);
       min-height: 100vh;
       color: var(--text-primary);
       line-height: 1.6;
@@ -40,57 +43,69 @@
 
     /* Container */
     .container {
-      max-width: 600px;
+      max-width: 680px;
       margin: 0 auto;
       padding: 40px 20px;
     }
 
-    /* Header */
+    /* Header with Logo */
     .header {
       text-align: center;
       margin-bottom: 32px;
+    }
+
+    .logo {
+      max-width: 200px;
+      height: auto;
+      margin-bottom: 16px;
     }
 
     .header h1 {
       margin: 0 0 8px;
       font-size: 28px;
       font-weight: 700;
+      color: var(--text-primary);
       letter-spacing: -0.5px;
     }
 
     .header p {
       margin: 0;
       color: var(--text-secondary);
-      font-size: 15px;
+      font-size: 16px;
     }
 
     /* Main Card */
     .voice-card {
-      background: var(--bg-secondary);
-      border-radius: 20px;
-      padding: 28px;
-      box-shadow: var(--shadow);
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: var(--shadow-lg);
       border: 1px solid var(--border-color);
     }
 
     /* Configuration Section */
     .config-section {
-      margin-bottom: 24px;
-      padding-bottom: 24px;
+      margin-bottom: 28px;
+      padding-bottom: 28px;
       border-bottom: 1px solid var(--border-color);
     }
 
     .config-section h3 {
-      margin: 0 0 16px;
-      font-size: 14px;
+      margin: 0 0 20px;
+      font-size: 16px;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-secondary);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .config-section h3 svg {
+      color: var(--accent-primary);
     }
 
     .form-group {
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     .form-group:last-child {
@@ -100,15 +115,23 @@
     .form-group label {
       display: block;
       margin-bottom: 6px;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 500;
-      color: var(--text-secondary);
+      color: var(--text-primary);
     }
 
-    .form-group input {
+    .form-group .hint {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .form-group input,
+    .form-group textarea {
       width: 100%;
       padding: 12px 14px;
-      background: var(--bg-card);
+      background: var(--bg-secondary);
       border: 1px solid var(--border-color);
       border-radius: 10px;
       color: var(--text-primary);
@@ -116,14 +139,27 @@
       transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    .form-group input:focus {
-      outline: none;
-      border-color: var(--accent-blue);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    .form-group textarea {
+      min-height: 100px;
+      resize: vertical;
+      font-family: inherit;
     }
 
-    .form-group input::placeholder {
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
       color: var(--text-muted);
+    }
+
+    /* Required indicator */
+    .required {
+      color: var(--accent-red);
     }
 
     /* Status Badge */
@@ -141,23 +177,27 @@
       border-radius: 9999px;
       font-size: 13px;
       font-weight: 600;
-      background: var(--bg-card);
+      background: var(--bg-secondary);
       color: var(--text-secondary);
+      border: 1px solid var(--border-color);
     }
 
     .status-badge.connected {
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--accent-green);
+      background: var(--accent-green-light);
+      color: #065f46;
+      border-color: #a7f3d0;
     }
 
     .status-badge.connecting {
-      background: rgba(245, 158, 11, 0.15);
-      color: var(--accent-amber);
+      background: #fef3c7;
+      color: #92400e;
+      border-color: #fde68a;
     }
 
     .status-badge.error {
-      background: rgba(239, 68, 68, 0.15);
-      color: var(--accent-red);
+      background: var(--accent-red-light);
+      color: #991b1b;
+      border-color: #fecaca;
     }
 
     .status-dot {
@@ -180,8 +220,9 @@
     .audio-level-container {
       margin-bottom: 20px;
       padding: 16px;
-      background: var(--bg-card);
+      background: var(--bg-secondary);
       border-radius: 12px;
+      border: 1px solid var(--border-color);
       display: none;
     }
 
@@ -205,22 +246,22 @@
     .speaking-indicator {
       font-size: 11px;
       font-weight: 600;
-      padding: 4px 8px;
-      border-radius: 4px;
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--accent-green);
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: var(--accent-green-light);
+      color: #065f46;
     }
 
     .audio-level-bar {
       height: 6px;
-      background: var(--bg-primary);
+      background: var(--border-color);
       border-radius: 3px;
       overflow: hidden;
     }
 
     .audio-level-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-green));
       border-radius: 3px;
       transition: width 0.05s linear;
       width: 0%;
@@ -230,20 +271,29 @@
     .transcript-container {
       height: 280px;
       overflow-y: auto;
-      background: var(--bg-card);
+      background: var(--bg-secondary);
       border-radius: 12px;
       padding: 16px;
       margin-bottom: 20px;
+      border: 1px solid var(--border-color);
     }
 
     .transcript-empty {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100%;
       color: var(--text-muted);
       font-size: 14px;
       text-align: center;
+      gap: 12px;
+    }
+
+    .transcript-empty svg {
+      width: 48px;
+      height: 48px;
+      opacity: 0.5;
     }
 
     .transcript-entry {
@@ -259,14 +309,16 @@
     }
 
     .transcript-entry.user {
-      background: rgba(59, 130, 246, 0.15);
+      background: rgba(79, 70, 229, 0.1);
       margin-left: 40px;
+      border: 1px solid rgba(79, 70, 229, 0.2);
     }
 
     .transcript-entry.agent {
-      background: var(--bg-secondary);
+      background: var(--bg-card);
       margin-right: 40px;
       border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
     }
 
     .transcript-entry.interim {
@@ -283,7 +335,7 @@
     }
 
     .transcript-entry.user .transcript-role {
-      color: var(--accent-blue);
+      color: var(--accent-primary);
     }
 
     .transcript-entry.agent .transcript-role {
@@ -293,17 +345,18 @@
     .transcript-text {
       font-size: 14px;
       line-height: 1.5;
+      color: var(--text-primary);
     }
 
     /* Error Display */
     .error-box {
       padding: 14px 16px;
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      background: var(--accent-red-light);
+      border: 1px solid #fecaca;
       border-radius: 10px;
       margin-bottom: 20px;
       font-size: 13px;
-      color: var(--accent-red);
+      color: #991b1b;
       display: none;
     }
 
@@ -323,7 +376,7 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      padding: 14px 28px;
+      padding: 14px 32px;
       border: none;
       border-radius: 12px;
       font-size: 15px;
@@ -338,18 +391,18 @@
     }
 
     .btn-start {
-      background: linear-gradient(135deg, var(--accent-green), #059669);
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-primary-light));
       color: white;
-      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
     }
 
     .btn-start:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 12px 28px rgba(16, 185, 129, 0.4);
+      box-shadow: 0 12px 28px rgba(79, 70, 229, 0.4);
     }
 
     .btn-stop {
-      background: linear-gradient(135deg, var(--accent-red), #dc2626);
+      background: linear-gradient(135deg, var(--accent-red), #f87171);
       color: white;
       box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35);
     }
@@ -360,7 +413,7 @@
     }
 
     .btn-connecting {
-      background: linear-gradient(135deg, var(--accent-amber), #d97706);
+      background: linear-gradient(135deg, var(--accent-amber), #fbbf24);
       color: white;
     }
 
@@ -371,7 +424,7 @@
 
     /* Footer */
     .footer {
-      margin-top: 28px;
+      margin-top: 24px;
       padding-top: 20px;
       border-top: 1px solid var(--border-color);
       text-align: center;
@@ -379,13 +432,14 @@
 
     .footer p {
       margin: 0;
-      font-size: 12px;
+      font-size: 13px;
       color: var(--text-muted);
     }
 
     .footer a {
-      color: var(--accent-blue);
+      color: var(--accent-primary);
       text-decoration: none;
+      font-weight: 500;
     }
 
     .footer a:hover {
@@ -395,35 +449,82 @@
     /* Info Box */
     .info-box {
       margin-top: 32px;
-      padding: 20px;
-      background: var(--bg-secondary);
+      padding: 24px;
+      background: var(--bg-card);
       border-radius: 16px;
       border: 1px solid var(--border-color);
+      box-shadow: var(--shadow);
     }
 
     .info-box h3 {
-      margin: 0 0 12px;
-      font-size: 16px;
+      margin: 0 0 16px;
+      font-size: 18px;
       font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .info-box ul {
       margin: 0;
-      padding-left: 20px;
+      padding-left: 0;
+      list-style: none;
     }
 
     .info-box li {
-      margin-bottom: 8px;
-      font-size: 13px;
+      margin-bottom: 12px;
+      font-size: 14px;
       color: var(--text-secondary);
+      padding-left: 28px;
+      position: relative;
     }
 
-    .info-box code {
-      background: var(--bg-card);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 12px;
-      color: var(--accent-amber);
+    .info-box li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--accent-green);
+      font-weight: bold;
+    }
+
+    .info-box li:last-child {
+      margin-bottom: 0;
+    }
+
+    /* CTA Box */
+    .cta-box {
+      margin-top: 24px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(129, 140, 248, 0.1));
+      border-radius: 12px;
+      border: 1px solid rgba(79, 70, 229, 0.2);
+      text-align: center;
+    }
+
+    .cta-box p {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .cta-box .btn-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: var(--accent-primary);
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .cta-box .btn-cta:hover {
+      background: var(--accent-primary-light);
+      transform: translateY(-1px);
     }
 
     /* Responsive */
@@ -443,39 +544,63 @@
       .transcript-entry.agent {
         margin-right: 20px;
       }
+
+      .header h1 {
+        font-size: 24px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
+    <!-- Header with Logo -->
     <div class="header">
-      <h1>ElevenLabs WebRTC Voice Demo</h1>
-      <p>Custom UI for Conversational AI - No embed widget required</p>
+      <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/692f57c22b865e4e4a6c8a63.png" alt="RinglyPro" class="logo">
+      <h1>Try Your AI Voice Agent</h1>
+      <p>Experience how RinglyPro can answer calls for your business</p>
     </div>
 
     <!-- Main Voice Card -->
     <div class="voice-card">
-      <!-- Configuration -->
+      <!-- Business Configuration -->
       <div class="config-section">
-        <h3>Configuration</h3>
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"/>
+          </svg>
+          Your Business Info
+        </h3>
+
         <div class="form-group">
-          <label for="agentId">Agent ID</label>
+          <label for="companyName">Company Name <span class="required">*</span></label>
           <input
             type="text"
-            id="agentId"
-            placeholder="Enter your ElevenLabs Agent ID"
-            autocomplete="off"
+            id="companyName"
+            placeholder="e.g., Acme Plumbing Services"
+            autocomplete="organization"
+            required
           >
+          <span class="hint">The AI will greet callers with your company name</span>
         </div>
+
         <div class="form-group">
-          <label for="customerName">Your Name (Optional - passed to agent)</label>
+          <label for="websiteUrl">Website URL (Optional)</label>
           <input
-            type="text"
-            id="customerName"
-            placeholder="Enter your name"
-            autocomplete="off"
+            type="url"
+            id="websiteUrl"
+            placeholder="e.g., https://www.yourcompany.com"
+            autocomplete="url"
           >
+          <span class="hint">Helps the AI understand your services and business</span>
+        </div>
+
+        <div class="form-group">
+          <label for="knowledgeBase">Additional Business Info (Optional)</label>
+          <textarea
+            id="knowledgeBase"
+            placeholder="Add any specific information about your business:&#10;&#10;- Services you offer&#10;- Business hours&#10;- Pricing information&#10;- Frequently asked questions&#10;- Special instructions for callers"
+          ></textarea>
+          <span class="hint">The more context you provide, the better the AI can represent your business</span>
         </div>
       </div>
 
@@ -483,7 +608,7 @@
       <div class="status-container">
         <div class="status-badge" id="statusBadge">
           <span class="status-dot"></span>
-          <span id="statusText">Ready</span>
+          <span id="statusText">Ready to Demo</span>
         </div>
       </div>
 
@@ -504,7 +629,13 @@
       <!-- Transcript -->
       <div class="transcript-container" id="transcriptContainer">
         <div class="transcript-empty" id="transcriptEmpty">
-          Transcript will appear here when you start talking...
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/>
+          </svg>
+          <div>
+            <strong>Enter your business info above</strong><br>
+            Then click "Start Demo Call" to talk with your AI receptionist
+          </div>
         </div>
       </div>
 
@@ -515,7 +646,7 @@
             <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
             <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
           </svg>
-          Start Talking
+          Start Demo Call
         </button>
         <button class="btn btn-stop" id="stopBtn" style="display: none;">
           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -527,19 +658,37 @@
 
       <!-- Footer -->
       <div class="footer">
-        <p>Powered by <a href="https://elevenlabs.io" target="_blank">ElevenLabs</a> Conversational AI</p>
+        <p>Powered by <a href="https://ringlypro.com" target="_blank">RinglyPro</a> AI Voice Technology</p>
       </div>
     </div>
 
     <!-- Info Box -->
     <div class="info-box">
-      <h3>How This Works</h3>
+      <h3>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 16v-4M12 8h.01"/>
+        </svg>
+        What You'll Experience
+      </h3>
       <ul>
-        <li><strong>Token Flow:</strong> Your browser requests a short-lived token from the backend. The API key is never exposed to the browser.</li>
-        <li><strong>WebRTC:</strong> Audio streams directly between your browser and ElevenLabs servers - low latency, real-time conversation.</li>
-        <li><strong>Transcript:</strong> Speech is transcribed in real-time and displayed as you talk.</li>
-        <li><strong>Backend endpoint:</strong> <code>POST /api/elevenlabs-webrtc/token</code></li>
+        <li><strong>Natural voice conversations</strong> - Talk naturally like you would on a phone call</li>
+        <li><strong>Personalized responses</strong> - The AI uses your business info to answer questions</li>
+        <li><strong>Real-time transcription</strong> - See the conversation as it happens</li>
+        <li><strong>Appointment booking</strong> - Experience how callers can schedule appointments</li>
+        <li><strong>Professional greeting</strong> - Hear your custom company welcome message</li>
       </ul>
+
+      <!-- CTA -->
+      <div class="cta-box">
+        <p><strong>Ready to get started?</strong> Sign up for RinglyPro and have your AI receptionist live in minutes.</p>
+        <a href="https://ringlypro.com/signup" class="btn-cta" target="_blank">
+          Get Started Free
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
     </div>
   </div>
 
@@ -548,8 +697,9 @@
 
   <script>
     // DOM Elements
-    const agentIdInput = document.getElementById('agentId');
-    const customerNameInput = document.getElementById('customerName');
+    const companyNameInput = document.getElementById('companyName');
+    const websiteUrlInput = document.getElementById('websiteUrl');
+    const knowledgeBaseInput = document.getElementById('knowledgeBase');
     const statusBadge = document.getElementById('statusBadge');
     const statusText = document.getElementById('statusText');
     const audioLevelContainer = document.getElementById('audioLevelContainer');
@@ -561,6 +711,9 @@
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
 
+    // Configuration - Using RinglyPro demo agent
+    const PRODUCTION_URL = 'https://aiagent.ringlypro.com';
+
     // State
     let client = null;
     let isAgentSpeaking = false;
@@ -568,9 +721,9 @@
 
     // Status configurations
     const statusConfig = {
-      disconnected: { label: 'Ready', class: '' },
+      disconnected: { label: 'Ready to Demo', class: '' },
       connecting: { label: 'Connecting...', class: 'connecting' },
-      connected: { label: 'Connected', class: 'connected' },
+      connected: { label: 'Call Active', class: 'connected' },
       error: { label: 'Error', class: 'error' }
     };
 
@@ -597,7 +750,7 @@
             <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
             <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
           </svg>
-          Start Talking
+          Start Demo Call
         `;
         stopBtn.style.display = 'none';
       } else if (status === 'connecting') {
@@ -650,7 +803,7 @@
         const entry = document.createElement('div');
         entry.className = `transcript-entry ${role}${isFinal ? '' : ' interim'}`;
         entry.innerHTML = `
-          <div class="transcript-role">${role === 'user' ? 'You' : 'Agent'}</div>
+          <div class="transcript-role">${role === 'user' ? 'You' : 'AI Receptionist'}</div>
           <div class="transcript-text">${text}</div>
         `;
         transcriptContainer.appendChild(entry);
@@ -662,7 +815,7 @@
       // Update speaking indicator
       if (role === 'agent') {
         isAgentSpeaking = true;
-        speakingIndicator.textContent = 'Agent Speaking';
+        speakingIndicator.textContent = 'AI Speaking';
         clearTimeout(speakingTimeout);
         speakingTimeout = setTimeout(() => {
           isAgentSpeaking = false;
@@ -683,27 +836,32 @@
       audioLevelFill.style.width = `${Math.min(level * 100, 100)}%`;
     }
 
-    // Initialize client
+    // Initialize client with business context
     function initClient() {
-      const agentId = agentIdInput.value.trim();
-      const customerName = customerNameInput.value.trim();
+      const companyName = companyNameInput.value.trim();
+      const websiteUrl = websiteUrlInput.value.trim();
+      const knowledgeBase = knowledgeBaseInput.value.trim();
 
-      if (!agentId) {
-        showError('Please enter an Agent ID');
+      if (!companyName) {
+        showError('Please enter your company name');
+        companyNameInput.focus();
         return null;
       }
 
       hideError();
 
-      // Use production server for token endpoint
-      const PRODUCTION_URL = 'https://aiagent.ringlypro.com';
+      // Build context for the AI agent
+      const businessContext = {
+        company_name: companyName,
+        website_url: websiteUrl || '',
+        knowledge_base: knowledgeBase || '',
+        demo_mode: 'true'
+      };
 
       return new ElevenLabsWebRTCClient({
-        tokenEndpoint: `${PRODUCTION_URL}/api/elevenlabs-webrtc/token`,
-        agentId: agentId,
-        dynamicVariables: {
-          customer_name: customerName || 'Guest'
-        },
+        tokenEndpoint: `${PRODUCTION_URL}/api/elevenlabs-webrtc/demo-token`,
+        agentId: 'demo', // Backend will use the hardcoded agent
+        dynamicVariables: businessContext,
         onStatusChange: (status) => {
           console.log('[Demo] Status:', status);
           updateStatus(status);
@@ -758,15 +916,24 @@
     // Initialize
     updateStatus('disconnected');
 
-    // Check if we have a saved agent ID
-    const savedAgentId = localStorage.getItem('elevenlabs_agent_id');
-    if (savedAgentId) {
-      agentIdInput.value = savedAgentId;
-    }
+    // Load saved values from localStorage
+    const savedCompany = localStorage.getItem('ringlypro_demo_company');
+    const savedWebsite = localStorage.getItem('ringlypro_demo_website');
+    const savedKnowledge = localStorage.getItem('ringlypro_demo_knowledge');
 
-    // Save agent ID on change
-    agentIdInput.addEventListener('change', () => {
-      localStorage.setItem('elevenlabs_agent_id', agentIdInput.value.trim());
+    if (savedCompany) companyNameInput.value = savedCompany;
+    if (savedWebsite) websiteUrlInput.value = savedWebsite;
+    if (savedKnowledge) knowledgeBaseInput.value = savedKnowledge;
+
+    // Save values on change
+    companyNameInput.addEventListener('change', () => {
+      localStorage.setItem('ringlypro_demo_company', companyNameInput.value.trim());
+    });
+    websiteUrlInput.addEventListener('change', () => {
+      localStorage.setItem('ringlypro_demo_website', websiteUrlInput.value.trim());
+    });
+    knowledgeBaseInput.addEventListener('change', () => {
+      localStorage.setItem('ringlypro_demo_knowledge', knowledgeBaseInput.value.trim());
     });
   </script>
 </body>
