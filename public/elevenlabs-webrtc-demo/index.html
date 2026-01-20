@@ -737,14 +737,28 @@
         const websiteUrl = websiteUrlInput.value.trim();
         const knowledgeBase = knowledgeBaseInput.value.trim();
 
-        // Start conversation using ElevenLabs SDK with dynamic variables
+        // Build the first message with company name
+        const firstMessage = `Hi, thanks for calling ${companyName}! This is Lina, how can I help you today?`;
+
+        // Build dynamic prompt additions
+        let promptAddition = `\n\nCURRENT CALL CONTEXT:\nCompany: ${companyName}`;
+        if (websiteUrl) {
+          promptAddition += `\nWebsite: ${websiteUrl}`;
+        }
+        if (knowledgeBase) {
+          promptAddition += `\nBusiness Info: ${knowledgeBase}`;
+        }
+
+        // Start conversation using ElevenLabs SDK with overrides
         conversation = await Conversation.startSession({
           signedUrl: signedUrl,
-          dynamicVariables: {
-            company_name: companyName,
-            website_url: websiteUrl || '',
-            knowledge_base: knowledgeBase || '',
-            business_info: knowledgeBase || ''
+          overrides: {
+            agent: {
+              firstMessage: firstMessage,
+              prompt: {
+                prompt: promptAddition
+              }
+            }
           },
           onConnect: () => {
             console.log('[ElevenLabs] Connected');
