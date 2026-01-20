@@ -733,9 +733,19 @@
         // Get signed URL from backend
         const signedUrl = await getSignedUrl();
 
-        // Start conversation using ElevenLabs SDK
+        // Get form values for dynamic variables
+        const websiteUrl = websiteUrlInput.value.trim();
+        const knowledgeBase = knowledgeBaseInput.value.trim();
+
+        // Start conversation using ElevenLabs SDK with dynamic variables
         conversation = await Conversation.startSession({
           signedUrl: signedUrl,
+          dynamicVariables: {
+            company_name: companyName,
+            website_url: websiteUrl || '',
+            knowledge_base: knowledgeBase || '',
+            business_info: knowledgeBase || ''
+          },
           onConnect: () => {
             console.log('[ElevenLabs] Connected');
             updateStatus('connected');
