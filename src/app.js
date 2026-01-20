@@ -117,6 +117,15 @@ try {
     console.log('⚠️ ElevenLabs voice routes not available:', error.message);
 }
 
+// Import ElevenLabs WebRTC routes (browser-based voice conversations)
+let elevenlabsWebrtcRoutes = null;
+try {
+    elevenlabsWebrtcRoutes = require('./routes/elevenlabs-webrtc'); // ElevenLabs WebRTC token endpoint
+    console.log('✅ ElevenLabs WebRTC routes loaded successfully');
+} catch (error) {
+    console.log('⚠️ ElevenLabs WebRTC routes not available:', error.message);
+}
+
 // Import email marketing routes (SendGrid integration)
 const emailRoutes = require('./routes/email'); // Email marketing with SendGrid
 
@@ -360,6 +369,14 @@ if (elevenlabsVoiceRoutes) {
     console.log('🎙️ ElevenLabs voice routes mounted at /voice/elevenlabs');
 } else {
     console.log('⚠️ ElevenLabs voice routes not available - skipping mount');
+}
+
+// ElevenLabs WebRTC routes (browser-based voice conversations)
+if (elevenlabsWebrtcRoutes) {
+    app.use('/api/elevenlabs-webrtc', elevenlabsWebrtcRoutes);
+    console.log('🌐 ElevenLabs WebRTC routes mounted at /api/elevenlabs-webrtc');
+} else {
+    console.log('⚠️ ElevenLabs WebRTC routes not available - skipping mount');
 }
 
 // Email Marketing routes (SendGrid integration)

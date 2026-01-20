@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ElevenLabs WebRTC Voice Demo</title>
+  <meta name="description" content="Custom UI for ElevenLabs Conversational AI using WebRTC - No embed widget required">
+
+  <style>
+    /* CSS Reset & Base */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-card: #334155;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-green: #10b981;
+      --accent-green-light: #d1fae5;
+      --accent-red: #ef4444;
+      --accent-red-light: #fee2e2;
+      --accent-amber: #f59e0b;
+      --accent-blue: #3b82f6;
+      --border-color: #475569;
+      --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1a2e 100%);
+      min-height: 100vh;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* Container */
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .header p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+
+    /* Main Card */
+    .voice-card {
+      background: var(--bg-secondary);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Configuration Section */
+    .config-section {
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .config-section h3 {
+      margin: 0 0 16px;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .form-group input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Status Badge */
+    .status-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--bg-card);
+      color: var(--text-secondary);
+    }
+
+    .status-badge.connected {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+    }
+
+    .status-badge.connecting {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-amber);
+    }
+
+    .status-badge.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-red);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-badge.connecting .status-dot {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.9); }
+    }
+
+    /* Audio Level */
+    .audio-level-container {
+      margin-bottom: 20px;
+      padding: 16px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      display: none;
+    }
+
+    .audio-level-container.visible {
+      display: block;
+    }
+
+    .audio-level-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .audio-level-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .speaking-indicator {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+    }
+
+    .audio-level-bar {
+      height: 6px;
+      background: var(--bg-primary);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .audio-level-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+      border-radius: 3px;
+      transition: width 0.05s linear;
+      width: 0%;
+    }
+
+    /* Transcript */
+    .transcript-container {
+      height: 280px;
+      overflow-y: auto;
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .transcript-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-muted);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .transcript-entry {
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .transcript-entry.user {
+      background: rgba(59, 130, 246, 0.15);
+      margin-left: 40px;
+    }
+
+    .transcript-entry.agent {
+      background: var(--bg-secondary);
+      margin-right: 40px;
+      border: 1px solid var(--border-color);
+    }
+
+    .transcript-entry.interim {
+      opacity: 0.6;
+    }
+
+    .transcript-role {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      color: var(--text-muted);
+    }
+
+    .transcript-entry.user .transcript-role {
+      color: var(--accent-blue);
+    }
+
+    .transcript-entry.agent .transcript-role {
+      color: var(--accent-green);
+    }
+
+    .transcript-text {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* Error Display */
+    .error-box {
+      padding: 14px 16px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: var(--accent-red);
+      display: none;
+    }
+
+    .error-box.visible {
+      display: block;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-start {
+      background: linear-gradient(135deg, var(--accent-green), #059669);
+      color: white;
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-start:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-stop {
+      background: linear-gradient(135deg, var(--accent-red), #dc2626);
+      color: white;
+      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35);
+    }
+
+    .btn-stop:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-connecting {
+      background: linear-gradient(135deg, var(--accent-amber), #d97706);
+      color: white;
+    }
+
+    .btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+    }
+
+    .footer p {
+      margin: 0;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .footer a {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Info Box */
+    .info-box {
+      margin-top: 32px;
+      padding: 20px;
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+    }
+
+    .info-box h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .info-box ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .info-box li {
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .info-box code {
+      background: var(--bg-card);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--accent-amber);
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .container {
+        padding: 20px 16px;
+      }
+
+      .voice-card {
+        padding: 20px;
+      }
+
+      .transcript-entry.user {
+        margin-left: 20px;
+      }
+
+      .transcript-entry.agent {
+        margin-right: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>ElevenLabs WebRTC Voice Demo</h1>
+      <p>Custom UI for Conversational AI - No embed widget required</p>
+    </div>
+
+    <!-- Main Voice Card -->
+    <div class="voice-card">
+      <!-- Configuration -->
+      <div class="config-section">
+        <h3>Configuration</h3>
+        <div class="form-group">
+          <label for="agentId">Agent ID</label>
+          <input
+            type="text"
+            id="agentId"
+            placeholder="Enter your ElevenLabs Agent ID"
+            autocomplete="off"
+          >
+        </div>
+        <div class="form-group">
+          <label for="customerName">Your Name (Optional - passed to agent)</label>
+          <input
+            type="text"
+            id="customerName"
+            placeholder="Enter your name"
+            autocomplete="off"
+          >
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="status-container">
+        <div class="status-badge" id="statusBadge">
+          <span class="status-dot"></span>
+          <span id="statusText">Ready</span>
+        </div>
+      </div>
+
+      <!-- Audio Level -->
+      <div class="audio-level-container" id="audioLevelContainer">
+        <div class="audio-level-header">
+          <span class="audio-level-label">Audio Level</span>
+          <span class="speaking-indicator" id="speakingIndicator">Listening</span>
+        </div>
+        <div class="audio-level-bar">
+          <div class="audio-level-fill" id="audioLevelFill"></div>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div class="error-box" id="errorBox"></div>
+
+      <!-- Transcript -->
+      <div class="transcript-container" id="transcriptContainer">
+        <div class="transcript-empty" id="transcriptEmpty">
+          Transcript will appear here when you start talking...
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <button class="btn btn-start" id="startBtn">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+          </svg>
+          Start Talking
+        </button>
+        <button class="btn btn-stop" id="stopBtn" style="display: none;">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="6" width="12" height="12" rx="2"/>
+          </svg>
+          End Call
+        </button>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p>Powered by <a href="https://elevenlabs.io" target="_blank">ElevenLabs</a> Conversational AI</p>
+      </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="info-box">
+      <h3>How This Works</h3>
+      <ul>
+        <li><strong>Token Flow:</strong> Your browser requests a short-lived token from the backend. The API key is never exposed to the browser.</li>
+        <li><strong>WebRTC:</strong> Audio streams directly between your browser and ElevenLabs servers - low latency, real-time conversation.</li>
+        <li><strong>Transcript:</strong> Speech is transcribed in real-time and displayed as you talk.</li>
+        <li><strong>Backend endpoint:</strong> <code>POST /api/elevenlabs-webrtc/token</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Load WebRTC Client -->
+  <script src="elevenlabs-webrtc-client.js"></script>
+
+  <script>
+    // DOM Elements
+    const agentIdInput = document.getElementById('agentId');
+    const customerNameInput = document.getElementById('customerName');
+    const statusBadge = document.getElementById('statusBadge');
+    const statusText = document.getElementById('statusText');
+    const audioLevelContainer = document.getElementById('audioLevelContainer');
+    const audioLevelFill = document.getElementById('audioLevelFill');
+    const speakingIndicator = document.getElementById('speakingIndicator');
+    const errorBox = document.getElementById('errorBox');
+    const transcriptContainer = document.getElementById('transcriptContainer');
+    const transcriptEmpty = document.getElementById('transcriptEmpty');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    // State
+    let client = null;
+    let isAgentSpeaking = false;
+    let speakingTimeout = null;
+
+    // Status configurations
+    const statusConfig = {
+      disconnected: { label: 'Ready', class: '' },
+      connecting: { label: 'Connecting...', class: 'connecting' },
+      connected: { label: 'Connected', class: 'connected' },
+      error: { label: 'Error', class: 'error' }
+    };
+
+    // Update status UI
+    function updateStatus(status) {
+      const config = statusConfig[status] || statusConfig.disconnected;
+      statusText.textContent = config.label;
+      statusBadge.className = 'status-badge ' + config.class;
+
+      // Show/hide audio level when connected
+      if (status === 'connected') {
+        audioLevelContainer.classList.add('visible');
+      } else {
+        audioLevelContainer.classList.remove('visible');
+      }
+
+      // Update buttons
+      if (status === 'disconnected' || status === 'error') {
+        startBtn.style.display = 'inline-flex';
+        startBtn.disabled = false;
+        startBtn.className = 'btn btn-start';
+        startBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+          </svg>
+          Start Talking
+        `;
+        stopBtn.style.display = 'none';
+      } else if (status === 'connecting') {
+        startBtn.disabled = true;
+        startBtn.className = 'btn btn-connecting';
+        startBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="currentColor" style="animation: spin 1s linear infinite">
+            <path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z"/>
+          </svg>
+          Connecting...
+        `;
+        stopBtn.style.display = 'none';
+      } else if (status === 'connected') {
+        startBtn.style.display = 'none';
+        stopBtn.style.display = 'inline-flex';
+      }
+    }
+
+    // Show error
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.classList.add('visible');
+    }
+
+    // Hide error
+    function hideError() {
+      errorBox.classList.remove('visible');
+    }
+
+    // Add transcript entry
+    function addTranscript(role, text, isFinal) {
+      // Hide empty message
+      transcriptEmpty.style.display = 'none';
+
+      // Find existing interim entry for this role
+      const existingInterim = transcriptContainer.querySelector(
+        `.transcript-entry.${role}.interim`
+      );
+
+      if (!isFinal && existingInterim) {
+        // Update existing interim
+        existingInterim.querySelector('.transcript-text').textContent = text;
+      } else {
+        // Remove any interim entries for this role
+        if (isFinal && existingInterim) {
+          existingInterim.remove();
+        }
+
+        // Create new entry
+        const entry = document.createElement('div');
+        entry.className = `transcript-entry ${role}${isFinal ? '' : ' interim'}`;
+        entry.innerHTML = `
+          <div class="transcript-role">${role === 'user' ? 'You' : 'Agent'}</div>
+          <div class="transcript-text">${text}</div>
+        `;
+        transcriptContainer.appendChild(entry);
+
+        // Scroll to bottom
+        transcriptContainer.scrollTop = transcriptContainer.scrollHeight;
+      }
+
+      // Update speaking indicator
+      if (role === 'agent') {
+        isAgentSpeaking = true;
+        speakingIndicator.textContent = 'Agent Speaking';
+        clearTimeout(speakingTimeout);
+        speakingTimeout = setTimeout(() => {
+          isAgentSpeaking = false;
+          speakingIndicator.textContent = 'Listening';
+        }, 800);
+      }
+    }
+
+    // Clear transcript
+    function clearTranscript() {
+      transcriptContainer.innerHTML = '';
+      transcriptContainer.appendChild(transcriptEmpty);
+      transcriptEmpty.style.display = 'flex';
+    }
+
+    // Update audio level
+    function updateAudioLevel(level) {
+      audioLevelFill.style.width = `${Math.min(level * 100, 100)}%`;
+    }
+
+    // Initialize client
+    function initClient() {
+      const agentId = agentIdInput.value.trim();
+      const customerName = customerNameInput.value.trim();
+
+      if (!agentId) {
+        showError('Please enter an Agent ID');
+        return null;
+      }
+
+      hideError();
+
+      // Use production server for token endpoint
+      const PRODUCTION_URL = 'https://aiagent.ringlypro.com';
+
+      return new ElevenLabsWebRTCClient({
+        tokenEndpoint: `${PRODUCTION_URL}/api/elevenlabs-webrtc/token`,
+        agentId: agentId,
+        dynamicVariables: {
+          customer_name: customerName || 'Guest'
+        },
+        onStatusChange: (status) => {
+          console.log('[Demo] Status:', status);
+          updateStatus(status);
+        },
+        onTranscript: (role, text, isFinal) => {
+          console.log(`[Demo] Transcript (${role}):`, text, isFinal ? '[FINAL]' : '[interim]');
+          addTranscript(role, text, isFinal);
+        },
+        onError: (error) => {
+          console.error('[Demo] Error:', error);
+          showError(error.message);
+        },
+        onAudioLevel: (level) => {
+          updateAudioLevel(level);
+        }
+      });
+    }
+
+    // Start conversation
+    async function startConversation() {
+      client = initClient();
+      if (!client) return;
+
+      clearTranscript();
+      hideError();
+
+      try {
+        await client.connect();
+      } catch (error) {
+        console.error('[Demo] Connection failed:', error);
+        showError(error.message);
+      }
+    }
+
+    // Stop conversation
+    function stopConversation() {
+      if (client) {
+        client.disconnect();
+        client = null;
+      }
+    }
+
+    // Event listeners
+    startBtn.addEventListener('click', startConversation);
+    stopBtn.addEventListener('click', stopConversation);
+
+    // Add spin animation
+    const style = document.createElement('style');
+    style.textContent = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+    document.head.appendChild(style);
+
+    // Initialize
+    updateStatus('disconnected');
+
+    // Check if we have a saved agent ID
+    const savedAgentId = localStorage.getItem('elevenlabs_agent_id');
+    if (savedAgentId) {
+      agentIdInput.value = savedAgentId;
+    }
+
+    // Save agent ID on change
+    agentIdInput.addEventListener('change', () => {
+      localStorage.setItem('elevenlabs_agent_id', agentIdInput.value.trim());
+    });
+  </script>
+</body>
+</html>
