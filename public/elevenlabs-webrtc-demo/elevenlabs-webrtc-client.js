@@ -1,8 +1,8 @@
 /**
- * ElevenLabs WebRTC Client
+ * ElevenLabs WebSocket Voice Client
  *
- * A standalone JavaScript class for establishing WebRTC voice connections
- * to ElevenLabs Conversational AI agents WITHOUT using the embed widget.
+ * A standalone JavaScript class for establishing WebSocket voice connections
+ * to ElevenLabs Conversational AI agents.
  *
  * Architecture Overview:
  * =====================
@@ -11,20 +11,12 @@
  *    Browser -> Your Backend -> ElevenLabs API -> Signed WebSocket URL
  *    (API key never exposed to browser)
  *
- * 2. WEBRTC SETUP:
- *    - Create RTCPeerConnection
- *    - Get user microphone via getUserMedia
- *    - Add audio track to peer connection
- *    - Connect to ElevenLabs via WebSocket for signaling
- *    - Exchange SDP offer/answer
- *    - ICE candidates are exchanged automatically
+ * 2. AUDIO FLOW (WebSocket-based, NOT WebRTC):
+ *    - User's mic audio -> MediaRecorder -> base64 -> WebSocket -> ElevenLabs
+ *    - ElevenLabs -> WebSocket -> base64 audio chunks -> Web Audio API -> Speaker
  *
- * 3. AUDIO HANDLING:
- *    - User's mic audio -> WebRTC -> ElevenLabs
- *    - Agent's voice -> WebRTC -> Browser audio element
- *
- * 4. TRANSCRIPT:
- *    - ElevenLabs sends transcript updates via WebSocket data channel
+ * 3. TRANSCRIPT:
+ *    - ElevenLabs sends transcript updates via WebSocket messages
  *    - Messages include role (user/agent) and text
  *
  * Usage:
@@ -66,13 +58,18 @@ class ElevenLabsWebRTCClient {
 
     // Internal state
     this.status = 'disconnected';
-    this.peerConnection = null;
     this.websocket = null;
     this.localStream = null;
-    this.remoteAudio = null;
+    this.mediaRecorder = null;
     this.audioContext = null;
-    this.analyser = null;
+    this.audioQueue = [];
+    this.isPlaying = false;
     this.transcript = [];
+    this.conversationId = null;
+
+    // Audio processing
+    this.inputAnalyser = null;
+    this.scriptProcessor = null;
   }
 
   /**
@@ -138,7 +135,6 @@ class ElevenLabsWebRTCClient {
       },
       body: JSON.stringify({
         agent_id: this.agentId,
-        // Dynamic variables are now sent via WebSocket after connection
         dynamicVariables: this.dynamicVariables
       })
     });
@@ -163,105 +159,148 @@ class ElevenLabsWebRTCClient {
   }
 
   /**
-   * Set up WebRTC peer connection
+   * Set up audio recording and streaming
    * @private
    */
-  _setupPeerConnection() {
-    // Create peer connection with STUN servers for NAT traversal
-    this.peerConnection = new RTCPeerConnection({
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
+  _setupAudioCapture() {
+    // Create audio context for processing
+    this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
+      sampleRate: 16000
     });
 
-    // Handle incoming audio track (agent's voice)
-    this.peerConnection.ontrack = (event) => {
-      console.log('[WebRTC] Received remote track:', event.track.kind);
+    // Create source from microphone stream
+    const source = this.audioContext.createMediaStreamSource(this.localStream);
 
-      if (event.track.kind === 'audio') {
-        // Create audio element to play agent's voice
-        this.remoteAudio = new Audio();
-        this.remoteAudio.srcObject = event.streams[0];
-        this.remoteAudio.autoplay = true;
+    // Create analyser for input level monitoring
+    this.inputAnalyser = this.audioContext.createAnalyser();
+    this.inputAnalyser.fftSize = 256;
+    source.connect(this.inputAnalyser);
 
-        // Set up audio analysis for agent's voice level
-        this._setupAudioAnalysis(event.streams[0]);
+    // Create script processor for capturing raw PCM data
+    // Note: ScriptProcessorNode is deprecated but AudioWorklet requires more setup
+    const bufferSize = 4096;
+    this.scriptProcessor = this.audioContext.createScriptProcessor(bufferSize, 1, 1);
+
+    this.scriptProcessor.onaudioprocess = (event) => {
+      if (this.websocket?.readyState !== WebSocket.OPEN) return;
+
+      const inputData = event.inputBuffer.getChannelData(0);
+
+      // Convert float32 to int16 PCM
+      const pcmData = new Int16Array(inputData.length);
+      for (let i = 0; i < inputData.length; i++) {
+        const s = Math.max(-1, Math.min(1, inputData[i]));
+        pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
       }
+
+      // Convert to base64
+      const base64Audio = this._arrayBufferToBase64(pcmData.buffer);
+
+      // Send audio chunk to ElevenLabs
+      this.websocket.send(JSON.stringify({
+        user_audio_chunk: base64Audio
+      }));
+
+      // Update input level
+      this._updateInputLevel();
     };
 
-    // Handle ICE connection state changes
-    this.peerConnection.oniceconnectionstatechange = () => {
-      console.log('[WebRTC] ICE state:', this.peerConnection.iceConnectionState);
-
-      switch (this.peerConnection.iceConnectionState) {
-        case 'connected':
-        case 'completed':
-          this._setStatus('connected');
-          break;
-        case 'disconnected':
-        case 'failed':
-        case 'closed':
-          this._setStatus('disconnected');
-          break;
-      }
-    };
-
-    // Handle ICE candidates - send to ElevenLabs via WebSocket
-    this.peerConnection.onicecandidate = (event) => {
-      if (event.candidate && this.websocket?.readyState === WebSocket.OPEN) {
-        this.websocket.send(JSON.stringify({
-          type: 'ice-candidate',
-          candidate: event.candidate
-        }));
-      }
-    };
+    source.connect(this.scriptProcessor);
+    this.scriptProcessor.connect(this.audioContext.destination);
   }
 
   /**
-   * Set up audio analysis for volume levels
+   * Convert ArrayBuffer to base64 string
    * @private
    */
-  _setupAudioAnalysis(stream) {
-    try {
-      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      this.analyser = this.audioContext.createAnalyser();
-      this.analyser.fftSize = 256;
-
-      const source = this.audioContext.createMediaStreamSource(stream);
-      source.connect(this.analyser);
-
-      // Start monitoring audio levels
-      this._monitorAudioLevel();
-    } catch (error) {
-      console.warn('[WebRTC] Could not set up audio analysis:', error);
+  _arrayBufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
     }
+    return btoa(binary);
   }
 
   /**
-   * Monitor audio levels and call callback
+   * Convert base64 string to ArrayBuffer
    * @private
    */
-  _monitorAudioLevel() {
-    if (!this.analyser || this.status === 'disconnected') return;
+  _base64ToArrayBuffer(base64) {
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }
 
-    const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-    this.analyser.getByteFrequencyData(dataArray);
+  /**
+   * Update input level meter
+   * @private
+   */
+  _updateInputLevel() {
+    if (!this.inputAnalyser) return;
 
-    // Calculate average volume (0-1)
+    const dataArray = new Uint8Array(this.inputAnalyser.frequencyBinCount);
+    this.inputAnalyser.getByteFrequencyData(dataArray);
+
     const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
     const normalizedLevel = average / 255;
 
     this.onAudioLevel(normalizedLevel);
+  }
 
-    // Continue monitoring
-    if (this.status === 'connected') {
-      requestAnimationFrame(() => this._monitorAudioLevel());
+  /**
+   * Play received audio chunk
+   * @private
+   */
+  async _playAudioChunk(base64Audio) {
+    try {
+      // Decode base64 to ArrayBuffer
+      const audioData = this._base64ToArrayBuffer(base64Audio);
+
+      // ElevenLabs sends MP3 chunks, need to decode them
+      const audioBuffer = await this.audioContext.decodeAudioData(audioData.slice(0));
+
+      // Queue the audio
+      this.audioQueue.push(audioBuffer);
+
+      // Start playing if not already
+      if (!this.isPlaying) {
+        this._playNextInQueue();
+      }
+    } catch (error) {
+      console.warn('[Audio] Error decoding audio chunk:', error);
     }
   }
 
   /**
-   * Connect to ElevenLabs WebSocket and establish WebRTC connection
+   * Play next audio buffer in queue
+   * @private
+   */
+  _playNextInQueue() {
+    if (this.audioQueue.length === 0) {
+      this.isPlaying = false;
+      return;
+    }
+
+    this.isPlaying = true;
+    const audioBuffer = this.audioQueue.shift();
+
+    const source = this.audioContext.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(this.audioContext.destination);
+
+    source.onended = () => {
+      this._playNextInQueue();
+    };
+
+    source.start(0);
+  }
+
+  /**
+   * Connect to ElevenLabs WebSocket
    * @private
    */
   async _connectWebSocket(signedUrl) {
@@ -269,34 +308,40 @@ class ElevenLabsWebRTCClient {
       this.websocket = new WebSocket(signedUrl);
 
       this.websocket.onopen = () => {
-        console.log('[WebRTC] WebSocket connected');
+        console.log('[WebSocket] Connected');
 
         // Send conversation initiation data with dynamic variables
         if (Object.keys(this.dynamicVariables).length > 0) {
-          console.log('[WebRTC] Sending conversation initiation data:', this.dynamicVariables);
+          console.log('[WebSocket] Sending conversation initiation data');
           this.websocket.send(JSON.stringify({
             type: 'conversation_initiation_client_data',
-            dynamic_variables: this.dynamicVariables
+            conversation_initiation_client_data: {
+              dynamic_variables: this.dynamicVariables
+            }
           }));
         }
+
+        // Mark as connected and resolve
+        this._setStatus('connected');
+        resolve();
       };
 
       this.websocket.onmessage = async (event) => {
         try {
           const message = JSON.parse(event.data);
-          await this._handleWebSocketMessage(message, resolve);
+          await this._handleWebSocketMessage(message);
         } catch (error) {
-          console.error('[WebRTC] Error handling message:', error);
+          console.error('[WebSocket] Error handling message:', error);
         }
       };
 
       this.websocket.onerror = (error) => {
-        console.error('[WebRTC] WebSocket error:', error);
+        console.error('[WebSocket] Error:', error);
         reject(new Error('WebSocket connection failed'));
       };
 
       this.websocket.onclose = (event) => {
-        console.log('[WebRTC] WebSocket closed:', event.code, event.reason);
+        console.log('[WebSocket] Closed:', event.code, event.reason);
         this._setStatus('disconnected');
       };
     });
@@ -306,87 +351,54 @@ class ElevenLabsWebRTCClient {
    * Handle incoming WebSocket messages from ElevenLabs
    * @private
    */
-  async _handleWebSocketMessage(message, onConnected) {
-    console.log('[WebRTC] Received message type:', message.type);
+  async _handleWebSocketMessage(message) {
+    // console.log('[WebSocket] Message:', message.type || Object.keys(message)[0]);
 
-    switch (message.type) {
-      case 'conversation_initiation_metadata':
-        // Initial metadata about the conversation
-        console.log('[WebRTC] Conversation initiated:', message.conversation_id);
-        break;
-
-      case 'audio_output_format':
-        // Audio format information
-        console.log('[WebRTC] Audio format:', message.sample_rate, 'Hz');
-        break;
-
-      case 'pong':
-        // Keepalive response
-        break;
-
-      case 'sdp':
-      case 'offer':
-        // SDP offer from ElevenLabs - create answer
-        if (message.sdp || message.offer) {
-          const sdp = message.sdp || message.offer;
-          await this.peerConnection.setRemoteDescription(
-            new RTCSessionDescription({ type: 'offer', sdp: sdp })
-          );
-
-          const answer = await this.peerConnection.createAnswer();
-          await this.peerConnection.setLocalDescription(answer);
-
-          this.websocket.send(JSON.stringify({
-            type: 'sdp',
-            sdp: answer.sdp
-          }));
-
-          console.log('[WebRTC] SDP answer sent');
-          onConnected?.();
-        }
-        break;
-
-      case 'ice-candidate':
-        // ICE candidate from ElevenLabs
-        if (message.candidate) {
-          await this.peerConnection.addIceCandidate(
-            new RTCIceCandidate(message.candidate)
-          );
-        }
-        break;
-
-      case 'user_transcript':
-        // User's speech transcribed
-        this._addTranscript('user', message.user_transcript, message.is_final);
-        break;
-
-      case 'agent_response':
-      case 'audio':
-        // Agent's response text
-        if (message.text || message.agent_response) {
-          this._addTranscript('agent', message.text || message.agent_response, true);
-        }
-        break;
-
-      case 'interruption':
-        // User interrupted the agent
-        console.log('[WebRTC] User interrupted');
-        break;
-
-      case 'error':
-        // Error from ElevenLabs
-        console.error('[WebRTC] Server error:', message.error);
-        this.onError(new Error(message.error || 'Server error'));
-        break;
-
-      case 'conversation_ended':
-        // Conversation ended by agent or timeout
-        console.log('[WebRTC] Conversation ended');
-        this.disconnect();
-        break;
-
-      default:
-        console.log('[WebRTC] Unhandled message type:', message.type, message);
+    // Handle different message types
+    if (message.type === 'conversation_initiation_metadata') {
+      this.conversationId = message.conversation_id;
+      console.log('[WebSocket] Conversation started:', this.conversationId);
+    }
+    else if (message.type === 'audio' || message.audio) {
+      // Agent audio response
+      const audioBase64 = message.audio?.chunk || message.audio_event?.audio_base_64 || message.audio;
+      if (audioBase64 && typeof audioBase64 === 'string') {
+        await this._playAudioChunk(audioBase64);
+      }
+    }
+    else if (message.type === 'agent_response') {
+      // Agent text response
+      const text = message.agent_response_event?.agent_response || message.agent_response || message.text;
+      if (text) {
+        this._addTranscript('agent', text, true);
+      }
+    }
+    else if (message.type === 'user_transcript') {
+      // User speech transcribed
+      const text = message.user_transcription_event?.user_transcript || message.user_transcript;
+      const isFinal = message.user_transcription_event?.is_final !== false;
+      if (text) {
+        this._addTranscript('user', text, isFinal);
+      }
+    }
+    else if (message.type === 'ping') {
+      // Respond to ping with pong
+      if (this.websocket?.readyState === WebSocket.OPEN) {
+        this.websocket.send(JSON.stringify({ type: 'pong' }));
+      }
+    }
+    else if (message.type === 'interruption') {
+      // User interrupted the agent - clear audio queue
+      console.log('[WebSocket] Interruption - clearing audio queue');
+      this.audioQueue = [];
+    }
+    else if (message.type === 'error') {
+      console.error('[WebSocket] Server error:', message.error || message.message);
+      this.onError(new Error(message.error || message.message || 'Server error'));
+    }
+    else if (message.type === 'conversation_ended' || message.type === 'session_end') {
+      console.log('[WebSocket] Conversation ended');
+      this.disconnect();
     }
   }
 
@@ -430,7 +442,7 @@ class ElevenLabsWebRTCClient {
    */
   async connect(dynamicVars = null) {
     if (this.status === 'connected' || this.status === 'connecting') {
-      console.warn('[WebRTC] Already connected or connecting');
+      console.warn('[Client] Already connected or connecting');
       return;
     }
 
@@ -443,30 +455,25 @@ class ElevenLabsWebRTCClient {
 
     try {
       // Step 1: Get microphone permission
-      console.log('[WebRTC] Getting microphone access...');
+      console.log('[Client] Getting microphone access...');
       this.localStream = await this._getMicrophoneStream();
 
       // Step 2: Get signed URL from backend
-      console.log('[WebRTC] Getting signed URL...');
+      console.log('[Client] Getting signed URL...');
       const signedUrl = await this._getSignedUrl();
 
-      // Step 3: Set up WebRTC peer connection
-      console.log('[WebRTC] Setting up peer connection...');
-      this._setupPeerConnection();
-
-      // Step 4: Add local audio track to peer connection
-      this.localStream.getAudioTracks().forEach(track => {
-        this.peerConnection.addTrack(track, this.localStream);
-      });
-
-      // Step 5: Connect WebSocket and complete WebRTC handshake
-      console.log('[WebRTC] Connecting to ElevenLabs...');
+      // Step 3: Connect WebSocket
+      console.log('[Client] Connecting to ElevenLabs...');
       await this._connectWebSocket(signedUrl);
 
-      console.log('[WebRTC] Connection established!');
+      // Step 4: Set up audio capture and streaming
+      console.log('[Client] Setting up audio capture...');
+      this._setupAudioCapture();
+
+      console.log('[Client] Connection established!');
 
     } catch (error) {
-      console.error('[WebRTC] Connection failed:', error);
+      console.error('[Client] Connection failed:', error);
       this._setStatus('error');
       this.onError(error);
       this.disconnect();
@@ -479,7 +486,7 @@ class ElevenLabsWebRTCClient {
    * Call this when user clicks "Stop" or wants to end the call
    */
   disconnect() {
-    console.log('[WebRTC] Disconnecting...');
+    console.log('[Client] Disconnecting...');
 
     // Close WebSocket
     if (this.websocket) {
@@ -487,10 +494,10 @@ class ElevenLabsWebRTCClient {
       this.websocket = null;
     }
 
-    // Close peer connection
-    if (this.peerConnection) {
-      this.peerConnection.close();
-      this.peerConnection = null;
+    // Stop script processor
+    if (this.scriptProcessor) {
+      this.scriptProcessor.disconnect();
+      this.scriptProcessor = null;
     }
 
     // Stop local audio tracks
@@ -499,18 +506,16 @@ class ElevenLabsWebRTCClient {
       this.localStream = null;
     }
 
-    // Clean up remote audio
-    if (this.remoteAudio) {
-      this.remoteAudio.srcObject = null;
-      this.remoteAudio = null;
-    }
-
-    // Clean up audio context
+    // Close audio context
     if (this.audioContext) {
       this.audioContext.close();
       this.audioContext = null;
-      this.analyser = null;
+      this.inputAnalyser = null;
     }
+
+    // Clear audio queue
+    this.audioQueue = [];
+    this.isPlaying = false;
 
     this._setStatus('disconnected');
   }
@@ -529,7 +534,7 @@ class ElevenLabsWebRTCClient {
       }));
       this._addTranscript('user', text, true);
     } else {
-      console.warn('[WebRTC] Cannot send text - not connected');
+      console.warn('[Client] Cannot send text - not connected');
     }
   }
 }
