@@ -737,29 +737,10 @@
         const websiteUrl = websiteUrlInput.value.trim();
         const knowledgeBase = knowledgeBaseInput.value.trim();
 
-        // Build the first message with company name
-        const firstMessage = `Hi, thanks for calling ${companyName}! This is Lina, how can I help you today?`;
-
-        // Build dynamic prompt additions
-        let promptAddition = `\n\nCURRENT CALL CONTEXT:\nCompany: ${companyName}`;
-        if (websiteUrl) {
-          promptAddition += `\nWebsite: ${websiteUrl}`;
-        }
-        if (knowledgeBase) {
-          promptAddition += `\nBusiness Info: ${knowledgeBase}`;
-        }
-
-        // Start conversation using ElevenLabs SDK with overrides
+        // Start conversation using ElevenLabs SDK
+        // Note: overrides don't work with signedUrl, using clientTools instead
         conversation = await Conversation.startSession({
           signedUrl: signedUrl,
-          overrides: {
-            agent: {
-              firstMessage: firstMessage,
-              prompt: {
-                prompt: promptAddition
-              }
-            }
-          },
           onConnect: () => {
             console.log('[ElevenLabs] Connected');
             updateStatus('connected');
