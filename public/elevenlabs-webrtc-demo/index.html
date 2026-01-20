@@ -864,31 +864,38 @@
       transcriptEmpty.style.display = 'flex';
     }
 
-    // Create a personalized demo agent and get signed URL
-    async function createDemoAgent() {
+    // Get signed URL for the demo agent (we'll apply overrides at connection time)
+    async function getDemoToken() {
       const companyName = companyNameInput.value.trim();
       const websiteUrl = websiteUrlInput.value.trim();
       const knowledgeBase = knowledgeBaseInput.value.trim();
 
-      // Call the new endpoint that creates a personalized agent
-      const response = await fetch(`${PRODUCTION_URL}/api/elevenlabs-webrtc/create-demo-agent`, {
+      // Get signed URL from the existing demo agent
+      const response = await fetch(`${PRODUCTION_URL}/api/elevenlabs-webrtc/demo-token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          company_name: companyName || 'Demo Company',
-          website_url: websiteUrl,
-          knowledge_base: knowledgeBase
+          dynamicVariables: {
+            company_name: companyName || 'Demo Company',
+            website_url: websiteUrl,
+            knowledge_base: knowledgeBase
+          }
         })
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to create demo agent');
+        throw new Error(error.error || 'Failed to get demo token');
       }
 
       const data = await response.json();
-      console.log('[Demo] Created personalized agent:', data.agent_id);
-      return data.signed_url;
+      console.log('[Demo] Got signed URL for demo agent');
+      return {
+        signedUrl: data.signed_url,
+        companyName: companyName || 'Demo Company',
+        websiteUrl: websiteUrl,
+        knowledgeBase: knowledgeBase
+      };
     }
 
     // Start conversation
@@ -911,17 +918,75 @@
         // Request microphone permission
         await navigator.mediaDevices.getUserMedia({ audio: true });
 
-        // Create personalized agent and get signed URL
-        // This creates a new agent with the company name baked into the greeting
-        console.log('[Demo] Creating personalized agent for:', companyName);
-        const signedUrl = await createDemoAgent();
+        // Get signed URL and business info
+        console.log('[Demo] Getting demo token for:', companyName);
+        const demoData = await getDemoToken();
 
         updateStatus('connecting');
 
-        // Start conversation using ElevenLabs SDK
-        // No need for clientTools - the agent already has the personalized greeting
+        // Build the personalized first message and prompt overrides
+        const websiteUrl = websiteUrlInput.value.trim();
+        const knowledgeBase = knowledgeBaseInput.value.trim();
+
+        // Create personalized first message
+        const customFirstMessage = `Hi, thanks for calling ${companyName}! This is Lina, your AI receptionist. How can I help you today?`;
+
+        // Build custom prompt with business info
+        let customPromptAddition = `\n\n## DEMO SESSION INFO\nThis demo is for: ${companyName}`;
+        if (websiteUrl) customPromptAddition += `\nWebsite: ${websiteUrl}`;
+        if (knowledgeBase) customPromptAddition += `\n\nBusiness Details:\n${knowledgeBase}`;
+
+        // Start conversation using ElevenLabs SDK with overrides
+        // The demo agent has overrides enabled for first_message and prompt
         conversation = await Conversation.startSession({
-          signedUrl: signedUrl,
+          signedUrl: demoData.signedUrl,
+          overrides: {
+            agent: {
+              firstMessage: customFirstMessage,
+              prompt: {
+                prompt: `You are Lina, a friendly and professional AI receptionist for ${companyName}. You are bilingual and can speak fluently in both English and Spanish - respond in whatever language the caller uses.
+
+## YOUR ROLE
+You handle incoming calls for ${companyName}. Your job is to:
+- Greet callers warmly and professionally
+- Answer questions about the business
+- Collect caller information for callbacks
+- Schedule appointments when possible
+- Provide helpful information
+
+## PERSONALITY
+- Warm, friendly, and professional
+- Patient and understanding
+- Helpful and proactive
+- Natural conversational style (use "um", "let me check", etc. occasionally)
+
+## COMPANY INFORMATION
+Company Name: ${companyName}${websiteUrl ? `\nWebsite: ${websiteUrl}` : ''}${knowledgeBase ? `\n\n## BUSINESS DETAILS\n${knowledgeBase}` : ''}
+
+## CONVERSATION RULES
+1. Always greet with the company name
+2. If you don't know something specific, offer to take a message or have someone call back
+3. Be concise - this is a phone call, not a text chat
+4. Ask one question at a time
+5. Confirm important details (phone numbers, names, appointment times)
+6. If the caller speaks Spanish, respond entirely in Spanish
+
+## COLLECTING INFORMATION
+When the caller wants to leave a message or schedule a callback, collect:
+- Their name
+- Phone number (repeat it back to confirm)
+- Brief reason for calling
+- Best time to reach them
+
+## ENDING CALLS
+- Thank them for calling ${companyName}
+- Confirm any next steps
+- Wish them a great day
+
+Remember: You are demonstrating RinglyPro's AI receptionist capabilities. Be impressive but natural!`
+              }
+            }
+          },
           onConnect: () => {
             console.log('[ElevenLabs] Connected');
             updateStatus('connected');
