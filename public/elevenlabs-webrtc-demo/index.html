@@ -105,11 +105,11 @@
       line-height: 1.5;
     }
 
-    /* 3-Step Guide */
+    /* 4-Step Workflow Guide */
     .steps-guide {
       display: flex;
       justify-content: center;
-      gap: 32px;
+      gap: 16px;
       margin-bottom: 32px;
       flex-wrap: wrap;
     }
@@ -118,11 +118,11 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
-      max-width: 140px;
+      max-width: 110px;
     }
     .step-number {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       background: var(--accent-blue);
       color: white;
@@ -130,23 +130,24 @@
       align-items: center;
       justify-content: center;
       font-weight: bold;
-      font-size: 16px;
-      margin-bottom: 8px;
+      font-size: 14px;
+      margin-bottom: 6px;
     }
     .step-number.completed {
       background: var(--accent-green);
     }
     .step-text {
       color: var(--text-on-dark);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
+      line-height: 1.3;
     }
-    .step-text a {
-      color: var(--accent-blue);
-      text-decoration: none;
-    }
-    .step-text a:hover {
-      text-decoration: underline;
+    .step-connector {
+      display: flex;
+      align-items: center;
+      color: var(--text-light);
+      font-size: 18px;
+      margin-top: -10px;
     }
 
     /* Main Card */
@@ -537,11 +538,26 @@
       }
 
       .steps-guide {
-        gap: 16px;
+        gap: 8px;
       }
 
       .step {
-        max-width: 100px;
+        max-width: 70px;
+      }
+
+      .step-number {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+      }
+
+      .step-text {
+        font-size: 10px;
+      }
+
+      .step-connector {
+        font-size: 14px;
+        margin-top: -8px;
       }
     }
   </style>
@@ -564,22 +580,30 @@
     Recepcionista telefónica con IA que contesta llamadas, agenda citas y nunca pierde un cliente potencial.
   </p>
 
-  <!-- 3-Step Guide -->
+  <!-- 4-Step Workflow Guide -->
   <div class="steps-guide">
     <div class="step">
       <div class="step-number">1</div>
-      <div class="step-text lang-en">Try Your AI Voice Agent</div>
-      <div class="step-text lang-es">Prueba Tu Agente de Voz IA</div>
+      <div class="step-text lang-en">Type Business Name</div>
+      <div class="step-text lang-es">Escribe el Nombre</div>
     </div>
+    <div class="step-connector">→</div>
     <div class="step">
       <div class="step-number">2</div>
-      <div class="step-text lang-en"><a href="https://ringlypro.com/signup" target="_blank">Sign Up for Free</a></div>
-      <div class="step-text lang-es"><a href="https://ringlypro.com/signup" target="_blank">Regístrate Gratis</a></div>
+      <div class="step-text lang-en">Enter Website URL</div>
+      <div class="step-text lang-es">Ingresa tu Sitio Web</div>
     </div>
+    <div class="step-connector">→</div>
     <div class="step">
       <div class="step-number">3</div>
-      <div class="step-text lang-en"><a href="https://ringlypro.com/login" target="_blank">Login to Dashboard</a></div>
-      <div class="step-text lang-es"><a href="https://ringlypro.com/login" target="_blank">Accede al Panel</a></div>
+      <div class="step-text lang-en">Click "Fetch"</div>
+      <div class="step-text lang-es">Haz clic en "Obtener"</div>
+    </div>
+    <div class="step-connector">→</div>
+    <div class="step">
+      <div class="step-number">4</div>
+      <div class="step-text lang-en">Start Demo Call</div>
+      <div class="step-text lang-es">Iniciar Llamada</div>
     </div>
   </div>
 
