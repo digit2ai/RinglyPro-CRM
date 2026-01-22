@@ -159,7 +159,7 @@ module.exports = (sequelize) => {
         },
         per_minute_rate: {
             type: DataTypes.DECIMAL(10, 3),
-            defaultValue: 0.100
+            defaultValue: 0.850
         },
         rachel_enabled: {
             type: DataTypes.BOOLEAN,
