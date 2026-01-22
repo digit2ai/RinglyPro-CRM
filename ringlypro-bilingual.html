@@ -169,6 +169,96 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
+
+    /* Live Demo Button */
+    .live-demo-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+    .live-demo-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    }
+    .live-demo-btn svg {
+      width: 18px;
+      height: 18px;
+      animation: pulse-icon 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
+      50% { box-shadow: 0 4px 25px rgba(16, 185, 129, 0.6); }
+    }
+    @keyframes pulse-icon {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    /* Demo Modal */
+    .demo-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .demo-modal-overlay.active {
+      display: flex;
+    }
+    .demo-modal {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      height: 90vh;
+      max-height: 800px;
+      background: #1a2234;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    }
+    .demo-modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .demo-modal-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .demo-modal iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
   </style>
 </head>
 
@@ -219,6 +309,18 @@
     <div class="absolute inset-0 bg-gradient-radial from-blue-900/20 via-transparent to-transparent"></div>
 
     <div class="max-w-7xl mx-auto px-4 py-20 text-center relative z-10">
+      <!-- Live Demo Button -->
+      <div class="mb-6">
+        <button onclick="openDemoModal()" class="live-demo-btn">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+          </svg>
+          <span class="lang-en-inline">Live Demo</span>
+          <span class="lang-es-inline">Demo en Vivo</span>
+        </button>
+      </div>
+
       <!-- Sound Wave Animation -->
       <div class="sound-wave mb-8">
         <div class="bar"></div>
@@ -246,7 +348,7 @@
           <a href="https://aiagent.ringlypro.com/signup" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-bold text-lg transition transform hover:scale-105 shadow-lg shadow-blue-500/30">
             Start Free
           </a>
-          <a href="#demo" class="border-2 border-gray-600 hover:border-blue-500 text-white px-8 py-4 rounded-full font-semibold transition">
+          <a href="https://ringlypro.com/demo" class="border-2 border-gray-600 hover:border-blue-500 text-white px-8 py-4 rounded-full font-semibold transition">
             Book a Demo
           </a>
         </div>
@@ -264,7 +366,7 @@
           <a href="https://aiagent.ringlypro.com/signup" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-bold text-lg transition transform hover:scale-105 shadow-lg shadow-blue-500/30">
             Comenzar Gratis
           </a>
-          <a href="#demo" class="border-2 border-gray-600 hover:border-blue-500 text-white px-8 py-4 rounded-full font-semibold transition">
+          <a href="https://ringlypro.com/demo" class="border-2 border-gray-600 hover:border-blue-500 text-white px-8 py-4 rounded-full font-semibold transition">
             Agendar Demo
           </a>
         </div>
@@ -699,8 +801,8 @@
               <span class="lang-es">Infraestructura dedicada</span>
             </li>
           </ul>
-          <a href="mailto:enterprise@ringlypro.com" class="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-full font-semibold transition lang-en">Contact Sales</a>
-          <a href="mailto:enterprise@ringlypro.com" class="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-full font-semibold transition lang-es">Contactar Ventas</a>
+          <a href="mailto:info@digit2ai.com" class="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-full font-semibold transition lang-en">Contact Sales</a>
+          <a href="mailto:info@digit2ai.com" class="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-full font-semibold transition lang-es">Contactar Ventas</a>
         </div>
       </div>
     </div>
@@ -879,8 +981,8 @@
           <a href="/privacy" class="text-gray-400 hover:text-white transition lang-es">Privacidad</a>
           <a href="/terms" class="text-gray-400 hover:text-white transition lang-en">Terms</a>
           <a href="/terms" class="text-gray-400 hover:text-white transition lang-es">Términos</a>
-          <a href="mailto:support@ringlypro.com" class="text-gray-400 hover:text-white transition lang-en">Contact</a>
-          <a href="mailto:support@ringlypro.com" class="text-gray-400 hover:text-white transition lang-es">Contacto</a>
+          <a href="mailto:info@digit2ai.com" class="text-gray-400 hover:text-white transition lang-en">Contact</a>
+          <a href="mailto:info@digit2ai.com" class="text-gray-400 hover:text-white transition lang-es">Contacto</a>
         </nav>
 
         <p class="text-gray-500 text-sm">
@@ -992,7 +1094,46 @@
 
     // ===== Year =====
     document.getElementById('year').textContent = new Date().getFullYear();
+
+    // ===== Demo Modal =====
+    function openDemoModal() {
+      const modal = document.getElementById('demoModal');
+      const iframe = document.getElementById('demoIframe');
+      modal.classList.add('active');
+      iframe.src = 'https://aiagent.ringlypro.com/elevenlabs-webrtc-demo/';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDemoModal() {
+      const modal = document.getElementById('demoModal');
+      const iframe = document.getElementById('demoIframe');
+      modal.classList.remove('active');
+      iframe.src = '';
+      document.body.style.overflow = '';
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeDemoModal();
+      }
+    });
+
+    // Close modal on overlay click
+    document.getElementById('demoModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeDemoModal();
+      }
+    });
   </script>
+
+  <!-- Demo Modal -->
+  <div class="demo-modal-overlay" id="demoModal">
+    <div class="demo-modal">
+      <button class="demo-modal-close" onclick="closeDemoModal()" aria-label="Close">&times;</button>
+      <iframe id="demoIframe" src="" allow="microphone" title="Live Demo"></iframe>
+    </div>
+  </div>
 
 </body>
 </html>
