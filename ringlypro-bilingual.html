@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="en" style="background-color: #000;">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RinglyPro — AI Sales Force | Booking, SMS & Mobile CRM</title>
+  <meta name="description" content="An all-in-one AI system that finds businesses, calls them automatically, collects leads, and schedules appointments." />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* Language toggle system */
+    .lang-en, .lang-es { display: none; }
+    body.show-en .lang-en { display: block; }
+    body.show-es .lang-es { display: block; }
+    body.show-en .lang-en-inline { display: inline; }
+    body.show-es .lang-es-inline { display: inline; }
+    body.show-en .lang-en-flex { display: flex; }
+    body.show-es .lang-es-flex { display: flex; }
+    body.show-en .lang-es, body.show-en .lang-es-inline, body.show-en .lang-es-flex { display: none !important; }
+    body.show-es .lang-en, body.show-es .lang-en-inline, body.show-es .lang-en-flex { display: none !important; }
+
+    /* Language switcher */
+    .lang-switcher {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      display: flex;
+      gap: 8px;
+      background: rgba(0,0,0,.9);
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid #333;
+    }
+    .lang-switcher button {
+      background: transparent;
+      border: 1px solid #444;
+      color: #888;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    .lang-switcher button:hover {
+      border-color: #2563eb;
+      color: #fff;
+    }
+    .lang-switcher button.active {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      .lang-switcher {
+        top: auto;
+        bottom: 20px;
+        right: 20px;
+      }
+    }
+
+    /* Sound wave animation */
+    .sound-wave {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      height: 60px;
+    }
+    .sound-wave .bar {
+      width: 6px;
+      background: linear-gradient(to top, #2563eb, #60a5fa);
+      border-radius: 3px;
+      animation: soundWave 1s ease-in-out infinite;
+    }
+    .sound-wave .bar:nth-child(1) { height: 20px; animation-delay: 0s; }
+    .sound-wave .bar:nth-child(2) { height: 35px; animation-delay: 0.1s; }
+    .sound-wave .bar:nth-child(3) { height: 50px; animation-delay: 0.2s; }
+    .sound-wave .bar:nth-child(4) { height: 35px; animation-delay: 0.3s; }
+    .sound-wave .bar:nth-child(5) { height: 20px; animation-delay: 0.4s; }
+    .sound-wave .bar:nth-child(6) { height: 40px; animation-delay: 0.5s; }
+    .sound-wave .bar:nth-child(7) { height: 25px; animation-delay: 0.6s; }
+
+    @keyframes soundWave {
+      0%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(0.5); }
+    }
+
+    /* Slideshow styles */
+    .slideshow-container {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+    }
+    .slide {
+      display: none;
+      width: 100%;
+    }
+    .slide.active {
+      display: block;
+    }
+    .slide-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .slide-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #374151;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .slide-dot.active {
+      background: #2563eb;
+      transform: scale(1.2);
+    }
+
+    /* Pricing toggle */
+    .pricing-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .pricing-toggle button {
+      padding: 12px 24px;
+      border-radius: 999px;
+      border: 2px solid #374151;
+      background: transparent;
+      color: #9ca3af;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .pricing-toggle button.active {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: white;
+    }
+    .pricing-toggle button:hover:not(.active) {
+      border-color: #2563eb;
+      color: #2563eb;
+    }
+    .annual-price, .monthly-price { display: none; }
+    body.show-monthly .monthly-price { display: inline; }
+    body.show-annual .annual-price { display: inline; }
+
+    /* Feature card hover */
+    .feature-card {
+      transition: all 0.3s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(37, 99, 235, 0.5);
+    }
+
+    /* Gradient text */
+    .gradient-text {
+      background: linear-gradient(to right, #fff, #93c5fd, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  </style>
+</head>
+
+<body class="bg-black text-white show-en show-monthly">
+
+  <!-- Language Switcher -->
+  <div class="lang-switcher">
+    <button onclick="setLanguage('en')" id="btn-en" class="active">EN</button>
+    <button onclick="setLanguage('es')" id="btn-es">ES</button>
+  </div>
+
+  <!-- ======================= HEADER ======================= -->
+  <header class="bg-black/90 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <!-- Logo Text -->
+        <a href="/" class="flex items-center gap-3">
+          <div>
+            <span class="text-white font-semibold text-xl lang-en">RinglyPro</span>
+            <p class="text-xs text-gray-400 lang-en">Free forever • No credit card</p>
+          </div>
+        </a>
+
+        <!-- Navigation -->
+        <nav class="hidden md:flex items-center gap-8">
+          <a href="#features" class="text-gray-300 hover:text-blue-400 transition lang-en">Features</a>
+          <a href="#features" class="text-gray-300 hover:text-blue-400 transition lang-es">Funciones</a>
+          <a href="#how-it-works" class="text-gray-300 hover:text-blue-400 transition lang-en">How It Works</a>
+          <a href="#how-it-works" class="text-gray-300 hover:text-blue-400 transition lang-es">Cómo Funciona</a>
+          <a href="#pricing" class="text-gray-300 hover:text-blue-400 transition lang-en">Pricing</a>
+          <a href="#pricing" class="text-gray-300 hover:text-blue-400 transition lang-es">Precios</a>
+        </nav>
+
+        <!-- CTA Buttons -->
+        <div class="flex items-center gap-4">
+          <a href="https://aiagent.ringlypro.com/login" class="text-gray-300 hover:text-white transition lang-en">Sign In</a>
+          <a href="https://aiagent.ringlypro.com/login" class="text-gray-300 hover:text-white transition lang-es">Iniciar Sesión</a>
+          <a href="https://aiagent.ringlypro.com/signup" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-full font-semibold transition lang-en">Start Free</a>
+          <a href="https://aiagent.ringlypro.com/signup" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-full font-semibold transition lang-es">Comenzar Gratis</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================= HERO SECTION ======================= -->
+  <section class="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-black via-gray-900 to-black">
+    <!-- Background glow -->
+    <div class="absolute inset-0 bg-gradient-radial from-blue-900/20 via-transparent to-transparent"></div>
+
+    <div class="max-w-7xl mx-auto px-4 py-20 text-center relative z-10">
+      <!-- Sound Wave Animation -->
+      <div class="sound-wave mb-8">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+      </div>
+
+      <!-- Logo -->
+      <div class="mb-6">
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" class="h-48 mx-auto" />
+      </div>
+
+      <!-- English Hero -->
+      <div class="lang-en">
+        <p class="text-blue-400 font-semibold mb-4">AI Sales Force — Booking, SMS & Mobile CRM</p>
+        <p class="text-gray-400 mb-6">B2B Collector · Outbound Dialer · Lead Generator</p>
+        <h1 class="text-4xl md:text-6xl font-bold mb-6 gradient-text">
+          An all-in-one AI system that finds businesses, calls them automatically, collects leads, and schedules appointments.
+        </h1>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
+          <a href="https://aiagent.ringlypro.com/signup" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-bold text-lg transition transform hover:scale-105 shadow-lg shadow-blue-500/30">
+            Start Free
+          </a>
+          <a href="#demo" class="border-2 border-gray-600 hover:border-blue-500 text-white px-8 py-4 rounded-full font-semibold transition">
+            Book a Demo
+          </a>
+        </div>
+        <p class="mt-6 text-gray-500 text-sm">Absolutely free — no credit card, no hidden fees.</p>
+      </div>
+
+      <!-- Spanish Hero -->
+      <div class="lang-es">
+        <p class="text-blue-400 font-semibold mb-4">Fuerza de Ventas IA — Reservas, SMS y CRM Móvil</p>
+        <p class="text-gray-400 mb-6">Recolector B2B · Marcador Saliente · Generador de Leads</p>
+        <h1 class="text-4xl md:text-6xl font-bold mb-6 gradient-text">
+          Un sistema IA todo-en-uno que encuentra negocios, los llama automáticamente, recolecta leads y agenda citas.
+        </h1>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
+          <a href="https://aiagent.ringlypro.com/signup" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-bold text-lg transition transform hover:scale-105 shadow-lg shadow-blue-500/30">
+            Comenzar Gratis
+          </a>
+          <a href="#demo" class="border-2 border-gray-600 hover:border-blue-500 text-white px-8 py-4 rounded-full font-semibold transition">
+            Agendar Demo
+          </a>
+        </div>
+        <p class="mt-6 text-gray-500 text-sm">Absolutamente gratis — sin tarjeta de crédito, sin cargos ocultos.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= APP PREVIEW IMAGE ======================= -->
+  <section class="py-8 bg-gradient-to-b from-black to-gray-900/50">
+    <div class="max-w-4xl mx-auto px-4">
+      <div class="flex justify-center">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/691758aeac7fade66e3cc403.png" alt="RinglyPro App Preview" class="max-w-full h-auto rounded-2xl shadow-2xl shadow-blue-500/20" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= AI FEATURES HIGHLIGHT ======================= -->
+  <section class="py-16 bg-gray-900/50">
+    <div class="max-w-7xl mx-auto px-4">
+      <!-- English -->
+      <div class="lang-en text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">AI-Powered Lead Generation & Appointment Scheduling</h2>
+        <p class="text-gray-400 max-w-3xl mx-auto">An all-in-one AI system that finds businesses, calls them automatically, collects leads, and schedules appointments — so you never miss an opportunity.</p>
+        <p class="text-blue-400 mt-4 font-medium">Absolutely free — no credit card, no hidden fees. 100 free Tokens/mo.</p>
+      </div>
+
+      <!-- Spanish -->
+      <div class="lang-es text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">Generación de Leads y Agendamiento con IA</h2>
+        <p class="text-gray-400 max-w-3xl mx-auto">Un sistema IA todo-en-uno que encuentra negocios, los llama automáticamente, recolecta leads y agenda citas — para que nunca pierdas una oportunidad.</p>
+        <p class="text-blue-400 mt-4 font-medium">Absolutamente gratis — sin tarjeta de crédito, sin cargos ocultos. 100 Tokens gratis/mes.</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <!-- Human-Like Voice -->
+        <div class="bg-black/50 border border-gray-800 rounded-2xl p-8 feature-card">
+          <div class="w-14 h-14 bg-blue-600/20 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2 lang-en">Human-Like Voice Responses</h3>
+          <h3 class="text-xl font-bold mb-2 lang-es">Respuestas de Voz Humanas</h3>
+          <p class="text-gray-400 lang-en">Voices responses like a real person — natural, conversational, and professional.</p>
+          <p class="text-gray-400 lang-es">Responde con voz como una persona real — natural, conversacional y profesional.</p>
+        </div>
+
+        <!-- AI Receptionist -->
+        <div class="bg-black/50 border border-gray-800 rounded-2xl p-8 feature-card">
+          <div class="w-14 h-14 bg-blue-600/20 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2 lang-en">AI Receptionist That Feels Real</h3>
+          <h3 class="text-xl font-bold mb-2 lang-es">Recepcionista IA Que Se Siente Real</h3>
+          <p class="text-gray-400 lang-en">Powered by cutting-edge AI. It answers calls, manages your schedule, and frees up your day.</p>
+          <p class="text-gray-400 lang-es">Impulsado por IA de vanguardia. Contesta llamadas, gestiona tu agenda y libera tu día.</p>
+        </div>
+      </div>
+
+      <div class="text-center mt-8">
+        <a href="https://aiagent.ringlypro.com/signup" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-semibold transition lang-en">Get Started Free</a>
+        <a href="https://aiagent.ringlypro.com/signup" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-semibold transition lang-es">Comenzar Gratis</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= TUNJO RACING COLLABORATION SECTION ======================= -->
+  <section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4">
+      <a href="https://tunjoracing.com" target="_blank" rel="noopener noreferrer" class="block">
+        <div class="bg-gray-50 border border-gray-200 rounded-2xl p-8 md:p-12 hover:border-blue-500 hover:shadow-xl transition">
+          <div class="flex flex-col lg:flex-row items-center gap-8">
+            <!-- Images -->
+            <div class="flex items-center gap-6">
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696feba5581e5478400ae0fe.png" alt="TunjoRacing Logo" class="h-24 md:h-32 w-auto border-[6px] border-red-600 rounded-lg bg-white p-2" />
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696fe6f541fb813304da1626.jpg" alt="TunjoRacing Team" class="h-24 md:h-32 w-auto rounded-xl shadow-lg" />
+            </div>
+            <!-- Text Content -->
+            <div class="flex-1 text-center lg:text-left">
+              <p class="text-blue-600 font-semibold mb-2 lang-en">Official Partnership</p>
+              <p class="text-blue-600 font-semibold mb-2 lang-es">Alianza Oficial</p>
+              <h3 class="text-2xl md:text-3xl font-bold mb-3 text-gray-900 lang-en">RinglyPro proudly announces its collaboration with TunjoRacing</h3>
+              <h3 class="text-2xl md:text-3xl font-bold mb-3 text-gray-900 lang-es">RinglyPro anuncia con orgullo su colaboración con TunjoRacing</h3>
+              <p class="text-gray-600 mb-4 lang-en">Driving innovation together. Learn more about our exciting partnership.</p>
+              <p class="text-gray-600 mb-4 lang-es">Impulsando la innovación juntos. Conoce más sobre nuestra emocionante alianza.</p>
+              <span class="inline-flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-700 transition lang-en">
+                Visit TunjoRacing.com
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+              </span>
+              <span class="inline-flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-700 transition lang-es">
+                Visita TunjoRacing.com
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+              </span>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ======================= 3 EASY STEPS SECTION ======================= -->
+  <section id="how-it-works" class="py-20 bg-black">
+    <div class="max-w-7xl mx-auto px-4">
+      <!-- English -->
+      <div class="lang-en text-center mb-12">
+        <h2 class="text-4xl font-bold mb-4">Get Started in 3 Easy Steps</h2>
+        <p class="text-gray-400">Start managing your business like never before</p>
+      </div>
+
+      <!-- Spanish -->
+      <div class="lang-es text-center mb-12">
+        <h2 class="text-4xl font-bold mb-4">Comienza en 3 Pasos Fáciles</h2>
+        <p class="text-gray-400">Empieza a gestionar tu negocio como nunca antes</p>
+      </div>
+
+      <!-- Slideshow -->
+      <div class="slideshow-container max-w-4xl mx-auto">
+        <!-- Slide 1 -->
+        <div class="slide active" data-slide="1">
+          <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 md:p-12 border border-gray-700">
+            <div class="flex flex-col md:flex-row items-center gap-8">
+              <div class="flex-shrink-0">
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69135f284dedcf5759a1a47d.png" alt="RinglyPro App" class="w-32 h-auto rounded-xl" />
+              </div>
+              <div class="text-center md:text-left flex-1">
+                <h3 class="text-2xl font-bold mb-3 lang-en">Download RinglyPro App</h3>
+                <h3 class="text-2xl font-bold mb-3 lang-es">Descarga la App RinglyPro</h3>
+                <p class="text-gray-400 lang-en">Get the RinglyPro mobile app from the Apple App Store and install it on your device.</p>
+                <p class="text-gray-400 lang-es">Obtén la aplicación móvil RinglyPro de la Apple App Store e instálala en tu dispositivo.</p>
+                <a href="#" class="inline-block mt-4 text-blue-400 hover:text-blue-300 font-medium lang-en">Download for iOS →</a>
+                <a href="#" class="inline-block mt-4 text-blue-400 hover:text-blue-300 font-medium lang-es">Descargar para iOS →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="slide" data-slide="2">
+          <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 md:p-12 border border-gray-700">
+            <div class="flex flex-col md:flex-row items-center gap-8">
+              <div class="flex-shrink-0">
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/691641661547ed899cd4863b.png" alt="Create Account" class="w-32 h-auto rounded-xl" />
+              </div>
+              <div class="text-center md:text-left flex-1">
+                <h3 class="text-2xl font-bold mb-3 lang-en">Sign Up for Free</h3>
+                <h3 class="text-2xl font-bold mb-3 lang-es">Regístrate Gratis</h3>
+                <p class="text-gray-400 lang-en">Create your free account in minutes. No credit card required. Start with 100 free tokens included.</p>
+                <p class="text-gray-400 lang-es">Crea tu cuenta gratis en minutos. Sin tarjeta de crédito. Comienza con 100 tokens gratis incluidos.</p>
+                <a href="https://aiagent.ringlypro.com/signup" class="inline-block mt-4 text-blue-400 hover:text-blue-300 font-medium lang-en">Create Account →</a>
+                <a href="https://aiagent.ringlypro.com/signup" class="inline-block mt-4 text-blue-400 hover:text-blue-300 font-medium lang-es">Crear Cuenta →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="slide" data-slide="3">
+          <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 md:p-12 border border-gray-700">
+            <div class="flex flex-col md:flex-row items-center gap-8">
+              <div class="flex-shrink-0">
+                <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6920948fce816c975f58801a.png" alt="CRM Copilot Dashboard" class="w-32 h-auto rounded-xl" />
+              </div>
+              <div class="text-center md:text-left flex-1">
+                <h3 class="text-2xl font-bold mb-3 lang-en">CRM Copilot Dashboard</h3>
+                <h3 class="text-2xl font-bold mb-3 lang-es">Panel CRM Copilot</h3>
+                <p class="text-gray-400 lang-en">Access your AI-powered dashboard and start managing calls, appointments, and leads effortlessly.</p>
+                <p class="text-gray-400 lang-es">Accede a tu panel impulsado por IA y comienza a gestionar llamadas, citas y leads sin esfuerzo.</p>
+                <a href="https://app.ringlypro.com" class="inline-block mt-4 text-blue-400 hover:text-blue-300 font-medium lang-en">Launch Dashboard →</a>
+                <a href="https://app.ringlypro.com" class="inline-block mt-4 text-blue-400 hover:text-blue-300 font-medium lang-es">Abrir Panel →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide Dots -->
+        <div class="slide-dots">
+          <div class="slide-dot active" data-slide="1" onclick="goToSlide(1)"></div>
+          <div class="slide-dot" data-slide="2" onclick="goToSlide(2)"></div>
+          <div class="slide-dot" data-slide="3" onclick="goToSlide(3)"></div>
+        </div>
+      </div>
+
+      <div class="text-center mt-10">
+        <a href="https://aiagent.ringlypro.com/signup" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-semibold transition lang-en">Get Started Now</a>
+        <a href="https://aiagent.ringlypro.com/signup" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-semibold transition lang-es">Comenzar Ahora</a>
+        <p class="mt-3 text-gray-500 text-sm lang-en">No credit card required. Start free today.</p>
+        <p class="mt-3 text-gray-500 text-sm lang-es">Sin tarjeta de crédito. Comienza gratis hoy.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= PRICING SECTION ======================= -->
+  <section id="pricing" class="py-20 bg-gray-900">
+    <div class="max-w-7xl mx-auto px-4">
+      <!-- English -->
+      <div class="lang-en text-center mb-8">
+        <h2 class="text-4xl font-bold mb-4">Choose Your Plan</h2>
+        <p class="text-gray-400">Flexible token-based pricing. Pay only for what you use. No hidden fees.</p>
+      </div>
+
+      <!-- Spanish -->
+      <div class="lang-es text-center mb-8">
+        <h2 class="text-4xl font-bold mb-4">Elige Tu Plan</h2>
+        <p class="text-gray-400">Precios flexibles basados en tokens. Paga solo por lo que usas. Sin cargos ocultos.</p>
+      </div>
+
+      <!-- Pricing Toggle -->
+      <div class="pricing-toggle">
+        <button onclick="setPricingMode('monthly')" class="active" id="btn-monthly">
+          <span class="lang-en">Monthly</span>
+          <span class="lang-es">Mensual</span>
+        </button>
+        <button onclick="setPricingMode('annual')" id="btn-annual">
+          <span class="lang-en">Annual (Save 15%)</span>
+          <span class="lang-es">Anual (Ahorra 15%)</span>
+        </button>
+      </div>
+
+      <!-- Pricing Cards -->
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
+        <!-- Free Plan -->
+        <div class="bg-black/50 border border-gray-800 rounded-2xl p-6 feature-card">
+          <h3 class="text-xl font-bold mb-1">Free</h3>
+          <p class="text-gray-400 text-sm mb-4 lang-en">Perfect for testing</p>
+          <p class="text-gray-400 text-sm mb-4 lang-es">Perfecto para probar</p>
+          <div class="mb-4">
+            <span class="text-4xl font-bold">$0</span>
+            <span class="text-gray-400 lang-en">/month</span>
+            <span class="text-gray-400 lang-es">/mes</span>
+          </div>
+          <p class="text-blue-400 font-semibold mb-4">100 <span class="text-gray-400 font-normal lang-en">tokens/month</span><span class="text-gray-400 font-normal lang-es">tokens/mes</span></p>
+          <ul class="space-y-2 mb-6 text-sm">
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">All services available</span>
+              <span class="lang-es">Todos los servicios</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">AI Copilot access</span>
+              <span class="lang-es">Acceso AI Copilot</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">Basic support</span>
+              <span class="lang-es">Soporte básico</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">No rollover</span>
+              <span class="lang-es">Sin acumulación</span>
+            </li>
+          </ul>
+          <a href="https://aiagent.ringlypro.com/signup?plan=free&amount=0&tokens=100&billing=monthly" class="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-full font-semibold transition lang-en">Get Started Free</a>
+          <a href="https://aiagent.ringlypro.com/signup?plan=free&amount=0&tokens=100&billing=monthly" class="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-full font-semibold transition lang-es">Comenzar Gratis</a>
+        </div>
+
+        <!-- Starter Plan -->
+        <div class="bg-black/50 border border-gray-800 rounded-2xl p-6 feature-card">
+          <h3 class="text-xl font-bold mb-1">Starter</h3>
+          <p class="text-gray-400 text-sm mb-4 lang-en">For small businesses</p>
+          <p class="text-gray-400 text-sm mb-4 lang-es">Para pequeños negocios</p>
+          <div class="mb-4">
+            <span class="text-4xl font-bold monthly-price">$33</span>
+            <span class="text-4xl font-bold annual-price">$28</span>
+            <span class="text-gray-400 lang-en">/month</span>
+            <span class="text-gray-400 lang-es">/mes</span>
+          </div>
+          <p class="text-blue-400 font-semibold mb-1">500 <span class="text-gray-400 font-normal lang-en">tokens/month</span><span class="text-gray-400 font-normal lang-es">tokens/mes</span></p>
+          <p class="text-gray-500 text-xs mb-4">$0.066 per token</p>
+          <ul class="space-y-2 mb-6 text-sm">
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">All services included</span>
+              <span class="lang-es">Todos los servicios</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">AI Copilot unlimited</span>
+              <span class="lang-es">AI Copilot ilimitado</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">Priority support</span>
+              <span class="lang-es">Soporte prioritario</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">Rollover up to 1,000</span>
+              <span class="lang-es">Acumula hasta 1,000</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span>Business Collector</span>
+            </li>
+          </ul>
+          <a href="https://aiagent.ringlypro.com/signup?plan=starter&amount=33&tokens=500&billing=monthly" class="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-full font-semibold transition lang-en">Subscribe Now</a>
+          <a href="https://aiagent.ringlypro.com/signup?plan=starter&amount=33&tokens=500&billing=monthly" class="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-full font-semibold transition lang-es">Suscribirse</a>
+        </div>
+
+        <!-- Growth Plan (Popular) -->
+        <div class="bg-blue-900/30 border-2 border-blue-500 rounded-2xl p-6 relative">
+          <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+            <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold lang-en">Most Popular</span>
+            <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold lang-es">Más Popular</span>
+          </div>
+          <h3 class="text-xl font-bold mb-1">Growth</h3>
+          <p class="text-gray-400 text-sm mb-4 lang-en">For growing businesses</p>
+          <p class="text-gray-400 text-sm mb-4 lang-es">Para negocios en crecimiento</p>
+          <div class="mb-4">
+            <span class="text-4xl font-bold monthly-price">$115</span>
+            <span class="text-4xl font-bold annual-price">$98</span>
+            <span class="text-gray-400 lang-en">/month</span>
+            <span class="text-gray-400 lang-es">/mes</span>
+          </div>
+          <p class="text-blue-400 font-semibold mb-1">2,000 <span class="text-gray-400 font-normal lang-en">tokens/month</span><span class="text-gray-400 font-normal lang-es">tokens/mes</span></p>
+          <p class="text-gray-500 text-xs mb-4">$0.057 per token</p>
+          <ul class="space-y-2 mb-6 text-sm">
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">Everything in Starter</span>
+              <span class="lang-es">Todo en Starter</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">Advanced analytics</span>
+              <span class="lang-es">Analíticas avanzadas</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">Outbound campaigns</span>
+              <span class="lang-es">Campañas salientes</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">Rollover up to 5,000</span>
+              <span class="lang-es">Acumula hasta 5,000</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">Team collaboration</span>
+              <span class="lang-es">Colaboración en equipo</span>
+            </li>
+          </ul>
+          <a href="https://aiagent.ringlypro.com/signup?plan=growth&amount=114&tokens=2000&billing=monthly" class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-full font-semibold transition lang-en">Subscribe Now</a>
+          <a href="https://aiagent.ringlypro.com/signup?plan=growth&amount=114&tokens=2000&billing=monthly" class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-full font-semibold transition lang-es">Suscribirse</a>
+        </div>
+
+        <!-- Professional Plan -->
+        <div class="bg-black/50 border border-gray-800 rounded-2xl p-6 feature-card">
+          <h3 class="text-xl font-bold mb-1">Professional</h3>
+          <p class="text-gray-400 text-sm mb-4 lang-en">For large teams</p>
+          <p class="text-gray-400 text-sm mb-4 lang-es">Para equipos grandes</p>
+          <div class="mb-4">
+            <span class="text-4xl font-bold monthly-price">$340</span>
+            <span class="text-4xl font-bold annual-price">$289</span>
+            <span class="text-gray-400 lang-en">/month</span>
+            <span class="text-gray-400 lang-es">/mes</span>
+          </div>
+          <p class="text-blue-400 font-semibold mb-1">7,500 <span class="text-gray-400 font-normal lang-en">tokens/month</span><span class="text-gray-400 font-normal lang-es">tokens/mes</span></p>
+          <p class="text-gray-500 text-xs mb-4">$0.045 per token</p>
+          <ul class="space-y-2 mb-6 text-sm">
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">Everything in Growth</span>
+              <span class="lang-es">Todo en Growth</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">Unlimited rollover</span>
+              <span class="lang-es">Acumulación ilimitada</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">Account manager</span>
+              <span class="lang-es">Gerente de cuenta</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">White-label options</span>
+              <span class="lang-es">Opciones marca blanca</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">24/7 priority support</span>
+              <span class="lang-es">Soporte 24/7</span>
+            </li>
+          </ul>
+          <a href="https://aiagent.ringlypro.com/signup?plan=professional&amount=341&tokens=7500&billing=monthly" class="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-full font-semibold transition lang-en">Subscribe Now</a>
+          <a href="https://aiagent.ringlypro.com/signup?plan=professional&amount=341&tokens=7500&billing=monthly" class="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-full font-semibold transition lang-es">Suscribirse</a>
+        </div>
+
+        <!-- Enterprise Plan -->
+        <div class="bg-black/50 border border-gray-800 rounded-2xl p-6 feature-card">
+          <h3 class="text-xl font-bold mb-1">Enterprise</h3>
+          <p class="text-gray-400 text-sm mb-4 lang-en">For large organizations</p>
+          <p class="text-gray-400 text-sm mb-4 lang-es">Para grandes organizaciones</p>
+          <div class="mb-4">
+            <span class="text-4xl font-bold lang-en">Custom</span>
+            <span class="text-4xl font-bold lang-es">Personalizado</span>
+          </div>
+          <p class="text-blue-400 font-semibold mb-1">∞ <span class="text-gray-400 font-normal lang-en">unlimited tokens</span><span class="text-gray-400 font-normal lang-es">tokens ilimitados</span></p>
+          <p class="text-gray-500 text-xs mb-4 lang-en">No limits, no overages</p>
+          <p class="text-gray-500 text-xs mb-4 lang-es">Sin límites, sin excedentes</p>
+          <ul class="space-y-2 mb-6 text-sm">
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">Everything in Professional</span>
+              <span class="lang-es">Todo en Professional</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">Custom API integrations</span>
+              <span class="lang-es">Integraciones API custom</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">Custom workflows</span>
+              <span class="lang-es">Flujos personalizados</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">SLA guarantee 99.9%</span>
+              <span class="lang-es">SLA garantizado 99.9%</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-300">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              <span class="lang-en">Dedicated infrastructure</span>
+              <span class="lang-es">Infraestructura dedicada</span>
+            </li>
+          </ul>
+          <a href="mailto:enterprise@ringlypro.com" class="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-full font-semibold transition lang-en">Contact Sales</a>
+          <a href="mailto:enterprise@ringlypro.com" class="block w-full text-center bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-full font-semibold transition lang-es">Contactar Ventas</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= FEATURES SECTION ======================= -->
+  <section id="features" class="py-20 bg-black">
+    <div class="max-w-7xl mx-auto px-4">
+      <!-- English -->
+      <div class="lang-en text-center mb-12">
+        <h2 class="text-4xl font-bold mb-4">The #1 Solution in The Game</h2>
+        <p class="text-gray-400 max-w-2xl mx-auto">Everything you need to run your business smarter, faster, and more efficiently — all in one powerful platform</p>
+      </div>
+
+      <!-- Spanish -->
+      <div class="lang-es text-center mb-12">
+        <h2 class="text-4xl font-bold mb-4">La Solución #1 del Mercado</h2>
+        <p class="text-gray-400 max-w-2xl mx-auto">Todo lo que necesitas para administrar tu negocio de forma más inteligente, rápida y eficiente — en una sola plataforma</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- 24/7 Answering -->
+        <div class="bg-gray-900/50 border border-gray-800 rounded-xl p-6 feature-card">
+          <div class="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+          </div>
+          <h3 class="text-lg font-bold mb-2 lang-en">24/7 Answering Service</h3>
+          <h3 class="text-lg font-bold mb-2 lang-es">Servicio de Respuesta 24/7</h3>
+          <p class="text-gray-400 text-sm lang-en">Ensure you're always available — no missed calls, ever</p>
+          <p class="text-gray-400 text-sm lang-es">Asegúrate de estar siempre disponible — sin llamadas perdidas</p>
+        </div>
+
+        <!-- CRM Co-Pilot -->
+        <div class="bg-gray-900/50 border border-gray-800 rounded-xl p-6 feature-card">
+          <div class="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+          </div>
+          <h3 class="text-lg font-bold mb-2">CRM Co-Pilot</h3>
+          <p class="text-gray-400 text-sm lang-en">Speak it or type it — your CRM Co-Pilot understands and gets it done. No clicks, no hassle.</p>
+          <p class="text-gray-400 text-sm lang-es">Dilo o escríbelo — tu CRM Co-Pilot entiende y lo hace. Sin clics, sin complicaciones.</p>
+        </div>
+
+        <!-- AI Chat -->
+        <div class="bg-gray-900/50 border border-gray-800 rounded-xl p-6 feature-card">
+          <div class="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+          </div>
+          <h3 class="text-lg font-bold mb-2 lang-en">AI-Powered Chat & Text</h3>
+          <h3 class="text-lg font-bold mb-2 lang-es">Chat y Texto con IA</h3>
+          <p class="text-gray-400 text-sm lang-en">Streamline and tailor every customer conversation with intelligent automation.</p>
+          <p class="text-gray-400 text-sm lang-es">Optimiza y personaliza cada conversación con clientes con automatización inteligente.</p>
+        </div>
+
+        <!-- Voice Agent -->
+        <div class="bg-gray-900/50 border border-gray-800 rounded-xl p-6 feature-card">
+          <div class="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+          </div>
+          <h3 class="text-lg font-bold mb-2 lang-en">Human-Like Voice Agent</h3>
+          <h3 class="text-lg font-bold mb-2 lang-es">Agente de Voz Humano</h3>
+          <p class="text-gray-400 text-sm lang-en">24/7 human-like AI that keeps your business connected—no voicemails, no delays</p>
+          <p class="text-gray-400 text-sm lang-es">IA 24/7 que suena humana y mantiene tu negocio conectado—sin buzones, sin demoras</p>
+        </div>
+
+        <!-- Scheduling -->
+        <div class="bg-gray-900/50 border border-gray-800 rounded-xl p-6 feature-card">
+          <div class="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          </div>
+          <h3 class="text-lg font-bold mb-2 lang-en">Appointment Scheduling</h3>
+          <h3 class="text-lg font-bold mb-2 lang-es">Agendamiento de Citas</h3>
+          <p class="text-gray-400 text-sm lang-en">Your clients can schedule appointments by phone, text, or online, and you can view them in your existing calendar.</p>
+          <p class="text-gray-400 text-sm lang-es">Tus clientes pueden agendar por teléfono, texto u online, y puedes verlos en tu calendario existente.</p>
+        </div>
+
+        <!-- Integrations -->
+        <div class="bg-gray-900/50 border border-gray-800 rounded-xl p-6 feature-card">
+          <div class="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+          </div>
+          <h3 class="text-lg font-bold mb-2 lang-en">Integrate with your existing apps</h3>
+          <h3 class="text-lg font-bold mb-2 lang-es">Integra con tus apps existentes</h3>
+          <p class="text-gray-400 text-sm lang-en">Whether it's CRMs, schedulers, or calendars, RinglyPro works seamlessly with them all.</p>
+          <p class="text-gray-400 text-sm lang-es">Ya sean CRMs, agendadores o calendarios, RinglyPro funciona perfectamente con todos.</p>
+        </div>
+      </div>
+
+      <div class="text-center mt-10">
+        <a href="https://aiagent.ringlypro.com/signup" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-semibold transition lang-en">Get Started Now</a>
+        <a href="https://aiagent.ringlypro.com/signup" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-semibold transition lang-es">Comenzar Ahora</a>
+        <p class="mt-3 text-gray-500 text-sm lang-en">Start free today — no credit card required</p>
+        <p class="mt-3 text-gray-500 text-sm lang-es">Comienza gratis hoy — sin tarjeta de crédito</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= RESULTS SECTION ======================= -->
+  <section class="py-16 bg-gray-900/50">
+    <div class="max-w-7xl mx-auto px-4">
+      <!-- English -->
+      <div class="lang-en text-center mb-12">
+        <h2 class="text-3xl font-bold mb-4">Results You Can Expect</h2>
+      </div>
+
+      <!-- Spanish -->
+      <div class="lang-es text-center mb-12">
+        <h2 class="text-3xl font-bold mb-4">Resultados Que Puedes Esperar</h2>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+        <div class="text-center">
+          <div class="text-blue-400 text-lg font-semibold mb-2 lang-en">✓ More calls answered → more leads captured</div>
+          <div class="text-blue-400 text-lg font-semibold mb-2 lang-es">✓ Más llamadas contestadas → más leads capturados</div>
+        </div>
+        <div class="text-center">
+          <div class="text-blue-400 text-lg font-semibold mb-2 lang-en">✓ More leads captured → more appointments booked</div>
+          <div class="text-blue-400 text-lg font-semibold mb-2 lang-es">✓ Más leads capturados → más citas agendadas</div>
+        </div>
+        <div class="text-center">
+          <div class="text-blue-400 text-lg font-semibold mb-2 lang-en">✓ More appointments booked → more revenue generated</div>
+          <div class="text-blue-400 text-lg font-semibold mb-2 lang-es">✓ Más citas agendadas → más ingresos generados</div>
+        </div>
+      </div>
+
+      <div class="text-center mt-10">
+        <a href="https://aiagent.ringlypro.com/signup" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-semibold transition lang-en">Start Your Journey Today</a>
+        <a href="https://aiagent.ringlypro.com/signup" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-semibold transition lang-es">Comienza Tu Viaje Hoy</a>
+        <p class="mt-3 text-gray-500 text-sm lang-en">No credit card required. No hidden fees. No risk.</p>
+        <p class="mt-3 text-gray-500 text-sm lang-es">Sin tarjeta de crédito. Sin cargos ocultos. Sin riesgo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= CTA SECTION ======================= -->
+  <section class="py-20 bg-gradient-to-b from-blue-900/20 to-black">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <div class="lang-en">
+        <p class="text-gray-400 mb-4">Because you shouldn't have to choose between finishing the job and answering the phone</p>
+        <h2 class="text-3xl md:text-4xl font-bold mb-6">RinglyPro is the all-in-one AI system that works while you work — so you can focus on finishing what you started, and still never miss a lead.</h2>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a href="https://aiagent.ringlypro.com/signup" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-full font-bold text-lg transition transform hover:scale-105 shadow-lg shadow-blue-500/30">
+            Get Started Now
+          </a>
+          <a href="#features" class="text-blue-400 hover:text-blue-300 font-medium">
+            Learn More →
+          </a>
+        </div>
+      </div>
+
+      <div class="lang-es">
+        <p class="text-gray-400 mb-4">Porque no deberías tener que elegir entre terminar el trabajo y contestar el teléfono</p>
+        <h2 class="text-3xl md:text-4xl font-bold mb-6">RinglyPro es el sistema IA todo-en-uno que trabaja mientras tú trabajas — para que puedas enfocarte en terminar lo que empezaste, y nunca perder un lead.</h2>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a href="https://aiagent.ringlypro.com/signup" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-full font-bold text-lg transition transform hover:scale-105 shadow-lg shadow-blue-500/30">
+            Comenzar Ahora
+          </a>
+          <a href="#features" class="text-blue-400 hover:text-blue-300 font-medium">
+            Conocer Más →
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= FOOTER ======================= -->
+  <footer class="bg-black border-t border-gray-800 py-12">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-3">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" class="h-8 w-auto" />
+          <span class="text-white font-semibold">RinglyPro</span>
+        </div>
+
+        <nav class="flex items-center gap-6">
+          <a href="/privacy" class="text-gray-400 hover:text-white transition lang-en">Privacy</a>
+          <a href="/privacy" class="text-gray-400 hover:text-white transition lang-es">Privacidad</a>
+          <a href="/terms" class="text-gray-400 hover:text-white transition lang-en">Terms</a>
+          <a href="/terms" class="text-gray-400 hover:text-white transition lang-es">Términos</a>
+          <a href="mailto:support@ringlypro.com" class="text-gray-400 hover:text-white transition lang-en">Contact</a>
+          <a href="mailto:support@ringlypro.com" class="text-gray-400 hover:text-white transition lang-es">Contacto</a>
+        </nav>
+
+        <p class="text-gray-500 text-sm">
+          © <span id="year"></span> RinglyPro.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ======================= JAVASCRIPT ======================= -->
+  <script>
+    // ===== Language Detection & Switching =====
+    function setLanguage(lang) {
+      document.body.classList.remove('show-en', 'show-es');
+      document.body.classList.add('show-' + lang);
+      document.documentElement.lang = lang;
+
+      // Update page title based on language
+      document.title = lang === 'es'
+        ? 'RinglyPro — Fuerza de Ventas IA | Reservas, SMS y CRM Móvil'
+        : 'RinglyPro — AI Sales Force | Booking, SMS & Mobile CRM';
+
+      // Update button states
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+
+      // Save preference
+      localStorage.setItem('preferredLang', lang);
+    }
+
+    // IP-based geolocation detection
+    async function detectCountry() {
+      // Check if user has a saved preference
+      const savedLang = localStorage.getItem('preferredLang');
+      if (savedLang) {
+        setLanguage(savedLang);
+        return;
+      }
+
+      try {
+        // Use ipapi.co for free geolocation
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+
+        // If user is from US, show English; otherwise show Spanish (for Latin America)
+        if (data.country_code === 'US') {
+          setLanguage('en');
+        } else {
+          // Latin America and other countries get Spanish
+          setLanguage('es');
+        }
+      } catch (error) {
+        // If geolocation fails, default to Spanish
+        console.log('Geolocation failed, defaulting to Spanish');
+        setLanguage('es');
+      }
+    }
+
+    // Initialize language detection
+    detectCountry();
+
+    // ===== Pricing Toggle =====
+    function setPricingMode(mode) {
+      document.body.classList.remove('show-monthly', 'show-annual');
+      document.body.classList.add('show-' + mode);
+
+      document.getElementById('btn-monthly').classList.toggle('active', mode === 'monthly');
+      document.getElementById('btn-annual').classList.toggle('active', mode === 'annual');
+    }
+
+    // ===== Slideshow =====
+    let currentSlide = 1;
+    const totalSlides = 3;
+    let slideInterval;
+
+    function goToSlide(slideNum) {
+      // Hide all slides
+      document.querySelectorAll('.slide').forEach(slide => {
+        slide.classList.remove('active');
+      });
+
+      // Remove active from all dots
+      document.querySelectorAll('.slide-dot').forEach(dot => {
+        dot.classList.remove('active');
+      });
+
+      // Show the selected slide
+      document.querySelector(`.slide[data-slide="${slideNum}"]`).classList.add('active');
+      document.querySelector(`.slide-dot[data-slide="${slideNum}"]`).classList.add('active');
+
+      currentSlide = slideNum;
+
+      // Reset auto-advance timer
+      resetSlideTimer();
+    }
+
+    function nextSlide() {
+      const next = currentSlide >= totalSlides ? 1 : currentSlide + 1;
+      goToSlide(next);
+    }
+
+    function resetSlideTimer() {
+      clearInterval(slideInterval);
+      slideInterval = setInterval(nextSlide, 5000);
+    }
+
+    // Start auto-advance
+    resetSlideTimer();
+
+    // ===== Year =====
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+
+</body>
+</html>

@@ -989,7 +989,16 @@
       } catch (error) {
         console.error('[Demo] Website fetch error:', error);
         const lang = getLang();
-        showError(lang === 'es' ? 'No se pudo obtener el contenido del sitio web' : 'Could not fetch website content');
+        // Show more specific error message
+        let errorMsg;
+        if (error.message && error.message !== 'Failed to fetch') {
+          errorMsg = error.message;
+        } else if (error.name === 'TypeError') {
+          errorMsg = lang === 'es' ? 'Error de red - verifica tu conexión' : 'Network error - check your connection';
+        } else {
+          errorMsg = lang === 'es' ? 'No se pudo obtener el contenido del sitio web' : 'Could not fetch website content';
+        }
+        showError(errorMsg);
       } finally {
         fetchBtn.disabled = false;
         fetchBtn.classList.remove('loading');

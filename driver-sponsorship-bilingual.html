@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title class="lang-en" style="display:none;">Óscar Tunjo — Sponsorship & Partnerships | IMSA 2026</title>
   <title class="lang-es">Óscar Tunjo — Patrocinio y Alianzas | IMSA 2026</title>
+  <title class="lang-de" style="display:none;">Óscar Tunjo — Sponsoring & Partnerschaften | IMSA 2026</title>
   <meta name="description" content="Partner with Óscar Tunjo in IMSA 2026. Accelerate your brand through passion, performance, and global visibility at every race." />
 
   <style>
@@ -47,13 +48,16 @@
     .container{ width: min(var(--max), calc(100% - 40px)); margin: 0 auto; }
 
     /* Language toggle */
-    .lang-en, .lang-es { display: none; }
+    .lang-en, .lang-es, .lang-de { display: none; }
     body.show-en .lang-en { display: block; }
     body.show-es .lang-es { display: block; }
+    body.show-de .lang-de { display: block; }
     body.show-en .lang-en-inline { display: inline; }
     body.show-es .lang-es-inline { display: inline; }
-    body.show-en .lang-es, body.show-en .lang-es-inline { display: none !important; }
-    body.show-es .lang-en, body.show-es .lang-en-inline { display: none !important; }
+    body.show-de .lang-de-inline { display: inline; }
+    body.show-en .lang-es, body.show-en .lang-es-inline, body.show-en .lang-de, body.show-en .lang-de-inline { display: none !important; }
+    body.show-es .lang-en, body.show-es .lang-en-inline, body.show-es .lang-de, body.show-es .lang-de-inline { display: none !important; }
+    body.show-de .lang-en, body.show-de .lang-en-inline, body.show-de .lang-es, body.show-de .lang-es-inline { display: none !important; }
 
     .lang-switcher {
       position: fixed;
@@ -121,12 +125,51 @@
     }
     .nav-menu a{ text-decoration:none; font-size: 13px; color: #888888; }
     .nav-menu a:hover{ color: #e31837; }
+    .header-buttons{
+      display: flex;
+      align-items: center;
+      margin-left: 12px;
+    }
+    .header-login-btn{
+      background: #e31837;
+      color: #ffffff !important;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      text-decoration: none;
+      transition: background 0.3s;
+      white-space: nowrap;
+    }
+    .header-login-btn:hover{
+      background: #c41530;
+      color: #ffffff !important;
+    }
+    .header-ringlypro-btn{
+      background: #2563eb;
+      color: #ffffff !important;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      text-decoration: none;
+      margin-left: 6px;
+      transition: background 0.3s;
+      white-space: nowrap;
+    }
+    .header-ringlypro-btn:hover{
+      background: #1d4ed8;
+      color: #ffffff !important;
+    }
 
     .nav-toggle{
-      display:none;
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
       background: transparent; border: 1px solid #333;
       border-radius: 12px; padding: 10px 12px; color: #ffffff;
       cursor: pointer;
+      z-index: 60;
     }
     .nav-toggle-lines{
       width: 18px; height: 14px; display:inline-block; position: relative;
@@ -142,8 +185,58 @@
     .nav-toggle-lines:after{ bottom: 0; }
     .sr-only{ position:absolute; left:-9999px; }
 
-    /* Hide nav menus by default on mobile - controlled via JS */
-    .nav-menu { display: flex; }
+    /* Nav menu - slide-in panel for both desktop and mobile */
+    .nav-menu {
+      position: fixed;
+      top: 0;
+      right: -300px;
+      width: 280px;
+      height: 100vh;
+      display: flex !important;
+      flex-direction: column;
+      align-items: stretch;
+      padding: 80px 20px 30px;
+      background: rgba(10,10,10,0.98);
+      border-left: 1px solid #333;
+      transition: right 0.3s ease;
+      z-index: 55;
+      gap: 8px;
+      list-style: none;
+      margin: 0;
+    }
+    .nav-menu.open {
+      right: 0;
+    }
+    .nav-menu li {
+      border-bottom: 1px solid #222;
+      padding: 12px 0;
+    }
+    .nav-menu li:last-child {
+      border-bottom: none;
+    }
+    .nav-menu a {
+      font-size: 15px;
+      color: #fff;
+      text-decoration: none;
+    }
+    .nav-menu a:hover {
+      color: #e31837;
+    }
+
+    /* Overlay when menu is open */
+    .nav-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 54;
+    }
+    .nav-overlay.open {
+      display: block;
+    }
 
     /* Buttons */
     .btn{
@@ -178,8 +271,8 @@
     .section-head{ margin-bottom: 24px; }
     .section-head h2{ margin: 0 0 8px; font-size: clamp(22px, 3vw, 34px); letter-spacing: -0.02em; color: #ffffff; }
     h2, h3{ color: #ffffff; }
-    p{ color: #cccccc; }
-    .muted{ color: #888888; }
+    p{ color: #888888; }
+    .muted{ color: #777777; }
     .small-note{ font-size: 13px; }
 
     .card{
@@ -233,7 +326,7 @@
       letter-spacing: -0.03em;
     }
     .accent{ color: #e31837; text-decoration: underline; text-underline-offset: 6px; }
-    .lead{ font-size: 16px; color: #cccccc; margin: 10px 0 16px; }
+    .lead{ font-size: 16px; color: #666666; margin: 10px 0 16px; }
 
     .proof{
       display:grid;
@@ -251,7 +344,7 @@
     .proof-label{ display:block; font-size: 12px; color: #888888; margin-top: 2px; }
 
     .hero-actions{ display:flex; gap: 10px; flex-wrap: wrap; }
-    .fineprint{ margin-top: 12px; font-size: 12px; color: #888888; }
+    .fineprint{ margin-top: 12px; font-size: 12px; color: #555555; }
 
     /* Layout helpers */
     .grid-2{
@@ -268,13 +361,13 @@
     }
 
     .bullets{ padding-left: 18px; margin: 12px 0 0; }
-    .bullets li{ margin: 8px 0; }
+    .bullets li{ margin: 8px 0; color: #888888; }
     .checklist{ list-style: none; padding: 0; margin: 12px 0 0; }
     .checklist li{
       margin: 10px 0;
       padding-left: 26px;
       position: relative;
-      color: #cccccc;
+      color: #888888;
     }
     .checklist li:before{
       content: "✓";
@@ -420,59 +513,13 @@
       .gallery{ grid-template-columns: 1fr; }
       .logo-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); }
 
-      /* Hamburger menu button */
-      .nav-toggle{
-        display:inline-flex;
-        align-items:center;
-        gap: 10px;
-        z-index: 60;
-      }
-
-      /* Hide nav menus by default on mobile */
-      .nav-menu{
-        position: fixed;
-        top: 0;
-        right: -280px;
+      /* Smaller nav menu width on mobile */
+      .nav-menu {
         width: 260px;
-        height: 100vh;
-        display: flex !important;
-        flex-direction: column;
-        align-items: stretch;
-        padding: 80px 20px 30px;
-        background: rgba(10,10,10,0.98);
-        border-left: 1px solid #333;
-        transition: right 0.3s ease;
-        z-index: 55;
-        gap: 8px;
+        right: -280px;
       }
-      .nav-menu.open{
+      .nav-menu.open {
         right: 0;
-      }
-      .nav-menu li {
-        border-bottom: 1px solid #222;
-        padding: 12px 0;
-      }
-      .nav-menu li:last-child {
-        border-bottom: none;
-      }
-      .nav-menu a {
-        font-size: 15px;
-        color: #fff;
-      }
-
-      /* Overlay when menu is open */
-      .nav-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        z-index: 54;
-      }
-      .nav-overlay.open {
-        display: block;
       }
 
       /* Larger brand logo on mobile to show driver face */
@@ -491,6 +538,85 @@
         bottom: 20px;
         right: 20px;
       }
+      .countdown-box {
+        flex-direction: column;
+        padding: 6px 10px;
+      }
+      .header-buttons {
+        flex-direction: column;
+        gap: 4px;
+        margin-left: 8px;
+      }
+      .header-login-btn {
+        padding: 6px 12px;
+        font-size: 11px;
+      }
+      .header-ringlypro-btn {
+        padding: 6px 12px;
+        font-size: 11px;
+        margin-left: 0;
+      }
+      .countdown-box .countdown-location {
+        font-size: 9px;
+      }
+      .countdown-timer {
+        font-size: 11px;
+        gap: 4px;
+      }
+      .countdown-timer .time-unit {
+        min-width: 28px;
+        padding: 2px 4px;
+      }
+      .countdown-timer .time-unit span:first-child {
+        font-size: 12px;
+      }
+      .countdown-timer .time-unit span:last-child {
+        font-size: 7px;
+      }
+    }
+
+    /* Countdown Timer */
+    .countdown-box {
+      background: #e31837;
+      border-radius: 8px;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: 12px;
+    }
+    .countdown-box .countdown-location {
+      color: #000;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      line-height: 1.2;
+    }
+    .countdown-timer {
+      display: flex;
+      gap: 6px;
+    }
+    .countdown-timer .time-unit {
+      background: #000;
+      color: #fff;
+      border-radius: 4px;
+      padding: 4px 6px;
+      text-align: center;
+      min-width: 36px;
+    }
+    .countdown-timer .time-unit span:first-child {
+      display: block;
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .countdown-timer .time-unit span:last-child {
+      display: block;
+      font-size: 8px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-top: 2px;
     }
   </style>
 </head>
@@ -501,10 +627,12 @@
   <div class="lang-switcher">
     <button onclick="setLanguage('en')" id="btn-en">EN</button>
     <button onclick="setLanguage('es')" id="btn-es" class="active">ES</button>
+    <button onclick="setLanguage('de')" id="btn-de">DE</button>
   </div>
 
   <a class="skip-link lang-en" href="#main">Skip to content</a>
   <a class="skip-link lang-es" href="#main">Ir al contenido</a>
+  <a class="skip-link lang-de" href="#main">Zum Inhalt springen</a>
 
   <header class="site-header" id="top">
     <div class="container header-inner">
@@ -513,6 +641,34 @@
         <div class="brand-text">
           <strong class="brand-title">ÓSCAR TUNJO</strong>
           <span class="brand-sub">Powered by <a href="https://ringlypro.com" target="_blank" rel="noopener" style="color: #e31837; text-decoration: none; font-weight: bold;">RinglyPro</a></span>
+        </div>
+        <!-- Countdown Timer -->
+        <div class="countdown-box">
+          <div class="countdown-location">
+            <span class="lang-en">AUSTIN, TX</span>
+            <span class="lang-es">AUSTIN, TX</span>
+            <span class="lang-de">AUSTIN, TX</span>
+            <br>Feb 27, 2026
+          </div>
+          <div class="countdown-timer" id="countdown">
+            <div class="time-unit"><span id="days">00</span><span class="lang-en">Days</span><span class="lang-es">Días</span><span class="lang-de">Tage</span></div>
+            <div class="time-unit"><span id="hours">00</span><span class="lang-en">Hrs</span><span class="lang-es">Hrs</span><span class="lang-de">Std</span></div>
+            <div class="time-unit"><span id="minutes">00</span><span class="lang-en">Min</span><span class="lang-es">Min</span><span class="lang-de">Min</span></div>
+            <div class="time-unit"><span id="seconds">00</span><span class="lang-en">Sec</span><span class="lang-es">Seg</span><span class="lang-de">Sek</span></div>
+          </div>
+        </div>
+        <!-- Header Buttons Container -->
+        <div class="header-buttons">
+          <!-- Login Button -->
+          <a href="http://aiagent.ringlypro.com" target="_blank" class="header-login-btn">
+            <span class="lang-en">Login</span>
+            <span class="lang-es">Iniciar Sesión</span>
+            <span class="lang-de">Anmelden</span>
+          </a>
+          <!-- RinglyPro Button -->
+          <a href="https://aiagent.ringlypro.com/elevenlabs-webrtc-demo/" target="_blank" class="header-ringlypro-btn">
+            RinglyPro
+          </a>
         </div>
       </div>
 
@@ -547,6 +703,18 @@
           <li><a href="#calendar">Calendario</a></li>
           <li><a href="#vip">VIP</a></li>
           <li><a href="#partners">Socios</a></li>
+        </ul>
+
+        <!-- German Nav -->
+        <ul class="nav-menu lang-de" id="navMenuDe">
+          <li><a href="#about">Über uns</a></li>
+          <li><a href="#value">Partnerschaftswert</a></li>
+          <li><a href="#reach">Statistiken</a></li>
+          <li><a href="#benefits">Vorteile</a></li>
+          <li><a href="#packages">Pakete</a></li>
+          <li><a href="#calendar">Kalender</a></li>
+          <li><a href="#vip">VIP</a></li>
+          <li><a href="#partners">Partner</a></li>
         </ul>
       </nav>
     </div>
@@ -623,6 +791,39 @@
             Media kit + entregables disponibles bajo solicitud.
           </p>
         </div>
+
+        <!-- German Hero -->
+        <div class="hero-card lang-de">
+          <p class="pill">Sponsoring & Partnerschaftsprogramm 2026</p>
+          <h1>Beschleunigen Sie Ihre Marke mit <span class="accent">ÓSCAR TUNJO</span></h1>
+          <p class="lead">
+            Durch Leidenschaft, Leistung und globale Sichtbarkeit bei jedem Rennen verbindet Ihr Unternehmen Motorsportfans weltweit. Lassen Sie uns gemeinsam zum Sieg fahren!
+          </p>
+
+          <div class="proof">
+            <div class="proof-item">
+              <span class="proof-kpi">50+</span>
+              <span class="proof-label">Siege & Podiumsplätze</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-kpi">15+</span>
+              <span class="proof-label">Profisaisons</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-kpi">540M</span>
+              <span class="proof-label">Weltweite Zuschauer</span>
+            </div>
+          </div>
+
+          <div class="hero-actions">
+            <a class="btn" href="#contact">Partner werden</a>
+            <a class="btn btn-ghost" href="#packages">Pakete ansehen</a>
+          </div>
+
+          <p class="fineprint">
+            Media Kit + Leistungen auf Anfrage verfügbar.
+          </p>
+        </div>
       </div>
     </section>
 
@@ -650,11 +851,8 @@
 
           <div style="margin-top: 24px;">
             <a href="https://ringlypro.com" target="_blank" rel="noopener">
-              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696e7672eecbfae3623c1042.png" alt="RinglyPro" style="width: 100%; height: auto; border: 4px solid #e31837; border-radius: 14px;" loading="lazy" />
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696ff18deb392b463913fcb4.png" alt="RinglyPro - Powered by AI" style="width: 100%; height: auto; border: 4px solid #e31837; border-radius: 14px;" loading="lazy" />
             </a>
-            <p style="margin-top: 12px; font-size: 13px; color: #888;">
-              <strong style="color: #e31837;">RinglyPro</strong> — AI-powered voice booking and customer engagement platform. Automate calls, capture leads, and grow your business 24/7 with intelligent conversational AI.
-            </p>
           </div>
         </div>
 
@@ -679,7 +877,33 @@
 
           <div style="margin-top: 24px;">
             <a href="https://ringlypro.com" target="_blank" rel="noopener">
-              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696e7672eecbfae3623c1042.png" alt="RinglyPro" style="width: 100%; height: auto; border: 4px solid #e31837; border-radius: 14px;" loading="lazy" />
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696ff18deb392b463913fcb4.png" alt="RinglyPro - Powered by AI" style="width: 100%; height: auto; border: 4px solid #e31837; border-radius: 14px;" loading="lazy" />
+            </a>
+          </div>
+        </div>
+
+        <!-- German About -->
+        <div class="lang-de">
+          <h2>Über Óscar Tunjo</h2>
+          <p>
+            Óscar Andrés Tunjo ist ein kolumbianischer Profi-Rennfahrer mit über 15 Jahren internationaler Motorsport-Erfahrung. Von mehreren Karting-Meisterschaften in Kolumbien, Lateinamerika, Spanien, den USA und Italien bis hin zu Wettbewerben auf höchstem Niveau im europäischen und amerikanischen Prototypen-Rennsport.
+          </p>
+          <p>
+            Im Herzen seiner Karriere stehen drei Kernwerte: <strong>Leistung, Hingabe und Leidenschaft</strong>. Diese Werte sind die treibende Kraft hinter jedem Rennen, jeder Runde und jedem Sieg mit Gebhardt Motorsport.
+          </p>
+
+          <ul class="bullets">
+            <li><strong>2025:</strong> IMSA VP Sieger Mid-Ohio, Norisring-Sieger, Rundenrekord Spa-Francorchamps LMP3</li>
+            <li><strong>2021:</strong> GT World Challenge Sieger England, 2. Platz 24 Stunden von Spa-Francorchamps</li>
+            <li><strong>2015-2016:</strong> GP3 Series Sieger Österreich, 2. Platz Barcelona</li>
+            <li><strong>Team:</strong> Gebhardt Motorsport</li>
+            <li><strong>Fahrzeug:</strong> LMP3 Prototyp</li>
+            <li><strong>Nationalität:</strong> Kolumbianer</li>
+          </ul>
+
+          <div style="margin-top: 24px;">
+            <a href="https://ringlypro.com" target="_blank" rel="noopener">
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696ff18deb392b463913fcb4.png" alt="RinglyPro - Powered by AI" style="width: 100%; height: auto; border: 4px solid #e31837; border-radius: 14px;" loading="lazy" />
             </a>
           </div>
         </div>
@@ -688,6 +912,7 @@
           <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c12cc439b6bb3782f8255.png" alt="Óscar Tunjo portrait" loading="lazy" />
           <figcaption class="lang-en">Óscar Tunjo • IMSA & Le Mans Cup Driver • Born January 5, 1996</figcaption>
           <figcaption class="lang-es">Óscar Tunjo • Piloto IMSA & Le Mans Cup • Nacido el 5 de enero de 1996</figcaption>
+          <figcaption class="lang-de">Óscar Tunjo • IMSA & Le Mans Cup Fahrer • Geboren am 5. Januar 1996</figcaption>
         </figure>
       </div>
     </section>
@@ -756,6 +981,37 @@
             <a class="btn" href="#contact">Solicitar Media Kit</a>
           </div>
         </div>
+
+        <!-- German Value -->
+        <div class="lang-de">
+          <div class="section-head">
+            <h2>Warum Branding im Motorsport wichtig ist</h2>
+            <p class="muted">Kommen Sie weiter, schneller. Moderne Sponsorings integrieren digitales Storytelling, Fan-Engagement und exklusive Erlebnisse.</p>
+          </div>
+
+          <div class="cards-3">
+            <article class="card">
+              <h3>Sichtbarkeit & Wiedererkennung</h3>
+              <p>Rennwagen, Teamausrüstung und digitale Kanäle dienen als kraftvolle Leinwände für Markenexposition. Jedes Rennen zieht Tausende von Live-Zuschauern und Millionen von Online-Zuschauern an und gewährleistet kontinuierliche Sichtbarkeit.</p>
+            </article>
+            <article class="card">
+              <h3>Verbindung mit Exzellenz</h3>
+              <p>Durch eine Partnerschaft mit Gebhardt Motorsport verbinden Unternehmen ihre Marke mit Präzisionstechnik, Geschwindigkeit und Innovation—Werte, die den Markenruf stärken und Sie als zukunftsorientiert positionieren.</p>
+            </article>
+            <article class="card">
+              <h3>Emotionale Verbindung</h3>
+              <p>Fans sind loyal und emotional mit ihren Teams und Fahrern verbunden. Die Verbindung Ihrer Marke mit Óscar Tunjo ermöglicht es Ihnen, von dieser Loyalität zu profitieren und sie auf Ihre Produkte oder Dienstleistungen zu übertragen.</p>
+            </article>
+          </div>
+
+          <div class="cta-band">
+            <div>
+              <h3>Marktaktivierung auf globaler Ebene</h3>
+              <p class="muted">Abdeckung in Nordamerika und Europa mit IMSA und Le Mans Cup. Individuelle Pakete verfügbar.</p>
+            </div>
+            <a class="btn" href="#contact">Media Kit anfordern</a>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -816,6 +1072,33 @@
           </div>
         </div>
 
+        <!-- German Stats -->
+        <div class="lang-de">
+          <div class="section-head">
+            <h2>Live-Rennübertragungsmetriken</h2>
+            <p class="muted">Globale Reichweite in 156 Ländern über TV, Rundfunk und Streaming-Plattformen.</p>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-num">3,9M</div>
+              <div class="stat-label">US-Zuschauer (Daytona)</div>
+            </div>
+            <div class="stat">
+              <div class="stat-num">584M</div>
+              <div class="stat-label">Weltweite Haushalte</div>
+            </div>
+            <div class="stat">
+              <div class="stat-num">18</div>
+              <div class="stat-label">Rennveranstaltungen 2026</div>
+            </div>
+            <div class="stat">
+              <div class="stat-num">156</div>
+              <div class="stat-label">Erreichte Länder</div>
+            </div>
+          </div>
+        </div>
+
         <figure class="card media-card" style="margin-bottom: 18px;">
           <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696d2a7ce125ef09b3101e98.png" alt="IMSA Racing broadcast coverage" style="width: 100%; border-radius: 14px;" loading="lazy" />
         </figure>
@@ -864,6 +1147,28 @@
               <li>Activos profesionales de foto y video para campañas</li>
             </ul>
           </article>
+
+          <!-- German Broadcast -->
+          <article class="card lang-de">
+            <h3>Übertragungsabdeckung</h3>
+            <ul class="bullets">
+              <li><strong>NBC Sports:</strong> 3,5 Millionen einzigartige Zuschauer</li>
+              <li><strong>Peacock Streaming:</strong> 438.000 einzigartige Zuschauer</li>
+              <li><strong>IMSA.TV:</strong> 687.000 globale einzigartige Zuschauer insgesamt</li>
+              <li>Zweisprachige Reichweite (Englisch & Spanisch) verbindet US- und LATAM-Publikum</li>
+            </ul>
+          </article>
+
+          <!-- German Social -->
+          <article class="card lang-de">
+            <h3>Digital & Soziale Medien</h3>
+            <ul class="bullets">
+              <li>Markeninhalte auf Instagram, Facebook, LinkedIn</li>
+              <li>Rennwocheninhalte: Training, Vorbereitung, Behind-the-Scenes</li>
+              <li>Markenintegration in Reels, Stories, Posts</li>
+              <li>Professionelle Foto- & Video-Assets für Kampagnen</li>
+            </ul>
+          </article>
         </div>
       </div>
     </section>
@@ -883,6 +1188,12 @@
           <p class="muted">Experimenta la acción en vivo desde IMSA.TV - Socio oficial de streaming de IMSA racing.</p>
         </div>
 
+        <!-- German Broadcast Section -->
+        <div class="section-head lang-de">
+          <h2>Live ansehen: IMSA-Rennübertragungen</h2>
+          <p class="muted">Erleben Sie die Action live auf IMSA.TV - Offizieller Streaming-Partner von IMSA Racing.</p>
+        </div>
+
         <a href="https://www.imsa.tv" target="_blank" rel="noopener" style="display: block; text-decoration: none; border-radius: 12px; overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease; border: 2px solid #333333;">
           <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%); padding: 60px 40px; text-align: center;">
             <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#e31837" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 20px;">
@@ -892,8 +1203,10 @@
             <h3 style="font-size: 32px; margin: 0 0 12px; color: #ffffff; font-weight: 700;">IMSA.TV</h3>
             <p class="lang-en" style="color: #888888; margin: 0 0 24px; font-size: 18px;">Click to watch live race broadcasts, replays, and exclusive content</p>
             <p class="lang-es" style="color: #888888; margin: 0 0 24px; font-size: 18px;">Haz clic para ver transmisiones en vivo, repeticiones y contenido exclusivo</p>
+            <p class="lang-de" style="color: #888888; margin: 0 0 24px; font-size: 18px;">Klicken Sie, um Live-Rennübertragungen, Wiederholungen und exklusive Inhalte anzusehen</p>
             <span class="btn lang-en" style="display: inline-block; padding: 16px 40px; font-size: 18px;">Watch Now on IMSA.TV</span>
             <span class="btn lang-es" style="display: inline-block; padding: 16px 40px; font-size: 18px;">Ver Ahora en IMSA.TV</span>
+            <span class="btn lang-de" style="display: inline-block; padding: 16px 40px; font-size: 18px;">Jetzt auf IMSA.TV ansehen</span>
           </div>
         </a>
 
@@ -902,21 +1215,25 @@
             <div class="stat-num">LIVE</div>
             <div class="stat-label lang-en">Race Broadcasts</div>
             <div class="stat-label lang-es">Transmisiones en Vivo</div>
+            <div class="stat-label lang-de">Rennübertragungen</div>
           </div>
           <div class="stat">
             <div class="stat-num">156</div>
             <div class="stat-label lang-en">Countries Streaming</div>
             <div class="stat-label lang-es">Países con Streaming</div>
+            <div class="stat-label lang-de">Länder mit Streaming</div>
           </div>
           <div class="stat">
             <div class="stat-num">687K</div>
             <div class="stat-label lang-en">Global Viewers</div>
             <div class="stat-label lang-es">Espectadores Globales</div>
+            <div class="stat-label lang-de">Weltweite Zuschauer</div>
           </div>
           <div class="stat">
             <div class="stat-num">24/7</div>
             <div class="stat-label lang-en">On-Demand Content</div>
             <div class="stat-label lang-es">Contenido On-Demand</div>
+            <div class="stat-label lang-de">On-Demand Inhalte</div>
           </div>
         </div>
       </div>
@@ -1064,6 +1381,180 @@
             </article>
           </div>
         </div>
+
+        <!-- German Benefits -->
+        <div class="lang-de">
+          <div class="section-head">
+            <h2>Partnervorteile</h2>
+            <p class="muted">Umfassende Sponsoring-Leistungen in den Bereichen Sichtbarkeit, Inhalte und Erlebnisse.</p>
+          </div>
+
+          <div class="benefits">
+            <article class="card">
+              <h3>Internationale Markensichtbarkeit</h3>
+              <ul class="checklist">
+                <li>Logo auf Rennanzug und Helm</li>
+                <li>Logo auf Teambekleidung</li>
+                <li>Digitale Inhalte und Medien-Assets</li>
+                <li>Präsenz auf wichtigen US-Märkten: Daytona, COTA, Road America, Virginia, Road Atlanta</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>Digitale & Social Media Präsenz</h3>
+              <ul class="checklist">
+                <li>Markeninhalte auf Instagram, Facebook, LinkedIn</li>
+                <li>Rennwochen-Training und Vorbereitungsinhalte</li>
+                <li>Behind-the-Scenes-Zugang in den USA</li>
+                <li>Zweisprachige Reichweite (Englisch & Spanisch)</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>Inhalte für Marketing</h3>
+              <ul class="checklist">
+                <li>Professionelle Foto- & Video-Assets</li>
+                <li>Trainingseinheiten und Rennwochen-Visuals</li>
+                <li>Inhaltsrechte für Social Media, digitale Kampagnen, Bildschirme im Club</li>
+                <li>Individuelle Kampagnen und Engagement-Initiativen</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>Markenpositionierung</h3>
+              <ul class="checklist">
+                <li>Marke mit Elite-Leistung verbinden</li>
+                <li>Gesunde, aktive Lebensweise motivieren</li>
+                <li>Glaubwürdigkeit eines Profisportlers</li>
+                <li>"Trainiere wie ein Rennfahrer"-Narrativ</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>VIP-Erlebnisse</h3>
+              <ul class="checklist">
+                <li>VIP-Zugang bei ausgewählten IMSA-Rennen</li>
+                <li>Meet & Greet-Erlebnisse</li>
+                <li>Autogrammstunden und Markenaktivierungen</li>
+                <li>Behind-the-Scenes Paddock-Zugang</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>Mehrwert</h3>
+              <ul class="checklist">
+                <li>Authentische Botschafterbeziehung</li>
+                <li>Kontinuierliche Präsenz während der gesamten IMSA-Saison</li>
+                <li>Verbindung zwischen Fitness, Disziplin und Leistung</li>
+                <li>Repräsentation auf internationalem Niveau</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RINGLYPRO COLLABORATION -->
+    <section class="section section-alt" id="ringlypro-collab">
+      <div class="container">
+        <!-- English RinglyPro Section -->
+        <div class="lang-en">
+          <div class="section-head" style="text-align: center;">
+            <h2>Powered by RinglyPro</h2>
+            <p class="muted">AI-powered voice booking and customer engagement platform</p>
+          </div>
+
+          <div class="grid-2" style="align-items: center;">
+            <div style="text-align: center;">
+              <a href="https://ringlypro.com" target="_blank" rel="noopener">
+                <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" style="max-width: 200px; height: auto; margin: 0 auto;" loading="lazy" />
+              </a>
+            </div>
+
+            <div>
+              <h3>Transform Your Business with AI Voice Technology</h3>
+              <p>
+                RinglyPro is an AI-powered voice booking and customer engagement platform that helps businesses automate calls, capture leads, and grow 24/7 with intelligent conversational AI.
+              </p>
+              <ul class="checklist">
+                <li>AI-powered voice agents that handle calls 24/7</li>
+                <li>Automated appointment booking and reminders</li>
+                <li>Lead capture and customer engagement</li>
+                <li>Multilingual support (English & Spanish)</li>
+                <li>Seamless CRM integration</li>
+              </ul>
+              <div style="margin-top: 24px;">
+                <a class="btn" href="https://ringlypro.com" target="_blank" rel="noopener">Visit RinglyPro.com</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Spanish RinglyPro Section -->
+        <div class="lang-es">
+          <div class="section-head" style="text-align: center;">
+            <h2>Impulsado por RinglyPro</h2>
+            <p class="muted">Plataforma de reservas por voz y engagement de clientes impulsada por IA</p>
+          </div>
+
+          <div class="grid-2" style="align-items: center;">
+            <div style="text-align: center;">
+              <a href="https://ringlypro.com" target="_blank" rel="noopener">
+                <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" style="max-width: 200px; height: auto; margin: 0 auto;" loading="lazy" />
+              </a>
+            </div>
+
+            <div>
+              <h3>Transforma Tu Negocio con Tecnología de Voz IA</h3>
+              <p>
+                RinglyPro es una plataforma de reservas por voz y engagement de clientes impulsada por IA que ayuda a las empresas a automatizar llamadas, capturar leads y crecer 24/7 con IA conversacional inteligente.
+              </p>
+              <ul class="checklist">
+                <li>Agentes de voz con IA que atienden llamadas 24/7</li>
+                <li>Reservas automáticas de citas y recordatorios</li>
+                <li>Captura de leads y engagement de clientes</li>
+                <li>Soporte multilingüe (Inglés y Español)</li>
+                <li>Integración seamless con CRM</li>
+              </ul>
+              <div style="margin-top: 24px;">
+                <a class="btn" href="https://ringlypro.com" target="_blank" rel="noopener">Visita RinglyPro.com</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- German RinglyPro Section -->
+        <div class="lang-de">
+          <div class="section-head" style="text-align: center;">
+            <h2>Unterstützt von RinglyPro</h2>
+            <p class="muted">KI-gestützte Sprachbuchungs- und Kundenbindungsplattform</p>
+          </div>
+
+          <div class="grid-2" style="align-items: center;">
+            <div style="text-align: center;">
+              <a href="https://ringlypro.com" target="_blank" rel="noopener">
+                <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" style="max-width: 200px; height: auto; margin: 0 auto;" loading="lazy" />
+              </a>
+            </div>
+
+            <div>
+              <h3>Transformieren Sie Ihr Unternehmen mit KI-Sprachtechnologie</h3>
+              <p>
+                RinglyPro ist eine KI-gestützte Sprachbuchungs- und Kundenbindungsplattform, die Unternehmen hilft, Anrufe zu automatisieren, Leads zu erfassen und rund um die Uhr mit intelligenter Konversations-KI zu wachsen.
+              </p>
+              <ul class="checklist">
+                <li>KI-Sprachagenten, die Anrufe rund um die Uhr bearbeiten</li>
+                <li>Automatisierte Terminbuchung und Erinnerungen</li>
+                <li>Lead-Erfassung und Kundenbindung</li>
+                <li>Mehrsprachige Unterstützung (Englisch & Spanisch)</li>
+                <li>Nahtlose CRM-Integration</li>
+              </ul>
+              <div style="margin-top: 24px;">
+                <a class="btn" href="https://ringlypro.com" target="_blank" rel="noopener">RinglyPro.com besuchen</a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1187,6 +1678,65 @@
             Add-ons opcionales: mejoras de hospitalidad, apariciones del auto de exhibición, activaciones en ferias, visitas al gimnasio y eventos especiales, retos de fitness personalizados.
           </p>
         </div>
+
+        <!-- German Packages -->
+        <div class="lang-de">
+          <div class="section-head">
+            <h2>Sponsoring-Pakete</h2>
+            <p class="muted">Maßgeschneiderte Partnerschaftsprogramme, abgestimmt auf Ihre Markenziele und Aktivierungsbedürfnisse.</p>
+          </div>
+
+          <div class="tiers">
+            <article class="tier card">
+              <div class="tier-top">
+                <h3>Titelpartner</h3>
+                <p class="tier-price">Individuell</p>
+              </div>
+              <p class="tier-desc">Maximale Sichtbarkeit mit primärem Branding auf allen Assets und exklusiver Botschafterbeziehung.</p>
+              <ul class="checklist">
+                <li>Primäres Logo auf Auto, Anzug, Helm</li>
+                <li>Volle VIP-Hospitalität bei allen IMSA-Events</li>
+                <li>Exklusive Content-Creation-Partnerschaft</li>
+                <li>Volle Medienrechte und Kampagnennutzung</li>
+              </ul>
+              <a class="btn btn-ghost" href="#contact">Titelpartnerschaft besprechen</a>
+            </article>
+
+            <article class="tier card">
+              <div class="tier-top">
+                <h3>Hauptpartner</h3>
+                <p class="tier-price">Individuell</p>
+              </div>
+              <p class="tier-desc">Hochwirksame Sichtbarkeit mit prominenter Markenplatzierung und umfassender digitaler Präsenz.</p>
+              <ul class="checklist">
+                <li>Logo auf Anzug, Helm, Teambekleidung</li>
+                <li>Social-Media-Content-Integration</li>
+                <li>VIP-Zugang bei ausgewählten Events</li>
+                <li>Professionelle Foto-/Video-Assets</li>
+              </ul>
+              <a class="btn btn-ghost" href="#contact">Hauptpartnerschaft besprechen</a>
+            </article>
+
+            <article class="tier card">
+              <div class="tier-top">
+                <h3>Unterstützender Partner</h3>
+                <p class="tier-price">Individuell</p>
+              </div>
+              <p class="tier-desc">Einstiegspartnerschaft mit digitaler Präsenz und Markenassoziationsvorteilen.</p>
+              <ul class="checklist">
+                <li>Digitale Inhaltsplatzierung</li>
+                <li>Social-Media-Erwähnungen</li>
+                <li>Zugang zu ausgewählten Events</li>
+                <li>Markeninhalts-Deliverables</li>
+              </ul>
+              <a class="btn btn-ghost" href="#contact">Unterstützende Partnerschaft besprechen</a>
+            </article>
+          </div>
+
+          <p class="muted small-note">
+            Optionale Add-ons: Hospitalitäts-Upgrades, Show-Car-Auftritte, Messeaktivierungen, Gym-Besuche & Sonderveranstaltungen, individuelle Fitness-Challenges.
+          </p>
+        </div>
       </div>
     </section>
 
@@ -1205,6 +1755,12 @@
           <p class="muted">18 eventos de carrera en EE.UU., Europa y Canadá. IMSA VP SportsCar Challenge + Le Mans Cup.</p>
         </div>
 
+        <!-- German Calendar -->
+        <div class="section-head lang-de">
+          <h2>Gebhardt Motorsport Welttournee 2026</h2>
+          <p class="muted">18 Rennveranstaltungen in USA, Europa und Kanada. IMSA VP SportsCar Challenge + Le Mans Cup.</p>
+        </div>
+
         <div class="card table-card">
           <div class="table">
             <div class="row head lang-en">
@@ -1212,6 +1768,9 @@
             </div>
             <div class="row head lang-es">
               <div>Fecha</div><div>Circuito</div><div>País</div><div>Serie</div>
+            </div>
+            <div class="row head lang-de">
+              <div>Datum</div><div>Rennstrecke</div><div>Land</div><div>Serie</div>
             </div>
             <div class="row">
               <div>Jan 16-19</div><div>Daytona International Speedway</div><div>USA</div><div>IMSA Sprint</div>
@@ -1223,13 +1782,13 @@
               <div>Mar 6-8</div><div>Sebring International Raceway</div><div>USA</div><div>IMSA Endurance</div>
             </div>
             <div class="row">
-              <div>Apr 8</div><div>Barcelona – Collective Test</div><div class="lang-en">Spain</div><div class="lang-es">España</div><div>Le Mans Cup Test</div>
+              <div>Apr 8</div><div>Barcelona – Collective Test</div><div><span class="lang-en-inline">Spain</span><span class="lang-es-inline">España</span><span class="lang-de-inline">Spanien</span></div><div>Le Mans Cup Test</div>
             </div>
             <div class="row">
-              <div>Apr 11</div><div>Barcelona</div><div class="lang-en">Spain</div><div class="lang-es">España</div><div>Le Mans Cup</div>
+              <div>Apr 11</div><div>Barcelona</div><div><span class="lang-en-inline">Spain</span><span class="lang-es-inline">España</span><span class="lang-de-inline">Spanien</span></div><div>Le Mans Cup</div>
             </div>
             <div class="row">
-              <div>May 1-2</div><div>Le Castellet</div><div class="lang-en">France</div><div class="lang-es">Francia</div><div>Le Mans Cup</div>
+              <div>May 1-2</div><div>Le Castellet</div><div><span class="lang-en-inline">France</span><span class="lang-es-inline">Francia</span><span class="lang-de-inline">Frankreich</span></div><div>Le Mans Cup</div>
             </div>
             <div class="row">
               <div>May 7-9</div><div>Circuit of the Americas</div><div>USA</div><div>IMSA Endurance</div>
@@ -1238,13 +1797,13 @@
               <div>Jun 5-7</div><div>Mid-Ohio Sports Car Course</div><div>USA</div><div>IMSA Sprint</div>
             </div>
             <div class="row">
-              <div>Jun 12</div><div>Road to Le Mans</div><div class="lang-en">France</div><div class="lang-es">Francia</div><div>Le Mans Cup</div>
+              <div>Jun 12</div><div>Road to Le Mans</div><div><span class="lang-en-inline">France</span><span class="lang-es-inline">Francia</span><span class="lang-de-inline">Frankreich</span></div><div>Le Mans Cup</div>
             </div>
             <div class="row">
               <div>Jun 19-21</div><div>Virginia International Raceway</div><div>USA</div><div>IMSA Endurance</div>
             </div>
             <div class="row">
-              <div>Jul 10-12</div><div>Canadian Tire Motorsport Park</div><div class="lang-en">Canada</div><div class="lang-es">Canadá</div><div>IMSA Sprint</div>
+              <div>Jul 10-12</div><div>Canadian Tire Motorsport Park</div><div><span class="lang-en-inline">Canada</span><span class="lang-es-inline">Canadá</span><span class="lang-de-inline">Kanada</span></div><div>IMSA Sprint</div>
             </div>
             <div class="row">
               <div>Aug 14-16</div><div>Road America</div><div>USA</div><div>IMSA Endurance</div>
@@ -1253,10 +1812,10 @@
               <div>Aug 21-22</div><div>Virginia International Raceway</div><div>USA</div><div>IMSA Sprint</div>
             </div>
             <div class="row">
-              <div>Aug 21-22</div><div>Spa-Francorchamps</div><div class="lang-en">Belgium</div><div class="lang-es">Bélgica</div><div>Le Mans Cup</div>
+              <div>Aug 21-22</div><div>Spa-Francorchamps</div><div><span class="lang-en-inline">Belgium</span><span class="lang-es-inline">Bélgica</span><span class="lang-de-inline">Belgien</span></div><div>Le Mans Cup</div>
             </div>
             <div class="row">
-              <div>Sept 12</div><div>Silverstone</div><div class="lang-en">UK</div><div class="lang-es">Reino Unido</div><div>Le Mans Cup</div>
+              <div>Sept 12</div><div>Silverstone</div><div><span class="lang-en-inline">UK</span><span class="lang-es-inline">Reino Unido</span><span class="lang-de-inline">Großbritannien</span></div><div>Le Mans Cup</div>
             </div>
             <div class="row">
               <div>Oct 1-3</div><div>Michelin Raceway Road Atlanta</div><div>USA</div><div>IMSA Sprint</div>
@@ -1347,6 +1906,44 @@
             </div>
           </div>
         </div>
+
+        <!-- German VIP -->
+        <div class="lang-de">
+          <div class="section-head">
+            <h2>VIP-Erlebnis</h2>
+            <p class="muted">Exklusiver Behind-the-Scenes-Zugang zu den prestigeträchtigsten Motorsportwettbewerben der Welt.</p>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <h3>Einmaliger Zugang</h3>
+              <p>
+                Dieses exklusive Erlebnis bietet die Möglichkeit, an Rennveranstaltungen mit beispiellosem Zugang zur Welt hinter den Kulissen der wichtigsten Wettbewerbe der Welt teilzunehmen. Die Teilnehmer werden "Teil des Teams" und genießen die spannende Action sowohl auf der Strecke als auch hinter den Kulissen.
+              </p>
+              <ul class="checklist">
+                <li>VIP-Paddock-Zugang und Garagentouren</li>
+                <li>Treffen Sie den Fahrer und das Ingenieurteam</li>
+                <li>Startaufstellungs-Walk vor dem Rennen</li>
+                <li>Exklusive Hospitalität und Catering</li>
+                <li>Behind-the-Scenes-Content-Möglichkeiten</li>
+                <li>Autogrammstunden und Fotomöglichkeiten</li>
+              </ul>
+
+              <h3 style="margin-top: 24px;">Emotionale Verbindung</h3>
+              <p>
+                Emotionales Marketing ermöglicht es Marken, tiefe Verbindungen mit ihrem Publikum aufzubauen, indem Geschichten und Erlebnisse verwendet werden, die mit den Werten und Leidenschaften der Verbraucher resonieren, was zu größerer Loyalität und Präferenz für die Marke führt.
+              </p>
+            </div>
+
+            <div class="card" style="padding: 0; overflow: hidden;">
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c12ccb34b640a0770f924.png" alt="VIP paddock experience with team and car" style="border-radius: 0; width: 100%; aspect-ratio: 4/3; object-fit: cover;" />
+              <div style="padding: 18px;">
+                <p class="stat-num" style="margin: 0;">540M+</p>
+                <p class="muted" style="margin: 4px 0 0;">Weltweite Zuschauer in 156 Ländern über TV, Rundfunk und YouTube-Livestream pro Saison.</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1360,6 +1957,11 @@
         <div class="section-head lang-es">
           <h2>Galería</h2>
           <p class="muted">Fotos de acción, celebraciones de podio y momentos detrás de cámaras.</p>
+        </div>
+
+        <div class="section-head lang-de">
+          <h2>Galerie</h2>
+          <p class="muted">Action-Aufnahmen, Podiumsfeiern und Behind-the-Scenes-Momente.</p>
         </div>
 
         <div class="gallery">
@@ -1381,6 +1983,11 @@
         <div class="section-head lang-es">
           <h2>Socios y Afiliaciones Actuales</h2>
           <p class="muted">Únete a estas marcas líderes apoyando la excelencia del automovilismo internacional.</p>
+        </div>
+
+        <div class="section-head lang-de">
+          <h2>Aktuelle Partner & Kooperationen</h2>
+          <p class="muted">Schließen Sie sich diesen führenden Marken an, die internationale Motorsport-Exzellenz unterstützen.</p>
         </div>
 
         <div class="logo-grid card">
@@ -1414,6 +2021,14 @@
               </p>
             </div>
 
+            <!-- German Contact -->
+            <div class="lang-de">
+              <h2>Partner werden</h2>
+              <p class="lead">
+                Eine Partnerschaft mit Óscar Tunjo ist weit mehr als ein traditionelles Sponsoring—es ist eine strategische Allianz, die auf Leistung, Gesundheit, Disziplin und Motivation aufgebaut ist. Lassen Sie uns gemeinsam eine erfolgreiche Partnerschaft aufbauen.
+              </p>
+            </div>
+
             <figure class="card media-card" style="margin-bottom: 14px;">
               <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c12cc4e42b96bfa99d93b.png" alt="Óscar Tunjo with LMP3 race car" loading="lazy" />
             </figure>
@@ -1423,6 +2038,7 @@
                 <h3>Óscar Tunjo</h3>
                 <p class="muted lang-en">Professional Racing Driver</p>
                 <p class="muted lang-es">Piloto Profesional de Carreras</p>
+                <p class="muted lang-de">Professioneller Rennfahrer</p>
                 <p>
                   <a href="mailto:team@tunjoracing.com">team@tunjoracing.com</a><br />
                   TunjoRacing Motorsport
@@ -1432,8 +2048,10 @@
               <div class="card">
                 <h3 class="lang-en">Follow Óscar</h3>
                 <h3 class="lang-es">Sigue a Óscar</h3>
+                <h3 class="lang-de">Folgen Sie Óscar</h3>
                 <p class="muted lang-en">Connect on social media</p>
                 <p class="muted lang-es">Conéctate en redes sociales</p>
+                <p class="muted lang-de">Verbinden Sie sich auf Social Media</p>
                 <p class="social">
                   <a href="https://www.instagram.com/oscartunjo" target="_blank" rel="noopener">Instagram</a>
                   <a href="https://www.facebook.com/OscarAndresTunjo" target="_blank" rel="noopener">Facebook</a>
@@ -1448,6 +2066,9 @@
             <p class="fineprint lang-es">
               Esta sociedad entrega valor medible, narrativa auténtica y posicionamiento de marca a largo plazo mientras representa tu marca con profesionalismo, compromiso y orgullo durante toda la temporada IMSA.
             </p>
+            <p class="fineprint lang-de">
+              Diese Partnerschaft liefert messbaren Wert, authentisches Storytelling und langfristige Markenpositionierung, während Ihre Marke mit Professionalität, Engagement und Stolz während der gesamten IMSA-Saison vertreten wird.
+            </p>
 
             <div style="margin-top: 18px;">
               <video autoplay muted loop playsinline style="width: 100%; border-radius: 14px; border: 2px solid #333;">
@@ -1459,6 +2080,7 @@
           <div class="card">
             <h3 class="lang-en">Schedule a Partnership Call</h3>
             <h3 class="lang-es">Agenda una Llamada de Alianza</h3>
+            <h3 class="lang-de">Partnerschaftsgespräch vereinbaren</h3>
             <iframe src="https://api.leadconnectorhq.com/widget/booking/6tZaRmDJBXFoWu01wD2T" style="width: 100%; min-height: 600px; border:none; overflow: hidden;" scrolling="no" id="6tZaRmDJBXFoWu01wD2T_1768859965896"></iframe>
             <script src="https://api.leadconnectorhq.com/js/form_embed.js" type="text/javascript"></script>
           </div>
@@ -1472,21 +2094,24 @@
     <div class="container footer-inner">
       <p class="lang-en">© <span id="year"></span> Óscar Tunjo Racing. All rights reserved.</p>
       <p class="lang-es">© <span id="year-es"></span> Óscar Tunjo Racing. Todos los derechos reservados.</p>
+      <p class="lang-de">© <span id="year-de"></span> Óscar Tunjo Racing. Alle Rechte vorbehalten.</p>
       <a href="#top" class="lang-en">Back to top</a>
       <a href="#top" class="lang-es">Volver arriba</a>
+      <a href="#top" class="lang-de">Nach oben</a>
     </div>
   </footer>
 
   <script>
     // Language detection and switching
     function setLanguage(lang) {
-      document.body.classList.remove('show-en', 'show-es');
+      document.body.classList.remove('show-en', 'show-es', 'show-de');
       document.body.classList.add('show-' + lang);
       document.documentElement.lang = lang;
 
       // Update button states
       document.getElementById('btn-en').classList.toggle('active', lang === 'en');
       document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+      document.getElementById('btn-de').classList.toggle('active', lang === 'de');
 
       // Save preference
       localStorage.setItem('preferredLang', lang);
@@ -1506,9 +2131,12 @@
         const response = await fetch('https://ipapi.co/json/');
         const data = await response.json();
 
-        // If user is from US, show English; otherwise show Spanish
+        // Language based on country
         if (data.country_code === 'US') {
           setLanguage('en');
+        } else if (data.country_code === 'DE' || data.country_code === 'AT' || data.country_code === 'CH') {
+          // Germany, Austria, and Switzerland get German
+          setLanguage('de');
         } else {
           // Colombia and all other countries get Spanish
           setLanguage('es');
@@ -1527,6 +2155,7 @@
     const toggle = document.getElementById('navToggle');
     const menuEn = document.getElementById('navMenuEn');
     const menuEs = document.getElementById('navMenu');
+    const menuDe = document.getElementById('navMenuDe');
     const overlay = document.getElementById('navOverlay');
 
     function toggleMobileMenu() {
@@ -1534,6 +2163,7 @@
       toggle.setAttribute('aria-expanded', String(!expanded));
       if (menuEn) menuEn.classList.toggle('open');
       if (menuEs) menuEs.classList.toggle('open');
+      if (menuDe) menuDe.classList.toggle('open');
       if (overlay) overlay.classList.toggle('open');
       document.body.style.overflow = !expanded ? 'hidden' : '';
     }
@@ -1542,6 +2172,7 @@
       toggle.setAttribute('aria-expanded', 'false');
       if (menuEn) menuEn.classList.remove('open');
       if (menuEs) menuEs.classList.remove('open');
+      if (menuDe) menuDe.classList.remove('open');
       if (overlay) overlay.classList.remove('open');
       document.body.style.overflow = '';
     }
@@ -1562,9 +2193,40 @@
     // Year
     const yearEl = document.getElementById('year');
     const yearEsEl = document.getElementById('year-es');
+    const yearDeEl = document.getElementById('year-de');
     const currentYear = new Date().getFullYear();
     if (yearEl) yearEl.textContent = currentYear;
     if (yearEsEl) yearEsEl.textContent = currentYear;
+    if (yearDeEl) yearDeEl.textContent = currentYear;
+
+    // Countdown Timer - Feb 27, 2026 Austin, TX
+    function updateCountdown() {
+      const targetDate = new Date('2026-02-27T00:00:00-06:00'); // Austin, TX timezone (CST)
+      const now = new Date();
+      const diff = targetDate - now;
+
+      if (diff <= 0) {
+        document.getElementById('days').textContent = '00';
+        document.getElementById('hours').textContent = '00';
+        document.getElementById('minutes').textContent = '00';
+        document.getElementById('seconds').textContent = '00';
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      document.getElementById('days').textContent = days.toString().padStart(2, '0');
+      document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+      document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+      document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+    }
+
+    // Update countdown every second
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
   </script>
 </body>
 </html>

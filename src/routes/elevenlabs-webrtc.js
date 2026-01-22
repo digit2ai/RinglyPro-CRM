@@ -520,22 +520,48 @@ function extractBusinessInfo(html, hostname) {
     info.push(`Key Services/Features: ${headings.slice(0, 8).join(', ')}`);
   }
 
-  // Extract phone numbers
-  const phoneMatches = cleanHtml.match(/(?:tel:|href="tel:)?[\+]?[(]?[0-9]{1,3}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,4}[-\s\.]?[0-9]{1,9}/g);
-  if (phoneMatches) {
-    const phones = [...new Set(phoneMatches.map(p => p.replace(/tel:|href="|"/g, '').trim()))];
-    const validPhones = phones.filter(p => p.replace(/\D/g, '').length >= 10);
-    if (validPhones.length > 0) {
-      info.push(`Phone: ${validPhones[0]}`);
+  // Extract phone numbers (look for tel: links or formatted phone numbers)
+  // More strict pattern to avoid matching timestamps or other numbers
+  const phonePatterns = [
+    /tel:[\+]?1?[-.\s]?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/gi,
+    /\(?[0-9]{3}\)?[-.\s][0-9]{3}[-.\s][0-9]{4}/g,
+    /1[-.\s][0-9]{3}[-.\s][0-9]{3}[-.\s][0-9]{4}/g
+  ];
+  for (const pattern of phonePatterns) {
+    const phoneMatches = cleanHtml.match(pattern);
+    if (phoneMatches) {
+      const phone = phoneMatches[0].replace(/tel:/gi, '').trim();
+      const digits = phone.replace(/\D/g, '');
+      // Only accept 10 or 11 digit phone numbers (US format)
+      if (digits.length === 10 || digits.length === 11) {
+        info.push(`Phone: ${phone}`);
+        break;
+      }
     }
   }
 
-  // Extract email addresses
-  const emailMatches = cleanHtml.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+  // Extract email addresses (exclude image files and common non-email patterns)
+  const emailMatches = cleanHtml.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}/g);
   if (emailMatches) {
-    const emails = [...new Set(emailMatches)].filter(e =>
-      !e.includes('example') && !e.includes('test') && !e.includes('your')
-    );
+    const emails = [...new Set(emailMatches)].filter(e => {
+      const lower = e.toLowerCase();
+      // Exclude image files, example emails, and other non-email patterns
+      return !lower.includes('example') &&
+             !lower.includes('test') &&
+             !lower.includes('your') &&
+             !lower.includes('.png') &&
+             !lower.includes('.jpg') &&
+             !lower.includes('.jpeg') &&
+             !lower.includes('.gif') &&
+             !lower.includes('.webp') &&
+             !lower.includes('.svg') &&
+             !lower.includes('2x') &&
+             !lower.includes('3x') &&
+             !lower.endsWith('.js') &&
+             !lower.endsWith('.css') &&
+             lower.includes('@') &&
+             lower.split('@')[1].includes('.');
+    });
     if (emails.length > 0) {
       info.push(`Email: ${emails[0]}`);
     }
