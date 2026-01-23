@@ -274,6 +274,7 @@ class TokenService {
 
   /**
    * Get user token balance and package info
+   * Also handles FREE plan monthly reset (resets to 100 tokens if a month has passed)
    * @param {number} userId - User ID
    * @returns {Promise<object>}
    */
@@ -287,9 +288,9 @@ class TokenService {
       }
 
       // Handle NULL values - default to free tier with 100 tokens
-      const tokenBalance = user.tokens_balance ?? 100;
-      const tokensUsed = user.tokens_used_this_month ?? 0;
-      const tokenPackage = user.token_package || 'free';
+      let tokenBalance = user.tokens_balance ?? 100;
+      let tokensUsed = user.tokens_used_this_month ?? 0;
+      const tokenPackage = user.token_package || user.subscription_plan || 'free';
       const tokensRollover = user.tokens_rollover ?? 0;
 
       // Calculate monthly allocation based on package
@@ -300,6 +301,33 @@ class TokenService {
         professional: 7500
       };
       const monthlyAllocation = packageAllocations[tokenPackage] || 100;
+
+      // ==================== FREE PLAN MONTHLY RESET ====================
+      // Free plan users get 100 tokens per month (no rollover)
+      // Reset their balance if a month has passed since last reset
+      if (tokenPackage === 'free' && !user.stripe_subscription_id) {
+        const lastReset = user.last_token_reset || user.created_at;
+        const now = new Date();
+        const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+
+        if (new Date(lastReset) < oneMonthAgo) {
+          // It's been more than a month - reset free user tokens
+          logger.info(`[TOKENS] Free plan monthly reset for user ${userId}: ${tokenBalance} → 100 tokens`);
+
+          await user.update({
+            tokens_balance: 100,
+            tokens_used_this_month: 0,
+            last_token_reset: now,
+            billing_cycle_start: now
+          });
+
+          tokenBalance = 100;
+          tokensUsed = 0;
+
+          logger.info(`[TOKENS] User ${userId} free tier reset completed`);
+        }
+      }
+      // =================================================================
 
       return {
         balance: tokenBalance,                           // Frontend expects 'balance'

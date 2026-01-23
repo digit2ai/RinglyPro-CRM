@@ -10,6 +10,16 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { User } = require('../models');
 
 // =====================================================
+// SUBSCRIPTION PLANS - Must match auth.js
+// =====================================================
+const SUBSCRIPTION_PLANS = {
+    free: { tokens: 100, rollover: false },
+    starter: { tokens: 500, rollover: true },      // $45/mo - 500 tokens
+    growth: { tokens: 2000, rollover: true },      // $180/mo - 2,000 tokens
+    professional: { tokens: 7500, rollover: true } // $675/mo - 7,500 tokens
+};
+
+// =====================================================
 // STRIPE WEBHOOK ENDPOINT
 // =====================================================
 
@@ -139,6 +149,8 @@ async function handleTrialWillEnd(subscription) {
 
 /**
  * Handle successful payment (including renewals)
+ * Adds monthly tokens to user account based on plan
+ * Paid plans accumulate tokens (rollover), free plan resets
  */
 async function handleInvoicePaid(invoice) {
     // Get subscription details
@@ -150,7 +162,6 @@ async function handleInvoicePaid(invoice) {
     try {
         const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
         const userId = subscription.metadata.userId;
-        const monthlyTokens = parseInt(subscription.metadata.monthlyTokens);
         const plan = subscription.metadata.plan;
 
         if (!userId) {
@@ -165,42 +176,46 @@ async function handleInvoicePaid(invoice) {
             return;
         }
 
+        // Get plan details (use metadata or fallback to SUBSCRIPTION_PLANS)
+        const planDetails = SUBSCRIPTION_PLANS[plan] || SUBSCRIPTION_PLANS.free;
+        const monthlyTokens = parseInt(subscription.metadata.monthlyTokens) || planDetails.tokens;
+        const hasRollover = subscription.metadata.rollover === 'true' || planDetails.rollover;
+
         // Check if this is the first payment or a renewal
         const isFirstPayment = invoice.billing_reason === 'subscription_create' ||
+                               invoice.billing_reason === 'subscription_cycle' === false ||
                                user.subscription_status === 'trialing';
 
-        // Add tokens to user account
+        // Calculate new token balance
         const currentBalance = user.tokens_balance || 0;
-        const newBalance = currentBalance + monthlyTokens;
+        let finalBalance;
 
-        // Apply rollover limits based on plan
-        let finalBalance = newBalance;
-        const rolloverLimits = {
-            starter: 1000,
-            growth: 5000,
-            professional: Infinity,
-            enterprise: Infinity
-        };
-
-        const maxRollover = rolloverLimits[plan] || Infinity;
-        if (finalBalance > maxRollover && maxRollover !== Infinity) {
-            finalBalance = maxRollover;
-            console.log(`⚠️ Token balance capped at ${maxRollover} (rollover limit for ${plan})`);
+        if (hasRollover) {
+            // ROLLOVER: Add new tokens to existing balance (accumulates)
+            finalBalance = currentBalance + monthlyTokens;
+            console.log(`🔄 Rollover: ${currentBalance} + ${monthlyTokens} = ${finalBalance} tokens`);
+        } else {
+            // NO ROLLOVER: Reset to monthly allocation
+            finalBalance = monthlyTokens;
+            console.log(`🔁 Reset: Balance set to ${finalBalance} tokens (no rollover)`);
         }
 
         // Update user account
         await user.update({
             subscription_status: 'active',
+            subscription_plan: plan,
             tokens_balance: finalBalance,
+            monthly_token_allocation: monthlyTokens,
+            token_package: plan,
             last_token_reset: new Date(),
             billing_cycle_start: new Date()
         });
 
         console.log(`✅ Payment processed for user ${userId} (${user.email})`);
-        console.log(`📊 Plan: ${plan}, Added: ${monthlyTokens} tokens, New balance: ${finalBalance}`);
+        console.log(`📊 Plan: ${plan}, Tokens added: ${monthlyTokens}, New balance: ${finalBalance}`);
         console.log(`💰 Amount paid: $${(invoice.amount_paid / 100).toFixed(2)}`);
 
-        if (isFirstPayment) {
+        if (isFirstPayment || user.subscription_status === 'trialing') {
             console.log('🎉 First payment - trial completed successfully');
         } else {
             console.log('🔄 Renewal payment - subscription renewed');
@@ -252,6 +267,7 @@ async function handlePaymentFailed(invoice) {
 
 /**
  * Handle subscription cancellation
+ * Downgrades user to free tier with 100 tokens (no rollover)
  */
 async function handleSubscriptionDeleted(subscription) {
     const userId = subscription.metadata.userId;
@@ -265,18 +281,21 @@ async function handleSubscriptionDeleted(subscription) {
         const user = await User.findByPk(userId);
 
         if (user) {
+            const freePlan = SUBSCRIPTION_PLANS.free;
+
             // Downgrade to free tier
             await user.update({
                 subscription_status: 'canceled',
                 subscription_plan: 'free',
                 billing_frequency: 'monthly',
-                tokens_balance: 100,  // Free tier tokens
-                monthly_token_allocation: 100,
+                tokens_balance: freePlan.tokens,  // 100 tokens
+                monthly_token_allocation: freePlan.tokens,
+                token_package: 'free',
                 stripe_subscription_id: null
             });
 
             console.log(`❌ Subscription canceled for user ${userId} (${user.email})`);
-            console.log(`⬇️ Downgraded to free tier - 100 tokens`);
+            console.log(`⬇️ Downgraded to free tier - ${freePlan.tokens} tokens`);
 
             // TODO: Send email notification about cancellation
             // const emailService = require('../services/emailService');

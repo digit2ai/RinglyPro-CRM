@@ -149,6 +149,7 @@ router.get('/analytics', authenticateToken, async (req, res) => {
 /**
  * GET /api/tokens/pricing
  * Get all service costs (for pricing display)
+ * Updated: 2024 - Simplified rollover (all paid plans have remaining rollover)
  */
 router.get('/pricing', async (req, res) => {
   try {
@@ -159,33 +160,44 @@ router.get('/pricing', async (req, res) => {
       pricing,
       packages: {
         free: {
-          name: 'Free Tier',
+          name: 'Free',
           tokens: 100,
           price: 0,
-          rollover: 0,
-          features: ['All services available', 'Monthly reset', 'No rollover']
+          minutes: 20,           // 100 tokens ÷ 5 = 20 minutes
+          rollover: false,
+          features: ['All services available', 'AI Copilot access', 'Basic support', 'No rollover']
         },
         starter: {
-          name: 'Starter Pack',
+          name: 'Starter',
           tokens: 500,
           price: 45,
-          rollover: 1000,
-          features: ['All services', 'Rollover up to 1000 tokens', 'Priority support']
+          minutes: 100,          // 500 tokens ÷ 5 = 100 minutes
+          rollover: true,
+          features: ['All services included', 'AI Copilot unlimited', 'Priority support', 'Remaining rollover', 'Business Collector']
         },
         growth: {
-          name: 'Growth Pack',
+          name: 'Growth',
           tokens: 2000,
           price: 180,
-          rollover: 5000,
-          features: ['All services', 'Rollover up to 5000 tokens', 'Premium support']
+          minutes: 400,          // 2,000 tokens ÷ 5 = 400 minutes
+          rollover: true,
+          features: ['Everything in Starter', 'Advanced analytics', 'Outbound campaigns', 'Remaining rollover', 'Team collaboration']
         },
         professional: {
-          name: 'Professional Pack',
+          name: 'Professional',
           tokens: 7500,
           price: 675,
-          rollover: 'unlimited',
-          features: ['All services', 'Unlimited rollover', 'Dedicated support']
+          minutes: 1500,         // 7,500 tokens ÷ 5 = 1,500 minutes
+          rollover: true,
+          features: ['Everything in Growth', 'Remaining rollover', 'Dedicated account manager', 'Custom integrations', 'White-label options', '24/7 priority support']
         }
+      },
+      // Annual pricing (15% discount)
+      annualDiscount: 0.15,
+      annualPrices: {
+        starter: 459,            // $45 × 12 × 0.85 = $459/year (~$38/month)
+        growth: 1836,            // $180 × 12 × 0.85 = $1,836/year (~$153/month)
+        professional: 6885       // $675 × 12 × 0.85 = $6,885/year (~$574/month)
       }
     });
   } catch (error) {

@@ -39,6 +39,44 @@ try {
 
 console.log('🔍 AUTH ROUTES FILE LOADED - Routes should be available');
 
+// =====================================================
+// SUBSCRIPTION PLANS - Server-side validation
+// These values override any frontend-passed values for security
+// =====================================================
+const SUBSCRIPTION_PLANS = {
+    free: {
+        name: 'Free',
+        price: 0,
+        tokens: 100,
+        rollover: false,
+        description: 'Perfect for testing'
+    },
+    starter: {
+        name: 'Starter',
+        price: 45,           // $45/month
+        tokens: 500,         // 500 tokens/month (100 minutes)
+        rollover: true,
+        description: 'For small businesses'
+    },
+    growth: {
+        name: 'Growth',
+        price: 180,          // $180/month
+        tokens: 2000,        // 2,000 tokens/month (400 minutes)
+        rollover: true,
+        description: 'For growing businesses'
+    },
+    professional: {
+        name: 'Professional',
+        price: 675,          // $675/month
+        tokens: 7500,        // 7,500 tokens/month (1,500 minutes)
+        rollover: true,
+        description: 'For large teams'
+    }
+};
+
+// Annual discount: 15% off
+const ANNUAL_DISCOUNT = 0.15;
+
 // Simple test route (no middleware)
 router.get('/simple-test', (req, res) => {
     console.log('🎯 Simple test route was called!');
@@ -141,10 +179,25 @@ router.post('/register', async (req, res) => {
         // Clean up website_url - convert empty strings to null
         const cleanWebsiteUrl = websiteUrl && websiteUrl.trim() !== '' ? websiteUrl.trim() : null;
 
-        // Determine subscription plan and token allocation
-        const selectedPlan = plan || 'free';
-        const selectedBilling = billing || 'monthly';
-        const monthlyTokens = selectedBilling === 'annual' && tokens ? Math.floor(parseInt(tokens) / 12) : (tokens ? parseInt(tokens) : 100);
+        // ==================== SERVER-SIDE PLAN VALIDATION ====================
+        // CRITICAL: Use server-side values, not frontend-passed values for security
+        const selectedPlan = SUBSCRIPTION_PLANS[plan] ? plan : 'free';
+        const selectedBilling = (billing === 'annual') ? 'annual' : 'monthly';
+
+        // Get server-validated plan details
+        const planDetails = SUBSCRIPTION_PLANS[selectedPlan];
+        const monthlyTokens = planDetails.tokens;
+
+        // Calculate price (apply annual discount if applicable)
+        const monthlyPrice = planDetails.price;
+        const actualPrice = selectedBilling === 'annual'
+            ? Math.floor(monthlyPrice * 12 * (1 - ANNUAL_DISCOUNT))  // Annual: 15% off
+            : monthlyPrice;
+
+        console.log(`📊 Server-validated plan: ${selectedPlan}`);
+        console.log(`   - Monthly tokens: ${monthlyTokens}`);
+        console.log(`   - Price: $${actualPrice} (${selectedBilling})`);
+        console.log(`   - Rollover: ${planDetails.rollover ? 'Yes' : 'No'}`);
 
         // Calculate trial end date (14 days from now)
         const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
@@ -353,9 +406,10 @@ router.post('/register', async (req, res) => {
         // Create Stripe subscription for paid plans (non-blocking for free tier)
         let stripeSessionUrl = null;
 
-        if (selectedPlan !== 'free' && amount && parseInt(amount) > 0) {
+        if (selectedPlan !== 'free' && actualPrice > 0) {
             try {
                 console.log('💳 Creating Stripe subscription with 14-day free trial...');
+                console.log(`   Plan: ${planDetails.name}, Price: $${actualPrice}/${selectedBilling}`);
 
                 const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
                 const ghlBookingUrl = 'https://api.leadconnectorhq.com/widget/booking/nhKuDsn2At5csiDYc4d0';
@@ -363,7 +417,7 @@ router.post('/register', async (req, res) => {
                 // TESTING MODE: Skip Stripe checkout
                 if (process.env.SKIP_STRIPE_CHECKOUT === 'true') {
                     console.log(`🧪 TEST MODE: Skipping Stripe checkout for ${selectedPlan} plan`);
-                    console.log(`🧪 TEST MODE: User would be charged $${amount}/${selectedBilling}`);
+                    console.log(`🧪 TEST MODE: User would be charged $${actualPrice}/${selectedBilling}`);
                     console.log(`🧪 TEST MODE: User receives ${monthlyTokens} tokens immediately`);
 
                     // Mock subscription ID
@@ -377,6 +431,7 @@ router.post('/register', async (req, res) => {
                 } else {
 
                 // Create Stripe Checkout Session for recurring subscription
+                // IMPORTANT: Uses server-validated price, not frontend-passed amount
                 const session = await stripe.checkout.sessions.create({
                     customer_email: email,
                     payment_method_types: ['card'],
@@ -384,10 +439,10 @@ router.post('/register', async (req, res) => {
                         price_data: {
                             currency: 'usd',
                             product_data: {
-                                name: `RinglyPro ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan`,
-                                description: `${monthlyTokens} tokens per ${selectedBilling === 'annual' ? 'year' : 'month'}`,
+                                name: `RinglyPro ${planDetails.name} Plan`,
+                                description: `${monthlyTokens} tokens/month (${Math.floor(monthlyTokens / 5)} minutes of voice)`,
                             },
-                            unit_amount: parseInt(amount) * 100,  // Convert to cents
+                            unit_amount: actualPrice * 100,  // Server-validated price in cents
                             recurring: {
                                 interval: selectedBilling === 'annual' ? 'year' : 'month',
                                 interval_count: 1
@@ -401,11 +456,12 @@ router.post('/register', async (req, res) => {
                     subscription_data: {
                         trial_period_days: 14,
                         metadata: {
-                            userId: user.id,
+                            userId: user.id.toString(),
                             plan: selectedPlan,
-                            monthlyTokens: monthlyTokens,
+                            monthlyTokens: monthlyTokens.toString(),
                             billing: selectedBilling,
-                            clientId: client.id
+                            clientId: client.id.toString(),
+                            rollover: planDetails.rollover.toString()
                         }
                     },
 
@@ -413,11 +469,11 @@ router.post('/register', async (req, res) => {
                     cancel_url: `${webhookBaseUrl}/pricing`,
 
                     metadata: {
-                        userId: user.id,
+                        userId: user.id.toString(),
                         plan: selectedPlan,
-                        monthlyTokens: monthlyTokens,
+                        monthlyTokens: monthlyTokens.toString(),
                         billing: selectedBilling,
-                        clientId: client.id
+                        clientId: client.id.toString()
                     }
                 });
 
