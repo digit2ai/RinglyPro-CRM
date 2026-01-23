@@ -34,11 +34,11 @@ async function manualRecharge(clientId, amountPaid) {
         console.log(`   - Current Balance: ${user.tokens_balance} tokens`);
         console.log(`   - Package: ${user.token_package}`);
 
-        // Calculate tokens to add ($0.17 per token - 40% margin rate)
-        const tokensToAdd = Math.floor(amountPaid / 0.17);
+        // Calculate tokens to add ($0.09 per token - 40% margin rate)
+        const tokensToAdd = Math.floor(amountPaid / 0.09);
         console.log(`\n📊 Calculation:`);
         console.log(`   - Amount Paid: $${amountPaid}`);
-        console.log(`   - Token Rate: $0.17 per token`);
+        console.log(`   - Token Rate: $0.09 per token`);
         console.log(`   - Tokens to Add: ${tokensToAdd} tokens`);
 
         // Add tokens

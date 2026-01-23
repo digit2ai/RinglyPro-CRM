@@ -168,21 +168,21 @@ router.get('/pricing', async (req, res) => {
         starter: {
           name: 'Starter Pack',
           tokens: 500,
-          price: 85,
+          price: 45,
           rollover: 1000,
           features: ['All services', 'Rollover up to 1000 tokens', 'Priority support']
         },
         growth: {
           name: 'Growth Pack',
           tokens: 2000,
-          price: 339,
+          price: 180,
           rollover: 5000,
           features: ['All services', 'Rollover up to 5000 tokens', 'Premium support']
         },
         professional: {
           name: 'Professional Pack',
           tokens: 7500,
-          price: 1275,
+          price: 675,
           rollover: 'unlimited',
           features: ['All services', 'Unlimited rollover', 'Dedicated support']
         }
@@ -206,11 +206,11 @@ router.post('/purchase', authenticateToken, async (req, res) => {
     const userId = req.user.userId || req.user.id;
     const { package_name, payment_method_id } = req.body;
 
-    // Validate package (updated to $0.17/token rate with 40% margin)
+    // Validate package (updated to $0.09/token rate with 40% margin)
     const packages = {
-      starter: { tokens: 500, price: 85 },
-      growth: { tokens: 2000, price: 339 },
-      professional: { tokens: 7500, price: 1275 }
+      starter: { tokens: 500, price: 45 },
+      growth: { tokens: 2000, price: 180 },
+      professional: { tokens: 7500, price: 675 }
     };
 
     const selectedPackage = packages[package_name];
@@ -559,8 +559,8 @@ router.post('/manual-recharge/:clientId', async (req, res) => {
       });
     }
 
-    // Calculate tokens to add ($0.17 per token - 40% margin rate)
-    const tokensToAdd = Math.floor(amountPaid / 0.17);
+    // Calculate tokens to add ($0.09 per token - 40% margin rate)
+    const tokensToAdd = Math.floor(amountPaid / 0.09);
     const previousBalance = user.tokens_balance;
 
     logger.info(`[MANUAL RECHARGE] Client ${clientId}, User ${user.id}, Adding ${tokensToAdd} tokens ($${amountPaid})`);

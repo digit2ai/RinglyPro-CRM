@@ -392,8 +392,8 @@ class CreditSystem {
         const transactionData = transaction.rows[0];
         const creditAccount = await this.getCreditAccount(transactionData.client_id);
 
-        // Calculate tokens based on amount ($0.17 per token - 40% margin rate)
-        const tokensToAdd = Math.floor(amount / 0.17);
+        // Calculate tokens based on amount ($0.09 per token - 40% margin rate)
+        const tokensToAdd = Math.floor(amount / 0.09);
 
         // Get user_id from client_id
         const clientResult = await this.pool.query(
