@@ -34,11 +34,11 @@ async function manualRecharge(clientId, amountPaid) {
         console.log(`   - Current Balance: ${user.tokens_balance} tokens`);
         console.log(`   - Package: ${user.token_package}`);
 
-        // Calculate tokens to add ($0.05 per token)
-        const tokensToAdd = Math.floor(amountPaid / 0.05);
+        // Calculate tokens to add ($0.17 per token - 40% margin rate)
+        const tokensToAdd = Math.floor(amountPaid / 0.17);
         console.log(`\n📊 Calculation:`);
         console.log(`   - Amount Paid: $${amountPaid}`);
-        console.log(`   - Token Rate: $0.05 per token`);
+        console.log(`   - Token Rate: $0.17 per token`);
         console.log(`   - Tokens to Add: ${tokensToAdd} tokens`);
 
         // Add tokens
@@ -88,9 +88,9 @@ if (require.main === module) {
         console.log(`
 Usage: node scripts/manual-token-recharge.js <clientId> <amountPaid>
 
-Example: node scripts/manual-token-recharge.js 15 10
+Example: node scripts/manual-token-recharge.js 15 17
 
-This will add 200 tokens (10 / 0.05) to client 15's account.
+This will add 100 tokens (17 / 0.17) to client 15's account.
         `);
         process.exit(1);
     }
