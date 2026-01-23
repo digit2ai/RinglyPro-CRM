@@ -302,32 +302,11 @@ class TokenService {
       };
       const monthlyAllocation = packageAllocations[tokenPackage] || 100;
 
-      // ==================== FREE PLAN MONTHLY RESET ====================
-      // Free plan users get 100 tokens per month (no rollover)
-      // Reset their balance if a month has passed since last reset
-      if (tokenPackage === 'free' && !user.stripe_subscription_id) {
-        const lastReset = user.last_token_reset || user.created_at;
-        const now = new Date();
-        const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-
-        if (new Date(lastReset) < oneMonthAgo) {
-          // It's been more than a month - reset free user tokens
-          logger.info(`[TOKENS] Free plan monthly reset for user ${userId}: ${tokenBalance} → 100 tokens`);
-
-          await user.update({
-            tokens_balance: 100,
-            tokens_used_this_month: 0,
-            last_token_reset: now,
-            billing_cycle_start: now
-          });
-
-          tokenBalance = 100;
-          tokensUsed = 0;
-
-          logger.info(`[TOKENS] User ${userId} free tier reset completed`);
-        }
-      }
-      // =================================================================
+      // NOTE: Auto-reset removed to prevent accidental token wipes
+      // Free plan monthly tokens are now handled ONLY via:
+      // 1. Stripe webhook (invoice.paid) for paid subscribers
+      // 2. Manual admin intervention for free tier users
+      // This prevents purchased/referral tokens from being wiped
 
       return {
         balance: tokenBalance,                           // Frontend expects 'balance'
