@@ -199,10 +199,9 @@ router.post('/register', async (req, res) => {
         console.log(`   - Price: $${actualPrice} (${selectedBilling})`);
         console.log(`   - Rollover: ${planDetails.rollover ? 'Yes' : 'No'}`);
 
-        // Calculate trial end date (14 days from now)
-        const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-
         // Create user with all business fields - use normalized phone numbers
+        // Note: Paid plans get 'pending' status until Stripe payment completes
+        // Free plan gets tokens immediately, paid plans get tokens after first payment
         const user = await User.create({
             email,
             password_hash: passwordHash,
@@ -222,10 +221,10 @@ router.post('/register', async (req, res) => {
             // Subscription fields
             subscription_plan: selectedPlan,
             billing_frequency: selectedBilling,
-            subscription_status: selectedPlan === 'free' ? null : 'trialing',
-            trial_ends_at: selectedPlan === 'free' ? null : trialEndsAt,
+            subscription_status: selectedPlan === 'free' ? 'active' : 'pending',
+            trial_ends_at: null,  // No trial - free plan is the trial
             monthly_token_allocation: monthlyTokens,
-            tokens_balance: monthlyTokens  // Give initial tokens during trial
+            tokens_balance: selectedPlan === 'free' ? monthlyTokens : 0  // Free plan gets tokens, paid plans get tokens after payment
         }, { transaction });
 
         console.log('✅ User created successfully:', user.id);
@@ -408,7 +407,7 @@ router.post('/register', async (req, res) => {
 
         if (selectedPlan !== 'free' && actualPrice > 0) {
             try {
-                console.log('💳 Creating Stripe subscription with 14-day free trial...');
+                console.log('💳 Creating Stripe subscription (immediate payment)...');
                 console.log(`   Plan: ${planDetails.name}, Price: $${actualPrice}/${selectedBilling}`);
 
                 const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
@@ -452,9 +451,8 @@ router.post('/register', async (req, res) => {
                     }],
                     mode: 'subscription',
 
-                    // 14-DAY FREE TRIAL
+                    // NO TRIAL - Free plan is the trial
                     subscription_data: {
-                        trial_period_days: 14,
                         metadata: {
                             userId: user.id.toString(),
                             plan: selectedPlan,
@@ -483,8 +481,8 @@ router.post('/register', async (req, res) => {
                 }, { where: { id: user.id } });
 
                 stripeSessionUrl = session.url;
-                console.log(`✅ Stripe subscription created with 14-day trial: ${session.id}`);
-                console.log(`💳 Trial ends: ${trialEndsAt.toISOString()}`);
+                console.log(`✅ Stripe checkout session created: ${session.id}`);
+                console.log(`💳 User will be charged immediately upon checkout`);
                 } // End skip Stripe check
 
             } catch (stripeError) {
@@ -590,8 +588,8 @@ router.post('/register', async (req, res) => {
                     freeTrialMinutes: user.free_trial_minutes,
                     onboardingCompleted: user.onboarding_completed,
                     subscriptionPlan: selectedPlan,
-                    subscriptionStatus: selectedPlan === 'free' ? null : 'trialing',
-                    trialEndsAt: selectedPlan === 'free' ? null : trialEndsAt
+                    subscriptionStatus: selectedPlan === 'free' ? 'active' : 'pending',
+                    tokensBalance: selectedPlan === 'free' ? monthlyTokens : 0
                 },
                 client: {
                     id: client.id,

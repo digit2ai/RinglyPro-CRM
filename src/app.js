@@ -166,6 +166,16 @@ console.log('✅ LaunchStack routes loaded successfully');
 const webhookRoutes = require('./routes/webhooks'); // Stripe webhooks for subscriptions
 console.log('✅ Webhook routes loaded successfully');
 
+// Import subscription upgrade routes
+let subscriptionRoutes = null;
+try {
+    subscriptionRoutes = require('./routes/subscription'); // Subscription upgrade for existing users
+    console.log('✅ Subscription routes loaded successfully');
+} catch (error) {
+    console.error('⚠️ Subscription routes not loaded (optional feature):', error.message);
+    subscriptionRoutes = null;
+}
+
 // Import copilot access control routes
 const copilotAccessRoutes = require('./routes/copilot-access'); // Copilot authentication
 console.log('✅ Copilot access routes loaded successfully');
@@ -289,6 +299,14 @@ if (tokenRoutes) {
     console.log('💰 Token routes mounted at /api/tokens');
 } else {
     console.error('⚠️ Token routes not available - skipping mount');
+}
+
+// Subscription upgrade routes (for existing users to upgrade plans)
+if (subscriptionRoutes) {
+    app.use('/api/subscription', subscriptionRoutes); // Subscription upgrade and management
+    console.log('📈 Subscription routes mounted at /api/subscription');
+} else {
+    console.error('⚠️ Subscription routes not available - skipping mount');
 }
 
 // Viral referral system routes
