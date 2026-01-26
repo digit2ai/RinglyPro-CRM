@@ -411,8 +411,9 @@ router.post('/scrape-website', async (req, res) => {
       const response = await fetch(parsedUrl.href, {
         signal: controller.signal,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; RinglyProBot/1.0; +https://ringlypro.com)',
-          'Accept': 'text/html,application/xhtml+xml',
+          // Use a real browser user-agent to avoid being blocked by sites that filter bots
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
           'Accept-Language': 'en-US,en;q=0.9,es;q=0.8'
         }
       });
@@ -491,6 +492,12 @@ function extractBusinessInfo(html, hostname) {
     info.push(`Description: ${ogDescMatch[1].trim()}`);
   }
 
+  // Extract OG site_name as business name fallback
+  const ogSiteNameMatch = cleanHtml.match(/<meta[^>]*property=["']og:site_name["'][^>]*content=["']([^"']+)["']/i);
+  if (ogSiteNameMatch && ogSiteNameMatch[1]) {
+    info.push(`Business: ${ogSiteNameMatch[1].trim()}`);
+  }
+
   // Extract title
   const titleMatch = cleanHtml.match(/<title[^>]*>([^<]+)<\/title>/i);
   if (titleMatch && titleMatch[1]) {
@@ -500,8 +507,10 @@ function extractBusinessInfo(html, hostname) {
     }
   }
 
-  // Extract headings (h1, h2) for services/features
+  // Extract headings (h1, h2) for services/features - including nested content
   const headings = [];
+
+  // Standard h1/h2 with direct text
   const h1Matches = cleanHtml.matchAll(/<h1[^>]*>([^<]+)<\/h1>/gi);
   for (const match of h1Matches) {
     const text = match[1].trim().replace(/\s+/g, ' ');
@@ -516,6 +525,44 @@ function extractBusinessInfo(html, hostname) {
       headings.push(text);
     }
   }
+
+  // Extract content from DraftJS/edit.site templates (data-text="true" spans)
+  // These are commonly used by modern website builders
+  const dataTextMatches = cleanHtml.matchAll(/<span[^>]*data-text=["']true["'][^>]*>([^<]+)<\/span>/gi);
+  const dataTextContent = [];
+  for (const match of dataTextMatches) {
+    let text = match[1]
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .trim()
+      .replace(/\s+/g, ' ');
+    // Only keep meaningful text (not single words or very short)
+    if (text && text.length > 10 && text.length < 500) {
+      dataTextContent.push(text);
+    } else if (text && text.length > 3 && text.length <= 10) {
+      // Short items might be menu items or features - collect as headings
+      headings.push(text);
+    }
+  }
+
+  // Add extracted data-text content as features/about
+  if (dataTextContent.length > 0) {
+    // First longer text item is likely the main description
+    const mainDesc = dataTextContent.find(t => t.length > 30);
+    if (mainDesc && !info.some(i => i.includes('Description'))) {
+      info.push(`Description: ${mainDesc}`);
+    }
+    // Add remaining as about/features
+    const features = dataTextContent.filter(t => t !== mainDesc).slice(0, 5);
+    if (features.length > 0) {
+      info.push(`About: ${features.join(' | ')}`);
+    }
+  }
+
   if (headings.length > 0) {
     info.push(`Key Services/Features: ${headings.slice(0, 8).join(', ')}`);
   }
