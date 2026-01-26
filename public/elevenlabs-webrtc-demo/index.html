@@ -248,6 +248,55 @@
       background: var(--accent-orange);
     }
 
+    /* Upload file button */
+    .upload-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .upload-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-input);
+      color: var(--text-secondary);
+      border: 2px dashed var(--border-color);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .upload-btn:hover {
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+    }
+    .upload-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+    .upload-btn.loading {
+      background: var(--accent-orange);
+      color: white;
+      border-color: var(--accent-orange);
+    }
+    .upload-status {
+      font-size: 12px;
+      color: var(--accent-green);
+      display: none;
+    }
+    .upload-status.visible {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .upload-status svg {
+      width: 14px;
+      height: 14px;
+    }
+
     /* Status Badge */
     .status-container {
       display: flex;
@@ -666,6 +715,26 @@
         data-placeholder-es="Servicios, horarios, precios, preguntas frecuentes..."
         placeholder="Services, hours, pricing, FAQs..."
       ></textarea>
+      <!-- File Upload -->
+      <div class="upload-container">
+        <input type="file" id="fileUpload" accept=".txt,.text,.md,.csv" style="display: none;">
+        <button type="button" class="upload-btn" id="uploadBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span class="lang-en-inline">Upload File (.txt)</span>
+          <span class="lang-es-inline">Subir Archivo (.txt)</span>
+        </button>
+        <span class="upload-status" id="uploadStatus">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span class="lang-en-inline">File loaded</span>
+          <span class="lang-es-inline">Archivo cargado</span>
+        </span>
+      </div>
     </div>
 
     <!-- Status -->
@@ -793,6 +862,9 @@
     const websiteUrlInput = document.getElementById('websiteUrl');
     const knowledgeBaseInput = document.getElementById('knowledgeBase');
     const fetchBtn = document.getElementById('fetchBtn');
+    const fileUpload = document.getElementById('fileUpload');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadStatus = document.getElementById('uploadStatus');
     const statusBadge = document.getElementById('statusBadge');
     const statusText = document.getElementById('statusText');
     const audioLevelContainer = document.getElementById('audioLevelContainer');
@@ -1032,6 +1104,94 @@
       }
     }
 
+    // Handle file upload
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const lang = getLang();
+
+      // Validate file type
+      const validTypes = ['text/plain', 'text/markdown', 'text/csv', 'application/octet-stream'];
+      const validExtensions = ['.txt', '.text', '.md', '.csv'];
+      const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+
+      if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
+        const errorMsg = lang === 'es'
+          ? 'Por favor sube un archivo de texto (.txt, .md, .csv)'
+          : 'Please upload a text file (.txt, .md, .csv)';
+        showError(errorMsg);
+        return;
+      }
+
+      // Update UI to loading state
+      uploadBtn.classList.add('loading');
+      uploadBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="currentColor" style="animation: spin 1s linear infinite">
+          <path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z"/>
+        </svg>
+        <span class="lang-en-inline">Loading...</span>
+        <span class="lang-es-inline">Cargando...</span>
+      `;
+
+      // Read the file
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const content = e.target.result;
+
+        // Append to existing content or set new
+        const existing = knowledgeBaseInput.value.trim();
+        if (existing) {
+          knowledgeBaseInput.value = existing + '\n\n--- From Uploaded File: ' + file.name + ' ---\n' + content;
+        } else {
+          knowledgeBaseInput.value = '--- From Uploaded File: ' + file.name + ' ---\n' + content;
+        }
+
+        // Save to localStorage
+        localStorage.setItem('ringlypro_demo_knowledge', knowledgeBaseInput.value.trim());
+
+        // Update UI to success state
+        uploadBtn.classList.remove('loading');
+        uploadBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span class="lang-en-inline">Upload File (.txt)</span>
+          <span class="lang-es-inline">Subir Archivo (.txt)</span>
+        `;
+        uploadStatus.classList.add('visible');
+
+        // Hide status after 3 seconds
+        setTimeout(() => {
+          uploadStatus.classList.remove('visible');
+        }, 3000);
+
+        console.log('[Demo] File uploaded:', file.name, 'Size:', content.length, 'chars');
+        hideError();
+      };
+
+      reader.onerror = function() {
+        const errorMsg = lang === 'es'
+          ? 'Error al leer el archivo'
+          : 'Error reading file';
+        showError(errorMsg);
+        uploadBtn.classList.remove('loading');
+        uploadBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span class="lang-en-inline">Upload File (.txt)</span>
+          <span class="lang-es-inline">Subir Archivo (.txt)</span>
+        `;
+      };
+
+      reader.readAsText(file);
+    }
+
     // Get signed URL for the demo agent
     async function getDemoToken() {
       const companyName = companyNameInput.value.trim();
@@ -1215,6 +1375,8 @@ Remember: You are demonstrating RinglyPro's AI receptionist capabilities. Be imp
     startBtn.addEventListener('click', startConversation);
     stopBtn.addEventListener('click', stopConversation);
     fetchBtn.addEventListener('click', fetchWebsiteContent);
+    uploadBtn.addEventListener('click', () => fileUpload.click());
+    fileUpload.addEventListener('change', handleFileUpload);
 
     // Auto-fetch when URL is entered and user leaves field
     websiteUrlInput.addEventListener('blur', () => {
