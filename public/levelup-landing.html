@@ -1,0 +1,2619 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color: #0a0a0f;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="LevelUp - Comprehensive digital marketing solutions, premium content creation, and intelligent automation systems. Create a brand presence that demands attention.">
+    <title>LevelUp | Growth Marketing & AI Solutions Agency</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        /* ═══════════════════════════════════════════════════════════════
+           CSS RESET & BASE STYLES
+           ═══════════════════════════════════════════════════════════════ */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #1a1a2e;
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --bg-card-hover: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent-blue: #00d4ff;
+            --accent-purple: #7c3aed;
+            --accent-gold: #f59e0b;
+            --accent-gold-hover: #d97706;
+            --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%);
+            --gradient-gold: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --shadow-glow: 0 0 40px rgba(0, 212, 255, 0.3);
+            --transition-fast: 0.2s ease;
+            --transition-medium: 0.3s ease;
+            --transition-slow: 0.5s ease;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+            transition: var(--transition-fast);
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           UTILITY CLASSES
+           ═══════════════════════════════════════════════════════════════ */
+        .gradient-text {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .gradient-border {
+            position: relative;
+            background: var(--bg-card);
+            border-radius: 16px;
+        }
+
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            padding: 1px;
+            background: var(--gradient-primary);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: var(--transition-medium);
+        }
+
+        .gradient-border:hover::before {
+            opacity: 1;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 5vw, 3rem);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .section-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 48px;
+        }
+
+        .section-padding {
+            padding: 100px 0;
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(0, 212, 255, 0.5); }
+        }
+
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           BUTTONS
+           ═══════════════════════════════════════════════════════════════ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 32px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            transition: all var(--transition-medium);
+            min-width: 180px;
+        }
+
+        .btn-primary {
+            background: var(--gradient-gold);
+            color: #000;
+            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 30px rgba(245, 158, 11, 0.5);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .btn-gradient {
+            background: var(--gradient-primary);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 30px rgba(0, 212, 255, 0.5);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           NAVIGATION
+           ═══════════════════════════════════════════════════════════════ */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 20px 0;
+            transition: all var(--transition-medium);
+        }
+
+        .navbar.scrolled {
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .navbar .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .nav-link {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            transition: width var(--transition-medium);
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-cta {
+            padding: 10px 24px;
+            font-size: 0.9rem;
+            min-width: auto;
+        }
+
+        .mobile-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .mobile-toggle span {
+            width: 25px;
+            height: 2px;
+            background: var(--text-primary);
+            transition: var(--transition-medium);
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 80%;
+            max-width: 400px;
+            height: 100vh;
+            background: var(--bg-secondary);
+            padding: 80px 40px 40px;
+            transition: right var(--transition-medium);
+            z-index: 999;
+        }
+
+        .mobile-menu.active {
+            right: 0;
+        }
+
+        .mobile-menu-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 998;
+            opacity: 0;
+            transition: opacity var(--transition-medium);
+        }
+
+        .mobile-menu-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .mobile-menu .nav-link {
+            display: block;
+            font-size: 1.25rem;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mobile-menu .btn {
+            width: 100%;
+            margin-top: 24px;
+        }
+
+        .mobile-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 968px) {
+            .nav-menu {
+                display: none;
+            }
+            .mobile-toggle {
+                display: flex;
+            }
+            .mobile-menu {
+                display: block;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           HERO SECTION
+           ═══════════════════════════════════════════════════════════════ */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding: 120px 0 80px;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 50%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 100%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
+            z-index: -1;
+        }
+
+        .hero-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: -1;
+        }
+
+        .hero-content {
+            max-width: 800px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .hero-badge i {
+            color: var(--accent-gold);
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 800;
+            margin-bottom: 24px;
+            line-height: 1.1;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.125rem, 2vw, 1.375rem);
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            max-width: 650px;
+        }
+
+        .hero-features {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        .hero-feature {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .hero-feature i {
+            color: var(--accent-blue);
+            font-size: 1.125rem;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .hero-image {
+            position: absolute;
+            right: -5%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 45%;
+            max-width: 600px;
+            opacity: 0.8;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @media (max-width: 1100px) {
+            .hero-image {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .hero-buttons {
+                flex-direction: column;
+            }
+            .hero-buttons .btn {
+                width: 100%;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SOCIAL PROOF BAR
+           ═══════════════════════════════════════════════════════════════ */
+        .social-proof {
+            padding: 40px 0;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .social-proof-content {
+            text-align: center;
+        }
+
+        .social-proof p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 24px;
+        }
+
+        .industry-tags {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .industry-tag {
+            padding: 8px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            transition: var(--transition-fast);
+        }
+
+        .industry-tag:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           VALUE PROPOSITION
+           ═══════════════════════════════════════════════════════════════ */
+        .value-prop {
+            background: var(--bg-primary);
+        }
+
+        .value-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .value-card {
+            padding: 40px 32px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            text-align: center;
+            transition: all var(--transition-medium);
+        }
+
+        .value-card:hover {
+            transform: translateY(-8px);
+            background: var(--bg-card-hover);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .value-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient-primary);
+            border-radius: 20px;
+            font-size: 2rem;
+        }
+
+        .value-card h3 {
+            font-size: 1.375rem;
+            margin-bottom: 12px;
+        }
+
+        .value-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 900px) {
+            .value-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SERVICES SECTION
+           ═══════════════════════════════════════════════════════════════ */
+        .services {
+            background: var(--bg-secondary);
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+        }
+
+        .service-card {
+            padding: 32px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            transition: all var(--transition-medium);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            transform: scaleX(0);
+            transition: transform var(--transition-medium);
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+            background: var(--bg-card-hover);
+        }
+
+        .service-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .service-icon {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            color: var(--accent-blue);
+        }
+
+        .service-card h3 {
+            font-size: 1.125rem;
+            margin-bottom: 12px;
+        }
+
+        .service-card ul {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .service-card li {
+            padding: 4px 0;
+            padding-left: 16px;
+            position: relative;
+        }
+
+        .service-card li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 12px;
+            width: 6px;
+            height: 6px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+        }
+
+        @media (max-width: 1100px) {
+            .services-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           AI AUTOMATION SECTION
+           ═══════════════════════════════════════════════════════════════ */
+        .ai-section {
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 1000px;
+            height: 100%;
+            background: radial-gradient(ellipse at center, rgba(0, 212, 255, 0.08) 0%, transparent 70%);
+            z-index: 0;
+        }
+
+        .ai-section .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .ai-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: var(--gradient-primary);
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .ai-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .ai-card {
+            padding: 32px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 20px;
+            transition: all var(--transition-medium);
+        }
+
+        .ai-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+        }
+
+        .ai-card-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient-primary);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 1.25rem;
+        }
+
+        .ai-card h3 {
+            font-size: 1.125rem;
+            margin-bottom: 16px;
+        }
+
+        .ai-card ul {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .ai-card li {
+            padding: 6px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .ai-card li i {
+            color: var(--accent-blue);
+            font-size: 0.75rem;
+            margin-top: 6px;
+        }
+
+        .ai-cta {
+            text-align: center;
+            margin-top: 48px;
+        }
+
+        @media (max-width: 1000px) {
+            .ai-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 650px) {
+            .ai-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           PRICING TABLE
+           ═══════════════════════════════════════════════════════════════ */
+        .pricing {
+            background: var(--bg-secondary);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+        }
+
+        .pricing-card {
+            padding: 32px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            text-align: center;
+            transition: all var(--transition-medium);
+            position: relative;
+        }
+
+        .pricing-card.featured {
+            border-color: var(--accent-blue);
+            transform: scale(1.05);
+        }
+
+        .pricing-card.featured::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 16px;
+            background: var(--gradient-primary);
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-5px);
+        }
+
+        .pricing-plan {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .pricing-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .pricing-price span {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+        }
+
+        .pricing-annual {
+            font-size: 0.875rem;
+            color: var(--accent-gold);
+            margin-bottom: 16px;
+        }
+
+        .pricing-tokens {
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+        }
+
+        .pricing-tokens strong {
+            color: var(--accent-blue);
+        }
+
+        .pricing-features {
+            text-align: left;
+            margin-bottom: 24px;
+        }
+
+        .pricing-features li {
+            padding: 8px 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .pricing-features li i {
+            color: var(--accent-blue);
+            margin-top: 4px;
+        }
+
+        .pricing-card .btn {
+            width: 100%;
+        }
+
+        /* Pricing Toggle */
+        .pricing-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+
+        .pricing-toggle button {
+            padding: 14px 28px;
+            border-radius: 50px;
+            border: 2px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-medium);
+        }
+
+        .pricing-toggle button.active {
+            background: var(--gradient-primary);
+            border-color: transparent;
+            color: #fff;
+        }
+
+        .pricing-toggle button:hover:not(.active) {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        /* Monthly/Annual Price Display */
+        .monthly-price, .annual-price {
+            display: none;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        body.show-monthly .monthly-price {
+            display: inline;
+        }
+
+        body.show-annual .annual-price {
+            display: inline;
+        }
+
+        @media (max-width: 1100px) {
+            .pricing-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .pricing-card.featured {
+                transform: none;
+            }
+            .pricing-card.featured:hover {
+                transform: translateY(-5px);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           INDUSTRIES SECTION
+           ═══════════════════════════════════════════════════════════════ */
+        .industries {
+            background: var(--bg-primary);
+        }
+
+        .industries-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .industry-card {
+            padding: 16px 28px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all var(--transition-medium);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .industry-card i {
+            color: var(--accent-blue);
+        }
+
+        .industry-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-blue);
+            transform: translateY(-3px);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           PROCESS SECTION
+           ═══════════════════════════════════════════════════════════════ */
+        .process {
+            background: var(--bg-secondary);
+        }
+
+        .process-timeline {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            position: relative;
+        }
+
+        .process-timeline::before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 16.66%;
+            right: 16.66%;
+            height: 2px;
+            background: var(--border-color);
+        }
+
+        .process-step {
+            text-align: center;
+            position: relative;
+        }
+
+        .process-number {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            border: 2px solid var(--accent-blue);
+            border-radius: 50%;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            position: relative;
+            z-index: 1;
+            transition: all var(--transition-medium);
+        }
+
+        .process-step:hover .process-number {
+            background: var(--gradient-primary);
+            color: #fff;
+            border-color: transparent;
+            transform: scale(1.1);
+        }
+
+        .process-step h3 {
+            font-size: 1.125rem;
+            margin-bottom: 12px;
+        }
+
+        .process-step p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 900px) {
+            .process-timeline {
+                grid-template-columns: 1fr;
+            }
+            .process-timeline::before {
+                display: none;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           BENEFITS SECTION
+           ═══════════════════════════════════════════════════════════════ */
+        .benefits {
+            background: var(--bg-primary);
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            transition: all var(--transition-medium);
+        }
+
+        .benefit-item:hover {
+            border-color: var(--accent-blue);
+            transform: translateX(5px);
+        }
+
+        .benefit-icon {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient-primary);
+            border-radius: 10px;
+            font-size: 1.25rem;
+        }
+
+        .benefit-content h4 {
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+
+        .benefit-content p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            .benefits-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           FAQ SECTION
+           ═══════════════════════════════════════════════════════════════ */
+        .faq {
+            background: var(--bg-secondary);
+        }
+
+        .faq-grid {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all var(--transition-medium);
+        }
+
+        .faq-item:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .faq-question {
+            width: 100%;
+            padding: 20px 24px;
+            background: var(--bg-card);
+            border: none;
+            color: var(--text-primary);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            transition: all var(--transition-medium);
+        }
+
+        .faq-question:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .faq-question i {
+            color: var(--accent-blue);
+            transition: transform var(--transition-medium);
+        }
+
+        .faq-item.active .faq-question i {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-medium);
+        }
+
+        .faq-answer-content {
+            padding: 0 24px 20px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 300px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           CONTACT / CTA SECTION
+           ═══════════════════════════════════════════════════════════════ */
+        .contact {
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            position: relative;
+        }
+
+        .contact::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at center bottom, rgba(245, 158, 11, 0.1) 0%, transparent 60%);
+        }
+
+        .contact .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: start;
+        }
+
+        .contact-content h2 {
+            font-size: clamp(2rem, 4vw, 2.5rem);
+            margin-bottom: 16px;
+        }
+
+        .contact-content > p {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+            margin-bottom: 32px;
+        }
+
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .contact-info-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+
+        .contact-info-item i {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient-primary);
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .contact-info-item span {
+            color: var(--text-secondary);
+        }
+
+        .contact-form-wrapper {
+            padding: 40px;
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+        }
+
+        .contact-form-wrapper h3 {
+            font-size: 1.5rem;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 18px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all var(--transition-fast);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group select {
+            cursor: pointer;
+        }
+
+        .contact-form-wrapper .btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.1rem;
+        }
+
+        /* GHL Form Embed Placeholder */
+        .ghl-form-placeholder {
+            padding: 40px;
+            background: var(--bg-secondary);
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 900px) {
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           FOOTER
+           ═══════════════════════════════════════════════════════════════ */
+        .footer {
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border-color);
+            padding: 60px 0 30px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 48px;
+        }
+
+        .footer-brand .logo {
+            margin-bottom: 16px;
+            display: inline-block;
+        }
+
+        .footer-brand p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+            max-width: 300px;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 12px;
+        }
+
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            transition: all var(--transition-medium);
+        }
+
+        .footer-social a:hover {
+            background: var(--gradient-primary);
+            border-color: transparent;
+            color: #fff;
+            transform: translateY(-3px);
+        }
+
+        .footer-links h4 {
+            font-size: 1rem;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .footer-links ul li {
+            margin-bottom: 12px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-blue);
+        }
+
+        .footer-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 16px;
+        }
+
+        .footer-badge img {
+            height: 20px;
+        }
+
+        .footer-bottom {
+            padding-top: 30px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-bottom p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .footer-bottom-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer-bottom-links a {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .footer-bottom-links a:hover {
+            color: var(--accent-blue);
+        }
+
+        @media (max-width: 900px) {
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+            .footer-bottom {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           PACKAGES SECTION
+           ═══════════════════════════════════════════════════════════════ */
+        .packages {
+            background: var(--bg-primary);
+        }
+
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .package-card {
+            padding: 40px 32px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            text-align: center;
+            transition: all var(--transition-medium);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .package-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .package-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .package-card h3 {
+            font-size: 1.375rem;
+            margin-bottom: 16px;
+        }
+
+        .package-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 900px) {
+            .packages-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #0a0a0f; color: #ffffff; min-height: 100vh;">
+    <!-- ═══════════════════════════════════════════════════════════════
+         NAVIGATION
+         ═══════════════════════════════════════════════════════════════ -->
+    <nav class="navbar" id="navbar" style="position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 20px 0;">
+        <div class="container">
+            <a href="#" class="logo" style="font-family: 'Montserrat', sans-serif; font-size: 1.75rem; font-weight: 800; background: linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">LevelUp</a>
+
+            <ul class="nav-menu">
+                <li><a href="#services" class="nav-link">Solutions</a></li>
+                <li><a href="#ai-automation" class="nav-link">Automation</a></li>
+                <li><a href="#industries" class="nav-link">Markets</a></li>
+                <li><a href="#process" class="nav-link">Our Process</a></li>
+                <li><a href="#contact" class="btn btn-primary nav-cta">Get Started</a></li>
+            </ul>
+
+            <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu-overlay" id="mobileOverlay"></div>
+    <div class="mobile-menu" id="mobileMenu">
+        <button class="mobile-close" id="mobileClose" aria-label="Close menu">
+            <i class="fas fa-times"></i>
+        </button>
+        <a href="#services" class="nav-link">Solutions</a>
+        <a href="#ai-automation" class="nav-link">Automation</a>
+        <a href="#industries" class="nav-link">Markets</a>
+        <a href="#process" class="nav-link">Our Process</a>
+        <a href="#faq" class="nav-link">FAQs</a>
+        <a href="#contact" class="btn btn-primary">Schedule a Consultation</a>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         HERO SECTION
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="hero" id="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-grid"></div>
+
+        <div class="container">
+            <div class="hero-content fade-in visible" style="opacity: 1; transform: none;">
+                <div class="hero-badge">
+                    <i class="fas fa-bolt"></i>
+                    <span>Growth Marketing + Smart Automation</span>
+                </div>
+
+                <h1>Create a Presence That <span class="gradient-text">Commands Attention</span></h1>
+
+                <p class="hero-subtitle">Complete marketing solutions, premium creative production, and intelligent automation systems — your single strategic growth partner.</p>
+
+                <div class="hero-features">
+                    <div class="hero-feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Results that matter, not hollow engagement numbers</span>
+                    </div>
+                    <div class="hero-feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Round-the-clock AI communication — capture every opportunity</span>
+                    </div>
+                    <div class="hero-feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Purposeful content that establishes expertise & drives conversions</span>
+                    </div>
+                </div>
+
+                <div class="hero-buttons">
+                    <a href="#contact" class="btn btn-primary">
+                        <i class="fas fa-calendar-check"></i>
+                        Schedule Your Consultation
+                    </a>
+                    <a href="#services" class="btn btn-secondary">
+                        <i class="fas fa-arrow-down"></i>
+                        Explore Our Solutions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         SOCIAL PROOF BAR
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="social-proof">
+        <div class="container">
+            <div class="social-proof-content fade-in">
+                <p>Partnering with businesses across</p>
+                <div class="industry-tags">
+                    <span class="industry-tag">Beauty</span>
+                    <span class="industry-tag">Healthcare</span>
+                    <span class="industry-tag">Fitness</span>
+                    <span class="industry-tag">Hospitality</span>
+                    <span class="industry-tag">E-commerce</span>
+                    <span class="industry-tag">Professional Services</span>
+                    <span class="industry-tag">Restaurants</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         VALUE PROPOSITION
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="value-prop section-padding">
+        <div class="container">
+            <h2 class="section-title fade-in">Why Choose <span class="gradient-text">LevelUp</span>?</h2>
+            <p class="section-subtitle fade-in">All the resources for your success — planning, creativity, and technology unified.</p>
+
+            <div class="value-grid">
+                <div class="value-card fade-in">
+                    <div class="value-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <h3>Targeted Expansion</h3>
+                    <p>End-to-end campaigns refined by analytics. Our priority is returns, not superficial numbers.</p>
+                </div>
+
+                <div class="value-card fade-in">
+                    <div class="value-icon">
+                        <i class="fas fa-film"></i>
+                    </div>
+                    <h3>Premium Production</h3>
+                    <p>Studio-quality video, expert photography, and 45+ monthly posts designed to drive action.</p>
+                </div>
+
+                <div class="value-card fade-in">
+                    <div class="value-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>Intelligent Automation</h3>
+                    <p>Always-on AI for voice, text, and WhatsApp. Smart call routing ensures no prospect slips away.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         SERVICES SECTION
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="services section-padding" id="services">
+        <div class="container">
+            <h2 class="section-title fade-in">Complete <span class="gradient-text">Marketing Solutions</span></h2>
+            <p class="section-subtitle fade-in">End-to-end services to elevate your brand, attract prospects, and accelerate growth.</p>
+
+            <div class="services-grid">
+                <div class="service-card fade-in">
+                    <div class="service-icon">
+                        <i class="fas fa-crosshairs"></i>
+                    </div>
+                    <h3>Growth Strategy</h3>
+                    <ul>
+                        <li>Tailored marketing roadmaps</li>
+                        <li>Market intelligence reports</li>
+                        <li>Customer journey design</li>
+                        <li>Performance benchmarking</li>
+                    </ul>
+                </div>
+
+                <div class="service-card fade-in">
+                    <div class="service-icon">
+                        <i class="fas fa-ad"></i>
+                    </div>
+                    <h3>Performance Ads</h3>
+                    <ul>
+                        <li>Google Search & Display</li>
+                        <li>Meta, TikTok, LinkedIn campaigns</li>
+                        <li>Prospect acquisition funnels</li>
+                        <li>Regional & national targeting</li>
+                    </ul>
+                </div>
+
+                <div class="service-card fade-in">
+                    <div class="service-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3>Search & Organic</h3>
+                    <ul>
+                        <li>Visibility optimization</li>
+                        <li>Thought leadership content</li>
+                        <li>Technical & link building</li>
+                        <li>Neighborhood SEO tactics</li>
+                    </ul>
+                </div>
+
+                <div class="service-card fade-in">
+                    <div class="service-icon">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <h3>Video Creation</h3>
+                    <ul>
+                        <li>Expert-level production</li>
+                        <li>Story development & post</li>
+                        <li>Animated visuals</li>
+                        <li>Compelling narratives</li>
+                    </ul>
+                </div>
+
+                <div class="service-card fade-in">
+                    <div class="service-icon">
+                        <i class="fas fa-hashtag"></i>
+                    </div>
+                    <h3>Social Presence</h3>
+                    <ul>
+                        <li>Complete platform oversight</li>
+                        <li>45+ monthly publications</li>
+                        <li>Audience interaction</li>
+                        <li>Natural follower building</li>
+                    </ul>
+                </div>
+
+                <div class="service-card fade-in">
+                    <div class="service-icon">
+                        <i class="fas fa-palette"></i>
+                    </div>
+                    <h3>Brand Building</h3>
+                    <ul>
+                        <li>Founder positioning strategy</li>
+                        <li>Visual identity systems</li>
+                        <li>Voice & tone guidelines</li>
+                        <li>Design language creation</li>
+                    </ul>
+                </div>
+
+                <div class="service-card fade-in">
+                    <div class="service-icon">
+                        <i class="fas fa-laptop-code"></i>
+                    </div>
+                    <h3>Web Solutions</h3>
+                    <ul>
+                        <li>High-converting sites</li>
+                        <li>Campaign landing pages</li>
+                        <li>Online storefronts</li>
+                        <li>Interactive experiences</li>
+                    </ul>
+                </div>
+
+                <div class="service-card fade-in">
+                    <div class="service-icon">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <h3>Online Retail</h3>
+                    <ul>
+                        <li>Product positioning</li>
+                        <li>Checkout optimization</li>
+                        <li>Imagery that converts</li>
+                        <li>Loyalty & retention programs</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         AI AUTOMATION SECTION
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="ai-section section-padding" id="ai-automation">
+        <div class="container">
+            <div class="ai-badge fade-in">
+                <i class="fas fa-microchip"></i>
+                Driven by RinglyPro
+            </div>
+
+            <h2 class="section-title fade-in">Smart <span class="gradient-text">Automation Systems</span></h2>
+            <p class="section-subtitle fade-in">Capture every opportunity. Our AI manages calls, conversations, and bookings around the clock.</p>
+
+            <div class="ai-grid">
+                <div class="ai-card fade-in">
+                    <div class="ai-card-icon">
+                        <i class="fas fa-phone-volume"></i>
+                    </div>
+                    <h3>Virtual Call Assistant</h3>
+                    <ul>
+                        <li><i class="fas fa-circle"></i> Rachel (English) & Lina (Spanish) voices</li>
+                        <li><i class="fas fa-circle"></i> Around-the-clock call management</li>
+                        <li><i class="fas fa-circle"></i> Conversational AI comprehension</li>
+                        <li><i class="fas fa-circle"></i> Hands-free booking system</li>
+                        <li><i class="fas fa-circle"></i> Syncs with Google, GHL, HubSpot</li>
+                    </ul>
+                </div>
+
+                <div class="ai-card fade-in">
+                    <div class="ai-card-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3>Unified Communications</h3>
+                    <ul>
+                        <li><i class="fas fa-circle"></i> WhatsApp Business connectivity</li>
+                        <li><i class="fas fa-circle"></i> Bidirectional SMS via Twilio</li>
+                        <li><i class="fas fa-circle"></i> Automated email via SendGrid</li>
+                        <li><i class="fas fa-circle"></i> Instant replies & nurture sequences</li>
+                        <li><i class="fas fa-circle"></i> Complete message archives</li>
+                    </ul>
+                </div>
+
+                <div class="ai-card fade-in">
+                    <div class="ai-card-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3>Intelligent Booking</h3>
+                    <ul>
+                        <li><i class="fas fa-circle"></i> Connects multiple calendars</li>
+                        <li><i class="fas fa-circle"></i> Live availability checks</li>
+                        <li><i class="fas fa-circle"></i> Overlap prevention</li>
+                        <li><i class="fas fa-circle"></i> Cross-platform notifications</li>
+                        <li><i class="fas fa-circle"></i> Vagaro beauty/wellness link</li>
+                    </ul>
+                </div>
+
+                <div class="ai-card fade-in">
+                    <div class="ai-card-icon">
+                        <i class="fas fa-address-book"></i>
+                    </div>
+                    <h3>Contact & Pipeline Hub</h3>
+                    <ul>
+                        <li><i class="fas fa-circle"></i> Comprehensive client records</li>
+                        <li><i class="fas fa-circle"></i> Interaction history tracking</li>
+                        <li><i class="fas fa-circle"></i> Intelligent priority ranking</li>
+                        <li><i class="fas fa-circle"></i> Visual sales funnel</li>
+                        <li><i class="fas fa-circle"></i> Auto prospect collection</li>
+                    </ul>
+                </div>
+
+                <div class="ai-card fade-in">
+                    <div class="ai-card-icon">
+                        <i class="fas fa-cut"></i>
+                    </div>
+                    <h3>Beauty Industry Connect</h3>
+                    <ul>
+                        <li><i class="fas fa-circle"></i> Vagaro bidirectional link</li>
+                        <li><i class="fas fa-circle"></i> Client data synchronization</li>
+                        <li><i class="fas fa-circle"></i> Team availability updates</li>
+                        <li><i class="fas fa-circle"></i> Booking confirmations sent</li>
+                        <li><i class="fas fa-circle"></i> Transaction monitoring</li>
+                    </ul>
+                </div>
+
+                <div class="ai-card fade-in">
+                    <div class="ai-card-icon">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <h3>Image Transformation</h3>
+                    <ul>
+                        <li><i class="fas fa-circle"></i> Upgrade smartphone captures</li>
+                        <li><i class="fas fa-circle"></i> AI-enhanced light & framing</li>
+                        <li><i class="fas fa-circle"></i> Studio-grade results</li>
+                        <li><i class="fas fa-circle"></i> Bulk image processing</li>
+                        <li><i class="fas fa-circle"></i> From only $1 per image</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="ai-cta fade-in">
+                <a href="#pricing" class="btn btn-gradient">
+                    <i class="fas fa-rocket"></i>
+                    View Automation Packages
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         PRICING SECTION
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="pricing section-padding" id="pricing">
+        <div class="container">
+            <h2 class="section-title fade-in">RinglyPro <span class="gradient-text">Automation Tiers</span></h2>
+            <p class="section-subtitle fade-in">Flexible token-based pricing. Pay only for what you use. No hidden fees.</p>
+
+            <!-- Pricing Toggle -->
+            <div class="pricing-toggle fade-in">
+                <button onclick="setPricingMode('monthly')" class="active" id="btn-monthly">Monthly</button>
+                <button onclick="setPricingMode('annual')" id="btn-annual">Annual (Save 15%)</button>
+            </div>
+
+            <div class="pricing-grid">
+                <div class="pricing-card fade-in">
+                    <div class="pricing-plan">Free</div>
+                    <div class="pricing-price">$0<span>/mo</span></div>
+                    <div class="pricing-annual">&nbsp;</div>
+                    <div class="pricing-tokens"><strong>100</strong> tokens/month</div>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check"></i> All AI services available</li>
+                        <li><i class="fas fa-check"></i> AI Copilot access</li>
+                        <li><i class="fas fa-check"></i> Basic support</li>
+                        <li><i class="fas fa-check"></i> No rollover</li>
+                    </ul>
+                    <a href="https://aiagent.ringlypro.com/signup?plan=free&amount=0&tokens=100&billing=monthly" class="btn btn-secondary">Get Started Free</a>
+                </div>
+
+                <div class="pricing-card fade-in">
+                    <div class="pricing-plan">Starter</div>
+                    <div class="pricing-price">
+                        <span class="monthly-price">$45</span>
+                        <span class="annual-price">$38</span>
+                        <span>/mo</span>
+                    </div>
+                    <div class="pricing-annual">100 minutes of voice</div>
+                    <div class="pricing-tokens"><strong>500</strong> tokens/month</div>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check"></i> All services included</li>
+                        <li><i class="fas fa-check"></i> AI Copilot unlimited</li>
+                        <li><i class="fas fa-check"></i> Priority support</li>
+                        <li><i class="fas fa-check"></i> Remaining rollover</li>
+                        <li><i class="fas fa-check"></i> Business Collector</li>
+                    </ul>
+                    <a href="https://aiagent.ringlypro.com/signup?plan=starter&amount=45&tokens=500&billing=monthly" class="btn btn-secondary">Subscribe Now</a>
+                </div>
+
+                <div class="pricing-card featured fade-in">
+                    <div class="pricing-plan">Growth</div>
+                    <div class="pricing-price">
+                        <span class="monthly-price">$180</span>
+                        <span class="annual-price">$153</span>
+                        <span>/mo</span>
+                    </div>
+                    <div class="pricing-annual">400 minutes of voice</div>
+                    <div class="pricing-tokens"><strong>2,000</strong> tokens/month</div>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check"></i> Everything in Starter</li>
+                        <li><i class="fas fa-check"></i> Advanced analytics</li>
+                        <li><i class="fas fa-check"></i> Outbound campaigns</li>
+                        <li><i class="fas fa-check"></i> Remaining rollover</li>
+                        <li><i class="fas fa-check"></i> Team collaboration</li>
+                    </ul>
+                    <a href="https://aiagent.ringlypro.com/signup?plan=growth&amount=180&tokens=2000&billing=monthly" class="btn btn-primary">Subscribe Now</a>
+                </div>
+
+                <div class="pricing-card fade-in">
+                    <div class="pricing-plan">Professional</div>
+                    <div class="pricing-price">
+                        <span class="monthly-price">$675</span>
+                        <span class="annual-price">$574</span>
+                        <span>/mo</span>
+                    </div>
+                    <div class="pricing-annual">1,500 minutes of voice</div>
+                    <div class="pricing-tokens"><strong>7,500</strong> tokens/month</div>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check"></i> Everything in Growth</li>
+                        <li><i class="fas fa-check"></i> Remaining rollover</li>
+                        <li><i class="fas fa-check"></i> Dedicated account manager</li>
+                        <li><i class="fas fa-check"></i> White-label options</li>
+                        <li><i class="fas fa-check"></i> 24/7 priority support</li>
+                    </ul>
+                    <a href="https://aiagent.ringlypro.com/signup?plan=professional&amount=675&tokens=7500&billing=monthly" class="btn btn-secondary">Subscribe Now</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         PACKAGES SECTION
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="packages section-padding">
+        <div class="container">
+            <h2 class="section-title fade-in">Marketing <span class="gradient-text">Bundles</span></h2>
+            <p class="section-subtitle fade-in">All-inclusive programs crafted for varying objectives and expansion phases.</p>
+
+            <div class="packages-grid">
+                <div class="package-card fade-in">
+                    <h3>The Dual Build</h3>
+                    <p>Parallel approaches for your personal identity + company identity with 100+ monthly publications. Ideal for executives cultivating individual authority alongside corporate recognition.</p>
+                </div>
+
+                <div class="package-card fade-in">
+                    <h3>The Founder's Effect™</h3>
+                    <p>Executive-focused positioning with cinematic visuals and 45+ targeted posts each month. Transform into the go-to voice within your market.</p>
+                </div>
+
+                <div class="package-card fade-in">
+                    <h3>Business Growth Accelerator</h3>
+                    <p>Intentional content, sophisticated metrics, and interaction refinement with 45+ posts. Built for organizations primed to amplify their online footprint.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         INDUSTRIES SECTION
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="industries section-padding" id="industries">
+        <div class="container">
+            <h2 class="section-title fade-in">Markets We <span class="gradient-text">Specialize In</span></h2>
+            <p class="section-subtitle fade-in">Personalized approaches designed for your unique sector and operational requirements.</p>
+
+            <div class="industries-grid fade-in">
+                <div class="industry-card"><i class="fas fa-spa"></i> Salons & Spas</div>
+                <div class="industry-card"><i class="fas fa-heart"></i> Beauty & Cosmetics</div>
+                <div class="industry-card"><i class="fas fa-stethoscope"></i> Medical & Dental</div>
+                <div class="industry-card"><i class="fas fa-hospital"></i> Healthcare</div>
+                <div class="industry-card"><i class="fas fa-hotel"></i> Hospitality</div>
+                <div class="industry-card"><i class="fas fa-dumbbell"></i> Fitness & Wellness</div>
+                <div class="industry-card"><i class="fas fa-football-ball"></i> Sports & Athletics</div>
+                <div class="industry-card"><i class="fas fa-camera-retro"></i> Lifestyle Brands</div>
+                <div class="industry-card"><i class="fas fa-store"></i> Local Businesses</div>
+                <div class="industry-card"><i class="fas fa-gavel"></i> Attorneys & Legal</div>
+                <div class="industry-card"><i class="fas fa-shopping-cart"></i> E-commerce</div>
+                <div class="industry-card"><i class="fas fa-utensils"></i> Restaurants</div>
+                <div class="industry-card"><i class="fas fa-user-tie"></i> Founders & CEOs</div>
+                <div class="industry-card"><i class="fas fa-handshake"></i> B2B & High-Ticket</div>
+                <div class="industry-card"><i class="fas fa-building"></i> Agencies</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         PROCESS SECTION
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="process section-padding" id="process">
+        <div class="container">
+            <h2 class="section-title fade-in">Our <span class="gradient-text">Methodology</span></h2>
+            <p class="section-subtitle fade-in">A battle-tested framework engineered to produce quantifiable outcomes.</p>
+
+            <div class="process-timeline">
+                <div class="process-step fade-in">
+                    <div class="process-number">1</div>
+                    <h3>Initial Consultation</h3>
+                    <p>We begin with thorough exploration of your objectives, target audience, and market positioning.</p>
+                </div>
+
+                <div class="process-step fade-in">
+                    <div class="process-number">2</div>
+                    <h3>Blueprint & Roadmap</h3>
+                    <p>Bespoke plan featuring customized offerings, defined outputs, and explicit success metrics.</p>
+                </div>
+
+                <div class="process-step fade-in">
+                    <div class="process-number">3</div>
+                    <h3>Kickoff Phase</h3>
+                    <p>Orientation materials, identity assessment, and comprehensive execution framework.</p>
+                </div>
+
+                <div class="process-step fade-in">
+                    <div class="process-number">4</div>
+                    <h3>Content Development</h3>
+                    <p>Complete production journey: ideation, scripting, capture, post-production, and refinement.</p>
+                </div>
+
+                <div class="process-step fade-in">
+                    <div class="process-number">5</div>
+                    <h3>Go-Live Execution</h3>
+                    <p>Deploy across paid and organic platforms with intelligent automation activated.</p>
+                </div>
+
+                <div class="process-step fade-in">
+                    <div class="process-number">6</div>
+                    <h3>Refine & Review</h3>
+                    <p>Analytics-informed improvements with periodic performance summaries and return tracking.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         BENEFITS SECTION
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="benefits section-padding">
+        <div class="container">
+            <h2 class="section-title fade-in">Your <span class="gradient-text">Advantages</span></h2>
+            <p class="section-subtitle fade-in">Everything needed to expand your brand and enterprise.</p>
+
+            <div class="benefits-grid">
+                <div class="benefit-item fade-in">
+                    <div class="benefit-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="benefit-content">
+                        <h4>Outcome-Focused Approach</h4>
+                        <p>Our emphasis is on returns and tangible results — not empty statistics.</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item fade-in">
+                    <div class="benefit-icon"><i class="fas fa-film"></i></div>
+                    <div class="benefit-content">
+                        <h4>Striking Visual Content</h4>
+                        <p>Top-tier video and imagery that distinguishes your brand from competitors.</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item fade-in">
+                    <div class="benefit-icon"><i class="fas fa-robot"></i></div>
+                    <div class="benefit-content">
+                        <h4>Always-On AI Systems</h4>
+                        <p>Capture every prospect with smart voice, text, and WhatsApp response.</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item fade-in">
+                    <div class="benefit-icon"><i class="fas fa-layer-group"></i></div>
+                    <div class="benefit-content">
+                        <h4>Cross-Platform Mastery</h4>
+                        <p>Advertising, organic reach, content, search, and websites — one unified partner.</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item fade-in">
+                    <div class="benefit-icon"><i class="fas fa-seedling"></i></div>
+                    <div class="benefit-content">
+                        <h4>Genuine Brand Cultivation</h4>
+                        <p>Natural expansion that fosters devoted audiences and lasting impact.</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item fade-in">
+                    <div class="benefit-icon"><i class="fas fa-sliders-h"></i></div>
+                    <div class="benefit-content">
+                        <h4>Personalized Strategies</h4>
+                        <p>No template approaches — plans crafted around your distinct objectives.</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item fade-in">
+                    <div class="benefit-icon"><i class="fas fa-globe-americas"></i></div>
+                    <div class="benefit-content">
+                        <h4>Community + National Scale</h4>
+                        <p>Support businesses nationwide with equally focused strategic execution.</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item fade-in">
+                    <div class="benefit-icon"><i class="fas fa-calendar-check"></i></div>
+                    <div class="benefit-content">
+                        <h4>Effortless Booking</h4>
+                        <p>AI places appointments straight into your schedule with no manual steps.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         FAQ SECTION
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="faq section-padding" id="faq">
+        <div class="container">
+            <h2 class="section-title fade-in">Common <span class="gradient-text">Inquiries</span></h2>
+            <p class="section-subtitle fade-in">Curious about something? Find your answers here.</p>
+
+            <div class="faq-grid">
+                <div class="faq-item fade-in">
+                    <button class="faq-question">
+                        Which sectors do you support?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            We partner with diverse sectors including salons & spas, beauty, healthcare, fitness, hospitality, legal professionals, online retail, restaurants, executives, and beyond. Each approach is adapted to your industry's specific demands.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item fade-in">
+                    <button class="faq-question">
+                        How does the virtual assistant function?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            Our AI agents (Rachel for English, Lina for Spanish) manage incoming calls continuously using conversational AI. They field inquiries, schedule appointments directly in your system, dispatch confirmations, and sync with your contact database — entirely hands-free.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item fade-in">
+                    <button class="faq-question">
+                        What do your bundles contain?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            Bundles differ based on content quantity, production requirements, ad budget, and automation scope. We develop tailored proposals following consultations to match your precise needs. Typical inclusions are planning, content production, distribution, and reporting.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item fade-in">
+                    <button class="faq-question">
+                        When can I expect to see progress?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            The majority of clients observe meaningful engagement and brand definition within 90 days. We suggest 6-month partnerships for sustained, trackable improvements. Automation advantages (capturing all opportunities) begin working right away after deployment.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item fade-in">
+                    <button class="faq-question">
+                        Is AI automation available on its own?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            Absolutely! RinglyPro AI capabilities are offered as independent subscriptions beginning at zero cost. Access our virtual receptionist, messaging hub, booking tools, and contact management without committing to comprehensive marketing packages.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item fade-in">
+                    <button class="faq-question">
+                        Which scheduling platforms connect with your system?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            We link with Google Calendar, GoHighLevel, HubSpot, Vagaro (for beauty/wellness), and Zoho Calendar. Our AI verifies live availability and secures bookings instantly, with built-in overlap prevention.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         CONTACT SECTION
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="contact section-padding" id="contact">
+        <div class="container">
+            <div class="contact-grid">
+                <div class="contact-content fade-in">
+                    <h2>Prepared to <span class="gradient-text">Elevate</span> Your Brand?</h2>
+                    <p>Reserve a complimentary consultation and let's create something remarkable together.</p>
+
+                    <div class="contact-info">
+                        <div class="contact-info-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Reply within one business day</span>
+                        </div>
+                        <div class="contact-info-item">
+                            <i class="fas fa-video"></i>
+                            <span>Complimentary 30-minute planning session</span>
+                        </div>
+                        <div class="contact-info-item">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Tailored proposal provided</span>
+                        </div>
+                    </div>
+
+                    <div class="footer-badge" style="margin-top: 32px;">
+                        <i class="fas fa-microchip"></i>
+                        Smart Automation via RinglyPro
+                    </div>
+                </div>
+
+                <div class="contact-form-wrapper fade-in">
+                    <h3>Reserve Your Consultation</h3>
+
+                    <!-- GHL FORM EMBED HERE -->
+                    <!-- Replace this form with your GHL form embed code -->
+                    <form id="contactForm">
+                        <div class="form-group">
+                            <label for="name">Your Name *</label>
+                            <input type="text" id="name" name="name" required placeholder="John Smith">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" name="email" required placeholder="john@company.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Contact Number</label>
+                            <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="business">Your Industry *</label>
+                            <select id="business" name="business" required>
+                                <option value="">Choose your sector...</option>
+                                <option value="salon-spa">Salon & Spa</option>
+                                <option value="beauty">Beauty & Cosmetics</option>
+                                <option value="medical">Medical/Dental</option>
+                                <option value="fitness">Fitness & Wellness</option>
+                                <option value="hospitality">Hospitality</option>
+                                <option value="restaurant">Restaurant & Food</option>
+                                <option value="ecommerce">E-commerce</option>
+                                <option value="attorney">Attorney/Legal</option>
+                                <option value="founder">Founder/CEO</option>
+                                <option value="agency">Agency</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="message">What brings you here?</label>
+                            <textarea id="message" name="message" placeholder="Share your objectives with us..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-calendar-check"></i>
+                            Schedule My Consultation
+                        </button>
+                    </form>
+                    <!-- END GHL FORM EMBED -->
+
+                    <!-- Alternative: GHL Calendar Embed Placeholder
+                    <div class="ghl-form-placeholder">
+                        <p>GHL CALENDAR EMBED HERE</p>
+                    </div>
+                    -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         FOOTER
+         ═══════════════════════════════════════════════════════════════ -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="logo">LevelUp</a>
+                    <p>Comprehensive marketing solutions, premium content creation, and intelligent automation technology. Create a brand presence that demands attention.</p>
+                    <div class="footer-social">
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                    <div class="footer-badge">
+                        <i class="fas fa-microchip"></i>
+                        Driven by RinglyPro
+                    </div>
+                </div>
+
+                <div class="footer-links">
+                    <h4>Solutions</h4>
+                    <ul>
+                        <li><a href="#services">Growth Strategy</a></li>
+                        <li><a href="#services">Performance Ads</a></li>
+                        <li><a href="#services">Search & Content</a></li>
+                        <li><a href="#services">Video Creation</a></li>
+                        <li><a href="#services">Social Presence</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-links">
+                    <h4>Automation</h4>
+                    <ul>
+                        <li><a href="#ai-automation">Virtual Assistant</a></li>
+                        <li><a href="#ai-automation">Text & WhatsApp</a></li>
+                        <li><a href="#ai-automation">Intelligent Booking</a></li>
+                        <li><a href="#ai-automation">Contact Hub</a></li>
+                        <li><a href="#pricing">Pricing Tiers</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-links">
+                    <h4>About</h4>
+                    <ul>
+                        <li><a href="#process">Our Methodology</a></li>
+                        <li><a href="#industries">Markets We Serve</a></li>
+                        <li><a href="#faq">Common Inquiries</a></li>
+                        <li><a href="#contact">Get In Touch</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2025 LevelUp. All rights reserved.</p>
+                <div class="footer-bottom-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         JAVASCRIPT
+         ═══════════════════════════════════════════════════════════════ -->
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // NAVBAR SCROLL EFFECT
+        // ═══════════════════════════════════════════════════════════════
+        const navbar = document.getElementById('navbar');
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // MOBILE MENU
+        // ═══════════════════════════════════════════════════════════════
+        const mobileToggle = document.getElementById('mobileToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+        const mobileClose = document.getElementById('mobileClose');
+        const mobileLinks = mobileMenu.querySelectorAll('.nav-link, .btn');
+
+        function openMobileMenu() {
+            mobileMenu.classList.add('active');
+            mobileOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileMenu() {
+            mobileMenu.classList.remove('active');
+            mobileOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        mobileToggle.addEventListener('click', openMobileMenu);
+        mobileClose.addEventListener('click', closeMobileMenu);
+        mobileOverlay.addEventListener('click', closeMobileMenu);
+
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', closeMobileMenu);
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // SMOOTH SCROLL FOR ANCHOR LINKS
+        // ═══════════════════════════════════════════════════════════════
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    const offset = 80; // Account for fixed navbar
+                    const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - offset;
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // FADE IN ANIMATIONS ON SCROLL
+        // ═══════════════════════════════════════════════════════════════
+        const fadeElements = document.querySelectorAll('.fade-in');
+
+        const fadeObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    fadeObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        fadeElements.forEach(element => {
+            fadeObserver.observe(element);
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // FAQ ACCORDION
+        // ═══════════════════════════════════════════════════════════════
+        const faqItems = document.querySelectorAll('.faq-item');
+
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question');
+
+            question.addEventListener('click', () => {
+                const isActive = item.classList.contains('active');
+
+                // Close all other items
+                faqItems.forEach(otherItem => {
+                    otherItem.classList.remove('active');
+                });
+
+                // Toggle current item
+                if (!isActive) {
+                    item.classList.add('active');
+                }
+            });
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // FORM HANDLING (Basic validation)
+        // ═══════════════════════════════════════════════════════════════
+        const contactForm = document.getElementById('contactForm');
+
+        if (contactForm) {
+            contactForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // Get form data
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData);
+
+                // Basic validation
+                if (!data.name || !data.email || !data.business) {
+                    alert('Please fill in all required fields.');
+                    return;
+                }
+
+                // Email validation
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(data.email)) {
+                    alert('Please enter a valid email address.');
+                    return;
+                }
+
+                // Here you would typically send to your backend or GHL
+                // For now, show success message
+                alert('Thank you! We\'ll reach out within 24 hours to arrange your consultation.');
+                this.reset();
+
+                // If using GHL, you can uncomment and modify:
+                // window.location.href = 'YOUR_GHL_THANK_YOU_PAGE';
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // PRICING TOGGLE
+        // ═══════════════════════════════════════════════════════════════
+        function setPricingMode(mode) {
+            const body = document.body;
+            const btnMonthly = document.getElementById('btn-monthly');
+            const btnAnnual = document.getElementById('btn-annual');
+
+            if (mode === 'monthly') {
+                body.classList.remove('show-annual');
+                body.classList.add('show-monthly');
+                btnMonthly.classList.add('active');
+                btnAnnual.classList.remove('active');
+            } else {
+                body.classList.remove('show-monthly');
+                body.classList.add('show-annual');
+                btnAnnual.classList.add('active');
+                btnMonthly.classList.remove('active');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // INITIALIZE - Add visible class to hero immediately
+        // ═══════════════════════════════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', () => {
+            // Make hero content visible immediately
+            const heroContent = document.querySelector('.hero-content');
+            if (heroContent) {
+                setTimeout(() => {
+                    heroContent.classList.add('visible');
+                }, 100);
+            }
+
+            // Initialize pricing mode to monthly
+            document.body.classList.add('show-monthly');
+        });
+    </script>
+</body>
+</html>
