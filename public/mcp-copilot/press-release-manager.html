@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Press Release Manager - TunjoRacing</title>
+    <link rel="stylesheet" href="press-release-manager.css">
+    <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png">
+</head>
+<body>
+    <div class="press-manager-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68689aafe4eb736da9ffe16c.png" alt="TunjoRacing" class="logo">
+                <div class="header-title">
+                    <h1>📰 Press Release Manager</h1>
+                    <p class="subtitle">TunjoRacing Media Center</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="client-badge" id="clientBadge">Client ID: --</span>
+                <a href="javascript:history.back()" class="back-link">← Back to Dashboard</a>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">
+                📊 Dashboard
+            </button>
+            <button class="tab-btn" data-tab="contacts" onclick="switchTab('contacts')">
+                👥 Contacts
+            </button>
+            <button class="tab-btn" data-tab="releases" onclick="switchTab('releases')">
+                📝 Press Releases
+            </button>
+            <button class="tab-btn" data-tab="analytics" onclick="switchTab('analytics')">
+                📈 Analytics
+            </button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Dashboard Tab -->
+            <div class="tab-pane active" id="dashboard-tab">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📧</div>
+                        <div class="stat-value" id="totalContacts">--</div>
+                        <div class="stat-label">Total Contacts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📰</div>
+                        <div class="stat-value" id="totalReleases">--</div>
+                        <div class="stat-label">Press Releases</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value" id="deliveredCount">--</div>
+                        <div class="stat-label">Delivered</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📖</div>
+                        <div class="stat-value" id="openRate">--%</div>
+                        <div class="stat-label">Open Rate</div>
+                    </div>
+                </div>
+
+                <div class="action-cards">
+                    <div class="action-card">
+                        <div class="action-card-icon">📝</div>
+                        <h3>Create Press Release</h3>
+                        <p>Write and send a new press release to your media contacts</p>
+                        <button class="btn btn-primary" onclick="switchTab('releases')">Create New</button>
+                    </div>
+                    <div class="action-card">
+                        <div class="action-card-icon">📥</div>
+                        <h3>Upload Contacts</h3>
+                        <p>Import press contacts from CSV or add manually</p>
+                        <button class="btn btn-secondary" onclick="switchTab('contacts')">Manage Contacts</button>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="recent-activity">
+                    <h2>Recent Activity</h2>
+                    <div id="recentActivityList" class="activity-list">
+                        <div class="empty-state">
+                            <p>No recent activity</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contacts Tab -->
+            <div class="tab-pane" id="contacts-tab">
+                <div class="section-header">
+                    <h2>Press Contacts</h2>
+                    <button class="btn btn-primary" onclick="showUploadContactsModal()">+ Upload Contacts</button>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters">
+                    <input type="text" id="contactSearchInput" placeholder="🔍 Search by email or name..." class="search-input" oninput="filterContacts()">
+                    <select id="languageFilter" class="filter-select" onchange="filterContacts()">
+                        <option value="">All Languages</option>
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                    </select>
+                    <select id="statusFilter" class="filter-select" onchange="filterContacts()">
+                        <option value="opted_in">Active Only</option>
+                        <option value="">All Statuses</option>
+                        <option value="unsubscribed">Unsubscribed</option>
+                    </select>
+                </div>
+
+                <!-- Contacts Table -->
+                <div class="table-container">
+                    <table class="data-table" id="contactsTable">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Name</th>
+                                <th>Organization</th>
+                                <th>Language</th>
+                                <th>Country</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contactsTableBody">
+                            <tr>
+                                <td colspan="7" class="empty-state">No contacts found. Upload contacts to get started.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Press Releases Tab -->
+            <div class="tab-pane" id="releases-tab">
+                <div class="section-header">
+                    <h2>Press Releases</h2>
+                    <button class="btn btn-primary" onclick="showCreateReleaseModal()">+ New Press Release</button>
+                </div>
+
+                <!-- Releases List -->
+                <div id="releasesList" class="releases-list">
+                    <div class="empty-state">
+                        <p>No press releases yet. Create your first one!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div class="tab-pane" id="analytics-tab">
+                <div class="section-header">
+                    <h2>Email Analytics</h2>
+                </div>
+
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3>Delivery Rate</h3>
+                        <div class="analytics-value" id="deliveryRate">--%</div>
+                        <div class="analytics-subtext">Successfully delivered emails</div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Open Rate</h3>
+                        <div class="analytics-value" id="analyticsOpenRate">--%</div>
+                        <div class="analytics-subtext">Recipients who opened</div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Click Rate</h3>
+                        <div class="analytics-value" id="clickRate">--%</div>
+                        <div class="analytics-subtext">Recipients who clicked links</div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Bounce Rate</h3>
+                        <div class="analytics-value" id="bounceRate">--%</div>
+                        <div class="analytics-subtext">Failed deliveries</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>Recent Press Releases Performance</h3>
+                    <div id="performanceChart" class="chart-placeholder">
+                        <p>No data available yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Contacts Modal -->
+    <div id="uploadContactsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Upload Press Contacts</h2>
+                <button class="modal-close" onclick="closeUploadContactsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-section">
+                    <label class="file-upload-label">
+                        <input type="file" id="contactsFileInput" accept=".csv,.txt" onchange="handleContactsFile(event)">
+                        <div class="file-upload-button">
+                            <span class="upload-icon">📤</span>
+                            <span>Choose CSV or TXT file</span>
+                        </div>
+                    </label>
+                    <p class="help-text">Upload a CSV file with columns: email, first_name, last_name, organization, country, language</p>
+                </div>
+                <div class="upload-results" id="uploadResults" style="display: none;">
+                    <h3>Upload Results</h3>
+                    <div id="uploadResultsContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Press Release Modal -->
+    <div id="createReleaseModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Create Press Release</h2>
+                <button class="modal-close" onclick="closeCreateReleaseModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createReleaseForm">
+                    <div class="form-group">
+                        <label>Title *</label>
+                        <input type="text" id="releaseTitle" required placeholder="TunjoRacing Achieves Historic Win at...">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Race Event</label>
+                            <input type="text" id="raceEvent" placeholder="Monaco Grand Prix">
+                        </div>
+                        <div class="form-group">
+                            <label>Race Date</label>
+                            <input type="date" id="raceDate">
+                        </div>
+                    </div>
+
+                    <!-- Language Tabs -->
+                    <div class="language-tabs">
+                        <button type="button" class="lang-tab active" data-lang="en" onclick="switchLanguage('en')">English</button>
+                        <button type="button" class="lang-tab" data-lang="es" onclick="switchLanguage('es')">Español</button>
+                    </div>
+
+                    <!-- English Content -->
+                    <div class="lang-content active" id="en-content">
+                        <div class="form-group">
+                            <label>Subject Line (English)</label>
+                            <input type="text" id="subjectEn" placeholder="TunjoRacing Makes History at Monaco">
+                        </div>
+                        <div class="form-group">
+                            <label>Body (English)</label>
+                            <textarea id="bodyEn" rows="10" placeholder="Write your press release here..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Spanish Content -->
+                    <div class="lang-content" id="es-content">
+                        <div class="form-group">
+                            <label>Subject Line (Spanish)</label>
+                            <input type="text" id="subjectEs" placeholder="TunjoRacing Hace Historia en Mónaco">
+                        </div>
+                        <div class="form-group">
+                            <label>Body (Spanish)</label>
+                            <textarea id="bodyEs" rows="10" placeholder="Escribe tu nota de prensa aquí..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeCreateReleaseModal()">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="saveDraft()">Save Draft</button>
+                        <button type="submit" class="btn btn-success">Create & Send</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="press-release-manager.js"></script>
+</body>
+</html>

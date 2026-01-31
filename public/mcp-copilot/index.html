@@ -165,6 +165,11 @@
             grid-column: span 2;
         }
 
+        .btn-press {
+            background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+            grid-column: span 2;
+        }
+
         /* Disabled button state */
         .action-btn:disabled,
         .action-btn.disabled {
@@ -462,6 +467,12 @@
                 <div class="action-icon">📊</div>
                 <div>Prospect Manager</div>
             </button>
+
+            <!-- Press Release Manager - ONLY for clients 15 & 43 -->
+            <button class="action-btn btn-press" id="pressReleaseBtn" onclick="openPressReleaseManager()" style="display: none;">
+                <div class="action-icon">📰</div>
+                <div>Press Release Manager</div>
+            </button>
         </div>
     </div>
 
@@ -542,6 +553,38 @@
                         console.log('❌ Service Worker registration failed:', error);
                     });
             });
+        }
+    </script>
+
+    <!-- Press Release Manager - Clients 15 & 43 Only -->
+    <script>
+        // Show Press Release Manager button ONLY for clients 15 and 43 (TunjoRacing)
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const clientId = parseInt(urlParams.get('client_id'));
+
+            // Only show for clients 15 and 43
+            if (clientId === 15 || clientId === 43) {
+                const pressBtn = document.getElementById('pressReleaseBtn');
+                if (pressBtn) {
+                    pressBtn.style.display = 'flex';
+                    console.log('✅ Press Release Manager enabled for client', clientId);
+                }
+            }
+        })();
+
+        // Open Press Release Manager page
+        function openPressReleaseManager() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const clientId = urlParams.get('client_id');
+
+            if (!clientId) {
+                alert('Error: Missing client_id parameter');
+                return;
+            }
+
+            // Open in new tab/window
+            window.open(`press-release-manager.html?client_id=${clientId}`, '_blank');
         }
     </script>
 
