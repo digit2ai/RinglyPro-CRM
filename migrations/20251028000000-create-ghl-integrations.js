@@ -29,13 +29,7 @@ module.exports = {
       user_id: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        references: {
-          model: 'users',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL',
-        comment: 'User who authorized the OAuth connection'
+        comment: 'User who authorized the OAuth connection (no FK constraint - users table may not exist)'
       },
       ghl_location_id: {
         type: Sequelize.STRING(50),
