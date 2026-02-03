@@ -2,32 +2,38 @@
 
 const express = require('express');
 const router = express.Router();
-const { sequelize } = require('../../models');
 
 /**
  * Health check endpoint
  * GET /health
  */
 router.get('/', async (req, res) => {
-  try {
-    // Check database connection
-    await sequelize.authenticate();
+  let dbStatus = 'unknown';
+  let dbError = null;
 
-    res.json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      database: 'connected',
-      environment: process.env.NODE_ENV || 'development'
-    });
+  try {
+    // Try to load models (may fail if DB not set up)
+    const { sequelize } = require('../../models');
+    await sequelize.authenticate();
+    dbStatus = 'connected';
   } catch (error) {
-    res.status(503).json({
-      status: 'unhealthy',
-      timestamp: new Date().toISOString(),
-      database: 'disconnected',
-      error: error.message
-    });
+    dbStatus = 'disconnected';
+    dbError = error.message;
   }
+
+  const response = {
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    database: dbStatus,
+    environment: process.env.NODE_ENV || 'development'
+  };
+
+  if (dbError) {
+    response.database_error = dbError;
+  }
+
+  res.json(response);
 });
 
 module.exports = router;

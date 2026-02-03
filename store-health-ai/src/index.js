@@ -20,15 +20,25 @@ const fs = require('fs');
 const errorHandler = require('./middleware/error-handler');
 const notFound = require('./middleware/not-found');
 
-// Import routes
-const healthRoutes = require('./routes/health');
-const storeRoutes = require('./routes/stores');
-const kpiRoutes = require('./routes/kpis');
-const alertRoutes = require('./routes/alerts');
-const taskRoutes = require('./routes/tasks');
-const escalationRoutes = require('./routes/escalations');
-const dashboardRoutes = require('./routes/dashboard');
-const voiceRoutes = require('./routes/voice');
+// Import routes - wrapped in try-catch for resilience
+let healthRoutes, storeRoutes, kpiRoutes, alertRoutes, taskRoutes, escalationRoutes, dashboardRoutes, voiceRoutes;
+let routesLoaded = false;
+
+try {
+  healthRoutes = require('./routes/health');
+  storeRoutes = require('./routes/stores');
+  kpiRoutes = require('./routes/kpis');
+  alertRoutes = require('./routes/alerts');
+  taskRoutes = require('./routes/tasks');
+  escalationRoutes = require('./routes/escalations');
+  dashboardRoutes = require('./routes/dashboard');
+  voiceRoutes = require('./routes/voice');
+  routesLoaded = true;
+  console.log('✅ Store Health AI routes loaded successfully');
+} catch (error) {
+  console.log('⚠️ Some Store Health AI routes failed to load:', error.message);
+  console.log('   Dashboard will still be served, but API endpoints may be limited');
+}
 
 // Initialize Express app
 const app = express();
@@ -83,17 +93,31 @@ app.use((req, res, next) => {
 // ROUTES
 // ============================================================================
 
-// Health check (no auth required)
-app.use(`${BASE_PATH}/health`, healthRoutes);
+// Mount routes only if they loaded successfully
+if (routesLoaded) {
+  // Health check (no auth required)
+  app.use(`${BASE_PATH}/health`, healthRoutes);
 
-// API routes (v1)
-app.use(`${BASE_PATH}/api/v1/stores`, storeRoutes);
-app.use(`${BASE_PATH}/api/v1/kpis`, kpiRoutes);
-app.use(`${BASE_PATH}/api/v1/alerts`, alertRoutes);
-app.use(`${BASE_PATH}/api/v1/tasks`, taskRoutes);
-app.use(`${BASE_PATH}/api/v1/escalations`, escalationRoutes);
-app.use(`${BASE_PATH}/api/v1/dashboard`, dashboardRoutes);
-app.use(`${BASE_PATH}/api/v1/voice`, voiceRoutes);
+  // API routes (v1)
+  app.use(`${BASE_PATH}/api/v1/stores`, storeRoutes);
+  app.use(`${BASE_PATH}/api/v1/kpis`, kpiRoutes);
+  app.use(`${BASE_PATH}/api/v1/alerts`, alertRoutes);
+  app.use(`${BASE_PATH}/api/v1/tasks`, taskRoutes);
+  app.use(`${BASE_PATH}/api/v1/escalations`, escalationRoutes);
+  app.use(`${BASE_PATH}/api/v1/dashboard`, dashboardRoutes);
+  app.use(`${BASE_PATH}/api/v1/voice`, voiceRoutes);
+} else {
+  // Fallback health endpoint
+  app.get(`${BASE_PATH}/health`, (req, res) => {
+    res.json({
+      status: 'partial',
+      message: 'Store Health AI running without database',
+      timestamp: new Date().toISOString(),
+      dashboard: 'available',
+      api: 'limited'
+    });
+  });
+}
 
 // Serve React dashboard static files
 if (fs.existsSync(dashboardDistPath)) {
