@@ -441,14 +441,16 @@ console.log('📝 A2P 10DLC verification routes mounted at /api/clients/:clientI
 // Mount Store Health AI system at /aiastore
 let storeHealthApp = null;
 try {
-  storeHealthApp = require('../store-health-ai/src/index');
+  // Try minimal version first for testing
+  storeHealthApp = require('../store-health-ai/src/index-minimal');
   app.use('/aiastore', storeHealthApp);
-  console.log('🏪 Store Health AI mounted at /aiastore');
+  console.log('🏪 Store Health AI (MINIMAL TEST) mounted at /aiastore');
   console.log('   - Health Check: /aiastore/health');
-  console.log('   - API v1: /aiastore/api/v1/*');
-  console.log('   - Dashboard: /aiastore/api/v1/dashboard/*');
+  console.log('   - Test: /aiastore/test');
+  console.log('   - Root: /aiastore/');
 } catch (error) {
   console.log('⚠️ Store Health AI not available:', error.message);
+  console.error('Full error:', error);
 }
 
 // Conditional forwarding webhook (for business phone forwarding)
