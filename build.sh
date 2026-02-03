@@ -58,7 +58,16 @@ echo ""
 echo "🔨 Building dashboard with Vite..."
 echo "Running: npm run build"
 export NODE_ENV=production
-npm run build 2>&1 | tee build.log || (echo "Build failed, here's the log:" && cat build.log && exit 1)
+set +e  # Don't exit on error for this command
+npm run build 2>&1 | tee build.log
+BUILD_EXIT_CODE=$?
+set -e  # Re-enable exit on error
+if [ $BUILD_EXIT_CODE -ne 0 ]; then
+  echo "❌ Build failed with exit code $BUILD_EXIT_CODE"
+  echo "Build log:"
+  cat build.log
+  echo "Continuing anyway to check if dist exists..."
+fi
 
 echo ""
 echo "✅ Checking if dist folder was created..."

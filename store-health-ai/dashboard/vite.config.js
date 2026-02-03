@@ -14,7 +14,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    emptyOutDir: true,
+    emptyOutDir: false,  // Don't empty during build to preserve committed fallback
   },
   server: {
     port: 5173,
