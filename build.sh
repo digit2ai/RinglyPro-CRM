@@ -76,9 +76,16 @@ else
     exit 1
 fi
 
+echo ""
+echo "📦 Copying dist folder to ensure deployment..."
+cp -r dist ../../store-health-ai-dashboard-dist
+echo "✅ Copied dist to: $(pwd)/../../store-health-ai-dashboard-dist"
+ls -la ../../store-health-ai-dashboard-dist
+
 cd ../..
 
 echo ""
 echo "================================================"
 echo "✅ Build completed successfully!"
+echo "✅ Dashboard built at: ./store-health-ai-dashboard-dist"
 echo "================================================"

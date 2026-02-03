@@ -45,8 +45,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const BASE_PATH = process.env.BASE_PATH || '';
 
-// Dashboard static files path
-const dashboardDistPath = path.join(__dirname, '..', 'dashboard', 'dist');
+// Dashboard static files path - try root copy first, then original location
+let dashboardDistPath = path.join(__dirname, '..', '..', 'store-health-ai-dashboard-dist');
+if (!fs.existsSync(dashboardDistPath)) {
+  dashboardDistPath = path.join(__dirname, '..', 'dashboard', 'dist');
+}
 console.log('🔍 Dashboard dist path:', dashboardDistPath);
 console.log('🔍 Dist folder exists?', fs.existsSync(dashboardDistPath));
 if (fs.existsSync(dashboardDistPath)) {
