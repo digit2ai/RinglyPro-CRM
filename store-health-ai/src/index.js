@@ -103,6 +103,21 @@ app.use((req, res, next) => {
 // ROUTES
 // ============================================================================
 
+// Diagnostic endpoint to check dist folder
+app.get(`${BASE_PATH}/diagnostic`, (req, res) => {
+  const distPath = path.join(__dirname, '..', 'dashboard', 'dist');
+  const distExists = fs.existsSync(distPath);
+  const files = distExists ? fs.readdirSync(distPath) : [];
+  res.json({
+    __dirname,
+    distPath,
+    distExists,
+    files,
+    BASE_PATH,
+    cwd: process.cwd()
+  });
+});
+
 // Mount routes only if they loaded successfully
 if (routesLoaded) {
   // Health check (no auth required)
