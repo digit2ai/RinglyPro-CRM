@@ -5,7 +5,7 @@ services:
     env: node
     region: oregon
     plan: starter
-    buildCommand: npm install && cd store-health-ai/dashboard && npm install && npm run build && cd ../..
+    buildCommand: npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV

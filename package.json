@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "build": "npm install",
+    "build": "npm install && npm run build:dashboard",
+    "build:dashboard": "cd store-health-ai/dashboard && npm install && npm run build && cd ../..",
     "setup-db": "node scripts/setup-database.js",
     "seed-db": "node scripts/seed-database.js",
     "migrate": "npx sequelize-cli db:migrate",
