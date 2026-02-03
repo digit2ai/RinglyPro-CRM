@@ -434,6 +434,23 @@ const a2pRoutes = require('./routes/a2p');
 app.use('/api', a2pRoutes);
 console.log('📝 A2P 10DLC verification routes mounted at /api/clients/:clientId/a2p');
 
+// =====================================================
+// STORE HEALTH AI INTEGRATION
+// =====================================================
+
+// Mount Store Health AI system at /aiastore
+let storeHealthApp = null;
+try {
+  storeHealthApp = require('../store-health-ai/src/index');
+  app.use('/aiastore', storeHealthApp);
+  console.log('🏪 Store Health AI mounted at /aiastore');
+  console.log('   - Health Check: /aiastore/health');
+  console.log('   - API v1: /aiastore/api/v1/*');
+  console.log('   - Dashboard: /aiastore/api/v1/dashboard/*');
+} catch (error) {
+  console.log('⚠️ Store Health AI not available:', error.message);
+}
+
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 

@@ -93,6 +93,15 @@ async function startServer() {
         } catch (error) {
           console.log('⚠️ Calendar sync columns migration skipped:', error.message);
         }
+
+        // AUTO-MIGRATE STORE HEALTH AI TABLES
+        try {
+          const { migrateStoreHealthAI } = require('../scripts/migrate-store-health-ai');
+          await migrateStoreHealthAI();
+        } catch (error) {
+          console.log('⚠️ Store Health AI migration skipped:', error.message);
+        }
+
         console.log('✅ All migrations complete, ready to start server');
       } else {
         console.log('⚠️ No DATABASE_URL provided, running without database');
