@@ -17,8 +17,19 @@ echo "================================================"
 
 cd store-health-ai/dashboard
 
+echo "📦 Cleaning any cached dependencies..."
+rm -rf node_modules package-lock.json || true
+
 echo "📦 Installing dashboard dependencies (including devDependencies)..."
-npm install --include=dev
+NODE_ENV=development npm install
+
+echo "📦 Verifying vite is installed..."
+if [ -f "node_modules/.bin/vite" ]; then
+    echo "✅ vite is installed!"
+else
+    echo "❌ vite is NOT installed! Installing manually..."
+    npm install vite @vitejs/plugin-react --save-dev
+fi
 
 echo ""
 echo "🔨 Building dashboard with Vite..."
