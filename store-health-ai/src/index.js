@@ -47,16 +47,7 @@ const BASE_PATH = process.env.BASE_PATH || '';
 
 // Dashboard static files path
 const dashboardDistPath = path.join(__dirname, '..', 'dashboard', 'dist');
-console.log('🔍 __dirname:', __dirname);
-console.log('🔍 Dashboard dist path:', dashboardDistPath);
-console.log('🔍 Dist folder exists?', fs.existsSync(dashboardDistPath));
-if (fs.existsSync(dashboardDistPath)) {
-  const files = fs.readdirSync(dashboardDistPath);
-  console.log('🔍 Dist folder contents:', files);
-  console.log('🔍 index.html exists?', files.includes('index.html'));
-} else {
-  console.log('❌ Dist folder NOT FOUND at:', dashboardDistPath);
-}
+console.log('🔍 Checking dashboard at:', dashboardDistPath);
 
 // Create HTTP server and Socket.IO
 const httpServer = http.createServer(app);
@@ -144,43 +135,20 @@ if (routesLoaded) {
   });
 }
 
-// Serve React dashboard static files
-if (fs.existsSync(dashboardDistPath)) {
-  console.log('📊 Serving Store Health AI dashboard from:', dashboardDistPath);
-  app.use(`${BASE_PATH}/`, express.static(dashboardDistPath));
+// ALWAYS serve dashboard - file exists, we confirmed in shell
+console.log('📊 Serving Store Health AI dashboard from:', dashboardDistPath);
+app.use(`${BASE_PATH}/`, express.static(dashboardDistPath));
 
-  // Handle React Router - serve index.html for all non-API routes
-  app.get(`${BASE_PATH}/*`, (req, res, next) => {
-    // Skip API routes
-    if (req.path.startsWith(`${BASE_PATH}/api/`) || req.path.startsWith(`${BASE_PATH}/health`)) {
-      return next();
-    }
-    res.sendFile(path.join(dashboardDistPath, 'index.html'));
-  });
-} else {
-  console.log('⚠️ Dashboard dist folder not found, serving API only');
-  // Fallback: Root endpoint returns API info
-  app.get(`${BASE_PATH}/`, (req, res) => {
-    res.json({
-      name: 'Store Health AI API',
-      version: '1.0.0',
-      status: 'online',
-      basePath: BASE_PATH,
-      message: 'Dashboard not built. Run: cd dashboard && npm run build',
-      endpoints: {
-        health: `${BASE_PATH}/health`,
-        docs: `${BASE_PATH}/api/docs`,
-        stores: `${BASE_PATH}/api/v1/stores`,
-        kpis: `${BASE_PATH}/api/v1/kpis`,
-        alerts: `${BASE_PATH}/api/v1/alerts`,
-        tasks: `${BASE_PATH}/api/v1/tasks`,
-        escalations: `${BASE_PATH}/api/v1/escalations`,
-        dashboard: `${BASE_PATH}/api/v1/dashboard`,
-        voice: `${BASE_PATH}/api/v1/voice`
-      }
-    });
-  });
-}
+// Serve index.html for all non-API routes
+app.get(`${BASE_PATH}/*`, (req, res, next) => {
+  // Skip API and health routes
+  if (req.path.startsWith(`${BASE_PATH}/api/`) || req.path.startsWith(`${BASE_PATH}/health`) || req.path.startsWith(`${BASE_PATH}/diagnostic`)) {
+    return next();
+  }
+  const indexPath = path.join(dashboardDistPath, 'index.html');
+  console.log('📄 Serving index.html from:', indexPath);
+  res.sendFile(indexPath);
+});
 
 // ============================================================================
 // ERROR HANDLING
