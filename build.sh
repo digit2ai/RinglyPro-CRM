@@ -31,11 +31,8 @@ fi
 cd store-health-ai/dashboard
 echo "Dashboard directory: $(pwd)"
 
-echo "📦 Cleaning any cached dependencies..."
-rm -rf node_modules package-lock.json || true
-
 echo "📦 Installing dashboard dependencies with NODE_ENV=development..."
-NODE_ENV=development npm install
+NODE_ENV=development npm ci --include=dev || NODE_ENV=development npm install --include=dev
 
 echo ""
 echo "📦 Checking installed packages..."
@@ -60,7 +57,8 @@ fi
 echo ""
 echo "🔨 Building dashboard with Vite..."
 echo "Running: npm run build"
-npm run build
+export NODE_ENV=production
+npm run build 2>&1 | tee build.log || (echo "Build failed, here's the log:" && cat build.log && exit 1)
 
 echo ""
 echo "✅ Checking if dist folder was created..."
