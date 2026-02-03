@@ -13,6 +13,8 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const path = require('path');
+const fs = require('fs');
 
 // Import middleware
 const errorHandler = require('./middleware/error-handler');
@@ -33,6 +35,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const BASE_PATH = process.env.BASE_PATH || '';
 
+// Dashboard static files path
+const dashboardDistPath = path.join(__dirname, '..', 'dashboard', 'dist');
+
 // Create HTTP server and Socket.IO
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
@@ -46,8 +51,11 @@ const io = new Server(httpServer, {
 // MIDDLEWARE
 // ============================================================================
 
-// Security
-app.use(helmet());
+// Security - configure helmet to allow inline scripts for React app
+app.use(helmet({
+  contentSecurityPolicy: false,  // Disable CSP for React app
+  crossOriginEmbedderPolicy: false
+}));
 
 // CORS
 app.use(cors({
@@ -87,26 +95,43 @@ app.use(`${BASE_PATH}/api/v1/escalations`, escalationRoutes);
 app.use(`${BASE_PATH}/api/v1/dashboard`, dashboardRoutes);
 app.use(`${BASE_PATH}/api/v1/voice`, voiceRoutes);
 
-// Root endpoint
-app.get(`${BASE_PATH}/`, (req, res) => {
-  res.json({
-    name: 'Store Health AI API',
-    version: '1.0.0',
-    status: 'online',
-    basePath: BASE_PATH,
-    endpoints: {
-      health: `${BASE_PATH}/health`,
-      docs: `${BASE_PATH}/api/docs`,
-      stores: `${BASE_PATH}/api/v1/stores`,
-      kpis: `${BASE_PATH}/api/v1/kpis`,
-      alerts: `${BASE_PATH}/api/v1/alerts`,
-      tasks: `${BASE_PATH}/api/v1/tasks`,
-      escalations: `${BASE_PATH}/api/v1/escalations`,
-      dashboard: `${BASE_PATH}/api/v1/dashboard`,
-      voice: `${BASE_PATH}/api/v1/voice`
+// Serve React dashboard static files
+if (fs.existsSync(dashboardDistPath)) {
+  console.log('📊 Serving Store Health AI dashboard from:', dashboardDistPath);
+  app.use(`${BASE_PATH}/`, express.static(dashboardDistPath));
+
+  // Handle React Router - serve index.html for all non-API routes
+  app.get(`${BASE_PATH}/*`, (req, res, next) => {
+    // Skip API routes
+    if (req.path.startsWith(`${BASE_PATH}/api/`) || req.path.startsWith(`${BASE_PATH}/health`)) {
+      return next();
     }
+    res.sendFile(path.join(dashboardDistPath, 'index.html'));
   });
-});
+} else {
+  console.log('⚠️ Dashboard dist folder not found, serving API only');
+  // Fallback: Root endpoint returns API info
+  app.get(`${BASE_PATH}/`, (req, res) => {
+    res.json({
+      name: 'Store Health AI API',
+      version: '1.0.0',
+      status: 'online',
+      basePath: BASE_PATH,
+      message: 'Dashboard not built. Run: cd dashboard && npm run build',
+      endpoints: {
+        health: `${BASE_PATH}/health`,
+        docs: `${BASE_PATH}/api/docs`,
+        stores: `${BASE_PATH}/api/v1/stores`,
+        kpis: `${BASE_PATH}/api/v1/kpis`,
+        alerts: `${BASE_PATH}/api/v1/alerts`,
+        tasks: `${BASE_PATH}/api/v1/tasks`,
+        escalations: `${BASE_PATH}/api/v1/escalations`,
+        dashboard: `${BASE_PATH}/api/v1/dashboard`,
+        voice: `${BASE_PATH}/api/v1/voice`
+      }
+    });
+  });
+}
 
 // ============================================================================
 // ERROR HANDLING

@@ -95,14 +95,14 @@ async function startServer() {
         }
 
         // AUTO-MIGRATE STORE HEALTH AI TABLES
-        // NOTE: Store Health AI migrations temporarily disabled - needs database setup
-        // TODO: Set up Store Health AI database and enable migrations
-        // try {
-        //   const { migrateStoreHealthAI } = require('../scripts/migrate-store-health-ai');
-        //   await migrateStoreHealthAI();
-        // } catch (error) {
-        //   console.log('⚠️ Store Health AI migration skipped:', error.message);
-        // }
+        try {
+          const { migrateStoreHealthAI } = require('../scripts/migrate-store-health-ai');
+          await migrateStoreHealthAI();
+          console.log('✅ Store Health AI tables ready');
+        } catch (error) {
+          console.log('⚠️ Store Health AI migration skipped:', error.message);
+          console.log('   Store Health AI will run in fallback mode with mock data');
+        }
 
         console.log('✅ All migrations complete, ready to start server');
       } else {
