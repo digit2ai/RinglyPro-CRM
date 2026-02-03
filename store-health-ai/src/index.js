@@ -47,6 +47,11 @@ const BASE_PATH = process.env.BASE_PATH || '';
 
 // Dashboard static files path
 const dashboardDistPath = path.join(__dirname, '..', 'dashboard', 'dist');
+console.log('🔍 Dashboard dist path:', dashboardDistPath);
+console.log('🔍 Dist folder exists?', fs.existsSync(dashboardDistPath));
+if (fs.existsSync(dashboardDistPath)) {
+  console.log('🔍 Dist folder contents:', fs.readdirSync(dashboardDistPath));
+}
 
 // Create HTTP server and Socket.IO
 const httpServer = http.createServer(app);
