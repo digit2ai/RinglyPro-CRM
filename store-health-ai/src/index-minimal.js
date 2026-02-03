@@ -8,9 +8,14 @@
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 // Initialize Express app
 const app = express();
+
+// Serve dashboard static files
+const dashboardDistPath = path.join(__dirname, '..', 'dashboard', 'dist');
+app.use('/', express.static(dashboardDistPath));
 
 // Middleware
 app.use(cors());
@@ -27,21 +32,13 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({
-    name: 'Store Health AI API',
-    version: '1.0.0',
-    status: 'online',
-    basePath: '',
-    endpoints: {
-      health: '/health',
-      dashboard_overview: '/api/v1/dashboard/overview',
-      critical_stores: '/api/v1/dashboard/critical-stores',
-      store_details: '/api/v1/stores/:store_code',
-      active_alerts: '/api/v1/alerts/active'
-    }
-  });
+// Serve index.html for non-API routes (React Router support)
+app.get('/*', (req, res, next) => {
+  // Skip API and health routes
+  if (req.path.startsWith('/api/') || req.path.startsWith('/health')) {
+    return next();
+  }
+  res.sendFile(path.join(dashboardDistPath, 'index.html'));
 });
 
 // ============================================================================
