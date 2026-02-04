@@ -5,6 +5,7 @@ import { useAlertUpdates, useKpiUpdates } from '@/lib/websocket';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { StoreHealthCard } from '@/components/StoreHealthCard';
 import { CriticalIndicators } from '@/components/CriticalIndicators';
+import { TrafficLight } from '@/components/TrafficLight';
 import { Loading } from '@/components/Loading';
 import { ErrorMessage } from '@/components/ErrorMessage';
 import { Store, AlertTriangle, TrendingUp, Activity } from 'lucide-react';
@@ -84,11 +85,21 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">
-          Real-time store health monitoring and alerts
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <div className="flex items-center gap-4 mt-1">
+            <p className="text-muted-foreground">
+              Real-time store health monitoring and alerts
+            </p>
+            <TrafficLight
+              redStores={stats.red_stores || 0}
+              yellowStores={stats.yellow_stores || 0}
+              greenStores={stats.green_stores || 0}
+              totalStores={stats.total_stores || 0}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Critical Flight Indicators */}
