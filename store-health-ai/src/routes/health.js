@@ -148,8 +148,8 @@ router.get('/seed', async (req, res) => {
 
           await sequelize.query(`
             INSERT INTO kpi_metrics (store_id, kpi_definition_id, metric_date, metric_timestamp, value, status, created_at, updated_at)
-            VALUES (${store.id}, ${kpi.id}, CURRENT_DATE - ${day}, NOW(), ${value.toFixed(2)}, '${status}', NOW(), NOW())
-            ON CONFLICT DO NOTHING
+            SELECT ${store.id}, ${kpi.id}, CURRENT_DATE - ${day}, NOW(), ${value.toFixed(2)}, '${status}', NOW(), NOW()
+            WHERE NOT EXISTS (SELECT 1 FROM kpi_metrics WHERE store_id = ${store.id} AND kpi_definition_id = ${kpi.id} AND metric_date = CURRENT_DATE - ${day})
           `);
         }
 
@@ -158,8 +158,8 @@ router.get('/seed', async (req, res) => {
 
         await sequelize.query(`
           INSERT INTO store_health_snapshots (store_id, snapshot_date, overall_status, health_score, green_kpi_count, yellow_kpi_count, red_kpi_count, escalation_level, action_required, created_at, updated_at)
-          VALUES (${store.id}, CURRENT_DATE - ${day}, '${overallStatus}', ${healthScore}, ${greenCount}, ${yellowCount}, ${redCount}, 0, ${redCount > 0}, NOW(), NOW())
-          ON CONFLICT (store_id, snapshot_date) DO NOTHING
+          SELECT ${store.id}, CURRENT_DATE - ${day}, '${overallStatus}', ${healthScore}, ${greenCount}, ${yellowCount}, ${redCount}, 0, ${redCount > 0}, NOW(), NOW()
+          WHERE NOT EXISTS (SELECT 1 FROM store_health_snapshots WHERE store_id = ${store.id} AND snapshot_date = CURRENT_DATE - ${day})
         `);
       }
     }
