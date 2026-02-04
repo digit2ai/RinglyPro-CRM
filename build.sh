@@ -14,6 +14,32 @@ echo ""
 echo "📦 Installing root dependencies..."
 npm install
 
+# Run Store Health AI database migrations
+echo ""
+echo "================================================"
+echo "Running Store Health AI Database Setup"
+echo "================================================"
+
+if [ -n "$DATABASE_URL" ]; then
+  echo "✅ DATABASE_URL is set, running migrations..."
+  cd store-health-ai
+  npx sequelize-cli db:migrate
+  echo "✅ Migrations completed"
+
+  # Seed data if this is first deployment (check if organizations table is empty)
+  ORGS_COUNT=$(psql $DATABASE_URL -t -c "SELECT COUNT(*) FROM organizations;" 2>/dev/null || echo "0")
+  if [ "$ORGS_COUNT" -eq "0" ]; then
+    echo "📊 Database is empty, seeding with 1 month of dummy data..."
+    npx sequelize-cli db:seed --seed 20260204-one-month-data.js
+    echo "✅ Seeding completed"
+  else
+    echo "ℹ️  Database already has data, skipping seed"
+  fi
+  cd ..
+else
+  echo "⚠️  DATABASE_URL not set, skipping database migrations"
+fi
+
 # Build Store Health AI Dashboard
 echo ""
 echo "================================================"
