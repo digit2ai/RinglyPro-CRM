@@ -26,3 +26,4 @@ SELECT column_name, data_type
 FROM information_schema.columns
 WHERE table_name = 'stores'
 ORDER BY ordinal_position;
+# Deploy trigger Wed Feb  4 14:49:59 EST 2026
