@@ -27,3 +27,4 @@ FROM information_schema.columns
 WHERE table_name = 'stores'
 ORDER BY ordinal_position;
 # Deploy trigger Wed Feb  4 14:49:59 EST 2026
+# Schema complete Wed Feb  4 14:52:12 EST 2026
