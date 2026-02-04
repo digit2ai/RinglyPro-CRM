@@ -9,5 +9,22 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+
+    <!-- ElevenLabs AI Agent Widget -->
+    <elevenlabs-convai agent-id="agent_3701kgg7d7v3e1vbjsxv0p5pn48e"></elevenlabs-convai>
+    <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+
+    <!-- Hide "Powered by ElevenLabs" branding -->
+    <style>
+      elevenlabs-convai::part(powered-by),
+      elevenlabs-convai [class*="powered"],
+      elevenlabs-convai [class*="branding"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+      }
+    </style>
   </body>
 </html>
