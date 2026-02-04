@@ -14,30 +14,32 @@ echo ""
 echo "📦 Installing root dependencies..."
 npm install
 
-# Run Store Health AI database migrations
+# Store Health AI Database Setup
+# Note: Tables are created manually in existing ringlypro_crm_production database
+# Run STORE_HEALTH_AI_SCHEMA.sql first, then use this to seed data
+
 echo ""
 echo "================================================"
-echo "Running Store Health AI Database Setup"
+echo "Store Health AI Database Check"
 echo "================================================"
 
 if [ -n "$DATABASE_URL" ]; then
-  echo "✅ DATABASE_URL is set, running migrations..."
-  cd store-health-ai
-  npx sequelize-cli db:migrate
-  echo "✅ Migrations completed"
+  echo "✅ DATABASE_URL is set"
 
-  # Seed data if this is first deployment (check if organizations table is empty)
-  ORGS_COUNT=$(psql $DATABASE_URL -t -c "SELECT COUNT(*) FROM organizations;" 2>/dev/null || echo "0")
-  if [ "$ORGS_COUNT" -eq "0" ]; then
-    echo "📊 Database is empty, seeding with 1 month of dummy data..."
+  # Check if Store Health AI tables exist and seed if needed
+  ORGS_COUNT=$(psql $DATABASE_URL -t -c "SELECT COUNT(*) FROM organizations WHERE name='Dollar Tree Stores';" 2>/dev/null || echo "0")
+
+  if [ "$ORGS_COUNT" -eq "0" ] || [ "$ORGS_COUNT" = "0" ]; then
+    echo "📊 No Store Health AI data found, seeding with 1 month of dummy data..."
+    cd store-health-ai
     npx sequelize-cli db:seed --seed 20260204-one-month-data.js
     echo "✅ Seeding completed"
+    cd ..
   else
-    echo "ℹ️  Database already has data, skipping seed"
+    echo "ℹ️  Store Health AI data already exists, skipping seed"
   fi
-  cd ..
 else
-  echo "⚠️  DATABASE_URL not set, skipping database migrations"
+  echo "⚠️  DATABASE_URL not set, skipping database setup"
 fi
 
 # Build Store Health AI Dashboard
