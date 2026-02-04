@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * Traffic Light Component
+ * Traffic Light Component (Horizontal)
  * Visual traffic light indicator showing overall store health status
  * with risk percentage displayed on the active light
  */
@@ -26,54 +26,51 @@ export function TrafficLight({ redStores = 0, yellowStores = 0, greenStores = 0,
 
   return (
     <div className="flex items-center gap-3">
-      {/* Traffic Light Housing */}
-      <div className="relative bg-gray-800 rounded-xl p-2 shadow-lg">
-        <div className="flex flex-col gap-1.5">
+      {/* Traffic Light Housing - Horizontal */}
+      <div className="relative bg-gray-800 rounded-full px-2 py-1.5 shadow-lg">
+        <div className="flex flex-row gap-1.5">
           {/* Red Light */}
           <div
             className={cn(
-              'w-8 h-8 rounded-full border-2 border-gray-700 flex items-center justify-center transition-all duration-300',
+              'w-6 h-6 rounded-full border-2 border-gray-700 flex items-center justify-center transition-all duration-300',
               activeStatus === 'red'
-                ? 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)]'
+                ? 'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.8)]'
                 : 'bg-red-900/30'
             )}
           >
             {activeStatus === 'red' && (
-              <span className="text-[10px] font-bold text-white">{riskPercentage}%</span>
+              <span className="text-[8px] font-bold text-white">{riskPercentage}%</span>
             )}
           </div>
 
           {/* Yellow Light */}
           <div
             className={cn(
-              'w-8 h-8 rounded-full border-2 border-gray-700 flex items-center justify-center transition-all duration-300',
+              'w-6 h-6 rounded-full border-2 border-gray-700 flex items-center justify-center transition-all duration-300',
               activeStatus === 'yellow'
-                ? 'bg-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.8)]'
+                ? 'bg-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.8)]'
                 : 'bg-yellow-900/30'
             )}
           >
             {activeStatus === 'yellow' && (
-              <span className="text-[10px] font-bold text-gray-800">{riskPercentage}%</span>
+              <span className="text-[8px] font-bold text-gray-800">{riskPercentage}%</span>
             )}
           </div>
 
           {/* Green Light */}
           <div
             className={cn(
-              'w-8 h-8 rounded-full border-2 border-gray-700 flex items-center justify-center transition-all duration-300',
+              'w-6 h-6 rounded-full border-2 border-gray-700 flex items-center justify-center transition-all duration-300',
               activeStatus === 'green'
-                ? 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.8)]'
+                ? 'bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.8)]'
                 : 'bg-green-900/30'
             )}
           >
             {activeStatus === 'green' && (
-              <span className="text-[10px] font-bold text-white">{riskPercentage}%</span>
+              <span className="text-[8px] font-bold text-white">{riskPercentage}%</span>
             )}
           </div>
         </div>
-
-        {/* Pole/Stand */}
-        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-2 h-3 bg-gray-700 rounded-b" />
       </div>
 
       {/* Status Text */}
