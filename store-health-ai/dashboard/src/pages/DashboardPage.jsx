@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { StoreHealthCard } from '@/components/StoreHealthCard';
 import { CriticalIndicators } from '@/components/CriticalIndicators';
 import { TrafficLight } from '@/components/TrafficLight';
-import { AIAgentOrb } from '@/components/AIAgentOrb';
 import { Loading } from '@/components/Loading';
 import { ErrorMessage } from '@/components/ErrorMessage';
 import { Store, AlertTriangle, TrendingUp, Activity } from 'lucide-react';
@@ -101,7 +100,6 @@ export function DashboardPage() {
             />
           </div>
         </div>
-        <AIAgentOrb agentUrl="https://elevenlabs.io/app/agents/agents/agent_3701kgg7d7v3e1vbjsxv0p5pn48e?branchId=agtbrch_9301kgg7d82ce4ct863x1n92ygdz&tab=widget" />
       </div>
 
       {/* Critical Flight Indicators */}
