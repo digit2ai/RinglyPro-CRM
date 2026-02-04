@@ -36,4 +36,29 @@ router.get('/', async (req, res) => {
   res.json(response);
 });
 
+// Debug endpoint to test Store model
+router.get('/debug', async (req, res) => {
+  try {
+    const { Store, sequelize } = require('../../models');
+
+    // Raw SQL count
+    const [rawCount] = await sequelize.query('SELECT COUNT(*) as count FROM stores');
+
+    // Model count
+    const modelCount = await Store.count();
+
+    // Model findAll
+    const stores = await Store.findAll({ limit: 3 });
+
+    res.json({
+      rawSqlCount: rawCount[0].count,
+      modelCount,
+      storesFound: stores.length,
+      sampleStores: stores.map(s => ({ id: s.id, code: s.store_code, name: s.name }))
+    });
+  } catch (error) {
+    res.json({ error: error.message, stack: error.stack });
+  }
+});
+
 module.exports = router;
