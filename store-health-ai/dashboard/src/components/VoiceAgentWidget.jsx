@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useConversation } from '@elevenlabs/react';
 import { cn } from '@/lib/utils';
 
@@ -9,55 +9,99 @@ import { cn } from '@/lib/utils';
  */
 export function VoiceAgentWidget({ agentId }) {
   const [isConnecting, setIsConnecting] = useState(false);
+  const [error, setError] = useState(null);
 
   const conversation = useConversation({
     onConnect: () => {
+      console.log('ElevenLabs: Connected');
       setIsConnecting(false);
+      setError(null);
     },
     onDisconnect: () => {
+      console.log('ElevenLabs: Disconnected');
       setIsConnecting(false);
     },
-    onError: (error) => {
-      console.error('Conversation error:', error);
+    onError: (err) => {
+      console.error('ElevenLabs error:', err);
+      setError(err?.message || 'Connection failed');
       setIsConnecting(false);
+    },
+    onMessage: (message) => {
+      console.log('ElevenLabs message:', message);
     },
   });
 
   const { status, isSpeaking } = conversation;
 
+  // Debug: log status changes
+  useEffect(() => {
+    console.log('ElevenLabs status:', status, 'isSpeaking:', isSpeaking);
+  }, [status, isSpeaking]);
+
   const handleStartConversation = useCallback(async () => {
     try {
       setIsConnecting(true);
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      await conversation.startSession({
+      setError(null);
+
+      // Request microphone permission
+      console.log('Requesting microphone...');
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log('Microphone granted');
+
+      // Start the conversation session
+      console.log('Starting session with agent:', agentId);
+      const conversationId = await conversation.startSession({
         agentId: agentId,
       });
-    } catch (error) {
-      console.error('Failed to start conversation:', error);
+      console.log('Session started:', conversationId);
+
+    } catch (err) {
+      console.error('Failed to start conversation:', err);
+      setError(err?.message || 'Failed to connect');
       setIsConnecting(false);
     }
   }, [conversation, agentId]);
 
   const handleEndConversation = useCallback(async () => {
-    await conversation.endSession();
+    try {
+      console.log('Ending session...');
+      await conversation.endSession();
+      console.log('Session ended');
+    } catch (err) {
+      console.error('Failed to end session:', err);
+    }
   }, [conversation]);
 
   const handleToggle = useCallback(() => {
     if (status === 'connected') {
       handleEndConversation();
-    } else {
+    } else if (!isConnecting) {
       handleStartConversation();
     }
-  }, [status, handleStartConversation, handleEndConversation]);
+  }, [status, isConnecting, handleStartConversation, handleEndConversation]);
 
   const isActive = status === 'connected';
 
   return (
     <div className="relative flex items-center gap-2">
+      {/* Error message */}
+      {error && (
+        <span className="text-xs font-medium text-red-500">
+          {error}
+        </span>
+      )}
+
       {/* Status text when active */}
-      {isActive && (
+      {isActive && !error && (
         <span className="text-xs font-medium text-red-500 animate-pulse">
           {isSpeaking ? 'Speaking...' : 'Listening...'}
+        </span>
+      )}
+
+      {/* Connecting status */}
+      {isConnecting && (
+        <span className="text-xs font-medium text-gray-500">
+          Connecting...
         </span>
       )}
 
@@ -70,15 +114,14 @@ export function VoiceAgentWidget({ agentId }) {
           'flex items-center justify-center',
           'hover:scale-110 active:scale-95',
           isActive ? 'bg-red-500' : 'bg-gray-900 hover:bg-gray-800',
-          isConnecting && 'opacity-70 cursor-wait'
+          isConnecting && 'opacity-70 cursor-wait',
+          error && 'ring-2 ring-red-500'
         )}
-        title={isActive ? 'End call' : 'Talk to AI Agent'}
+        title={isActive ? 'End call' : error ? `Error: ${error}` : 'Talk to AI Agent'}
       >
         {/* Animated rings when active */}
         {isActive && (
-          <>
-            <div className="absolute inset-0 rounded-full border-2 border-red-400 animate-ping opacity-75" />
-          </>
+          <div className="absolute inset-0 rounded-full border-2 border-red-400 animate-ping opacity-75" />
         )}
 
         {/* Outer glow */}
