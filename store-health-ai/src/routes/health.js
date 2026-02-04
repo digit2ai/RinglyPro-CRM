@@ -77,41 +77,38 @@ router.get('/seed', async (req, res) => {
     }
 
     // Create organization
-    await sequelize.query(`
-      INSERT INTO organizations (name, timezone, config, created_at, updated_at)
-      VALUES ('Dollar Tree Stores', 'America/New_York', '{"businessHours":{"open":"08:00","close":"22:00"}}'::jsonb, NOW(), NOW())
-      ON CONFLICT DO NOTHING
-    `);
-    const [org] = await sequelize.query(`SELECT id FROM organizations WHERE name = 'Dollar Tree Stores' LIMIT 1`);
+    let [org] = await sequelize.query(`SELECT id FROM organizations WHERE name = 'Dollar Tree Stores' LIMIT 1`);
+    if (org.length === 0) {
+      await sequelize.query(`INSERT INTO organizations (name, timezone, config, created_at, updated_at) VALUES ('Dollar Tree Stores', 'America/New_York', '{"businessHours":{"open":"08:00","close":"22:00"}}'::jsonb, NOW(), NOW())`);
+      [org] = await sequelize.query(`SELECT id FROM organizations WHERE name = 'Dollar Tree Stores' LIMIT 1`);
+    }
     const orgId = org[0].id;
 
     // Create region
-    await sequelize.query(`
-      INSERT INTO regions (organization_id, name, manager_name, manager_email, created_at, updated_at)
-      VALUES (${orgId}, 'Northeast Region', 'Sarah Johnson', 'sarah@dollartree.com', NOW(), NOW())
-      ON CONFLICT DO NOTHING
-    `);
-    const [region] = await sequelize.query(`SELECT id FROM regions WHERE name = 'Northeast Region' LIMIT 1`);
+    let [region] = await sequelize.query(`SELECT id FROM regions WHERE name = 'Northeast Region' LIMIT 1`);
+    if (region.length === 0) {
+      await sequelize.query(`INSERT INTO regions (organization_id, name, manager_name, manager_email, created_at, updated_at) VALUES (${orgId}, 'Northeast Region', 'Sarah Johnson', 'sarah@dollartree.com', NOW(), NOW())`);
+      [region] = await sequelize.query(`SELECT id FROM regions WHERE name = 'Northeast Region' LIMIT 1`);
+    }
     const regionId = region[0].id;
 
     // Create district
-    await sequelize.query(`
-      INSERT INTO districts (organization_id, region_id, name, manager_name, created_at, updated_at)
-      VALUES (${orgId}, ${regionId}, 'NYC Metro District', 'Michael Chen', NOW(), NOW())
-      ON CONFLICT DO NOTHING
-    `);
-    const [district] = await sequelize.query(`SELECT id FROM districts WHERE name = 'NYC Metro District' LIMIT 1`);
+    let [district] = await sequelize.query(`SELECT id FROM districts WHERE name = 'NYC Metro District' LIMIT 1`);
+    if (district.length === 0) {
+      await sequelize.query(`INSERT INTO districts (organization_id, region_id, name, manager_name, created_at, updated_at) VALUES (${orgId}, ${regionId}, 'NYC Metro District', 'Michael Chen', NOW(), NOW())`);
+      [district] = await sequelize.query(`SELECT id FROM districts WHERE name = 'NYC Metro District' LIMIT 1`);
+    }
     const districtId = district[0].id;
 
     // Create 10 stores
     const storeNames = ['Manhattan 42nd St', 'Brooklyn Heights', 'Queens Plaza', 'Bronx Fordham', 'Staten Island Mall',
                         'Upper East Side', 'Harlem 125th', 'Greenwich Village', 'Williamsburg', 'Long Island City'];
     for (let i = 0; i < 10; i++) {
-      await sequelize.query(`
-        INSERT INTO stores (organization_id, region_id, district_id, store_code, name, city, state, zip_code, status, created_at, updated_at)
-        VALUES (${orgId}, ${regionId}, ${districtId}, 'DT-${String(i+1).padStart(3, '0')}', '${storeNames[i]}', 'New York', 'NY', '10001', 'active', NOW(), NOW())
-        ON CONFLICT (store_code) DO NOTHING
-      `);
+      const code = 'DT-' + String(i+1).padStart(3, '0');
+      const [existingStore] = await sequelize.query(`SELECT id FROM stores WHERE store_code = '${code}' LIMIT 1`);
+      if (existingStore.length === 0) {
+        await sequelize.query(`INSERT INTO stores (organization_id, region_id, district_id, store_code, name, city, state, zip_code, status, created_at, updated_at) VALUES (${orgId}, ${regionId}, ${districtId}, '${code}', '${storeNames[i]}', 'New York', 'NY', '10001', 'active', NOW(), NOW())`);
+      }
     }
 
     // Create KPI definitions
@@ -123,11 +120,10 @@ router.get('/seed', async (req, res) => {
       ['TRAFFIC', 'Store Traffic', 'traffic', 'visitors', 200]
     ];
     for (const [code, name, cat, unit, target] of kpis) {
-      await sequelize.query(`
-        INSERT INTO kpi_definitions (organization_id, kpi_code, name, category, unit, calculation_method, is_active, created_at, updated_at)
-        VALUES (${orgId}, '${code}', '${name}', '${cat}', '${unit}', 'sum', true, NOW(), NOW())
-        ON CONFLICT (kpi_code) DO NOTHING
-      `);
+      const [existingKpi] = await sequelize.query(`SELECT id FROM kpi_definitions WHERE kpi_code = '${code}' LIMIT 1`);
+      if (existingKpi.length === 0) {
+        await sequelize.query(`INSERT INTO kpi_definitions (organization_id, kpi_code, name, category, unit, calculation_method, is_active, created_at, updated_at) VALUES (${orgId}, '${code}', '${name}', '${cat}', '${unit}', 'sum', true, NOW(), NOW())`);
+      }
     }
 
     // Get store IDs and KPI IDs
