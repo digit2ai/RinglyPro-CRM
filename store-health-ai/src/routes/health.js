@@ -50,7 +50,11 @@ router.get('/debug', async (req, res) => {
     // Model findAll
     const stores = await Store.findAll({ limit: 3 });
 
+    // Get database name
+    const [dbInfo] = await sequelize.query('SELECT current_database() as db');
+
     res.json({
+      database: dbInfo[0].db,
       rawSqlCount: rawCount[0].count,
       modelCount,
       storesFound: stores.length,
