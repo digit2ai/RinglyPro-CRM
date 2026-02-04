@@ -440,6 +440,7 @@ console.log('📝 A2P 10DLC verification routes mounted at /api/clients/:clientI
 
 // Mount Store Health AI system at /aiastore
 let storeHealthApp = null;
+let storeHealthError = null;
 try {
   // Try full version with dashboard and database
   storeHealthApp = require('../store-health-ai/src/index');
@@ -449,8 +450,10 @@ try {
   console.log('   - Health Check: /aiastore/health');
   console.log('   - API: /aiastore/api/v1/*');
 } catch (error) {
+  storeHealthError = { message: error.message, stack: error.stack };
   console.log('⚠️ Store Health AI full version failed, trying minimal version');
   console.error('Full version error:', error.message);
+  console.error('Full stack:', error.stack);
   try {
     // Fallback to minimal version with mock data
     storeHealthApp = require('../store-health-ai/src/index-minimal');
@@ -461,6 +464,18 @@ try {
     console.log('⚠️ Store Health AI not available:', fallbackError.message);
   }
 }
+
+// Debug endpoint to see store health AI error
+app.get('/debug/store-health-error', (req, res) => {
+  res.json({
+    mode: storeHealthError ? 'minimal (fallback)' : 'full',
+    error: storeHealthError,
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      hasDbUrl: !!process.env.DATABASE_URL
+    }
+  });
+});
 
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
