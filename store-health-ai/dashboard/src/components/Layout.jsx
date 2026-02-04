@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useWebSocket } from '@/lib/websocket';
 import { cn } from '@/lib/utils';
+import { VoiceAgentWidget } from './VoiceAgentWidget';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -130,6 +131,9 @@ export function Layout({ children }) {
           {children}
         </main>
       </div>
+
+      {/* Voice AI Agent Widget */}
+      <VoiceAgentWidget agentId="agent_3701kgg7d7v3e1vbjsxv0p5pn48e" />
     </div>
   );
 }
