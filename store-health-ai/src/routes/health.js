@@ -223,8 +223,8 @@ router.get('/reseed', async (req, res) => {
           }
 
           await sequelize.query(`
-            INSERT INTO kpi_metrics (store_id, kpi_definition_id, metric_date, metric_timestamp, value, variance_pct, status, data_source, created_at, updated_at)
-            VALUES (${store.id}, ${kpi.id}, CURRENT_DATE - ${day}, NOW(), ${value.toFixed(2)}, ${variancePct.toFixed(2)}, '${status}', 'seed', NOW(), NOW())
+            INSERT INTO kpi_metrics (store_id, kpi_definition_id, metric_date, metric_timestamp, value, variance_pct, status, created_at, updated_at)
+            VALUES (${store.id}, ${kpi.id}, CURRENT_DATE - ${day}, NOW(), ${value.toFixed(2)}, ${variancePct.toFixed(2)}, '${status}', NOW(), NOW())
           `);
           metricsCreated++;
         }
