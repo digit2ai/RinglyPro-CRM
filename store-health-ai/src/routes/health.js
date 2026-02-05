@@ -175,4 +175,84 @@ router.get('/seed', async (req, res) => {
   }
 });
 
+// Reseed snapshots - regenerates KPI metrics and snapshots for existing stores
+router.get('/reseed', async (req, res) => {
+  try {
+    const { sequelize } = require('../../models');
+
+    // Get store IDs
+    const [stores] = await sequelize.query(`SELECT id FROM stores WHERE status = 'active' ORDER BY id`);
+    const [kpiDefs] = await sequelize.query(`SELECT id FROM kpi_definitions ORDER BY id`);
+
+    if (stores.length === 0) {
+      return res.json({ error: 'No stores found. Run /health/seed first.' });
+    }
+
+    if (kpiDefs.length === 0) {
+      return res.json({ error: 'No KPI definitions found. Run /health/seed first.' });
+    }
+
+    // Clear existing snapshots and metrics
+    await sequelize.query('DELETE FROM store_health_snapshots');
+    await sequelize.query('DELETE FROM kpi_metrics');
+
+    let metricsCreated = 0;
+    let snapshotsCreated = 0;
+
+    // Create metrics and snapshots for last 30 days
+    for (let day = 0; day < 30; day++) {
+      for (const store of stores) {
+        let greenCount = 0, yellowCount = 0, redCount = 0;
+
+        for (const kpi of kpiDefs) {
+          const targetValue = 100;
+          const variance = 0.7 + Math.random() * 0.5;
+          const value = targetValue * variance;
+          const variancePct = ((value - targetValue) / targetValue) * 100;
+
+          let status;
+          if (variancePct >= -10) {
+            status = 'green';
+            greenCount++;
+          } else if (variancePct >= -25) {
+            status = 'yellow';
+            yellowCount++;
+          } else {
+            status = 'red';
+            redCount++;
+          }
+
+          await sequelize.query(`
+            INSERT INTO kpi_metrics (store_id, kpi_definition_id, metric_date, metric_timestamp, value, variance_pct, status, data_source, created_at, updated_at)
+            VALUES (${store.id}, ${kpi.id}, CURRENT_DATE - ${day}, NOW(), ${value.toFixed(2)}, ${variancePct.toFixed(2)}, '${status}', 'seed', NOW(), NOW())
+          `);
+          metricsCreated++;
+        }
+
+        const overallStatus = redCount > 0 || yellowCount >= 2 ? 'red' : (yellowCount > 0 ? 'yellow' : 'green');
+        const total = greenCount + yellowCount + redCount;
+        const healthScore = total > 0 ? (greenCount * 100 + yellowCount * 60) / total : 100;
+        const escalationLevel = (redCount > 0 || yellowCount >= 2) ? 2 : (yellowCount > 0 ? 1 : 0);
+        const actionRequired = redCount > 0 || yellowCount > 1;
+
+        await sequelize.query(`
+          INSERT INTO store_health_snapshots (store_id, snapshot_date, overall_status, health_score, green_kpi_count, yellow_kpi_count, red_kpi_count, escalation_level, action_required, created_at, updated_at)
+          VALUES (${store.id}, CURRENT_DATE - ${day}, '${overallStatus}', ${healthScore.toFixed(2)}, ${greenCount}, ${yellowCount}, ${redCount}, ${escalationLevel}, ${actionRequired}, NOW(), NOW())
+        `);
+        snapshotsCreated++;
+      }
+    }
+
+    res.json({
+      status: 'reseeded',
+      stores: stores.length,
+      kpis: kpiDefs.length,
+      metricsCreated,
+      snapshotsCreated
+    });
+  } catch (error) {
+    res.json({ error: error.message, stack: error.stack });
+  }
+});
+
 module.exports = router;

@@ -137,7 +137,7 @@ BEGIN
 
     FOR current_store_id IN (SELECT id FROM stores WHERE store_code LIKE 'DT-%')
     LOOP
-      INSERT INTO store_health_snapshots (store_id, snapshot_date, overall_status, green_count, yellow_count, red_count, health_score, escalation_level, created_at, updated_at)
+      INSERT INTO store_health_snapshots (store_id, snapshot_date, overall_status, green_kpi_count, yellow_kpi_count, red_kpi_count, health_score, escalation_level, action_required, created_at, updated_at)
       SELECT
         current_store_id,
         current_metric_date,
@@ -155,6 +155,7 @@ BEGIN
           WHEN SUM(CASE WHEN km.status = 'red' THEN 1 ELSE 0 END) >= 1 THEN 1
           ELSE 0
         END,
+        CASE WHEN SUM(CASE WHEN km.status = 'red' THEN 1 ELSE 0 END) > 0 OR SUM(CASE WHEN km.status = 'yellow' THEN 1 ELSE 0 END) > 1 THEN true ELSE false END,
         NOW(),
         NOW()
       FROM kpi_metrics km
