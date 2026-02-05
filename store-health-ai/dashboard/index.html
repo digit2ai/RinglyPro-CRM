@@ -14,17 +14,34 @@
     <elevenlabs-convai agent-id="agent_3701kgg7d7v3e1vbjsxv0p5pn48e"></elevenlabs-convai>
     <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
 
-    <!-- Hide "Powered by ElevenLabs" branding -->
-    <style>
-      elevenlabs-convai::part(powered-by),
-      elevenlabs-convai [class*="powered"],
-      elevenlabs-convai [class*="branding"] {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        height: 0 !important;
-        overflow: hidden !important;
+    <!-- Hide "Powered by ElevenLabs" branding via JavaScript -->
+    <script>
+      function hideBranding() {
+        const widget = document.querySelector('elevenlabs-convai');
+        if (widget && widget.shadowRoot) {
+          const style = document.createElement('style');
+          style.textContent = `
+            [class*="powered"], [class*="Powered"],
+            [class*="branding"], [class*="Branding"],
+            a[href*="elevenlabs.io"],
+            .powered-by, .poweredBy {
+              display: none !important;
+              visibility: hidden !important;
+              height: 0 !important;
+              opacity: 0 !important;
+            }
+          `;
+          widget.shadowRoot.appendChild(style);
+        }
       }
-    </style>
+      // Try immediately and after delays
+      setTimeout(hideBranding, 500);
+      setTimeout(hideBranding, 1000);
+      setTimeout(hideBranding, 2000);
+      setTimeout(hideBranding, 3000);
+      // Also observe for changes
+      const observer = new MutationObserver(hideBranding);
+      observer.observe(document.body, { childList: true, subtree: true });
+    </script>
   </body>
 </html>
