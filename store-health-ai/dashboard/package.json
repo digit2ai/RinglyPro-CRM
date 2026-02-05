@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@elevenlabs/convai-widget-core": "^0.8.2",
     "@elevenlabs/react": "^0.14.0",
     "@tanstack/react-query": "^5.20.0",
     "@vitejs/plugin-react": "^4.2.1",
