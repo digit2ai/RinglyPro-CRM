@@ -175,14 +175,14 @@ router.get('/seed', async (req, res) => {
   }
 });
 
-// Reseed snapshots - regenerates KPI metrics and snapshots for existing stores
+// Reseed snapshots - regenerates 2 months of realistic KPI metrics and snapshots
 router.get('/reseed', async (req, res) => {
   try {
     const { sequelize } = require('../../models');
 
-    // Get store IDs
-    const [stores] = await sequelize.query(`SELECT id FROM stores WHERE status = 'active' ORDER BY id`);
-    const [kpiDefs] = await sequelize.query(`SELECT id FROM kpi_definitions ORDER BY id`);
+    // Get store IDs and names
+    const [stores] = await sequelize.query(`SELECT id, name FROM stores WHERE status = 'active' ORDER BY id`);
+    const [kpiDefs] = await sequelize.query(`SELECT id, kpi_code FROM kpi_definitions ORDER BY id`);
 
     if (stores.length === 0) {
       return res.json({ error: 'No stores found. Run /health/seed first.' });
@@ -199,17 +199,76 @@ router.get('/reseed', async (req, res) => {
     let metricsCreated = 0;
     let snapshotsCreated = 0;
 
-    // Create metrics and snapshots for last 30 days
-    for (let day = 0; day < 30; day++) {
+    // Define store performance profiles for realistic data
+    // Each store has a "base performance" that determines how well they typically do
+    const storeProfiles = {
+      // High performers (consistently green)
+      1: { basePerformance: 0.95, volatility: 0.08, trend: 0.002 },   // Manhattan 42nd St - flagship
+      6: { basePerformance: 0.92, volatility: 0.10, trend: 0.001 },   // Upper East Side - wealthy area
+
+      // Good performers (mostly green, occasional yellow)
+      2: { basePerformance: 0.88, volatility: 0.12, trend: 0.001 },   // Brooklyn Heights
+      8: { basePerformance: 0.87, volatility: 0.11, trend: 0.000 },   // Greenwich Village
+
+      // Average performers (mix of green/yellow)
+      3: { basePerformance: 0.82, volatility: 0.15, trend: -0.001 },  // Queens Plaza
+      9: { basePerformance: 0.80, volatility: 0.14, trend: 0.000 },   // Williamsburg
+      10: { basePerformance: 0.78, volatility: 0.13, trend: 0.001 },  // Long Island City
+
+      // Struggling stores (frequent yellow, some red)
+      4: { basePerformance: 0.72, volatility: 0.18, trend: -0.002 },  // Bronx Fordham
+      7: { basePerformance: 0.70, volatility: 0.20, trend: -0.001 },  // Harlem 125th
+
+      // Problem store (frequent red, needs attention)
+      5: { basePerformance: 0.65, volatility: 0.22, trend: -0.003 },  // Staten Island Mall
+    };
+
+    // KPI-specific variance (some KPIs are harder to hit than others)
+    const kpiDifficulty = {
+      'SALES_DAILY': 1.0,      // Base difficulty
+      'LABOR_HOURS': 1.1,      // Labor is tricky to manage
+      'CONVERSION_RATE': 0.95, // Slightly easier
+      'INVENTORY_LEVEL': 1.05, // Inventory management challenges
+      'TRAFFIC': 0.9,          // Traffic is external, easier to hit
+    };
+
+    // Create metrics and snapshots for last 60 days (2 months)
+    const DAYS = 60;
+
+    for (let day = 0; day < DAYS; day++) {
+      // Add some weekly patterns (weekends are different)
+      const dayOfWeek = (new Date().getDay() - day + 70) % 7; // 0=Sun, 6=Sat
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      const weekendBoost = isWeekend ? 0.03 : 0; // Slightly better on weekends
+
       for (const store of stores) {
+        const profile = storeProfiles[store.id] || { basePerformance: 0.80, volatility: 0.15, trend: 0 };
+
+        // Calculate store's performance for this day
+        // Includes: base + trend over time + weekend effect + random daily variance
+        const trendEffect = profile.trend * (DAYS - day); // Trend effect increases over time
+        const dailyVariance = (Math.random() - 0.5) * profile.volatility;
+        const storePerformance = profile.basePerformance + trendEffect + weekendBoost + dailyVariance;
+
         let greenCount = 0, yellowCount = 0, redCount = 0;
 
         for (const kpi of kpiDefs) {
-          const targetValue = 100;
-          const variance = 0.7 + Math.random() * 0.5;
-          const value = targetValue * variance;
-          const variancePct = ((value - targetValue) / targetValue) * 100;
+          const difficulty = kpiDifficulty[kpi.kpi_code] || 1.0;
 
+          // Calculate this KPI's performance
+          // Add KPI-specific random variance
+          const kpiVariance = (Math.random() - 0.5) * 0.15;
+          const kpiPerformance = (storePerformance / difficulty) + kpiVariance;
+
+          // Convert performance to a percentage variance from target
+          // Performance of 1.0 = on target, 0.9 = -10%, 0.8 = -20%
+          const variancePct = (kpiPerformance - 1.0) * 100;
+
+          // Calculate actual value (target * performance)
+          const targetValue = 100;
+          const value = targetValue * Math.max(0.3, kpiPerformance); // Floor at 30% of target
+
+          // Determine status based on variance thresholds
           let status;
           if (variancePct >= -10) {
             status = 'green';
@@ -229,6 +288,7 @@ router.get('/reseed', async (req, res) => {
           metricsCreated++;
         }
 
+        // Determine overall store status
         const overallStatus = redCount > 0 || yellowCount >= 2 ? 'red' : (yellowCount > 0 ? 'yellow' : 'green');
         const total = greenCount + yellowCount + redCount;
         const healthScore = total > 0 ? (greenCount * 100 + yellowCount * 60) / total : 100;
@@ -247,8 +307,14 @@ router.get('/reseed', async (req, res) => {
       status: 'reseeded',
       stores: stores.length,
       kpis: kpiDefs.length,
+      days: DAYS,
       metricsCreated,
-      snapshotsCreated
+      snapshotsCreated,
+      profiles: Object.entries(storeProfiles).map(([id, p]) => ({
+        store_id: id,
+        performance: p.basePerformance,
+        category: p.basePerformance >= 0.9 ? 'high' : p.basePerformance >= 0.8 ? 'good' : p.basePerformance >= 0.75 ? 'average' : 'struggling'
+      }))
     });
   } catch (error) {
     res.json({ error: error.message, stack: error.stack });
