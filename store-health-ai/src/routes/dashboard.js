@@ -24,4 +24,7 @@ router.get('/kpi-trends', asyncHandler(dashboardController.getKpiTrends));
 // GET /api/v1/dashboard/top-issues - Get top issues across all stores
 router.get('/top-issues', asyncHandler(dashboardController.getTopIssues));
 
+// GET /api/v1/dashboard/kpi-breakdown/:kpi_code - Get KPI breakdown by store
+router.get('/kpi-breakdown/:kpi_code', asyncHandler(dashboardController.getKpiBreakdown));
+
 module.exports = router;

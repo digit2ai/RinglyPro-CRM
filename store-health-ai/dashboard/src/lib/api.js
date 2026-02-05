@@ -46,6 +46,7 @@ export const dashboardApi = {
   getCriticalStores: (date, limit) => api.get('/api/v1/dashboard/critical-stores', { params: { date, limit } }),
   getKpiTrends: (days, kpi_code) => api.get('/api/v1/dashboard/kpi-trends', { params: { days, kpi_code } }),
   getTopIssues: (date, limit) => api.get('/api/v1/dashboard/top-issues', { params: { date, limit } }),
+  getKpiBreakdown: (kpi_code, date) => api.get(`/api/v1/dashboard/kpi-breakdown/${kpi_code}`, { params: { date } }),
 };
 
 // ============================================================================

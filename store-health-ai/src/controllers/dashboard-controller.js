@@ -165,3 +165,86 @@ exports.getTopIssues = async (req, res) => {
     count: issues.length
   });
 };
+
+/**
+ * Get KPI breakdown by store
+ * GET /api/v1/dashboard/kpi-breakdown/:kpi_code
+ * Returns all stores with their performance for a specific KPI
+ */
+exports.getKpiBreakdown = async (req, res) => {
+  const { kpi_code } = req.params;
+  const { date } = req.query;
+  const targetDate = date || format(new Date(), 'yyyy-MM-dd');
+
+  // Get KPI definition
+  const kpiDef = await KpiDefinition.findOne({
+    where: { kpi_code: kpi_code.toUpperCase() }
+  });
+
+  if (!kpiDef) {
+    return res.status(404).json({
+      success: false,
+      error: { message: `KPI not found: ${kpi_code}` }
+    });
+  }
+
+  // Get all stores' metrics for this KPI on the target date
+  const metrics = await KpiMetric.findAll({
+    where: {
+      kpi_definition_id: kpiDef.id,
+      metric_date: targetDate
+    },
+    include: [
+      {
+        model: Store,
+        as: 'store',
+        attributes: ['id', 'store_code', 'name', 'city', 'state']
+      }
+    ],
+    order: [['variance_pct', 'ASC']] // Worst performers first
+  });
+
+  // Calculate summary stats
+  const totalStores = metrics.length;
+  const greenCount = metrics.filter(m => m.status === 'green').length;
+  const yellowCount = metrics.filter(m => m.status === 'yellow').length;
+  const redCount = metrics.filter(m => m.status === 'red').length;
+  const avgValue = metrics.reduce((sum, m) => sum + parseFloat(m.value || 0), 0) / totalStores || 0;
+  const avgVariance = metrics.reduce((sum, m) => sum + parseFloat(m.variance_pct || 0), 0) / totalStores || 0;
+
+  // Format store breakdown
+  const storeBreakdown = metrics.map(m => ({
+    store_id: m.store.id,
+    store_code: m.store.store_code,
+    store_name: m.store.name,
+    location: `${m.store.city}, ${m.store.state}`,
+    value: parseFloat(m.value),
+    variance_pct: parseFloat(m.variance_pct),
+    status: m.status,
+    // Performance indicator (100 + variance_pct = performance %)
+    performance: Math.round(100 + parseFloat(m.variance_pct))
+  }));
+
+  res.json({
+    success: true,
+    data: {
+      kpi: {
+        code: kpiDef.kpi_code,
+        name: kpiDef.name,
+        category: kpiDef.category,
+        unit: kpiDef.unit
+      },
+      date: targetDate,
+      summary: {
+        total_stores: totalStores,
+        green_stores: greenCount,
+        yellow_stores: yellowCount,
+        red_stores: redCount,
+        avg_value: avgValue.toFixed(2),
+        avg_variance: avgVariance.toFixed(2),
+        overall_performance: Math.round(100 + avgVariance)
+      },
+      stores: storeBreakdown
+    }
+  });
+};

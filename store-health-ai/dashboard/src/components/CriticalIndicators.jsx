@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { KpiDrilldownModal } from './KpiDrilldownModal';
 
 /**
  * Glass Cockpit Display - Garmin G1000 Style
  * Modern digital tape indicators for 5 key financial metrics
+ * Click any indicator to see store-by-store breakdown
  */
 export function CriticalIndicators({ dashboardData }) {
   const [salesStatus, setSalesStatus] = useState({ performance: 0, variance: 0, trend: 'stable' });
@@ -11,6 +13,9 @@ export function CriticalIndicators({ dashboardData }) {
   const [conversionStatus, setConversionStatus] = useState({ rate: 0, trend: 'stable' });
   const [inventoryStatus, setInventoryStatus] = useState({ availability: 0, trend: 'stable' });
   const [trafficStatus, setTrafficStatus] = useState({ index: 0, trend: 'stable' });
+
+  // Modal state for KPI drill-down
+  const [selectedKpi, setSelectedKpi] = useState(null);
 
   useEffect(() => {
     if (!dashboardData) return;
@@ -37,7 +42,7 @@ export function CriticalIndicators({ dashboardData }) {
   }, [dashboardData]);
 
   // Garmin G1000 style tape indicator
-  const TapeIndicator = ({ value, min, max, label, unit, zones, trend, decimals = 0 }) => {
+  const TapeIndicator = ({ value, min, max, label, unit, zones, trend, decimals = 0, kpiCode, kpiName }) => {
     const percentage = ((value - min) / (max - min)) * 100;
 
     // Determine color based on zones
@@ -68,6 +73,12 @@ export function CriticalIndicators({ dashboardData }) {
       return { value: tickValue, percentage: tickPercentage };
     });
 
+    const handleClick = () => {
+      if (kpiCode) {
+        setSelectedKpi({ code: kpiCode, name: kpiName || label });
+      }
+    };
+
     return (
       <div className="flex flex-col items-center">
         {/* Label */}
@@ -75,8 +86,12 @@ export function CriticalIndicators({ dashboardData }) {
           <div className="text-cyan-400 text-xs font-mono tracking-wider">{label}</div>
         </div>
 
-        {/* Tape Display */}
-        <div className="relative w-32 h-64 bg-black rounded-lg border-2 border-gray-700 overflow-hidden">
+        {/* Tape Display - Now clickable */}
+        <div
+          className="relative w-32 h-64 bg-black rounded-lg border-2 border-gray-700 overflow-hidden cursor-pointer hover:border-cyan-500 transition-colors"
+          onClick={handleClick}
+          title={`Click to see ${label} breakdown by store`}
+        >
           {/* Zone color bars (background) */}
           {zones.map((zone, i) => {
             const zoneStart = ((zone.min - min) / (max - min)) * 100;
@@ -167,6 +182,8 @@ export function CriticalIndicators({ dashboardData }) {
             label="SALES"
             unit="%"
             trend={salesStatus.trend}
+            kpiCode="SALES_DAILY"
+            kpiName="Daily Sales"
             zones={[
               { min: 0, max: 75, color: 'red' },
               { min: 75, max: 90, color: 'yellow' },
@@ -182,6 +199,8 @@ export function CriticalIndicators({ dashboardData }) {
             label="LABOR"
             unit="%"
             trend={laborStatus.trend}
+            kpiCode="LABOR_HOURS"
+            kpiName="Labor Hours"
             zones={[
               { min: 50, max: 85, color: 'red' },
               { min: 85, max: 95, color: 'yellow' },
@@ -196,7 +215,11 @@ export function CriticalIndicators({ dashboardData }) {
               <div className="text-gray-500 text-[10px] font-mono">PRIMARY</div>
             </div>
 
-            <div className="relative w-40 h-64 bg-black rounded-lg border-2 border-cyan-500/50 overflow-hidden shadow-lg shadow-cyan-500/20">
+            <div
+              className="relative w-40 h-64 bg-black rounded-lg border-2 border-cyan-500/50 overflow-hidden shadow-lg shadow-cyan-500/20 cursor-pointer hover:border-cyan-400 transition-colors"
+              onClick={() => setSelectedKpi({ code: 'CONVERSION_RATE', name: 'Conversion Rate' })}
+              title="Click to see Conversion Rate breakdown by store"
+            >
               {/* Zone backgrounds */}
               <div className="absolute left-0 right-0 bottom-0" style={{ height: '45%', backgroundColor: 'rgba(239, 68, 68, 0.15)' }}></div>
               <div className="absolute left-0 right-0" style={{ bottom: '45%', height: '10%', backgroundColor: 'rgba(245, 158, 11, 0.15)' }}></div>
@@ -262,6 +285,8 @@ export function CriticalIndicators({ dashboardData }) {
             label="INVENTORY"
             unit="%"
             trend={inventoryStatus.trend}
+            kpiCode="INVENTORY_LEVEL"
+            kpiName="Inventory Level"
             zones={[
               { min: 70, max: 90, color: 'red' },
               { min: 90, max: 95, color: 'yellow' },
@@ -277,6 +302,8 @@ export function CriticalIndicators({ dashboardData }) {
             label="TRAFFIC"
             unit=""
             trend={trafficStatus.trend}
+            kpiCode="TRAFFIC"
+            kpiName="Store Traffic"
             zones={[
               { min: 0, max: 85, color: 'red' },
               { min: 85, max: 100, color: 'yellow' },
@@ -306,7 +333,20 @@ export function CriticalIndicators({ dashboardData }) {
             {dashboardData?.total_stores || 0} STORES MONITORED
           </div>
         </div>
+
+        {/* Click hint */}
+        <div className="mt-3 text-center text-gray-600 text-[10px] font-mono">
+          Click any indicator to see store-by-store breakdown
+        </div>
       </div>
+
+      {/* KPI Drill-down Modal */}
+      <KpiDrilldownModal
+        kpiCode={selectedKpi?.code}
+        kpiName={selectedKpi?.name}
+        isOpen={!!selectedKpi}
+        onClose={() => setSelectedKpi(null)}
+      />
     </div>
   );
 }
