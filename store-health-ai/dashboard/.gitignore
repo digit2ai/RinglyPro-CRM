@@ -1,8 +1,7 @@
 # Dependencies
 node_modules/
 
-# Build output
-dist/
+# Build output (keeping dist/ in git for deployment)
 
 # Local env files
 .env
