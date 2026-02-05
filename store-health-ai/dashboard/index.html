@@ -18,30 +18,95 @@
     <script>
       function hideBranding() {
         const widget = document.querySelector('elevenlabs-convai');
-        if (widget && widget.shadowRoot) {
+        if (!widget || !widget.shadowRoot) return;
+
+        // Method 1: Inject aggressive CSS
+        if (!widget.shadowRoot.querySelector('#hide-branding-style')) {
           const style = document.createElement('style');
+          style.id = 'hide-branding-style';
           style.textContent = `
+            /* Hide by class patterns */
             [class*="powered"], [class*="Powered"],
             [class*="branding"], [class*="Branding"],
-            a[href*="elevenlabs.io"],
-            .powered-by, .poweredBy {
+            [class*="footer"], [class*="Footer"],
+            a[href*="elevenlabs"], a[href*="ElevenLabs"] {
               display: none !important;
               visibility: hidden !important;
               height: 0 !important;
+              max-height: 0 !important;
+              overflow: hidden !important;
               opacity: 0 !important;
+              pointer-events: none !important;
             }
           `;
           widget.shadowRoot.appendChild(style);
         }
+
+        // Method 2: Walk through all elements and hide those with branding text
+        function walkAndHide(root) {
+          if (!root) return;
+          const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+          let node;
+          while (node = walker.nextNode()) {
+            if (node.nodeType === Node.TEXT_NODE) {
+              const text = node.textContent.toLowerCase();
+              if (text.includes('powered') || text.includes('elevenlabs')) {
+                let parent = node.parentElement;
+                // Walk up to find the containing div/span to hide
+                for (let i = 0; i < 5 && parent; i++) {
+                  if (parent.tagName !== 'BODY' && parent.tagName !== 'HTML') {
+                    parent.style.cssText = 'display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important;';
+                  }
+                  parent = parent.parentElement;
+                }
+              }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+              // Check for links to elevenlabs
+              if (node.tagName === 'A' && node.href && node.href.toLowerCase().includes('elevenlabs')) {
+                node.style.cssText = 'display:none!important;visibility:hidden!important;';
+              }
+              // Check inner text
+              const text = (node.innerText || '').toLowerCase();
+              if (text.includes('powered by') || (text.includes('elevenlabs') && !text.includes('error'))) {
+                node.style.cssText = 'display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important;';
+              }
+            }
+          }
+        }
+
+        walkAndHide(widget.shadowRoot);
+
+        // Also handle nested shadow roots
+        const allElements = widget.shadowRoot.querySelectorAll('*');
+        allElements.forEach(el => {
+          if (el.shadowRoot) {
+            walkAndHide(el.shadowRoot);
+          }
+        });
       }
-      // Try immediately and after delays
-      setTimeout(hideBranding, 500);
-      setTimeout(hideBranding, 1000);
-      setTimeout(hideBranding, 2000);
-      setTimeout(hideBranding, 3000);
-      // Also observe for changes
-      const observer = new MutationObserver(hideBranding);
-      observer.observe(document.body, { childList: true, subtree: true });
+
+      // Run multiple times with increasing delays
+      [100, 500, 1000, 2000, 3000, 5000].forEach(delay => {
+        setTimeout(hideBranding, delay);
+      });
+
+      // Observe for any changes in the widget
+      const mainObserver = new MutationObserver(() => {
+        hideBranding();
+      });
+
+      // Wait for widget to appear, then observe it
+      function startObserving() {
+        const widget = document.querySelector('elevenlabs-convai');
+        if (widget) {
+          mainObserver.observe(widget, { childList: true, subtree: true, attributes: true });
+          if (widget.shadowRoot) {
+            mainObserver.observe(widget.shadowRoot, { childList: true, subtree: true, attributes: true });
+          }
+        }
+      }
+      setTimeout(startObserving, 500);
+      setTimeout(startObserving, 2000);
     </script>
   </body>
 </html>
