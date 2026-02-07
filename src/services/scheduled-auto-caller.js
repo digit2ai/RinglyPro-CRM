@@ -26,9 +26,9 @@ class ScheduledAutoCallerService {
       duplicateDetections: 0
     };
     this.config = {
-      schedule: '*/2 8-18 * * 1-5', // Every 2 minutes, 8am-6pm EST, Mon-Fri
+      schedule: '* 8-20 * * *', // Every 1 minute, 8am-8pm EST, Mon-Sun (all days)
       timezone: 'America/New_York',
-      minInterval: 2, // minutes between calls
+      minInterval: 1, // minutes between calls
       maxCallsPerHour: 30,
       maxCallsPerDay: 200,
       maxConsecutiveFailures: 3, // EMERGENCY: Stop after 3 consecutive failures
@@ -120,7 +120,7 @@ class ScheduledAutoCallerService {
   }
 
   /**
-   * Check if current time is within business hours (8am-6pm EST, Mon-Fri)
+   * Check if current time is within business hours (8am-6pm EST, Mon-Sun)
    */
   isBusinessHours() {
     try {
@@ -140,15 +140,15 @@ class ScheduledAutoCallerService {
 
       logger.debug(`🕐 Current time check: ${weekday} ${hour}:00 EST`);
 
-      // Check if Monday-Friday
-      const validDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+      // All days allowed (Mon-Sun)
+      const validDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       if (!validDays.includes(weekday)) {
         logger.debug(`❌ Outside business days: ${weekday}`);
         return false;
       }
 
-      // Check if 8am-6pm EST (8-17, stops before 6pm)
-      if (hour < 8 || hour >= 18) {
+      // Check if 8am-8pm EST (8-19, stops before 8pm)
+      if (hour < 8 || hour >= 20) {
         logger.debug(`❌ Outside business hours: ${hour}:00 EST`);
         return false;
       }

@@ -67,8 +67,7 @@ class OutboundCallerService {
   }
 
   /**
-   * Check if current time is within business hours (8am-6pm EST, Mon-Fri)
-   * Client 15 and 43 have extended hours: Mon-Sat 8am-6pm EST
+   * Check if current time is within business hours (8am-6pm EST, Mon-Sun)
    */
   isBusinessHours(clientId = null) {
     try {
@@ -88,27 +87,21 @@ class OutboundCallerService {
 
       logger.info(`📅 Business hours check: ${weekday} ${hour}:00 EST (clientId: ${clientId})`);
 
-      // Client 15 and 43 get extended days: Mon-Sat (includes Saturday)
-      const extendedClients = [15, 43];
-      const isExtendedClient = clientId && extendedClients.includes(parseInt(clientId));
-
-      // Set valid days based on client
-      const validDays = isExtendedClient
-        ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']  // Mon-Sat for clients 15 & 43
-        : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];         // Mon-Fri for all others
+      // All days allowed (Mon-Sun)
+      const validDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
       if (!validDays.includes(weekday)) {
         logger.info(`❌ Outside business days: ${weekday} (allowed: ${validDays.join(', ')})`);
         return false;
       }
 
-      // Check if 8am-6pm EST (8-17, stops before 6pm)
-      if (hour < 8 || hour >= 18) {
-        logger.info(`❌ Outside business hours: ${hour}:00 EST (allowed 8-17)`);
+      // Check if 8am-8pm EST (8-19, stops before 8pm)
+      if (hour < 8 || hour >= 20) {
+        logger.info(`❌ Outside business hours: ${hour}:00 EST (allowed 8-19)`);
         return false;
       }
 
-      logger.info(`✅ Within business hours: ${weekday} ${hour}:00 EST${isExtendedClient ? ' (extended client)' : ''}`);
+      logger.info(`✅ Within business hours: ${weekday} ${hour}:00 EST`);
       return true;
     } catch (error) {
       logger.error('Error checking business hours:', error.message);
