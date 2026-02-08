@@ -85,12 +85,12 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-0">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <div className="flex items-center gap-4 mt-1">
-            <p className="text-muted-foreground">
-              Real-time store health monitoring and alerts
+          <h1 className="text-xl sm:text-3xl font-bold">Dashboard</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1">
+            <p className="text-xs sm:text-base text-muted-foreground">
+              Store health monitoring
             </p>
             <TrafficLight
               redStores={stats.red_stores || 0}
@@ -106,62 +106,62 @@ export function DashboardPage() {
       <CriticalIndicators dashboardData={stats} />
 
       {/* Summary Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Stores</CardTitle>
-            <Store className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-6 pb-1 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Stores</CardTitle>
+            <Store className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total_stores || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{stats.total_stores || 0}</div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">
               Active locations
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Green Stores</CardTitle>
-            <div className="h-3 w-3 rounded-full bg-success" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-6 pb-1 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium">Green</CardTitle>
+            <div className="h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-success" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-success">
               {stats.green_stores || 0}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Performing well
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">
+              Healthy
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Yellow/Red Stores</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-warning" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-6 pb-1 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium">Yellow/Red</CardTitle>
+            <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-warning" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-danger">
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-danger">
               {(stats.yellow_stores || 0) + (stats.red_stores || 0)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {stats.yellow_stores || 0} yellow, {stats.red_stores || 0} red
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">
+              {stats.yellow_stores || 0}Y / {stats.red_stores || 0}R
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Health Score</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-6 pb-1 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium">Health Score</CardTitle>
+            <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.average_health_score?.toFixed(1) || '0.0'}
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">
+              {stats.average_health_score?.toFixed(1) || '0.0'}%
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+            <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2 mt-1 sm:mt-2">
               <div
-                className="h-2 rounded-full bg-primary transition-all"
+                className="h-1.5 sm:h-2 rounded-full bg-primary transition-all"
                 style={{ width: `${stats.average_health_score || 0}%` }}
               />
             </div>
@@ -172,8 +172,8 @@ export function DashboardPage() {
       {/* Critical Stores */}
       {criticalStores?.data && criticalStores.data.length > 0 && (
         <div>
-          <h2 className="text-2xl font-bold mb-4">Critical Stores</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <h2 className="text-lg sm:text-2xl font-bold mb-2 sm:mb-4">Critical Stores</h2>
+          <div className="grid gap-2 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {criticalStores.data.map((snapshot) => (
               <StoreHealthCard
                 key={snapshot.id}
@@ -187,14 +187,14 @@ export function DashboardPage() {
 
       {/* KPI Trends Chart */}
       <Card>
-        <CardHeader>
-          <CardTitle>KPI Trends (Last 7 Days)</CardTitle>
+        <CardHeader className="p-3 sm:p-6">
+          <CardTitle className="text-sm sm:text-base">KPI Trends (7 Days)</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-6 pt-0">
           {trendsLoading ? (
             <Loading message="Loading trends..." />
           ) : kpiTrends?.data && kpiTrends.data.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={200} className="sm:!h-[300px]">
               <LineChart data={kpiTrends.data}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis

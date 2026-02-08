@@ -1,0 +1,131 @@
+{
+  "tools": [
+    {
+      "type": "webhook",
+      "name": "get_dashboard_overview",
+      "description": "Get the current dashboard overview with total stores, health scores, and status breakdown (green/yellow/red counts). Use this when the user asks about overall network health, how many stores need attention, or general performance summary.",
+      "webhook": {
+        "url": "https://aiagent.ringlypro.com/aiastore/api/v1/dashboard/overview",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "Optional date in YYYY-MM-DD format. Defaults to today if not provided."
+          }
+        },
+        "required": []
+      },
+      "response_template": "Dashboard Overview:\n- Total Stores: {{data.total_stores}}\n- Green (Healthy): {{data.green_stores}}\n- Yellow (Caution): {{data.yellow_stores}}\n- Red (Critical): {{data.red_stores}}\n- Average Health Score: {{data.average_health_score}}%\n- Stores Requiring Action: {{data.stores_requiring_action}}"
+    },
+    {
+      "type": "webhook",
+      "name": "get_store_details",
+      "description": "Get detailed information about a specific store including its KPIs, health score, and current status. Use this when the user asks about a specific store by name or code (e.g., 'How is Manhattan doing?', 'Tell me about DT-001', 'What's the status of Brooklyn Heights?').",
+      "webhook": {
+        "url": "https://aiagent.ringlypro.com/aiastore/api/v1/stores/{{store_id}}",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "path_params": {
+          "store_id": "{{store_id}}"
+        }
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "store_id": {
+            "type": "string",
+            "description": "The store ID number (1-10) or store code (e.g., 'DT-001'). Store mapping: 1=Manhattan 42nd St, 2=Brooklyn Heights, 3=Queens Plaza, 4=Bronx Fordham, 5=Staten Island Mall, 6=Upper East Side, 7=Harlem 125th, 8=Greenwich Village, 9=Williamsburg, 10=Long Island City"
+          }
+        },
+        "required": ["store_id"]
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "get_critical_stores",
+      "description": "Get a list of stores that are in critical condition (red status) and require immediate attention. Use this when the user asks 'Which stores need attention?', 'What stores are critical?', 'Show me problem stores', or 'What should I focus on today?'.",
+      "webhook": {
+        "url": "https://aiagent.ringlypro.com/aiastore/api/v1/dashboard/critical-stores",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "Optional date in YYYY-MM-DD format. Defaults to today."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of stores to return. Defaults to 20."
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "get_kpi_breakdown",
+      "description": "Get detailed breakdown of a specific KPI across all stores. Use this when the user asks about a specific metric like 'How are sales doing?', 'Show me labor coverage', 'What about inventory levels?'. Available KPIs: SALES (Daily Sales), LABOR (Labor Hours), INVENTORY (Inventory Level), TRAFFIC (Store Traffic), CONVERSION (Conversion Rate).",
+      "webhook": {
+        "url": "https://aiagent.ringlypro.com/aiastore/api/v1/dashboard/kpi-breakdown/{{kpi_code}}",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "path_params": {
+          "kpi_code": "{{kpi_code}}"
+        }
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "kpi_code": {
+            "type": "string",
+            "description": "The KPI code to analyze. Options: SALES, LABOR, INVENTORY, TRAFFIC, CONVERSION",
+            "enum": ["SALES", "LABOR", "INVENTORY", "TRAFFIC", "CONVERSION"]
+          },
+          "date": {
+            "type": "string",
+            "description": "Optional date in YYYY-MM-DD format. Defaults to today."
+          }
+        },
+        "required": ["kpi_code"]
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "get_active_alerts",
+      "description": "Get list of active alerts that need attention. Use this when the user asks 'What alerts do I have?', 'Any new issues?', 'What's happening today?'.",
+      "webhook": {
+        "url": "https://aiagent.ringlypro.com/aiastore/api/v1/alerts?status=active&limit=10",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "description": "Filter by severity: red, yellow, or green",
+            "enum": ["red", "yellow", "green"]
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}

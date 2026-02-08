@@ -80,15 +80,15 @@ export function CriticalIndicators({ dashboardData }) {
     };
 
     return (
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center flex-shrink-0">
         {/* Label */}
-        <div className="mb-2 text-center">
-          <div className="text-cyan-400 text-xs font-mono tracking-wider">{label}</div>
+        <div className="mb-1 sm:mb-2 text-center">
+          <div className="text-cyan-400 text-[10px] sm:text-xs font-mono tracking-wider">{label}</div>
         </div>
 
         {/* Tape Display - Now clickable */}
         <div
-          className="relative w-32 h-64 bg-black rounded-lg border-2 border-gray-700 overflow-hidden cursor-pointer hover:border-cyan-500 transition-colors"
+          className="relative w-16 sm:w-32 h-32 sm:h-64 bg-black rounded-lg border-2 border-gray-700 overflow-hidden cursor-pointer hover:border-cyan-500 transition-colors"
           onClick={handleClick}
           title={`Click to see ${label} breakdown by store`}
         >
@@ -118,8 +118,8 @@ export function CriticalIndicators({ dashboardData }) {
               className="absolute left-0 right-0 flex items-center"
               style={{ bottom: `${tick.percentage}%` }}
             >
-              <div className="w-3 h-px bg-gray-500"></div>
-              <div className="text-gray-400 text-[9px] font-mono ml-1">
+              <div className="w-1.5 sm:w-3 h-px bg-gray-500"></div>
+              <div className="text-gray-400 text-[7px] sm:text-[9px] font-mono ml-0.5 sm:ml-1 hidden sm:block">
                 {Math.round(tick.value)}
               </div>
             </div>
@@ -134,23 +134,23 @@ export function CriticalIndicators({ dashboardData }) {
             <div className="absolute left-0 right-0 h-0.5 bg-white shadow-lg" style={{ top: '-1px' }}></div>
 
             {/* Value box */}
-            <div className={`absolute right-0 top-1/2 -translate-y-1/2 ${bgColor} ${borderColor} border-2 px-2 py-1 rounded-l-lg shadow-lg`}>
-              <div className="text-white text-sm font-bold font-mono whitespace-nowrap" style={{ color }}>
+            <div className={`absolute right-0 top-1/2 -translate-y-1/2 ${bgColor} ${borderColor} border sm:border-2 px-1 sm:px-2 py-0.5 sm:py-1 rounded-l-lg shadow-lg`}>
+              <div className="text-white text-xs sm:text-sm font-bold font-mono whitespace-nowrap" style={{ color }}>
                 {decimals > 0 ? value.toFixed(decimals) : Math.round(value)}{unit}
               </div>
             </div>
           </div>
 
           {/* Trend arrow */}
-          <div className="absolute top-2 right-2">
-            {trend === 'up' && <TrendingUp className="w-3 h-3 text-green-400" />}
-            {trend === 'down' && <TrendingDown className="w-3 h-3 text-red-400" />}
-            {trend === 'stable' && <Minus className="w-3 h-3 text-yellow-400" />}
+          <div className="absolute top-1 sm:top-2 right-1 sm:right-2">
+            {trend === 'up' && <TrendingUp className="w-2 h-2 sm:w-3 sm:h-3 text-green-400" />}
+            {trend === 'down' && <TrendingDown className="w-2 h-2 sm:w-3 sm:h-3 text-red-400" />}
+            {trend === 'stable' && <Minus className="w-2 h-2 sm:w-3 sm:h-3 text-yellow-400" />}
           </div>
         </div>
 
         {/* Unit label */}
-        <div className="mt-1 text-gray-500 text-[10px] font-mono">{unit}</div>
+        <div className="mt-0.5 sm:mt-1 text-gray-500 text-[8px] sm:text-[10px] font-mono">{unit}</div>
       </div>
     );
   };
@@ -158,21 +158,21 @@ export function CriticalIndicators({ dashboardData }) {
   return (
     <div className="mb-6">
       {/* Glass Cockpit Panel */}
-      <div className="bg-gradient-to-b from-gray-950 to-black p-6 rounded-xl border-2 border-gray-800 shadow-2xl">
+      <div className="bg-gradient-to-b from-gray-950 to-black p-3 sm:p-6 rounded-xl border-2 border-gray-800 shadow-2xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-800">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between mb-3 sm:mb-4 pb-2 sm:pb-3 border-b border-gray-800">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <div className="text-cyan-400 text-sm font-mono tracking-wider">STORE HEALTH MONITOR</div>
+            <div className="text-cyan-400 text-xs sm:text-sm font-mono tracking-wider">STORE HEALTH</div>
           </div>
-          <div className="text-gray-500 text-xs font-mono">
+          <div className="text-gray-500 text-[10px] sm:text-xs font-mono">
             {new Date().toLocaleTimeString('en-US', { hour12: false })}
           </div>
         </div>
 
-        {/* Tape Indicators Row */}
-        <div className="flex justify-center gap-8">
+        {/* Tape Indicators Row - Scrollable on mobile */}
+        <div className="flex justify-start sm:justify-center gap-3 sm:gap-8 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0">
 
           {/* SALES Performance */}
           <TapeIndicator
@@ -209,14 +209,14 @@ export function CriticalIndicators({ dashboardData }) {
           />
 
           {/* CONVERSION Rate (Center - Larger) */}
-          <div className="flex flex-col items-center">
-            <div className="mb-2 text-center">
-              <div className="text-cyan-400 text-sm font-mono tracking-wider">CONVERSION RATE</div>
-              <div className="text-gray-500 text-[10px] font-mono">PRIMARY</div>
+          <div className="flex flex-col items-center flex-shrink-0">
+            <div className="mb-1 sm:mb-2 text-center">
+              <div className="text-cyan-400 text-[10px] sm:text-sm font-mono tracking-wider">CONV %</div>
+              <div className="text-gray-500 text-[8px] sm:text-[10px] font-mono hidden sm:block">PRIMARY</div>
             </div>
 
             <div
-              className="relative w-40 h-64 bg-black rounded-lg border-2 border-cyan-500/50 overflow-hidden shadow-lg shadow-cyan-500/20 cursor-pointer hover:border-cyan-400 transition-colors"
+              className="relative w-20 sm:w-40 h-32 sm:h-64 bg-black rounded-lg border-2 border-cyan-500/50 overflow-hidden shadow-lg shadow-cyan-500/20 cursor-pointer hover:border-cyan-400 transition-colors"
               onClick={() => setSelectedKpi({ code: 'CONVERSION_RATE', name: 'Conversion Rate' })}
               title="Click to see Conversion Rate breakdown by store"
             >
@@ -234,9 +234,9 @@ export function CriticalIndicators({ dashboardData }) {
                     className="absolute left-0 right-0 flex items-center"
                     style={{ bottom: `${tickPercentage}%` }}
                   >
-                    <div className={`${tickValue % 10 === 0 ? 'w-4' : 'w-2'} h-px bg-gray-500`}></div>
-                    {tickValue % 5 === 0 && (
-                      <div className="text-gray-400 text-[10px] font-mono ml-1">{tickValue}</div>
+                    <div className={`${tickValue % 10 === 0 ? 'w-2 sm:w-4' : 'w-1 sm:w-2'} h-px bg-gray-500`}></div>
+                    {tickValue % 10 === 0 && (
+                      <div className="text-gray-400 text-[8px] sm:text-[10px] font-mono ml-0.5 sm:ml-1">{tickValue}</div>
                     )}
                   </div>
                 );
@@ -250,31 +250,31 @@ export function CriticalIndicators({ dashboardData }) {
                 <div className="absolute left-0 right-0 h-0.5 bg-white shadow-lg"></div>
 
                 {/* Large digital readout */}
-                <div className={`absolute right-0 top-1/2 -translate-y-1/2 px-3 py-2 rounded-l-lg shadow-lg border-2 ${
+                <div className={`absolute right-0 top-1/2 -translate-y-1/2 px-1.5 sm:px-3 py-1 sm:py-2 rounded-l-lg shadow-lg border sm:border-2 ${
                   conversionStatus.rate >= 22 ? 'bg-green-500/20 border-green-500' :
                   conversionStatus.rate >= 18 ? 'bg-yellow-500/20 border-yellow-500' :
                   'bg-red-500/20 border-red-500'
                 }`}>
-                  <div className={`text-2xl font-bold font-mono ${
+                  <div className={`text-base sm:text-2xl font-bold font-mono ${
                     conversionStatus.rate >= 22 ? 'text-green-400' :
                     conversionStatus.rate >= 18 ? 'text-yellow-400' :
                     'text-red-400'
                   }`}>
                     {conversionStatus.rate}
                   </div>
-                  <div className="text-gray-400 text-[9px] font-mono text-center">%</div>
+                  <div className="text-gray-400 text-[7px] sm:text-[9px] font-mono text-center">%</div>
                 </div>
               </div>
 
               {/* Trend indicator */}
-              <div className="absolute top-2 right-2">
-                {conversionStatus.trend === 'up' && <TrendingUp className="w-4 h-4 text-green-400" />}
-                {conversionStatus.trend === 'down' && <TrendingDown className="w-4 h-4 text-red-400" />}
-                {conversionStatus.trend === 'stable' && <Minus className="w-4 h-4 text-yellow-400" />}
+              <div className="absolute top-1 sm:top-2 right-1 sm:right-2">
+                {conversionStatus.trend === 'up' && <TrendingUp className="w-2.5 h-2.5 sm:w-4 sm:h-4 text-green-400" />}
+                {conversionStatus.trend === 'down' && <TrendingDown className="w-2.5 h-2.5 sm:w-4 sm:h-4 text-red-400" />}
+                {conversionStatus.trend === 'stable' && <Minus className="w-2.5 h-2.5 sm:w-4 sm:h-4 text-yellow-400" />}
               </div>
             </div>
 
-            <div className="mt-1 text-gray-500 text-xs font-mono">PERCENT</div>
+            <div className="mt-0.5 sm:mt-1 text-gray-500 text-[8px] sm:text-xs font-mono">PERCENT</div>
           </div>
 
           {/* INVENTORY Availability */}
@@ -314,28 +314,28 @@ export function CriticalIndicators({ dashboardData }) {
         </div>
 
         {/* Status Footer */}
-        <div className="mt-4 pt-3 border-t border-gray-800 flex justify-between items-center">
-          <div className="flex gap-6 text-xs font-mono">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500/30 border border-green-500 rounded"></div>
-              <span className="text-gray-400">OPTIMAL</span>
+        <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-0">
+          <div className="flex gap-3 sm:gap-6 text-[10px] sm:text-xs font-mono">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500/30 border border-green-500 rounded"></div>
+              <span className="text-gray-400">OK</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-yellow-500/30 border border-yellow-500 rounded"></div>
-              <span className="text-gray-400">CAUTION</span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-yellow-500/30 border border-yellow-500 rounded"></div>
+              <span className="text-gray-400">WARN</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500/30 border border-red-500 rounded"></div>
-              <span className="text-gray-400">CRITICAL</span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-red-500/30 border border-red-500 rounded"></div>
+              <span className="text-gray-400">CRIT</span>
             </div>
           </div>
-          <div className="text-gray-600 text-[10px] font-mono">
-            {dashboardData?.total_stores || 0} STORES MONITORED
+          <div className="text-gray-600 text-[9px] sm:text-[10px] font-mono">
+            {dashboardData?.total_stores || 0} STORES
           </div>
         </div>
 
-        {/* Click hint */}
-        <div className="mt-3 text-center text-gray-600 text-[10px] font-mono">
+        {/* Click hint - hidden on mobile */}
+        <div className="mt-2 sm:mt-3 text-center text-gray-600 text-[9px] sm:text-[10px] font-mono hidden sm:block">
           Click any indicator to see store-by-store breakdown
         </div>
       </div>
