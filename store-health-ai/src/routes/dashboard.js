@@ -27,4 +27,7 @@ router.get('/top-issues', asyncHandler(dashboardController.getTopIssues));
 // GET /api/v1/dashboard/kpi-breakdown/:kpi_code - Get KPI breakdown by store
 router.get('/kpi-breakdown/:kpi_code', asyncHandler(dashboardController.getKpiBreakdown));
 
+// GET /api/v1/dashboard/executive-summary - Get executive summary for Virginia AI
+router.get('/executive-summary', asyncHandler(dashboardController.getExecutiveSummary));
+
 module.exports = router;

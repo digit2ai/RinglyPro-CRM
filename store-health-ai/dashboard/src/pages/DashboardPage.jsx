@@ -5,6 +5,7 @@ import { useAlertUpdates, useKpiUpdates } from '@/lib/websocket';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { StoreHealthCard } from '@/components/StoreHealthCard';
 import { CriticalIndicators } from '@/components/CriticalIndicators';
+import { ExecutiveSummary } from '@/components/ExecutiveSummary';
 import { TrafficLight } from '@/components/TrafficLight';
 import { Loading } from '@/components/Loading';
 import { ErrorMessage } from '@/components/ErrorMessage';
@@ -240,6 +241,9 @@ export function DashboardPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Executive Summary for Virginia AI */}
+      <ExecutiveSummary dashboardData={stats} criticalStores={criticalStores?.data} />
     </div>
   );
 }
