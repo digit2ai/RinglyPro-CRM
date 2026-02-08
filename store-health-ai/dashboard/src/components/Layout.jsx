@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   Activity,
+  Mic,
 } from 'lucide-react';
 import { useWebSocket } from '@/lib/websocket';
 import { cn } from '@/lib/utils';
@@ -113,7 +114,8 @@ export function Layout({ children }) {
             <div className="flex-1" />
 
             {/* Header actions */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              {/* Date */}
               <div className="hidden sm:block text-sm text-muted-foreground">
                 {new Date().toLocaleDateString('en-US', {
                   weekday: 'long',
@@ -122,8 +124,16 @@ export function Layout({ children }) {
                   day: 'numeric',
                 })}
               </div>
-              {/* Voice AI Agent */}
-              <VoiceAgentWidget agentId="agent_3701kgg7d7v3e1vbjsxv0p5pn48e" />
+
+              {/* Divider */}
+              <div className="hidden sm:block w-px h-6 bg-gray-200" />
+
+              {/* Voice AI Agent with Mic Icon */}
+              <div className="flex items-center gap-2">
+                <Mic className="w-4 h-4 text-gray-400" />
+                <span className="hidden md:inline text-xs text-gray-500">Virginia</span>
+                <VoiceAgentWidget agentId="agent_3701kgg7d7v3e1vbjsxv0p5pn48e" />
+              </div>
             </div>
           </div>
         </div>
