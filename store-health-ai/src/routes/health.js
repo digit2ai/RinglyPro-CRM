@@ -326,6 +326,12 @@ router.get('/seed-alerts', async (req, res) => {
   try {
     const { sequelize } = require('../../models');
 
+    // First check what columns exist in alerts table
+    const [alertCols] = await sequelize.query(`
+      SELECT column_name FROM information_schema.columns WHERE table_name = 'alerts'
+    `);
+    const alertColNames = alertCols.map(c => c.column_name);
+
     // Get critical stores (red/yellow status)
     const [stores] = await sequelize.query(`
       SELECT s.id, s.store_code, s.name, s.manager_name,
@@ -339,7 +345,7 @@ router.get('/seed-alerts', async (req, res) => {
     `);
 
     if (stores.length === 0) {
-      return res.json({ status: 'no_critical_stores', message: 'No stores in red/yellow status today' });
+      return res.json({ status: 'no_critical_stores', message: 'No stores in red/yellow status today', alertColumns: alertColNames });
     }
 
     // Get KPI definitions
@@ -349,11 +355,11 @@ router.get('/seed-alerts', async (req, res) => {
 
     // Alert templates
     const alertTemplates = [
-      { kpi: 'SALES_DAILY', title: 'Sales Below Target', severity: 'critical' },
-      { kpi: 'LABOR_HOURS', title: 'Staffing Coverage Critical', severity: 'warning' },
-      { kpi: 'INVENTORY_LEVEL', title: 'Inventory Stockout Alert', severity: 'critical' },
-      { kpi: 'CONVERSION_RATE', title: 'Low Conversion Rate', severity: 'warning' },
-      { kpi: 'TRAFFIC', title: 'Traffic Below Baseline', severity: 'warning' }
+      { kpi: 'SALES_DAILY', title: 'Sales Below Target', severity: 'red' },
+      { kpi: 'LABOR_HOURS', title: 'Staffing Coverage Critical', severity: 'yellow' },
+      { kpi: 'INVENTORY_LEVEL', title: 'Inventory Stockout Alert', severity: 'red' },
+      { kpi: 'CONVERSION_RATE', title: 'Low Conversion Rate', severity: 'yellow' },
+      { kpi: 'TRAFFIC', title: 'Traffic Below Baseline', severity: 'yellow' }
     ];
 
     let alertCount = 0;
@@ -368,42 +374,63 @@ router.get('/seed-alerts', async (req, res) => {
         if (!kpiDef) continue;
 
         const variance = Math.round(15 + Math.random() * 20);
-        const severity = store.status === 'red' ? 'critical' : template.severity;
+        const severity = store.status === 'red' ? 'red' : template.severity;
         const message = `${store.name} - ${template.title}: ${variance}% below target. Immediate attention required.`;
 
-        await sequelize.query(`
-          INSERT INTO alerts (
-            store_id, kpi_definition_id, alert_type, severity, escalation_level, status,
-            title, message, requires_acknowledgment, alert_date, triggered_at, expires_at,
-            created_at, updated_at
-          ) VALUES (
-            ${store.id}, ${kpiDef.id}, 'threshold_breach', '${severity}', ${store.escalation_level || 1}, 'open',
-            '${template.title}', '${message.replace(/'/g, "''")}', true, CURRENT_DATE, NOW(),
-            NOW() + INTERVAL '24 hours', NOW(), NOW()
-          )
-        `);
+        // Build dynamic insert based on available columns
+        const cols = ['store_id', 'kpi_definition_id', 'severity', 'status', 'title', 'message', 'alert_date', 'created_at', 'updated_at'];
+        const vals = [`${store.id}`, `${kpiDef.id}`, `'${severity}'`, `'active'`, `'${template.title}'`, `'${message.replace(/'/g, "''")}'`, 'CURRENT_DATE', 'NOW()', 'NOW()'];
+
+        if (alertColNames.includes('escalation_level')) {
+          cols.push('escalation_level');
+          vals.push(`${store.escalation_level || 1}`);
+        }
+        if (alertColNames.includes('requires_acknowledgment')) {
+          cols.push('requires_acknowledgment');
+          vals.push('true');
+        }
+        if (alertColNames.includes('expires_at')) {
+          cols.push('expires_at');
+          vals.push("NOW() + INTERVAL '24 hours'");
+        }
+
+        await sequelize.query(`INSERT INTO alerts (${cols.join(', ')}) VALUES (${vals.join(', ')})`);
         alertCount++;
       }
 
       // Create tasks for red stores
       if (store.status === 'red') {
+        const [taskCols] = await sequelize.query(`
+          SELECT column_name FROM information_schema.columns WHERE table_name = 'tasks'
+        `);
+        const taskColNames = taskCols.map(c => c.column_name);
+
         const taskTemplates = [
-          { title: `Contact Manager at ${store.name}`, priority: 'urgent', role: 'District Manager' },
-          { title: `Review Inventory at ${store.name}`, priority: 'high', role: 'Inventory Manager' },
-          { title: `Staffing Review for ${store.name}`, priority: 'high', role: 'HR Manager' }
+          { title: `Contact Manager at ${store.name}`, priority: 1, role: 'District Manager' },
+          { title: `Review Inventory at ${store.name}`, priority: 2, role: 'Inventory Manager' },
+          { title: `Staffing Review for ${store.name}`, priority: 2, role: 'HR Manager' }
         ];
 
         for (const task of taskTemplates) {
           const desc = `Follow up on critical KPI issues. Store health score is ${store.health_score}%.`;
-          await sequelize.query(`
-            INSERT INTO tasks (
-              store_id, task_type, title, description, priority,
-              status, assigned_to_role, due_date, created_at, updated_at
-            ) VALUES (
-              ${store.id}, 'action', '${task.title.replace(/'/g, "''")}', '${desc}', '${task.priority}',
-              'open', '${task.role}', CURRENT_DATE + INTERVAL '2 days', NOW(), NOW()
-            )
-          `);
+
+          const cols = ['store_id', 'title', 'description', 'status', 'created_at', 'updated_at'];
+          const vals = [`${store.id}`, `'${task.title.replace(/'/g, "''")}'`, `'${desc}'`, `'pending'`, 'NOW()', 'NOW()'];
+
+          if (taskColNames.includes('priority')) {
+            cols.push('priority');
+            vals.push(`${task.priority}`);
+          }
+          if (taskColNames.includes('assigned_to_role')) {
+            cols.push('assigned_to_role');
+            vals.push(`'${task.role}'`);
+          }
+          if (taskColNames.includes('due_date')) {
+            cols.push('due_date');
+            vals.push("CURRENT_DATE + INTERVAL '2 days'");
+          }
+
+          await sequelize.query(`INSERT INTO tasks (${cols.join(', ')}) VALUES (${vals.join(', ')})`);
           taskCount++;
         }
       }
@@ -413,7 +440,8 @@ router.get('/seed-alerts', async (req, res) => {
       status: 'seeded',
       criticalStores: stores.length,
       alertsCreated: alertCount,
-      tasksCreated: taskCount
+      tasksCreated: taskCount,
+      alertColumns: alertColNames
     });
   } catch (error) {
     res.json({ error: error.message, stack: error.stack });
