@@ -284,6 +284,79 @@ export function ExecutiveSummary({ dashboardData, criticalStores }) {
             )}
           </div>
         </div>
+
+        {/* Dynamic Action Items by KPI - Only shows KPIs that need attention */}
+        {kpis.filter(k => k.status !== 'green').length > 0 && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertCircle className="w-5 h-5 text-red-500" />
+              <h3 className="font-semibold text-red-700">Action Items by KPI</h3>
+              <span className="ml-auto text-xs text-red-500 font-medium">
+                {kpis.filter(k => k.status !== 'green').length} KPIs need attention
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {kpis.filter(k => k.status !== 'green').map((kpi, idx) => (
+                <div
+                  key={kpi.code}
+                  className={`p-3 rounded-lg border-l-4 ${
+                    kpi.status === 'red' ? 'bg-red-100 border-red-500' : 'bg-yellow-100 border-yellow-500'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                        kpi.status === 'red' ? 'bg-red-500 text-white' : 'bg-yellow-500 text-white'
+                      }`}>
+                        #{idx + 1}
+                      </span>
+                      <kpi.icon className={`w-4 h-4 ${kpi.status === 'red' ? 'text-red-600' : 'text-yellow-600'}`} />
+                      <span className="font-semibold text-gray-800">{kpi.name}</span>
+                    </div>
+                    <span className={`text-sm font-bold ${kpi.status === 'red' ? 'text-red-600' : 'text-yellow-600'}`}>
+                      {kpi.value}{kpi.unit} / {kpi.target}{kpi.unit}
+                    </span>
+                  </div>
+
+                  <div className="ml-8 space-y-2">
+                    <div>
+                      <span className="text-xs font-medium text-gray-500 uppercase">Issue:</span>
+                      <p className="text-sm text-gray-700">{kpi.rootCause.split('.')[0]}.</p>
+                    </div>
+                    <div>
+                      <span className="text-xs font-medium text-gray-500 uppercase">Action Required:</span>
+                      <p className={`text-sm font-medium ${kpi.status === 'red' ? 'text-red-700' : 'text-yellow-700'}`}>
+                        → {kpi.recommendation}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Priority Summary */}
+            <div className="mt-3 pt-3 border-t border-red-200">
+              <p className="text-xs text-gray-600">
+                <strong>Priority Order:</strong> Address {kpis.filter(k => k.status === 'red').length > 0 ? 'critical (red) KPIs first' : 'warning KPIs'},
+                focusing on {kpis.filter(k => k.status !== 'green')[0]?.name} which has the biggest impact on store health.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* All KPIs healthy message */}
+        {kpis.filter(k => k.status !== 'green').length === 0 && (
+          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <h3 className="font-semibold text-green-700">All KPIs Within Target</h3>
+            </div>
+            <p className="mt-2 text-sm text-green-600">
+              No immediate action items required. Continue monitoring and maintain current operational practices.
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

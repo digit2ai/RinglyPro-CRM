@@ -83,12 +83,12 @@ export function CriticalIndicators({ dashboardData }) {
       <div className="flex flex-col items-center flex-shrink-0">
         {/* Label */}
         <div className="mb-1 sm:mb-2 text-center">
-          <div className="text-cyan-400 text-[10px] sm:text-xs font-mono tracking-wider">{label}</div>
+          <div className="text-cyan-400 text-[8px] sm:text-xs font-mono tracking-wider">{label}</div>
         </div>
 
         {/* Tape Display - Now clickable */}
         <div
-          className="relative w-16 sm:w-32 h-32 sm:h-64 bg-black rounded-lg border-2 border-gray-700 overflow-hidden cursor-pointer hover:border-cyan-500 transition-colors"
+          className="relative w-12 sm:w-32 h-28 sm:h-64 bg-black rounded-lg border-2 border-gray-700 overflow-hidden cursor-pointer hover:border-cyan-500 transition-colors"
           onClick={handleClick}
           title={`Click to see ${label} breakdown by store`}
         >
@@ -171,8 +171,8 @@ export function CriticalIndicators({ dashboardData }) {
           </div>
         </div>
 
-        {/* Tape Indicators Row - Scrollable on mobile */}
-        <div className="flex justify-start sm:justify-center gap-3 sm:gap-8 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0">
+        {/* Tape Indicators Row - All visible on mobile */}
+        <div className="flex justify-between sm:justify-center gap-1 sm:gap-8 pb-2">
 
           {/* SALES Performance */}
           <TapeIndicator
@@ -211,12 +211,12 @@ export function CriticalIndicators({ dashboardData }) {
           {/* CONVERSION Rate (Center - Larger) */}
           <div className="flex flex-col items-center flex-shrink-0">
             <div className="mb-1 sm:mb-2 text-center">
-              <div className="text-cyan-400 text-[10px] sm:text-sm font-mono tracking-wider">CONV %</div>
+              <div className="text-cyan-400 text-[8px] sm:text-sm font-mono tracking-wider">CONV %</div>
               <div className="text-gray-500 text-[8px] sm:text-[10px] font-mono hidden sm:block">PRIMARY</div>
             </div>
 
             <div
-              className="relative w-20 sm:w-40 h-32 sm:h-64 bg-black rounded-lg border-2 border-cyan-500/50 overflow-hidden shadow-lg shadow-cyan-500/20 cursor-pointer hover:border-cyan-400 transition-colors"
+              className="relative w-14 sm:w-40 h-28 sm:h-64 bg-black rounded-lg border-2 border-cyan-500/50 overflow-hidden shadow-lg shadow-cyan-500/20 cursor-pointer hover:border-cyan-400 transition-colors"
               onClick={() => setSelectedKpi({ code: 'CONVERSION_RATE', name: 'Conversion Rate' })}
               title="Click to see Conversion Rate breakdown by store"
             >
