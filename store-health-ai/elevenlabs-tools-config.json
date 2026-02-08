@@ -126,6 +126,29 @@
         },
         "required": []
       }
+    },
+    {
+      "type": "webhook",
+      "name": "get_executive_summary",
+      "description": "Get detailed executive summary for senior management reporting. This is the PRIMARY tool for status briefings. Use when the user asks 'Give me a status report', 'Brief me on the network', 'What should I tell management?', 'Give me the executive summary', 'How are we doing overall?'. Returns all 5 KPIs (Sales, Labor, Conversion, Inventory, Traffic) with current values, status, root causes for any issues, and recommended actions. Also includes a pre-written spoken briefing you can use.",
+      "webhook": {
+        "url": "https://aiagent.ringlypro.com/aiastore/api/v1/dashboard/executive-summary",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "Optional date in YYYY-MM-DD format. Defaults to today."
+          }
+        },
+        "required": []
+      },
+      "response_template": "Executive Summary:\n{{data.spoken_briefing}}\n\nKPI Status:\n{{#each data.kpi_analysis}}\n- {{name}}: {{value}}{{unit}} ({{status}}) - {{description}}\n{{/each}}\n\nAction Items:\n{{#each data.action_items}}\n- {{kpi}} ({{severity}}): {{action}}\n{{/each}}"
     }
   ]
 }
