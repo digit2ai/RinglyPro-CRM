@@ -1,3 +1,4 @@
+// Dashboard Layout v2.1 - Virginia Voice Widget with Orange Styling
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
