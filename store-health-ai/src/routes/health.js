@@ -321,4 +321,103 @@ router.get('/reseed', async (req, res) => {
   }
 });
 
+// Seed alerts and tasks based on current store health
+router.get('/seed-alerts', async (req, res) => {
+  try {
+    const { sequelize } = require('../../models');
+
+    // Get critical stores (red/yellow status)
+    const [stores] = await sequelize.query(`
+      SELECT s.id, s.store_code, s.name, s.manager_name,
+             shs.health_score, shs.escalation_level, shs.overall_status as status
+      FROM stores s
+      JOIN store_health_snapshots shs ON s.id = shs.store_id
+      WHERE shs.snapshot_date = CURRENT_DATE
+        AND shs.overall_status IN ('red', 'yellow')
+      ORDER BY shs.health_score ASC
+      LIMIT 10
+    `);
+
+    if (stores.length === 0) {
+      return res.json({ status: 'no_critical_stores', message: 'No stores in red/yellow status today' });
+    }
+
+    // Get KPI definitions
+    const [kpiDefs] = await sequelize.query(`SELECT id, kpi_code, name FROM kpi_definitions LIMIT 5`);
+    const kpiMap = {};
+    kpiDefs.forEach(k => kpiMap[k.kpi_code] = k);
+
+    // Alert templates
+    const alertTemplates = [
+      { kpi: 'SALES_DAILY', title: 'Sales Below Target', severity: 'critical' },
+      { kpi: 'LABOR_HOURS', title: 'Staffing Coverage Critical', severity: 'warning' },
+      { kpi: 'INVENTORY_LEVEL', title: 'Inventory Stockout Alert', severity: 'critical' },
+      { kpi: 'CONVERSION_RATE', title: 'Low Conversion Rate', severity: 'warning' },
+      { kpi: 'TRAFFIC', title: 'Traffic Below Baseline', severity: 'warning' }
+    ];
+
+    let alertCount = 0;
+    let taskCount = 0;
+
+    for (const store of stores) {
+      const numAlerts = store.status === 'red' ? 3 : 1;
+
+      for (let i = 0; i < numAlerts && i < alertTemplates.length; i++) {
+        const template = alertTemplates[i];
+        const kpiDef = kpiMap[template.kpi];
+        if (!kpiDef) continue;
+
+        const variance = Math.round(15 + Math.random() * 20);
+        const severity = store.status === 'red' ? 'critical' : template.severity;
+        const message = `${store.name} - ${template.title}: ${variance}% below target. Immediate attention required.`;
+
+        await sequelize.query(`
+          INSERT INTO alerts (
+            store_id, kpi_definition_id, alert_type, severity, escalation_level, status,
+            title, message, requires_acknowledgment, alert_date, triggered_at, expires_at,
+            created_at, updated_at
+          ) VALUES (
+            ${store.id}, ${kpiDef.id}, 'threshold_breach', '${severity}', ${store.escalation_level || 1}, 'open',
+            '${template.title}', '${message.replace(/'/g, "''")}', true, CURRENT_DATE, NOW(),
+            NOW() + INTERVAL '24 hours', NOW(), NOW()
+          )
+        `);
+        alertCount++;
+      }
+
+      // Create tasks for red stores
+      if (store.status === 'red') {
+        const taskTemplates = [
+          { title: `Contact Manager at ${store.name}`, priority: 'urgent', role: 'District Manager' },
+          { title: `Review Inventory at ${store.name}`, priority: 'high', role: 'Inventory Manager' },
+          { title: `Staffing Review for ${store.name}`, priority: 'high', role: 'HR Manager' }
+        ];
+
+        for (const task of taskTemplates) {
+          const desc = `Follow up on critical KPI issues. Store health score is ${store.health_score}%.`;
+          await sequelize.query(`
+            INSERT INTO tasks (
+              store_id, task_type, title, description, priority,
+              status, assigned_to_role, due_date, created_at, updated_at
+            ) VALUES (
+              ${store.id}, 'action', '${task.title.replace(/'/g, "''")}', '${desc}', '${task.priority}',
+              'open', '${task.role}', CURRENT_DATE + INTERVAL '2 days', NOW(), NOW()
+            )
+          `);
+          taskCount++;
+        }
+      }
+    }
+
+    res.json({
+      status: 'seeded',
+      criticalStores: stores.length,
+      alertsCreated: alertCount,
+      tasksCreated: taskCount
+    });
+  } catch (error) {
+    res.json({ error: error.message, stack: error.stack });
+  }
+});
+
 module.exports = router;
