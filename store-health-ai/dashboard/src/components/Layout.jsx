@@ -128,10 +128,10 @@ export function Layout({ children }) {
               {/* Divider */}
               <div className="hidden sm:block w-px h-6 bg-gray-200" />
 
-              {/* Voice AI Agent with Mic Icon */}
-              <div className="flex items-center gap-2">
-                <Mic className="w-4 h-4 text-gray-400" />
-                <span className="hidden md:inline text-xs text-gray-500">Virginia</span>
+              {/* Voice AI Agent with Mic Icon - Orange for visibility */}
+              <div className="flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-full border border-orange-200">
+                <Mic className="w-5 h-5 text-orange-500" />
+                <span className="text-xs font-medium text-orange-600">Virginia</span>
                 <VoiceAgentWidget agentId="agent_3701kgg7d7v3e1vbjsxv0p5pn48e" />
               </div>
             </div>
