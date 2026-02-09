@@ -207,15 +207,21 @@ app.get('/', (req, res) => {
       .desktop-search {
         display: none;
       }
-      /* Adjust logo and title on mobile */
+      /* Hide title and subtitle on mobile - show only logo */
       .nav-brand h1 {
-        font-size: 1rem !important;
+        display: none !important;
       }
       .nav-brand p {
-        display: none;
+        display: none !important;
+      }
+      .nav-brand > div {
+        display: none !important;
       }
       .nav-brand img {
-        height: 32px !important;
+        height: 36px !important;
+      }
+      .nav-brand {
+        gap: 0 !important;
       }
       /* Voice widget stays visible but smaller */
       .voice-widget {
