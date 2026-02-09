@@ -91,7 +91,16 @@ export function StoreDetailPage() {
   }
 
   const storeData = store?.data;
-  const snapshot = health?.data?.snapshot;
+  const rawSnapshot = health?.data?.snapshot;
+  // Parse numeric fields that may come as strings from the database
+  const snapshot = rawSnapshot ? {
+    ...rawSnapshot,
+    health_score: parseFloat(rawSnapshot.health_score) || 0,
+    escalation_level: parseInt(rawSnapshot.escalation_level) || 0,
+    green_kpi_count: parseInt(rawSnapshot.green_kpi_count) || 0,
+    yellow_kpi_count: parseInt(rawSnapshot.yellow_kpi_count) || 0,
+    red_kpi_count: parseInt(rawSnapshot.red_kpi_count) || 0,
+  } : null;
   const metrics = health?.data?.metrics || [];
 
   return (
