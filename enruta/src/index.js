@@ -803,7 +803,7 @@ app.get('/', (req, res) => {
       }
     }
 
-    // Load ElevenLabs SDK from CDN
+    // Load ElevenLabs SDK from CDN (requires livekit-client)
     function loadElevenLabsSDK() {
       return new Promise((resolve, reject) => {
         if (window.ElevenLabsClient) {
@@ -811,16 +811,30 @@ app.get('/', (req, res) => {
           return;
         }
 
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/@11labs/client@latest/dist/browser.min.js';
-        script.onload = () => {
-          console.log('ElevenLabs SDK loaded');
-          resolve();
+        // First load livekit-client dependency
+        const livekitScript = document.createElement('script');
+        livekitScript.src = 'https://cdn.jsdelivr.net/npm/livekit-client@2.9.0/dist/livekit-client.umd.min.js';
+        livekitScript.onload = () => {
+          console.log('LiveKit SDK loaded');
+
+          // Then load ElevenLabs client
+          const elevenLabsScript = document.createElement('script');
+          elevenLabsScript.src = 'https://cdn.jsdelivr.net/npm/@11labs/client@0.2.0/dist/lib.umd.min.js';
+          elevenLabsScript.onload = () => {
+            console.log('ElevenLabs SDK loaded');
+            // The UMD exports to window.client
+            window.ElevenLabsClient = window.client;
+            resolve();
+          };
+          elevenLabsScript.onerror = () => {
+            reject(new Error('Failed to load ElevenLabs SDK'));
+          };
+          document.head.appendChild(elevenLabsScript);
         };
-        script.onerror = () => {
-          reject(new Error('Failed to load ElevenLabs SDK'));
+        livekitScript.onerror = () => {
+          reject(new Error('Failed to load LiveKit SDK'));
         };
-        document.head.appendChild(script);
+        document.head.appendChild(livekitScript);
       });
     }
 
