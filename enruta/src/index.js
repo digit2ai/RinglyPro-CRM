@@ -87,19 +87,31 @@ app.get('/', (req, res) => {
     .gradient-bg { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
     .card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
 
-    /* Voice Agent Widget Styles */
+    /* Voice Agent Widget Styles - Styled like Virginia */
     .voice-widget {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .voice-status {
-      font-size: 12px;
+    .voice-label {
+      font-size: 14px;
       font-weight: 500;
+      color: #f97316;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
-    .voice-status.active { color: #ef4444; animation: pulse 1.5s infinite; }
-    .voice-status.connecting { color: #9ca3af; }
-    .voice-status.error { color: #ef4444; }
+    .voice-label::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #f97316;
+      border-radius: 50%;
+    }
+    .voice-label.speaking::before {
+      animation: pulse 1s infinite;
+    }
 
     .voice-btn {
       position: relative;
@@ -117,14 +129,14 @@ app.get('/', (req, res) => {
     .voice-btn:hover { transform: scale(1.1); }
     .voice-btn:active { transform: scale(0.95); }
     .voice-btn.inactive { background: linear-gradient(135deg, #374151, #1f2937); }
-    .voice-btn.active { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .voice-btn.active { background: linear-gradient(135deg, #f97316, #ea580c); }
     .voice-btn.connecting { background: #6b7280; opacity: 0.7; cursor: wait; }
 
     .voice-btn .ping {
       position: absolute;
       inset: 0;
       border-radius: 50%;
-      border: 2px solid #f87171;
+      border: 2px solid #fb923c;
       animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
     }
     .voice-btn .glow {
@@ -135,11 +147,11 @@ app.get('/', (req, res) => {
       transition: all 0.3s;
     }
     .voice-btn.inactive .glow {
-      background: linear-gradient(90deg, #ef4444, #f97316, #ef4444);
+      background: linear-gradient(90deg, #f97316, #fb923c, #f97316);
       opacity: 0.3;
     }
     .voice-btn.active .glow {
-      background: #ef4444;
+      background: #f97316;
       opacity: 0.5;
     }
     .voice-btn .inner {
@@ -153,7 +165,7 @@ app.get('/', (req, res) => {
       transition: all 0.3s;
     }
     .voice-btn.inactive .inner { background: linear-gradient(135deg, #4b5563, #1f2937); }
-    .voice-btn.active .inner { background: linear-gradient(135deg, #f87171, #dc2626); }
+    .voice-btn.active .inner { background: linear-gradient(135deg, #fb923c, #ea580c); }
     .voice-btn .inner svg { width: 16px; height: 16px; color: white; }
     .voice-btn .highlight {
       position: absolute;
@@ -291,9 +303,20 @@ app.get('/', (req, res) => {
         </div>
       </div>
       <div class="flex items-center space-x-4">
-        <!-- Voice Agent Widget -->
+        <div class="flex items-center">
+          <input type="text" id="cedula-search" placeholder="Buscar por cédula..."
+            class="px-3 py-1.5 rounded-l-lg text-gray-800 text-sm w-44 focus:outline-none"
+            onkeypress="if(event.key==='Enter') buscarCliente()">
+          <button onclick="buscarCliente()" class="bg-blue-800 hover:bg-blue-900 px-3 py-1.5 rounded-r-lg text-sm">
+            🔍
+          </button>
+        </div>
+        <a href="/enruta/api/dashboard/stats" class="hover:text-blue-200">API</a>
+        <a href="https://cdav.gov.co" target="_blank" class="hover:text-blue-200">CDAV</a>
+
+        <!-- Voice Agent Widget - Laura (far right, styled like Virginia) -->
         <div class="voice-widget">
-          <span id="voice-status" class="voice-status" style="display:none;"></span>
+          <span id="voice-label" class="voice-label">Laura</span>
           <button id="voice-btn" class="voice-btn inactive" onclick="toggleVoiceAgent()" title="Hablar con Laura">
             <div class="glow"></div>
             <div class="inner">
@@ -312,17 +335,6 @@ app.get('/', (req, res) => {
             <div id="voice-ping" class="ping" style="display:none;"></div>
           </button>
         </div>
-
-        <div class="flex items-center">
-          <input type="text" id="cedula-search" placeholder="Buscar por cédula..."
-            class="px-3 py-1.5 rounded-l-lg text-gray-800 text-sm w-44 focus:outline-none"
-            onkeypress="if(event.key==='Enter') buscarCliente()">
-          <button onclick="buscarCliente()" class="bg-blue-800 hover:bg-blue-900 px-3 py-1.5 rounded-r-lg text-sm">
-            🔍
-          </button>
-        </div>
-        <a href="/enruta/api/dashboard/stats" class="hover:text-blue-200">API</a>
-        <a href="https://cdav.gov.co" target="_blank" class="hover:text-blue-200">CDAV</a>
       </div>
     </div>
   </nav>
@@ -646,7 +658,7 @@ app.get('/', (req, res) => {
     function updateVoiceUI(status, message) {
       voiceStatus = status;
       const btn = document.getElementById('voice-btn');
-      const statusEl = document.getElementById('voice-status');
+      const label = document.getElementById('voice-label');
       const iconMic = document.getElementById('voice-icon-mic');
       const iconX = document.getElementById('voice-icon-x');
       const iconSpinner = document.getElementById('voice-icon-spinner');
@@ -660,40 +672,40 @@ app.get('/', (req, res) => {
 
       // Reset button classes
       btn.classList.remove('inactive', 'active', 'connecting');
+      label.classList.remove('speaking');
 
       switch (status) {
         case 'disconnected':
           btn.classList.add('inactive');
           iconMic.style.display = 'block';
-          statusEl.style.display = 'none';
+          label.textContent = 'Laura';
           btn.title = 'Hablar con Laura';
           break;
         case 'connecting':
           btn.classList.add('connecting');
           iconSpinner.style.display = 'block';
-          statusEl.style.display = 'block';
-          statusEl.className = 'voice-status connecting';
-          statusEl.textContent = 'Conectando...';
+          label.textContent = 'Conectando...';
           btn.title = 'Conectando...';
           break;
         case 'connected':
           btn.classList.add('active');
           iconX.style.display = 'block';
           ping.style.display = 'block';
-          statusEl.style.display = 'block';
-          statusEl.className = 'voice-status active';
-          statusEl.textContent = message || 'Escuchando...';
+          if (message === 'Laura habla...') {
+            label.textContent = 'Laura habla...';
+            label.classList.add('speaking');
+          } else {
+            label.textContent = 'Laura';
+          }
           btn.title = 'Terminar llamada';
           break;
         case 'error':
           btn.classList.add('inactive');
           iconMic.style.display = 'block';
-          statusEl.style.display = 'block';
-          statusEl.className = 'voice-status error';
-          statusEl.textContent = message || 'Error';
+          label.textContent = message || 'Error';
           btn.title = 'Error - Click para reintentar';
           setTimeout(() => {
-            statusEl.style.display = 'none';
+            label.textContent = 'Laura';
           }, 3000);
           break;
       }
