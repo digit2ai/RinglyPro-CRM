@@ -291,7 +291,8 @@ router.get('/reseed', async (req, res) => {
         // Determine overall store status
         const overallStatus = redCount > 0 || yellowCount >= 2 ? 'red' : (yellowCount > 0 ? 'yellow' : 'green');
         const total = greenCount + yellowCount + redCount;
-        const healthScore = total > 0 ? (greenCount * 100 + yellowCount * 60) / total : 100;
+        // Health score: green=100pts, yellow=60pts, red=20pts (floor so 0 doesn't look like missing data)
+        const healthScore = total > 0 ? (greenCount * 100 + yellowCount * 60 + redCount * 20) / total : 100;
         const escalationLevel = (redCount > 0 || yellowCount >= 2) ? 2 : (yellowCount > 0 ? 1 : 0);
         const actionRequired = redCount > 0 || yellowCount > 1;
 
