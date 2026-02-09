@@ -87,6 +87,216 @@ app.get('/', (req, res) => {
     .gradient-bg { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
     .card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
 
+    /* Mobile Responsive Styles */
+    .mobile-menu-btn {
+      display: none;
+      background: transparent;
+      border: none;
+      color: white;
+      padding: 8px;
+      cursor: pointer;
+    }
+    .mobile-menu-btn svg {
+      width: 24px;
+      height: 24px;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .mobile-drawer {
+      display: none;
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 280px;
+      height: 100%;
+      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+      box-shadow: -4px 0 20px rgba(0,0,0,0.3);
+      z-index: 1000;
+      transition: right 0.3s ease;
+      padding: 1rem;
+    }
+    .mobile-drawer.open {
+      right: 0;
+    }
+    .mobile-drawer-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .mobile-drawer-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    .mobile-drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    .mobile-drawer-close {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .mobile-nav-links {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .mobile-nav-links a {
+      color: white;
+      text-decoration: none;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      transition: background 0.2s;
+    }
+    .mobile-nav-links a:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .mobile-search {
+      margin-top: 1.5rem;
+    }
+    .mobile-search input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      border: none;
+      margin-bottom: 0.5rem;
+    }
+    .mobile-search button {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      border: none;
+      background: #1e40af;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* Desktop search */
+    .desktop-search {
+      display: flex;
+    }
+
+    @media (max-width: 768px) {
+      .mobile-menu-btn {
+        display: block;
+      }
+      .nav-links {
+        display: none;
+      }
+      .mobile-drawer {
+        display: block;
+      }
+      .mobile-drawer-overlay {
+        display: block;
+      }
+      .desktop-search {
+        display: none;
+      }
+      /* Adjust logo and title on mobile */
+      .nav-brand h1 {
+        font-size: 1rem !important;
+      }
+      .nav-brand p {
+        display: none;
+      }
+      .nav-brand img {
+        height: 32px !important;
+      }
+      /* Voice widget stays visible but smaller */
+      .voice-widget {
+        margin-left: auto;
+      }
+      .voice-label {
+        font-size: 12px;
+      }
+      .voice-btn {
+        width: 36px;
+        height: 36px;
+      }
+      .voice-btn .inner {
+        width: 28px;
+        height: 28px;
+      }
+      /* Cards on mobile */
+      main.container {
+        padding: 1rem;
+      }
+      .card {
+        padding: 1rem;
+      }
+      .card .text-3xl {
+        font-size: 1.5rem;
+      }
+      /* Footer */
+      footer {
+        padding: 1rem;
+      }
+      footer p {
+        font-size: 0.75rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      nav {
+        padding: 0.75rem !important;
+      }
+      .nav-brand {
+        gap: 0.5rem !important;
+      }
+      .voice-label {
+        display: none;
+      }
+      /* Client modal on small screens */
+      #cliente-modal > div {
+        margin: 0.5rem;
+        max-height: calc(100vh - 1rem);
+      }
+      #cliente-modal .gradient-bg {
+        padding: 0.75rem 1rem;
+      }
+      #cliente-modal h2 {
+        font-size: 1rem;
+      }
+      #modal-content {
+        padding: 1rem;
+      }
+      /* Mic permission modal */
+      .mic-modal {
+        padding: 1.5rem;
+        margin: 1rem;
+      }
+      .mic-modal-icon {
+        width: 60px;
+        height: 60px;
+      }
+      .mic-modal-icon svg {
+        width: 30px;
+        height: 30px;
+      }
+    }
+
+    /* Improve grid on tablets */
+    @media (min-width: 481px) and (max-width: 768px) {
+      .grid-cols-1.md\\:grid-cols-4 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
     /* Voice Agent Widget Styles - Styled like Virginia */
     .voice-widget {
       display: flex;
@@ -293,28 +503,53 @@ app.get('/', (req, res) => {
   </style>
 </head>
 <body class="bg-gray-100">
+  <!-- Mobile Drawer Overlay -->
+  <div id="mobile-drawer-overlay" class="mobile-drawer-overlay" onclick="closeMobileMenu()"></div>
+
+  <!-- Mobile Drawer -->
+  <div id="mobile-drawer" class="mobile-drawer">
+    <div class="mobile-drawer-header">
+      <span class="text-white font-bold">Menú</span>
+      <button class="mobile-drawer-close" onclick="closeMobileMenu()">&times;</button>
+    </div>
+    <div class="mobile-nav-links">
+      <a href="/enruta/api/dashboard/stats">📊 Dashboard API</a>
+      <a href="https://cdav.gov.co" target="_blank">🏢 CDAV Colombia</a>
+      <a href="/enruta/health">❤️ Estado del Sistema</a>
+    </div>
+    <div class="mobile-search">
+      <input type="text" id="cedula-search-mobile" placeholder="Buscar por cédula..."
+        onkeypress="if(event.key==='Enter') buscarClienteMobile()">
+      <button onclick="buscarClienteMobile()">🔍 Buscar Cliente</button>
+    </div>
+  </div>
+
   <nav class="gradient-bg text-white p-4 shadow-lg">
     <div class="container mx-auto flex justify-between items-center">
-      <div class="flex items-center space-x-3">
+      <div class="nav-brand flex items-center space-x-3">
         <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698a435b6505127aa93fdf45.png" alt="ENRUTA" class="h-10 rounded-lg">
         <div>
           <h1 class="text-xl font-bold">ENRUTA</h1>
           <p class="text-xs text-blue-200">Sistema de Gestión Documental Vehicular</p>
         </div>
       </div>
-      <div class="flex items-center space-x-4">
-        <div class="flex items-center">
-          <input type="text" id="cedula-search" placeholder="Buscar por cédula..."
-            class="px-3 py-1.5 rounded-l-lg text-gray-800 text-sm w-44 focus:outline-none"
-            onkeypress="if(event.key==='Enter') buscarCliente()">
-          <button onclick="buscarCliente()" class="bg-blue-800 hover:bg-blue-900 px-3 py-1.5 rounded-r-lg text-sm">
-            🔍
-          </button>
-        </div>
-        <a href="/enruta/api/dashboard/stats" class="hover:text-blue-200">API</a>
-        <a href="https://cdav.gov.co" target="_blank" class="hover:text-blue-200">CDAV</a>
 
-        <!-- Voice Agent Widget - Laura (far right, styled like Virginia) -->
+      <div class="flex items-center gap-3">
+        <!-- Desktop Navigation -->
+        <div class="nav-links">
+          <div class="desktop-search flex items-center">
+            <input type="text" id="cedula-search" placeholder="Buscar por cédula..."
+              class="px-3 py-1.5 rounded-l-lg text-gray-800 text-sm w-44 focus:outline-none"
+              onkeypress="if(event.key==='Enter') buscarCliente()">
+            <button onclick="buscarCliente()" class="bg-blue-800 hover:bg-blue-900 px-3 py-1.5 rounded-r-lg text-sm">
+              🔍
+            </button>
+          </div>
+          <a href="/enruta/api/dashboard/stats" class="hover:text-blue-200">API</a>
+          <a href="https://cdav.gov.co" target="_blank" class="hover:text-blue-200">CDAV</a>
+        </div>
+
+        <!-- Voice Agent Widget - Laura (always visible) -->
         <div class="voice-widget">
           <span id="voice-label" class="voice-label">Laura</span>
           <button id="voice-btn" class="voice-btn inactive" onclick="toggleVoiceAgent()" title="Hablar con Laura">
@@ -335,6 +570,13 @@ app.get('/', (req, res) => {
             <div id="voice-ping" class="ping" style="display:none;"></div>
           </button>
         </div>
+
+        <!-- Hamburger Menu Button (mobile only) -->
+        <button class="mobile-menu-btn" onclick="openMobileMenu()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
       </div>
     </div>
   </nav>
@@ -648,6 +890,32 @@ app.get('/', (req, res) => {
     setInterval(loadStats, 30000);
 
     // =====================================================
+    // Mobile Menu Functions
+    // =====================================================
+    function openMobileMenu() {
+      document.getElementById('mobile-drawer').classList.add('open');
+      document.getElementById('mobile-drawer-overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileMenu() {
+      document.getElementById('mobile-drawer').classList.remove('open');
+      document.getElementById('mobile-drawer-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function buscarClienteMobile() {
+      const cedula = document.getElementById('cedula-search-mobile').value.trim();
+      if (!cedula) {
+        alert('Por favor ingrese un número de cédula');
+        return;
+      }
+      document.getElementById('cedula-search').value = cedula;
+      closeMobileMenu();
+      buscarCliente();
+    }
+
+    // =====================================================
     // Voice Agent - Laura (ElevenLabs Conversational AI)
     // =====================================================
     const LAURA_AGENT_ID = 'agent_7901kh24ng7zfsg9v14jwd58bn5x';
@@ -860,6 +1128,7 @@ app.get('/', (req, res) => {
       if (e.key === 'Escape') {
         closeMicModal();
         cerrarModal();
+        closeMobileMenu();
       }
     });
   </script>
