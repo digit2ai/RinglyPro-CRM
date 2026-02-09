@@ -115,11 +115,11 @@ export function KpiDrilldownModal({ kpiCode, kpiName, isOpen, onClose }) {
                       <div className="text-right">
                         <div className={cn(
                           'text-lg font-bold',
-                          store.variance_pct >= -10 && 'text-green-400',
-                          store.variance_pct < -10 && store.variance_pct >= -25 && 'text-yellow-400',
-                          store.variance_pct < -25 && 'text-red-400'
+                          parseFloat(store.variance_pct) >= -10 && 'text-green-400',
+                          parseFloat(store.variance_pct) < -10 && parseFloat(store.variance_pct) >= -25 && 'text-yellow-400',
+                          parseFloat(store.variance_pct) < -25 && 'text-red-400'
                         )}>
-                          {store.variance_pct >= 0 ? '+' : ''}{store.variance_pct.toFixed(1)}%
+                          {parseFloat(store.variance_pct) >= 0 ? '+' : ''}{parseFloat(store.variance_pct || 0).toFixed(1)}%
                         </div>
                         <div className="text-xs text-gray-400">variance</div>
                       </div>

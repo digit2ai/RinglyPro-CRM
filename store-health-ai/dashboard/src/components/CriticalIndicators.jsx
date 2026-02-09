@@ -136,7 +136,7 @@ export function CriticalIndicators({ dashboardData }) {
             {/* Value box */}
             <div className={`absolute right-0 top-1/2 -translate-y-1/2 ${bgColor} ${borderColor} border sm:border-2 px-1 sm:px-2 py-0.5 sm:py-1 rounded-l-lg shadow-lg`}>
               <div className="text-white text-xs sm:text-sm font-bold font-mono whitespace-nowrap" style={{ color }}>
-                {decimals > 0 ? value.toFixed(decimals) : Math.round(value)}{unit}
+                {decimals > 0 ? parseFloat(value || 0).toFixed(decimals) : Math.round(parseFloat(value || 0))}{unit}
               </div>
             </div>
           </div>

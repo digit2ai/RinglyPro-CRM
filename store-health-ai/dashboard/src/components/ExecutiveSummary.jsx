@@ -204,7 +204,7 @@ export function ExecutiveSummary({ dashboardData, criticalStores }) {
         <div className="p-4 bg-gray-50 rounded-lg">
           <h3 className="font-semibold mb-2">Network Overview</h3>
           <p className="text-sm text-gray-700">
-            Currently monitoring <strong>{summary.totalStores} stores</strong> with an average health score of <strong>{summary.avgHealthScore.toFixed(1)}%</strong>.
+            Currently monitoring <strong>{summary.totalStores} stores</strong> with an average health score of <strong>{parseFloat(summary.avgHealthScore || 0).toFixed(1)}%</strong>.
             {' '}<strong className="text-green-600">{summary.healthyStores}</strong> stores are performing well,
             {' '}<strong className="text-yellow-600">{summary.warningStores}</strong> need attention, and
             {' '}<strong className="text-red-600">{summary.criticalStores}</strong> require immediate action.
@@ -268,7 +268,7 @@ export function ExecutiveSummary({ dashboardData, criticalStores }) {
               Here's your store network status update.
             </p>
             <p>
-              We're currently monitoring {summary.totalStores} locations with an overall health score of {summary.avgHealthScore.toFixed(1)} percent.
+              We're currently monitoring {summary.totalStores} locations with an overall health score of {parseFloat(summary.avgHealthScore || 0).toFixed(1)} percent.
               {summary.criticalStores > 0 && ` ${summary.criticalStores} stores are in critical status requiring immediate attention.`}
             </p>
             <p>

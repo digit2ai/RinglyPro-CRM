@@ -21,7 +21,8 @@ export function formatCurrency(value) {
  * Format percentage
  */
 export function formatPercent(value, decimals = 1) {
-  return `${value >= 0 ? '+' : ''}${value.toFixed(decimals)}%`;
+  const numValue = parseFloat(value) || 0;
+  return `${numValue >= 0 ? '+' : ''}${numValue.toFixed(decimals)}%`;
 }
 
 /**
