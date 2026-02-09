@@ -469,23 +469,26 @@ app.get('/health/seed-test-data', async (req, res) => {
     }
 
     // Create contact records (call history)
-    const resultados = ['cita_agendada', 'informado_sin_cita', 'no_contesto', 'numero_equivocado', 'buzon_voz', 'requiere_seguimiento', 'ya_renovo'];
+    // Valid resultado values from model validation
+    const resultados = ['informado_renovara', 'cita_agendada', 'ya_renovo', 'necesita_seguimiento', 'no_interesado', 'solicito_info_sms', 'no_contactado'];
     const contactos = [];
 
     for (let i = 0; i < 40; i++) {
       const cliente = random(clientes);
       const doc = documentos.find(d => d.cliente_id === cliente.id) || random(documentos);
       const resultado = random(resultados);
+      // Valid estado_llamada: completada, buzon_voz, sin_respuesta, ocupado, fallida, numero_equivocado
+      const estadoLlamada = resultado === 'no_contactado' ? random(['sin_respuesta', 'buzon_voz', 'ocupado']) : 'completada';
       const llamadaInicio = addDays(today, -randomInt(0, 30));
-      const duracion = resultado === 'no_contesto' ? 0 : randomInt(30, 300);
+      const duracion = resultado === 'no_contactado' ? 0 : randomInt(30, 300);
 
       const contacto = await EnrutaRegistroContacto.create({
         tenant_id: tenantId,
         cliente_id: cliente.id,
         documento_id: doc.id,
         direccion_llamada: Math.random() > 0.8 ? 'entrante' : 'saliente',
-        tipo_llamada: random(['recordatorio_30_dias', 'recordatorio_15_dias', 'recordatorio_7_dias', 'seguimiento', 'urgente_vencido']),
-        estado_llamada: resultado === 'no_contesto' ? 'no_contestada' : 'completada',
+        tipo_llamada: random(['recordatorio_30_dias', 'recordatorio_15_dias', 'recordatorio_7_dias', 'seguimiento']),
+        estado_llamada: estadoLlamada,
         resultado: resultado,
         numero_origen: '+5723808957',
         numero_destino: cliente.telefono_principal,
@@ -495,11 +498,11 @@ app.get('/health/seed-test-data', async (req, res) => {
         version_agente_ia: 'laura-v1.0',
         resumen_conversacion: resultado === 'cita_agendada'
           ? 'Cliente agendó cita para renovación de documentos'
-          : resultado === 'informado_sin_cita'
-          ? 'Cliente informado sobre vencimiento, pendiente agendar'
+          : resultado === 'informado_renovara'
+          ? 'Cliente informado sobre vencimiento, confirmó que renovará'
           : null,
-        requiere_seguimiento: resultado === 'requiere_seguimiento',
-        fecha_seguimiento: resultado === 'requiere_seguimiento' ? addDays(today, randomInt(1, 7)) : null
+        requiere_seguimiento: resultado === 'necesita_seguimiento',
+        fecha_seguimiento: resultado === 'necesita_seguimiento' ? addDays(today, randomInt(1, 7)) : null
       });
       contactos.push(contacto);
     }
