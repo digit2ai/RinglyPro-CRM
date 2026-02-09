@@ -178,6 +178,106 @@ app.get('/', (req, res) => {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
+
+    /* Microphone Permission Modal */
+    .mic-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .mic-modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .mic-modal {
+      background: white;
+      border-radius: 1rem;
+      padding: 2rem;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    }
+    .mic-modal-overlay.show .mic-modal {
+      transform: scale(1);
+    }
+    .mic-modal-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem;
+      background: linear-gradient(135deg, #3b82f6, #1e3a8a);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse-mic 2s ease-in-out infinite;
+    }
+    .mic-modal-icon svg {
+      width: 40px;
+      height: 40px;
+      color: white;
+    }
+    @keyframes pulse-mic {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
+      50% { box-shadow: 0 0 0 20px rgba(59,130,246,0); }
+    }
+    .mic-modal h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+    .mic-modal p {
+      color: #6b7280;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .mic-modal-btn {
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+    .mic-modal-btn.primary {
+      background: linear-gradient(135deg, #3b82f6, #1e3a8a);
+      color: white;
+      margin-bottom: 0.75rem;
+    }
+    .mic-modal-btn.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59,130,246,0.4);
+    }
+    .mic-modal-btn.secondary {
+      background: #f3f4f6;
+      color: #4b5563;
+    }
+    .mic-modal-btn.secondary:hover {
+      background: #e5e7eb;
+    }
+    .mic-modal-hint {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background: #fef3c7;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      color: #92400e;
+      display: none;
+    }
+    .mic-modal-hint.show {
+      display: block;
+    }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -226,6 +326,31 @@ app.get('/', (req, res) => {
       </div>
     </div>
   </nav>
+
+  <!-- Microphone Permission Modal -->
+  <div id="mic-modal-overlay" class="mic-modal-overlay">
+    <div class="mic-modal">
+      <div class="mic-modal-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+        </svg>
+      </div>
+      <h3>Hablar con Laura</h3>
+      <p>Laura es nuestra asistente virtual. Necesita acceso a tu micrófono para escucharte.</p>
+      <button class="mic-modal-btn primary" onclick="confirmMicPermission()">
+        Permitir Micrófono
+      </button>
+      <button class="mic-modal-btn secondary" onclick="closeMicModal()">
+        Cancelar
+      </button>
+      <div id="mic-modal-hint" class="mic-modal-hint">
+        <strong>Permiso denegado.</strong> Para habilitar el micrófono:<br>
+        1. Haz clic en el icono del candado 🔒 en la barra de direcciones<br>
+        2. Busca "Micrófono" y selecciona "Permitir"<br>
+        3. Recarga la página
+      </div>
+    </div>
+  </div>
 
   <!-- Modal for client details -->
   <div id="cliente-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
@@ -496,10 +621,7 @@ app.get('/', (req, res) => {
       return d.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
-    // Close modal on escape key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') cerrarModal();
-    });
+    // Close modals on escape key (handled below with voice modal)
 
     // Close modal on background click
     document.getElementById('cliente-modal').addEventListener('click', (e) => {
@@ -577,6 +699,36 @@ app.get('/', (req, res) => {
       }
     }
 
+    // Show microphone permission modal
+    function showMicModal() {
+      document.getElementById('mic-modal-overlay').classList.add('show');
+      document.getElementById('mic-modal-hint').classList.remove('show');
+    }
+
+    // Close microphone permission modal
+    function closeMicModal() {
+      document.getElementById('mic-modal-overlay').classList.remove('show');
+    }
+
+    // User confirmed microphone permission
+    async function confirmMicPermission() {
+      try {
+        // Request microphone permission
+        console.log('Requesting microphone...');
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('Microphone granted');
+
+        // Close modal and start session
+        closeMicModal();
+        await actuallyStartVoiceSession();
+
+      } catch (err) {
+        console.error('Microphone permission denied:', err);
+        // Show hint about how to enable
+        document.getElementById('mic-modal-hint').classList.add('show');
+      }
+    }
+
     // Toggle voice agent on/off
     async function toggleVoiceAgent() {
       if (voiceStatus === 'connecting') return;
@@ -584,19 +736,15 @@ app.get('/', (req, res) => {
       if (voiceStatus === 'connected') {
         await endVoiceSession();
       } else {
-        await startVoiceSession();
+        // Show permission modal first
+        showMicModal();
       }
     }
 
-    // Start voice conversation with Laura
-    async function startVoiceSession() {
+    // Actually start voice conversation with Laura (after permission granted)
+    async function actuallyStartVoiceSession() {
       try {
         updateVoiceUI('connecting');
-
-        // Request microphone permission
-        console.log('Requesting microphone...');
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        console.log('Microphone granted');
 
         // Load ElevenLabs client dynamically if not already loaded
         if (!window.ElevenLabsClient) {
@@ -675,6 +823,19 @@ app.get('/', (req, res) => {
         document.head.appendChild(script);
       });
     }
+
+    // Close mic modal on background click
+    document.getElementById('mic-modal-overlay').addEventListener('click', (e) => {
+      if (e.target.id === 'mic-modal-overlay') closeMicModal();
+    });
+
+    // Also close mic modal on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeMicModal();
+        cerrarModal();
+      }
+    });
   </script>
 </body>
 </html>
