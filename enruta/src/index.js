@@ -92,7 +92,7 @@ app.get('/', (req, res) => {
   <nav class="gradient-bg text-white p-4 shadow-lg">
     <div class="container mx-auto flex justify-between items-center">
       <div class="flex items-center space-x-3">
-        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" class="h-8">
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698a435b6505127aa93fdf45.png" alt="ENRUTA" class="h-10 rounded-lg">
         <div>
           <h1 class="text-xl font-bold">ENRUTA</h1>
           <p class="text-xs text-blue-200">Sistema de Gestión Documental Vehicular</p>
@@ -546,20 +546,20 @@ app.get('/health/seed-test-data', async (req, res) => {
       {
         nombre_plantilla: 'Recordatorio 30 días',
         tipo_plantilla: 'sms',
-        evento_disparador: 'recordatorio_30_dias',
-        contenido: 'Hola {{nombre}}, su {{documento}} vence el {{fecha_vencimiento}}. Renuévelo en CDAV: cdav.gov.co o llame al (602) 380 8957'
+        evento_disparador: 'post_llamada_recordatorio',
+        cuerpo: 'Hola {nombre}, su {documento} vence el {fecha_vencimiento}. Renuévelo en CDAV: cdav.gov.co o llame al (602) 380 8957'
       },
       {
         nombre_plantilla: 'Cita Confirmada',
         tipo_plantilla: 'whatsapp',
-        evento_disparador: 'cita_agendada',
-        contenido: '✅ ¡Cita confirmada! {{nombre}}, lo esperamos el {{fecha_cita}} a las {{hora_cita}} en {{sede}}. Traiga: {{requisitos}}'
+        evento_disparador: 'confirmacion_cita',
+        cuerpo: '¡Cita confirmada! {nombre}, lo esperamos el {fecha_cita} a las {hora_cita} en {sede}. Traiga: {requisitos}'
       },
       {
         nombre_plantilla: 'Documento Vencido',
         tipo_plantilla: 'sms',
-        evento_disparador: 'documento_vencido',
-        contenido: '⚠️ {{nombre}}, su {{documento}} está VENCIDO. Multa: ${{valor_multa}}. Renueve YA: cdav.gov.co'
+        evento_disparador: 'aviso_vencimiento',
+        cuerpo: '{nombre}, su {documento} está VENCIDO. Multa: ${valor_multa}. Renueve YA: cdav.gov.co'
       }
     ];
 
@@ -572,7 +572,6 @@ app.get('/health/seed-test-data', async (req, res) => {
         defaults: {
           tenant_id: tenantId,
           ...plantilla,
-          variables_requeridas: ['nombre', 'documento', 'fecha_vencimiento'],
           esta_activa: true
         }
       });
