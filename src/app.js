@@ -477,6 +477,24 @@ app.get('/debug/store-health-error', (req, res) => {
   });
 });
 
+// =====================================================
+// ENRUTA - Vehicle Document Management System with AI
+// =====================================================
+
+// Mount ENRUTA vehicle document management system at /enruta
+let enrutaApp = null;
+try {
+  enrutaApp = require('../enruta/src/index');
+  app.use('/enruta', enrutaApp);
+  console.log('🚗 ENRUTA Vehicle Document Management mounted at /enruta');
+  console.log('   - Dashboard UI: /enruta/');
+  console.log('   - Health Check: /enruta/health');
+  console.log('   - API: /enruta/api/*');
+  console.log('   - Voice: /enruta/voice/laura/*');
+} catch (error) {
+  console.log('⚠️ ENRUTA not available:', error.message);
+}
+
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 
