@@ -104,10 +104,10 @@ class SeedService {
           overallStatus = 'green';
         }
 
-        // Calculate health score
+        // Calculate health score (red=20 floor so 0 doesn't look like missing data)
         const total = statusCounts.green + statusCounts.yellow + statusCounts.red;
         const healthScore = total > 0
-          ? (statusCounts.green * 100 + statusCounts.yellow * 60 + statusCounts.red * 0) / total
+          ? (statusCounts.green * 100 + statusCounts.yellow * 60 + statusCounts.red * 20) / total
           : 100;
 
         // Determine escalation level

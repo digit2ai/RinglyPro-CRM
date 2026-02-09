@@ -139,7 +139,7 @@ class ThresholdCheckerService {
 
     const greenWeight = 100;
     const yellowWeight = 60;
-    const redWeight = 0;
+    const redWeight = 20; // Floor so 0 doesn't look like missing data
 
     const totalScore =
       statusCounts.green * greenWeight +
