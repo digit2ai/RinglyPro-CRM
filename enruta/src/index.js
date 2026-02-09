@@ -338,4 +338,298 @@ app.get('/health/seed', async (req, res) => {
   }
 });
 
+// Seed comprehensive test data for dashboard testing
+app.get('/health/seed-test-data', async (req, res) => {
+  try {
+    const {
+      EnrutaCliente,
+      EnrutaDocumento,
+      EnrutaRegistroContacto,
+      EnrutaRenovacion,
+      EnrutaCampana,
+      EnrutaPlantillaMensaje,
+      EnrutaComparendo
+    } = models;
+
+    const tenantId = req.query.tenant_id || '00000000-0000-0000-0000-000000000001';
+
+    // Colombian first names
+    const nombres = ['Carlos', 'María', 'José', 'Ana', 'Luis', 'Diana', 'Andrés', 'Paola', 'Juan', 'Laura',
+                     'Pedro', 'Sofía', 'Miguel', 'Valentina', 'Diego', 'Camila', 'Fernando', 'Daniela', 'Ricardo', 'Isabella'];
+    const apellidos = ['García', 'Rodríguez', 'Martínez', 'López', 'González', 'Hernández', 'Sánchez', 'Ramírez',
+                       'Torres', 'Flores', 'Rivera', 'Gómez', 'Díaz', 'Reyes', 'Morales', 'Jiménez', 'Ruiz', 'Álvarez', 'Romero', 'Vargas'];
+    const ciudades = ['Cali', 'Palmira', 'Yumbo', 'Jamundí', 'Candelaria', 'Buga'];
+    const barrios = ['La Flora', 'Granada', 'San Fernando', 'Ciudad Jardín', 'El Ingenio', 'Chipichape', 'Centenario', 'Versalles'];
+
+    // Helper functions
+    const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const randomPhone = () => `+5731${randomInt(0, 9)}${randomInt(1000000, 9999999)}`;
+    const randomCedula = () => `${randomInt(10, 99)}${randomInt(100000, 999999)}${randomInt(100, 999)}`;
+
+    const addDays = (date, days) => {
+      const result = new Date(date);
+      result.setDate(result.getDate() + days);
+      return result;
+    };
+
+    // Create 25 test clients
+    const clientes = [];
+    for (let i = 0; i < 25; i++) {
+      const primerNombre = random(nombres);
+      const segundoNombre = Math.random() > 0.5 ? random(nombres) : null;
+      const primerApellido = random(apellidos);
+      const segundoApellido = random(apellidos);
+
+      const [cliente] = await EnrutaCliente.findOrCreate({
+        where: {
+          tenant_id: tenantId,
+          numero_documento: randomCedula()
+        },
+        defaults: {
+          tenant_id: tenantId,
+          tipo_documento: 'CC',
+          numero_documento: randomCedula(),
+          primer_nombre: primerNombre,
+          segundo_nombre: segundoNombre,
+          primer_apellido: primerApellido,
+          segundo_apellido: segundoApellido,
+          nombre_completo: [primerNombre, segundoNombre, primerApellido, segundoApellido].filter(Boolean).join(' '),
+          fecha_nacimiento: new Date(randomInt(1960, 2000), randomInt(0, 11), randomInt(1, 28)),
+          genero: Math.random() > 0.5 ? 'masculino' : 'femenino',
+          correo_electronico: `${primerNombre.toLowerCase()}.${primerApellido.toLowerCase()}${randomInt(1, 99)}@gmail.com`,
+          telefono_principal: randomPhone(),
+          ciudad: random(ciudades),
+          departamento: 'Valle del Cauca',
+          barrio: random(barrios),
+          direccion: `Calle ${randomInt(1, 100)} # ${randomInt(1, 50)} - ${randomInt(1, 99)}`,
+          estado: 'activo',
+          consentimiento_llamadas: true,
+          consentimiento_sms: true,
+          consentimiento_whatsapp: true,
+          no_llamar: false,
+          canal_preferido: random(['llamada', 'whatsapp', 'sms'])
+        }
+      });
+      clientes.push(cliente);
+    }
+
+    // Document states and expiration dates
+    const today = new Date();
+    const docStates = [
+      { estado: 'vigente', daysOffset: randomInt(60, 365) },
+      { estado: 'por_vencer_30_dias', daysOffset: randomInt(20, 30) },
+      { estado: 'por_vencer_15_dias', daysOffset: randomInt(10, 15) },
+      { estado: 'por_vencer_7_dias', daysOffset: randomInt(1, 7) },
+      { estado: 'vencido', daysOffset: randomInt(-90, -1) }
+    ];
+
+    const tiposDoc = ['licencia_conduccion', 'soat', 'revision_tecnicomecanica', 'tarjeta_propiedad'];
+    const categoriasLicencia = ['A1', 'A2', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3'];
+
+    // Create documents for each client
+    const documentos = [];
+    for (const cliente of clientes) {
+      // Each client gets 1-3 documents
+      const numDocs = randomInt(1, 3);
+      const usedTypes = new Set();
+
+      for (let j = 0; j < numDocs; j++) {
+        let tipoDoc = random(tiposDoc);
+        while (usedTypes.has(tipoDoc)) {
+          tipoDoc = random(tiposDoc);
+        }
+        usedTypes.add(tipoDoc);
+
+        const stateInfo = random(docStates);
+        const fechaVencimiento = addDays(today, stateInfo.daysOffset);
+
+        const [doc] = await EnrutaDocumento.findOrCreate({
+          where: {
+            tenant_id: tenantId,
+            cliente_id: cliente.id,
+            tipo_documento: tipoDoc
+          },
+          defaults: {
+            tenant_id: tenantId,
+            cliente_id: cliente.id,
+            tipo_documento: tipoDoc,
+            numero_documento: tipoDoc === 'licencia_conduccion' ? randomCedula() : `${randomInt(100000, 999999)}`,
+            categoria_licencia: tipoDoc === 'licencia_conduccion' ? random(categoriasLicencia) : null,
+            fecha_expedicion: addDays(fechaVencimiento, tipoDoc === 'licencia_conduccion' ? -3650 : -365),
+            fecha_vencimiento: fechaVencimiento,
+            estado: stateInfo.estado,
+            tipo_multa: stateInfo.estado === 'vencido' ? random(['C', 'D']) : null,
+            valor_multa_cop: stateInfo.estado === 'vencido' ? random([695000, 1207800, 1390000]) : null,
+            riesgo_inmovilizacion: stateInfo.estado === 'vencido'
+          }
+        });
+        documentos.push(doc);
+      }
+    }
+
+    // Create contact records (call history)
+    const resultados = ['cita_agendada', 'informado_sin_cita', 'no_contesto', 'numero_equivocado', 'buzon_voz', 'requiere_seguimiento', 'ya_renovo'];
+    const contactos = [];
+
+    for (let i = 0; i < 40; i++) {
+      const cliente = random(clientes);
+      const doc = documentos.find(d => d.cliente_id === cliente.id) || random(documentos);
+      const resultado = random(resultados);
+      const llamadaInicio = addDays(today, -randomInt(0, 30));
+      const duracion = resultado === 'no_contesto' ? 0 : randomInt(30, 300);
+
+      const contacto = await EnrutaRegistroContacto.create({
+        tenant_id: tenantId,
+        cliente_id: cliente.id,
+        documento_id: doc.id,
+        direccion_llamada: Math.random() > 0.8 ? 'entrante' : 'saliente',
+        tipo_llamada: random(['recordatorio_30_dias', 'recordatorio_15_dias', 'recordatorio_7_dias', 'seguimiento', 'urgente_vencido']),
+        estado_llamada: resultado === 'no_contesto' ? 'no_contestada' : 'completada',
+        resultado: resultado,
+        numero_origen: '+5723808957',
+        numero_destino: cliente.telefono_principal,
+        llamada_inicio: llamadaInicio,
+        llamada_fin: new Date(llamadaInicio.getTime() + duracion * 1000),
+        duracion_llamada_segundos: duracion,
+        version_agente_ia: 'laura-v1.0',
+        resumen_conversacion: resultado === 'cita_agendada'
+          ? 'Cliente agendó cita para renovación de documentos'
+          : resultado === 'informado_sin_cita'
+          ? 'Cliente informado sobre vencimiento, pendiente agendar'
+          : null,
+        requiere_seguimiento: resultado === 'requiere_seguimiento',
+        fecha_seguimiento: resultado === 'requiere_seguimiento' ? addDays(today, randomInt(1, 7)) : null
+      });
+      contactos.push(contacto);
+    }
+
+    // Create active campaigns
+    const campanas = [];
+    const nombresCampana = [
+      'Campaña Licencias Vencidas Enero',
+      'Recordatorio SOAT Febrero',
+      'RTMyEC Urgente Q1',
+      'Seguimiento Clientes Inactivos'
+    ];
+
+    for (const nombreCampana of nombresCampana) {
+      const [campana] = await EnrutaCampana.findOrCreate({
+        where: {
+          tenant_id: tenantId,
+          nombre_campana: nombreCampana
+        },
+        defaults: {
+          tenant_id: tenantId,
+          nombre_campana: nombreCampana,
+          descripcion: `Campaña automatizada para ${nombreCampana.toLowerCase()}`,
+          tipo_campana: random(['recordatorio', 'seguimiento', 'urgente']),
+          estado: random(['activa', 'pausada', 'borrador']),
+          tipos_documentos_objetivo: [random(tiposDoc)],
+          fecha_inicio: addDays(today, -randomInt(0, 14)),
+          fecha_fin: addDays(today, randomInt(7, 30)),
+          total_objetivos: randomInt(50, 200),
+          llamadas_realizadas: randomInt(20, 80),
+          llamadas_contestadas: randomInt(10, 40),
+          llamadas_exitosas: randomInt(5, 20),
+          renovaciones_iniciadas: randomInt(2, 10)
+        }
+      });
+      campanas.push(campana);
+    }
+
+    // Create message templates
+    const plantillas = [
+      {
+        nombre_plantilla: 'Recordatorio 30 días',
+        tipo_plantilla: 'sms',
+        evento_disparador: 'recordatorio_30_dias',
+        contenido: 'Hola {{nombre}}, su {{documento}} vence el {{fecha_vencimiento}}. Renuévelo en CDAV: cdav.gov.co o llame al (602) 380 8957'
+      },
+      {
+        nombre_plantilla: 'Cita Confirmada',
+        tipo_plantilla: 'whatsapp',
+        evento_disparador: 'cita_agendada',
+        contenido: '✅ ¡Cita confirmada! {{nombre}}, lo esperamos el {{fecha_cita}} a las {{hora_cita}} en {{sede}}. Traiga: {{requisitos}}'
+      },
+      {
+        nombre_plantilla: 'Documento Vencido',
+        tipo_plantilla: 'sms',
+        evento_disparador: 'documento_vencido',
+        contenido: '⚠️ {{nombre}}, su {{documento}} está VENCIDO. Multa: ${{valor_multa}}. Renueve YA: cdav.gov.co'
+      }
+    ];
+
+    for (const plantilla of plantillas) {
+      await EnrutaPlantillaMensaje.findOrCreate({
+        where: {
+          tenant_id: tenantId,
+          nombre_plantilla: plantilla.nombre_plantilla
+        },
+        defaults: {
+          tenant_id: tenantId,
+          ...plantilla,
+          variables_requeridas: ['nombre', 'documento', 'fecha_vencimiento'],
+          esta_activa: true
+        }
+      });
+    }
+
+    // Create some traffic fines (comparendos)
+    const infracciones = [
+      { codigo: 'C29', descripcion: 'No portar licencia de conducción', tipo: 'C', valor: 695000 },
+      { codigo: 'D12', descripcion: 'No tener SOAT vigente', tipo: 'D', valor: 1207800 },
+      { codigo: 'C35', descripcion: 'No tener RTMyEC vigente', tipo: 'C', valor: 695000 }
+    ];
+
+    for (let i = 0; i < 8; i++) {
+      const cliente = random(clientes);
+      const infraccion = random(infracciones);
+
+      await EnrutaComparendo.findOrCreate({
+        where: {
+          tenant_id: tenantId,
+          numero_comparendo: `VAL${randomInt(100000, 999999)}`
+        },
+        defaults: {
+          tenant_id: tenantId,
+          cliente_id: cliente.id,
+          numero_comparendo: `VAL${randomInt(100000, 999999)}`,
+          fecha_comparendo: addDays(today, -randomInt(1, 180)),
+          codigo_infraccion: infraccion.codigo,
+          descripcion_infraccion: infraccion.descripcion,
+          tipo_infraccion: infraccion.tipo,
+          valor_infraccion: infraccion.valor,
+          ciudad_infraccion: random(ciudades),
+          departamento_infraccion: 'Valle del Cauca',
+          estado: random(['pendiente', 'en_proceso', 'pagado', 'con_descuento']),
+          aplica_curso_pedagogico: Math.random() > 0.3,
+          porcentaje_descuento_disponible: 50
+        }
+      });
+    }
+
+    res.json({
+      status: 'OK',
+      message: 'Test data seeded successfully',
+      summary: {
+        clientes: clientes.length,
+        documentos: documentos.length,
+        contactos: contactos.length,
+        campanas: campanas.length,
+        plantillas: plantillas.length,
+        comparendos: 8
+      }
+    });
+
+  } catch (error) {
+    console.error('Seed error:', error);
+    res.status(500).json({
+      status: 'ERROR',
+      error: error.message,
+      stack: error.stack
+    });
+  }
+});
+
 module.exports = app;
