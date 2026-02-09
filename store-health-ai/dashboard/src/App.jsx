@@ -7,8 +7,11 @@ import { AlertsPage } from './pages/AlertsPage';
 import { TasksPage } from './pages/TasksPage';
 
 function App() {
+  // Get base path from Vite config (removes trailing slash if present)
+  const basename = import.meta.env.BASE_URL?.replace(/\/$/, '') || '';
+
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <Layout>
         <Routes>
           <Route path="/" element={<DashboardPage />} />
