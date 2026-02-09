@@ -86,6 +86,98 @@ app.get('/', (req, res) => {
   <style>
     .gradient-bg { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
     .card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+
+    /* Voice Agent Widget Styles */
+    .voice-widget {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .voice-status {
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .voice-status.active { color: #ef4444; animation: pulse 1.5s infinite; }
+    .voice-status.connecting { color: #9ca3af; }
+    .voice-status.error { color: #ef4444; }
+
+    .voice-btn {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    .voice-btn:hover { transform: scale(1.1); }
+    .voice-btn:active { transform: scale(0.95); }
+    .voice-btn.inactive { background: linear-gradient(135deg, #374151, #1f2937); }
+    .voice-btn.active { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .voice-btn.connecting { background: #6b7280; opacity: 0.7; cursor: wait; }
+
+    .voice-btn .ping {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid #f87171;
+      animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+    .voice-btn .glow {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      filter: blur(4px);
+      transition: all 0.3s;
+    }
+    .voice-btn.inactive .glow {
+      background: linear-gradient(90deg, #ef4444, #f97316, #ef4444);
+      opacity: 0.3;
+    }
+    .voice-btn.active .glow {
+      background: #ef4444;
+      opacity: 0.5;
+    }
+    .voice-btn .inner {
+      position: relative;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+    .voice-btn.inactive .inner { background: linear-gradient(135deg, #4b5563, #1f2937); }
+    .voice-btn.active .inner { background: linear-gradient(135deg, #f87171, #dc2626); }
+    .voice-btn .inner svg { width: 16px; height: 16px; color: white; }
+    .voice-btn .highlight {
+      position: absolute;
+      top: 4px;
+      left: 6px;
+      width: 8px;
+      height: 6px;
+      border-radius: 50%;
+      background: white;
+      opacity: 0.3;
+      filter: blur(1px);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    @keyframes ping {
+      75%, 100% { transform: scale(1.5); opacity: 0; }
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -98,12 +190,55 @@ app.get('/', (req, res) => {
           <p class="text-xs text-blue-200">Sistema de Gestión Documental Vehicular</p>
         </div>
       </div>
-      <div class="flex space-x-4">
+      <div class="flex items-center space-x-4">
+        <!-- Voice Agent Widget -->
+        <div class="voice-widget">
+          <span id="voice-status" class="voice-status" style="display:none;"></span>
+          <button id="voice-btn" class="voice-btn inactive" onclick="toggleVoiceAgent()" title="Hablar con Laura">
+            <div class="glow"></div>
+            <div class="inner">
+              <svg id="voice-icon-mic" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+              <svg id="voice-icon-x" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <svg id="voice-icon-spinner" fill="none" viewBox="0 0 24 24" style="display:none; animation: spin 1s linear infinite;">
+                <circle opacity="0.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path opacity="0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            <div class="highlight"></div>
+            <div id="voice-ping" class="ping" style="display:none;"></div>
+          </button>
+        </div>
+
+        <div class="flex items-center">
+          <input type="text" id="cedula-search" placeholder="Buscar por cédula..."
+            class="px-3 py-1.5 rounded-l-lg text-gray-800 text-sm w-44 focus:outline-none"
+            onkeypress="if(event.key==='Enter') buscarCliente()">
+          <button onclick="buscarCliente()" class="bg-blue-800 hover:bg-blue-900 px-3 py-1.5 rounded-r-lg text-sm">
+            🔍
+          </button>
+        </div>
         <a href="/enruta/api/dashboard/stats" class="hover:text-blue-200">API</a>
         <a href="https://cdav.gov.co" target="_blank" class="hover:text-blue-200">CDAV</a>
       </div>
     </div>
   </nav>
+
+  <!-- Modal for client details -->
+  <div id="cliente-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
+      <div class="gradient-bg text-white p-4 flex justify-between items-center">
+        <h2 class="text-lg font-bold">Información del Cliente</h2>
+        <button onclick="cerrarModal()" class="text-white hover:text-blue-200 text-2xl">&times;</button>
+      </div>
+      <div id="modal-content" class="p-6 overflow-y-auto max-h-[calc(90vh-60px)]">
+        <p class="text-gray-500">Cargando...</p>
+      </div>
+    </div>
+  </div>
 
   <main class="container mx-auto p-6">
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -202,7 +337,7 @@ app.get('/', (req, res) => {
 
     async function loadDocsList() {
       try {
-        const res = await fetch('/enruta/api/documentos/por-vencer?limit=5');
+        const res = await fetch('/enruta/api/documentos/por-vencer?limit=5&tenant_id=00000000-0000-0000-0000-000000000001');
         const data = await res.json();
 
         const container = document.getElementById('docs-list');
@@ -210,8 +345,8 @@ app.get('/', (req, res) => {
           container.innerHTML = data.data.map(doc => \`
             <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <div>
-                <p class="font-medium text-gray-800">\${doc.cliente?.nombre_completo || 'N/A'}</p>
-                <p class="text-sm text-gray-500">\${doc.tipo_documento} - Vence: \${doc.fecha_vencimiento}</p>
+                <p class="font-medium text-gray-800">\${doc.cliente?.primer_nombre || ''} \${doc.cliente?.primer_apellido || 'N/A'}</p>
+                <p class="text-sm text-gray-500">\${formatTipoDoc(doc.tipo_documento)} - Vence: \${formatDate(doc.fecha_vencimiento)}</p>
               </div>
               <span class="px-3 py-1 rounded-full text-xs font-medium \${
                 doc.estado === 'vencido' ? 'bg-red-100 text-red-600' :
@@ -238,12 +373,308 @@ app.get('/', (req, res) => {
       window.location.href = '/enruta/api/dashboard/stats';
     }
 
+    async function buscarCliente() {
+      const cedula = document.getElementById('cedula-search').value.trim();
+      if (!cedula) {
+        alert('Por favor ingrese un número de cédula');
+        return;
+      }
+
+      const modal = document.getElementById('cliente-modal');
+      const content = document.getElementById('modal-content');
+
+      modal.classList.remove('hidden');
+      content.innerHTML = '<p class="text-gray-500 text-center py-8">Buscando...</p>';
+
+      try {
+        const res = await fetch(\`/enruta/api/clientes/buscar/cedula?cedula=\${encodeURIComponent(cedula)}&tenant_id=00000000-0000-0000-0000-000000000001\`);
+        const data = await res.json();
+
+        if (data.success && data.data) {
+          const c = data.data;
+          const docs = c.documentos || [];
+
+          content.innerHTML = \`
+            <div class="space-y-6">
+              <!-- Client Info -->
+              <div class="bg-blue-50 rounded-lg p-4">
+                <h3 class="text-lg font-bold text-gray-800 mb-3">\${c.nombre_completo || 'N/A'}</h3>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                  <div><span class="text-gray-500">Cédula:</span> <span class="font-medium">\${c.numero_documento}</span></div>
+                  <div><span class="text-gray-500">Teléfono:</span> <span class="font-medium">\${c.telefono_principal || 'N/A'}</span></div>
+                  <div><span class="text-gray-500">Email:</span> <span class="font-medium">\${c.correo_electronico || 'N/A'}</span></div>
+                  <div><span class="text-gray-500">Ciudad:</span> <span class="font-medium">\${c.ciudad || 'N/A'}</span></div>
+                  <div class="col-span-2"><span class="text-gray-500">Dirección:</span> <span class="font-medium">\${c.direccion || 'N/A'}</span></div>
+                </div>
+              </div>
+
+              <!-- Documents -->
+              <div>
+                <h4 class="font-bold text-gray-700 mb-3">Documentos (\${docs.length})</h4>
+                \${docs.length > 0 ? docs.map(doc => \`
+                  <div class="border rounded-lg p-4 mb-3 \${
+                    doc.estado === 'vencido' ? 'border-red-300 bg-red-50' :
+                    doc.estado.includes('por_vencer') ? 'border-yellow-300 bg-yellow-50' :
+                    'border-green-300 bg-green-50'
+                  }">
+                    <div class="flex justify-between items-start">
+                      <div>
+                        <p class="font-semibold text-gray-800">\${formatTipoDoc(doc.tipo_documento)}</p>
+                        <p class="text-sm text-gray-600">No: \${doc.numero_documento || 'N/A'}</p>
+                        \${doc.categoria_licencia ? \`<p class="text-sm text-gray-600">Categoría: \${doc.categoria_licencia}</p>\` : ''}
+                      </div>
+                      <span class="px-3 py-1 rounded-full text-xs font-medium \${
+                        doc.estado === 'vencido' ? 'bg-red-200 text-red-700' :
+                        doc.estado === 'por_vencer_7_dias' ? 'bg-orange-200 text-orange-700' :
+                        doc.estado.includes('por_vencer') ? 'bg-yellow-200 text-yellow-700' :
+                        'bg-green-200 text-green-700'
+                      }">
+                        \${formatEstado(doc.estado)}
+                      </span>
+                    </div>
+                    <div class="mt-2 text-sm grid grid-cols-2 gap-2">
+                      <div><span class="text-gray-500">Expedición:</span> \${formatDate(doc.fecha_expedicion)}</div>
+                      <div><span class="text-gray-500">Vencimiento:</span> <span class="font-medium">\${formatDate(doc.fecha_vencimiento)}</span></div>
+                    </div>
+                    \${doc.estado === 'vencido' && doc.valor_multa_cop ? \`
+                      <div class="mt-2 text-sm text-red-600 font-medium">
+                        Multa estimada: $\${Number(doc.valor_multa_cop).toLocaleString('es-CO')} COP
+                      </div>
+                    \` : ''}
+                  </div>
+                \`).join('') : '<p class="text-gray-500">No hay documentos registrados</p>'}
+              </div>
+            </div>
+          \`;
+        } else {
+          content.innerHTML = \`
+            <div class="text-center py-8">
+              <p class="text-red-500 text-lg mb-2">Cliente no encontrado</p>
+              <p class="text-gray-500">No existe un cliente con cédula: \${cedula}</p>
+            </div>
+          \`;
+        }
+      } catch (error) {
+        console.error('Error searching:', error);
+        content.innerHTML = \`
+          <div class="text-center py-8">
+            <p class="text-red-500">Error al buscar cliente</p>
+            <p class="text-gray-500 text-sm">\${error.message}</p>
+          </div>
+        \`;
+      }
+    }
+
+    function cerrarModal() {
+      document.getElementById('cliente-modal').classList.add('hidden');
+    }
+
+    function formatTipoDoc(tipo) {
+      const tipos = {
+        'licencia_conduccion': 'Licencia de Conducción',
+        'soat': 'SOAT',
+        'revision_tecnicomecanica': 'Revisión Técnico Mecánica',
+        'tarjeta_propiedad': 'Tarjeta de Propiedad'
+      };
+      return tipos[tipo] || tipo;
+    }
+
+    function formatEstado(estado) {
+      const estados = {
+        'vigente': 'Vigente',
+        'por_vencer_30_dias': 'Vence en 30 días',
+        'por_vencer_15_dias': 'Vence en 15 días',
+        'por_vencer_7_dias': 'Vence en 7 días',
+        'vencido': 'VENCIDO'
+      };
+      return estados[estado] || estado;
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return 'N/A';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') cerrarModal();
+    });
+
+    // Close modal on background click
+    document.getElementById('cliente-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'cliente-modal') cerrarModal();
+    });
+
     // Load on page load
     loadStats();
     loadDocsList();
 
     // Refresh every 30 seconds
     setInterval(loadStats, 30000);
+
+    // =====================================================
+    // Voice Agent - Laura (ElevenLabs Conversational AI)
+    // =====================================================
+    const LAURA_AGENT_ID = 'agent_7901kh24ng7zfsg9v14jwd58bn5x';
+    let voiceConversation = null;
+    let voiceStatus = 'disconnected'; // disconnected, connecting, connected
+
+    // Update UI based on voice status
+    function updateVoiceUI(status, message) {
+      voiceStatus = status;
+      const btn = document.getElementById('voice-btn');
+      const statusEl = document.getElementById('voice-status');
+      const iconMic = document.getElementById('voice-icon-mic');
+      const iconX = document.getElementById('voice-icon-x');
+      const iconSpinner = document.getElementById('voice-icon-spinner');
+      const ping = document.getElementById('voice-ping');
+
+      // Reset all icons
+      iconMic.style.display = 'none';
+      iconX.style.display = 'none';
+      iconSpinner.style.display = 'none';
+      ping.style.display = 'none';
+
+      // Reset button classes
+      btn.classList.remove('inactive', 'active', 'connecting');
+
+      switch (status) {
+        case 'disconnected':
+          btn.classList.add('inactive');
+          iconMic.style.display = 'block';
+          statusEl.style.display = 'none';
+          btn.title = 'Hablar con Laura';
+          break;
+        case 'connecting':
+          btn.classList.add('connecting');
+          iconSpinner.style.display = 'block';
+          statusEl.style.display = 'block';
+          statusEl.className = 'voice-status connecting';
+          statusEl.textContent = 'Conectando...';
+          btn.title = 'Conectando...';
+          break;
+        case 'connected':
+          btn.classList.add('active');
+          iconX.style.display = 'block';
+          ping.style.display = 'block';
+          statusEl.style.display = 'block';
+          statusEl.className = 'voice-status active';
+          statusEl.textContent = message || 'Escuchando...';
+          btn.title = 'Terminar llamada';
+          break;
+        case 'error':
+          btn.classList.add('inactive');
+          iconMic.style.display = 'block';
+          statusEl.style.display = 'block';
+          statusEl.className = 'voice-status error';
+          statusEl.textContent = message || 'Error';
+          btn.title = 'Error - Click para reintentar';
+          setTimeout(() => {
+            statusEl.style.display = 'none';
+          }, 3000);
+          break;
+      }
+    }
+
+    // Toggle voice agent on/off
+    async function toggleVoiceAgent() {
+      if (voiceStatus === 'connecting') return;
+
+      if (voiceStatus === 'connected') {
+        await endVoiceSession();
+      } else {
+        await startVoiceSession();
+      }
+    }
+
+    // Start voice conversation with Laura
+    async function startVoiceSession() {
+      try {
+        updateVoiceUI('connecting');
+
+        // Request microphone permission
+        console.log('Requesting microphone...');
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('Microphone granted');
+
+        // Load ElevenLabs client dynamically if not already loaded
+        if (!window.ElevenLabsClient) {
+          console.log('Loading ElevenLabs SDK...');
+          await loadElevenLabsSDK();
+        }
+
+        // Create conversation
+        console.log('Starting conversation with Laura:', LAURA_AGENT_ID);
+        voiceConversation = await window.ElevenLabsClient.Conversation.startSession({
+          agentId: LAURA_AGENT_ID,
+          onConnect: () => {
+            console.log('ElevenLabs: Connected');
+            updateVoiceUI('connected', 'Escuchando...');
+          },
+          onDisconnect: () => {
+            console.log('ElevenLabs: Disconnected');
+            updateVoiceUI('disconnected');
+            voiceConversation = null;
+          },
+          onError: (error) => {
+            console.error('ElevenLabs error:', error);
+            updateVoiceUI('error', 'Error de conexión');
+            voiceConversation = null;
+          },
+          onModeChange: (mode) => {
+            console.log('Mode:', mode);
+            if (mode.mode === 'speaking') {
+              updateVoiceUI('connected', 'Laura habla...');
+            } else {
+              updateVoiceUI('connected', 'Escuchando...');
+            }
+          }
+        });
+
+        console.log('Session started:', voiceConversation);
+
+      } catch (err) {
+        console.error('Failed to start voice session:', err);
+        updateVoiceUI('error', err.message || 'No se pudo conectar');
+      }
+    }
+
+    // End voice conversation
+    async function endVoiceSession() {
+      try {
+        console.log('Ending voice session...');
+        if (voiceConversation) {
+          await voiceConversation.endSession();
+          voiceConversation = null;
+        }
+        updateVoiceUI('disconnected');
+      } catch (err) {
+        console.error('Error ending session:', err);
+        updateVoiceUI('disconnected');
+      }
+    }
+
+    // Load ElevenLabs SDK from CDN
+    function loadElevenLabsSDK() {
+      return new Promise((resolve, reject) => {
+        if (window.ElevenLabsClient) {
+          resolve();
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@11labs/client@latest/dist/browser.min.js';
+        script.onload = () => {
+          console.log('ElevenLabs SDK loaded');
+          resolve();
+        };
+        script.onerror = () => {
+          reject(new Error('Failed to load ElevenLabs SDK'));
+        };
+        document.head.appendChild(script);
+      });
+    }
   </script>
 </body>
 </html>
