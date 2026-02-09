@@ -340,4 +340,417 @@ router.get('/laura/cola', async (req, res) => {
   }
 });
 
+// =====================================================
+// ELEVENLABS TOOLS - Called by Laura during conversations
+// =====================================================
+
+// POST /voice/laura/tools/consultar-documentos - Look up documents by cedula
+// This is called by ElevenLabs when Laura needs to check document status
+router.post('/laura/tools/consultar-documentos', async (req, res) => {
+  try {
+    const { numero_cedula } = req.body;
+
+    if (!numero_cedula) {
+      return res.json({
+        success: false,
+        mensaje_para_usuario: 'No recibí el número de cédula. ¿Me lo puede repetir por favor?'
+      });
+    }
+
+    // Clean cedula (remove dots, spaces)
+    const cedulaLimpia = numero_cedula.replace(/[\.\s-]/g, '');
+
+    // Find client by cedula
+    const cliente = await EnrutaCliente.findOne({
+      where: { numero_documento: cedulaLimpia }
+    });
+
+    if (!cliente) {
+      return res.json({
+        success: false,
+        mensaje_para_usuario: `No encontré ningún registro con la cédula ${numero_cedula}. ¿Puede verificar el número o desea que lo registremos en nuestro sistema?`
+      });
+    }
+
+    // Get all documents for this client
+    const documentos = await EnrutaDocumento.findAll({
+      where: { cliente_id: cliente.id },
+      order: [['fecha_vencimiento', 'ASC']]
+    });
+
+    if (documentos.length === 0) {
+      return res.json({
+        success: true,
+        cliente: {
+          nombre: cliente.nombre_completo,
+          cedula: cliente.numero_documento
+        },
+        documentos: [],
+        mensaje_para_usuario: `Señor/a ${cliente.nombre_completo}, lo encontré en nuestro sistema pero no tiene documentos registrados. ¿Desea que registremos su licencia de conducción o SOAT?`
+      });
+    }
+
+    // Format documents for Laura to read
+    const docsFormateados = documentos.map(doc => {
+      const fechaVenc = new Date(doc.fecha_vencimiento);
+      const hoy = new Date();
+      const diasRestantes = Math.ceil((fechaVenc - hoy) / (1000 * 60 * 60 * 24));
+
+      let estadoTexto;
+      if (diasRestantes < 0) {
+        estadoTexto = `VENCIDO hace ${Math.abs(diasRestantes)} días`;
+      } else if (diasRestantes === 0) {
+        estadoTexto = 'VENCE HOY';
+      } else if (diasRestantes <= 7) {
+        estadoTexto = `vence en ${diasRestantes} días - URGENTE`;
+      } else if (diasRestantes <= 15) {
+        estadoTexto = `vence en ${diasRestantes} días`;
+      } else if (diasRestantes <= 30) {
+        estadoTexto = `vence en ${diasRestantes} días`;
+      } else {
+        estadoTexto = `vigente hasta el ${fechaVenc.toLocaleDateString('es-CO')}`;
+      }
+
+      const tipoTexto = {
+        'licencia_conduccion': 'Licencia de conducción',
+        'soat': 'SOAT',
+        'revision_tecnicomecanica': 'Revisión técnico mecánica',
+        'tarjeta_propiedad': 'Tarjeta de propiedad'
+      }[doc.tipo_documento] || doc.tipo_documento;
+
+      return {
+        tipo: tipoTexto,
+        numero: doc.numero_documento,
+        categoria: doc.categoria_licencia,
+        fecha_vencimiento: fechaVenc.toLocaleDateString('es-CO'),
+        estado: doc.estado,
+        estado_texto: estadoTexto,
+        dias_restantes: diasRestantes,
+        multa: doc.valor_multa_cop ? `$${doc.valor_multa_cop.toLocaleString('es-CO')} COP` : null,
+        riesgo_inmovilizacion: doc.riesgo_inmovilizacion
+      };
+    });
+
+    // Build message for Laura to read
+    let mensaje = `Señor/a ${cliente.nombre_completo}, encontré ${documentos.length} documento${documentos.length > 1 ? 's' : ''} registrado${documentos.length > 1 ? 's' : ''}: `;
+
+    docsFormateados.forEach((doc, i) => {
+      mensaje += `${doc.tipo}${doc.categoria ? ` categoría ${doc.categoria}` : ''}, ${doc.estado_texto}`;
+      if (doc.multa && doc.dias_restantes < 0) {
+        mensaje += `. Tiene una multa pendiente de ${doc.multa}`;
+        if (doc.riesgo_inmovilizacion) {
+          mensaje += ' y riesgo de inmovilización del vehículo';
+        }
+      }
+      if (i < docsFormateados.length - 1) mensaje += '. ';
+    });
+
+    // Add recommendation
+    const vencidos = docsFormateados.filter(d => d.dias_restantes < 0);
+    const porVencer = docsFormateados.filter(d => d.dias_restantes >= 0 && d.dias_restantes <= 30);
+
+    if (vencidos.length > 0) {
+      mensaje += '. Le recomiendo renovar lo antes posible para evitar más multas.';
+    } else if (porVencer.length > 0) {
+      mensaje += '. Le recomiendo agendar una cita pronto para evitar inconvenientes.';
+    }
+
+    res.json({
+      success: true,
+      cliente: {
+        id: cliente.id,
+        nombre: cliente.nombre_completo,
+        cedula: cliente.numero_documento,
+        telefono: cliente.telefono_principal,
+        ciudad: cliente.ciudad
+      },
+      documentos: docsFormateados,
+      resumen: {
+        total: documentos.length,
+        vencidos: vencidos.length,
+        por_vencer: porVencer.length,
+        vigentes: docsFormateados.filter(d => d.dias_restantes > 30).length
+      },
+      mensaje_para_usuario: mensaje
+    });
+
+  } catch (error) {
+    console.error('Error consulting documents:', error);
+    res.json({
+      success: false,
+      mensaje_para_usuario: 'Disculpe, tuve un problema consultando la información. ¿Puede intentar de nuevo en un momento?'
+    });
+  }
+});
+
+// POST /voice/laura/tools/consultar-comparendos - Look up traffic fines
+router.post('/laura/tools/consultar-comparendos', async (req, res) => {
+  try {
+    const { numero_cedula } = req.body;
+
+    if (!numero_cedula) {
+      return res.json({
+        success: false,
+        mensaje_para_usuario: 'Necesito su número de cédula para consultar comparendos.'
+      });
+    }
+
+    const cedulaLimpia = numero_cedula.replace(/[\.\s-]/g, '');
+
+    const cliente = await EnrutaCliente.findOne({
+      where: { numero_documento: cedulaLimpia }
+    });
+
+    if (!cliente) {
+      return res.json({
+        success: false,
+        mensaje_para_usuario: `No encontré registros con esa cédula. Para consultar comparendos oficialmente, puede visitar el portal SIMIT en consulta.simit.org.co`
+      });
+    }
+
+    const { EnrutaComparendo } = require('../../models');
+    const comparendos = await EnrutaComparendo.findAll({
+      where: { cliente_id: cliente.id },
+      order: [['fecha_comparendo', 'DESC']]
+    });
+
+    if (comparendos.length === 0) {
+      return res.json({
+        success: true,
+        mensaje_para_usuario: `Señor/a ${cliente.nombre_completo}, no tiene comparendos registrados en nuestro sistema. Para una consulta oficial, puede verificar en el portal SIMIT.`
+      });
+    }
+
+    const pendientes = comparendos.filter(c => c.estado === 'pendiente' || c.estado === 'en_proceso');
+    const totalDeuda = pendientes.reduce((sum, c) => sum + (c.valor_multa_cop || 0), 0);
+
+    let mensaje = `Señor/a ${cliente.nombre_completo}, tiene ${comparendos.length} comparendo${comparendos.length > 1 ? 's' : ''} registrado${comparendos.length > 1 ? 's' : ''}. `;
+
+    if (pendientes.length > 0) {
+      mensaje += `${pendientes.length} pendiente${pendientes.length > 1 ? 's' : ''} de pago por un total de $${totalDeuda.toLocaleString('es-CO')} pesos. `;
+      mensaje += 'Recuerde que puede acceder a un curso pedagógico para obtener hasta el 50% de descuento.';
+    } else {
+      mensaje += 'Todos sus comparendos están resueltos.';
+    }
+
+    res.json({
+      success: true,
+      cliente: cliente.nombre_completo,
+      comparendos: comparendos.map(c => ({
+        numero: c.numero_comparendo,
+        fecha: c.fecha_comparendo,
+        infraccion: c.descripcion_infraccion,
+        tipo: c.tipo_infraccion,
+        valor: c.valor_multa_cop,
+        estado: c.estado
+      })),
+      resumen: {
+        total: comparendos.length,
+        pendientes: pendientes.length,
+        total_deuda: totalDeuda
+      },
+      mensaje_para_usuario: mensaje
+    });
+
+  } catch (error) {
+    console.error('Error consulting fines:', error);
+    res.json({
+      success: false,
+      mensaje_para_usuario: 'Disculpe, no pude consultar los comparendos. Puede verificar en el portal SIMIT.'
+    });
+  }
+});
+
+// POST /voice/laura/tools/agendar-cita - Schedule appointment
+router.post('/laura/tools/agendar-cita', async (req, res) => {
+  try {
+    const { numero_cedula, tipo_tramite, fecha_preferida, hora_preferida } = req.body;
+
+    if (!numero_cedula) {
+      return res.json({
+        success: false,
+        mensaje_para_usuario: 'Necesito su número de cédula para agendar la cita.'
+      });
+    }
+
+    const cedulaLimpia = numero_cedula.replace(/[\.\s-]/g, '');
+    const cliente = await EnrutaCliente.findOne({
+      where: { numero_documento: cedulaLimpia }
+    });
+
+    if (!cliente) {
+      return res.json({
+        success: false,
+        mensaje_para_usuario: 'No lo encontré en el sistema. Primero necesito registrar sus datos.'
+      });
+    }
+
+    // For now, create a renovation record with the appointment
+    const { EnrutaSede } = require('../../models');
+    const sede = await EnrutaSede.findOne({
+      where: { esta_activa: true },
+      order: [['creado_en', 'ASC']]
+    });
+
+    const referencia = `CITA-${Date.now().toString(36).toUpperCase()}`;
+
+    await EnrutaRenovacion.create({
+      tenant_id: cliente.tenant_id,
+      cliente_id: cliente.id,
+      estado_renovacion: 'cita_agendada',
+      fecha_cita: fecha_preferida || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+      hora_cita: hora_preferida || '09:00',
+      sede_cita: sede?.nombre_sede || 'CDAV Sede Principal',
+      tipo_tramite: tipo_tramite || 'renovacion_licencia',
+      historial_estados: [{
+        estado: 'cita_agendada',
+        fecha: new Date().toISOString(),
+        nota: 'Cita agendada por Laura via llamada telefónica'
+      }]
+    });
+
+    const sedeInfo = sede ? `${sede.nombre_sede}, ${sede.direccion}` : 'Calle 62 Norte # Av 3B-40, La Flora, Cali';
+    const horario = sede?.horario_lunes_viernes || 'Lunes a viernes 7:45am a 4:55pm';
+
+    res.json({
+      success: true,
+      cita: {
+        referencia,
+        fecha: fecha_preferida || 'Por confirmar',
+        hora: hora_preferida || '9:00 AM',
+        sede: sedeInfo,
+        horario: horario
+      },
+      mensaje_para_usuario: `Perfecto señor/a ${cliente.nombre_completo}, le agendé su cita. Su número de referencia es ${referencia}. Lo esperamos en ${sedeInfo}. Recuerde traer su cédula original y el examen médico vigente. Le enviaré un mensaje de texto con todos los detalles.`
+    });
+
+  } catch (error) {
+    console.error('Error scheduling appointment:', error);
+    res.json({
+      success: false,
+      mensaje_para_usuario: 'Disculpe, no pude agendar la cita en este momento. Puede llamar directamente al (602) 380 8957 para agendar.'
+    });
+  }
+});
+
+// GET /voice/laura/tools/info-sedes - Get CDAV location info
+router.get('/laura/tools/info-sedes', async (req, res) => {
+  try {
+    const { EnrutaSede } = require('../../models');
+    const sedes = await EnrutaSede.findAll({
+      where: { esta_activa: true }
+    });
+
+    const sedesInfo = sedes.map(s => ({
+      nombre: s.nombre_sede,
+      direccion: s.direccion,
+      barrio: s.barrio,
+      ciudad: s.ciudad,
+      telefono: s.telefono,
+      whatsapp: s.whatsapp,
+      horario_semana: s.horario_lunes_viernes,
+      horario_sabado: s.horario_sabado,
+      servicios: s.servicios_ofrecidos
+    }));
+
+    res.json({
+      success: true,
+      sedes: sedesInfo,
+      mensaje_para_usuario: sedes.length > 0
+        ? `Tenemos ${sedes.length} sede${sedes.length > 1 ? 's' : ''} disponible${sedes.length > 1 ? 's' : ''}. La sede principal está en ${sedes[0].direccion}, barrio ${sedes[0].barrio}. Horario: ${sedes[0].horario_lunes_viernes}.`
+        : 'Lo siento, no tengo información de sedes disponible en este momento.'
+    });
+
+  } catch (error) {
+    console.error('Error getting locations:', error);
+    res.json({
+      success: false,
+      mensaje_para_usuario: 'La sede principal está en Calle 62 Norte # Avenida 3B-40, barrio La Flora en Cali. Horario de lunes a viernes 7:45am a 4:55pm.'
+    });
+  }
+});
+
+// GET /voice/laura/tools-schema - ElevenLabs tool definitions
+router.get('/laura/tools-schema', (req, res) => {
+  res.json({
+    tools: [
+      {
+        type: 'function',
+        function: {
+          name: 'consultar_documentos',
+          description: 'Consulta el estado de los documentos de un ciudadano (licencia, SOAT, RTMyEC) usando su número de cédula',
+          parameters: {
+            type: 'object',
+            properties: {
+              numero_cedula: {
+                type: 'string',
+                description: 'Número de cédula de ciudadanía del usuario'
+              }
+            },
+            required: ['numero_cedula']
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'consultar_comparendos',
+          description: 'Consulta los comparendos (multas de tránsito) de un ciudadano',
+          parameters: {
+            type: 'object',
+            properties: {
+              numero_cedula: {
+                type: 'string',
+                description: 'Número de cédula de ciudadanía'
+              }
+            },
+            required: ['numero_cedula']
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'agendar_cita',
+          description: 'Agenda una cita para renovación de licencia u otro trámite vehicular',
+          parameters: {
+            type: 'object',
+            properties: {
+              numero_cedula: {
+                type: 'string',
+                description: 'Número de cédula del ciudadano'
+              },
+              tipo_tramite: {
+                type: 'string',
+                enum: ['renovacion_licencia', 'expedicion_licencia', 'rtmyec', 'soat'],
+                description: 'Tipo de trámite a realizar'
+              },
+              fecha_preferida: {
+                type: 'string',
+                description: 'Fecha preferida en formato YYYY-MM-DD'
+              },
+              hora_preferida: {
+                type: 'string',
+                description: 'Hora preferida (ej: 09:00, 14:00)'
+              }
+            },
+            required: ['numero_cedula']
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'info_sedes',
+          description: 'Obtiene información sobre las sedes del CDAV (direcciones, horarios, servicios)',
+          parameters: {
+            type: 'object',
+            properties: {}
+          }
+        }
+      }
+    ]
+  });
+});
+
 module.exports = router;
