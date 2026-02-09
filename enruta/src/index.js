@@ -526,11 +526,11 @@ app.get('/health/seed-test-data', async (req, res) => {
           tenant_id: tenantId,
           nombre_campana: nombreCampana,
           descripcion: `Campaña automatizada para ${nombreCampana.toLowerCase()}`,
-          tipo_campana: random(['recordatorio', 'seguimiento', 'urgente']),
+          tipo_campana: random(['recordatorio_30', 'recordatorio_15', 'recordatorio_7', 'vencidos', 'personalizada']),
           estado: random(['activa', 'pausada', 'borrador']),
           tipos_documentos_objetivo: [random(tiposDoc)],
-          fecha_inicio: addDays(today, -randomInt(0, 14)),
-          fecha_fin: addDays(today, randomInt(7, 30)),
+          inicio_programado: addDays(today, -randomInt(0, 14)),
+          fin_programado: addDays(today, randomInt(7, 30)),
           total_objetivos: randomInt(50, 200),
           llamadas_realizadas: randomInt(20, 80),
           llamadas_contestadas: randomInt(10, 40),
@@ -599,15 +599,10 @@ app.get('/health/seed-test-data', async (req, res) => {
           cliente_id: cliente.id,
           numero_comparendo: `VAL${randomInt(100000, 999999)}`,
           fecha_comparendo: addDays(today, -randomInt(1, 180)),
-          codigo_infraccion: infraccion.codigo,
           descripcion_infraccion: infraccion.descripcion,
           tipo_infraccion: infraccion.tipo,
-          valor_infraccion: infraccion.valor,
-          ciudad_infraccion: random(ciudades),
-          departamento_infraccion: 'Valle del Cauca',
-          estado: random(['pendiente', 'en_proceso', 'pagado', 'con_descuento']),
-          aplica_curso_pedagogico: Math.random() > 0.3,
-          porcentaje_descuento_disponible: 50
+          valor_multa_cop: infraccion.valor,
+          estado: random(['pendiente', 'en_proceso', 'curso_pedagogico', 'pagado', 'resuelto'])
         }
       });
     }
