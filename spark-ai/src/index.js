@@ -1506,10 +1506,275 @@ app.get('*', (req, res) => {
     }
 
     // =====================================================
-    // SPARK VOICE INTEGRATION (ElevenLabs WebRTC)
+    // SPARK VOICE INTEGRATION - Using ElevenLabsWebRTCClient
+    // Proven implementation from Store Health AI
     // =====================================================
+
+    // ElevenLabs WebRTC Client Class (proven working implementation)
+    class SparkVoiceClient {
+      constructor(options = {}) {
+        this.tokenEndpoint = options.tokenEndpoint || '/spark/api/v1/voice/webrtc-token';
+        this.dynamicVariables = options.dynamicVariables || {};
+        this.onTranscript = options.onTranscript || (() => {});
+        this.onStatusChange = options.onStatusChange || (() => {});
+        this.onError = options.onError || console.error;
+
+        this.status = 'disconnected';
+        this.websocket = null;
+        this.localStream = null;
+        this.audioContext = null;
+        this.audioQueue = [];
+        this.isPlaying = false;
+        this.scriptProcessor = null;
+        this.conversationId = null;
+      }
+
+      _setStatus(status) {
+        this.status = status;
+        this.onStatusChange(status);
+      }
+
+      async _getMicrophoneStream() {
+        try {
+          return await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 16000 },
+            video: false
+          });
+        } catch (error) {
+          if (error.name === 'NotAllowedError') {
+            throw new Error('Microphone permission denied. Please allow microphone access.');
+          } else if (error.name === 'NotFoundError') {
+            throw new Error('No microphone found. Please connect a microphone.');
+          }
+          throw error;
+        }
+      }
+
+      async _getSignedUrl() {
+        const response = await fetch(this.tokenEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dynamicVariables: this.dynamicVariables })
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.error || 'Failed to get conversation token');
+        }
+
+        const data = await response.json();
+        if (!data.success || !data.signed_url) {
+          throw new Error(data.error || 'Invalid token response');
+        }
+
+        this.dynamicVariables = { ...this.dynamicVariables, ...data.dynamic_variables };
+        return data.signed_url;
+      }
+
+      _setupAudioCapture() {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        const source = this.audioContext.createMediaStreamSource(this.localStream);
+        this.scriptProcessor = this.audioContext.createScriptProcessor(4096, 1, 1);
+
+        this.scriptProcessor.onaudioprocess = (event) => {
+          if (this.websocket?.readyState !== WebSocket.OPEN) return;
+
+          const inputData = event.inputBuffer.getChannelData(0);
+          const pcmData = new Int16Array(inputData.length);
+          for (let i = 0; i < inputData.length; i++) {
+            const s = Math.max(-1, Math.min(1, inputData[i]));
+            pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+          }
+
+          const bytes = new Uint8Array(pcmData.buffer);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+
+          this.websocket.send(JSON.stringify({ user_audio_chunk: btoa(binary) }));
+        };
+
+        source.connect(this.scriptProcessor);
+        this.scriptProcessor.connect(this.audioContext.destination);
+      }
+
+      async _playAudioChunk(base64Audio) {
+        try {
+          const binaryString = atob(base64Audio);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+
+          const audioBuffer = await this.audioContext.decodeAudioData(bytes.buffer.slice(0));
+          this.audioQueue.push(audioBuffer);
+
+          if (!this.isPlaying) this._playNextInQueue();
+        } catch (error) {
+          console.warn('[Audio] Decode error:', error);
+        }
+      }
+
+      _playNextInQueue() {
+        if (this.audioQueue.length === 0) {
+          this.isPlaying = false;
+          return;
+        }
+
+        this.isPlaying = true;
+        const audioBuffer = this.audioQueue.shift();
+        const source = this.audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(this.audioContext.destination);
+        source.onended = () => this._playNextInQueue();
+        source.start(0);
+      }
+
+      async _connectWebSocket(signedUrl) {
+        return new Promise((resolve, reject) => {
+          this.websocket = new WebSocket(signedUrl);
+
+          this.websocket.onopen = () => {
+            console.log('[SparkVoice] WebSocket connected');
+
+            // Send dynamic variables
+            if (Object.keys(this.dynamicVariables).length > 0) {
+              this.websocket.send(JSON.stringify({
+                type: 'conversation_initiation_client_data',
+                conversation_initiation_client_data: {
+                  dynamic_variables: this.dynamicVariables
+                }
+              }));
+            }
+
+            this._setStatus('connected');
+            resolve();
+          };
+
+          this.websocket.onmessage = async (event) => {
+            try {
+              const message = JSON.parse(event.data);
+              await this._handleMessage(message);
+            } catch (error) {
+              console.error('[SparkVoice] Message error:', error);
+            }
+          };
+
+          this.websocket.onerror = (error) => {
+            console.error('[SparkVoice] WebSocket error:', error);
+            reject(new Error('WebSocket connection failed'));
+          };
+
+          this.websocket.onclose = (event) => {
+            console.log('[SparkVoice] WebSocket closed:', event.code, event.reason);
+            this._setStatus('disconnected');
+          };
+        });
+      }
+
+      async _handleMessage(message) {
+        if (message.type === 'conversation_initiation_metadata') {
+          this.conversationId = message.conversation_id;
+          console.log('[SparkVoice] Conversation started:', this.conversationId);
+        }
+        else if (message.type === 'audio' || message.audio) {
+          const audioBase64 = message.audio?.chunk || message.audio_event?.audio_base_64 || message.audio;
+          if (audioBase64 && typeof audioBase64 === 'string') {
+            await this._playAudioChunk(audioBase64);
+          }
+        }
+        else if (message.type === 'agent_response') {
+          const text = message.agent_response_event?.agent_response || message.agent_response || message.text;
+          if (text) this.onTranscript('agent', text);
+        }
+        else if (message.type === 'user_transcript') {
+          const text = message.user_transcription_event?.user_transcript || message.user_transcript;
+          if (text) this.onTranscript('user', text);
+        }
+        else if (message.type === 'ping') {
+          if (this.websocket?.readyState === WebSocket.OPEN) {
+            this.websocket.send(JSON.stringify({ type: 'pong' }));
+          }
+        }
+        else if (message.type === 'interruption') {
+          this.audioQueue = [];
+        }
+        else if (message.type === 'error') {
+          this.onError(new Error(message.error || message.message || 'Server error'));
+        }
+      }
+
+      async connect(dynamicVars = null) {
+        if (this.status === 'connected' || this.status === 'connecting') {
+          console.warn('[SparkVoice] Already connected or connecting');
+          return;
+        }
+
+        if (dynamicVars) {
+          this.dynamicVariables = { ...this.dynamicVariables, ...dynamicVars };
+        }
+
+        this._setStatus('connecting');
+
+        try {
+          // Step 1: Get microphone (FIRST - critical for user gesture context)
+          console.log('[SparkVoice] Getting microphone...');
+          this.localStream = await this._getMicrophoneStream();
+
+          // Step 2: Get signed URL
+          console.log('[SparkVoice] Getting signed URL...');
+          const signedUrl = await this._getSignedUrl();
+
+          // Step 3: Connect WebSocket
+          console.log('[SparkVoice] Connecting WebSocket...');
+          await this._connectWebSocket(signedUrl);
+
+          // Step 4: Set up audio capture (AFTER connection established)
+          console.log('[SparkVoice] Setting up audio...');
+          this._setupAudioCapture();
+
+          console.log('[SparkVoice] Connected!');
+        } catch (error) {
+          console.error('[SparkVoice] Connection failed:', error);
+          this._setStatus('error');
+          this.onError(error);
+          this.disconnect();
+          throw error;
+        }
+      }
+
+      disconnect() {
+        console.log('[SparkVoice] Disconnecting...');
+
+        if (this.websocket) {
+          this.websocket.close();
+          this.websocket = null;
+        }
+
+        if (this.scriptProcessor) {
+          this.scriptProcessor.disconnect();
+          this.scriptProcessor = null;
+        }
+
+        if (this.localStream) {
+          this.localStream.getTracks().forEach(track => track.stop());
+          this.localStream = null;
+        }
+
+        if (this.audioContext) {
+          this.audioContext.close();
+          this.audioContext = null;
+        }
+
+        this.audioQueue = [];
+        this.isPlaying = false;
+        this._setStatus('disconnected');
+      }
+    }
+
+    // Global voice client instance
     let sparkVoiceClient = null;
-    let voiceStatus = 'disconnected';
 
     function talkToSpark() {
       if (!currentSchoolId) {
@@ -1523,13 +1788,20 @@ app.get('*', (req, res) => {
       document.getElementById('voiceModal').classList.remove('hidden');
       document.getElementById('voiceModal').classList.add('flex');
       document.getElementById('voiceStatus').textContent = 'Ready to connect';
-      document.getElementById('voiceTranscript').innerHTML = '';
+      document.getElementById('voiceTranscript').innerHTML = \`
+        <div class="text-center text-gray-500 py-8">
+          <i class="fas fa-microphone text-3xl mb-3 opacity-50"></i>
+          <p class="text-sm">Press "Start Talking" to begin</p>
+          <p class="text-xs mt-2">Ask Spark about your business insights</p>
+        </div>
+      \`;
       updateVoiceButtons('disconnected');
     }
 
     function closeVoiceModal() {
-      if (sparkVoiceClient && voiceStatus === 'connected') {
+      if (sparkVoiceClient) {
         sparkVoiceClient.disconnect();
+        sparkVoiceClient = null;
       }
       document.getElementById('voiceModal').classList.add('hidden');
       document.getElementById('voiceModal').classList.remove('flex');
@@ -1538,160 +1810,95 @@ app.get('*', (req, res) => {
     async function startVoiceCall() {
       try {
         updateVoiceButtons('connecting');
-
-        // First, check if we can access microphone permissions API
-        if (navigator.permissions && navigator.permissions.query) {
-          try {
-            const permResult = await navigator.permissions.query({ name: 'microphone' });
-            console.log('[Spark Voice] Microphone permission state:', permResult.state);
-
-            if (permResult.state === 'denied') {
-              throw new Error('PERMISSION_DENIED');
-            }
-          } catch (permErr) {
-            // Some browsers don't support querying microphone permission, continue anyway
-            console.log('[Spark Voice] Permission query not supported, continuing...');
-          }
-        }
-
         document.getElementById('voiceStatus').textContent = 'Requesting microphone...';
+        document.getElementById('voiceTranscript').innerHTML = '';
 
-        // IMPORTANT: Request microphone FIRST, before any async operations
-        // This ensures we're still within the user gesture context
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-          video: false
+        // Create new voice client with callbacks
+        sparkVoiceClient = new SparkVoiceClient({
+          tokenEndpoint: '/spark/api/v1/voice/webrtc-token',
+          dynamicVariables: {
+            school_id: currentSchoolId,
+            language: currentLanguage
+          },
+          onStatusChange: (status) => {
+            console.log('[Spark] Voice status:', status);
+            if (status === 'connected') {
+              document.getElementById('voiceStatus').textContent = 'Connected - Speak to Spark!';
+              updateVoiceButtons('connected');
+            } else if (status === 'disconnected') {
+              document.getElementById('voiceStatus').textContent = 'Disconnected';
+              updateVoiceButtons('disconnected');
+            }
+          },
+          onTranscript: (role, text) => {
+            addTranscript(role, text);
+          },
+          onError: (error) => {
+            console.error('[Spark] Voice error:', error);
+            document.getElementById('voiceStatus').textContent = 'Error: ' + error.message;
+          }
         });
 
         document.getElementById('voiceStatus').textContent = 'Connecting to Spark...';
-
-        // Now get WebRTC token (after microphone permission granted)
-        const tokenRes = await fetch('/spark/api/v1/voice/webrtc-token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            school_id: currentSchoolId,
-            language: currentLanguage
-          })
-        });
-
-        const tokenData = await tokenRes.json();
-        if (!tokenData.success) {
-          // Clean up microphone if token fails
-          stream.getTracks().forEach(t => t.stop());
-          throw new Error(tokenData.error || 'Failed to get voice token');
-        }
-
-        document.getElementById('voiceStatus').textContent = 'Connecting to Spark AI...';
-
-        // Connect to ElevenLabs WebSocket
-        const ws = new WebSocket(tokenData.signed_url);
-
-        ws.onopen = () => {
-          console.log('[Spark Voice] WebSocket connected');
-          voiceStatus = 'connected';
-          updateVoiceButtons('connected');
-          document.getElementById('voiceStatus').textContent = 'Connected - Speak to Spark!';
-
-          // Send dynamic variables
-          ws.send(JSON.stringify({
-            type: 'conversation_initiation_client_data',
-            conversation_initiation_client_data: {
-              dynamic_variables: tokenData.dynamic_variables
-            }
-          }));
-
-          // Set up audio streaming
-          setupAudioStreaming(stream, ws);
-        };
-
-        ws.onmessage = async (event) => {
-          try {
-            const msg = JSON.parse(event.data);
-            handleVoiceMessage(msg);
-          } catch (e) {
-            console.warn('[Spark Voice] Message parse error:', e);
-          }
-        };
-
-        ws.onerror = (err) => {
-          console.error('[Spark Voice] WebSocket error:', err);
-          document.getElementById('voiceStatus').textContent = 'Connection error';
-          updateVoiceButtons('disconnected');
-        };
-
-        ws.onclose = () => {
-          console.log('[Spark Voice] WebSocket closed');
-          voiceStatus = 'disconnected';
-          document.getElementById('voiceStatus').textContent = 'Disconnected';
-          updateVoiceButtons('disconnected');
-          stream.getTracks().forEach(t => t.stop());
-        };
-
-        sparkVoiceClient = { ws, stream };
+        await sparkVoiceClient.connect();
 
       } catch (error) {
-        console.error('[Spark Voice] Error:', error);
-
-        // Provide specific error messages based on error type
-        const transcriptArea = document.getElementById('voiceTranscript');
-        let errorMsg = error.message;
-        let helpHtml = '';
-
-        if (error.message === 'PERMISSION_DENIED' ||
-            error.name === 'NotAllowedError' ||
-            error.message.includes('not allowed') ||
-            error.message.includes('denied')) {
-
-          errorMsg = 'Microphone access blocked';
-          helpHtml = \`
-            <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-              <p class="font-medium text-red-400 mb-3"><i class="fas fa-microphone-slash mr-2"></i>Microphone Permission Required</p>
-              <p class="text-sm text-gray-300 mb-4">Your browser has blocked microphone access. To fix this:</p>
-              <ol class="text-sm text-gray-400 space-y-2 list-decimal list-inside">
-                <li>Click the <i class="fas fa-lock text-gray-500"></i> lock icon in your browser's address bar</li>
-                <li>Find "Microphone" in the permissions list</li>
-                <li>Change it from "Blocked" to "Allow"</li>
-                <li>Refresh this page and try again</li>
-              </ol>
-              <button onclick="location.reload()" class="mt-4 w-full py-2 bg-spark-coral/20 hover:bg-spark-coral/30 text-spark rounded-lg text-sm transition">
-                <i class="fas fa-refresh mr-2"></i>Refresh Page
-              </button>
-            </div>
-          \`;
-        } else if (error.name === 'NotFoundError') {
-          errorMsg = 'No microphone found';
-          helpHtml = \`
-            <div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
-              <p class="font-medium text-yellow-400 mb-2"><i class="fas fa-plug mr-2"></i>No Microphone Detected</p>
-              <p class="text-sm text-gray-400">Please connect a microphone and try again.</p>
-            </div>
-          \`;
-        } else {
-          helpHtml = \`
-            <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-              <p class="font-medium text-red-400 mb-2"><i class="fas fa-exclamation-circle mr-2"></i>Connection Error</p>
-              <p class="text-sm text-gray-400">\${error.message}</p>
-              <button onclick="startVoiceCall()" class="mt-3 w-full py-2 bg-spark-coral/20 hover:bg-spark-coral/30 text-spark rounded-lg text-sm transition">
-                <i class="fas fa-redo mr-2"></i>Try Again
-              </button>
-            </div>
-          \`;
-        }
-
-        document.getElementById('voiceStatus').textContent = errorMsg;
-        transcriptArea.innerHTML = helpHtml;
+        console.error('[Spark] Voice error:', error);
+        handleVoiceError(error);
         updateVoiceButtons('disconnected');
       }
     }
 
+    function handleVoiceError(error) {
+      const transcriptArea = document.getElementById('voiceTranscript');
+      let errorMsg = error.message;
+      let helpHtml = '';
+
+      if (error.message.includes('denied') || error.message.includes('permission') || error.name === 'NotAllowedError') {
+        errorMsg = 'Microphone access blocked';
+        helpHtml = \`
+          <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+            <p class="font-medium text-red-400 mb-3"><i class="fas fa-microphone-slash mr-2"></i>Microphone Permission Required</p>
+            <p class="text-sm text-gray-300 mb-4">Your browser has blocked microphone access. To fix this:</p>
+            <ol class="text-sm text-gray-400 space-y-2 list-decimal list-inside">
+              <li>Click the lock icon in your browser's address bar</li>
+              <li>Find "Microphone" and change to "Allow"</li>
+              <li>Refresh this page and try again</li>
+            </ol>
+            <button onclick="location.reload()" class="mt-4 w-full py-2 bg-spark-coral/20 hover:bg-spark-coral/30 text-spark rounded-lg text-sm transition">
+              <i class="fas fa-redo mr-2"></i>Refresh Page
+            </button>
+          </div>
+        \`;
+      } else if (error.name === 'NotFoundError' || error.message.includes('microphone')) {
+        errorMsg = 'No microphone found';
+        helpHtml = \`
+          <div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+            <p class="font-medium text-yellow-400 mb-2"><i class="fas fa-plug mr-2"></i>No Microphone Detected</p>
+            <p class="text-sm text-gray-400">Please connect a microphone and try again.</p>
+          </div>
+        \`;
+      } else {
+        helpHtml = \`
+          <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+            <p class="font-medium text-red-400 mb-2"><i class="fas fa-exclamation-circle mr-2"></i>Connection Error</p>
+            <p class="text-sm text-gray-400 mb-3">\${error.message}</p>
+            <button onclick="startVoiceCall()" class="w-full py-2 bg-spark-coral/20 hover:bg-spark-coral/30 text-spark rounded-lg text-sm transition">
+              <i class="fas fa-redo mr-2"></i>Try Again
+            </button>
+          </div>
+        \`;
+      }
+
+      document.getElementById('voiceStatus').textContent = errorMsg;
+      transcriptArea.innerHTML = helpHtml;
+    }
+
     function stopVoiceCall() {
       if (sparkVoiceClient) {
-        if (sparkVoiceClient.ws) sparkVoiceClient.ws.close();
-        if (sparkVoiceClient.stream) sparkVoiceClient.stream.getTracks().forEach(t => t.stop());
+        sparkVoiceClient.disconnect();
         sparkVoiceClient = null;
       }
-      voiceStatus = 'disconnected';
       document.getElementById('voiceStatus').textContent = 'Disconnected';
       updateVoiceButtons('disconnected');
     }
@@ -1715,69 +1922,12 @@ app.get('*', (req, res) => {
       }
     }
 
-    let audioContext = null;
-    let scriptProcessor = null;
-
-    function setupAudioStreaming(stream, ws) {
-      audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-      const source = audioContext.createMediaStreamSource(stream);
-      scriptProcessor = audioContext.createScriptProcessor(4096, 1, 1);
-
-      scriptProcessor.onaudioprocess = (e) => {
-        if (ws.readyState !== WebSocket.OPEN) return;
-
-        const inputData = e.inputBuffer.getChannelData(0);
-        const pcmData = new Int16Array(inputData.length);
-        for (let i = 0; i < inputData.length; i++) {
-          const s = Math.max(-1, Math.min(1, inputData[i]));
-          pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-        }
-
-        // Convert to base64
-        const bytes = new Uint8Array(pcmData.buffer);
-        let binary = '';
-        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-        const base64 = btoa(binary);
-
-        ws.send(JSON.stringify({ user_audio_chunk: base64 }));
-      };
-
-      source.connect(scriptProcessor);
-      scriptProcessor.connect(audioContext.destination);
-    }
-
-    let playbackContext = null;
-    let audioQueue = [];
-    let isPlaying = false;
-
-    function handleVoiceMessage(msg) {
-      // Handle audio
-      if (msg.audio || msg.type === 'audio') {
-        const audio = msg.audio?.chunk || msg.audio_event?.audio_base_64 || msg.audio;
-        if (audio && typeof audio === 'string') {
-          playAudioChunk(audio);
-        }
-      }
-
-      // Handle transcripts
-      if (msg.type === 'user_transcript' || msg.user_transcript) {
-        const text = msg.user_transcription_event?.user_transcript || msg.user_transcript;
-        if (text) addTranscript('user', text);
-      }
-
-      if (msg.type === 'agent_response' || msg.agent_response) {
-        const text = msg.agent_response_event?.agent_response || msg.agent_response || msg.text;
-        if (text) addTranscript('agent', text);
-      }
-
-      // Handle ping
-      if (msg.type === 'ping' && sparkVoiceClient?.ws?.readyState === WebSocket.OPEN) {
-        sparkVoiceClient.ws.send(JSON.stringify({ type: 'pong' }));
-      }
-    }
-
     function addTranscript(role, text) {
       const container = document.getElementById('voiceTranscript');
+      // Clear placeholder if present
+      if (container.querySelector('.text-center')) {
+        container.innerHTML = '';
+      }
       const isUser = role === 'user';
       const html = \`
         <div class="flex \${isUser ? 'justify-end' : 'justify-start'} mb-3">
@@ -1789,37 +1939,6 @@ app.get('*', (req, res) => {
       \`;
       container.innerHTML += html;
       container.scrollTop = container.scrollHeight;
-    }
-
-    async function playAudioChunk(base64) {
-      try {
-        if (!playbackContext) {
-          playbackContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-
-        const binaryString = atob(base64);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
-
-        const audioBuffer = await playbackContext.decodeAudioData(bytes.buffer);
-        audioQueue.push(audioBuffer);
-
-        if (!isPlaying) playNextAudio();
-      } catch (e) {
-        console.warn('[Audio] Decode error:', e);
-      }
-    }
-
-    function playNextAudio() {
-      if (audioQueue.length === 0) { isPlaying = false; return; }
-      isPlaying = true;
-
-      const buffer = audioQueue.shift();
-      const source = playbackContext.createBufferSource();
-      source.buffer = buffer;
-      source.connect(playbackContext.destination);
-      source.onended = playNextAudio;
-      source.start(0);
     }
 
     function triggerSparkCalls(type) {
