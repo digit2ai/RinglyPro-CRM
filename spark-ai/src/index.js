@@ -892,6 +892,8 @@ app.get('*', (req, res) => {
       }
     }
   </style>
+  <!-- ElevenLabs Convai Widget - Official SDK -->
+  <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
 </head>
 <body class="gradient-bg min-h-screen text-white">
   <!-- Header -->
@@ -1192,7 +1194,7 @@ app.get('*', (req, res) => {
     <button onclick="setLanguage('es')" id="langEsDesktop" class="px-3 py-2 bg-white/5 hover:bg-white/20 rounded-lg text-sm transition border border-white/5">ES</button>
   </div>
 
-  <!-- Voice Chat Modal -->
+  <!-- Voice Chat Modal - Using Official ElevenLabs Widget -->
   <div id="voiceModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4">
     <div class="bg-spark-dark-card border border-spark-dark-border rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
       <!-- Modal Header -->
@@ -1203,7 +1205,7 @@ app.get('*', (req, res) => {
           </div>
           <div>
             <h3 class="text-lg font-bold">Talk to Spark</h3>
-            <p id="voiceStatus" class="text-sm text-gray-400">Ready to connect</p>
+            <p id="voiceStatus" class="text-sm text-gray-400">Click the orb below to start</p>
           </div>
         </div>
         <button onclick="closeVoiceModal()" class="p-2 hover:bg-white/10 rounded-lg transition">
@@ -1211,31 +1213,23 @@ app.get('*', (req, res) => {
         </button>
       </div>
 
-      <!-- Transcript Area -->
-      <div id="voiceTranscript" class="h-64 overflow-y-auto p-4 bg-black/20">
-        <div class="text-center text-gray-500 py-8">
-          <i class="fas fa-microphone text-3xl mb-3 opacity-50"></i>
-          <p class="text-sm">Press "Start Talking" to begin</p>
-          <p class="text-xs mt-2">Ask Spark about your business insights</p>
+      <!-- ElevenLabs Widget Container -->
+      <div class="p-8 flex flex-col items-center justify-center min-h-[300px]">
+        <div id="elevenlabs-widget-container" class="mb-4">
+          <!-- Widget will be inserted here dynamically -->
         </div>
+        <p id="widgetSchoolName" class="text-lg font-medium text-white mb-2"></p>
+        <p class="text-sm text-gray-400 text-center">
+          Click the orb to start talking to Spark.<br>
+          Ask about revenue, members, leads, and more.
+        </p>
       </div>
 
-      <!-- Controls -->
-      <div class="p-6 border-t border-spark-dark-border">
-        <div class="flex gap-3">
-          <button id="voiceStartBtn" onclick="startVoiceCall()" class="flex-1 spark-btn py-4 rounded-xl font-medium transition flex items-center justify-center gap-2">
-            <i class="fas fa-microphone"></i>
-            <span>Start Talking</span>
-          </button>
-          <button id="voiceStopBtn" onclick="stopVoiceCall()" class="hidden flex-1 bg-red-500 hover:bg-red-600 py-4 rounded-xl font-medium transition flex items-center justify-center gap-2">
-            <i class="fas fa-stop"></i>
-            <span>End Call</span>
-          </button>
-        </div>
-        <p class="text-center text-xs text-gray-500 mt-4">
-          <i class="fas fa-info-circle mr-1"></i>
-          Spark can answer questions about revenue, members, leads, and more
-        </p>
+      <!-- Close Button -->
+      <div class="p-4 border-t border-spark-dark-border">
+        <button onclick="closeVoiceModal()" class="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-medium transition">
+          Close
+        </button>
       </div>
     </div>
   </div>
@@ -1506,284 +1500,12 @@ app.get('*', (req, res) => {
     }
 
     // =====================================================
-    // SPARK VOICE INTEGRATION - Using ElevenLabsWebRTCClient
-    // Proven implementation from Store Health AI
+    // SPARK VOICE INTEGRATION - Using Official ElevenLabs Widget
+    // This uses the official ElevenLabs Convai Widget which handles
+    // all the complexity of WebSocket, audio, and dynamic variables
     // =====================================================
 
-    // ElevenLabs WebRTC Client Class (proven working implementation)
-    class SparkVoiceClient {
-      constructor(options = {}) {
-        this.tokenEndpoint = options.tokenEndpoint || '/spark/api/v1/voice/webrtc-token';
-        this.dynamicVariables = options.dynamicVariables || {};
-        this.onTranscript = options.onTranscript || (() => {});
-        this.onStatusChange = options.onStatusChange || (() => {});
-        this.onError = options.onError || console.error;
-
-        this.status = 'disconnected';
-        this.websocket = null;
-        this.localStream = null;
-        this.audioContext = null;
-        this.audioQueue = [];
-        this.isPlaying = false;
-        this.scriptProcessor = null;
-        this.conversationId = null;
-      }
-
-      _setStatus(status) {
-        this.status = status;
-        this.onStatusChange(status);
-      }
-
-      async _getMicrophoneStream() {
-        try {
-          return await navigator.mediaDevices.getUserMedia({
-            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 16000 },
-            video: false
-          });
-        } catch (error) {
-          if (error.name === 'NotAllowedError') {
-            throw new Error('Microphone permission denied. Please allow microphone access.');
-          } else if (error.name === 'NotFoundError') {
-            throw new Error('No microphone found. Please connect a microphone.');
-          }
-          throw error;
-        }
-      }
-
-      async _getSignedUrl() {
-        const response = await fetch(this.tokenEndpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            school_id: this.dynamicVariables.school_id,
-            language: this.dynamicVariables.language || 'en'
-          })
-        });
-
-        if (!response.ok) {
-          const error = await response.json().catch(() => ({}));
-          throw new Error(error.error || 'Failed to get conversation token');
-        }
-
-        const data = await response.json();
-        console.log('[SparkVoice] Token response:', JSON.stringify(data));
-
-        if (!data.success || !data.signed_url) {
-          throw new Error(data.error || 'Invalid token response');
-        }
-
-        // Merge backend dynamic variables (includes school context)
-        this.dynamicVariables = { ...this.dynamicVariables, ...data.dynamic_variables };
-        console.log('[SparkVoice] Final dynamic variables:', JSON.stringify(this.dynamicVariables));
-
-        return data.signed_url;
-      }
-
-      _setupAudioCapture() {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-        const source = this.audioContext.createMediaStreamSource(this.localStream);
-        this.scriptProcessor = this.audioContext.createScriptProcessor(4096, 1, 1);
-
-        this.scriptProcessor.onaudioprocess = (event) => {
-          if (this.websocket?.readyState !== WebSocket.OPEN) return;
-
-          const inputData = event.inputBuffer.getChannelData(0);
-          const pcmData = new Int16Array(inputData.length);
-          for (let i = 0; i < inputData.length; i++) {
-            const s = Math.max(-1, Math.min(1, inputData[i]));
-            pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-          }
-
-          const bytes = new Uint8Array(pcmData.buffer);
-          let binary = '';
-          for (let i = 0; i < bytes.byteLength; i++) {
-            binary += String.fromCharCode(bytes[i]);
-          }
-
-          this.websocket.send(JSON.stringify({ user_audio_chunk: btoa(binary) }));
-        };
-
-        source.connect(this.scriptProcessor);
-        this.scriptProcessor.connect(this.audioContext.destination);
-      }
-
-      async _playAudioChunk(base64Audio) {
-        try {
-          const binaryString = atob(base64Audio);
-          const bytes = new Uint8Array(binaryString.length);
-          for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-          }
-
-          const audioBuffer = await this.audioContext.decodeAudioData(bytes.buffer.slice(0));
-          this.audioQueue.push(audioBuffer);
-
-          if (!this.isPlaying) this._playNextInQueue();
-        } catch (error) {
-          console.warn('[Audio] Decode error:', error);
-        }
-      }
-
-      _playNextInQueue() {
-        if (this.audioQueue.length === 0) {
-          this.isPlaying = false;
-          return;
-        }
-
-        this.isPlaying = true;
-        const audioBuffer = this.audioQueue.shift();
-        const source = this.audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(this.audioContext.destination);
-        source.onended = () => this._playNextInQueue();
-        source.start(0);
-      }
-
-      async _connectWebSocket(signedUrl) {
-        return new Promise((resolve, reject) => {
-          this.websocket = new WebSocket(signedUrl);
-
-          this.websocket.onopen = () => {
-            console.log('[SparkVoice] WebSocket connected');
-            console.log('[SparkVoice] Sending dynamic variables:', JSON.stringify(this.dynamicVariables));
-
-            // Send dynamic variables - MUST include school_id for ElevenLabs tools
-            const initData = {
-              type: 'conversation_initiation_client_data',
-              conversation_initiation_client_data: {
-                dynamic_variables: this.dynamicVariables
-              }
-            };
-            console.log('[SparkVoice] Init data:', JSON.stringify(initData));
-            this.websocket.send(JSON.stringify(initData));
-
-            this._setStatus('connected');
-            resolve();
-          };
-
-          this.websocket.onmessage = async (event) => {
-            try {
-              const message = JSON.parse(event.data);
-              await this._handleMessage(message);
-            } catch (error) {
-              console.error('[SparkVoice] Message error:', error);
-            }
-          };
-
-          this.websocket.onerror = (error) => {
-            console.error('[SparkVoice] WebSocket error:', error);
-            reject(new Error('WebSocket connection failed'));
-          };
-
-          this.websocket.onclose = (event) => {
-            console.log('[SparkVoice] WebSocket closed:', event.code, event.reason);
-            this._setStatus('disconnected');
-          };
-        });
-      }
-
-      async _handleMessage(message) {
-        if (message.type === 'conversation_initiation_metadata') {
-          this.conversationId = message.conversation_id;
-          console.log('[SparkVoice] Conversation started:', this.conversationId);
-        }
-        else if (message.type === 'audio' || message.audio) {
-          const audioBase64 = message.audio?.chunk || message.audio_event?.audio_base_64 || message.audio;
-          if (audioBase64 && typeof audioBase64 === 'string') {
-            await this._playAudioChunk(audioBase64);
-          }
-        }
-        else if (message.type === 'agent_response') {
-          const text = message.agent_response_event?.agent_response || message.agent_response || message.text;
-          if (text) this.onTranscript('agent', text);
-        }
-        else if (message.type === 'user_transcript') {
-          const text = message.user_transcription_event?.user_transcript || message.user_transcript;
-          if (text) this.onTranscript('user', text);
-        }
-        else if (message.type === 'ping') {
-          if (this.websocket?.readyState === WebSocket.OPEN) {
-            this.websocket.send(JSON.stringify({ type: 'pong' }));
-          }
-        }
-        else if (message.type === 'interruption') {
-          this.audioQueue = [];
-        }
-        else if (message.type === 'error') {
-          this.onError(new Error(message.error || message.message || 'Server error'));
-        }
-      }
-
-      async connect(dynamicVars = null) {
-        if (this.status === 'connected' || this.status === 'connecting') {
-          console.warn('[SparkVoice] Already connected or connecting');
-          return;
-        }
-
-        if (dynamicVars) {
-          this.dynamicVariables = { ...this.dynamicVariables, ...dynamicVars };
-        }
-
-        this._setStatus('connecting');
-
-        try {
-          // Step 1: Get microphone (FIRST - critical for user gesture context)
-          console.log('[SparkVoice] Getting microphone...');
-          this.localStream = await this._getMicrophoneStream();
-
-          // Step 2: Get signed URL
-          console.log('[SparkVoice] Getting signed URL...');
-          const signedUrl = await this._getSignedUrl();
-
-          // Step 3: Connect WebSocket
-          console.log('[SparkVoice] Connecting WebSocket...');
-          await this._connectWebSocket(signedUrl);
-
-          // Step 4: Set up audio capture (AFTER connection established)
-          console.log('[SparkVoice] Setting up audio...');
-          this._setupAudioCapture();
-
-          console.log('[SparkVoice] Connected!');
-        } catch (error) {
-          console.error('[SparkVoice] Connection failed:', error);
-          this._setStatus('error');
-          this.onError(error);
-          this.disconnect();
-          throw error;
-        }
-      }
-
-      disconnect() {
-        console.log('[SparkVoice] Disconnecting...');
-
-        if (this.websocket) {
-          this.websocket.close();
-          this.websocket = null;
-        }
-
-        if (this.scriptProcessor) {
-          this.scriptProcessor.disconnect();
-          this.scriptProcessor = null;
-        }
-
-        if (this.localStream) {
-          this.localStream.getTracks().forEach(track => track.stop());
-          this.localStream = null;
-        }
-
-        if (this.audioContext) {
-          this.audioContext.close();
-          this.audioContext = null;
-        }
-
-        this.audioQueue = [];
-        this.isPlaying = false;
-        this._setStatus('disconnected');
-      }
-    }
-
-    // Global voice client instance
-    let sparkVoiceClient = null;
+    const SPARK_AGENT_ID = 'agent_5601kh453hqqfz59nfemkwk02vax';
 
     function talkToSpark() {
       if (!currentSchoolId) {
@@ -1794,167 +1516,53 @@ app.get('*', (req, res) => {
     }
 
     function openVoiceModal() {
-      document.getElementById('voiceModal').classList.remove('hidden');
-      document.getElementById('voiceModal').classList.add('flex');
-      document.getElementById('voiceStatus').textContent = 'Ready to connect';
-      document.getElementById('voiceTranscript').innerHTML = \`
-        <div class="text-center text-gray-500 py-8">
-          <i class="fas fa-microphone text-3xl mb-3 opacity-50"></i>
-          <p class="text-sm">Press "Start Talking" to begin</p>
-          <p class="text-xs mt-2">Ask Spark about your business insights</p>
-        </div>
-      \`;
-      updateVoiceButtons('disconnected');
+      const modal = document.getElementById('voiceModal');
+      const container = document.getElementById('elevenlabs-widget-container');
+      const schoolNameEl = document.getElementById('widgetSchoolName');
+
+      // Show modal
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      // Update school name
+      const schoolSelect = document.getElementById('schoolSelect');
+      const selectedOption = schoolSelect.options[schoolSelect.selectedIndex];
+      schoolNameEl.textContent = selectedOption ? selectedOption.text : '';
+
+      // Create widget with dynamic variables
+      const dynamicVars = {
+        school_id: parseInt(currentSchoolId, 10),
+        language: currentLanguage || 'en'
+      };
+
+      console.log('[Spark Widget] Opening with dynamic variables:', dynamicVars);
+
+      // Clear any existing widget
+      container.innerHTML = '';
+
+      // Create the ElevenLabs widget element
+      const widget = document.createElement('elevenlabs-convai');
+      widget.setAttribute('agent-id', SPARK_AGENT_ID);
+      widget.setAttribute('dynamic-variables', JSON.stringify(dynamicVars));
+
+      // Style the widget container
+      widget.style.display = 'block';
+
+      container.appendChild(widget);
+
+      console.log('[Spark Widget] Widget created with agent:', SPARK_AGENT_ID);
     }
 
     function closeVoiceModal() {
-      if (sparkVoiceClient) {
-        sparkVoiceClient.disconnect();
-        sparkVoiceClient = null;
-      }
-      document.getElementById('voiceModal').classList.add('hidden');
-      document.getElementById('voiceModal').classList.remove('flex');
-    }
+      const modal = document.getElementById('voiceModal');
+      const container = document.getElementById('elevenlabs-widget-container');
 
-    async function startVoiceCall() {
-      try {
-        updateVoiceButtons('connecting');
-        document.getElementById('voiceStatus').textContent = 'Requesting microphone...';
-        document.getElementById('voiceTranscript').innerHTML = '';
+      // Remove the widget
+      container.innerHTML = '';
 
-        // Debug: Log current school ID
-        console.log('[Spark] Starting voice call with school_id:', currentSchoolId, 'type:', typeof currentSchoolId);
-
-        if (!currentSchoolId) {
-          throw new Error('No school selected. Please select a business first.');
-        }
-
-        // Create new voice client with callbacks
-        sparkVoiceClient = new SparkVoiceClient({
-          tokenEndpoint: '/spark/api/v1/voice/webrtc-token',
-          dynamicVariables: {
-            school_id: parseInt(currentSchoolId, 10),  // Must be NUMBER - ElevenLabs tool expects number type
-            language: currentLanguage || 'en'
-          },
-          onStatusChange: (status) => {
-            console.log('[Spark] Voice status:', status);
-            if (status === 'connected') {
-              document.getElementById('voiceStatus').textContent = 'Connected - Speak to Spark!';
-              updateVoiceButtons('connected');
-            } else if (status === 'disconnected') {
-              document.getElementById('voiceStatus').textContent = 'Disconnected';
-              updateVoiceButtons('disconnected');
-            }
-          },
-          onTranscript: (role, text) => {
-            addTranscript(role, text);
-          },
-          onError: (error) => {
-            console.error('[Spark] Voice error:', error);
-            document.getElementById('voiceStatus').textContent = 'Error: ' + error.message;
-          }
-        });
-
-        document.getElementById('voiceStatus').textContent = 'Connecting to Spark...';
-        await sparkVoiceClient.connect();
-
-      } catch (error) {
-        console.error('[Spark] Voice error:', error);
-        handleVoiceError(error);
-        updateVoiceButtons('disconnected');
-      }
-    }
-
-    function handleVoiceError(error) {
-      const transcriptArea = document.getElementById('voiceTranscript');
-      let errorMsg = error.message;
-      let helpHtml = '';
-
-      if (error.message.includes('denied') || error.message.includes('permission') || error.name === 'NotAllowedError') {
-        errorMsg = 'Microphone access blocked';
-        helpHtml = \`
-          <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-            <p class="font-medium text-red-400 mb-3"><i class="fas fa-microphone-slash mr-2"></i>Microphone Permission Required</p>
-            <p class="text-sm text-gray-300 mb-4">Your browser has blocked microphone access. To fix this:</p>
-            <ol class="text-sm text-gray-400 space-y-2 list-decimal list-inside">
-              <li>Click the lock icon in your browser's address bar</li>
-              <li>Find "Microphone" and change to "Allow"</li>
-              <li>Refresh this page and try again</li>
-            </ol>
-            <button onclick="location.reload()" class="mt-4 w-full py-2 bg-spark-coral/20 hover:bg-spark-coral/30 text-spark rounded-lg text-sm transition">
-              <i class="fas fa-redo mr-2"></i>Refresh Page
-            </button>
-          </div>
-        \`;
-      } else if (error.name === 'NotFoundError' || error.message.includes('microphone')) {
-        errorMsg = 'No microphone found';
-        helpHtml = \`
-          <div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
-            <p class="font-medium text-yellow-400 mb-2"><i class="fas fa-plug mr-2"></i>No Microphone Detected</p>
-            <p class="text-sm text-gray-400">Please connect a microphone and try again.</p>
-          </div>
-        \`;
-      } else {
-        helpHtml = \`
-          <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-            <p class="font-medium text-red-400 mb-2"><i class="fas fa-exclamation-circle mr-2"></i>Connection Error</p>
-            <p class="text-sm text-gray-400 mb-3">\${error.message}</p>
-            <button onclick="startVoiceCall()" class="w-full py-2 bg-spark-coral/20 hover:bg-spark-coral/30 text-spark rounded-lg text-sm transition">
-              <i class="fas fa-redo mr-2"></i>Try Again
-            </button>
-          </div>
-        \`;
-      }
-
-      document.getElementById('voiceStatus').textContent = errorMsg;
-      transcriptArea.innerHTML = helpHtml;
-    }
-
-    function stopVoiceCall() {
-      if (sparkVoiceClient) {
-        sparkVoiceClient.disconnect();
-        sparkVoiceClient = null;
-      }
-      document.getElementById('voiceStatus').textContent = 'Disconnected';
-      updateVoiceButtons('disconnected');
-    }
-
-    function updateVoiceButtons(status) {
-      const startBtn = document.getElementById('voiceStartBtn');
-      const stopBtn = document.getElementById('voiceStopBtn');
-
-      if (status === 'connecting') {
-        startBtn.disabled = true;
-        startBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Connecting...';
-        stopBtn.classList.add('hidden');
-      } else if (status === 'connected') {
-        startBtn.classList.add('hidden');
-        stopBtn.classList.remove('hidden');
-      } else {
-        startBtn.disabled = false;
-        startBtn.innerHTML = '<i class="fas fa-microphone mr-2"></i>Start Talking';
-        startBtn.classList.remove('hidden');
-        stopBtn.classList.add('hidden');
-      }
-    }
-
-    function addTranscript(role, text) {
-      const container = document.getElementById('voiceTranscript');
-      // Clear placeholder if present
-      if (container.querySelector('.text-center')) {
-        container.innerHTML = '';
-      }
-      const isUser = role === 'user';
-      const html = \`
-        <div class="flex \${isUser ? 'justify-end' : 'justify-start'} mb-3">
-          <div class="\${isUser ? 'bg-spark-coral/20 text-white' : 'bg-white/10 text-gray-200'} rounded-2xl px-4 py-2 max-w-[80%]">
-            <p class="text-xs \${isUser ? 'text-spark' : 'text-gray-400'} mb-1">\${isUser ? 'You' : 'Spark'}</p>
-            <p class="text-sm">\${text}</p>
-          </div>
-        </div>
-      \`;
-      container.innerHTML += html;
-      container.scrollTop = container.scrollHeight;
+      // Hide modal
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
     }
 
     function triggerSparkCalls(type) {
