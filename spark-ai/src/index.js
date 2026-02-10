@@ -1538,9 +1538,19 @@ app.get('*', (req, res) => {
     async function startVoiceCall() {
       try {
         updateVoiceButtons('connecting');
+        document.getElementById('voiceStatus').textContent = 'Requesting microphone...';
+
+        // IMPORTANT: Request microphone FIRST, before any async operations
+        // This ensures we're still within the user gesture context
+        // (getUserMedia must be called immediately after user interaction)
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+          video: false
+        });
+
         document.getElementById('voiceStatus').textContent = 'Connecting to Spark...';
 
-        // Get WebRTC token
+        // Now get WebRTC token (after microphone permission granted)
         const tokenRes = await fetch('/spark/api/v1/voice/webrtc-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1552,16 +1562,10 @@ app.get('*', (req, res) => {
 
         const tokenData = await tokenRes.json();
         if (!tokenData.success) {
+          // Clean up microphone if token fails
+          stream.getTracks().forEach(t => t.stop());
           throw new Error(tokenData.error || 'Failed to get voice token');
         }
-
-        document.getElementById('voiceStatus').textContent = 'Requesting microphone...';
-
-        // Get microphone
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-          video: false
-        });
 
         document.getElementById('voiceStatus').textContent = 'Connecting to Spark AI...';
 
