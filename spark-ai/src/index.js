@@ -1653,12 +1653,24 @@ app.get('*', (req, res) => {
       }
     }
 
+    // Helper function to get color based on value thresholds
+    function getScoreColor(score) {
+      if (score >= 80) return '#22c55e'; // Green
+      if (score >= 50) return '#eab308'; // Yellow
+      return '#ef4444'; // Red
+    }
+
     function updateDashboard(data) {
       // Health Score
       if (data.health) {
-        document.getElementById('healthScore').textContent = data.health.overall_score || '--';
+        const healthScore = data.health.overall_score || 0;
+        document.getElementById('healthScore').textContent = healthScore || '--';
         document.getElementById('healthGrade').textContent = 'Grade: ' + (data.health.grade || '--');
-        document.getElementById('scoreRing').style.setProperty('--score', data.health.overall_score || 0);
+        document.getElementById('scoreRing').style.setProperty('--score', healthScore);
+        // Set ring color based on health score
+        const ringColor = getScoreColor(healthScore);
+        document.getElementById('scoreRing').style.stroke = ringColor;
+        document.getElementById('healthScore').style.color = ringColor;
       }
 
       // Calculate revenue at risk (at-risk students * avg monthly rate)
@@ -1683,6 +1695,9 @@ app.get('*', (req, res) => {
       const progress = data.revenue?.progress || 0;
       document.getElementById('monthlyRevenue').textContent = '$' + revenue.toLocaleString();
       document.getElementById('revenueProgress').style.width = progress + '%';
+      // Set progress bar color based on percentage
+      const progressColor = getScoreColor(progress);
+      document.getElementById('revenueProgress').style.backgroundColor = progressColor;
       document.getElementById('revenueTarget').textContent = progress + '% of $' + target.toLocaleString() + ' goal';
 
       // Spark Message
