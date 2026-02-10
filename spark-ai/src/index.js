@@ -58,6 +58,133 @@ if (models && !modelsError) {
   app.use('/api/v1/health', healthRoutes);
   app.use('/api/v1/voice', voiceRoutes);
 
+  // Seed data for a specific existing school
+  app.post('/api/v1/seed-school/:school_id', async (req, res) => {
+    try {
+      const { SparkSchool, SparkStudent, SparkLead, SparkRevenue, SparkHealthScore } = models;
+      const school_id = parseInt(req.params.school_id, 10);
+
+      const school = await SparkSchool.findByPk(school_id);
+      if (!school) {
+        return res.status(404).json({ error: 'School not found' });
+      }
+
+      const today = new Date();
+      const results = { students: 0, leads: 0, revenue: 0 };
+
+      // Helper functions
+      const randBetween = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+      const randItem = arr => arr[Math.floor(Math.random() * arr.length)];
+
+      const belts = ['White', 'Yellow', 'Orange', 'Green', 'Blue', 'Red', 'Black'];
+      const memberships = ['Unlimited', '3x Week', '2x Week', 'Competition Team'];
+      const firstNames = ['James', 'Emma', 'Liam', 'Olivia', 'Noah', 'Ava', 'Ethan', 'Sophia', 'Mason', 'Isabella', 'Logan', 'Mia', 'Lucas', 'Charlotte', 'Jacob', 'Amelia', 'William', 'Harper', 'Alexander', 'Evelyn', 'Benjamin', 'Abigail', 'Daniel', 'Emily', 'Henry', 'Michael', 'Sarah', 'David', 'Jennifer', 'Robert'];
+      const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Kim', 'Lee'];
+
+      // Create 25-35 students
+      const numStudents = randBetween(25, 35);
+      for (let i = 0; i < numStudents; i++) {
+        const isAtRisk = i < Math.floor(numStudents * 0.2);
+        const churnRisk = i < 3 ? 'critical' : (i < 6 ? 'high' : (i < 10 ? 'medium' : 'low'));
+        const lastAtt = new Date(today);
+        lastAtt.setDate(today.getDate() - (isAtRisk ? randBetween(15, 30) : randBetween(0, 7)));
+
+        await SparkStudent.create({
+          school_id,
+          first_name: randItem(firstNames),
+          last_name: randItem(lastNames),
+          email: `student${i}_${school_id}@demo.test`,
+          phone: `+1555${String(school_id).padStart(3, '0')}${String(i).padStart(4, '0')}`,
+          belt_rank: randItem(belts),
+          membership_type: randItem(memberships),
+          status: 'active',
+          monthly_rate: randBetween(149, 249),
+          start_date: new Date(today.getFullYear(), today.getMonth() - randBetween(1, 24), 1),
+          last_attendance: lastAtt,
+          attendance_streak: isAtRisk ? 0 : randBetween(2, 12),
+          total_classes: randBetween(10, 150),
+          churn_risk: churnRisk,
+          churn_risk_score: churnRisk === 'critical' ? randBetween(85, 99) : churnRisk === 'high' ? randBetween(65, 84) : churnRisk === 'medium' ? randBetween(35, 64) : randBetween(5, 34),
+          payment_status: isAtRisk && Math.random() < 0.3 ? 'past_due' : 'current'
+        });
+        results.students++;
+      }
+
+      // Create 8-15 leads
+      const numLeads = randBetween(8, 15);
+      const leadSources = ['Website', 'Facebook', 'Instagram', 'Referral', 'Walk-in', 'Google'];
+      for (let i = 0; i < numLeads; i++) {
+        const temp = i < 4 ? 'hot' : (i < 8 ? 'warm' : 'cold');
+        await SparkLead.create({
+          school_id,
+          first_name: randItem(firstNames),
+          last_name: randItem(lastNames),
+          email: `lead${i}_${school_id}@prospect.test`,
+          phone: `+1555${String(school_id).padStart(3, '0')}${String(100 + i).padStart(4, '0')}`,
+          source: randItem(leadSources),
+          interest: school.martial_art_type || 'Martial Arts',
+          temperature: temp,
+          lead_score: temp === 'hot' ? randBetween(80, 99) : temp === 'warm' ? randBetween(50, 79) : randBetween(10, 49),
+          status: temp === 'hot' && Math.random() < 0.5 ? 'trial_scheduled' : 'new',
+          trial_date: temp === 'hot' ? new Date(today.getTime() + randBetween(1, 7) * 86400000) : null
+        });
+        results.leads++;
+      }
+
+      // Create revenue for current month
+      const revenueTypes = ['membership', 'retail', 'event', 'private_lesson', 'testing_fee'];
+      for (let day = 1; day <= today.getDate(); day++) {
+        if (day === 1 || day === 15) {
+          // Membership batch
+          await SparkRevenue.create({
+            school_id,
+            date: new Date(today.getFullYear(), today.getMonth(), day),
+            type: 'membership',
+            amount: randBetween(4000, 6000),
+            description: 'Monthly membership dues',
+            is_recurring: true,
+            source: 'demo'
+          });
+          results.revenue += 5000;
+        }
+        if (day % 3 === 0) {
+          // Daily transactions
+          await SparkRevenue.create({
+            school_id,
+            date: new Date(today.getFullYear(), today.getMonth(), day),
+            type: randItem(revenueTypes.slice(1)),
+            amount: randBetween(50, 400),
+            description: 'Daily transaction',
+            is_recurring: false,
+            source: 'demo'
+          });
+          results.revenue += 200;
+        }
+      }
+
+      // Update school active_students
+      await school.update({ active_students: results.students });
+
+      // Calculate health score
+      const https = require('https');
+      https.request({
+        hostname: 'aiagent.ringlypro.com',
+        path: '/spark/api/v1/health/calculate',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      }, () => {}).end(JSON.stringify({ school_id }));
+
+      res.json({
+        success: true,
+        message: `Demo data seeded for ${school.name}`,
+        data: results
+      });
+    } catch (error) {
+      console.error('Seed school error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Comprehensive demo data seed endpoint - Multiple schools with realistic data
   app.post('/api/v1/seed-demo', async (req, res) => {
     try {
