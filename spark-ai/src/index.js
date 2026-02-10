@@ -707,33 +707,216 @@ app.get('*', (req, res) => {
     .bg-gradient-spark { background: linear-gradient(to right, #F17A70, #E85A4F); }
     /* Spark flame logo SVG */
     .spark-flame { filter: drop-shadow(0 0 10px rgba(232, 90, 79, 0.5)); }
+
+    /* ========== MOBILE OPTIMIZATIONS ========== */
+    @media (max-width: 768px) {
+      /* Header - stack on mobile */
+      .mobile-header {
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px 16px;
+      }
+      .mobile-header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+      }
+      .mobile-header-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+      }
+      .mobile-header-controls select {
+        width: 100%;
+        font-size: 14px;
+        padding: 10px 12px;
+      }
+      .mobile-header-controls .spark-btn {
+        display: none; /* Hide talk button in header on mobile, use FAB */
+      }
+
+      /* Main content - reduced padding */
+      .mobile-main {
+        padding: 16px !important;
+      }
+
+      /* Welcome Section - more compact */
+      .mobile-welcome {
+        padding-top: 24px !important;
+        padding-bottom: 24px !important;
+      }
+      .mobile-welcome-icon {
+        width: 80px !important;
+        height: 80px !important;
+        margin-bottom: 20px !important;
+      }
+      .mobile-welcome-icon i {
+        font-size: 32px !important;
+      }
+      .mobile-welcome h2 {
+        font-size: 28px !important;
+        margin-bottom: 8px !important;
+      }
+      .mobile-welcome .subtitle {
+        font-size: 16px !important;
+        margin-bottom: 4px !important;
+      }
+      .mobile-welcome .description {
+        font-size: 14px !important;
+        padding: 0 8px;
+        line-height: 1.5;
+      }
+
+      /* Value props cards - compact grid */
+      .mobile-value-props {
+        gap: 12px !important;
+        margin-bottom: 24px !important;
+      }
+      .mobile-value-card {
+        padding: 16px !important;
+      }
+      .mobile-value-card .icon-wrap {
+        width: 48px !important;
+        height: 48px !important;
+        margin-bottom: 12px !important;
+      }
+      .mobile-value-card .icon-wrap i {
+        font-size: 20px !important;
+      }
+      .mobile-value-card h3 {
+        font-size: 16px !important;
+        margin-bottom: 6px !important;
+      }
+      .mobile-value-card p {
+        font-size: 12px !important;
+        line-height: 1.4;
+      }
+
+      /* CTA section */
+      .mobile-cta {
+        margin-top: 8px !important;
+      }
+      .mobile-cta p {
+        font-size: 13px !important;
+        margin-bottom: 12px !important;
+      }
+      .mobile-cta button {
+        padding: 14px 24px !important;
+        font-size: 14px !important;
+        width: 100%;
+      }
+
+      /* Floating action button */
+      .mobile-fab {
+        width: 56px !important;
+        height: 56px !important;
+        bottom: 80px !important;
+        right: 16px !important;
+      }
+      .mobile-fab i {
+        font-size: 22px !important;
+      }
+      .mobile-fab span {
+        display: none !important;
+      }
+
+      /* Bottom controls - fixed bar */
+      .mobile-bottom-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #1A1A1A;
+        border-top: 1px solid #2A2A2A;
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 100;
+      }
+      .mobile-lang-toggle {
+        position: static !important;
+        display: flex;
+        gap: 8px;
+      }
+      .mobile-lang-toggle button {
+        padding: 8px 16px !important;
+        font-size: 13px !important;
+      }
+
+      /* Add padding to body for fixed bottom bar */
+      body {
+        padding-bottom: 70px;
+      }
+
+      /* Dashboard cards on mobile */
+      .mobile-stats-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 12px !important;
+      }
+      .mobile-stat-card {
+        padding: 14px !important;
+      }
+      .mobile-stat-card .stat-value {
+        font-size: 22px !important;
+      }
+      .mobile-stat-card .stat-label {
+        font-size: 10px !important;
+      }
+
+      /* Hide desktop-only elements */
+      .desktop-only {
+        display: none !important;
+      }
+    }
+
+    /* Small phones */
+    @media (max-width: 375px) {
+      .mobile-welcome h2 {
+        font-size: 24px !important;
+      }
+      .mobile-welcome-icon {
+        width: 64px !important;
+        height: 64px !important;
+      }
+      .mobile-welcome-icon i {
+        font-size: 26px !important;
+      }
+      .mobile-value-props {
+        grid-template-columns: 1fr !important;
+      }
+    }
   </style>
 </head>
 <body class="gradient-bg min-h-screen text-white">
   <!-- Header -->
-  <header class="border-b border-spark-dark-border px-6 py-4 sticky top-0 z-50 bg-spark-dark/95 backdrop-blur-xl">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <!-- Spark Flame Logo -->
-        <svg class="w-10 h-10 spark-flame" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M20 2C20 2 8 14 8 24C8 30.627 13.373 36 20 36C26.627 36 32 30.627 32 24C32 20 30 16 28 14C28 14 27 20 24 22C24 22 26 14 22 8C22 8 20 12 18 14C18 14 20 6 20 2Z" fill="url(#sparkGradient)"/>
-          <defs>
-            <linearGradient id="sparkGradient" x1="8" y1="2" x2="32" y2="36" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#F17A70"/>
-              <stop offset="1" stop-color="#E85A4F"/>
-            </linearGradient>
-          </defs>
-        </svg>
-        <div>
-          <h1 class="text-2xl font-bold text-white tracking-tight">SPARK</h1>
-          <p class="text-xs text-gray-500">AI Business Intelligence</p>
+  <header class="border-b border-spark-dark-border sticky top-0 z-50 bg-spark-dark/95 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-4 mobile-header">
+      <div class="flex items-center gap-3 mobile-header-top">
+        <div class="flex items-center gap-3">
+          <!-- Spark Flame Logo -->
+          <svg class="w-8 h-8 md:w-10 md:h-10 spark-flame" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 2C20 2 8 14 8 24C8 30.627 13.373 36 20 36C26.627 36 32 30.627 32 24C32 20 30 16 28 14C28 14 27 20 24 22C24 22 26 14 22 8C22 8 20 12 18 14C18 14 20 6 20 2Z" fill="url(#sparkGradient)"/>
+            <defs>
+              <linearGradient id="sparkGradient" x1="8" y1="2" x2="32" y2="36" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#F17A70"/>
+                <stop offset="1" stop-color="#E85A4F"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div>
+            <h1 class="text-xl md:text-2xl font-bold text-white tracking-tight">SPARK</h1>
+            <p class="text-xs text-gray-500">AI Business Intelligence</p>
+          </div>
         </div>
       </div>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-4 mobile-header-controls">
         <select id="schoolSelect" class="bg-spark-dark-card border border-spark-dark-border rounded-lg px-4 py-2.5 text-sm focus:border-spark-coral focus:outline-none transition">
-          <option value="">Select Your School...</option>
+          <option value="">Select Your Business...</option>
         </select>
-        <button onclick="talkToSpark()" class="spark-btn px-5 py-2.5 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-lg">
+        <button onclick="talkToSpark()" class="spark-btn px-5 py-2.5 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-lg desktop-only">
           <i class="fas fa-microphone"></i>
           <span>Talk to Spark</span>
         </button>
@@ -742,16 +925,16 @@ app.get('*', (req, res) => {
   </header>
 
   <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-6 py-8">
+  <main class="max-w-7xl mx-auto px-6 py-8 mobile-main">
     <!-- Welcome Section -->
-    <div id="welcomeSection" class="py-16">
-      <div class="text-center mb-16">
-        <div class="w-28 h-28 spark-icon rounded-3xl flex items-center justify-center mx-auto mb-8 glow-pulse">
+    <div id="welcomeSection" class="py-16 mobile-welcome">
+      <div class="text-center mb-10 md:mb-16">
+        <div class="w-28 h-28 spark-icon rounded-3xl flex items-center justify-center mx-auto mb-8 glow-pulse mobile-welcome-icon">
           <i class="fas fa-bolt text-white text-5xl"></i>
         </div>
         <h2 class="text-4xl font-bold mb-4">Meet <span class="text-spark">Spark</span></h2>
-        <p class="text-xl text-gray-300 mb-2">Your AI Business Intelligence Officer</p>
-        <p class="text-gray-400 max-w-2xl mx-auto">
+        <p class="text-xl text-gray-300 mb-2 subtitle">Your AI Business Intelligence Officer</p>
+        <p class="text-gray-400 max-w-2xl mx-auto description">
           Connects to your company data, understands how your business really works,
           and delivers clear insights on where you're losing money, where you can grow,
           and what actions will maximize your profit and performance.
@@ -759,25 +942,25 @@ app.get('*', (req, res) => {
       </div>
 
       <!-- Value Props -->
-      <div class="grid md:grid-cols-3 gap-8 mb-16">
-        <div class="card card-danger rounded-2xl p-8 text-center">
-          <div class="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 mobile-value-props">
+        <div class="card card-danger rounded-2xl p-8 text-center mobile-value-card">
+          <div class="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 icon-wrap">
             <i class="fas fa-money-bill-wave text-red-400 text-2xl"></i>
           </div>
           <h3 class="text-xl font-bold mb-2 text-red-400">Find Money Leaks</h3>
           <p class="text-gray-400 text-sm">Identify where you're losing revenue - churning members, failed payments, missed opportunities</p>
         </div>
 
-        <div class="card card-success rounded-2xl p-8 text-center">
-          <div class="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <div class="card card-success rounded-2xl p-8 text-center mobile-value-card">
+          <div class="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 icon-wrap">
             <i class="fas fa-chart-line text-green-400 text-2xl"></i>
           </div>
           <h3 class="text-xl font-bold mb-2 text-green-400">Spot Growth</h3>
           <p class="text-gray-400 text-sm">Discover untapped potential - hot leads, upsell opportunities, expansion possibilities</p>
         </div>
 
-        <div class="card card-spark rounded-2xl p-8 text-center">
-          <div class="w-16 h-16 bg-spark-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <div class="card card-spark rounded-2xl p-8 text-center mobile-value-card">
+          <div class="w-16 h-16 bg-spark-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-4 icon-wrap">
             <i class="fas fa-bolt text-spark text-2xl"></i>
           </div>
           <h3 class="text-xl font-bold mb-2 text-spark">Take Action</h3>
@@ -786,7 +969,7 @@ app.get('*', (req, res) => {
       </div>
 
       <!-- CTA -->
-      <div class="text-center">
+      <div class="text-center mobile-cta">
         <p class="text-gray-400 mb-6">Select a business above to see Spark in action, or:</p>
         <button onclick="seedDemoData()" class="spark-btn px-8 py-4 rounded-xl font-medium transition shadow-lg shadow-spark-coral/20">
           <i class="fas fa-rocket mr-2"></i>Load Demo Data
@@ -990,8 +1173,8 @@ app.get('*', (req, res) => {
     </div>
   </main>
 
-  <!-- Floating Spark Button -->
-  <div class="fixed bottom-6 right-6">
+  <!-- Floating Spark Button (Desktop) -->
+  <div class="fixed bottom-6 right-6 hidden md:block">
     <button onclick="talkToSpark()" class="w-16 h-16 spark-icon rounded-2xl shadow-2xl flex items-center justify-center transition hover:scale-110 glow-pulse group">
       <i class="fas fa-bolt text-white text-2xl"></i>
       <span class="absolute right-full mr-4 bg-gray-900/95 backdrop-blur px-4 py-2 rounded-xl text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition shadow-xl">
@@ -1000,10 +1183,24 @@ app.get('*', (req, res) => {
     </button>
   </div>
 
-  <!-- Language Toggle -->
-  <div class="fixed bottom-6 left-6 flex gap-2">
-    <button onclick="setLanguage('en')" id="langEn" class="px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition border border-white/10">EN</button>
-    <button onclick="setLanguage('es')" id="langEs" class="px-3 py-2 bg-white/5 hover:bg-white/20 rounded-lg text-sm transition border border-white/5">ES</button>
+  <!-- Language Toggle (Desktop) -->
+  <div class="fixed bottom-6 left-6 hidden md:flex gap-2">
+    <button onclick="setLanguage('en')" id="langEnDesktop" class="px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition border border-white/10">EN</button>
+    <button onclick="setLanguage('es')" id="langEsDesktop" class="px-3 py-2 bg-white/5 hover:bg-white/20 rounded-lg text-sm transition border border-white/5">ES</button>
+  </div>
+
+  <!-- Mobile Bottom Bar -->
+  <div class="fixed bottom-0 left-0 right-0 bg-spark-dark-card border-t border-spark-dark-border p-3 flex justify-between items-center z-50 md:hidden mobile-bottom-bar">
+    <div class="flex gap-2 mobile-lang-toggle">
+      <button onclick="setLanguage('en')" id="langEn" class="px-4 py-2 bg-white/10 rounded-lg text-sm font-medium border border-white/10">EN</button>
+      <button onclick="setLanguage('es')" id="langEs" class="px-4 py-2 bg-white/5 rounded-lg text-sm border border-white/5">ES</button>
+    </div>
+    <button onclick="seedDemoData()" class="p-3 bg-white/5 rounded-xl border border-white/10">
+      <i class="fas fa-database text-gray-400"></i>
+    </button>
+    <button onclick="talkToSpark()" class="w-14 h-14 spark-icon rounded-2xl shadow-lg flex items-center justify-center glow-pulse">
+      <i class="fas fa-bolt text-white text-xl"></i>
+    </button>
   </div>
 
   <script>
@@ -1297,12 +1494,22 @@ app.get('*', (req, res) => {
 
     function setLanguage(lang) {
       currentLanguage = lang;
-      document.getElementById('langEn').className = lang === 'en'
-        ? 'px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition border border-white/10'
-        : 'px-3 py-2 bg-white/5 hover:bg-white/20 rounded-lg text-sm transition border border-white/5';
-      document.getElementById('langEs').className = lang === 'es'
-        ? 'px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition border border-white/10'
-        : 'px-3 py-2 bg-white/5 hover:bg-white/20 rounded-lg text-sm transition border border-white/5';
+      // Mobile buttons
+      const enBtn = document.getElementById('langEn');
+      const esBtn = document.getElementById('langEs');
+      // Desktop buttons
+      const enBtnDesktop = document.getElementById('langEnDesktop');
+      const esBtnDesktop = document.getElementById('langEsDesktop');
+
+      const activeClass = 'px-4 py-2 bg-white/10 rounded-lg text-sm font-medium border border-white/10';
+      const inactiveClass = 'px-4 py-2 bg-white/5 rounded-lg text-sm border border-white/5';
+      const activeClassDesktop = 'px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition border border-white/10';
+      const inactiveClassDesktop = 'px-3 py-2 bg-white/5 hover:bg-white/20 rounded-lg text-sm transition border border-white/5';
+
+      if (enBtn) enBtn.className = lang === 'en' ? activeClass : inactiveClass;
+      if (esBtn) esBtn.className = lang === 'es' ? activeClass : inactiveClass;
+      if (enBtnDesktop) enBtnDesktop.className = lang === 'en' ? activeClassDesktop : inactiveClassDesktop;
+      if (esBtnDesktop) esBtnDesktop.className = lang === 'es' ? activeClassDesktop : inactiveClassDesktop;
     }
   </script>
 </body>
