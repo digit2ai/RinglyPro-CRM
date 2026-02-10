@@ -1900,7 +1900,7 @@ app.get('*', (req, res) => {
     let voiceClient = null;
     let voiceStatus = 'disconnected'; // disconnected, connecting, connected
 
-    // WebSocket Voice Client Class
+    // WebSocket Voice Client Class - Fixed Audio Playback
     class SparkVoiceClient {
       constructor(options = {}) {
         this.tokenEndpoint = options.tokenEndpoint || '/spark/api/v1/voice/webrtc-token';
@@ -1912,10 +1912,12 @@ app.get('*', (req, res) => {
         this.status = 'disconnected';
         this.websocket = null;
         this.localStream = null;
-        this.audioContext = null;
+        this.inputAudioContext = null;  // For capturing mic at 16kHz
+        this.outputAudioContext = null; // For playing audio at native rate
         this.scriptProcessor = null;
         this.audioQueue = [];
         this.isPlaying = false;
+        this.nextPlayTime = 0;
       }
 
       async connect() {
@@ -1923,12 +1925,22 @@ app.get('*', (req, res) => {
         this._setStatus('connecting');
 
         try {
+          // FIRST: Create and resume audio contexts (must happen on user gesture)
+          console.log('[SparkVoice] Creating audio contexts...');
+          this.outputAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+          await this.outputAudioContext.resume();
+          console.log('[SparkVoice] Output audio context ready, state:', this.outputAudioContext.state);
+
           // Get microphone
           console.log('[SparkVoice] Getting microphone...');
           this.localStream = await navigator.mediaDevices.getUserMedia({
-            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 16000 },
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
             video: false
           });
+
+          // Create input context for mic capture at 16kHz
+          this.inputAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+          await this.inputAudioContext.resume();
 
           // Get signed URL
           console.log('[SparkVoice] Getting signed URL...');
@@ -1952,7 +1964,7 @@ app.get('*', (req, res) => {
 
           // Setup audio capture
           this._setupAudioCapture();
-          console.log('[SparkVoice] Connected!');
+          console.log('[SparkVoice] Connected and ready!');
 
         } catch (error) {
           console.error('[SparkVoice] Connection failed:', error);
@@ -1968,9 +1980,11 @@ app.get('*', (req, res) => {
         if (this.websocket) { this.websocket.close(); this.websocket = null; }
         if (this.scriptProcessor) { this.scriptProcessor.disconnect(); this.scriptProcessor = null; }
         if (this.localStream) { this.localStream.getTracks().forEach(t => t.stop()); this.localStream = null; }
-        if (this.audioContext) { this.audioContext.close(); this.audioContext = null; }
+        if (this.inputAudioContext) { this.inputAudioContext.close(); this.inputAudioContext = null; }
+        if (this.outputAudioContext) { this.outputAudioContext.close(); this.outputAudioContext = null; }
         this.audioQueue = [];
         this.isPlaying = false;
+        this.nextPlayTime = 0;
         this._setStatus('disconnected');
       }
 
@@ -2008,9 +2022,16 @@ app.get('*', (req, res) => {
       }
 
       async _handleMessage(msg) {
+        // Log message types for debugging
+        const msgType = msg.type || Object.keys(msg)[0];
+        if (msgType !== 'ping') console.log('[WebSocket] Message type:', msgType);
+
         if (msg.type === 'audio' || msg.audio) {
           const audio = msg.audio?.chunk || msg.audio_event?.audio_base_64 || msg.audio;
-          if (audio && typeof audio === 'string') await this._playAudio(audio);
+          if (audio && typeof audio === 'string') {
+            console.log('[Audio] Received chunk, length:', audio.length);
+            await this._playAudio(audio);
+          }
         } else if (msg.type === 'agent_response') {
           const text = msg.agent_response_event?.agent_response || msg.agent_response || msg.text;
           if (text) this.onTranscript('agent', text);
@@ -2020,16 +2041,17 @@ app.get('*', (req, res) => {
         } else if (msg.type === 'ping') {
           if (this.websocket?.readyState === WebSocket.OPEN) this.websocket.send(JSON.stringify({ type: 'pong' }));
         } else if (msg.type === 'interruption') {
+          console.log('[Audio] Interruption - clearing queue');
           this.audioQueue = [];
+          this.nextPlayTime = 0;
         } else if (msg.type === 'error') {
           this.onError(new Error(msg.error || msg.message || 'Server error'));
         }
       }
 
       _setupAudioCapture() {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-        const source = this.audioContext.createMediaStreamSource(this.localStream);
-        this.scriptProcessor = this.audioContext.createScriptProcessor(4096, 1, 1);
+        const source = this.inputAudioContext.createMediaStreamSource(this.localStream);
+        this.scriptProcessor = this.inputAudioContext.createScriptProcessor(4096, 1, 1);
 
         this.scriptProcessor.onaudioprocess = (event) => {
           if (this.websocket?.readyState !== WebSocket.OPEN) return;
@@ -2046,29 +2068,51 @@ app.get('*', (req, res) => {
         };
 
         source.connect(this.scriptProcessor);
-        this.scriptProcessor.connect(this.audioContext.destination);
+        this.scriptProcessor.connect(this.inputAudioContext.destination);
       }
 
       async _playAudio(base64) {
+        if (!this.outputAudioContext) {
+          console.warn('[Audio] No output context');
+          return;
+        }
+
+        // Ensure context is running
+        if (this.outputAudioContext.state === 'suspended') {
+          console.log('[Audio] Resuming suspended context...');
+          await this.outputAudioContext.resume();
+        }
+
         try {
+          // Decode base64 to ArrayBuffer
           const binary = atob(base64);
           const bytes = new Uint8Array(binary.length);
           for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-          const audioBuffer = await this.audioContext.decodeAudioData(bytes.buffer.slice(0));
-          this.audioQueue.push(audioBuffer);
-          if (!this.isPlaying) this._playNext();
-        } catch (e) { console.warn('[Audio] Decode error:', e); }
-      }
 
-      _playNext() {
-        if (this.audioQueue.length === 0) { this.isPlaying = false; return; }
-        this.isPlaying = true;
-        const buffer = this.audioQueue.shift();
-        const source = this.audioContext.createBufferSource();
-        source.buffer = buffer;
-        source.connect(this.audioContext.destination);
-        source.onended = () => this._playNext();
-        source.start(0);
+          // Decode audio data (ElevenLabs sends MP3/PCM chunks)
+          const arrayBuffer = bytes.buffer.slice(0);
+          const audioBuffer = await this.outputAudioContext.decodeAudioData(arrayBuffer);
+
+          console.log('[Audio] Decoded buffer, duration:', audioBuffer.duration.toFixed(2) + 's');
+
+          // Schedule playback
+          const source = this.outputAudioContext.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(this.outputAudioContext.destination);
+
+          // Schedule to play after previous audio
+          const currentTime = this.outputAudioContext.currentTime;
+          const startTime = Math.max(currentTime, this.nextPlayTime);
+          source.start(startTime);
+
+          // Update next play time
+          this.nextPlayTime = startTime + audioBuffer.duration;
+
+          console.log('[Audio] Playing at:', startTime.toFixed(2), 'Next:', this.nextPlayTime.toFixed(2));
+
+        } catch (e) {
+          console.error('[Audio] Decode/play error:', e.message);
+        }
       }
     }
 
