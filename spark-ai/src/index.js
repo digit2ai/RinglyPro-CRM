@@ -1566,11 +1566,16 @@ app.get('*', (req, res) => {
         }
 
         const data = await response.json();
+        console.log('[SparkVoice] Token response:', JSON.stringify(data));
+
         if (!data.success || !data.signed_url) {
           throw new Error(data.error || 'Invalid token response');
         }
 
+        // Merge backend dynamic variables (includes school context)
         this.dynamicVariables = { ...this.dynamicVariables, ...data.dynamic_variables };
+        console.log('[SparkVoice] Final dynamic variables:', JSON.stringify(this.dynamicVariables));
+
         return data.signed_url;
       }
 
@@ -1640,16 +1645,17 @@ app.get('*', (req, res) => {
 
           this.websocket.onopen = () => {
             console.log('[SparkVoice] WebSocket connected');
+            console.log('[SparkVoice] Sending dynamic variables:', JSON.stringify(this.dynamicVariables));
 
-            // Send dynamic variables
-            if (Object.keys(this.dynamicVariables).length > 0) {
-              this.websocket.send(JSON.stringify({
-                type: 'conversation_initiation_client_data',
-                conversation_initiation_client_data: {
-                  dynamic_variables: this.dynamicVariables
-                }
-              }));
-            }
+            // Send dynamic variables - MUST include school_id for ElevenLabs tools
+            const initData = {
+              type: 'conversation_initiation_client_data',
+              conversation_initiation_client_data: {
+                dynamic_variables: this.dynamicVariables
+              }
+            };
+            console.log('[SparkVoice] Init data:', JSON.stringify(initData));
+            this.websocket.send(JSON.stringify(initData));
 
             this._setStatus('connected');
             resolve();
