@@ -655,45 +655,85 @@ app.get('*', (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spark AI - Your Business Intelligence Officer</title>
+  <title>Spark AI - Business Intelligence for Martial Arts Schools</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            spark: {
+              coral: '#E85A4F',
+              'coral-dark': '#D64A3F',
+              'coral-light': '#F17A70',
+              dark: '#0D0D0D',
+              'dark-card': '#1A1A1A',
+              'dark-border': '#2A2A2A'
+            }
+          }
+        }
+      }
+    }
+  </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    .gradient-bg { background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%); }
-    .card { background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
-    .card-danger { background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%); border-color: rgba(239, 68, 68, 0.2); }
+    .gradient-bg { background: #0D0D0D; }
+    .card { background: #1A1A1A; border: 1px solid #2A2A2A; }
+    .card-danger { background: linear-gradient(135deg, rgba(232, 90, 79, 0.15) 0%, rgba(232, 90, 79, 0.05) 100%); border-color: rgba(232, 90, 79, 0.3); }
     .card-success { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%); border-color: rgba(34, 197, 94, 0.2); }
-    .card-warning { background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(234, 179, 8, 0.05) 100%); border-color: rgba(234, 179, 8, 0.2); }
-    .glow-orange { box-shadow: 0 0 60px rgba(249, 115, 22, 0.4); }
+    .card-spark { background: linear-gradient(135deg, rgba(232, 90, 79, 0.1) 0%, rgba(232, 90, 79, 0.05) 100%); border-color: rgba(232, 90, 79, 0.2); }
+    .glow-spark { box-shadow: 0 0 60px rgba(232, 90, 79, 0.4); }
     .glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
-    @keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 40px rgba(249, 115, 22, 0.3); } 50% { box-shadow: 0 0 60px rgba(249, 115, 22, 0.5); } }
-    .score-ring { stroke-dasharray: 251; stroke-dashoffset: calc(251 - (251 * var(--score)) / 100); transition: stroke-dashoffset 1.5s ease-out; }
+    @keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 40px rgba(232, 90, 79, 0.3); } 50% { box-shadow: 0 0 60px rgba(232, 90, 79, 0.5); } }
+    .score-ring { stroke-dasharray: 377; stroke-dashoffset: calc(377 - (377 * var(--score)) / 100); transition: stroke-dashoffset 1.5s ease-out; }
     .fade-in { animation: fadeIn 0.5s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .spark-icon { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
-    .money-leak { border-left: 3px solid #ef4444; }
+    .spark-icon { background: linear-gradient(135deg, #E85A4F 0%, #D64A3F 100%); }
+    .spark-btn { background: linear-gradient(135deg, #E85A4F 0%, #D64A3F 100%); }
+    .spark-btn:hover { background: linear-gradient(135deg, #D64A3F 0%, #C53A2F 100%); }
+    .money-leak { border-left: 3px solid #E85A4F; }
     .growth-opp { border-left: 3px solid #22c55e; }
-    .action-item { border-left: 3px solid #f97316; }
+    .action-item { border-left: 3px solid #E85A4F; }
+    .text-spark { color: #E85A4F; }
+    .bg-spark { background-color: #E85A4F; }
+    .border-spark { border-color: #E85A4F; }
+    .bg-spark-coral\/10 { background-color: rgba(232, 90, 79, 0.1); }
+    .bg-spark-coral\/20 { background-color: rgba(232, 90, 79, 0.2); }
+    .bg-spark-coral\/30 { background-color: rgba(232, 90, 79, 0.3); }
+    .hover\:bg-spark-coral\/10:hover { background-color: rgba(232, 90, 79, 0.1); }
+    .hover\:bg-spark-coral\/30:hover { background-color: rgba(232, 90, 79, 0.3); }
+    .border-spark-coral\/30 { border-color: rgba(232, 90, 79, 0.3); }
+    .shadow-spark-coral\/20 { --tw-shadow-color: rgba(232, 90, 79, 0.2); }
+    .bg-gradient-spark { background: linear-gradient(to right, #F17A70, #E85A4F); }
+    /* Spark flame logo SVG */
+    .spark-flame { filter: drop-shadow(0 0 10px rgba(232, 90, 79, 0.5)); }
   </style>
 </head>
 <body class="gradient-bg min-h-screen text-white">
   <!-- Header -->
-  <header class="border-b border-white/10 px-6 py-4 sticky top-0 z-50 bg-black/20 backdrop-blur-xl">
+  <header class="border-b border-spark-dark-border px-6 py-4 sticky top-0 z-50 bg-spark-dark/95 backdrop-blur-xl">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <div class="w-12 h-12 spark-icon rounded-xl flex items-center justify-center glow-pulse">
-          <i class="fas fa-bolt text-white text-2xl"></i>
-        </div>
+      <div class="flex items-center gap-3">
+        <!-- Spark Flame Logo -->
+        <svg class="w-10 h-10 spark-flame" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 2C20 2 8 14 8 24C8 30.627 13.373 36 20 36C26.627 36 32 30.627 32 24C32 20 30 16 28 14C28 14 27 20 24 22C24 22 26 14 22 8C22 8 20 12 18 14C18 14 20 6 20 2Z" fill="url(#sparkGradient)"/>
+          <defs>
+            <linearGradient id="sparkGradient" x1="8" y1="2" x2="32" y2="36" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#F17A70"/>
+              <stop offset="1" stop-color="#E85A4F"/>
+            </linearGradient>
+          </defs>
+        </svg>
         <div>
-          <h1 class="text-2xl font-bold bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">Spark</h1>
-          <p class="text-xs text-gray-400">AI Business Intelligence Officer</p>
+          <h1 class="text-2xl font-bold text-white tracking-tight">SPARK</h1>
+          <p class="text-xs text-gray-500">AI Business Intelligence</p>
         </div>
       </div>
       <div class="flex items-center gap-4">
-        <select id="schoolSelect" class="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:border-orange-500 focus:outline-none transition">
-          <option value="">Select Your Business...</option>
+        <select id="schoolSelect" class="bg-spark-dark-card border border-spark-dark-border rounded-lg px-4 py-2.5 text-sm focus:border-spark-coral focus:outline-none transition">
+          <option value="">Select Your School...</option>
         </select>
-        <button onclick="talkToSpark()" class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 px-5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-lg shadow-orange-500/20">
+        <button onclick="talkToSpark()" class="spark-btn px-5 py-2.5 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-lg">
           <i class="fas fa-microphone"></i>
           <span>Talk to Spark</span>
         </button>
@@ -706,10 +746,10 @@ app.get('*', (req, res) => {
     <!-- Welcome Section -->
     <div id="welcomeSection" class="py-16">
       <div class="text-center mb-16">
-        <div class="w-28 h-28 spark-icon rounded-3xl flex items-center justify-center mx-auto mb-8 glow-orange">
+        <div class="w-28 h-28 spark-icon rounded-3xl flex items-center justify-center mx-auto mb-8 glow-pulse">
           <i class="fas fa-bolt text-white text-5xl"></i>
         </div>
-        <h2 class="text-4xl font-bold mb-4">Meet <span class="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">Spark</span></h2>
+        <h2 class="text-4xl font-bold mb-4">Meet <span class="text-spark">Spark</span></h2>
         <p class="text-xl text-gray-300 mb-2">Your AI Business Intelligence Officer</p>
         <p class="text-gray-400 max-w-2xl mx-auto">
           Connects to your company data, understands how your business really works,
@@ -736,11 +776,11 @@ app.get('*', (req, res) => {
           <p class="text-gray-400 text-sm">Discover untapped potential - hot leads, upsell opportunities, expansion possibilities</p>
         </div>
 
-        <div class="card card-warning rounded-2xl p-8 text-center">
-          <div class="w-16 h-16 bg-orange-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <i class="fas fa-bolt text-orange-400 text-2xl"></i>
+        <div class="card card-spark rounded-2xl p-8 text-center">
+          <div class="w-16 h-16 bg-spark-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-bolt text-spark text-2xl"></i>
           </div>
-          <h3 class="text-xl font-bold mb-2 text-orange-400">Take Action</h3>
+          <h3 class="text-xl font-bold mb-2 text-spark">Take Action</h3>
           <p class="text-gray-400 text-sm">Get prioritized recommendations that maximize profit and performance immediately</p>
         </div>
       </div>
@@ -748,7 +788,7 @@ app.get('*', (req, res) => {
       <!-- CTA -->
       <div class="text-center">
         <p class="text-gray-400 mb-6">Select a business above to see Spark in action, or:</p>
-        <button onclick="seedDemoData()" class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 px-8 py-4 rounded-xl font-medium transition shadow-lg shadow-orange-500/20">
+        <button onclick="seedDemoData()" class="spark-btn px-8 py-4 rounded-xl font-medium transition shadow-lg shadow-spark-coral/20">
           <i class="fas fa-rocket mr-2"></i>Load Demo Data
         </button>
       </div>
@@ -757,13 +797,13 @@ app.get('*', (req, res) => {
     <!-- Dashboard Section -->
     <div id="dashboardSection" class="hidden fade-in">
       <!-- Spark Speaking -->
-      <div class="card rounded-2xl p-6 mb-8 border-orange-500/30">
+      <div class="card rounded-2xl p-6 mb-8 border-spark-coral/30">
         <div class="flex items-start gap-4">
           <div class="w-12 h-12 spark-icon rounded-xl flex items-center justify-center flex-shrink-0">
             <i class="fas fa-bolt text-white text-xl"></i>
           </div>
           <div>
-            <p class="text-orange-400 font-medium mb-1">Spark says:</p>
+            <p class="text-spark font-medium mb-1">Spark says:</p>
             <p id="sparkMessage" class="text-lg text-gray-200">Analyzing your business data...</p>
           </div>
         </div>
@@ -782,8 +822,8 @@ app.get('*', (req, res) => {
                   class="score-ring" style="--score: 0"/>
                 <defs>
                   <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#f97316"/>
-                    <stop offset="100%" stop-color="#ea580c"/>
+                    <stop offset="0%" stop-color="#F17A70"/>
+                    <stop offset="100%" stop-color="#E85A4F"/>
                   </linearGradient>
                 </defs>
               </svg>
@@ -794,7 +834,7 @@ app.get('*', (req, res) => {
                 </div>
               </div>
             </div>
-            <span id="healthGrade" class="inline-block px-4 py-1.5 bg-orange-500/20 text-orange-400 rounded-full text-sm font-bold">
+            <span id="healthGrade" class="inline-block px-4 py-1.5 bg-spark-coral/20 text-spark rounded-full text-sm font-bold">
               Grade: --
             </span>
           </div>
@@ -837,8 +877,8 @@ app.get('*', (req, res) => {
         <!-- Monthly Revenue -->
         <div class="card rounded-2xl p-6">
           <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
-              <i class="fas fa-sack-dollar text-orange-400"></i>
+            <div class="w-10 h-10 bg-spark-coral/20 rounded-lg flex items-center justify-center">
+              <i class="fas fa-sack-dollar text-spark"></i>
             </div>
             <div>
               <p class="text-xs text-gray-400 uppercase tracking-wider">This Month</p>
@@ -846,7 +886,7 @@ app.get('*', (req, res) => {
           </div>
           <p class="text-3xl font-bold mb-1" id="monthlyRevenue">$--</p>
           <div class="w-full bg-white/10 rounded-full h-2 mb-2">
-            <div id="revenueProgress" class="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+            <div id="revenueProgress" class="bg-gradient-spark h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
           </div>
           <p class="text-sm text-gray-400" id="revenueTarget">--% to goal</p>
         </div>
@@ -882,7 +922,7 @@ app.get('*', (req, res) => {
 
         <!-- Priority Actions -->
         <div class="card rounded-2xl p-6">
-          <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-orange-400">
+          <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-spark">
             <i class="fas fa-bolt"></i>
             Priority Actions
           </h3>
@@ -898,7 +938,7 @@ app.get('*', (req, res) => {
       <div class="card rounded-2xl p-6 mb-8">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-lg font-bold flex items-center gap-2">
-            <i class="fas fa-phone-volume text-orange-400"></i>
+            <i class="fas fa-phone-volume text-spark"></i>
             Spark Voice Agent Activity
           </h3>
           <div class="flex gap-2">
@@ -937,10 +977,10 @@ app.get('*', (req, res) => {
         <div class="card rounded-2xl p-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-bold flex items-center gap-2">
-              <i class="fas fa-fire text-orange-400"></i>
+              <i class="fas fa-fire text-spark"></i>
               Hot Leads Ready to Convert
             </h3>
-            <span id="hotLeadsBadge" class="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-sm">0</span>
+            <span id="hotLeadsBadge" class="px-3 py-1 bg-spark-coral/20 text-spark rounded-full text-sm">0</span>
           </div>
           <div id="hotLeadsList" class="space-y-2 max-h-80 overflow-y-auto">
             <p class="text-gray-400 text-sm p-4">No hot leads detected</p>
@@ -1128,14 +1168,14 @@ app.get('*', (req, res) => {
       actions.push({ icon: 'bullhorn', text: 'Run a referral campaign', action: 'campaign', priority: 4 });
 
       actionsList.innerHTML = actions.slice(0, 4).map((action, idx) => \`
-        <div onclick="executeAction('\${action.action}')" class="p-4 bg-white/5 rounded-xl action-item hover:bg-orange-500/10 transition cursor-pointer group">
+        <div onclick="executeAction('\${action.action}')" class="p-4 bg-white/5 rounded-xl action-item hover:bg-spark-coral/10 transition cursor-pointer group">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <span class="w-6 h-6 bg-orange-500/20 rounded-full flex items-center justify-center text-xs text-orange-400">\${idx + 1}</span>
-              <i class="fas fa-\${action.icon} text-orange-400"></i>
+              <span class="w-6 h-6 bg-spark-coral/20 rounded-full flex items-center justify-center text-xs text-spark">\${idx + 1}</span>
+              <i class="fas fa-\${action.icon} text-spark"></i>
               <span class="font-medium">\${action.text}</span>
             </div>
-            <i class="fas fa-chevron-right text-gray-600 group-hover:text-orange-400 transition"></i>
+            <i class="fas fa-chevron-right text-gray-600 group-hover:text-spark transition"></i>
           </div>
         </div>
       \`).join('');
@@ -1155,7 +1195,7 @@ app.get('*', (req, res) => {
                 <p class="text-xs text-red-400">\${student.churn_risk} risk (\${student.churn_risk_score}%)</p>
               </div>
             </div>
-            <button onclick="triggerCall('retention', \${student.id})" class="px-3 py-1.5 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded-lg text-sm transition">
+            <button onclick="triggerCall('retention', \${student.id})" class="px-3 py-1.5 bg-spark-coral/20 hover:bg-spark-coral/30 text-spark rounded-lg text-sm transition">
               <i class="fas fa-phone mr-1"></i>Call
             </button>
           </div>
@@ -1169,12 +1209,12 @@ app.get('*', (req, res) => {
         hotLeadsList.innerHTML = data.lists.hot_leads.map(lead => \`
           <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl hover:bg-white/10 transition">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center">
-                <span class="text-orange-400 font-medium">\${lead.first_name[0]}\${(lead.last_name || 'X')[0]}</span>
+              <div class="w-10 h-10 bg-spark-coral/20 rounded-full flex items-center justify-center">
+                <span class="text-spark font-medium">\${lead.first_name[0]}\${(lead.last_name || 'X')[0]}</span>
               </div>
               <div>
                 <p class="font-medium">\${lead.first_name} \${lead.last_name || ''}</p>
-                <p class="text-xs text-orange-400">Score: \${lead.lead_score} | \${lead.source || 'Direct'}</p>
+                <p class="text-xs text-spark">Score: \${lead.lead_score} | \${lead.source || 'Direct'}</p>
               </div>
             </div>
             <button onclick="triggerCall('lead', \${lead.id})" class="px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-sm transition">
