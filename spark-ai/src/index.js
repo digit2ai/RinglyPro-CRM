@@ -1898,8 +1898,11 @@ app.get('*', (req, res) => {
       const atRiskCount = students.at_risk || 0;
       const hotLeads = leads.hot || 0;
 
+      const schoolId = parseInt(currentSchoolId, 10);
       const dynamicVars = {
-        school_id: parseInt(currentSchoolId, 10),
+        // ElevenLabs tool placeholder - maps to school_id
+        dynamic_variable: schoolId,
+        school_id: schoolId,
         language: currentLanguage || 'en',
         school_name: school.name || 'your school',
         martial_art: school.martial_art_type || 'martial arts',
