@@ -58,170 +58,573 @@ if (models && !modelsError) {
   app.use('/api/v1/health', healthRoutes);
   app.use('/api/v1/voice', voiceRoutes);
 
-  // Seed demo data endpoint
+  // Comprehensive demo data seed endpoint - Multiple schools with realistic data
   app.post('/api/v1/seed-demo', async (req, res) => {
     try {
       const { SparkSchool, SparkStudent, SparkLead, SparkRevenue, SparkAiCall, SparkHealthScore } = models;
       const today = new Date();
+      const results = { schools: [], totalStudents: 0, totalLeads: 0, totalRevenue: 0, totalCalls: 0 };
 
-      // Create or get demo school
-      let [school] = await SparkSchool.findOrCreate({
-        where: { name: 'Tampa Bay BJJ Academy', tenant_id: 1 },
-        defaults: {
-          tenant_id: 1,
-          name: 'Tampa Bay BJJ Academy',
-          martial_art_type: 'BJJ',
-          owner_name: 'Professor Carlos Silva',
-          owner_email: 'carlos@tampabaybjj.com',
-          owner_phone: '+18135551234',
-          address: '1234 Main Street',
-          city: 'Tampa',
-          state: 'FL',
-          zip: '33601',
-          monthly_revenue_target: 35000,
-          student_capacity: 200,
-          website: 'https://tampabaybjj.com'
+      // ========================================
+      // SCHOOL DATA - 8 Diverse Martial Arts Schools
+      // ========================================
+      const schoolsData = [
+        {
+          info: {
+            tenant_id: 1,
+            name: 'Tampa Bay BJJ Academy',
+            martial_art_type: 'BJJ',
+            owner_name: 'Professor Carlos Silva',
+            owner_email: 'carlos@tampabaybjj.com',
+            owner_phone: '+18135551234',
+            address: '1234 Main Street',
+            city: 'Tampa',
+            state: 'FL',
+            zip: '33601',
+            monthly_revenue_target: 45000,
+            student_capacity: 250,
+            plan_type: 'pro',
+            voice_agent: 'both',
+            status: 'active',
+            website: 'https://tampabaybjj.com'
+          },
+          beltSystem: ['White', 'Blue', 'Purple', 'Brown', 'Black'],
+          membershipTypes: ['Unlimited', '3x Week', '2x Week', 'Competition Team'],
+          rateRange: [149, 249],
+          programs: ['Adult BJJ', 'Kids BJJ', 'No-Gi', 'Competition', 'Women Only']
+        },
+        {
+          info: {
+            tenant_id: 1,
+            name: 'Elite Karate Academy',
+            martial_art_type: 'Karate',
+            owner_name: 'Sensei Michael Tanaka',
+            owner_email: 'mtanaka@elitekarate.com',
+            owner_phone: '+17135559876',
+            address: '5678 Oak Boulevard',
+            city: 'Houston',
+            state: 'TX',
+            zip: '77001',
+            monthly_revenue_target: 38000,
+            student_capacity: 180,
+            plan_type: 'growth',
+            voice_agent: 'sensei',
+            status: 'active',
+            website: 'https://elitekaratehouston.com'
+          },
+          beltSystem: ['White', 'Yellow', 'Orange', 'Green', 'Blue', 'Purple', 'Brown', 'Black'],
+          membershipTypes: ['Family Plan', 'Individual', 'Kids Only', 'Adult Only'],
+          rateRange: [129, 199],
+          programs: ['Traditional Karate', 'Kids Karate', 'Kata', 'Kumite', 'Self Defense']
+        },
+        {
+          info: {
+            tenant_id: 1,
+            name: 'Champions Taekwondo Center',
+            martial_art_type: 'Taekwondo',
+            owner_name: 'Master Kim Sung-ho',
+            owner_email: 'masterkim@championtkd.com',
+            owner_phone: '+13055557654',
+            address: '890 Palm Avenue',
+            city: 'Miami',
+            state: 'FL',
+            zip: '33101',
+            monthly_revenue_target: 52000,
+            student_capacity: 300,
+            plan_type: 'enterprise',
+            voice_agent: 'both',
+            status: 'active',
+            website: 'https://championstaekwondo.com'
+          },
+          beltSystem: ['White', 'Yellow', 'Green', 'Blue', 'Red', 'Black 1st Dan', 'Black 2nd Dan', 'Black 3rd Dan'],
+          membershipTypes: ['Olympic Track', 'Traditional', 'Little Tigers', 'Family'],
+          rateRange: [139, 229],
+          programs: ['Olympic Sparring', 'Traditional Forms', 'Little Tigers (4-6)', 'Junior Program', 'Adult Program']
+        },
+        {
+          info: {
+            tenant_id: 1,
+            name: 'Apex MMA Center',
+            martial_art_type: 'MMA',
+            owner_name: 'Coach Derek "The Hammer" Williams',
+            owner_email: 'derek@apexmma.com',
+            owner_phone: '+13035558432',
+            address: '2345 Fighter Way',
+            city: 'Denver',
+            state: 'CO',
+            zip: '80201',
+            monthly_revenue_target: 65000,
+            student_capacity: 200,
+            plan_type: 'pro',
+            voice_agent: 'sensei',
+            status: 'active',
+            website: 'https://apexmmacenter.com'
+          },
+          beltSystem: ['Beginner', 'Intermediate', 'Advanced', 'Pro-Am', 'Professional'],
+          membershipTypes: ['All Access', 'Striking Only', 'Grappling Only', 'Fight Team'],
+          rateRange: [169, 299],
+          programs: ['MMA Fundamentals', 'Striking', 'Wrestling', 'Submission Grappling', 'Fight Team']
+        },
+        {
+          info: {
+            tenant_id: 1,
+            name: 'Golden Dragon Kung Fu',
+            martial_art_type: 'Kung Fu',
+            owner_name: 'Sifu James Chen',
+            owner_email: 'sifu.chen@goldendragon.com',
+            owner_phone: '+14155553210',
+            address: '456 Chinatown Square',
+            city: 'San Francisco',
+            state: 'CA',
+            zip: '94102',
+            monthly_revenue_target: 28000,
+            student_capacity: 120,
+            plan_type: 'growth',
+            voice_agent: 'sensei',
+            status: 'active',
+            website: 'https://goldendragonsf.com'
+          },
+          beltSystem: ['White Sash', 'Yellow Sash', 'Orange Sash', 'Green Sash', 'Blue Sash', 'Red Sash', 'Black Sash'],
+          membershipTypes: ['Traditional', 'Wushu', 'Tai Chi', 'Full Access'],
+          rateRange: [139, 219],
+          programs: ['Wing Chun', 'Shaolin', 'Tai Chi', 'Wushu', 'Lion Dance']
+        },
+        {
+          info: {
+            tenant_id: 1,
+            name: 'Victory Kickboxing Academy',
+            martial_art_type: 'Kickboxing',
+            owner_name: 'Coach Maria Santos',
+            owner_email: 'maria@victorykickboxing.com',
+            owner_phone: '+16025559988',
+            address: '789 Victory Lane',
+            city: 'Phoenix',
+            state: 'AZ',
+            zip: '85001',
+            monthly_revenue_target: 42000,
+            student_capacity: 175,
+            plan_type: 'pro',
+            voice_agent: 'maestro',
+            status: 'active',
+            website: 'https://victorykickboxing.com'
+          },
+          beltSystem: ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5', 'Instructor'],
+          membershipTypes: ['Fitness Kickboxing', 'Technical', 'Competition', 'Personal Training'],
+          rateRange: [129, 249],
+          programs: ['Cardio Kickboxing', 'Muay Thai', 'K-1 Style', 'Womens Only', 'Kids Kickboxing']
+        },
+        {
+          info: {
+            tenant_id: 1,
+            name: 'Midwest Judo Club',
+            martial_art_type: 'Judo',
+            owner_name: 'Sensei Robert Yamamoto',
+            owner_email: 'yamamoto@midwestjudo.com',
+            owner_phone: '+13125556677',
+            address: '321 Olympic Drive',
+            city: 'Chicago',
+            state: 'IL',
+            zip: '60601',
+            monthly_revenue_target: 32000,
+            student_capacity: 150,
+            plan_type: 'growth',
+            voice_agent: 'sensei',
+            status: 'active',
+            website: 'https://midwestjudo.com'
+          },
+          beltSystem: ['White', 'Yellow', 'Orange', 'Green', 'Blue', 'Brown', 'Black 1st Dan', 'Black 2nd Dan'],
+          membershipTypes: ['Recreational', 'Competitive', 'Masters (40+)', 'Youth'],
+          rateRange: [119, 189],
+          programs: ['Recreational Judo', 'Competition Team', 'Kids Judo', 'Self Defense', 'Kata']
+        },
+        {
+          info: {
+            tenant_id: 1,
+            name: 'Northwest Wrestling Academy',
+            martial_art_type: 'Wrestling',
+            owner_name: 'Coach Dan Peterson',
+            owner_email: 'dan@nwwrestling.com',
+            owner_phone: '+12065554321',
+            address: '567 Grappler Street',
+            city: 'Seattle',
+            state: 'WA',
+            zip: '98101',
+            monthly_revenue_target: 35000,
+            student_capacity: 140,
+            plan_type: 'growth',
+            voice_agent: 'sensei',
+            status: 'active',
+            website: 'https://nwwrestlingacademy.com'
+          },
+          beltSystem: ['Novice', 'Intermediate', 'Varsity', 'Elite', 'All-American'],
+          membershipTypes: ['Youth Program', 'High School', 'Collegiate', 'Open'],
+          rateRange: [99, 179],
+          programs: ['Freestyle', 'Greco-Roman', 'Folkstyle', 'Youth Wrestling', 'Adult Grappling']
         }
-      });
-
-      const schoolId = school.id;
-
-      // Add students
-      const students = [
-        { first_name: 'Michael', last_name: 'Johnson', belt_rank: 'Purple', churn_risk: 'low', churn_risk_score: 12, monthly_rate: 189 },
-        { first_name: 'Sarah', last_name: 'Williams', belt_rank: 'Blue', churn_risk: 'low', churn_risk_score: 8, monthly_rate: 175 },
-        { first_name: 'David', last_name: 'Martinez', belt_rank: 'White', churn_risk: 'medium', churn_risk_score: 45, monthly_rate: 129 },
-        { first_name: 'Emily', last_name: 'Brown', belt_rank: 'Brown', churn_risk: 'low', churn_risk_score: 5, monthly_rate: 199 },
-        { first_name: 'James', last_name: 'Wilson', belt_rank: 'Blue', churn_risk: 'high', churn_risk_score: 72, monthly_rate: 175 },
-        { first_name: 'Jessica', last_name: 'Davis', belt_rank: 'White', churn_risk: 'critical', churn_risk_score: 89, monthly_rate: 149 },
-        { first_name: 'Christopher', last_name: 'Lee', belt_rank: 'Purple', churn_risk: 'low', churn_risk_score: 15, monthly_rate: 189 },
-        { first_name: 'Amanda', last_name: 'Taylor', belt_rank: 'Black', churn_risk: 'low', churn_risk_score: 3, monthly_rate: 0 },
-        { first_name: 'Daniel', last_name: 'Anderson', belt_rank: 'Blue', churn_risk: 'medium', churn_risk_score: 52, monthly_rate: 175 },
-        { first_name: 'Ashley', last_name: 'Thomas', belt_rank: 'White', churn_risk: 'high', churn_risk_score: 78, monthly_rate: 129 },
-        { first_name: 'Matthew', last_name: 'Jackson', belt_rank: 'Purple', churn_risk: 'low', churn_risk_score: 10, monthly_rate: 189 },
-        { first_name: 'Nicole', last_name: 'Martin', belt_rank: 'White', churn_risk: 'critical', churn_risk_score: 92, monthly_rate: 149 },
-        { first_name: 'Andrew', last_name: 'Harris', belt_rank: 'Brown', churn_risk: 'low', churn_risk_score: 7, monthly_rate: 199 },
-        { first_name: 'Rachel', last_name: 'Robinson', belt_rank: 'Blue', churn_risk: 'low', churn_risk_score: 18, monthly_rate: 175 },
-        { first_name: 'Kevin', last_name: 'Clark', belt_rank: 'Blue', churn_risk: 'low', churn_risk_score: 14, monthly_rate: 175 },
       ];
 
-      for (const s of students) {
-        await SparkStudent.findOrCreate({
-          where: { school_id: schoolId, email: `${s.first_name.toLowerCase()}.${s.last_name.toLowerCase()}@email.com` },
-          defaults: { school_id: schoolId, ...s, email: `${s.first_name.toLowerCase()}.${s.last_name.toLowerCase()}@email.com`, membership_type: 'Unlimited', enrollment_date: new Date() }
+      // ========================================
+      // REALISTIC NAME POOLS
+      // ========================================
+      const firstNames = ['James', 'Michael', 'Robert', 'David', 'William', 'Richard', 'Joseph', 'Thomas', 'Christopher', 'Daniel',
+        'Matthew', 'Anthony', 'Mark', 'Steven', 'Andrew', 'Joshua', 'Kenneth', 'Kevin', 'Brian', 'Timothy',
+        'Mary', 'Patricia', 'Jennifer', 'Linda', 'Elizabeth', 'Barbara', 'Susan', 'Jessica', 'Sarah', 'Karen',
+        'Lisa', 'Nancy', 'Betty', 'Margaret', 'Sandra', 'Ashley', 'Dorothy', 'Kimberly', 'Emily', 'Donna',
+        'Carlos', 'Miguel', 'Jose', 'Luis', 'Juan', 'Sofia', 'Isabella', 'Valentina', 'Camila', 'Lucia',
+        'Ethan', 'Mason', 'Logan', 'Alexander', 'Lucas', 'Jackson', 'Aiden', 'Liam', 'Noah', 'Oliver',
+        'Emma', 'Olivia', 'Ava', 'Sophia', 'Mia', 'Charlotte', 'Amelia', 'Harper', 'Evelyn', 'Abigail'];
+
+      const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez',
+        'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin',
+        'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson',
+        'Walker', 'Young', 'Allen', 'King', 'Wright', 'Scott', 'Torres', 'Nguyen', 'Hill', 'Flores',
+        'Green', 'Adams', 'Nelson', 'Baker', 'Hall', 'Rivera', 'Campbell', 'Mitchell', 'Carter', 'Roberts'];
+
+      const leadSources = ['Google Ads', 'Facebook', 'Instagram', 'Referral', 'Walk-in', 'Website', 'Yelp', 'Groupon', 'TikTok', 'YouTube'];
+
+      // Helper to get random item
+      const randItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
+      const randBetween = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+      const randDate = (daysBack) => new Date(today.getTime() - Math.random() * daysBack * 24 * 60 * 60 * 1000);
+
+      // ========================================
+      // CREATE EACH SCHOOL WITH DATA
+      // ========================================
+      for (const schoolData of schoolsData) {
+        // Create school
+        const [school] = await SparkSchool.findOrCreate({
+          where: { name: schoolData.info.name, tenant_id: 1 },
+          defaults: schoolData.info
         });
-      }
+        const schoolId = school.id;
 
-      // Add leads
-      const leads = [
-        { first_name: 'Robert', last_name: 'Thompson', source: 'Google Ads', interest: 'Adult BJJ', temperature: 'hot', lead_score: 92, status: 'trial_scheduled' },
-        { first_name: 'Jennifer', last_name: 'Moore', source: 'Facebook', interest: 'Kids Program', temperature: 'hot', lead_score: 88, status: 'contacted' },
-        { first_name: 'William', last_name: 'Hall', source: 'Referral', interest: 'Self Defense', temperature: 'hot', lead_score: 95, status: 'new' },
-        { first_name: 'Elizabeth', last_name: 'Young', source: 'Walk-in', interest: 'Fitness BJJ', temperature: 'warm', lead_score: 65, status: 'trial_completed' },
-        { first_name: 'Richard', last_name: 'King', source: 'Website', interest: 'Competition', temperature: 'warm', lead_score: 58, status: 'follow_up' },
-        { first_name: 'Patricia', last_name: 'Wright', source: 'Instagram', interest: 'Kids BJJ', temperature: 'warm', lead_score: 62, status: 'contacted' },
-        { first_name: 'Linda', last_name: 'Green', source: 'Facebook', interest: 'Women Only Class', temperature: 'hot', lead_score: 85, status: 'new' },
-        { first_name: 'Joseph', last_name: 'Baker', source: 'Referral', interest: 'No-Gi BJJ', temperature: 'warm', lead_score: 70, status: 'trial_scheduled' },
-      ];
+        // ========================================
+        // GENERATE STUDENTS (20-45 per school)
+        // ========================================
+        const numStudents = randBetween(20, 45);
+        const usedEmails = new Set();
 
-      for (const l of leads) {
-        await SparkLead.findOrCreate({
-          where: { school_id: schoolId, email: `${l.first_name.toLowerCase()}.${l.last_name.toLowerCase()}@gmail.com` },
-          defaults: { school_id: schoolId, ...l, email: `${l.first_name.toLowerCase()}.${l.last_name.toLowerCase()}@gmail.com` }
-        });
-      }
+        for (let i = 0; i < numStudents; i++) {
+          const firstName = randItem(firstNames);
+          const lastName = randItem(lastNames);
+          let email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@email.com`;
 
-      // Add revenue
-      const revenues = [
-        { type: 'membership', amount: 3250.00, description: 'Monthly memberships batch 1' },
-        { type: 'membership', amount: 2875.00, description: 'Monthly memberships batch 2' },
-        { type: 'membership', amount: 1450.00, description: 'New enrollments' },
-        { type: 'membership', amount: 4100.00, description: 'Monthly memberships batch 3' },
-        { type: 'retail', amount: 450.00, description: 'Gi sales' },
-        { type: 'retail', amount: 275.00, description: 'Rashguards' },
-        { type: 'private_lesson', amount: 600.00, description: '4 private lessons' },
-        { type: 'private_lesson', amount: 450.00, description: '3 private lessons' },
-        { type: 'testing_fee', amount: 750.00, description: 'Belt promotions' },
-        { type: 'event', amount: 1200.00, description: 'Tournament entry fees' },
-      ];
+          // Ensure unique email
+          let counter = 1;
+          while (usedEmails.has(email)) {
+            email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${counter}@email.com`;
+            counter++;
+          }
+          usedEmails.add(email);
 
-      for (let i = 0; i < revenues.length; i++) {
-        const date = new Date(today.getFullYear(), today.getMonth(), i + 1);
-        await SparkRevenue.findOrCreate({
-          where: { school_id: schoolId, date: date, description: revenues[i].description },
-          defaults: { school_id: schoolId, date: date, ...revenues[i], is_recurring: revenues[i].type === 'membership', source: 'demo' }
-        });
-      }
+          // Realistic churn distribution: 60% low, 20% medium, 12% high, 8% critical
+          const churnRand = Math.random();
+          let churnRisk, churnScore;
+          if (churnRand < 0.60) { churnRisk = 'low'; churnScore = randBetween(1, 25); }
+          else if (churnRand < 0.80) { churnRisk = 'medium'; churnScore = randBetween(26, 55); }
+          else if (churnRand < 0.92) { churnRisk = 'high'; churnScore = randBetween(56, 80); }
+          else { churnRisk = 'critical'; churnScore = randBetween(81, 100); }
 
-      // Add AI calls
-      const calls = [
-        { agent: 'sensei', call_type: 'lead_followup', direction: 'outbound', status: 'completed', outcome: 'trial_booked', sentiment: 'positive', duration_seconds: 245, summary: 'Robert very interested in adult BJJ. Booked trial for Saturday.' },
-        { agent: 'sensei', call_type: 'lead_followup', direction: 'outbound', status: 'completed', outcome: 'callback_scheduled', sentiment: 'neutral', duration_seconds: 180, summary: 'Jennifer interested but needs to check schedule. Will call back Thursday.' },
-        { agent: 'sensei', call_type: 'retention', direction: 'outbound', status: 'completed', outcome: 'issue_resolved', sentiment: 'positive', duration_seconds: 320, summary: 'James had schedule conflict. Moved to evening classes. Very happy now.' },
-        { agent: 'sensei', call_type: 'retention', direction: 'outbound', status: 'voicemail', outcome: 'left_message', sentiment: 'neutral', duration_seconds: 45, summary: 'Left voicemail for Jessica about missed classes.' },
-        { agent: 'sensei', call_type: 'no_show', direction: 'outbound', status: 'completed', outcome: 'rescheduled', sentiment: 'positive', duration_seconds: 195, summary: 'Elizabeth rescheduled trial for next week. Had car trouble.' },
-        { agent: 'maestro', call_type: 'lead_followup', direction: 'outbound', status: 'completed', outcome: 'trial_booked', sentiment: 'positive', duration_seconds: 275, summary: 'William excited about competition training. Trial set for Monday.' },
-        { agent: 'sensei', call_type: 'payment_reminder', direction: 'outbound', status: 'completed', outcome: 'payment_made', sentiment: 'positive', duration_seconds: 120, summary: 'David updated payment method. All current now.' },
-        { agent: 'sensei', call_type: 'retention', direction: 'outbound', status: 'no_answer', outcome: null, sentiment: 'neutral', duration_seconds: 0, summary: null },
-      ];
+          // Belt distribution weighted toward lower ranks
+          const beltIdx = Math.min(Math.floor(Math.pow(Math.random(), 1.5) * schoolData.beltSystem.length), schoolData.beltSystem.length - 1);
 
-      for (const c of calls) {
-        await SparkAiCall.create({ school_id: schoolId, ...c, phone_number: '+1813555' + Math.floor(1000 + Math.random() * 9000) });
-      }
+          await SparkStudent.findOrCreate({
+            where: { school_id: schoolId, email },
+            defaults: {
+              school_id: schoolId,
+              first_name: firstName,
+              last_name: lastName,
+              email,
+              phone: `+1${randBetween(200, 999)}${randBetween(100, 999)}${randBetween(1000, 9999)}`,
+              belt_rank: schoolData.beltSystem[beltIdx],
+              membership_type: randItem(schoolData.membershipTypes),
+              monthly_rate: randBetween(schoolData.rateRange[0], schoolData.rateRange[1]),
+              churn_risk: churnRisk,
+              churn_risk_score: churnScore,
+              enrollment_date: randDate(730),
+              last_attendance: randDate(churnRisk === 'critical' ? 45 : churnRisk === 'high' ? 21 : 7),
+              attendance_streak: churnRisk === 'low' ? randBetween(5, 30) : randBetween(0, 5),
+              total_classes: randBetween(10, 500),
+              status: churnRisk === 'critical' && Math.random() < 0.3 ? 'inactive' : 'active',
+              payment_status: churnRisk === 'critical' ? randItem(['current', 'past_due', 'failed']) : 'current'
+            }
+          });
+        }
+        results.totalStudents += numStudents;
 
-      // Update school active_students count
-      const activeCount = await SparkStudent.count({ where: { school_id: schoolId, status: 'active' } });
-      await school.update({ active_students: activeCount });
+        // ========================================
+        // GENERATE LEADS (8-18 per school)
+        // ========================================
+        const numLeads = randBetween(8, 18);
+        const usedLeadEmails = new Set();
 
-      // Calculate health score
-      const { SparkHealthScore: HealthScore } = models;
-      const totalStudents = await SparkStudent.count({ where: { school_id: schoolId } });
-      const atRiskStudents = await SparkStudent.count({ where: { school_id: schoolId, churn_risk: ['high', 'critical'] } });
-      const hotLeads = await SparkLead.count({ where: { school_id: schoolId, temperature: 'hot' } });
-      const totalRevenue = revenues.reduce((sum, r) => sum + r.amount, 0);
+        for (let i = 0; i < numLeads; i++) {
+          const firstName = randItem(firstNames);
+          const lastName = randItem(lastNames);
+          let email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@gmail.com`;
 
-      const retentionScore = Math.round(((activeCount / totalStudents) * 60) + ((1 - atRiskStudents / activeCount) * 40));
-      const revenueScore = Math.round((totalRevenue / 35000) * 100);
-      const leadScoreVal = Math.min(100, hotLeads * 20 + 40);
-      const overallScore = Math.round((retentionScore * 0.3) + (revenueScore * 0.3) + (leadScoreVal * 0.2) + 70 * 0.2);
-      const grade = overallScore >= 90 ? 'A' : overallScore >= 80 ? 'B' : overallScore >= 70 ? 'C' : overallScore >= 60 ? 'D' : 'F';
+          let counter = 1;
+          while (usedLeadEmails.has(email)) {
+            email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${counter}@gmail.com`;
+            counter++;
+          }
+          usedLeadEmails.add(email);
 
-      await SparkHealthScore.findOrCreate({
-        where: { school_id: schoolId, date: today.toISOString().split('T')[0] },
-        defaults: {
-          school_id: schoolId,
-          date: today,
-          retention_score: retentionScore,
-          revenue_score: revenueScore,
-          lead_score: leadScoreVal,
-          attendance_score: 75,
-          engagement_score: 70,
-          growth_score: 65,
-          overall_score: overallScore,
-          grade: grade,
-          insights: [
-            `${atRiskStudents} students are at risk of churning. Consider reaching out with Sensei AI.`,
-            `${hotLeads} hot leads need immediate follow-up for best conversion rates.`,
-            `Revenue at ${Math.round(totalRevenue / 35000 * 100)}% of monthly target.`
+          // Temperature distribution: 25% hot, 50% warm, 25% cold
+          const tempRand = Math.random();
+          let temperature, leadScore;
+          if (tempRand < 0.25) { temperature = 'hot'; leadScore = randBetween(80, 100); }
+          else if (tempRand < 0.75) { temperature = 'warm'; leadScore = randBetween(50, 79); }
+          else { temperature = 'cold'; leadScore = randBetween(20, 49); }
+
+          const statuses = ['new', 'contacted', 'trial_scheduled', 'trial_completed', 'follow_up', 'unresponsive'];
+
+          await SparkLead.findOrCreate({
+            where: { school_id: schoolId, email },
+            defaults: {
+              school_id: schoolId,
+              first_name: firstName,
+              last_name: lastName,
+              email,
+              phone: `+1${randBetween(200, 999)}${randBetween(100, 999)}${randBetween(1000, 9999)}`,
+              source: randItem(leadSources),
+              interest: randItem(schoolData.programs),
+              temperature,
+              lead_score: leadScore,
+              status: randItem(statuses),
+              contact_attempts: randBetween(0, 5),
+              last_contact_date: randDate(14),
+              created_at: randDate(30)
+            }
+          });
+        }
+        results.totalLeads += numLeads;
+
+        // ========================================
+        // GENERATE REVENUE (15-25 entries per school)
+        // ========================================
+        const numRevenues = randBetween(15, 25);
+        const revenueTypes = [
+          { type: 'membership', weight: 0.6 },
+          { type: 'retail', weight: 0.15 },
+          { type: 'private_lesson', weight: 0.12 },
+          { type: 'testing_fee', weight: 0.08 },
+          { type: 'event', weight: 0.05 }
+        ];
+
+        let schoolRevenue = 0;
+        for (let i = 0; i < numRevenues; i++) {
+          const rand = Math.random();
+          let cumWeight = 0;
+          let revenueType = 'membership';
+          for (const rt of revenueTypes) {
+            cumWeight += rt.weight;
+            if (rand < cumWeight) { revenueType = rt.type; break; }
+          }
+
+          let amount, description;
+          switch (revenueType) {
+            case 'membership':
+              amount = randBetween(800, 4500);
+              description = randItem(['Monthly memberships batch', 'New enrollments', 'Membership renewals', 'Family plan payments']);
+              break;
+            case 'retail':
+              amount = randBetween(75, 650);
+              description = randItem(['Gi/Dobok sales', 'Equipment', 'Apparel', 'Gear & accessories', 'Protective equipment']);
+              break;
+            case 'private_lesson':
+              amount = randBetween(150, 800);
+              description = randItem(['Private lessons', 'Semi-private training', 'Personal coaching session']);
+              break;
+            case 'testing_fee':
+              amount = randBetween(200, 1200);
+              description = randItem(['Belt testing fees', 'Rank promotion testing', 'Certification fees']);
+              break;
+            case 'event':
+              amount = randBetween(300, 2000);
+              description = randItem(['Tournament entry fees', 'Seminar fees', 'Workshop registration', 'Camp fees']);
+              break;
+          }
+
+          const date = new Date(today.getFullYear(), today.getMonth(), randBetween(1, today.getDate()));
+          await SparkRevenue.findOrCreate({
+            where: { school_id: schoolId, date, description: `${description} #${i+1}` },
+            defaults: {
+              school_id: schoolId,
+              date,
+              type: revenueType,
+              amount,
+              description: `${description} #${i+1}`,
+              is_recurring: revenueType === 'membership',
+              source: 'demo'
+            }
+          });
+          schoolRevenue += amount;
+        }
+        results.totalRevenue += schoolRevenue;
+
+        // ========================================
+        // GENERATE AI CALLS (6-15 per school)
+        // ========================================
+        const numCalls = randBetween(6, 15);
+        const callTypes = ['lead_followup', 'no_show', 'retention', 'payment_reminder', 'winback', 'appointment_confirmation'];
+        const callStatuses = ['completed', 'no_answer', 'voicemail', 'busy', 'transferred'];
+        const outcomes = {
+          lead_followup: ['trial_booked', 'callback_scheduled', 'not_interested', 'sent_info'],
+          no_show: ['rescheduled', 'cancelled', 'callback_scheduled'],
+          retention: ['issue_resolved', 'schedule_adjusted', 'referred_to_owner', 'staying'],
+          payment_reminder: ['payment_made', 'payment_scheduled', 'needs_assistance'],
+          winback: ['reactivated', 'considering', 'not_interested'],
+          appointment_confirmation: ['confirmed', 'rescheduled', 'cancelled']
+        };
+        const summaries = {
+          lead_followup: [
+            'Very interested in {program}. Booked trial for this weekend.',
+            'Needs to discuss with spouse. Will call back Thursday.',
+            'Excited about kids program. Scheduled family visit.',
+            'Asked about pricing options. Sent detailed info via email.',
+            'Looking for self-defense classes. Scheduled consultation.'
           ],
-          alerts: atRiskStudents > 2 ? [{ type: 'warning', message: 'Multiple students at risk of churning' }] : []
+          retention: [
+            'Had schedule conflict. Moved to evening classes. Very happy now.',
+            'Concerned about progress. Set up meeting with instructor.',
+            'Financial concerns discussed. Offered payment plan options.',
+            'Work travel impacting attendance. Will resume next month.',
+            'Discussed goals and created personalized training plan.'
+          ],
+          no_show: [
+            'Car trouble prevented attendance. Rescheduled for next week.',
+            'Forgot about appointment. Very apologetic. Rebooked.',
+            'Child was sick. Rescheduled for when feeling better.',
+            'Work emergency came up. Will try again next week.'
+          ],
+          payment_reminder: [
+            'Updated payment method. All current now.',
+            'Scheduled payment for Friday payday.',
+            'Had billing question resolved. Payment processing.',
+            'Set up autopay to prevent future issues.'
+          ]
+        };
+
+        for (let i = 0; i < numCalls; i++) {
+          const callType = randItem(callTypes);
+          const status = randItem(callStatuses);
+          const agent = schoolData.info.voice_agent === 'both' ? randItem(['sensei', 'maestro']) :
+                        (schoolData.info.voice_agent === 'maestro' ? 'maestro' : 'sensei');
+
+          let outcome = null, summary = null, sentiment = 'neutral';
+          if (status === 'completed') {
+            outcome = randItem(outcomes[callType] || ['completed']);
+            if (summaries[callType]) {
+              summary = randItem(summaries[callType]).replace('{program}', randItem(schoolData.programs));
+            }
+            sentiment = ['trial_booked', 'reactivated', 'issue_resolved', 'payment_made', 'confirmed', 'staying'].includes(outcome)
+              ? 'positive' : (['not_interested', 'cancelled'].includes(outcome) ? 'negative' : 'neutral');
+          } else if (status === 'voicemail') {
+            outcome = 'left_message';
+            summary = 'Left voicemail with callback number.';
+          }
+
+          await SparkAiCall.create({
+            school_id: schoolId,
+            agent,
+            call_type: callType,
+            direction: 'outbound',
+            phone_number: `+1${randBetween(200, 999)}${randBetween(100, 999)}${randBetween(1000, 9999)}`,
+            duration_seconds: status === 'completed' ? randBetween(120, 420) : (status === 'voicemail' ? randBetween(30, 60) : 0),
+            status,
+            outcome,
+            sentiment,
+            summary,
+            created_at: randDate(7)
+          });
         }
-      });
+        results.totalCalls += numCalls;
+
+        // ========================================
+        // UPDATE SCHOOL STATS & HEALTH SCORE
+        // ========================================
+        const activeCount = await SparkStudent.count({ where: { school_id: schoolId, status: 'active' } });
+        const totalStudentsCount = await SparkStudent.count({ where: { school_id: schoolId } });
+        await school.update({ active_students: activeCount });
+
+        const atRiskStudents = await SparkStudent.count({
+          where: { school_id: schoolId, churn_risk: ['high', 'critical'] }
+        });
+        const hotLeads = await SparkLead.count({
+          where: { school_id: schoolId, temperature: 'hot' }
+        });
+
+        // Calculate realistic health scores
+        const retentionScore = Math.round(((activeCount / Math.max(totalStudentsCount, 1)) * 60) +
+          ((1 - atRiskStudents / Math.max(activeCount, 1)) * 40));
+        const revenueScore = Math.min(100, Math.round((schoolRevenue / schoolData.info.monthly_revenue_target) * 100));
+        const leadScore = Math.min(100, hotLeads * 15 + 35);
+        const attendanceScore = randBetween(65, 90);
+        const engagementScore = randBetween(60, 85);
+        const growthScore = randBetween(50, 80);
+
+        const overallScore = Math.round(
+          (retentionScore * 0.25) + (revenueScore * 0.25) + (leadScore * 0.20) +
+          (attendanceScore * 0.15) + (engagementScore * 0.10) + (growthScore * 0.05)
+        );
+        const grade = overallScore >= 90 ? 'A' : overallScore >= 80 ? 'B' : overallScore >= 70 ? 'C' : overallScore >= 60 ? 'D' : 'F';
+
+        await SparkHealthScore.findOrCreate({
+          where: { school_id: schoolId, date: today.toISOString().split('T')[0] },
+          defaults: {
+            school_id: schoolId,
+            date: today,
+            retention_score: retentionScore,
+            revenue_score: revenueScore,
+            lead_score: leadScore,
+            attendance_score: attendanceScore,
+            engagement_score: engagementScore,
+            growth_score: growthScore,
+            overall_score: overallScore,
+            grade,
+            vs_last_week: randBetween(-5, 8),
+            vs_last_month: randBetween(-10, 15),
+            insights: [
+              atRiskStudents > 0 ? `${atRiskStudents} student${atRiskStudents > 1 ? 's' : ''} at risk of churning. Sensei AI can help re-engage them.` : 'Student retention is excellent this month!',
+              hotLeads > 0 ? `${hotLeads} hot lead${hotLeads > 1 ? 's' : ''} ready for conversion. Follow up within 24 hours for best results.` : 'Lead pipeline needs attention - consider running a promotion.',
+              revenueScore >= 80 ? `Revenue is ${revenueScore}% to target. Great progress!` : `Revenue at ${revenueScore}% of monthly target. ${100 - revenueScore}% to go.`,
+              overallScore >= 80 ? 'School health is strong. Keep up the great work!' : 'Focus on retention and lead conversion to improve health score.'
+            ],
+            alerts: [
+              ...(atRiskStudents > 3 ? [{ type: 'warning', message: `${atRiskStudents} students showing signs of churning` }] : []),
+              ...(revenueScore < 50 ? [{ type: 'alert', message: 'Revenue significantly below target' }] : [])
+            ]
+          }
+        });
+
+        results.schools.push({
+          id: schoolId,
+          name: schoolData.info.name,
+          martial_art: schoolData.info.martial_art_type,
+          city: schoolData.info.city,
+          students: numStudents,
+          leads: numLeads,
+          health_grade: grade,
+          health_score: overallScore
+        });
+      }
 
       res.json({
         success: true,
-        message: 'Demo data seeded successfully',
-        school_id: schoolId,
-        counts: {
-          students: students.length,
-          leads: leads.length,
-          revenue_entries: revenues.length,
-          ai_calls: calls.length
-        }
+        message: 'Comprehensive demo data seeded successfully',
+        summary: {
+          schools_created: results.schools.length,
+          total_students: results.totalStudents,
+          total_leads: results.totalLeads,
+          total_revenue: `$${results.totalRevenue.toLocaleString()}`,
+          total_ai_calls: results.totalCalls
+        },
+        schools: results.schools
       });
     } catch (error) {
       console.error('Seed error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error.message, stack: error.stack });
     }
   });
 

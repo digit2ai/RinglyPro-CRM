@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horacio José Serpa Moncada – Perfil Político</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      color: #1e293b;
+      background: #0f172a;
+    }
+
+    /* Navegación */
+    .rp-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #000000;
+      z-index: 1000;
+      padding: 12px 0;
+    }
+    .rp-nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .rp-logo-img {
+      height: 36px;
+      width: auto;
+    }
+    .rp-nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+    .rp-nav-links a {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .rp-nav-links a:hover {
+      color: #0ea5e9;
+    }
+
+    /* Sección Hero */
+    .rp-hero {
+      padding: 140px 24px 80px;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .rp-hero::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(14,165,233,0.15) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .rp-hero-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 60px;
+      align-items: center;
+      position: relative;
+    }
+    .rp-hero-content h1 {
+      font-size: 48px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.2;
+      margin-bottom: 8px;
+      letter-spacing: -1px;
+    }
+    .rp-hero-tagline {
+      font-size: 20px;
+      color: #38bdf8;
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+    .rp-hero-bio {
+      font-size: 18px;
+      color: #94a3b8;
+      margin-bottom: 32px;
+      max-width: 600px;
+    }
+    .rp-hero-stats {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 32px;
+    }
+    .rp-stat {
+      text-align: left;
+    }
+    .rp-stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+    .rp-stat-label {
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .rp-powered-by {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .rp-powered-by-text {
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .rp-powered-by-logo {
+      height: 32px;
+      width: auto;
+    }
+    .rp-hero-photo {
+      position: relative;
+    }
+    .rp-photo-frame {
+      width: 280px;
+      height: 340px;
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 25px 50px -12px rgba(14,165,233,0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    .rp-photo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 20px;
+    }
+    .rp-party-badge {
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #dc2626;
+      color: white;
+      padding: 8px 24px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 15px rgba(220,38,38,0.4);
+      white-space: nowrap;
+    }
+
+    /* Base de Secciones */
+    .rp-section {
+      padding: 100px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .rp-section-dark {
+      background: #1e293b;
+    }
+    .rp-section-darker {
+      background: #0f172a;
+    }
+    .rp-section-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+    .rp-section-label {
+      display: inline-block;
+      background: rgba(14,165,233,0.2);
+      color: #38bdf8;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+    .rp-section-title {
+      font-size: 36px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
+    .rp-section-subtitle {
+      font-size: 18px;
+      color: #94a3b8;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Grid de Tarjetas de Información */
+    .rp-info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .rp-info-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 28px;
+      transition: all 0.3s ease;
+    }
+    .rp-section-dark .rp-info-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+    }
+    .rp-info-card:hover {
+      box-shadow: 0 20px 40px -15px rgba(0,0,0,0.3);
+      transform: translateY(-4px);
+      border-color: #0ea5e9;
+    }
+    .rp-info-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, rgba(14,165,233,0.2) 0%, rgba(14,165,233,0.1) 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 20px;
+    }
+    .rp-info-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+    .rp-info-card p {
+      font-size: 15px;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+
+    /* Sección de Línea de Tiempo */
+    .rp-timeline {
+      position: relative;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .rp-timeline::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 100%;
+      background: #334155;
+    }
+    .rp-timeline-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+    .rp-timeline-item:nth-child(odd) {
+      flex-direction: row-reverse;
+    }
+    .rp-timeline-content {
+      width: 45%;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+    }
+    .rp-timeline-item:nth-child(odd) .rp-timeline-content {
+      text-align: right;
+    }
+    .rp-timeline-dot {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 16px;
+      background: #0ea5e9;
+      border-radius: 50%;
+      border: 4px solid #0f172a;
+      box-shadow: 0 0 0 2px #0ea5e9;
+    }
+    .rp-timeline-year {
+      font-size: 14px;
+      font-weight: 600;
+      color: #38bdf8;
+      margin-bottom: 8px;
+    }
+    .rp-timeline-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+    .rp-timeline-desc {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    /* Proyectos Legislativos */
+    .rp-projects-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .rp-project-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      transition: all 0.3s ease;
+    }
+    .rp-project-card:hover {
+      border-color: #0ea5e9;
+      box-shadow: 0 10px 30px -10px rgba(14,165,233,0.3);
+    }
+    .rp-project-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(34,197,94,0.15);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #4ade80;
+      flex-shrink: 0;
+    }
+    .rp-project-content h4 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+    .rp-project-content p {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    /* Historial de Votación */
+    .rp-voting-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+    }
+    .rp-voting-visual {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      border-radius: 20px;
+      padding: 40px;
+      color: white;
+    }
+    .rp-voting-visual h3 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .rp-voting-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .rp-voting-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .rp-voting-bar-label {
+      font-size: 13px;
+      width: 160px;
+      flex-shrink: 0;
+    }
+    .rp-voting-bar-track {
+      flex: 1;
+      height: 8px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .rp-voting-bar-fill {
+      height: 100%;
+      background: white;
+      border-radius: 4px;
+    }
+    .rp-voting-text h3 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 20px;
+    }
+    .rp-voting-text p {
+      font-size: 16px;
+      color: #94a3b8;
+      margin-bottom: 16px;
+      line-height: 1.7;
+    }
+
+    /* Estado Legal */
+    .rp-legal-banner {
+      background: linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(34,197,94,0.05) 100%);
+      border: 1px solid rgba(34,197,94,0.3);
+      border-radius: 16px;
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .rp-legal-icon {
+      width: 64px;
+      height: 64px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+    .rp-legal-content h3 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #4ade80;
+      margin-bottom: 8px;
+    }
+    .rp-legal-content p {
+      font-size: 15px;
+      color: #86efac;
+      line-height: 1.6;
+    }
+    .rp-legal-content strong {
+      color: #4ade80;
+    }
+
+    /* Sección de Evaluación */
+    .rp-assessment-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .rp-assessment-card {
+      border-radius: 16px;
+      padding: 32px;
+    }
+    .rp-assessment-card.strengths {
+      background: linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(34,197,94,0.05) 100%);
+      border: 1px solid rgba(34,197,94,0.3);
+    }
+    .rp-assessment-card.limitations {
+      background: linear-gradient(135deg, rgba(251,191,36,0.15) 0%, rgba(251,191,36,0.05) 100%);
+      border: 1px solid rgba(251,191,36,0.3);
+    }
+    .rp-assessment-card.overall {
+      background: linear-gradient(135deg, rgba(14,165,233,0.15) 0%, rgba(14,165,233,0.05) 100%);
+      border: 1px solid rgba(14,165,233,0.3);
+    }
+    .rp-assessment-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .rp-assessment-card.strengths h3 { color: #4ade80; }
+    .rp-assessment-card.limitations h3 { color: #fbbf24; }
+    .rp-assessment-card.overall h3 { color: #38bdf8; }
+    .rp-assessment-card ul {
+      list-style: none;
+      padding: 0;
+    }
+    .rp-assessment-card li {
+      font-size: 14px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .rp-assessment-card li:last-child {
+      border-bottom: none;
+    }
+    .rp-assessment-card.strengths li { color: #86efac; }
+    .rp-assessment-card.limitations li { color: #fcd34d; }
+    .rp-assessment-card.overall p { color: #7dd3fc; font-size: 15px; line-height: 1.7; }
+
+    /* Botón de Copiar Resumen */
+    .rp-copy-section {
+      text-align: center;
+      padding: 40px 0 0;
+    }
+    .rp-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 30px -10px rgba(14,165,233,0.5);
+    }
+    .rp-copy-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px -10px rgba(14,165,233,0.6);
+    }
+    .rp-copy-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Notificación Toast */
+    .rp-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1e293b;
+      color: #fff;
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+      border: 1px solid #334155;
+      opacity: 0;
+      transition: all 0.4s ease;
+      z-index: 9999;
+    }
+    .rp-toast.rp-show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Responsivo */
+    @media (max-width: 968px) {
+      .rp-hero-inner {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .rp-hero-photo {
+        order: -1;
+      }
+      .rp-photo-frame {
+        margin: 0 auto;
+      }
+      .rp-hero-stats {
+        justify-content: center;
+      }
+      .rp-hero-bio {
+        margin: 0 auto 32px;
+      }
+      .rp-powered-by {
+        justify-content: center;
+      }
+      .rp-info-grid {
+        grid-template-columns: 1fr;
+      }
+      .rp-projects-grid {
+        grid-template-columns: 1fr;
+      }
+      .rp-voting-container {
+        grid-template-columns: 1fr;
+      }
+      .rp-assessment-grid {
+        grid-template-columns: 1fr;
+      }
+      .rp-nav-links {
+        display: none;
+      }
+      .rp-timeline::before {
+        left: 20px;
+      }
+      .rp-timeline-item,
+      .rp-timeline-item:nth-child(odd) {
+        flex-direction: column;
+        align-items: flex-start;
+        padding-left: 50px;
+      }
+      .rp-timeline-content,
+      .rp-timeline-item:nth-child(odd) .rp-timeline-content {
+        width: 100%;
+        text-align: left;
+      }
+      .rp-timeline-dot {
+        left: 20px;
+      }
+      .rp-legal-banner {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navegación -->
+  <nav class="rp-nav">
+    <div class="rp-nav-inner">
+      <div></div>
+      <ul class="rp-nav-links">
+        <li><a href="#acerca">Acerca de</a></li>
+        <li><a href="#posiciones">Posiciones</a></li>
+        <li><a href="#legislacion">Legislación</a></li>
+        <li><a href="#historial">Historial</a></li>
+        <li><a href="#evaluacion">Evaluación</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Sección Hero -->
+  <section class="rp-hero">
+    <div class="rp-hero-inner">
+      <div class="rp-hero-content">
+        <h1>Horacio José Serpa Moncada</h1>
+        <p class="rp-hero-tagline">Senador de la República de Colombia (2018–2022)</p>
+        <p class="rp-hero-bio">Político liberal de centro con enfoque tecnocrático en reformas institucionales, regulación de la economía digital y política urbana. Administrador de empresas con credenciales académicas internacionales.</p>
+        <div class="rp-hero-stats">
+          <div class="rp-stat">
+            <div class="rp-stat-value">10+</div>
+            <div class="rp-stat-label">Años en Cargos Públicos</div>
+          </div>
+          <div class="rp-stat">
+            <div class="rp-stat-value">10</div>
+            <div class="rp-stat-label">Proyectos de Ley</div>
+          </div>
+          <div class="rp-stat">
+            <div class="rp-stat-value">0</div>
+            <div class="rp-stat-label">Problemas Legales</div>
+          </div>
+        </div>
+      </div>
+      <div class="rp-hero-photo">
+        <div class="rp-photo-frame">
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6984dda8c9efe498d53f393b.png" alt="Horacio José Serpa Moncada" class="rp-photo-img">
+          <span class="rp-party-badge">Partido Liberal Colombiano</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección Acerca de -->
+  <div class="rp-section-darker">
+    <section class="rp-section" id="acerca">
+      <div class="rp-section-header">
+        <span class="rp-section-label">Antecedentes</span>
+        <h2 class="rp-section-title">Información Básica</h2>
+        <p class="rp-section-subtitle">Datos clave sobre los antecedentes, educación y carrera política del Senador Serpa Moncada.</p>
+      </div>
+      <div class="rp-info-grid">
+        <div class="rp-info-card">
+          <div class="rp-info-icon">01</div>
+          <h3>Fecha de Nacimiento</h3>
+          <p>20 de julio de 1982 – Barrancabermeja, Colombia</p>
+        </div>
+        <div class="rp-info-card">
+          <div class="rp-info-icon">02</div>
+          <h3>Profesión</h3>
+          <p>Administrador de Empresas con amplia experiencia en políticas públicas y gobernanza.</p>
+        </div>
+        <div class="rp-info-card">
+          <div class="rp-info-icon">03</div>
+          <h3>Educación</h3>
+          <p>CESA; Especialización en Gobierno, Gerencia y Asuntos Públicos en la Universidad de Columbia; Estudios en American University.</p>
+        </div>
+      </div>
+
+      <!-- Línea de Tiempo de Carrera -->
+      <div style="margin-top: 80px;">
+        <h3 style="text-align: center; font-size: 24px; font-weight: 600; margin-bottom: 40px; color: #ffffff;">Carrera Política</h3>
+        <div class="rp-timeline">
+          <div class="rp-timeline-item">
+            <div class="rp-timeline-content">
+              <div class="rp-timeline-year">2012 – 2017</div>
+              <div class="rp-timeline-title">Concejal de Bogotá</div>
+              <div class="rp-timeline-desc">Sirvió como representante electo para la ciudad capital.</div>
+            </div>
+            <div class="rp-timeline-dot"></div>
+          </div>
+          <div class="rp-timeline-item">
+            <div class="rp-timeline-content">
+              <div class="rp-timeline-year">2017</div>
+              <div class="rp-timeline-title">Presidente del Concejo de Bogotá</div>
+              <div class="rp-timeline-desc">Lideró el concejo de la ciudad como su presidente electo.</div>
+            </div>
+            <div class="rp-timeline-dot"></div>
+          </div>
+          <div class="rp-timeline-item">
+            <div class="rp-timeline-content">
+              <div class="rp-timeline-year">2018 – 2022</div>
+              <div class="rp-timeline-title">Senador de la República</div>
+              <div class="rp-timeline-desc">Elegido para servir en el Senado colombiano representando al Partido Liberal.</div>
+            </div>
+            <div class="rp-timeline-dot"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Sección de Posiciones Políticas -->
+  <div class="rp-section-dark">
+    <section class="rp-section" id="posiciones">
+      <div class="rp-section-header">
+        <span class="rp-section-label">Ideología</span>
+        <h2 class="rp-section-title">Posiciones Políticas y Orientación</h2>
+        <p class="rp-section-subtitle">La postura política del Senador Serpa Moncada y sus áreas de enfoque principales.</p>
+      </div>
+      <div class="rp-info-grid">
+        <div class="rp-info-card">
+          <div class="rp-info-icon">01</div>
+          <h3>Reformas Institucionales</h3>
+          <p>Aboga por reformas electorales e institucionales para fortalecer los procesos democráticos.</p>
+        </div>
+        <div class="rp-info-card">
+          <div class="rp-info-icon">02</div>
+          <h3>Política Social y Bienestar</h3>
+          <p>Apoya las protecciones sociales, las medidas de salud pública y los programas de bienestar.</p>
+        </div>
+        <div class="rp-info-card">
+          <div class="rp-info-icon">03</div>
+          <h3>Participación Juvenil</h3>
+          <p>Promueve una mayor representación juvenil en el gobierno y los sistemas de planificación.</p>
+        </div>
+        <div class="rp-info-card">
+          <div class="rp-info-icon">04</div>
+          <h3>Economía Digital</h3>
+          <p>Se enfoca en la regulación tecnológica, políticas fintech y modernización digital.</p>
+        </div>
+        <div class="rp-info-card">
+          <div class="rp-info-icon">05</div>
+          <h3>Desarrollo Regional</h3>
+          <p>Promueve la modernización económica y la inclusión financiera para todas las regiones.</p>
+        </div>
+        <div class="rp-info-card">
+          <div class="rp-info-icon">06</div>
+          <h3>Seguridad Pública</h3>
+          <p>Apoya las medidas de protección al consumidor y las regulaciones de seguridad pública.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Sección de Proyectos Legislativos -->
+  <div class="rp-section-darker">
+    <section class="rp-section" id="legislacion">
+      <div class="rp-section-header">
+        <span class="rp-section-label">Logros</span>
+        <h2 class="rp-section-title">Principales Proyectos Legislativos</h2>
+        <p class="rp-section-subtitle">Proyectos de ley e iniciativas clave presentados o patrocinados durante su período en el Senado.</p>
+      </div>
+      <div class="rp-projects-grid">
+        <div class="rp-project-card">
+          <div class="rp-project-icon">01</div>
+          <div class="rp-project-content">
+            <h4>Elecciones de Segunda Vuelta</h4>
+            <p>Segunda vuelta electoral para alcaldes de ciudades principales</p>
+          </div>
+        </div>
+        <div class="rp-project-card">
+          <div class="rp-project-icon">02</div>
+          <div class="rp-project-content">
+            <h4>Monitoreo de Planes de Desarrollo</h4>
+            <p>Sistemas de seguimiento y evaluación para planes de desarrollo</p>
+          </div>
+        </div>
+        <div class="rp-project-card">
+          <div class="rp-project-icon">03</div>
+          <div class="rp-project-content">
+            <h4>Regulación de Criptoactivos</h4>
+            <p>Regulación de servicios de intercambio de criptoactivos</p>
+          </div>
+        </div>
+        <div class="rp-project-card">
+          <div class="rp-project-icon">04</div>
+          <div class="rp-project-content">
+            <h4>Fintech para la Inclusión</h4>
+            <p>Políticas fintech para el desarrollo regional y la inclusión financiera</p>
+          </div>
+        </div>
+        <div class="rp-project-card">
+          <div class="rp-project-icon">05</div>
+          <div class="rp-project-content">
+            <h4>Anti-Obsolescencia Programada</h4>
+            <p>Ley contra la obsolescencia programada de dispositivos electrónicos</p>
+          </div>
+        </div>
+        <div class="rp-project-card">
+          <div class="rp-project-icon">06</div>
+          <div class="rp-project-content">
+            <h4>Restricciones de Pirotecnia</h4>
+            <p>Restricciones de fuegos artificiales y pirotecnia para la seguridad pública</p>
+          </div>
+        </div>
+        <div class="rp-project-card">
+          <div class="rp-project-icon">07</div>
+          <div class="rp-project-content">
+            <h4>Renta Básica de Emergencia</h4>
+            <p>Propuesta de renta básica de emergencia para poblaciones vulnerables</p>
+          </div>
+        </div>
+        <div class="rp-project-card">
+          <div class="rp-project-icon">08</div>
+          <div class="rp-project-content">
+            <h4>Promoción de la Lactancia</h4>
+            <p>Legislación de promoción de la lactancia materna</p>
+          </div>
+        </div>
+        <div class="rp-project-card">
+          <div class="rp-project-icon">09</div>
+          <div class="rp-project-content">
+            <h4>Educación en Estilos de Vida Saludables</h4>
+            <p>Programas de educación en estilos de vida saludables en escuelas</p>
+          </div>
+        </div>
+        <div class="rp-project-card">
+          <div class="rp-project-icon">10</div>
+          <div class="rp-project-content">
+            <h4>Representación Juvenil</h4>
+            <p>Representación juvenil en el Sistema Nacional de Planificación</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Sección de Historial de Votación -->
+  <div class="rp-section-dark">
+    <section class="rp-section" id="historial">
+      <div class="rp-section-header">
+        <span class="rp-section-label">Trayectoria</span>
+        <h2 class="rp-section-title">Historial de Votación y Comportamiento Legislativo</h2>
+        <p class="rp-section-subtitle">Tendencias generales observadas durante su período en el Senado (2018–2022).</p>
+      </div>
+      <div class="rp-voting-container">
+        <div class="rp-voting-visual">
+          <h3>Áreas de Apoyo en Políticas</h3>
+          <div class="rp-voting-bars">
+            <div class="rp-voting-bar">
+              <span class="rp-voting-bar-label">Protecciones Sociales</span>
+              <div class="rp-voting-bar-track">
+                <div class="rp-voting-bar-fill" style="width: 90%"></div>
+              </div>
+            </div>
+            <div class="rp-voting-bar">
+              <span class="rp-voting-bar-label">Salud Pública</span>
+              <div class="rp-voting-bar-track">
+                <div class="rp-voting-bar-fill" style="width: 85%"></div>
+              </div>
+            </div>
+            <div class="rp-voting-bar">
+              <span class="rp-voting-bar-label">Modernización Económica</span>
+              <div class="rp-voting-bar-track">
+                <div class="rp-voting-bar-fill" style="width: 88%"></div>
+              </div>
+            </div>
+            <div class="rp-voting-bar">
+              <span class="rp-voting-bar-label">Reformas Institucionales</span>
+              <div class="rp-voting-bar-track">
+                <div class="rp-voting-bar-fill" style="width: 92%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="rp-voting-text">
+          <h3>Alineación con el Bloque de Centro</h3>
+          <p>Como senador del Partido Liberal (2018–2022), el Senador Serpa Moncada formó parte de un bloque centrista que frecuentemente negoció con el gobierno manteniendo una identidad partidaria independiente.</p>
+          <p>Su comportamiento legislativo indica un apoyo constante a las protecciones sociales, las medidas de salud pública, la modernización económica y las reformas institucionales, reflejando la agenda social y económica liberal tradicional.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Sección de Estado Legal -->
+  <div class="rp-section-darker">
+    <section class="rp-section">
+      <div class="rp-section-header">
+        <span class="rp-section-label">Transparencia</span>
+        <h2 class="rp-section-title">Controversias y Estado Legal</h2>
+        <p class="rp-section-subtitle">Revisión de registros oficiales y comentarios públicos.</p>
+      </div>
+      <div class="rp-legal-banner">
+        <div class="rp-legal-icon">OK</div>
+        <div class="rp-legal-content">
+          <h3>Historial Limpio Confirmado</h3>
+          <p>Los registros oficiales del Congreso indican <strong>ninguna investigación ni observación legal</strong> durante su período en el Senado. Los comentarios públicos frecuentemente hacen referencia a sus antecedentes familiares como hijo de Horacio Serpa Uribe, un prominente líder liberal, aunque esto no corresponde a ningún problema legal personal.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Sección de Evaluación -->
+  <div class="rp-section-dark">
+    <section class="rp-section" id="evaluacion">
+      <div class="rp-section-header">
+        <span class="rp-section-label">Análisis</span>
+        <h2 class="rp-section-title">Evaluación Neutral de Reputación e Impacto</h2>
+        <p class="rp-section-subtitle">Una evaluación objetiva de la carrera política e influencia del Senador Serpa Moncada.</p>
+      </div>
+      <div class="rp-assessment-grid">
+        <div class="rp-assessment-card strengths">
+          <h3>Fortalezas</h3>
+          <ul>
+            <li>Experiencia institucional tanto a nivel local como nacional</li>
+            <li>Enfoque tecnocrático en política urbana y economía digital</li>
+            <li>Alineación con la agenda social y económica liberal tradicional</li>
+          </ul>
+        </div>
+        <div class="rp-assessment-card limitations">
+          <h3>Críticas y Limitaciones</h3>
+          <ul>
+            <li>Prominencia nacional limitada comparada con figuras más experimentadas del partido</li>
+            <li>Carrera frecuentemente vista a través del lente del legado político familiar</li>
+            <li>Pocas reformas nacionales emblemáticas ampliamente reconocidas</li>
+          </ul>
+        </div>
+        <div class="rp-assessment-card overall">
+          <h3>Evaluación General</h3>
+          <p>Político liberal de centro con enfoque tecnocrático e institucional. Generalmente considerado con un historial limpio e influencia moderada, con mayor impacto a nivel local en Bogotá que a nivel nacional.</p>
+        </div>
+      </div>
+
+      <div class="rp-copy-section">
+        <button type="button" class="rp-copy-btn" id="rp-copy-summary">
+          Copiar Resumen Ejecutivo
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Notificación Toast -->
+  <div class="rp-toast" id="rp-toast">Resumen copiado al portapapeles</div>
+
+  <script>
+    (function() {
+      var copyBtn = document.getElementById('rp-copy-summary');
+      var toast = document.getElementById('rp-toast');
+
+      var summaryText = 'PERFIL POLÍTICO: Horacio José Serpa Moncada\n\n' +
+        'Nacimiento: 20 de julio de 1982, Barrancabermeja, Colombia\n' +
+        'Partido: Partido Liberal Colombiano\n' +
+        'Cargos Principales: Senador (2018–2022), Concejal de Bogotá (2012–2017), Presidente del Concejo de Bogotá (2017)\n\n' +
+        'PERFIL: Político liberal de centro con enfoque tecnocrático en reformas institucionales, regulación de la economía digital y política urbana.\n\n' +
+        'TRABAJO LEGISLATIVO CLAVE: Reformas electorales para alcaldías, regulación de criptoactivos, fintech para inclusión financiera, leyes contra la obsolescencia programada, renta básica de emergencia, representación juvenil en la planificación nacional.\n\n' +
+        'ESTADO LEGAL: Sin investigaciones ni observaciones legales registradas durante su período en el Senado.\n\n' +
+        'EVALUACIÓN: Historial limpio con influencia moderada. Mayor impacto a nivel local en Bogotá que a nivel nacional. Carrera a veces vista a través del lente del legado político familiar (hijo de Horacio Serpa Uribe).\n\n' +
+        '— Desarrollado por RinglyPro';
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('rp-show');
+        setTimeout(function() {
+          toast.classList.remove('rp-show');
+        }, 2500);
+      }
+
+      copyBtn.addEventListener('click', function() {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(summaryText).then(function() {
+            showToast('Resumen ejecutivo copiado al portapapeles');
+          }).catch(function() {
+            fallbackCopy();
+          });
+        } else {
+          fallbackCopy();
+        }
+      });
+
+      function fallbackCopy() {
+        var textarea = document.createElement('textarea');
+        textarea.value = summaryText;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          showToast('Resumen ejecutivo copiado al portapapeles');
+        } catch (e) {
+          showToast('Error al copiar – por favor copie manualmente');
+        }
+        document.body.removeChild(textarea);
+      }
+
+      // Desplazamiento suave para enlaces de navegación
+      document.querySelectorAll('.rp-nav-links a').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          var targetId = this.getAttribute('href').substring(1);
+          var target = document.getElementById(targetId);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+    })();
+  </script>
+  <!-- ElevenLabs ConvAI Widget -->
+  <elevenlabs-convai agent-id="agent_0001kgqe5ggwe58rn7hp69fjzbyk"></elevenlabs-convai>
+  <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+</body>
+</html>
