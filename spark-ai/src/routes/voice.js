@@ -829,5 +829,93 @@ module.exports = (models) => {
     }
   });
 
+  // =====================================================
+  // WEBRTC TOKEN ENDPOINT - For browser-based voice chat
+  // =====================================================
+
+  // Spark Agent Configuration
+  const SPARK_AGENT_ID = 'agent_5601kh453hqqfz59nfemkwk02vax';
+  const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+  const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io/v1';
+
+  // POST /api/v1/voice/webrtc-token - Get WebRTC token for Spark voice chat
+  router.post('/webrtc-token', async (req, res) => {
+    try {
+      const { school_id, language } = req.body;
+
+      if (!ELEVENLABS_API_KEY) {
+        console.error('[Spark Voice] ELEVENLABS_API_KEY not configured');
+        return res.status(500).json({
+          success: false,
+          error: 'Voice service not configured'
+        });
+      }
+
+      // Get school info for context
+      let schoolName = 'your martial arts school';
+      let schoolData = {};
+      if (school_id) {
+        const school = await SparkSchool.findByPk(school_id);
+        if (school) {
+          schoolName = school.name;
+          schoolData = {
+            school_id: school.id,
+            school_name: school.name,
+            owner_name: school.owner_name,
+            martial_art_type: school.martial_art_type,
+            city: school.city,
+            state: school.state
+          };
+        }
+      }
+
+      console.log(`[Spark Voice] Requesting WebRTC token for school: ${schoolName}`);
+
+      // Request signed URL from ElevenLabs
+      const response = await fetch(
+        `${ELEVENLABS_API_BASE}/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(SPARK_AGENT_ID)}`,
+        {
+          method: 'GET',
+          headers: {
+            'xi-api-key': ELEVENLABS_API_KEY
+          }
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[Spark Voice] Failed to get signed URL: ${response.status} - ${errorText}`);
+        return res.status(response.status).json({
+          success: false,
+          error: 'Failed to initialize voice connection'
+        });
+      }
+
+      const data = await response.json();
+
+      console.log(`[Spark Voice] Successfully generated signed URL for: ${schoolName}`);
+
+      return res.json({
+        success: true,
+        signed_url: data.signed_url,
+        agent_id: SPARK_AGENT_ID,
+        school_name: schoolName,
+        dynamic_variables: {
+          school_id: school_id || '',
+          school_name: schoolName,
+          language: language || 'en',
+          ...schoolData
+        }
+      });
+
+    } catch (error) {
+      console.error('[Spark Voice] Token generation error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
   return router;
 };

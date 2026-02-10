@@ -1192,6 +1192,54 @@ app.get('*', (req, res) => {
     <button onclick="setLanguage('es')" id="langEsDesktop" class="px-3 py-2 bg-white/5 hover:bg-white/20 rounded-lg text-sm transition border border-white/5">ES</button>
   </div>
 
+  <!-- Voice Chat Modal -->
+  <div id="voiceModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4">
+    <div class="bg-spark-dark-card border border-spark-dark-border rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
+      <!-- Modal Header -->
+      <div class="p-6 border-b border-spark-dark-border flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 spark-icon rounded-xl flex items-center justify-center">
+            <i class="fas fa-bolt text-white text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold">Talk to Spark</h3>
+            <p id="voiceStatus" class="text-sm text-gray-400">Ready to connect</p>
+          </div>
+        </div>
+        <button onclick="closeVoiceModal()" class="p-2 hover:bg-white/10 rounded-lg transition">
+          <i class="fas fa-times text-gray-400"></i>
+        </button>
+      </div>
+
+      <!-- Transcript Area -->
+      <div id="voiceTranscript" class="h-64 overflow-y-auto p-4 bg-black/20">
+        <div class="text-center text-gray-500 py-8">
+          <i class="fas fa-microphone text-3xl mb-3 opacity-50"></i>
+          <p class="text-sm">Press "Start Talking" to begin</p>
+          <p class="text-xs mt-2">Ask Spark about your business insights</p>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="p-6 border-t border-spark-dark-border">
+        <div class="flex gap-3">
+          <button id="voiceStartBtn" onclick="startVoiceCall()" class="flex-1 spark-btn py-4 rounded-xl font-medium transition flex items-center justify-center gap-2">
+            <i class="fas fa-microphone"></i>
+            <span>Start Talking</span>
+          </button>
+          <button id="voiceStopBtn" onclick="stopVoiceCall()" class="hidden flex-1 bg-red-500 hover:bg-red-600 py-4 rounded-xl font-medium transition flex items-center justify-center gap-2">
+            <i class="fas fa-stop"></i>
+            <span>End Call</span>
+          </button>
+        </div>
+        <p class="text-center text-xs text-gray-500 mt-4">
+          <i class="fas fa-info-circle mr-1"></i>
+          Spark can answer questions about revenue, members, leads, and more
+        </p>
+      </div>
+    </div>
+  </div>
+
   <!-- Mobile Bottom Bar (Language Toggle Only) -->
   <div class="fixed bottom-0 left-0 right-0 bg-spark-dark-card border-t border-spark-dark-border p-3 flex justify-center items-center z-50 md:hidden mobile-bottom-bar">
     <div class="flex gap-2 mobile-lang-toggle">
@@ -1457,13 +1505,254 @@ app.get('*', (req, res) => {
       }
     }
 
+    // =====================================================
+    // SPARK VOICE INTEGRATION (ElevenLabs WebRTC)
+    // =====================================================
+    let sparkVoiceClient = null;
+    let voiceStatus = 'disconnected';
+
     function talkToSpark() {
       if (!currentSchoolId) {
         alert('Please select a business first to talk to Spark');
         return;
       }
-      const lang = currentLanguage === 'es' ? 'Spanish' : 'English';
-      alert('Spark Voice Agent (' + lang + ') coming soon!\\n\\nSpark will be able to:\\n- Make retention calls to at-risk members\\n- Follow up with hot leads\\n- Confirm appointments\\n- Collect feedback');
+      openVoiceModal();
+    }
+
+    function openVoiceModal() {
+      document.getElementById('voiceModal').classList.remove('hidden');
+      document.getElementById('voiceModal').classList.add('flex');
+      document.getElementById('voiceStatus').textContent = 'Ready to connect';
+      document.getElementById('voiceTranscript').innerHTML = '';
+      updateVoiceButtons('disconnected');
+    }
+
+    function closeVoiceModal() {
+      if (sparkVoiceClient && voiceStatus === 'connected') {
+        sparkVoiceClient.disconnect();
+      }
+      document.getElementById('voiceModal').classList.add('hidden');
+      document.getElementById('voiceModal').classList.remove('flex');
+    }
+
+    async function startVoiceCall() {
+      try {
+        updateVoiceButtons('connecting');
+        document.getElementById('voiceStatus').textContent = 'Connecting to Spark...';
+
+        // Get WebRTC token
+        const tokenRes = await fetch('/spark/api/v1/voice/webrtc-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            school_id: currentSchoolId,
+            language: currentLanguage
+          })
+        });
+
+        const tokenData = await tokenRes.json();
+        if (!tokenData.success) {
+          throw new Error(tokenData.error || 'Failed to get voice token');
+        }
+
+        document.getElementById('voiceStatus').textContent = 'Requesting microphone...';
+
+        // Get microphone
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+          video: false
+        });
+
+        document.getElementById('voiceStatus').textContent = 'Connecting to Spark AI...';
+
+        // Connect to ElevenLabs WebSocket
+        const ws = new WebSocket(tokenData.signed_url);
+
+        ws.onopen = () => {
+          console.log('[Spark Voice] WebSocket connected');
+          voiceStatus = 'connected';
+          updateVoiceButtons('connected');
+          document.getElementById('voiceStatus').textContent = 'Connected - Speak to Spark!';
+
+          // Send dynamic variables
+          ws.send(JSON.stringify({
+            type: 'conversation_initiation_client_data',
+            conversation_initiation_client_data: {
+              dynamic_variables: tokenData.dynamic_variables
+            }
+          }));
+
+          // Set up audio streaming
+          setupAudioStreaming(stream, ws);
+        };
+
+        ws.onmessage = async (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            handleVoiceMessage(msg);
+          } catch (e) {
+            console.warn('[Spark Voice] Message parse error:', e);
+          }
+        };
+
+        ws.onerror = (err) => {
+          console.error('[Spark Voice] WebSocket error:', err);
+          document.getElementById('voiceStatus').textContent = 'Connection error';
+          updateVoiceButtons('disconnected');
+        };
+
+        ws.onclose = () => {
+          console.log('[Spark Voice] WebSocket closed');
+          voiceStatus = 'disconnected';
+          document.getElementById('voiceStatus').textContent = 'Disconnected';
+          updateVoiceButtons('disconnected');
+          stream.getTracks().forEach(t => t.stop());
+        };
+
+        sparkVoiceClient = { ws, stream };
+
+      } catch (error) {
+        console.error('[Spark Voice] Error:', error);
+        document.getElementById('voiceStatus').textContent = 'Error: ' + error.message;
+        updateVoiceButtons('disconnected');
+      }
+    }
+
+    function stopVoiceCall() {
+      if (sparkVoiceClient) {
+        if (sparkVoiceClient.ws) sparkVoiceClient.ws.close();
+        if (sparkVoiceClient.stream) sparkVoiceClient.stream.getTracks().forEach(t => t.stop());
+        sparkVoiceClient = null;
+      }
+      voiceStatus = 'disconnected';
+      document.getElementById('voiceStatus').textContent = 'Disconnected';
+      updateVoiceButtons('disconnected');
+    }
+
+    function updateVoiceButtons(status) {
+      const startBtn = document.getElementById('voiceStartBtn');
+      const stopBtn = document.getElementById('voiceStopBtn');
+
+      if (status === 'connecting') {
+        startBtn.disabled = true;
+        startBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Connecting...';
+        stopBtn.classList.add('hidden');
+      } else if (status === 'connected') {
+        startBtn.classList.add('hidden');
+        stopBtn.classList.remove('hidden');
+      } else {
+        startBtn.disabled = false;
+        startBtn.innerHTML = '<i class="fas fa-microphone mr-2"></i>Start Talking';
+        startBtn.classList.remove('hidden');
+        stopBtn.classList.add('hidden');
+      }
+    }
+
+    let audioContext = null;
+    let scriptProcessor = null;
+
+    function setupAudioStreaming(stream, ws) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+      const source = audioContext.createMediaStreamSource(stream);
+      scriptProcessor = audioContext.createScriptProcessor(4096, 1, 1);
+
+      scriptProcessor.onaudioprocess = (e) => {
+        if (ws.readyState !== WebSocket.OPEN) return;
+
+        const inputData = e.inputBuffer.getChannelData(0);
+        const pcmData = new Int16Array(inputData.length);
+        for (let i = 0; i < inputData.length; i++) {
+          const s = Math.max(-1, Math.min(1, inputData[i]));
+          pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        }
+
+        // Convert to base64
+        const bytes = new Uint8Array(pcmData.buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        const base64 = btoa(binary);
+
+        ws.send(JSON.stringify({ user_audio_chunk: base64 }));
+      };
+
+      source.connect(scriptProcessor);
+      scriptProcessor.connect(audioContext.destination);
+    }
+
+    let playbackContext = null;
+    let audioQueue = [];
+    let isPlaying = false;
+
+    function handleVoiceMessage(msg) {
+      // Handle audio
+      if (msg.audio || msg.type === 'audio') {
+        const audio = msg.audio?.chunk || msg.audio_event?.audio_base_64 || msg.audio;
+        if (audio && typeof audio === 'string') {
+          playAudioChunk(audio);
+        }
+      }
+
+      // Handle transcripts
+      if (msg.type === 'user_transcript' || msg.user_transcript) {
+        const text = msg.user_transcription_event?.user_transcript || msg.user_transcript;
+        if (text) addTranscript('user', text);
+      }
+
+      if (msg.type === 'agent_response' || msg.agent_response) {
+        const text = msg.agent_response_event?.agent_response || msg.agent_response || msg.text;
+        if (text) addTranscript('agent', text);
+      }
+
+      // Handle ping
+      if (msg.type === 'ping' && sparkVoiceClient?.ws?.readyState === WebSocket.OPEN) {
+        sparkVoiceClient.ws.send(JSON.stringify({ type: 'pong' }));
+      }
+    }
+
+    function addTranscript(role, text) {
+      const container = document.getElementById('voiceTranscript');
+      const isUser = role === 'user';
+      const html = \`
+        <div class="flex \${isUser ? 'justify-end' : 'justify-start'} mb-3">
+          <div class="\${isUser ? 'bg-spark-coral/20 text-white' : 'bg-white/10 text-gray-200'} rounded-2xl px-4 py-2 max-w-[80%]">
+            <p class="text-xs \${isUser ? 'text-spark' : 'text-gray-400'} mb-1">\${isUser ? 'You' : 'Spark'}</p>
+            <p class="text-sm">\${text}</p>
+          </div>
+        </div>
+      \`;
+      container.innerHTML += html;
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function playAudioChunk(base64) {
+      try {
+        if (!playbackContext) {
+          playbackContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        const binaryString = atob(base64);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+
+        const audioBuffer = await playbackContext.decodeAudioData(bytes.buffer);
+        audioQueue.push(audioBuffer);
+
+        if (!isPlaying) playNextAudio();
+      } catch (e) {
+        console.warn('[Audio] Decode error:', e);
+      }
+    }
+
+    function playNextAudio() {
+      if (audioQueue.length === 0) { isPlaying = false; return; }
+      isPlaying = true;
+
+      const buffer = audioQueue.shift();
+      const source = playbackContext.createBufferSource();
+      source.buffer = buffer;
+      source.connect(playbackContext.destination);
+      source.onended = playNextAudio;
+      source.start(0);
     }
 
     function triggerSparkCalls(type) {
