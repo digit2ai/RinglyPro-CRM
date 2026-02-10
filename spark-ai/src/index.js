@@ -1570,9 +1570,9 @@ app.get('*', (req, res) => {
           </button>
         </div>
 
-        <!-- Hidden ElevenLabs Widget Container - handles all audio -->
-        <div id="hiddenWidgetContainer" style="position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; overflow: hidden;">
-          <!-- Widget inserted here by JS -->
+        <!-- Hidden ElevenLabs Widget - positioned off-screen but fully functional -->
+        <div id="hiddenWidgetContainer" style="position: fixed; left: -9999px; top: 0; width: 200px; height: 200px;">
+          <!-- Widget inserted here by JS - handles all audio -->
         </div>
 
         <p id="widgetSchoolName" class="text-lg font-medium text-white mb-2"></p>
@@ -1625,12 +1625,9 @@ app.get('*', (req, res) => {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-    /* Hide ElevenLabs widget completely */
-    elevenlabs-convai {
-      position: absolute !important;
-      opacity: 0 !important;
-      pointer-events: auto !important;
-      z-index: -1 !important;
+    /* Widget is positioned off-screen, no need to hide with opacity */
+    #hiddenWidgetContainer elevenlabs-convai {
+      display: block;
     }
   </style>
 
@@ -1970,27 +1967,49 @@ app.get('*', (req, res) => {
     }
 
     function clickHiddenWidget() {
-      // Toggle the orb state
-      isVoiceActive = !isVoiceActive;
-      updateOrbUI(isVoiceActive);
+      if (!widgetElement) {
+        console.log('[Spark] No widget element');
+        return;
+      }
 
-      // Find and click the widget's internal button
-      if (widgetElement) {
-        // The widget creates a shadow DOM with a button
-        const shadowRoot = widgetElement.shadowRoot;
+      // Show connecting state
+      const orbBtn = document.getElementById('voiceOrbBtn');
+      orbBtn.classList.add('connecting');
+      document.getElementById('voiceStatus').textContent = 'Connecting...';
+
+      // Try to click the widget button with retries
+      let attempts = 0;
+      const maxAttempts = 10;
+
+      function tryClick() {
+        attempts++;
+        const shadowRoot = widgetElement?.shadowRoot;
+
         if (shadowRoot) {
+          // Look for the button in shadow DOM
           const btn = shadowRoot.querySelector('button');
           if (btn) {
-            console.log('[Spark Widget] Clicking widget button');
+            console.log('[Spark] Found widget button, clicking...');
             btn.click();
-          } else {
-            console.log('[Spark Widget] No button found in shadow DOM');
+
+            // Toggle state after click
+            isVoiceActive = !isVoiceActive;
+            updateOrbUI(isVoiceActive);
+            return;
           }
+        }
+
+        if (attempts < maxAttempts) {
+          console.log('[Spark] Widget button not ready, retry', attempts);
+          setTimeout(tryClick, 200);
         } else {
-          console.log('[Spark Widget] No shadow root yet, widget may still be loading');
-          // Widget may not be ready yet - just update UI
+          console.log('[Spark] Failed to find widget button after', maxAttempts, 'attempts');
+          orbBtn.classList.remove('connecting');
+          document.getElementById('voiceStatus').textContent = 'Failed to connect. Try again.';
         }
       }
+
+      tryClick();
     }
 
     function updateOrbUI(active) {
