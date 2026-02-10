@@ -58,6 +58,173 @@ if (models && !modelsError) {
   app.use('/api/v1/health', healthRoutes);
   app.use('/api/v1/voice', voiceRoutes);
 
+  // Seed demo data endpoint
+  app.post('/api/v1/seed-demo', async (req, res) => {
+    try {
+      const { SparkSchool, SparkStudent, SparkLead, SparkRevenue, SparkAiCall, SparkHealthScore } = models;
+      const today = new Date();
+
+      // Create or get demo school
+      let [school] = await SparkSchool.findOrCreate({
+        where: { name: 'Tampa Bay BJJ Academy', tenant_id: 1 },
+        defaults: {
+          tenant_id: 1,
+          name: 'Tampa Bay BJJ Academy',
+          martial_art_type: 'BJJ',
+          owner_name: 'Professor Carlos Silva',
+          owner_email: 'carlos@tampabaybjj.com',
+          owner_phone: '+18135551234',
+          address: '1234 Main Street',
+          city: 'Tampa',
+          state: 'FL',
+          zip: '33601',
+          monthly_revenue_target: 35000,
+          student_capacity: 200,
+          website: 'https://tampabaybjj.com'
+        }
+      });
+
+      const schoolId = school.id;
+
+      // Add students
+      const students = [
+        { first_name: 'Michael', last_name: 'Johnson', belt_rank: 'Purple', churn_risk: 'low', churn_risk_score: 12, monthly_rate: 189 },
+        { first_name: 'Sarah', last_name: 'Williams', belt_rank: 'Blue', churn_risk: 'low', churn_risk_score: 8, monthly_rate: 175 },
+        { first_name: 'David', last_name: 'Martinez', belt_rank: 'White', churn_risk: 'medium', churn_risk_score: 45, monthly_rate: 129 },
+        { first_name: 'Emily', last_name: 'Brown', belt_rank: 'Brown', churn_risk: 'low', churn_risk_score: 5, monthly_rate: 199 },
+        { first_name: 'James', last_name: 'Wilson', belt_rank: 'Blue', churn_risk: 'high', churn_risk_score: 72, monthly_rate: 175 },
+        { first_name: 'Jessica', last_name: 'Davis', belt_rank: 'White', churn_risk: 'critical', churn_risk_score: 89, monthly_rate: 149 },
+        { first_name: 'Christopher', last_name: 'Lee', belt_rank: 'Purple', churn_risk: 'low', churn_risk_score: 15, monthly_rate: 189 },
+        { first_name: 'Amanda', last_name: 'Taylor', belt_rank: 'Black', churn_risk: 'low', churn_risk_score: 3, monthly_rate: 0 },
+        { first_name: 'Daniel', last_name: 'Anderson', belt_rank: 'Blue', churn_risk: 'medium', churn_risk_score: 52, monthly_rate: 175 },
+        { first_name: 'Ashley', last_name: 'Thomas', belt_rank: 'White', churn_risk: 'high', churn_risk_score: 78, monthly_rate: 129 },
+        { first_name: 'Matthew', last_name: 'Jackson', belt_rank: 'Purple', churn_risk: 'low', churn_risk_score: 10, monthly_rate: 189 },
+        { first_name: 'Nicole', last_name: 'Martin', belt_rank: 'White', churn_risk: 'critical', churn_risk_score: 92, monthly_rate: 149 },
+        { first_name: 'Andrew', last_name: 'Harris', belt_rank: 'Brown', churn_risk: 'low', churn_risk_score: 7, monthly_rate: 199 },
+        { first_name: 'Rachel', last_name: 'Robinson', belt_rank: 'Blue', churn_risk: 'low', churn_risk_score: 18, monthly_rate: 175 },
+        { first_name: 'Kevin', last_name: 'Clark', belt_rank: 'Blue', churn_risk: 'low', churn_risk_score: 14, monthly_rate: 175 },
+      ];
+
+      for (const s of students) {
+        await SparkStudent.findOrCreate({
+          where: { school_id: schoolId, email: `${s.first_name.toLowerCase()}.${s.last_name.toLowerCase()}@email.com` },
+          defaults: { school_id: schoolId, ...s, email: `${s.first_name.toLowerCase()}.${s.last_name.toLowerCase()}@email.com`, membership_type: 'Unlimited', enrollment_date: new Date() }
+        });
+      }
+
+      // Add leads
+      const leads = [
+        { first_name: 'Robert', last_name: 'Thompson', source: 'Google Ads', interest: 'Adult BJJ', temperature: 'hot', lead_score: 92, status: 'trial_scheduled' },
+        { first_name: 'Jennifer', last_name: 'Moore', source: 'Facebook', interest: 'Kids Program', temperature: 'hot', lead_score: 88, status: 'contacted' },
+        { first_name: 'William', last_name: 'Hall', source: 'Referral', interest: 'Self Defense', temperature: 'hot', lead_score: 95, status: 'new' },
+        { first_name: 'Elizabeth', last_name: 'Young', source: 'Walk-in', interest: 'Fitness BJJ', temperature: 'warm', lead_score: 65, status: 'trial_completed' },
+        { first_name: 'Richard', last_name: 'King', source: 'Website', interest: 'Competition', temperature: 'warm', lead_score: 58, status: 'follow_up' },
+        { first_name: 'Patricia', last_name: 'Wright', source: 'Instagram', interest: 'Kids BJJ', temperature: 'warm', lead_score: 62, status: 'contacted' },
+        { first_name: 'Linda', last_name: 'Green', source: 'Facebook', interest: 'Women Only Class', temperature: 'hot', lead_score: 85, status: 'new' },
+        { first_name: 'Joseph', last_name: 'Baker', source: 'Referral', interest: 'No-Gi BJJ', temperature: 'warm', lead_score: 70, status: 'trial_scheduled' },
+      ];
+
+      for (const l of leads) {
+        await SparkLead.findOrCreate({
+          where: { school_id: schoolId, email: `${l.first_name.toLowerCase()}.${l.last_name.toLowerCase()}@gmail.com` },
+          defaults: { school_id: schoolId, ...l, email: `${l.first_name.toLowerCase()}.${l.last_name.toLowerCase()}@gmail.com` }
+        });
+      }
+
+      // Add revenue
+      const revenues = [
+        { type: 'membership', amount: 3250.00, description: 'Monthly memberships batch 1' },
+        { type: 'membership', amount: 2875.00, description: 'Monthly memberships batch 2' },
+        { type: 'membership', amount: 1450.00, description: 'New enrollments' },
+        { type: 'membership', amount: 4100.00, description: 'Monthly memberships batch 3' },
+        { type: 'retail', amount: 450.00, description: 'Gi sales' },
+        { type: 'retail', amount: 275.00, description: 'Rashguards' },
+        { type: 'private_lesson', amount: 600.00, description: '4 private lessons' },
+        { type: 'private_lesson', amount: 450.00, description: '3 private lessons' },
+        { type: 'testing_fee', amount: 750.00, description: 'Belt promotions' },
+        { type: 'event', amount: 1200.00, description: 'Tournament entry fees' },
+      ];
+
+      for (let i = 0; i < revenues.length; i++) {
+        const date = new Date(today.getFullYear(), today.getMonth(), i + 1);
+        await SparkRevenue.findOrCreate({
+          where: { school_id: schoolId, date: date, description: revenues[i].description },
+          defaults: { school_id: schoolId, date: date, ...revenues[i], is_recurring: revenues[i].type === 'membership', source: 'demo' }
+        });
+      }
+
+      // Add AI calls
+      const calls = [
+        { agent: 'sensei', call_type: 'lead_followup', direction: 'outbound', status: 'completed', outcome: 'trial_booked', sentiment: 'positive', duration_seconds: 245, summary: 'Robert very interested in adult BJJ. Booked trial for Saturday.' },
+        { agent: 'sensei', call_type: 'lead_followup', direction: 'outbound', status: 'completed', outcome: 'callback_scheduled', sentiment: 'neutral', duration_seconds: 180, summary: 'Jennifer interested but needs to check schedule. Will call back Thursday.' },
+        { agent: 'sensei', call_type: 'retention', direction: 'outbound', status: 'completed', outcome: 'issue_resolved', sentiment: 'positive', duration_seconds: 320, summary: 'James had schedule conflict. Moved to evening classes. Very happy now.' },
+        { agent: 'sensei', call_type: 'retention', direction: 'outbound', status: 'voicemail', outcome: 'left_message', sentiment: 'neutral', duration_seconds: 45, summary: 'Left voicemail for Jessica about missed classes.' },
+        { agent: 'sensei', call_type: 'no_show', direction: 'outbound', status: 'completed', outcome: 'rescheduled', sentiment: 'positive', duration_seconds: 195, summary: 'Elizabeth rescheduled trial for next week. Had car trouble.' },
+        { agent: 'maestro', call_type: 'lead_followup', direction: 'outbound', status: 'completed', outcome: 'trial_booked', sentiment: 'positive', duration_seconds: 275, summary: 'William excited about competition training. Trial set for Monday.' },
+        { agent: 'sensei', call_type: 'payment_reminder', direction: 'outbound', status: 'completed', outcome: 'payment_made', sentiment: 'positive', duration_seconds: 120, summary: 'David updated payment method. All current now.' },
+        { agent: 'sensei', call_type: 'retention', direction: 'outbound', status: 'no_answer', outcome: null, sentiment: 'neutral', duration_seconds: 0, summary: null },
+      ];
+
+      for (const c of calls) {
+        await SparkAiCall.create({ school_id: schoolId, ...c, phone_number: '+1813555' + Math.floor(1000 + Math.random() * 9000) });
+      }
+
+      // Update school active_students count
+      const activeCount = await SparkStudent.count({ where: { school_id: schoolId, status: 'active' } });
+      await school.update({ active_students: activeCount });
+
+      // Calculate health score
+      const { SparkHealthScore: HealthScore } = models;
+      const totalStudents = await SparkStudent.count({ where: { school_id: schoolId } });
+      const atRiskStudents = await SparkStudent.count({ where: { school_id: schoolId, churn_risk: ['high', 'critical'] } });
+      const hotLeads = await SparkLead.count({ where: { school_id: schoolId, temperature: 'hot' } });
+      const totalRevenue = revenues.reduce((sum, r) => sum + r.amount, 0);
+
+      const retentionScore = Math.round(((activeCount / totalStudents) * 60) + ((1 - atRiskStudents / activeCount) * 40));
+      const revenueScore = Math.round((totalRevenue / 35000) * 100);
+      const leadScoreVal = Math.min(100, hotLeads * 20 + 40);
+      const overallScore = Math.round((retentionScore * 0.3) + (revenueScore * 0.3) + (leadScoreVal * 0.2) + 70 * 0.2);
+      const grade = overallScore >= 90 ? 'A' : overallScore >= 80 ? 'B' : overallScore >= 70 ? 'C' : overallScore >= 60 ? 'D' : 'F';
+
+      await SparkHealthScore.findOrCreate({
+        where: { school_id: schoolId, date: today.toISOString().split('T')[0] },
+        defaults: {
+          school_id: schoolId,
+          date: today,
+          retention_score: retentionScore,
+          revenue_score: revenueScore,
+          lead_score: leadScoreVal,
+          attendance_score: 75,
+          engagement_score: 70,
+          growth_score: 65,
+          overall_score: overallScore,
+          grade: grade,
+          insights: [
+            `${atRiskStudents} students are at risk of churning. Consider reaching out with Sensei AI.`,
+            `${hotLeads} hot leads need immediate follow-up for best conversion rates.`,
+            `Revenue at ${Math.round(totalRevenue / 35000 * 100)}% of monthly target.`
+          ],
+          alerts: atRiskStudents > 2 ? [{ type: 'warning', message: 'Multiple students at risk of churning' }] : []
+        }
+      });
+
+      res.json({
+        success: true,
+        message: 'Demo data seeded successfully',
+        school_id: schoolId,
+        counts: {
+          students: students.length,
+          leads: leads.length,
+          revenue_entries: revenues.length,
+          ai_calls: calls.length
+        }
+      });
+    } catch (error) {
+      console.error('Seed error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   console.log('Spark AI API routes mounted:');
   console.log('  - /spark/api/v1/schools');
   console.log('  - /spark/api/v1/students');
