@@ -1227,8 +1227,6 @@ app.get('*', (req, res) => {
       }
     }
   </style>
-  <!-- ElevenLabs Convai Widget - Official SDK -->
-  <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
 </head>
 <body class="gradient-bg min-h-screen text-white">
   <!-- Header -->
@@ -1529,7 +1527,7 @@ app.get('*', (req, res) => {
     <button onclick="setLanguage('es')" id="langEsDesktop" class="px-3 py-2 bg-white/5 hover:bg-white/20 rounded-lg text-sm transition border border-white/5">ES</button>
   </div>
 
-  <!-- Voice Chat Modal - Using Official ElevenLabs Widget -->
+  <!-- Voice Chat Modal - Custom Voice Orb (No ElevenLabs Branding) -->
   <div id="voiceModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4">
     <div class="bg-spark-dark-card border border-spark-dark-border rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
       <!-- Modal Header -->
@@ -1548,16 +1546,40 @@ app.get('*', (req, res) => {
         </button>
       </div>
 
-      <!-- ElevenLabs Widget Container -->
+      <!-- Custom Voice Orb Container -->
       <div class="p-8 flex flex-col items-center justify-center min-h-[300px]">
-        <div id="elevenlabs-widget-container" class="mb-4">
-          <!-- Widget will be inserted here dynamically -->
+        <!-- Custom Orb Button -->
+        <div id="voiceOrbContainer" class="relative mb-6">
+          <button id="voiceOrbBtn" onclick="toggleVoiceConnection()" class="voice-orb relative w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); box-shadow: 0 0 30px rgba(245, 158, 11, 0.3);">
+            <!-- Animated rings (shown when active) -->
+            <div id="voiceOrbRing1" class="voice-ring hidden absolute inset-0 rounded-full border-2 border-amber-400 opacity-75"></div>
+            <div id="voiceOrbRing2" class="voice-ring hidden absolute inset-[-8px] rounded-full border border-amber-500/50"></div>
+
+            <!-- Outer glow -->
+            <div id="voiceOrbGlow" class="absolute inset-0 rounded-full blur-md transition-all duration-300" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(249, 115, 22, 0.2));"></div>
+
+            <!-- Inner orb -->
+            <div id="voiceOrbInner" class="relative w-20 h-20 rounded-full transition-all duration-300" style="background: linear-gradient(135deg, #374151 0%, #1f2937 100%); box-shadow: inset 0 0 15px rgba(0,0,0,0.4), 0 0 10px rgba(0,0,0,0.2);">
+              <!-- Icon container -->
+              <div id="voiceOrbIcon" class="absolute inset-0 flex items-center justify-center">
+                <i class="fas fa-microphone text-white text-2xl"></i>
+              </div>
+              <!-- Highlight -->
+              <div class="absolute top-2 left-3 w-4 h-3 rounded-full bg-white opacity-20 blur-[2px]"></div>
+            </div>
+          </button>
         </div>
+
         <p id="widgetSchoolName" class="text-lg font-medium text-white mb-2"></p>
-        <p class="text-sm text-gray-400 text-center">
+        <p id="voiceInstructions" class="text-sm text-gray-400 text-center">
           Click the orb to start talking to Spark.<br>
           Ask about revenue, members, leads, and more.
         </p>
+
+        <!-- Transcript area (shown during conversation) -->
+        <div id="transcriptArea" class="hidden w-full mt-4 max-h-40 overflow-y-auto bg-white/5 rounded-xl p-3">
+          <div id="transcriptContent" class="text-sm text-gray-300 space-y-2"></div>
+        </div>
       </div>
 
       <!-- Close Button -->
@@ -1568,6 +1590,39 @@ app.get('*', (req, res) => {
       </div>
     </div>
   </div>
+
+  <style>
+    .voice-orb.active {
+      background: linear-gradient(135deg, #b45309 0%, #d97706 100%) !important;
+      box-shadow: 0 0 40px rgba(245, 158, 11, 0.6) !important;
+    }
+    .voice-orb.active .voice-ring {
+      display: block !important;
+      animation: voicePing 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+    .voice-orb.active #voiceOrbGlow {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.6), rgba(249, 115, 22, 0.5)) !important;
+    }
+    .voice-orb.active #voiceOrbInner {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+      box-shadow: inset 0 0 15px rgba(0,0,0,0.3), 0 0 20px rgba(245, 158, 11, 0.5) !important;
+    }
+    .voice-orb.connecting {
+      opacity: 0.7;
+      cursor: wait;
+    }
+    .voice-orb.connecting #voiceOrbIcon i {
+      animation: spin 1s linear infinite;
+    }
+    @keyframes voicePing {
+      0% { transform: scale(1); opacity: 0.75; }
+      75%, 100% { transform: scale(1.3); opacity: 0; }
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
 
   <!-- Mobile Bottom Bar (Language Toggle Only) -->
   <div class="fixed bottom-0 left-0 right-0 bg-spark-dark-card border-t border-spark-dark-border p-3 flex justify-center items-center z-50 md:hidden mobile-bottom-bar">
@@ -1835,12 +1890,187 @@ app.get('*', (req, res) => {
     }
 
     // =====================================================
-    // SPARK VOICE INTEGRATION - Using Official ElevenLabs Widget
-    // This uses the official ElevenLabs Convai Widget which handles
-    // all the complexity of WebSocket, audio, and dynamic variables
+    // SPARK VOICE INTEGRATION - Custom WebSocket Client
+    // No ElevenLabs branding - uses direct WebSocket connection
     // =====================================================
 
     const SPARK_AGENT_ID = 'agent_5601kh453hqqfz59nfemkwk02vax';
+
+    // Voice client state
+    let voiceClient = null;
+    let voiceStatus = 'disconnected'; // disconnected, connecting, connected
+
+    // WebSocket Voice Client Class
+    class SparkVoiceClient {
+      constructor(options = {}) {
+        this.tokenEndpoint = options.tokenEndpoint || '/spark/api/v1/voice/webrtc-token';
+        this.dynamicVariables = options.dynamicVariables || {};
+        this.onTranscript = options.onTranscript || (() => {});
+        this.onStatusChange = options.onStatusChange || (() => {});
+        this.onError = options.onError || console.error;
+
+        this.status = 'disconnected';
+        this.websocket = null;
+        this.localStream = null;
+        this.audioContext = null;
+        this.scriptProcessor = null;
+        this.audioQueue = [];
+        this.isPlaying = false;
+      }
+
+      async connect() {
+        if (this.status === 'connected' || this.status === 'connecting') return;
+        this._setStatus('connecting');
+
+        try {
+          // Get microphone
+          console.log('[SparkVoice] Getting microphone...');
+          this.localStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 16000 },
+            video: false
+          });
+
+          // Get signed URL
+          console.log('[SparkVoice] Getting signed URL...');
+          const response = await fetch(this.tokenEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              school_id: this.dynamicVariables.school_id,
+              language: this.dynamicVariables.language
+            })
+          });
+
+          const data = await response.json();
+          if (!data.success || !data.signed_url) {
+            throw new Error(data.error || 'Failed to get voice token');
+          }
+
+          // Connect WebSocket
+          console.log('[SparkVoice] Connecting WebSocket...');
+          await this._connectWebSocket(data.signed_url);
+
+          // Setup audio capture
+          this._setupAudioCapture();
+          console.log('[SparkVoice] Connected!');
+
+        } catch (error) {
+          console.error('[SparkVoice] Connection failed:', error);
+          this._setStatus('disconnected');
+          this.onError(error);
+          this.disconnect();
+          throw error;
+        }
+      }
+
+      disconnect() {
+        console.log('[SparkVoice] Disconnecting...');
+        if (this.websocket) { this.websocket.close(); this.websocket = null; }
+        if (this.scriptProcessor) { this.scriptProcessor.disconnect(); this.scriptProcessor = null; }
+        if (this.localStream) { this.localStream.getTracks().forEach(t => t.stop()); this.localStream = null; }
+        if (this.audioContext) { this.audioContext.close(); this.audioContext = null; }
+        this.audioQueue = [];
+        this.isPlaying = false;
+        this._setStatus('disconnected');
+      }
+
+      _setStatus(status) {
+        this.status = status;
+        this.onStatusChange(status);
+      }
+
+      async _connectWebSocket(signedUrl) {
+        return new Promise((resolve, reject) => {
+          this.websocket = new WebSocket(signedUrl);
+
+          this.websocket.onopen = () => {
+            console.log('[WebSocket] Connected');
+            if (Object.keys(this.dynamicVariables).length > 0) {
+              this.websocket.send(JSON.stringify({
+                type: 'conversation_initiation_client_data',
+                conversation_initiation_client_data: { dynamic_variables: this.dynamicVariables }
+              }));
+            }
+            this._setStatus('connected');
+            resolve();
+          };
+
+          this.websocket.onmessage = async (event) => {
+            try {
+              const msg = JSON.parse(event.data);
+              await this._handleMessage(msg);
+            } catch (e) { console.error('[WebSocket] Message error:', e); }
+          };
+
+          this.websocket.onerror = (e) => { console.error('[WebSocket] Error:', e); reject(new Error('WebSocket failed')); };
+          this.websocket.onclose = () => { console.log('[WebSocket] Closed'); this._setStatus('disconnected'); };
+        });
+      }
+
+      async _handleMessage(msg) {
+        if (msg.type === 'audio' || msg.audio) {
+          const audio = msg.audio?.chunk || msg.audio_event?.audio_base_64 || msg.audio;
+          if (audio && typeof audio === 'string') await this._playAudio(audio);
+        } else if (msg.type === 'agent_response') {
+          const text = msg.agent_response_event?.agent_response || msg.agent_response || msg.text;
+          if (text) this.onTranscript('agent', text);
+        } else if (msg.type === 'user_transcript') {
+          const text = msg.user_transcription_event?.user_transcript || msg.user_transcript;
+          if (text) this.onTranscript('user', text);
+        } else if (msg.type === 'ping') {
+          if (this.websocket?.readyState === WebSocket.OPEN) this.websocket.send(JSON.stringify({ type: 'pong' }));
+        } else if (msg.type === 'interruption') {
+          this.audioQueue = [];
+        } else if (msg.type === 'error') {
+          this.onError(new Error(msg.error || msg.message || 'Server error'));
+        }
+      }
+
+      _setupAudioCapture() {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        const source = this.audioContext.createMediaStreamSource(this.localStream);
+        this.scriptProcessor = this.audioContext.createScriptProcessor(4096, 1, 1);
+
+        this.scriptProcessor.onaudioprocess = (event) => {
+          if (this.websocket?.readyState !== WebSocket.OPEN) return;
+          const input = event.inputBuffer.getChannelData(0);
+          const pcm = new Int16Array(input.length);
+          for (let i = 0; i < input.length; i++) {
+            const s = Math.max(-1, Math.min(1, input[i]));
+            pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+          }
+          const bytes = new Uint8Array(pcm.buffer);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+          this.websocket.send(JSON.stringify({ user_audio_chunk: btoa(binary) }));
+        };
+
+        source.connect(this.scriptProcessor);
+        this.scriptProcessor.connect(this.audioContext.destination);
+      }
+
+      async _playAudio(base64) {
+        try {
+          const binary = atob(base64);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          const audioBuffer = await this.audioContext.decodeAudioData(bytes.buffer.slice(0));
+          this.audioQueue.push(audioBuffer);
+          if (!this.isPlaying) this._playNext();
+        } catch (e) { console.warn('[Audio] Decode error:', e); }
+      }
+
+      _playNext() {
+        if (this.audioQueue.length === 0) { this.isPlaying = false; return; }
+        this.isPlaying = true;
+        const buffer = this.audioQueue.shift();
+        const source = this.audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(this.audioContext.destination);
+        source.onended = () => this._playNext();
+        source.start(0);
+      }
+    }
 
     function talkToSpark() {
       if (!currentSchoolId) {
@@ -1852,7 +2082,6 @@ app.get('*', (req, res) => {
 
     function openVoiceModal() {
       const modal = document.getElementById('voiceModal');
-      const container = document.getElementById('elevenlabs-widget-container');
       const schoolNameEl = document.getElementById('widgetSchoolName');
 
       // Show modal
@@ -1864,40 +2093,105 @@ app.get('*', (req, res) => {
       const selectedOption = schoolSelect.options[schoolSelect.selectedIndex];
       schoolNameEl.textContent = selectedOption ? selectedOption.text : '';
 
-      // Create widget with dynamic variables
-      const dynamicVars = {
-        school_id: parseInt(currentSchoolId, 10),
-        language: currentLanguage || 'en'
-      };
+      // Reset UI state
+      updateVoiceUI('disconnected');
+      document.getElementById('transcriptArea').classList.add('hidden');
+      document.getElementById('transcriptContent').innerHTML = '';
 
-      console.log('[Spark Widget] Opening with dynamic variables:', dynamicVars);
-
-      // Clear any existing widget
-      container.innerHTML = '';
-
-      // Create the ElevenLabs widget element
-      const widget = document.createElement('elevenlabs-convai');
-      widget.setAttribute('agent-id', SPARK_AGENT_ID);
-      widget.setAttribute('dynamic-variables', JSON.stringify(dynamicVars));
-
-      // Style the widget container
-      widget.style.display = 'block';
-
-      container.appendChild(widget);
-
-      console.log('[Spark Widget] Widget created with agent:', SPARK_AGENT_ID);
+      console.log('[Spark Voice] Modal opened for school:', currentSchoolId);
     }
 
     function closeVoiceModal() {
       const modal = document.getElementById('voiceModal');
-      const container = document.getElementById('elevenlabs-widget-container');
 
-      // Remove the widget
-      container.innerHTML = '';
+      // Disconnect voice if connected
+      if (voiceClient) {
+        voiceClient.disconnect();
+        voiceClient = null;
+      }
+      voiceStatus = 'disconnected';
 
       // Hide modal
       modal.classList.add('hidden');
       modal.classList.remove('flex');
+    }
+
+    async function toggleVoiceConnection() {
+      const orbBtn = document.getElementById('voiceOrbBtn');
+
+      if (voiceStatus === 'connected') {
+        // Disconnect
+        if (voiceClient) {
+          voiceClient.disconnect();
+          voiceClient = null;
+        }
+        voiceStatus = 'disconnected';
+        updateVoiceUI('disconnected');
+      } else if (voiceStatus === 'disconnected') {
+        // Connect
+        voiceStatus = 'connecting';
+        updateVoiceUI('connecting');
+
+        try {
+          voiceClient = new SparkVoiceClient({
+            dynamicVariables: {
+              school_id: parseInt(currentSchoolId, 10),
+              language: currentLanguage || 'en'
+            },
+            onStatusChange: (status) => {
+              voiceStatus = status;
+              updateVoiceUI(status);
+            },
+            onTranscript: (role, text) => {
+              addTranscriptLine(role, text);
+            },
+            onError: (error) => {
+              console.error('[Spark Voice] Error:', error);
+              document.getElementById('voiceStatus').textContent = 'Error: ' + error.message;
+              voiceStatus = 'disconnected';
+              updateVoiceUI('disconnected');
+            }
+          });
+
+          await voiceClient.connect();
+        } catch (error) {
+          console.error('[Spark Voice] Connection failed:', error);
+          voiceStatus = 'disconnected';
+          updateVoiceUI('disconnected');
+        }
+      }
+    }
+
+    function updateVoiceUI(status) {
+      const orbBtn = document.getElementById('voiceOrbBtn');
+      const orbIcon = document.getElementById('voiceOrbIcon');
+      const statusEl = document.getElementById('voiceStatus');
+      const transcriptArea = document.getElementById('transcriptArea');
+
+      orbBtn.classList.remove('active', 'connecting');
+
+      if (status === 'connected') {
+        orbBtn.classList.add('active');
+        orbIcon.innerHTML = '<i class="fas fa-stop text-white text-2xl"></i>';
+        statusEl.textContent = 'Listening... Click orb to stop';
+        transcriptArea.classList.remove('hidden');
+      } else if (status === 'connecting') {
+        orbBtn.classList.add('connecting');
+        orbIcon.innerHTML = '<i class="fas fa-spinner fa-spin text-white text-2xl"></i>';
+        statusEl.textContent = 'Connecting...';
+      } else {
+        orbIcon.innerHTML = '<i class="fas fa-microphone text-white text-2xl"></i>';
+        statusEl.textContent = 'Click the orb below to start';
+      }
+    }
+
+    function addTranscriptLine(role, text) {
+      const container = document.getElementById('transcriptContent');
+      const line = document.createElement('div');
+      line.className = role === 'agent' ? 'text-amber-400' : 'text-blue-400';
+      line.innerHTML = '<span class="font-semibold">' + (role === 'agent' ? 'Spark: ' : 'You: ') + '</span>' + text;
+      container.appendChild(line);
+      container.scrollTop = container.scrollHeight;
     }
 
     function triggerSparkCalls(type) {
