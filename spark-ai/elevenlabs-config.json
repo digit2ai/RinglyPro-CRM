@@ -1,0 +1,384 @@
+{
+  "agent_config": {
+    "name": "Spark - AI Business Intelligence Voice Agent",
+    "first_message": "Hi! This is Spark calling from {{school_name}}. How are you doing today?",
+    "system_prompt": "You are Spark, an AI Business Intelligence Officer for martial arts schools. You help school owners by making calls to retain at-risk members, follow up with leads, recover payments, and win back former members. Be friendly, professional, and results-focused. Always quantify impact when possible. Use the tools available to look up information and take actions.",
+    "language": "en",
+    "voice_id": "YOUR_VOICE_ID_HERE"
+  },
+  "webhook_base_url": "https://aiagent.ringlypro.com/spark/api/v1/voice/tools",
+  "tools": [
+    {
+      "type": "webhook",
+      "name": "lookup_member",
+      "description": "Look up a member/student's information by their phone number. Use this to get details about existing members including their membership status, belt rank, attendance, payment status, and churn risk.",
+      "webhook": {
+        "url": "https://aiagent.ringlypro.com/spark/api/v1/voice/tools/lookup_member",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "phone_number": {
+            "type": "string",
+            "description": "The phone number of the member to look up"
+          },
+          "school_id": {
+            "type": "integer",
+            "description": "The ID of the school to search in"
+          }
+        },
+        "required": ["phone_number"]
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "lookup_lead",
+      "description": "Look up a lead/prospect's information by their phone number. Use this to get details about potential customers including their interest area, lead score, and previous contact attempts.",
+      "webhook": {
+        "url": "https://aiagent.ringlypro.com/spark/api/v1/voice/tools/lookup_lead",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "phone_number": {
+            "type": "string",
+            "description": "The phone number of the lead to look up"
+          },
+          "school_id": {
+            "type": "integer",
+            "description": "The ID of the school to search in"
+          }
+        },
+        "required": ["phone_number"]
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "schedule_trial",
+      "description": "Schedule a trial class for a lead. Use this when a prospect agrees to come in for a trial.",
+      "webhook": {
+        "url": "https://aiagent.ringlypro.com/spark/api/v1/voice/tools/schedule_trial",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "lead_id": {
+            "type": "integer",
+            "description": "The ID of the lead to schedule for"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "The phone number of the lead (alternative to lead_id)"
+          },
+          "school_id": {
+            "type": "integer",
+            "description": "The ID of the school"
+          },
+          "trial_date": {
+            "type": "string",
+            "description": "The date for the trial (e.g., '2026-02-15' or 'next Monday')"
+          },
+          "trial_time": {
+            "type": "string",
+            "description": "The time for the trial (e.g., '6:00 PM')"
+          },
+          "program": {
+            "type": "string",
+            "description": "The program/class type they're interested in (e.g., 'Adult BJJ', 'Kids Karate')"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "update_member",
+      "description": "Update a member's information or add notes to their record. Use this after resolving an issue or when a member provides updated information.",
+      "webhook": {
+        "url": "https://aiagent.ringlypro.com/spark/api/v1/voice/tools/update_member",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "member_id": {
+            "type": "integer",
+            "description": "The ID of the member to update"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "The phone number of the member (alternative to member_id)"
+          },
+          "school_id": {
+            "type": "integer",
+            "description": "The ID of the school"
+          },
+          "updates": {
+            "type": "object",
+            "description": "The fields to update",
+            "properties": {
+              "notes": {
+                "type": "string",
+                "description": "Notes to add to the member's record"
+              },
+              "churn_risk": {
+                "type": "string",
+                "enum": ["low", "medium", "high", "critical"],
+                "description": "Updated churn risk level"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["active", "inactive", "frozen", "cancelled"],
+                "description": "Updated member status"
+              }
+            }
+          }
+        },
+        "required": ["updates"]
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "create_lead",
+      "description": "Create a new lead in the system. Use this when speaking with someone who is not already in the database.",
+      "webhook": {
+        "url": "https://aiagent.ringlypro.com/spark/api/v1/voice/tools/create_lead",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "school_id": {
+            "type": "integer",
+            "description": "The ID of the school"
+          },
+          "first_name": {
+            "type": "string",
+            "description": "The lead's first name"
+          },
+          "last_name": {
+            "type": "string",
+            "description": "The lead's last name"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "The lead's phone number"
+          },
+          "email": {
+            "type": "string",
+            "description": "The lead's email address"
+          },
+          "interest": {
+            "type": "string",
+            "description": "What program/class they're interested in"
+          },
+          "source": {
+            "type": "string",
+            "description": "How they heard about the school"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes about the conversation"
+          }
+        },
+        "required": ["school_id", "first_name", "phone_number"]
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "get_classes",
+      "description": "Get available class times and schedules. Use this to help schedule trials or answer questions about class availability.",
+      "webhook": {
+        "url": "https://aiagent.ringlypro.com/spark/api/v1/voice/tools/get_classes",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "school_id": {
+            "type": "integer",
+            "description": "The ID of the school"
+          },
+          "program_type": {
+            "type": "string",
+            "description": "Filter by program type (e.g., 'Adult BJJ', 'Kids Karate')"
+          },
+          "day_of_week": {
+            "type": "string",
+            "description": "Filter by day of week"
+          }
+        },
+        "required": ["school_id"]
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "log_call",
+      "description": "Log the outcome of the current call. Use this at the end of every call to record what happened.",
+      "webhook": {
+        "url": "https://aiagent.ringlypro.com/spark/api/v1/voice/tools/log_call",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "school_id": {
+            "type": "integer",
+            "description": "The ID of the school"
+          },
+          "call_type": {
+            "type": "string",
+            "enum": ["lead_followup", "no_show", "retention", "payment_reminder", "winback", "appointment_confirmation"],
+            "description": "The type of call"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "The phone number called"
+          },
+          "lead_id": {
+            "type": "integer",
+            "description": "The lead ID if applicable"
+          },
+          "member_id": {
+            "type": "integer",
+            "description": "The member ID if applicable"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": ["trial_booked", "callback_requested", "issue_resolved", "payment_made", "payment_scheduled", "reactivated", "not_interested", "no_answer", "voicemail", "wrong_number"],
+            "description": "The outcome of the call"
+          },
+          "sentiment": {
+            "type": "string",
+            "enum": ["positive", "neutral", "negative"],
+            "description": "The overall sentiment of the conversation"
+          },
+          "summary": {
+            "type": "string",
+            "description": "A brief summary of the call"
+          },
+          "action_items": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of follow-up actions needed"
+          },
+          "next_steps": {
+            "type": "string",
+            "description": "What should happen next"
+          }
+        },
+        "required": ["school_id", "call_type", "outcome"]
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "get_school",
+      "description": "Get school information including name, address, and contact details. Use this to reference the school name or provide location information.",
+      "webhook": {
+        "url": "https://aiagent.ringlypro.com/spark/api/v1/voice/tools/get_school",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "school_id": {
+            "type": "integer",
+            "description": "The ID of the school"
+          }
+        },
+        "required": ["school_id"]
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "check_payment",
+      "description": "Check a member's payment status. Use this during payment recovery calls to understand their current billing situation.",
+      "webhook": {
+        "url": "https://aiagent.ringlypro.com/spark/api/v1/voice/tools/check_payment",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "member_id": {
+            "type": "integer",
+            "description": "The ID of the member"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "The phone number of the member (alternative to member_id)"
+          },
+          "school_id": {
+            "type": "integer",
+            "description": "The ID of the school"
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "call_types": {
+    "lead_followup": {
+      "description": "Follow up with new leads to schedule trial classes",
+      "first_message": "Hi! This is Spark calling from {{school_name}}. I'm reaching out because you recently expressed interest in our martial arts program. Do you have a quick moment?",
+      "goal": "Schedule a trial class"
+    },
+    "retention": {
+      "description": "Re-engage members showing signs of churning",
+      "first_message": "Hi! This is Spark calling from {{school_name}}. I noticed it's been a little while since we've seen you at the academy, and I wanted to personally check in. How have you been?",
+      "goal": "Understand concerns and offer solutions to keep them training"
+    },
+    "no_show": {
+      "description": "Follow up with leads who missed their scheduled trial",
+      "first_message": "Hi! This is Spark from {{school_name}}. I noticed we missed you at your trial yesterday - I just wanted to make sure everything's okay?",
+      "goal": "Reschedule the missed trial"
+    },
+    "payment_reminder": {
+      "description": "Collect past-due payments while preserving the relationship",
+      "first_message": "Hi! This is Spark from {{school_name}}. How are you today? I'm calling because our system flagged a payment that didn't process, and I wanted to reach out personally to help get this sorted.",
+      "goal": "Resolve payment issue or set up payment plan"
+    },
+    "winback": {
+      "description": "Re-enroll cancelled members",
+      "first_message": "Hi! This is Spark from {{school_name}}. We haven't seen you in a while, and I wanted to check in and see how you're doing!",
+      "goal": "Schedule a return visit and offer special comeback rate"
+    }
+  },
+  "dynamic_variables": {
+    "school_id": "The ID of the school making the call (required for all tools)",
+    "school_name": "The name of the martial arts school",
+    "member_name": "The name of the member being called",
+    "lead_name": "The name of the lead being called",
+    "call_type": "The type of call being made"
+  }
+}
