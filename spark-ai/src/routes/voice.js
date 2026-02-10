@@ -917,5 +917,574 @@ module.exports = (models) => {
     }
   });
 
+  // =====================================================
+  // ELEVENLABS WEBHOOK TOOLS - GET endpoints for voice agent
+  // These are called by ElevenLabs agent during conversations
+  // Similar to Store Health AI tools but for martial arts schools
+  // =====================================================
+
+  const { SparkHealthScore, SparkRevenue } = models;
+  const { Op } = require('sequelize');
+
+  // Tool: get_school_overview - Get school health and key metrics
+  // URL: /spark/api/v1/voice/school/{school_id}/overview
+  router.get('/school/:school_id/overview', async (req, res) => {
+    try {
+      const school_id = parseInt(req.params.school_id, 10);
+
+      if (!school_id) {
+        return res.json({ error: 'School ID required' });
+      }
+
+      const school = await SparkSchool.findByPk(school_id);
+      if (!school) {
+        return res.json({ error: 'School not found' });
+      }
+
+      // Get latest health score
+      const healthScore = await SparkHealthScore.findOne({
+        where: { school_id },
+        order: [['date', 'DESC']]
+      });
+
+      // Get student counts
+      const totalStudents = await SparkStudent.count({ where: { school_id } });
+      const activeStudents = await SparkStudent.count({ where: { school_id, status: 'active' } });
+      const atRiskStudents = await SparkStudent.count({
+        where: { school_id, churn_risk: ['high', 'critical'] }
+      });
+
+      // Get lead counts
+      const hotLeads = await SparkLead.count({ where: { school_id, temperature: 'hot' } });
+      const totalLeads = await SparkLead.count({
+        where: { school_id, status: { [Op.notIn]: ['converted', 'lost'] } }
+      });
+
+      // Get this month's revenue
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const monthlyRevenue = await SparkRevenue.sum('amount', {
+        where: {
+          school_id,
+          date: { [Op.gte]: startOfMonth }
+        }
+      }) || 0;
+
+      const revenueTarget = parseFloat(school.monthly_revenue_target) || 0;
+      const revenuePercent = revenueTarget > 0 ? Math.round((monthlyRevenue / revenueTarget) * 100) : 0;
+
+      res.json({
+        school_name: school.name,
+        martial_art: school.martial_art_type,
+        health_score: healthScore?.overall_score || 0,
+        health_grade: healthScore?.grade || 'N/A',
+        health_trend: healthScore?.vs_last_week > 0 ? 'improving' : healthScore?.vs_last_week < 0 ? 'declining' : 'stable',
+        students: {
+          active: activeStudents,
+          total: totalStudents,
+          at_risk: atRiskStudents
+        },
+        leads: {
+          hot: hotLeads,
+          total: totalLeads
+        },
+        revenue: {
+          this_month: `$${Math.round(monthlyRevenue).toLocaleString()}`,
+          target: `$${Math.round(revenueTarget).toLocaleString()}`,
+          percent_to_goal: revenuePercent
+        },
+        summary: `${school.name} has a health score of ${healthScore?.overall_score || 0} out of 100, grade ${healthScore?.grade || 'N/A'}. There are ${activeStudents} active students, ${atRiskStudents} at risk of leaving, and ${hotLeads} hot leads ready to convert. Revenue is at ${revenuePercent}% of the monthly target.`
+      });
+    } catch (error) {
+      console.error('get_school_overview error:', error);
+      res.json({ error: error.message });
+    }
+  });
+
+  // Tool: get_at_risk_students - Get students at risk of churning
+  // URL: /spark/api/v1/voice/school/{school_id}/at-risk-students
+  router.get('/school/:school_id/at-risk-students', async (req, res) => {
+    try {
+      const school_id = parseInt(req.params.school_id, 10);
+
+      if (!school_id) {
+        return res.json({ error: 'School ID required' });
+      }
+
+      const atRiskStudents = await SparkStudent.findAll({
+        where: {
+          school_id,
+          churn_risk: ['high', 'critical'],
+          status: 'active'
+        },
+        order: [['churn_risk_score', 'DESC']],
+        limit: 10
+      });
+
+      if (atRiskStudents.length === 0) {
+        return res.json({
+          count: 0,
+          students: [],
+          summary: "Great news! No students are currently at high risk of leaving. Retention looks healthy."
+        });
+      }
+
+      const criticalCount = atRiskStudents.filter(s => s.churn_risk === 'critical').length;
+      const highCount = atRiskStudents.filter(s => s.churn_risk === 'high').length;
+
+      const students = atRiskStudents.map(s => {
+        const daysSinceAttendance = s.last_attendance
+          ? Math.floor((new Date() - new Date(s.last_attendance)) / (1000 * 60 * 60 * 24))
+          : null;
+
+        return {
+          name: `${s.first_name} ${s.last_name}`,
+          belt_rank: s.belt_rank,
+          churn_risk: s.churn_risk,
+          risk_score: s.churn_risk_score,
+          days_since_training: daysSinceAttendance,
+          membership: s.membership_type,
+          payment_status: s.payment_status,
+          issue: daysSinceAttendance > 14 ? `Hasn't trained in ${daysSinceAttendance} days` :
+                 s.payment_status !== 'current' ? 'Payment issues' :
+                 'Low engagement detected'
+        };
+      });
+
+      res.json({
+        count: atRiskStudents.length,
+        critical: criticalCount,
+        high: highCount,
+        students,
+        summary: `There are ${atRiskStudents.length} students at risk of leaving: ${criticalCount} critical and ${highCount} high risk. The top concerns are ${students[0]?.name} (${students[0]?.issue}) and ${students[1]?.name || 'others'}. I recommend reaching out to them this week.`
+      });
+    } catch (error) {
+      console.error('get_at_risk_students error:', error);
+      res.json({ error: error.message });
+    }
+  });
+
+  // Tool: get_school_details - Get full school information
+  // URL: /spark/api/v1/voice/school/{school_id}/details
+  router.get('/school/:school_id/details', async (req, res) => {
+    try {
+      const school_id = parseInt(req.params.school_id, 10);
+
+      if (!school_id) {
+        return res.json({ error: 'School ID required' });
+      }
+
+      const school = await SparkSchool.findByPk(school_id);
+      if (!school) {
+        return res.json({ error: 'School not found' });
+      }
+
+      // Get student breakdown by belt
+      const studentsByBelt = await SparkStudent.findAll({
+        where: { school_id, status: 'active' },
+        attributes: [
+          'belt_rank',
+          [models.sequelize.fn('COUNT', models.sequelize.col('id')), 'count']
+        ],
+        group: ['belt_rank'],
+        raw: true
+      });
+
+      // Get membership breakdown
+      const membershipBreakdown = await SparkStudent.findAll({
+        where: { school_id, status: 'active' },
+        attributes: [
+          'membership_type',
+          [models.sequelize.fn('COUNT', models.sequelize.col('id')), 'count']
+        ],
+        group: ['membership_type'],
+        raw: true
+      });
+
+      res.json({
+        name: school.name,
+        owner: school.owner_name,
+        martial_art: school.martial_art_type,
+        location: `${school.city || ''}, ${school.state || ''}`.trim() || 'Not specified',
+        address: school.address,
+        phone: school.owner_phone,
+        website: school.website,
+        capacity: school.student_capacity,
+        active_students: school.active_students,
+        utilization: school.student_capacity > 0
+          ? `${Math.round((school.active_students / school.student_capacity) * 100)}%`
+          : 'N/A',
+        plan: school.plan_type,
+        voice_agent: school.voice_agent,
+        monthly_target: `$${parseFloat(school.monthly_revenue_target || 0).toLocaleString()}`,
+        belt_distribution: studentsByBelt.reduce((acc, row) => {
+          acc[row.belt_rank || 'Unknown'] = parseInt(row.count);
+          return acc;
+        }, {}),
+        membership_types: membershipBreakdown.reduce((acc, row) => {
+          acc[row.membership_type || 'Unknown'] = parseInt(row.count);
+          return acc;
+        }, {})
+      });
+    } catch (error) {
+      console.error('get_school_details error:', error);
+      res.json({ error: error.message });
+    }
+  });
+
+  // Tool: get_kpi_breakdown - Get breakdown of specific KPI
+  // URL: /spark/api/v1/voice/school/{school_id}/kpi/{kpi_code}
+  // KPI codes: RETENTION, REVENUE, LEADS, ATTENDANCE, ENGAGEMENT
+  router.get('/school/:school_id/kpi/:kpi_code', async (req, res) => {
+    try {
+      const school_id = parseInt(req.params.school_id, 10);
+      const kpi_code = req.params.kpi_code?.toUpperCase();
+
+      if (!school_id) {
+        return res.json({ error: 'School ID required' });
+      }
+
+      const validKPIs = ['RETENTION', 'REVENUE', 'LEADS', 'ATTENDANCE', 'ENGAGEMENT'];
+      if (!validKPIs.includes(kpi_code)) {
+        return res.json({
+          error: `Invalid KPI code. Use: ${validKPIs.join(', ')}`
+        });
+      }
+
+      const school = await SparkSchool.findByPk(school_id);
+      if (!school) {
+        return res.json({ error: 'School not found' });
+      }
+
+      const healthScore = await SparkHealthScore.findOne({
+        where: { school_id },
+        order: [['date', 'DESC']]
+      });
+
+      let result = { kpi: kpi_code, school_name: school.name };
+
+      switch (kpi_code) {
+        case 'RETENTION': {
+          const totalActive = await SparkStudent.count({ where: { school_id, status: 'active' } });
+          const lowRisk = await SparkStudent.count({ where: { school_id, status: 'active', churn_risk: 'low' } });
+          const mediumRisk = await SparkStudent.count({ where: { school_id, status: 'active', churn_risk: 'medium' } });
+          const highRisk = await SparkStudent.count({ where: { school_id, status: 'active', churn_risk: 'high' } });
+          const criticalRisk = await SparkStudent.count({ where: { school_id, status: 'active', churn_risk: 'critical' } });
+
+          result = {
+            ...result,
+            score: healthScore?.retention_score || 0,
+            total_active_students: totalActive,
+            risk_breakdown: {
+              low: lowRisk,
+              medium: mediumRisk,
+              high: highRisk,
+              critical: criticalRisk
+            },
+            at_risk_count: highRisk + criticalRisk,
+            retention_rate: totalActive > 0 ? `${Math.round(((lowRisk + mediumRisk) / totalActive) * 100)}%` : 'N/A',
+            summary: `Retention score is ${healthScore?.retention_score || 0} out of 100. ${lowRisk} students are stable, ${mediumRisk} need attention, and ${highRisk + criticalRisk} are at risk of leaving.`
+          };
+          break;
+        }
+
+        case 'REVENUE': {
+          const startOfMonth = new Date();
+          startOfMonth.setDate(1);
+          startOfMonth.setHours(0, 0, 0, 0);
+
+          const monthlyRevenue = await SparkRevenue.sum('amount', {
+            where: { school_id, date: { [Op.gte]: startOfMonth } }
+          }) || 0;
+
+          const target = parseFloat(school.monthly_revenue_target) || 0;
+          const percent = target > 0 ? Math.round((monthlyRevenue / target) * 100) : 0;
+
+          // Revenue by type
+          const byType = await SparkRevenue.findAll({
+            where: { school_id, date: { [Op.gte]: startOfMonth } },
+            attributes: [
+              'type',
+              [models.sequelize.fn('SUM', models.sequelize.col('amount')), 'total']
+            ],
+            group: ['type'],
+            raw: true
+          });
+
+          result = {
+            ...result,
+            score: healthScore?.revenue_score || 0,
+            this_month: `$${Math.round(monthlyRevenue).toLocaleString()}`,
+            target: `$${Math.round(target).toLocaleString()}`,
+            percent_to_goal: percent,
+            remaining: `$${Math.round(Math.max(0, target - monthlyRevenue)).toLocaleString()}`,
+            by_category: byType.reduce((acc, row) => {
+              acc[row.type] = `$${Math.round(parseFloat(row.total)).toLocaleString()}`;
+              return acc;
+            }, {}),
+            summary: `Revenue score is ${healthScore?.revenue_score || 0}. You've collected $${Math.round(monthlyRevenue).toLocaleString()} this month, which is ${percent}% of your $${Math.round(target).toLocaleString()} target. ${percent >= 100 ? 'Great job hitting the goal!' : `$${Math.round(target - monthlyRevenue).toLocaleString()} to go.`}`
+          };
+          break;
+        }
+
+        case 'LEADS': {
+          const hotLeads = await SparkLead.count({ where: { school_id, temperature: 'hot', status: { [Op.notIn]: ['converted', 'lost'] } } });
+          const warmLeads = await SparkLead.count({ where: { school_id, temperature: 'warm', status: { [Op.notIn]: ['converted', 'lost'] } } });
+          const coldLeads = await SparkLead.count({ where: { school_id, temperature: 'cold', status: { [Op.notIn]: ['converted', 'lost'] } } });
+          const trialScheduled = await SparkLead.count({ where: { school_id, status: 'trial_scheduled' } });
+
+          result = {
+            ...result,
+            score: healthScore?.lead_score || 0,
+            total_active_leads: hotLeads + warmLeads + coldLeads,
+            temperature_breakdown: {
+              hot: hotLeads,
+              warm: warmLeads,
+              cold: coldLeads
+            },
+            trials_scheduled: trialScheduled,
+            conversion_potential: hotLeads * 200, // Estimated value
+            summary: `Lead score is ${healthScore?.lead_score || 0}. You have ${hotLeads} hot leads ready to convert, ${warmLeads} warm leads to nurture, and ${trialScheduled} trial classes scheduled. Focus on the hot leads first.`
+          };
+          break;
+        }
+
+        case 'ATTENDANCE': {
+          const activeStudents = await SparkStudent.findAll({
+            where: { school_id, status: 'active' },
+            attributes: ['id', 'first_name', 'last_name', 'last_attendance', 'attendance_streak', 'total_classes']
+          });
+
+          const today = new Date();
+          const trainedThisWeek = activeStudents.filter(s => {
+            if (!s.last_attendance) return false;
+            const daysSince = Math.floor((today - new Date(s.last_attendance)) / (1000 * 60 * 60 * 24));
+            return daysSince <= 7;
+          }).length;
+
+          const avgStreak = activeStudents.length > 0
+            ? Math.round(activeStudents.reduce((sum, s) => sum + (s.attendance_streak || 0), 0) / activeStudents.length)
+            : 0;
+
+          result = {
+            ...result,
+            score: healthScore?.attendance_score || 0,
+            students_trained_this_week: trainedThisWeek,
+            total_active: activeStudents.length,
+            weekly_attendance_rate: activeStudents.length > 0 ? `${Math.round((trainedThisWeek / activeStudents.length) * 100)}%` : 'N/A',
+            average_streak: avgStreak,
+            summary: `Attendance score is ${healthScore?.attendance_score || 0}. ${trainedThisWeek} out of ${activeStudents.length} active students trained this week. Average attendance streak is ${avgStreak} weeks.`
+          };
+          break;
+        }
+
+        case 'ENGAGEMENT': {
+          const activeStudents = await SparkStudent.count({ where: { school_id, status: 'active' } });
+          const highEngaged = await SparkStudent.count({
+            where: { school_id, status: 'active', attendance_streak: { [Op.gte]: 8 } }
+          });
+          const competitionTeam = await SparkStudent.count({
+            where: { school_id, status: 'active', membership_type: { [Op.iLike]: '%competition%' } }
+          });
+
+          result = {
+            ...result,
+            score: healthScore?.engagement_score || 0,
+            highly_engaged: highEngaged,
+            competition_team: competitionTeam,
+            engagement_rate: activeStudents > 0 ? `${Math.round((highEngaged / activeStudents) * 100)}%` : 'N/A',
+            summary: `Engagement score is ${healthScore?.engagement_score || 0}. ${highEngaged} students are highly engaged with 8+ week streaks, and ${competitionTeam} are on the competition team.`
+          };
+          break;
+        }
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('get_kpi_breakdown error:', error);
+      res.json({ error: error.message });
+    }
+  });
+
+  // Tool: get_school_alerts - Get active alerts for the school
+  // URL: /spark/api/v1/voice/school/{school_id}/alerts
+  router.get('/school/:school_id/alerts', async (req, res) => {
+    try {
+      const school_id = parseInt(req.params.school_id, 10);
+
+      if (!school_id) {
+        return res.json({ error: 'School ID required' });
+      }
+
+      const school = await SparkSchool.findByPk(school_id);
+      if (!school) {
+        return res.json({ error: 'School not found' });
+      }
+
+      const alerts = [];
+
+      // Check for at-risk students
+      const criticalStudents = await SparkStudent.count({
+        where: { school_id, status: 'active', churn_risk: 'critical' }
+      });
+      if (criticalStudents > 0) {
+        alerts.push({
+          type: 'critical',
+          category: 'retention',
+          message: `${criticalStudents} student${criticalStudents > 1 ? 's' : ''} at critical risk of leaving`,
+          action: 'Call them today to re-engage'
+        });
+      }
+
+      const highRiskStudents = await SparkStudent.count({
+        where: { school_id, status: 'active', churn_risk: 'high' }
+      });
+      if (highRiskStudents > 0) {
+        alerts.push({
+          type: 'warning',
+          category: 'retention',
+          message: `${highRiskStudents} student${highRiskStudents > 1 ? 's' : ''} showing high churn risk`,
+          action: 'Schedule check-in calls this week'
+        });
+      }
+
+      // Check for payment issues
+      const paymentIssues = await SparkStudent.count({
+        where: { school_id, status: 'active', payment_status: ['past_due', 'failed'] }
+      });
+      if (paymentIssues > 0) {
+        alerts.push({
+          type: 'warning',
+          category: 'billing',
+          message: `${paymentIssues} student${paymentIssues > 1 ? 's' : ''} with payment issues`,
+          action: 'Follow up on failed payments'
+        });
+      }
+
+      // Check for hot leads
+      const hotLeads = await SparkLead.count({
+        where: { school_id, temperature: 'hot', status: { [Op.notIn]: ['converted', 'lost'] } }
+      });
+      if (hotLeads > 0) {
+        alerts.push({
+          type: 'opportunity',
+          category: 'leads',
+          message: `${hotLeads} hot lead${hotLeads > 1 ? 's' : ''} ready to convert`,
+          action: 'Follow up within 24 hours'
+        });
+      }
+
+      // Check revenue status
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      const monthlyRevenue = await SparkRevenue.sum('amount', {
+        where: { school_id, date: { [Op.gte]: startOfMonth } }
+      }) || 0;
+      const target = parseFloat(school.monthly_revenue_target) || 0;
+      const percent = target > 0 ? Math.round((monthlyRevenue / target) * 100) : 0;
+
+      if (percent < 50 && new Date().getDate() > 15) {
+        alerts.push({
+          type: 'warning',
+          category: 'revenue',
+          message: `Revenue at ${percent}% of monthly target`,
+          action: 'Focus on lead conversion and upsells'
+        });
+      }
+
+      // Check for scheduled trials
+      const upcomingTrials = await SparkLead.count({
+        where: {
+          school_id,
+          status: 'trial_scheduled',
+          trial_date: { [Op.gte]: new Date() }
+        }
+      });
+      if (upcomingTrials > 0) {
+        alerts.push({
+          type: 'info',
+          category: 'leads',
+          message: `${upcomingTrials} trial class${upcomingTrials > 1 ? 'es' : ''} scheduled`,
+          action: 'Prepare for trial visitors'
+        });
+      }
+
+      const criticalAlerts = alerts.filter(a => a.type === 'critical').length;
+      const warningAlerts = alerts.filter(a => a.type === 'warning').length;
+
+      res.json({
+        school_name: school.name,
+        total_alerts: alerts.length,
+        critical: criticalAlerts,
+        warnings: warningAlerts,
+        opportunities: alerts.filter(a => a.type === 'opportunity').length,
+        alerts,
+        summary: alerts.length === 0
+          ? "No active alerts. Everything looks good!"
+          : `There are ${alerts.length} items needing attention: ${criticalAlerts} critical, ${warningAlerts} warnings. ${alerts[0]?.message}.`
+      });
+    } catch (error) {
+      console.error('get_school_alerts error:', error);
+      res.json({ error: error.message });
+    }
+  });
+
+  // Tool: get_hot_leads - Get leads ready to convert
+  // URL: /spark/api/v1/voice/school/{school_id}/hot-leads
+  router.get('/school/:school_id/hot-leads', async (req, res) => {
+    try {
+      const school_id = parseInt(req.params.school_id, 10);
+
+      if (!school_id) {
+        return res.json({ error: 'School ID required' });
+      }
+
+      const hotLeads = await SparkLead.findAll({
+        where: {
+          school_id,
+          temperature: 'hot',
+          status: { [Op.notIn]: ['converted', 'lost'] }
+        },
+        order: [['lead_score', 'DESC']],
+        limit: 10
+      });
+
+      if (hotLeads.length === 0) {
+        return res.json({
+          count: 0,
+          leads: [],
+          summary: "No hot leads right now. Consider running a promotion or checking on warm leads."
+        });
+      }
+
+      const leads = hotLeads.map(l => ({
+        name: `${l.first_name} ${l.last_name || ''}`.trim(),
+        phone: l.phone,
+        email: l.email,
+        interest: l.interest,
+        source: l.source,
+        lead_score: l.lead_score,
+        status: l.status,
+        trial_scheduled: l.status === 'trial_scheduled',
+        trial_date: l.trial_date,
+        days_since_contact: l.last_contact_date
+          ? Math.floor((new Date() - new Date(l.last_contact_date)) / (1000 * 60 * 60 * 24))
+          : null
+      }));
+
+      res.json({
+        count: hotLeads.length,
+        leads,
+        estimated_value: `$${hotLeads.length * 175}`,
+        summary: `You have ${hotLeads.length} hot leads. Top prospect is ${leads[0].name}, interested in ${leads[0].interest}. ${leads[0].trial_scheduled ? 'They have a trial scheduled.' : 'Recommend scheduling a trial soon.'}`
+      });
+    } catch (error) {
+      console.error('get_hot_leads error:', error);
+      res.json({ error: error.message });
+    }
+  });
+
   return router;
 };
