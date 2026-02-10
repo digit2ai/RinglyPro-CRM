@@ -1932,18 +1932,42 @@ app.get('*', (req, res) => {
       const selectedOption = schoolSelect.options[schoolSelect.selectedIndex];
       schoolNameEl.textContent = selectedOption ? selectedOption.text : '';
 
-      // Create hidden widget with dynamic variables
+      // Create widget with comprehensive dynamic variables for personalized greeting
+      const school = currentSchoolData?.school || {};
+      const health = currentSchoolData?.health || {};
+      const students = currentSchoolData?.students || {};
+      const revenue = currentSchoolData?.revenue || {};
+      const leads = currentSchoolData?.leads || {};
+
+      // Calculate key metrics
+      const atRiskCount = students.at_risk || 0;
+      const revenueAtRisk = atRiskCount * 175; // Avg monthly value per student
+      const hotLeads = leads.hot || 0;
+      const growthPotential = hotLeads * 175; // Potential monthly revenue from leads
+
       const dynamicVars = {
         school_id: parseInt(currentSchoolId, 10),
-        language: currentLanguage || 'en'
+        language: currentLanguage || 'en',
+        school_name: school.name || 'your school',
+        martial_art: school.martial_art_type || 'martial arts',
+        health_score: health.overall_score || 0,
+        health_grade: health.grade || 'N/A',
+        active_students: students.active || 0,
+        at_risk_students: atRiskCount,
+        revenue_at_risk: revenueAtRisk,
+        hot_leads: hotLeads,
+        growth_potential: growthPotential,
+        monthly_revenue: revenue.this_month || 0,
+        revenue_target: revenue.target || 0,
+        revenue_percent: revenue.percent || 0
       };
 
-      console.log('[Spark Widget] Creating hidden widget with:', dynamicVars);
+      console.log('[Spark] Creating widget with dynamic variables:', dynamicVars);
 
       // Clear any existing widget
       container.innerHTML = '';
 
-      // Create the ElevenLabs widget (hidden)
+      // Create the ElevenLabs widget
       widgetElement = document.createElement('elevenlabs-convai');
       widgetElement.setAttribute('agent-id', SPARK_AGENT_ID);
       widgetElement.setAttribute('dynamic-variables', JSON.stringify(dynamicVars));
@@ -1953,7 +1977,7 @@ app.get('*', (req, res) => {
       isVoiceActive = false;
       updateOrbUI(false);
 
-      console.log('[Spark Widget] Hidden widget created');
+      console.log('[Spark] Widget created with school:', dynamicVars.school_name, 'Health:', dynamicVars.health_score);
     }
 
     function closeVoiceModal() {
