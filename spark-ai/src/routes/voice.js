@@ -926,6 +926,94 @@ module.exports = (models) => {
   const { SparkHealthScore, SparkRevenue } = models;
   const { Op } = require('sequelize');
 
+  // Tool: get_greeting - Get personalized greeting with key metrics
+  // IMPORTANT: This should be called FIRST when conversation starts
+  // URL: /spark/api/v1/voice/school/{school_id}/greeting
+  router.get('/school/:school_id/greeting', async (req, res) => {
+    try {
+      const school_id = parseInt(req.params.school_id, 10);
+      const language = req.query.language || 'en';
+
+      if (!school_id) {
+        return res.json({ greeting: "Hello! I'm Spark, your AI business intelligence assistant. How can I help you today?" });
+      }
+
+      const school = await SparkSchool.findByPk(school_id);
+      if (!school) {
+        return res.json({ greeting: "Hello! I'm Spark. I couldn't find your school information, but I'm here to help. What would you like to know?" });
+      }
+
+      // Get health score
+      const healthScore = await SparkHealthScore.findOne({
+        where: { school_id },
+        order: [['date', 'DESC']]
+      });
+
+      // Get at-risk students
+      const atRiskCount = await SparkStudent.count({
+        where: { school_id, churn_risk: ['high', 'critical'], status: 'active' }
+      });
+
+      // Get hot leads
+      const hotLeads = await SparkLead.count({
+        where: { school_id, temperature: 'hot', status: { [Op.notIn]: ['converted', 'lost'] } }
+      });
+
+      // Get revenue data
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const monthlyRevenue = await SparkRevenue.sum('amount', {
+        where: { school_id, date: { [Op.gte]: startOfMonth } }
+      }) || 0;
+
+      const revenueTarget = parseFloat(school.monthly_revenue_target) || 0;
+      const revenuePercent = revenueTarget > 0 ? Math.round((monthlyRevenue / revenueTarget) * 100) : 0;
+      const revenueAtRisk = atRiskCount * 175;
+      const growthPotential = hotLeads * 175;
+
+      // Build personalized greeting
+      let greeting;
+      if (language === 'es') {
+        greeting = `¡Hola! Soy Spark, tu asistente de inteligencia empresarial para ${school.name}. `;
+        greeting += `Tu puntuación de salud del negocio es ${healthScore?.overall_score || 0} de 100, grado ${healthScore?.grade || 'N/A'}. `;
+        if (atRiskCount > 0) {
+          greeting += `Tienes ${atRiskCount} estudiante${atRiskCount > 1 ? 's' : ''} en riesgo de cancelar, representando $${revenueAtRisk.toLocaleString()} en riesgo. `;
+        }
+        if (hotLeads > 0) {
+          greeting += `Hay ${hotLeads} prospecto${hotLeads > 1 ? 's' : ''} caliente${hotLeads > 1 ? 's' : ''} listos para convertir, con un potencial de $${growthPotential.toLocaleString()} en ingresos mensuales. `;
+        }
+        greeting += `Estás al ${revenuePercent}% de tu meta de ingresos este mes. ¿En qué puedo ayudarte hoy?`;
+      } else {
+        greeting = `Hello! I'm Spark, your AI business intelligence assistant for ${school.name}. `;
+        greeting += `Your business health score is ${healthScore?.overall_score || 0} out of 100, grade ${healthScore?.grade || 'N/A'}. `;
+        if (atRiskCount > 0) {
+          greeting += `You have ${atRiskCount} student${atRiskCount > 1 ? 's' : ''} at risk of leaving, representing $${revenueAtRisk.toLocaleString()} in revenue at risk. `;
+        }
+        if (hotLeads > 0) {
+          greeting += `There are ${hotLeads} hot lead${hotLeads > 1 ? 's' : ''} ready to convert, with $${growthPotential.toLocaleString()} in potential monthly revenue. `;
+        }
+        greeting += `You're at ${revenuePercent}% of your revenue goal this month. How can I help you today?`;
+      }
+
+      res.json({
+        greeting,
+        school_name: school.name,
+        health_score: healthScore?.overall_score || 0,
+        health_grade: healthScore?.grade || 'N/A',
+        at_risk_students: atRiskCount,
+        revenue_at_risk: revenueAtRisk,
+        hot_leads: hotLeads,
+        growth_potential: growthPotential,
+        revenue_percent: revenuePercent
+      });
+    } catch (error) {
+      console.error('get_greeting error:', error);
+      res.json({ greeting: "Hello! I'm Spark, your AI business intelligence assistant. How can I help you today?" });
+    }
+  });
+
   // Tool: get_school_overview - Get school health and key metrics
   // URL: /spark/api/v1/voice/school/{school_id}/overview
   router.get('/school/:school_id/overview', async (req, res) => {
