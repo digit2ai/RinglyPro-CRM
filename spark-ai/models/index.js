@@ -48,4 +48,19 @@ Object.keys(db).forEach(modelName => {
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
+// Auto-sync tables on startup (creates tables if they don't exist)
+(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Spark AI: Database connected');
+
+    // Sync all models (creates tables if they don't exist)
+    // Using alter: false to avoid modifying existing tables
+    await sequelize.sync({ alter: false });
+    console.log('Spark AI: Database tables synced');
+  } catch (error) {
+    console.error('Spark AI: Database sync error:', error.message);
+  }
+})();
+
 module.exports = db;
