@@ -1625,9 +1625,13 @@ app.get('*', (req, res) => {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-    /* Widget is positioned off-screen, no need to hide with opacity */
-    #hiddenWidgetContainer elevenlabs-convai {
-      display: block;
+    /* Hide ElevenLabs widget visually but keep it functional */
+    elevenlabs-convai {
+      position: fixed !important;
+      bottom: 20px !important;
+      right: 20px !important;
+      clip-path: inset(100%) !important;
+      overflow: hidden !important;
     }
   </style>
 
