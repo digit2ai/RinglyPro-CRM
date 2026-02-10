@@ -1554,7 +1554,10 @@ app.get('*', (req, res) => {
         const response = await fetch(this.tokenEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ dynamicVariables: this.dynamicVariables })
+          body: JSON.stringify({
+            school_id: this.dynamicVariables.school_id,
+            language: this.dynamicVariables.language || 'en'
+          })
         });
 
         if (!response.ok) {
