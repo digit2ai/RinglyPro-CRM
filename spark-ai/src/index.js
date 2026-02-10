@@ -1900,7 +1900,7 @@ app.get('*', (req, res) => {
     let voiceClient = null;
     let voiceStatus = 'disconnected'; // disconnected, connecting, connected
 
-    // WebSocket Voice Client Class - Fixed Audio Playback
+    // WebSocket Voice Client Class - Using Audio Element for MP3 Streaming
     class SparkVoiceClient {
       constructor(options = {}) {
         this.tokenEndpoint = options.tokenEndpoint || '/spark/api/v1/voice/webrtc-token';
@@ -1912,12 +1912,11 @@ app.get('*', (req, res) => {
         this.status = 'disconnected';
         this.websocket = null;
         this.localStream = null;
-        this.inputAudioContext = null;  // For capturing mic at 16kHz
-        this.outputAudioContext = null; // For playing audio at native rate
+        this.inputAudioContext = null;
         this.scriptProcessor = null;
         this.audioQueue = [];
         this.isPlaying = false;
-        this.nextPlayTime = 0;
+        this.currentAudio = null;
       }
 
       async connect() {
@@ -1925,13 +1924,7 @@ app.get('*', (req, res) => {
         this._setStatus('connecting');
 
         try {
-          // FIRST: Create and resume audio contexts (must happen on user gesture)
-          console.log('[SparkVoice] Creating audio contexts...');
-          this.outputAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-          await this.outputAudioContext.resume();
-          console.log('[SparkVoice] Output audio context ready, state:', this.outputAudioContext.state);
-
-          // Get microphone
+          // Get microphone first
           console.log('[SparkVoice] Getting microphone...');
           this.localStream = await navigator.mediaDevices.getUserMedia({
             audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
@@ -1941,6 +1934,7 @@ app.get('*', (req, res) => {
           // Create input context for mic capture at 16kHz
           this.inputAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
           await this.inputAudioContext.resume();
+          console.log('[SparkVoice] Input audio context state:', this.inputAudioContext.state);
 
           // Get signed URL
           console.log('[SparkVoice] Getting signed URL...');
@@ -1981,10 +1975,9 @@ app.get('*', (req, res) => {
         if (this.scriptProcessor) { this.scriptProcessor.disconnect(); this.scriptProcessor = null; }
         if (this.localStream) { this.localStream.getTracks().forEach(t => t.stop()); this.localStream = null; }
         if (this.inputAudioContext) { this.inputAudioContext.close(); this.inputAudioContext = null; }
-        if (this.outputAudioContext) { this.outputAudioContext.close(); this.outputAudioContext = null; }
+        if (this.currentAudio) { this.currentAudio.pause(); this.currentAudio = null; }
         this.audioQueue = [];
         this.isPlaying = false;
-        this.nextPlayTime = 0;
         this._setStatus('disconnected');
       }
 
@@ -2022,7 +2015,6 @@ app.get('*', (req, res) => {
       }
 
       async _handleMessage(msg) {
-        // Log message types for debugging
         const msgType = msg.type || Object.keys(msg)[0];
         if (msgType !== 'ping') console.log('[WebSocket] Message type:', msgType);
 
@@ -2030,7 +2022,7 @@ app.get('*', (req, res) => {
           const audio = msg.audio?.chunk || msg.audio_event?.audio_base_64 || msg.audio;
           if (audio && typeof audio === 'string') {
             console.log('[Audio] Received chunk, length:', audio.length);
-            await this._playAudio(audio);
+            this._queueAudio(audio);
           }
         } else if (msg.type === 'agent_response') {
           const text = msg.agent_response_event?.agent_response || msg.agent_response || msg.text;
@@ -2043,7 +2035,8 @@ app.get('*', (req, res) => {
         } else if (msg.type === 'interruption') {
           console.log('[Audio] Interruption - clearing queue');
           this.audioQueue = [];
-          this.nextPlayTime = 0;
+          if (this.currentAudio) { this.currentAudio.pause(); this.currentAudio = null; }
+          this.isPlaying = false;
         } else if (msg.type === 'error') {
           this.onError(new Error(msg.error || msg.message || 'Server error'));
         }
@@ -2071,47 +2064,59 @@ app.get('*', (req, res) => {
         this.scriptProcessor.connect(this.inputAudioContext.destination);
       }
 
-      async _playAudio(base64) {
-        if (!this.outputAudioContext) {
-          console.warn('[Audio] No output context');
+      _queueAudio(base64) {
+        this.audioQueue.push(base64);
+        if (!this.isPlaying) {
+          this._playNextInQueue();
+        }
+      }
+
+      _playNextInQueue() {
+        if (this.audioQueue.length === 0) {
+          this.isPlaying = false;
           return;
         }
 
-        // Ensure context is running
-        if (this.outputAudioContext.state === 'suspended') {
-          console.log('[Audio] Resuming suspended context...');
-          await this.outputAudioContext.resume();
-        }
+        this.isPlaying = true;
+        const base64 = this.audioQueue.shift();
 
         try {
-          // Decode base64 to ArrayBuffer
+          // Decode base64 to binary
           const binary = atob(base64);
           const bytes = new Uint8Array(binary.length);
           for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
 
-          // Decode audio data (ElevenLabs sends MP3/PCM chunks)
-          const arrayBuffer = bytes.buffer.slice(0);
-          const audioBuffer = await this.outputAudioContext.decodeAudioData(arrayBuffer);
+          // Create blob with MP3 mime type and play with Audio element
+          const blob = new Blob([bytes], { type: 'audio/mpeg' });
+          const url = URL.createObjectURL(blob);
 
-          console.log('[Audio] Decoded buffer, duration:', audioBuffer.duration.toFixed(2) + 's');
+          const audio = new Audio(url);
+          this.currentAudio = audio;
 
-          // Schedule playback
-          const source = this.outputAudioContext.createBufferSource();
-          source.buffer = audioBuffer;
-          source.connect(this.outputAudioContext.destination);
+          audio.onended = () => {
+            URL.revokeObjectURL(url);
+            this.currentAudio = null;
+            this._playNextInQueue();
+          };
 
-          // Schedule to play after previous audio
-          const currentTime = this.outputAudioContext.currentTime;
-          const startTime = Math.max(currentTime, this.nextPlayTime);
-          source.start(startTime);
+          audio.onerror = (e) => {
+            console.error('[Audio] Playback error:', e);
+            URL.revokeObjectURL(url);
+            this.currentAudio = null;
+            this._playNextInQueue();
+          };
 
-          // Update next play time
-          this.nextPlayTime = startTime + audioBuffer.duration;
-
-          console.log('[Audio] Playing at:', startTime.toFixed(2), 'Next:', this.nextPlayTime.toFixed(2));
+          audio.play().then(() => {
+            console.log('[Audio] Playing chunk');
+          }).catch(e => {
+            console.error('[Audio] Play failed:', e.message);
+            URL.revokeObjectURL(url);
+            this._playNextInQueue();
+          });
 
         } catch (e) {
-          console.error('[Audio] Decode/play error:', e.message);
+          console.error('[Audio] Error:', e.message);
+          this._playNextInQueue();
         }
       }
     }
