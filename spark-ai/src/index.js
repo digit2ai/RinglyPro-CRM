@@ -648,42 +648,54 @@ if (models && !modelsError) {
 
 // Serve dashboard for all other routes (SPA fallback)
 app.get('*', (req, res) => {
-  // For now, serve a simple dashboard HTML
+  // Spark AI Business Intelligence Dashboard
   res.send(`
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spark Martial Arts AI - Dashboard</title>
+  <title>Spark AI - Your Business Intelligence Officer</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    .gradient-bg { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
-    .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-    .glow { box-shadow: 0 0 40px rgba(239, 68, 68, 0.3); }
-    .score-ring { stroke-dasharray: 251; stroke-dashoffset: calc(251 - (251 * var(--score)) / 100); }
+    .gradient-bg { background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%); }
+    .card { background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
+    .card-danger { background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%); border-color: rgba(239, 68, 68, 0.2); }
+    .card-success { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%); border-color: rgba(34, 197, 94, 0.2); }
+    .card-warning { background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(234, 179, 8, 0.05) 100%); border-color: rgba(234, 179, 8, 0.2); }
+    .glow-orange { box-shadow: 0 0 60px rgba(249, 115, 22, 0.4); }
+    .glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
+    @keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 40px rgba(249, 115, 22, 0.3); } 50% { box-shadow: 0 0 60px rgba(249, 115, 22, 0.5); } }
+    .score-ring { stroke-dasharray: 251; stroke-dashoffset: calc(251 - (251 * var(--score)) / 100); transition: stroke-dashoffset 1.5s ease-out; }
+    .fade-in { animation: fadeIn 0.5s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .spark-icon { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
+    .money-leak { border-left: 3px solid #ef4444; }
+    .growth-opp { border-left: 3px solid #22c55e; }
+    .action-item { border-left: 3px solid #f97316; }
   </style>
 </head>
 <body class="gradient-bg min-h-screen text-white">
   <!-- Header -->
-  <header class="border-b border-white/10 px-6 py-4">
+  <header class="border-b border-white/10 px-6 py-4 sticky top-0 z-50 bg-black/20 backdrop-blur-xl">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center glow">
-          <i class="fas fa-fire text-white text-xl"></i>
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 spark-icon rounded-xl flex items-center justify-center glow-pulse">
+          <i class="fas fa-bolt text-white text-2xl"></i>
         </div>
         <div>
-          <h1 class="text-xl font-bold">Spark AI</h1>
-          <p class="text-xs text-gray-400">Martial Arts School Intelligence</p>
+          <h1 class="text-2xl font-bold bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">Spark</h1>
+          <p class="text-xs text-gray-400">AI Business Intelligence Officer</p>
         </div>
       </div>
       <div class="flex items-center gap-4">
-        <select id="schoolSelect" class="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-sm">
-          <option value="">Select School...</option>
+        <select id="schoolSelect" class="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:border-orange-500 focus:outline-none transition">
+          <option value="">Select Your Business...</option>
         </select>
-        <button class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg text-sm font-medium transition">
-          <i class="fas fa-plus mr-2"></i>Add School
+        <button onclick="talkToSpark()" class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 px-5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-lg shadow-orange-500/20">
+          <i class="fas fa-microphone"></i>
+          <span>Talk to Spark</span>
         </button>
       </div>
     </div>
@@ -691,186 +703,288 @@ app.get('*', (req, res) => {
 
   <!-- Main Content -->
   <main class="max-w-7xl mx-auto px-6 py-8">
-    <!-- Welcome Message (no school selected) -->
-    <div id="welcomeSection" class="text-center py-20">
-      <div class="w-24 h-24 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-        <i class="fas fa-fire text-red-500 text-4xl"></i>
+    <!-- Welcome Section -->
+    <div id="welcomeSection" class="py-16">
+      <div class="text-center mb-16">
+        <div class="w-28 h-28 spark-icon rounded-3xl flex items-center justify-center mx-auto mb-8 glow-orange">
+          <i class="fas fa-bolt text-white text-5xl"></i>
+        </div>
+        <h2 class="text-4xl font-bold mb-4">Meet <span class="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">Spark</span></h2>
+        <p class="text-xl text-gray-300 mb-2">Your AI Business Intelligence Officer</p>
+        <p class="text-gray-400 max-w-2xl mx-auto">
+          Connects to your company data, understands how your business really works,
+          and delivers clear insights on where you're losing money, where you can grow,
+          and what actions will maximize your profit and performance.
+        </p>
       </div>
-      <h2 class="text-3xl font-bold mb-4">Welcome to Spark AI</h2>
-      <p class="text-gray-400 max-w-lg mx-auto mb-8">
-        AI-powered intelligence for martial arts schools. Monitor health scores,
-        track leads, retain students, and grow revenue with Sensei & Maestro voice agents.
-      </p>
-      <div class="flex justify-center gap-4">
-        <button onclick="createDemoSchool()" class="bg-red-500 hover:bg-red-600 px-6 py-3 rounded-lg font-medium transition">
-          <i class="fas fa-rocket mr-2"></i>Create Demo School
+
+      <!-- Value Props -->
+      <div class="grid md:grid-cols-3 gap-8 mb-16">
+        <div class="card card-danger rounded-2xl p-8 text-center">
+          <div class="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-money-bill-wave text-red-400 text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-red-400">Find Money Leaks</h3>
+          <p class="text-gray-400 text-sm">Identify where you're losing revenue - churning members, failed payments, missed opportunities</p>
+        </div>
+
+        <div class="card card-success rounded-2xl p-8 text-center">
+          <div class="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-chart-line text-green-400 text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-green-400">Spot Growth</h3>
+          <p class="text-gray-400 text-sm">Discover untapped potential - hot leads, upsell opportunities, expansion possibilities</p>
+        </div>
+
+        <div class="card card-warning rounded-2xl p-8 text-center">
+          <div class="w-16 h-16 bg-orange-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-bolt text-orange-400 text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-orange-400">Take Action</h3>
+          <p class="text-gray-400 text-sm">Get prioritized recommendations that maximize profit and performance immediately</p>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="text-center">
+        <p class="text-gray-400 mb-6">Select a business above to see Spark in action, or:</p>
+        <button onclick="seedDemoData()" class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 px-8 py-4 rounded-xl font-medium transition shadow-lg shadow-orange-500/20">
+          <i class="fas fa-rocket mr-2"></i>Load Demo Data
         </button>
-        <a href="/spark/health" class="bg-white/10 hover:bg-white/20 px-6 py-3 rounded-lg font-medium transition">
-          <i class="fas fa-heart-pulse mr-2"></i>Check Health Status
-        </a>
       </div>
     </div>
 
-    <!-- Dashboard (school selected) -->
-    <div id="dashboardSection" class="hidden">
-      <!-- Health Score Card -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="card rounded-2xl p-6 md:col-span-1">
+    <!-- Dashboard Section -->
+    <div id="dashboardSection" class="hidden fade-in">
+      <!-- Spark Speaking -->
+      <div class="card rounded-2xl p-6 mb-8 border-orange-500/30">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 spark-icon rounded-xl flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-bolt text-white text-xl"></i>
+          </div>
+          <div>
+            <p class="text-orange-400 font-medium mb-1">Spark says:</p>
+            <p id="sparkMessage" class="text-lg text-gray-200">Analyzing your business data...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Business Health Overview -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Health Score -->
+        <div class="card rounded-2xl p-6">
           <div class="text-center">
-            <div class="relative w-32 h-32 mx-auto mb-4">
-              <svg class="w-32 h-32 transform -rotate-90">
-                <circle cx="64" cy="64" r="56" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/>
-                <circle id="scoreRing" cx="64" cy="64" r="56" fill="none" stroke="#ef4444" stroke-width="8"
-                  class="score-ring transition-all duration-1000" style="--score: 0"/>
+            <p class="text-xs text-gray-400 uppercase tracking-wider mb-4">Business Health</p>
+            <div class="relative w-36 h-36 mx-auto mb-4">
+              <svg class="w-36 h-36 transform -rotate-90">
+                <circle cx="72" cy="72" r="60" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="10"/>
+                <circle id="scoreRing" cx="72" cy="72" r="60" fill="none" stroke="url(#scoreGradient)" stroke-width="10" stroke-linecap="round"
+                  class="score-ring" style="--score: 0"/>
+                <defs>
+                  <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#f97316"/>
+                    <stop offset="100%" stop-color="#ea580c"/>
+                  </linearGradient>
+                </defs>
               </svg>
               <div class="absolute inset-0 flex items-center justify-center">
                 <div>
-                  <span id="healthScore" class="text-3xl font-bold">--</span>
-                  <p class="text-xs text-gray-400">Health Score</p>
+                  <span id="healthScore" class="text-4xl font-bold">--</span>
+                  <p class="text-xs text-gray-500">/ 100</p>
                 </div>
               </div>
             </div>
-            <span id="healthGrade" class="inline-block px-4 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-medium">
+            <span id="healthGrade" class="inline-block px-4 py-1.5 bg-orange-500/20 text-orange-400 rounded-full text-sm font-bold">
               Grade: --
             </span>
           </div>
         </div>
 
-        <!-- Quick Stats -->
-        <div class="card rounded-2xl p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-              <i class="fas fa-users text-blue-400"></i>
+        <!-- Revenue at Risk -->
+        <div class="card card-danger rounded-2xl p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+              <i class="fas fa-arrow-trend-down text-red-400"></i>
             </div>
             <div>
-              <p class="text-2xl font-bold" id="activeStudents">--</p>
-              <p class="text-xs text-gray-400">Active Students</p>
+              <p class="text-xs text-gray-400 uppercase tracking-wider">Revenue at Risk</p>
             </div>
           </div>
-          <div class="text-sm text-red-400" id="atRiskCount">
-            <i class="fas fa-exclamation-triangle mr-1"></i>-- at risk
+          <p class="text-3xl font-bold text-red-400 mb-1" id="revenueAtRisk">$--</p>
+          <p class="text-sm text-gray-400" id="atRiskReason">-- members may churn</p>
+          <div class="mt-4 pt-4 border-t border-red-500/20">
+            <p class="text-xs text-red-300"><i class="fas fa-exclamation-circle mr-1"></i> <span id="atRiskUrgent">Needs attention</span></p>
           </div>
         </div>
 
-        <div class="card rounded-2xl p-6">
-          <div class="flex items-center gap-3 mb-4">
+        <!-- Growth Potential -->
+        <div class="card card-success rounded-2xl p-6">
+          <div class="flex items-center gap-3 mb-3">
             <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-              <i class="fas fa-user-plus text-green-400"></i>
+              <i class="fas fa-arrow-trend-up text-green-400"></i>
             </div>
             <div>
-              <p class="text-2xl font-bold" id="activeLeads">--</p>
-              <p class="text-xs text-gray-400">Active Leads</p>
+              <p class="text-xs text-gray-400 uppercase tracking-wider">Growth Potential</p>
             </div>
           </div>
-          <div class="text-sm text-orange-400" id="hotLeadsCount">
-            <i class="fas fa-fire mr-1"></i>-- hot leads
+          <p class="text-3xl font-bold text-green-400 mb-1" id="growthPotential">$--</p>
+          <p class="text-sm text-gray-400" id="growthReason">-- hot leads ready</p>
+          <div class="mt-4 pt-4 border-t border-green-500/20">
+            <p class="text-xs text-green-300"><i class="fas fa-rocket mr-1"></i> <span id="growthAction">Ready to convert</span></p>
           </div>
         </div>
 
+        <!-- Monthly Revenue -->
         <div class="card rounded-2xl p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-              <i class="fas fa-dollar-sign text-yellow-400"></i>
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+              <i class="fas fa-sack-dollar text-orange-400"></i>
             </div>
             <div>
-              <p class="text-2xl font-bold" id="monthlyRevenue">$--</p>
-              <p class="text-xs text-gray-400">This Month</p>
+              <p class="text-xs text-gray-400 uppercase tracking-wider">This Month</p>
             </div>
           </div>
-          <div class="w-full bg-white/10 rounded-full h-2">
-            <div id="revenueProgress" class="bg-yellow-500 h-2 rounded-full" style="width: 0%"></div>
+          <p class="text-3xl font-bold mb-1" id="monthlyRevenue">$--</p>
+          <div class="w-full bg-white/10 rounded-full h-2 mb-2">
+            <div id="revenueProgress" class="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
           </div>
-          <p class="text-xs text-gray-400 mt-1" id="revenueTarget">-- of $-- target</p>
+          <p class="text-sm text-gray-400" id="revenueTarget">--% to goal</p>
         </div>
       </div>
 
-      <!-- AI Insights -->
-      <div class="card rounded-2xl p-6 mb-8">
-        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-          <i class="fas fa-brain text-purple-400"></i>
-          AI Insights
-        </h3>
-        <div id="insightsList" class="space-y-3">
-          <p class="text-gray-400">Loading insights...</p>
-        </div>
-      </div>
-
-      <!-- Action Lists -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- At-Risk Students -->
+      <!-- Three Column Insights -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Money Leaks -->
         <div class="card rounded-2xl p-6">
-          <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-            <i class="fas fa-exclamation-circle text-red-400"></i>
-            At-Risk Students
+          <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-red-400">
+            <i class="fas fa-money-bill-wave"></i>
+            Where You're Losing Money
           </h3>
-          <div id="atRiskList" class="space-y-3">
-            <p class="text-gray-400 text-sm">No at-risk students</p>
+          <div id="moneyLeaksList" class="space-y-3">
+            <div class="p-4 bg-white/5 rounded-xl money-leak">
+              <p class="text-gray-400 text-sm">Analyzing your data...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Growth Opportunities -->
+        <div class="card rounded-2xl p-6">
+          <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-green-400">
+            <i class="fas fa-chart-line"></i>
+            Where You Can Grow
+          </h3>
+          <div id="growthList" class="space-y-3">
+            <div class="p-4 bg-white/5 rounded-xl growth-opp">
+              <p class="text-gray-400 text-sm">Identifying opportunities...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Priority Actions -->
+        <div class="card rounded-2xl p-6">
+          <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-orange-400">
+            <i class="fas fa-bolt"></i>
+            Priority Actions
+          </h3>
+          <div id="actionsList" class="space-y-3">
+            <div class="p-4 bg-white/5 rounded-xl action-item">
+              <p class="text-gray-400 text-sm">Preparing recommendations...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Spark Voice Actions -->
+      <div class="card rounded-2xl p-6 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-bold flex items-center gap-2">
+            <i class="fas fa-phone-volume text-orange-400"></i>
+            Spark Voice Agent Activity
+          </h3>
+          <div class="flex gap-2">
+            <button onclick="triggerSparkCalls('retention')" class="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm transition">
+              <i class="fas fa-user-shield mr-2"></i>Retention Calls
+            </button>
+            <button onclick="triggerSparkCalls('leads')" class="px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-sm transition">
+              <i class="fas fa-user-plus mr-2"></i>Lead Follow-ups
+            </button>
+          </div>
+        </div>
+        <div id="recentCallsList" class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-4 bg-white/5 rounded-xl">
+            <p class="text-gray-400 text-sm">Loading call activity...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Lists -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- At-Risk Members -->
+        <div class="card rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+              <i class="fas fa-user-xmark text-red-400"></i>
+              Members at Risk
+            </h3>
+            <span id="atRiskBadge" class="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm">0</span>
+          </div>
+          <div id="atRiskList" class="space-y-2 max-h-80 overflow-y-auto">
+            <p class="text-gray-400 text-sm p-4">No at-risk members detected</p>
           </div>
         </div>
 
         <!-- Hot Leads -->
         <div class="card rounded-2xl p-6">
-          <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-            <i class="fas fa-fire text-orange-400"></i>
-            Hot Leads
-          </h3>
-          <div id="hotLeadsList" class="space-y-3">
-            <p class="text-gray-400 text-sm">No hot leads</p>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+              <i class="fas fa-fire text-orange-400"></i>
+              Hot Leads Ready to Convert
+            </h3>
+            <span id="hotLeadsBadge" class="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-sm">0</span>
           </div>
-        </div>
-
-        <!-- Recent AI Calls -->
-        <div class="card rounded-2xl p-6">
-          <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-            <i class="fas fa-phone-volume text-green-400"></i>
-            Recent AI Calls
-          </h3>
-          <div id="recentCallsList" class="space-y-3">
-            <p class="text-gray-400 text-sm">No recent calls</p>
+          <div id="hotLeadsList" class="space-y-2 max-h-80 overflow-y-auto">
+            <p class="text-gray-400 text-sm p-4">No hot leads detected</p>
           </div>
         </div>
       </div>
     </div>
   </main>
 
-  <!-- Voice Agent Floating Action -->
-  <div class="fixed bottom-6 right-6 flex flex-col gap-3">
-    <button onclick="triggerSensei()" class="w-14 h-14 bg-blue-500 hover:bg-blue-600 rounded-full shadow-lg flex items-center justify-center transition group">
-      <i class="fas fa-robot text-white text-xl"></i>
-      <span class="absolute right-full mr-3 bg-gray-900 px-3 py-1 rounded text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition">
-        Sensei AI (EN)
-      </span>
-    </button>
-    <button onclick="triggerMaestro()" class="w-14 h-14 bg-red-500 hover:bg-red-600 rounded-full shadow-lg flex items-center justify-center transition group">
-      <i class="fas fa-robot text-white text-xl"></i>
-      <span class="absolute right-full mr-3 bg-gray-900 px-3 py-1 rounded text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition">
-        Maestro AI (ES)
+  <!-- Floating Spark Button -->
+  <div class="fixed bottom-6 right-6">
+    <button onclick="talkToSpark()" class="w-16 h-16 spark-icon rounded-2xl shadow-2xl flex items-center justify-center transition hover:scale-110 glow-pulse group">
+      <i class="fas fa-bolt text-white text-2xl"></i>
+      <span class="absolute right-full mr-4 bg-gray-900/95 backdrop-blur px-4 py-2 rounded-xl text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition shadow-xl">
+        Talk to Spark
       </span>
     </button>
   </div>
 
+  <!-- Language Toggle -->
+  <div class="fixed bottom-6 left-6 flex gap-2">
+    <button onclick="setLanguage('en')" id="langEn" class="px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition border border-white/10">EN</button>
+    <button onclick="setLanguage('es')" id="langEs" class="px-3 py-2 bg-white/5 hover:bg-white/20 rounded-lg text-sm transition border border-white/5">ES</button>
+  </div>
+
   <script>
     let currentSchoolId = null;
+    let currentSchoolData = null;
+    let currentLanguage = 'en';
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      loadSchools();
-    });
+    document.addEventListener('DOMContentLoaded', loadSchools);
 
     async function loadSchools() {
       try {
-        // For demo, use tenant_id=1
         const res = await fetch('/spark/api/v1/schools?tenant_id=1');
         const data = await res.json();
-
         const select = document.getElementById('schoolSelect');
-        select.innerHTML = '<option value="">Select School...</option>';
+        select.innerHTML = '<option value="">Select Your Business...</option>';
 
         if (data.success && data.data.length > 0) {
           data.data.forEach(school => {
             const option = document.createElement('option');
             option.value = school.id;
-            option.textContent = school.name;
+            option.textContent = school.name + ' (' + school.martial_art_type + ')';
             select.appendChild(option);
           });
         }
@@ -893,11 +1007,13 @@ app.get('*', (req, res) => {
       try {
         document.getElementById('welcomeSection').classList.add('hidden');
         document.getElementById('dashboardSection').classList.remove('hidden');
+        document.getElementById('dashboardSection').classList.add('fade-in');
 
         const res = await fetch(\`/spark/api/v1/dashboard?school_id=\${schoolId}\`);
         const data = await res.json();
 
         if (data.success) {
+          currentSchoolData = data.data;
           updateDashboard(data.data);
         }
       } catch (error) {
@@ -908,64 +1024,161 @@ app.get('*', (req, res) => {
     function updateDashboard(data) {
       // Health Score
       if (data.health) {
-        document.getElementById('healthScore').textContent = data.health.overall_score;
-        document.getElementById('healthGrade').textContent = \`Grade: \${data.health.grade}\`;
-        document.getElementById('scoreRing').style.setProperty('--score', data.health.overall_score);
+        document.getElementById('healthScore').textContent = data.health.overall_score || '--';
+        document.getElementById('healthGrade').textContent = 'Grade: ' + (data.health.grade || '--');
+        document.getElementById('scoreRing').style.setProperty('--score', data.health.overall_score || 0);
       }
 
-      // Students
-      document.getElementById('activeStudents').textContent = data.students?.active || 0;
-      document.getElementById('atRiskCount').innerHTML = \`<i class="fas fa-exclamation-triangle mr-1"></i>\${data.students?.at_risk || 0} at risk\`;
+      // Calculate revenue at risk (at-risk students * avg monthly rate)
+      const atRiskCount = data.students?.at_risk || 0;
+      const avgRate = 175; // Approximate average
+      const revenueAtRisk = atRiskCount * avgRate;
+      document.getElementById('revenueAtRisk').textContent = '$' + revenueAtRisk.toLocaleString();
+      document.getElementById('atRiskReason').textContent = atRiskCount + ' member' + (atRiskCount !== 1 ? 's' : '') + ' may churn';
+      document.getElementById('atRiskUrgent').textContent = atRiskCount > 3 ? 'Urgent: Take action now' : 'Monitor closely';
 
-      // Leads
-      document.getElementById('activeLeads').textContent = data.leads?.active || 0;
-      document.getElementById('hotLeadsCount').innerHTML = \`<i class="fas fa-fire mr-1"></i>\${data.leads?.hot || 0} hot leads\`;
+      // Calculate growth potential (hot leads * avg initial value)
+      const hotLeads = data.leads?.hot || 0;
+      const leadValue = 189; // First month avg
+      const growthPotential = hotLeads * leadValue * 12; // Annual value
+      document.getElementById('growthPotential').textContent = '$' + growthPotential.toLocaleString();
+      document.getElementById('growthReason').textContent = hotLeads + ' hot lead' + (hotLeads !== 1 ? 's' : '') + ' ready';
+      document.getElementById('growthAction').textContent = 'Potential annual revenue';
 
-      // Revenue
+      // Monthly Revenue
       const revenue = data.revenue?.this_month || 0;
-      const target = data.revenue?.target || 0;
-      document.getElementById('monthlyRevenue').textContent = \`$\${revenue.toLocaleString()}\`;
-      document.getElementById('revenueProgress').style.width = \`\${data.revenue?.progress || 0}%\`;
-      document.getElementById('revenueTarget').textContent = \`\${data.revenue?.progress || 0}% of $\${target.toLocaleString()} target\`;
+      const target = data.revenue?.target || 1;
+      const progress = data.revenue?.progress || 0;
+      document.getElementById('monthlyRevenue').textContent = '$' + revenue.toLocaleString();
+      document.getElementById('revenueProgress').style.width = progress + '%';
+      document.getElementById('revenueTarget').textContent = progress + '% of $' + target.toLocaleString() + ' goal';
 
-      // Insights
-      const insightsList = document.getElementById('insightsList');
-      if (data.health?.insights?.length > 0) {
-        insightsList.innerHTML = data.health.insights.map(insight => \`
-          <div class="flex items-start gap-3 p-3 bg-white/5 rounded-lg">
-            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
-            <p class="text-sm">\${insight}</p>
+      // Spark Message
+      let sparkMsg = '';
+      if (atRiskCount > 3) {
+        sparkMsg = 'I see ' + atRiskCount + ' members at risk of leaving. That\\'s $' + revenueAtRisk.toLocaleString() + '/month at stake. I recommend triggering retention calls immediately.';
+      } else if (hotLeads > 2) {
+        sparkMsg = 'You have ' + hotLeads + ' hot leads ready to convert! That\\'s $' + growthPotential.toLocaleString() + ' potential annual revenue. Let me help you close them.';
+      } else if (progress < 50) {
+        sparkMsg = 'Revenue is at ' + progress + '% of target. Let\\'s focus on lead conversion and retention to close the gap.';
+      } else {
+        sparkMsg = 'Your business is performing well! Health score is ' + (data.health?.overall_score || '--') + '. Keep monitoring the insights below.';
+      }
+      document.getElementById('sparkMessage').textContent = sparkMsg;
+
+      // Money Leaks
+      const moneyLeaksList = document.getElementById('moneyLeaksList');
+      const leaks = [];
+      if (atRiskCount > 0) {
+        leaks.push({ icon: 'user-minus', text: atRiskCount + ' members showing churn signals', value: '$' + revenueAtRisk + '/mo at risk', severity: 'high' });
+      }
+      if (data.students?.inactive > 0) {
+        leaks.push({ icon: 'user-slash', text: (data.students?.inactive || 0) + ' inactive accounts', value: 'Lost recurring revenue', severity: 'medium' });
+      }
+      if (progress < 80) {
+        leaks.push({ icon: 'chart-line', text: 'Revenue ' + (100 - progress) + '% below target', value: 'Missed opportunity', severity: 'medium' });
+      }
+      if (leaks.length > 0) {
+        moneyLeaksList.innerHTML = leaks.map(leak => \`
+          <div class="p-4 bg-white/5 rounded-xl money-leak hover:bg-white/10 transition cursor-pointer">
+            <div class="flex items-center gap-3 mb-2">
+              <i class="fas fa-\${leak.icon} text-red-400"></i>
+              <span class="font-medium">\${leak.text}</span>
+            </div>
+            <p class="text-sm text-red-300">\${leak.value}</p>
           </div>
         \`).join('');
+      } else {
+        moneyLeaksList.innerHTML = '<div class="p-4 bg-green-500/10 rounded-xl border border-green-500/20"><p class="text-green-400 text-sm"><i class="fas fa-check-circle mr-2"></i>No significant money leaks detected!</p></div>';
       }
 
-      // At-Risk Students
+      // Growth Opportunities
+      const growthList = document.getElementById('growthList');
+      const opportunities = [];
+      if (hotLeads > 0) {
+        opportunities.push({ icon: 'fire', text: hotLeads + ' hot leads ready to close', value: '$' + growthPotential.toLocaleString() + ' annual potential' });
+      }
+      if (data.leads?.warm > 0) {
+        opportunities.push({ icon: 'thermometer-half', text: (data.leads?.warm || 0) + ' warm leads to nurture', value: 'Future pipeline' });
+      }
+      opportunities.push({ icon: 'users', text: 'Referral program potential', value: 'Each member = 1.5 referrals avg' });
+
+      growthList.innerHTML = opportunities.map(opp => \`
+        <div class="p-4 bg-white/5 rounded-xl growth-opp hover:bg-white/10 transition cursor-pointer">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fas fa-\${opp.icon} text-green-400"></i>
+            <span class="font-medium">\${opp.text}</span>
+          </div>
+          <p class="text-sm text-green-300">\${opp.value}</p>
+        </div>
+      \`).join('');
+
+      // Priority Actions
+      const actionsList = document.getElementById('actionsList');
+      const actions = [];
+      if (atRiskCount > 0) {
+        actions.push({ icon: 'phone', text: 'Call ' + atRiskCount + ' at-risk members', action: 'retention', priority: 1 });
+      }
+      if (hotLeads > 0) {
+        actions.push({ icon: 'user-plus', text: 'Follow up with ' + hotLeads + ' hot leads', action: 'leads', priority: 2 });
+      }
+      if (data.leads?.trial_scheduled > 0) {
+        actions.push({ icon: 'calendar-check', text: 'Confirm ' + (data.leads?.trial_scheduled || 0) + ' scheduled trials', action: 'confirm', priority: 3 });
+      }
+      actions.push({ icon: 'bullhorn', text: 'Run a referral campaign', action: 'campaign', priority: 4 });
+
+      actionsList.innerHTML = actions.slice(0, 4).map((action, idx) => \`
+        <div onclick="executeAction('\${action.action}')" class="p-4 bg-white/5 rounded-xl action-item hover:bg-orange-500/10 transition cursor-pointer group">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="w-6 h-6 bg-orange-500/20 rounded-full flex items-center justify-center text-xs text-orange-400">\${idx + 1}</span>
+              <i class="fas fa-\${action.icon} text-orange-400"></i>
+              <span class="font-medium">\${action.text}</span>
+            </div>
+            <i class="fas fa-chevron-right text-gray-600 group-hover:text-orange-400 transition"></i>
+          </div>
+        </div>
+      \`).join('');
+
+      // At-Risk List
       const atRiskList = document.getElementById('atRiskList');
+      document.getElementById('atRiskBadge').textContent = atRiskCount;
       if (data.lists?.at_risk_students?.length > 0) {
         atRiskList.innerHTML = data.lists.at_risk_students.map(student => \`
-          <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-            <div>
-              <p class="font-medium">\${student.first_name} \${student.last_name}</p>
-              <p class="text-xs text-red-400">\${student.churn_risk} risk</p>
+          <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl hover:bg-white/10 transition">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
+                <span class="text-red-400 font-medium">\${student.first_name[0]}\${student.last_name[0]}</span>
+              </div>
+              <div>
+                <p class="font-medium">\${student.first_name} \${student.last_name}</p>
+                <p class="text-xs text-red-400">\${student.churn_risk} risk (\${student.churn_risk_score}%)</p>
+              </div>
             </div>
-            <button onclick="triggerRetentionCall(\${student.id})" class="text-blue-400 hover:text-blue-300">
-              <i class="fas fa-phone"></i>
+            <button onclick="triggerCall('retention', \${student.id})" class="px-3 py-1.5 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded-lg text-sm transition">
+              <i class="fas fa-phone mr-1"></i>Call
             </button>
           </div>
         \`).join('');
       }
 
-      // Hot Leads
+      // Hot Leads List
       const hotLeadsList = document.getElementById('hotLeadsList');
+      document.getElementById('hotLeadsBadge').textContent = hotLeads;
       if (data.lists?.hot_leads?.length > 0) {
         hotLeadsList.innerHTML = data.lists.hot_leads.map(lead => \`
-          <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-            <div>
-              <p class="font-medium">\${lead.first_name} \${lead.last_name || ''}</p>
-              <p class="text-xs text-orange-400">Score: \${lead.lead_score}</p>
+          <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl hover:bg-white/10 transition">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center">
+                <span class="text-orange-400 font-medium">\${lead.first_name[0]}\${(lead.last_name || 'X')[0]}</span>
+              </div>
+              <div>
+                <p class="font-medium">\${lead.first_name} \${lead.last_name || ''}</p>
+                <p class="text-xs text-orange-400">Score: \${lead.lead_score} | \${lead.source || 'Direct'}</p>
+              </div>
             </div>
-            <button onclick="triggerLeadCall(\${lead.id})" class="text-blue-400 hover:text-blue-300">
-              <i class="fas fa-phone"></i>
+            <button onclick="triggerCall('lead', \${lead.id})" class="px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-sm transition">
+              <i class="fas fa-phone mr-1"></i>Call
             </button>
           </div>
         \`).join('');
@@ -974,70 +1187,82 @@ app.get('*', (req, res) => {
       // Recent Calls
       const recentCallsList = document.getElementById('recentCallsList');
       if (data.lists?.recent_ai_calls?.length > 0) {
-        recentCallsList.innerHTML = data.lists.recent_ai_calls.map(call => \`
-          <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-            <div>
-              <p class="font-medium capitalize">\${call.agent} - \${call.call_type.replace('_', ' ')}</p>
-              <p class="text-xs text-gray-400">\${call.status} - \${new Date(call.created_at).toLocaleString()}</p>
+        recentCallsList.innerHTML = data.lists.recent_ai_calls.slice(0, 4).map(call => {
+          const sentimentColor = call.sentiment === 'positive' ? 'green' : call.sentiment === 'negative' ? 'red' : 'gray';
+          const sentimentIcon = call.sentiment === 'positive' ? 'smile' : call.sentiment === 'negative' ? 'frown' : 'meh';
+          return \`
+            <div class="p-4 bg-white/5 rounded-xl">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-gray-400">\${call.call_type.replace('_', ' ')}</span>
+                <span class="text-\${sentimentColor}-400"><i class="fas fa-\${sentimentIcon}"></i></span>
+              </div>
+              <p class="text-sm font-medium capitalize mb-1">\${call.status}</p>
+              <p class="text-xs text-gray-500">\${call.summary ? call.summary.substring(0, 50) + '...' : 'No summary'}</p>
             </div>
-            <span class="text-\${call.sentiment === 'positive' ? 'green' : call.sentiment === 'negative' ? 'red' : 'gray'}-400">
-              <i class="fas fa-\${call.sentiment === 'positive' ? 'smile' : call.sentiment === 'negative' ? 'frown' : 'meh'}"></i>
-            </span>
-          </div>
-        \`).join('');
+          \`;
+        }).join('');
       }
     }
 
-    async function createDemoSchool() {
+    async function seedDemoData() {
       try {
-        const res = await fetch('/spark/api/v1/schools', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tenant_id: 1,
-            name: 'Demo Martial Arts Academy',
-            martial_art_type: 'BJJ',
-            owner_name: 'Demo Owner',
-            owner_email: 'demo@example.com',
-            monthly_revenue_target: 15000
-          })
-        });
+        const btn = event.target;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+
+        const res = await fetch('/spark/api/v1/seed-demo', { method: 'POST' });
         const data = await res.json();
+
         if (data.success) {
-          alert('Demo school created! Refreshing...');
+          alert('Demo data loaded! ' + data.summary.schools_created + ' schools with ' + data.summary.total_students + ' students created.');
           location.reload();
         }
       } catch (error) {
-        console.error('Error creating demo school:', error);
+        console.error('Error seeding data:', error);
+        alert('Error loading demo data');
       }
     }
 
-    function triggerSensei() {
+    function talkToSpark() {
       if (!currentSchoolId) {
-        alert('Please select a school first');
+        alert('Please select a business first to talk to Spark');
         return;
       }
-      // TODO: Integrate with Sensei voice agent
-      alert('Sensei AI voice agent coming soon!');
+      const lang = currentLanguage === 'es' ? 'Spanish' : 'English';
+      alert('Spark Voice Agent (' + lang + ') coming soon!\\n\\nSpark will be able to:\\n- Make retention calls to at-risk members\\n- Follow up with hot leads\\n- Confirm appointments\\n- Collect feedback');
     }
 
-    function triggerMaestro() {
+    function triggerSparkCalls(type) {
       if (!currentSchoolId) {
-        alert('Please select a school first');
+        alert('Please select a business first');
         return;
       }
-      // TODO: Integrate with Maestro voice agent
-      alert('Maestro AI voice agent coming soon!');
+      const msg = type === 'retention'
+        ? 'Spark will call all at-risk members with personalized retention messages.'
+        : 'Spark will follow up with all hot leads to schedule trials.';
+      alert(msg + '\\n\\n(Voice calling integration coming soon)');
     }
 
-    function triggerRetentionCall(studentId) {
-      console.log('Triggering retention call for student:', studentId);
-      // TODO: Call voice/trigger endpoint
+    function triggerCall(type, id) {
+      console.log('Triggering', type, 'call for ID:', id);
+      alert('Initiating Spark call...\\n\\n(Voice integration coming soon)');
     }
 
-    function triggerLeadCall(leadId) {
-      console.log('Triggering lead follow-up call:', leadId);
-      // TODO: Call voice/trigger endpoint
+    function executeAction(action) {
+      console.log('Executing action:', action);
+      if (action === 'retention') triggerSparkCalls('retention');
+      else if (action === 'leads') triggerSparkCalls('leads');
+      else alert('Action: ' + action + '\\n\\n(Feature coming soon)');
+    }
+
+    function setLanguage(lang) {
+      currentLanguage = lang;
+      document.getElementById('langEn').className = lang === 'en'
+        ? 'px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition border border-white/10'
+        : 'px-3 py-2 bg-white/5 hover:bg-white/20 rounded-lg text-sm transition border border-white/5';
+      document.getElementById('langEs').className = lang === 'es'
+        ? 'px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition border border-white/10'
+        : 'px-3 py-2 bg-white/5 hover:bg-white/20 rounded-lg text-sm transition border border-white/5';
     }
   </script>
 </body>
