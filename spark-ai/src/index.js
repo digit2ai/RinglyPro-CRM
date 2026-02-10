@@ -1822,12 +1822,19 @@ app.get('*', (req, res) => {
         document.getElementById('voiceStatus').textContent = 'Requesting microphone...';
         document.getElementById('voiceTranscript').innerHTML = '';
 
+        // Debug: Log current school ID
+        console.log('[Spark] Starting voice call with school_id:', currentSchoolId, 'type:', typeof currentSchoolId);
+
+        if (!currentSchoolId) {
+          throw new Error('No school selected. Please select a business first.');
+        }
+
         // Create new voice client with callbacks
         sparkVoiceClient = new SparkVoiceClient({
           tokenEndpoint: '/spark/api/v1/voice/webrtc-token',
           dynamicVariables: {
-            school_id: currentSchoolId,
-            language: currentLanguage
+            school_id: String(currentSchoolId),  // Ensure it's a string
+            language: currentLanguage || 'en'
           },
           onStatusChange: (status) => {
             console.log('[Spark] Voice status:', status);
