@@ -495,6 +495,39 @@ try {
   console.log('⚠️ ENRUTA not available:', error.message);
 }
 
+// =====================================================
+// SPARK AI - Martial Arts School Intelligence Platform
+// =====================================================
+
+// Mount Spark AI martial arts management system at /spark
+let sparkApp = null;
+let sparkError = null;
+try {
+  sparkApp = require('../spark-ai/src/index');
+  app.use('/spark', sparkApp);
+  console.log('🥋 Spark Martial Arts AI mounted at /spark');
+  console.log('   - Dashboard UI: /spark/');
+  console.log('   - Health Check: /spark/health');
+  console.log('   - API: /spark/api/v1/*');
+  console.log('   - Voice Agents: Sensei (EN) & Maestro (ES)');
+} catch (error) {
+  sparkError = error;
+  console.log('⚠️ Spark AI not available:', error.message);
+}
+
+// Debug endpoint to see Spark AI error
+app.get('/debug/spark-error', (req, res) => {
+  res.json({
+    service: 'Spark Martial Arts AI',
+    available: !sparkError,
+    error: sparkError ? { message: sparkError.message, stack: sparkError.stack } : null,
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      hasDbUrl: !!process.env.DATABASE_URL
+    }
+  });
+});
+
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 
