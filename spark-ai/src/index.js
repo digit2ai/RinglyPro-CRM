@@ -734,7 +734,10 @@ app.get('*', (req, res) => {
         padding: 10px 12px;
       }
       .mobile-header-controls .spark-btn {
-        display: none; /* Hide talk button in header on mobile, use FAB */
+        display: flex; /* Show talk button on mobile */
+        width: 100%;
+        justify-content: center;
+        padding: 12px 16px;
       }
 
       /* Main content - reduced padding */
@@ -916,7 +919,7 @@ app.get('*', (req, res) => {
         <select id="schoolSelect" class="bg-spark-dark-card border border-spark-dark-border rounded-lg px-4 py-2.5 text-sm focus:border-spark-coral focus:outline-none transition">
           <option value="">Select Your Business...</option>
         </select>
-        <button onclick="talkToSpark()" class="spark-btn px-5 py-2.5 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-lg desktop-only">
+        <button onclick="talkToSpark()" class="spark-btn px-5 py-2.5 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-lg">
           <i class="fas fa-microphone"></i>
           <span>Talk to Spark</span>
         </button>
@@ -1189,18 +1192,12 @@ app.get('*', (req, res) => {
     <button onclick="setLanguage('es')" id="langEsDesktop" class="px-3 py-2 bg-white/5 hover:bg-white/20 rounded-lg text-sm transition border border-white/5">ES</button>
   </div>
 
-  <!-- Mobile Bottom Bar -->
-  <div class="fixed bottom-0 left-0 right-0 bg-spark-dark-card border-t border-spark-dark-border p-3 flex justify-between items-center z-50 md:hidden mobile-bottom-bar">
+  <!-- Mobile Bottom Bar (Language Toggle Only) -->
+  <div class="fixed bottom-0 left-0 right-0 bg-spark-dark-card border-t border-spark-dark-border p-3 flex justify-center items-center z-50 md:hidden mobile-bottom-bar">
     <div class="flex gap-2 mobile-lang-toggle">
       <button onclick="setLanguage('en')" id="langEn" class="px-4 py-2 bg-white/10 rounded-lg text-sm font-medium border border-white/10">EN</button>
       <button onclick="setLanguage('es')" id="langEs" class="px-4 py-2 bg-white/5 rounded-lg text-sm border border-white/5">ES</button>
     </div>
-    <button onclick="seedDemoData()" class="p-3 bg-white/5 rounded-xl border border-white/10">
-      <i class="fas fa-database text-gray-400"></i>
-    </button>
-    <button onclick="talkToSpark()" class="w-14 h-14 spark-icon rounded-2xl shadow-lg flex items-center justify-center glow-pulse">
-      <i class="fas fa-bolt text-white text-xl"></i>
-    </button>
   </div>
 
   <script>
