@@ -1833,7 +1833,7 @@ app.get('*', (req, res) => {
         sparkVoiceClient = new SparkVoiceClient({
           tokenEndpoint: '/spark/api/v1/voice/webrtc-token',
           dynamicVariables: {
-            school_id: String(currentSchoolId),  // Ensure it's a string
+            school_id: parseInt(currentSchoolId, 10),  // Must be NUMBER - ElevenLabs tool expects number type
             language: currentLanguage || 'en'
           },
           onStatusChange: (status) => {

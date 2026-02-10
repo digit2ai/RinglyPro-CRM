@@ -901,7 +901,7 @@ module.exports = (models) => {
         agent_id: SPARK_AGENT_ID,
         school_name: schoolName,
         dynamic_variables: {
-          school_id: school_id || '',
+          school_id: parseInt(school_id, 10) || 0,  // Must be NUMBER for ElevenLabs tools
           school_name: schoolName,
           language: language || 'en',
           ...schoolData
