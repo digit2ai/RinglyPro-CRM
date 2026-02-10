@@ -1538,11 +1538,26 @@ app.get('*', (req, res) => {
     async function startVoiceCall() {
       try {
         updateVoiceButtons('connecting');
+
+        // First, check if we can access microphone permissions API
+        if (navigator.permissions && navigator.permissions.query) {
+          try {
+            const permResult = await navigator.permissions.query({ name: 'microphone' });
+            console.log('[Spark Voice] Microphone permission state:', permResult.state);
+
+            if (permResult.state === 'denied') {
+              throw new Error('PERMISSION_DENIED');
+            }
+          } catch (permErr) {
+            // Some browsers don't support querying microphone permission, continue anyway
+            console.log('[Spark Voice] Permission query not supported, continuing...');
+          }
+        }
+
         document.getElementById('voiceStatus').textContent = 'Requesting microphone...';
 
         // IMPORTANT: Request microphone FIRST, before any async operations
         // This ensures we're still within the user gesture context
-        // (getUserMedia must be called immediately after user interaction)
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
           video: false
@@ -1617,7 +1632,55 @@ app.get('*', (req, res) => {
 
       } catch (error) {
         console.error('[Spark Voice] Error:', error);
-        document.getElementById('voiceStatus').textContent = 'Error: ' + error.message;
+
+        // Provide specific error messages based on error type
+        const transcriptArea = document.getElementById('voiceTranscript');
+        let errorMsg = error.message;
+        let helpHtml = '';
+
+        if (error.message === 'PERMISSION_DENIED' ||
+            error.name === 'NotAllowedError' ||
+            error.message.includes('not allowed') ||
+            error.message.includes('denied')) {
+
+          errorMsg = 'Microphone access blocked';
+          helpHtml = \`
+            <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+              <p class="font-medium text-red-400 mb-3"><i class="fas fa-microphone-slash mr-2"></i>Microphone Permission Required</p>
+              <p class="text-sm text-gray-300 mb-4">Your browser has blocked microphone access. To fix this:</p>
+              <ol class="text-sm text-gray-400 space-y-2 list-decimal list-inside">
+                <li>Click the <i class="fas fa-lock text-gray-500"></i> lock icon in your browser's address bar</li>
+                <li>Find "Microphone" in the permissions list</li>
+                <li>Change it from "Blocked" to "Allow"</li>
+                <li>Refresh this page and try again</li>
+              </ol>
+              <button onclick="location.reload()" class="mt-4 w-full py-2 bg-spark-coral/20 hover:bg-spark-coral/30 text-spark rounded-lg text-sm transition">
+                <i class="fas fa-refresh mr-2"></i>Refresh Page
+              </button>
+            </div>
+          \`;
+        } else if (error.name === 'NotFoundError') {
+          errorMsg = 'No microphone found';
+          helpHtml = \`
+            <div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+              <p class="font-medium text-yellow-400 mb-2"><i class="fas fa-plug mr-2"></i>No Microphone Detected</p>
+              <p class="text-sm text-gray-400">Please connect a microphone and try again.</p>
+            </div>
+          \`;
+        } else {
+          helpHtml = \`
+            <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+              <p class="font-medium text-red-400 mb-2"><i class="fas fa-exclamation-circle mr-2"></i>Connection Error</p>
+              <p class="text-sm text-gray-400">\${error.message}</p>
+              <button onclick="startVoiceCall()" class="mt-3 w-full py-2 bg-spark-coral/20 hover:bg-spark-coral/30 text-spark rounded-lg text-sm transition">
+                <i class="fas fa-redo mr-2"></i>Try Again
+              </button>
+            </div>
+          \`;
+        }
+
+        document.getElementById('voiceStatus').textContent = errorMsg;
+        transcriptArea.innerHTML = helpHtml;
         updateVoiceButtons('disconnected');
       }
     }
