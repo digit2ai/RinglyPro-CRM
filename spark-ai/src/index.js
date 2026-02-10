@@ -1527,7 +1527,7 @@ app.get('*', (req, res) => {
     <button onclick="setLanguage('es')" id="langEsDesktop" class="px-3 py-2 bg-white/5 hover:bg-white/20 rounded-lg text-sm transition border border-white/5">ES</button>
   </div>
 
-  <!-- Voice Chat Modal - Hidden ElevenLabs Widget with Custom UI -->
+  <!-- Voice Chat Modal - ElevenLabs Widget Auto-Start -->
   <div id="voiceModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4">
     <div class="bg-spark-dark-card border border-spark-dark-border rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
       <!-- Modal Header -->
@@ -1538,7 +1538,7 @@ app.get('*', (req, res) => {
           </div>
           <div>
             <h3 class="text-lg font-bold">Talk to Spark</h3>
-            <p id="voiceStatus" class="text-sm text-gray-400">Click the orb below to start</p>
+            <p id="voiceStatus" class="text-sm text-gray-400">Starting conversation...</p>
           </div>
         </div>
         <button onclick="closeVoiceModal()" class="p-2 hover:bg-white/10 rounded-lg transition">
@@ -1546,38 +1546,15 @@ app.get('*', (req, res) => {
         </button>
       </div>
 
-      <!-- Custom Voice Orb with Hidden Widget -->
+      <!-- ElevenLabs Widget Container -->
       <div class="p-8 flex flex-col items-center justify-center min-h-[300px]">
-        <!-- Custom Orb Button (clicks the hidden widget) -->
-        <div id="voiceOrbContainer" class="relative mb-6">
-          <button id="voiceOrbBtn" onclick="clickHiddenWidget()" class="voice-orb relative w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); box-shadow: 0 0 30px rgba(245, 158, 11, 0.3);">
-            <!-- Animated rings (shown when active) -->
-            <div id="voiceOrbRing1" class="voice-ring hidden absolute inset-0 rounded-full border-2 border-amber-400 opacity-75"></div>
-            <div id="voiceOrbRing2" class="voice-ring hidden absolute inset-[-8px] rounded-full border border-amber-500/50"></div>
-
-            <!-- Outer glow -->
-            <div id="voiceOrbGlow" class="absolute inset-0 rounded-full blur-md transition-all duration-300" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(249, 115, 22, 0.2));"></div>
-
-            <!-- Inner orb -->
-            <div id="voiceOrbInner" class="relative w-20 h-20 rounded-full transition-all duration-300" style="background: linear-gradient(135deg, #374151 0%, #1f2937 100%); box-shadow: inset 0 0 15px rgba(0,0,0,0.4), 0 0 10px rgba(0,0,0,0.2);">
-              <!-- Icon container -->
-              <div id="voiceOrbIcon" class="absolute inset-0 flex items-center justify-center">
-                <i class="fas fa-microphone text-white text-2xl"></i>
-              </div>
-              <!-- Highlight -->
-              <div class="absolute top-2 left-3 w-4 h-3 rounded-full bg-white opacity-20 blur-[2px]"></div>
-            </div>
-          </button>
-        </div>
-
-        <!-- Hidden ElevenLabs Widget - positioned off-screen but fully functional -->
-        <div id="hiddenWidgetContainer" style="position: fixed; left: -9999px; top: 0; width: 200px; height: 200px;">
-          <!-- Widget inserted here by JS - handles all audio -->
+        <div id="voiceWidgetContainer" class="mb-4">
+          <!-- Widget inserted here by JS and auto-started -->
         </div>
 
         <p id="widgetSchoolName" class="text-lg font-medium text-white mb-2"></p>
-        <p id="voiceInstructions" class="text-sm text-gray-400 text-center">
-          Click the orb to start talking to Spark.<br>
+        <p class="text-sm text-gray-400 text-center">
+          Click the orb to talk to Spark.<br>
           Ask about revenue, members, leads, and more.
         </p>
       </div>
@@ -1585,53 +1562,31 @@ app.get('*', (req, res) => {
       <!-- Close Button -->
       <div class="p-4 border-t border-spark-dark-border">
         <button onclick="closeVoiceModal()" class="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-medium transition">
-          Close
+          End Conversation
         </button>
       </div>
     </div>
   </div>
 
-  <!-- ElevenLabs Widget SDK - loaded but widget hidden -->
+  <!-- ElevenLabs Widget SDK -->
   <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
 
   <style>
-    .voice-orb.active {
-      background: linear-gradient(135deg, #b45309 0%, #d97706 100%) !important;
-      box-shadow: 0 0 40px rgba(245, 158, 11, 0.6) !important;
+    /* Style ElevenLabs widget in modal - center it */
+    #voiceWidgetContainer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 120px;
     }
-    .voice-orb.active .voice-ring {
-      display: block !important;
-      animation: voicePing 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+    #voiceWidgetContainer elevenlabs-convai {
+      position: relative !important;
+      bottom: auto !important;
+      right: auto !important;
     }
-    .voice-orb.active #voiceOrbGlow {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.6), rgba(249, 115, 22, 0.5)) !important;
-    }
-    .voice-orb.active #voiceOrbInner {
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-      box-shadow: inset 0 0 15px rgba(0,0,0,0.3), 0 0 20px rgba(245, 158, 11, 0.5) !important;
-    }
-    .voice-orb.connecting {
-      opacity: 0.7;
-      cursor: wait;
-    }
-    .voice-orb.connecting #voiceOrbIcon i {
-      animation: spin 1s linear infinite;
-    }
-    @keyframes voicePing {
-      0% { transform: scale(1); opacity: 0.75; }
-      75%, 100% { transform: scale(1.3); opacity: 0; }
-    }
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    /* Hide ElevenLabs widget visually but keep it functional */
-    elevenlabs-convai {
-      position: fixed !important;
-      bottom: 20px !important;
-      right: 20px !important;
-      clip-path: inset(100%) !important;
-      overflow: hidden !important;
+    /* Hide the powered-by branding */
+    elevenlabs-convai::part(powered-by) {
+      display: none !important;
     }
   </style>
 
@@ -1908,7 +1863,6 @@ app.get('*', (req, res) => {
 
     const SPARK_AGENT_ID = 'agent_5601kh453hqqfz59nfemkwk02vax';
     let widgetElement = null;
-    let isVoiceActive = false;
 
     function talkToSpark() {
       if (!currentSchoolId) {
@@ -1921,29 +1875,28 @@ app.get('*', (req, res) => {
     function openVoiceModal() {
       const modal = document.getElementById('voiceModal');
       const schoolNameEl = document.getElementById('widgetSchoolName');
-      const container = document.getElementById('hiddenWidgetContainer');
+      const container = document.getElementById('voiceWidgetContainer');
+      const statusEl = document.getElementById('voiceStatus');
 
       // Show modal
       modal.classList.remove('hidden');
       modal.classList.add('flex');
+      statusEl.textContent = 'Starting conversation...';
 
       // Update school name
       const schoolSelect = document.getElementById('schoolSelect');
       const selectedOption = schoolSelect.options[schoolSelect.selectedIndex];
       schoolNameEl.textContent = selectedOption ? selectedOption.text : '';
 
-      // Create widget with comprehensive dynamic variables for personalized greeting
+      // Create widget with comprehensive dynamic variables
       const school = currentSchoolData?.school || {};
       const health = currentSchoolData?.health || {};
       const students = currentSchoolData?.students || {};
       const revenue = currentSchoolData?.revenue || {};
       const leads = currentSchoolData?.leads || {};
 
-      // Calculate key metrics
       const atRiskCount = students.at_risk || 0;
-      const revenueAtRisk = atRiskCount * 175; // Avg monthly value per student
       const hotLeads = leads.hot || 0;
-      const growthPotential = hotLeads * 175; // Potential monthly revenue from leads
 
       const dynamicVars = {
         school_id: parseInt(currentSchoolId, 10),
@@ -1954,15 +1907,15 @@ app.get('*', (req, res) => {
         health_grade: health.grade || 'N/A',
         active_students: students.active || 0,
         at_risk_students: atRiskCount,
-        revenue_at_risk: revenueAtRisk,
+        revenue_at_risk: atRiskCount * 175,
         hot_leads: hotLeads,
-        growth_potential: growthPotential,
+        growth_potential: hotLeads * 175,
         monthly_revenue: revenue.this_month || 0,
         revenue_target: revenue.target || 0,
         revenue_percent: revenue.percent || 0
       };
 
-      console.log('[Spark] Creating widget with dynamic variables:', dynamicVars);
+      console.log('[Spark] Creating widget with:', dynamicVars);
 
       // Clear any existing widget
       container.innerHTML = '';
@@ -1973,88 +1926,52 @@ app.get('*', (req, res) => {
       widgetElement.setAttribute('dynamic-variables', JSON.stringify(dynamicVars));
       container.appendChild(widgetElement);
 
-      // Reset orb state
-      isVoiceActive = false;
-      updateOrbUI(false);
-
-      console.log('[Spark] Widget created with school:', dynamicVars.school_name, 'Health:', dynamicVars.health_score);
+      // Auto-click the widget to start conversation
+      autoStartWidget();
     }
 
-    function closeVoiceModal() {
-      const modal = document.getElementById('voiceModal');
-      const container = document.getElementById('hiddenWidgetContainer');
-
-      // Remove widget
-      container.innerHTML = '';
-      widgetElement = null;
-      isVoiceActive = false;
-
-      // Hide modal
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    function clickHiddenWidget() {
-      if (!widgetElement) {
-        console.log('[Spark] No widget element');
-        return;
-      }
-
-      // Show connecting state
-      const orbBtn = document.getElementById('voiceOrbBtn');
-      orbBtn.classList.add('connecting');
-      document.getElementById('voiceStatus').textContent = 'Connecting...';
-
-      // Try to click the widget button with retries
+    function autoStartWidget() {
       let attempts = 0;
-      const maxAttempts = 10;
+      const maxAttempts = 20;
+      const statusEl = document.getElementById('voiceStatus');
 
-      function tryClick() {
+      function tryAutoStart() {
         attempts++;
-        const shadowRoot = widgetElement?.shadowRoot;
+        if (!widgetElement) return;
 
+        const shadowRoot = widgetElement.shadowRoot;
         if (shadowRoot) {
-          // Look for the button in shadow DOM
           const btn = shadowRoot.querySelector('button');
           if (btn) {
-            console.log('[Spark] Found widget button, clicking...');
+            console.log('[Spark] Auto-clicking widget button');
+            statusEl.textContent = 'Connected - Click orb to talk';
             btn.click();
-
-            // Toggle state after click
-            isVoiceActive = !isVoiceActive;
-            updateOrbUI(isVoiceActive);
             return;
           }
         }
 
         if (attempts < maxAttempts) {
-          console.log('[Spark] Widget button not ready, retry', attempts);
-          setTimeout(tryClick, 200);
+          setTimeout(tryAutoStart, 200);
         } else {
-          console.log('[Spark] Failed to find widget button after', maxAttempts, 'attempts');
-          orbBtn.classList.remove('connecting');
-          document.getElementById('voiceStatus').textContent = 'Failed to connect. Try again.';
+          console.log('[Spark] Widget ready - click orb to start');
+          statusEl.textContent = 'Click the orb to start talking';
         }
       }
 
-      tryClick();
+      setTimeout(tryAutoStart, 500);
     }
 
-    function updateOrbUI(active) {
-      const orbBtn = document.getElementById('voiceOrbBtn');
-      const orbIcon = document.getElementById('voiceOrbIcon');
-      const statusEl = document.getElementById('voiceStatus');
+    function closeVoiceModal() {
+      const modal = document.getElementById('voiceModal');
+      const container = document.getElementById('voiceWidgetContainer');
 
-      orbBtn.classList.remove('active', 'connecting');
+      // Remove widget to end conversation
+      if (container) container.innerHTML = '';
+      widgetElement = null;
 
-      if (active) {
-        orbBtn.classList.add('active');
-        orbIcon.innerHTML = '<i class="fas fa-stop text-white text-2xl"></i>';
-        statusEl.textContent = 'Listening... Click orb to stop';
-      } else {
-        orbIcon.innerHTML = '<i class="fas fa-microphone text-white text-2xl"></i>';
-        statusEl.textContent = 'Click the orb below to start';
-      }
+      // Hide modal
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
     }
 
     function triggerSparkCalls(type) {
