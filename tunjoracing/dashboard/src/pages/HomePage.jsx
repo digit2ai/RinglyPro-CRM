@@ -111,6 +111,24 @@ export default function HomePage() {
               </div>
 
               <p className="text-xs mt-4" style={{ color: '#555' }}>Media kit + deliverables available upon request.</p>
+
+              {/* Fan Signup - Inline in Hero */}
+              <div className="mt-6 pt-6" style={{ borderTop: '1px solid #333' }}>
+                <h3 className="text-white font-bold mb-2">Join the Fan Community</h3>
+                <p style={{ color: '#888' }} className="text-sm mb-3">Get race updates, exclusive content, and shop discounts.</p>
+                <form onSubmit={handleFanSignup} className="flex gap-2">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="flex-1 px-4 py-3 rounded-full text-white text-sm"
+                    style={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
+                  />
+                  <button type="submit" className="btn">Subscribe</button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
@@ -237,17 +255,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Fan Signup */}
-      <section className="section">
-        <div className="container mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-2">Join the Fan Community</h2>
-          <p style={{ color: '#888' }} className="mb-6">Get race updates, exclusive content, and shop discounts.</p>
-          <form onSubmit={handleFanSignup} className="max-w-md mx-auto flex gap-3">
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" className="flex-1" />
-            <button type="submit" className="btn">Subscribe</button>
-          </form>
-        </div>
-      </section>
 
       <Footer />
     </div>
