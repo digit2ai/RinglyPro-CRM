@@ -234,10 +234,17 @@ router.get('/', authenticateToken, requireAdmin, asyncHandler(async (req, res) =
 router.post('/', authenticateToken, requireAdmin, asyncHandler(async (req, res) => {
   const TunjoSponsor = models.TunjoSponsor;
 
-  const sponsor = await TunjoSponsor.create({
-    ...req.body,
+  // Map password to password_hash for the model hook to hash it
+  const { password, ...rest } = req.body;
+  const sponsorData = {
+    ...rest,
     tenant_id: 1
-  });
+  };
+  if (password) {
+    sponsorData.password_hash = password;
+  }
+
+  const sponsor = await TunjoSponsor.create(sponsorData);
 
   res.status(201).json({
     success: true,
