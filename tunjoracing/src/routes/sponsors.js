@@ -264,7 +264,14 @@ router.put('/:id', authenticateToken, requireAdmin, asyncHandler(async (req, res
     return res.status(404).json({ success: false, error: 'Sponsor not found' });
   }
 
-  await sponsor.update(req.body);
+  // Map password to password_hash for the model hook to hash it
+  const { password, ...rest } = req.body;
+  const updateData = { ...rest };
+  if (password) {
+    updateData.password_hash = password;
+  }
+
+  await sponsor.update(updateData);
 
   res.json({
     success: true,
