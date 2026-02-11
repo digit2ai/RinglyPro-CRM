@@ -402,6 +402,11 @@ if (elevenlabsWebrtcRoutes) {
 app.use('/api/email', emailRoutes);
 console.log('📧 Email Marketing routes mounted at /api/email');
 
+// Press Release Manager routes (TunjoRacing - Clients 15 & 40 only)
+const pressRoutes = require('./routes/press');
+app.use('/api/press', pressRoutes);
+console.log('📰 Press Release Manager routes mounted at /api/press');
+
 // Lina's Treasures E-Commerce routes
 const linasTreasuresRoutes = require('./routes/linas-treasures');
 const linasTreasuresAdminRoutes = require('./routes/linas-treasures-admin');
