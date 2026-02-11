@@ -83,6 +83,14 @@ try {
   adminRoutes = require('./routes/admin');
   routesLoaded = true;
   console.log('✅ TunjoRacing routes loaded successfully');
+
+  // Auto-sync database tables on startup
+  const models = require('../models');
+  models.sequelize.sync({ alter: false }).then(() => {
+    console.log('✅ TunjoRacing database tables synced');
+  }).catch(err => {
+    console.log('⚠️ TunjoRacing database sync warning:', err.message);
+  });
 } catch (error) {
   console.log('⚠️ Some TunjoRacing routes failed to load:', error.message);
   console.log('   Error stack:', error.stack);
