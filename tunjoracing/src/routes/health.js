@@ -210,4 +210,41 @@ router.get('/auth-test', async (req, res) => {
   }
 });
 
+// GET /health/model-debug - Debug model fields
+router.get('/model-debug', async (req, res) => {
+  if (!models || !models.TunjoFan) {
+    return res.status(500).json({ status: 'error', message: 'TunjoFan model not loaded' });
+  }
+
+  try {
+    const TunjoFan = models.TunjoFan;
+
+    // Get model attributes
+    const modelAttributes = Object.keys(TunjoFan.rawAttributes);
+
+    // Get actual database columns
+    const [dbColumns] = await models.sequelize.query(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_name = 'tunjo_fans' ORDER BY ordinal_position
+    `);
+
+    res.json({
+      status: 'OK',
+      model_name: TunjoFan.name,
+      table_name: TunjoFan.tableName,
+      model_attributes: modelAttributes,
+      has_password_hash_in_model: modelAttributes.includes('password_hash'),
+      database_columns: dbColumns.map(c => c.column_name),
+      has_password_hash_in_db: dbColumns.some(c => c.column_name === 'password_hash'),
+      deployment_timestamp: '2026-02-11-debug'
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message,
+      stack: error.stack?.split('\n').slice(0, 5)
+    });
+  }
+});
+
 module.exports = router;
