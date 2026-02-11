@@ -6,6 +6,7 @@
  */
 
 const { DataTypes } = require('sequelize');
+const bcrypt = require('bcryptjs');
 
 module.exports = (sequelize) => {
   const Fan = sequelize.define('TunjoFan', {
@@ -26,6 +27,11 @@ module.exports = (sequelize) => {
       validate: {
         isEmail: true
       }
+    },
+    password_hash: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: 'Hashed password for fan login'
     },
     first_name: {
       type: DataTypes.STRING(100),
@@ -130,11 +136,25 @@ module.exports = (sequelize) => {
       { fields: ['created_at'] }
     ],
     hooks: {
+      beforeCreate: async (fan) => {
+        if (fan.password_hash && !fan.password_hash.startsWith('$2')) {
+          fan.password_hash = await bcrypt.hash(fan.password_hash, 10);
+        }
+      },
       beforeUpdate: async (fan) => {
         fan.updated_at = new Date();
+        if (fan.changed('password_hash') && fan.password_hash && !fan.password_hash.startsWith('$2')) {
+          fan.password_hash = await bcrypt.hash(fan.password_hash, 10);
+        }
       }
     }
   });
+
+  // Instance method to validate password
+  Fan.prototype.validatePassword = async function(password) {
+    if (!this.password_hash) return false;
+    return bcrypt.compare(password, this.password_hash);
+  };
 
   Fan.associate = (models) => {
     Fan.hasMany(models.TunjoOrder, { foreignKey: 'fan_id', as: 'orders' });

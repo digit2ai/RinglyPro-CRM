@@ -80,6 +80,19 @@ const requireSponsor = (req, res, next) => {
 };
 
 /**
+ * Require fan role
+ */
+const requireFan = (req, res, next) => {
+  if (!req.user || req.user.role !== 'fan') {
+    return res.status(403).json({
+      success: false,
+      error: 'Fan access required'
+    });
+  }
+  next();
+};
+
+/**
  * Generate JWT token
  */
 const generateToken = (payload, expiresIn = '7d') => {
@@ -91,6 +104,7 @@ module.exports = {
   optionalAuth,
   requireAdmin,
   requireSponsor,
+  requireFan,
   generateToken,
   JWT_SECRET
 };

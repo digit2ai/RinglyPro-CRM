@@ -17,6 +17,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import FansPage from './pages/FansPage';
 import SponsorLoginPage from './pages/SponsorLoginPage';
 import SponsorDashboard from './pages/SponsorDashboard';
+import FanLoginPage from './pages/FanLoginPage';
+import FanDashboard from './pages/FanDashboard';
 
 function App() {
   return (
@@ -37,6 +39,10 @@ function App() {
         {/* Sponsor Portal */}
         <Route path="/sponsor/login" element={<SponsorLoginPage />} />
         <Route path="/sponsor/dashboard" element={<SponsorDashboard />} />
+
+        {/* Fan Portal */}
+        <Route path="/fan/login" element={<FanLoginPage />} />
+        <Route path="/fan/dashboard" element={<FanDashboard />} />
 
         {/* Admin Portal */}
         <Route path="/admin/login" element={<AdminLoginPage />} />

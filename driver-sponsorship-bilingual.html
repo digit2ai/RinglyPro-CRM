@@ -130,6 +130,21 @@
       align-items: center;
       margin-left: 12px;
     }
+    .header-fan-btn{
+      background: #2563eb;
+      color: #ffffff !important;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      text-decoration: none;
+      transition: background 0.3s;
+      white-space: nowrap;
+    }
+    .header-fan-btn:hover{
+      background: #1d4ed8;
+      color: #ffffff !important;
+    }
     .header-login-btn{
       background: #e31837;
       color: #ffffff !important;
@@ -138,6 +153,7 @@
       font-weight: bold;
       font-size: 14px;
       text-decoration: none;
+      margin-left: 6px;
       transition: background 0.3s;
       white-space: nowrap;
     }
@@ -606,9 +622,14 @@
         gap: 4px;
         margin-left: 8px;
       }
+      .header-fan-btn {
+        padding: 6px 12px;
+        font-size: 11px;
+      }
       .header-login-btn {
         padding: 6px 12px;
         font-size: 11px;
+        margin-left: 0;
       }
       .header-ringlypro-btn {
         padding: 6px 12px;
@@ -718,15 +739,17 @@
         </div>
         <!-- Header Buttons Container -->
         <div class="header-buttons">
-          <!-- Login Button -->
-          <a href="http://aiagent.ringlypro.com" target="_blank" class="header-login-btn">
-            <span class="lang-en">Login</span>
-            <span class="lang-es">Iniciar Sesión</span>
-            <span class="lang-de">Anmelden</span>
+          <!-- Fans Login Button -->
+          <a href="https://aiagent.ringlypro.com/tunjoracing/fan/login" target="_blank" class="header-fan-btn">
+            <span class="lang-en">Fans Login</span>
+            <span class="lang-es">Acceso Fans</span>
+            <span class="lang-de">Fans Login</span>
           </a>
-          <!-- RinglyPro Button -->
-          <a href="https://aiagent.ringlypro.com/elevenlabs-webrtc-demo/" target="_blank" class="header-ringlypro-btn">
-            RinglyPro
+          <!-- Sponsors Login Button -->
+          <a href="https://aiagent.ringlypro.com/tunjoracing/sponsor/login" target="_blank" class="header-login-btn">
+            <span class="lang-en">Sponsors Login</span>
+            <span class="lang-es">Acceso Patrocinadores</span>
+            <span class="lang-de">Sponsoren Login</span>
           </a>
         </div>
       </div>
@@ -750,6 +773,8 @@
           <li><a href="#calendar">Calendar</a></li>
           <li><a href="#vip">VIP</a></li>
           <li><a href="#partners">Partners</a></li>
+          <li><a href="https://aiagent.ringlypro.com/tunjoracing/store" target="_blank">Store</a></li>
+          <li><a href="https://aiagent.ringlypro.com/tunjoracing/schedule" target="_blank">Schedule</a></li>
         </ul>
 
         <!-- Spanish Nav -->
@@ -762,6 +787,8 @@
           <li><a href="#calendar">Calendario</a></li>
           <li><a href="#vip">VIP</a></li>
           <li><a href="#partners">Socios</a></li>
+          <li><a href="https://aiagent.ringlypro.com/tunjoracing/store" target="_blank">Tienda</a></li>
+          <li><a href="https://aiagent.ringlypro.com/tunjoracing/schedule" target="_blank">Calendario</a></li>
         </ul>
 
         <!-- German Nav -->
@@ -774,6 +801,8 @@
           <li><a href="#calendar">Kalender</a></li>
           <li><a href="#vip">VIP</a></li>
           <li><a href="#partners">Partner</a></li>
+          <li><a href="https://aiagent.ringlypro.com/tunjoracing/store" target="_blank">Shop</a></li>
+          <li><a href="https://aiagent.ringlypro.com/tunjoracing/schedule" target="_blank">Zeitplan</a></li>
         </ul>
       </nav>
     </div>
@@ -819,7 +848,7 @@
 
           <!-- Fan Signup -->
           <div class="fan-signup">
-            <h3>Join the Fan Community</h3>
+            <h3>Join the Fan Community <span style="color: #e31837; font-weight: bold;">(750,000+ Followers)</span></h3>
             <p>Get race updates, exclusive content, and shop discounts.</p>
             <form class="fan-signup-form" onsubmit="handleFanSignup(event, 'en')">
               <input type="email" id="fanEmailEn" placeholder="Enter your email" required />
@@ -868,7 +897,7 @@
 
           <!-- Fan Signup -->
           <div class="fan-signup">
-            <h3>Únete a la Comunidad de Fans</h3>
+            <h3>Únete a la Comunidad de Fans <span style="color: #e31837; font-weight: bold;">(750,000+ Seguidores)</span></h3>
             <p>Recibe actualizaciones de carreras, contenido exclusivo y descuentos.</p>
             <form class="fan-signup-form" onsubmit="handleFanSignup(event, 'es')">
               <input type="email" id="fanEmailEs" placeholder="Ingresa tu email" required />
@@ -917,7 +946,7 @@
 
           <!-- Fan Signup -->
           <div class="fan-signup">
-            <h3>Werde Teil der Fan-Community</h3>
+            <h3>Werde Teil der Fan-Community <span style="color: #e31837; font-weight: bold;">(750.000+ Follower)</span></h3>
             <p>Erhalte Renn-Updates, exklusive Inhalte und Shop-Rabatte.</p>
             <form class="fan-signup-form" onsubmit="handleFanSignup(event, 'de')">
               <input type="email" id="fanEmailDe" placeholder="E-Mail eingeben" required />
