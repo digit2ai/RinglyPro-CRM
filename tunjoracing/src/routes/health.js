@@ -186,4 +186,28 @@ router.get('/db', async (req, res) => {
   }
 });
 
+// GET /health/auth-test - Test JWT generation
+router.get('/auth-test', async (req, res) => {
+  try {
+    const { generateToken } = require('../middleware/auth');
+    const token = generateToken({
+      id: 0,
+      email: 'test@tunjoracing.com',
+      role: 'admin',
+      name: 'Test Admin'
+    });
+    res.json({
+      status: 'OK',
+      message: 'JWT generation working',
+      tokenPreview: token.substring(0, 50) + '...'
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message,
+      stack: error.stack?.split('\n').slice(0, 3)
+    });
+  }
+});
+
 module.exports = router;
