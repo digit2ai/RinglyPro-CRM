@@ -1,0 +1,1325 @@
+<!doctype html>
+<html lang="es" style="background-color: #0a0a0a;">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title class="lang-en" style="display:none;">Óscar Tunjo — Sponsorship & Partnerships | IMSA 2026</title>
+  <title class="lang-es">Óscar Tunjo — Patrocinio y Alianzas | IMSA 2026</title>
+  <title class="lang-de" style="display:none;">Óscar Tunjo — Sponsoring & Partnerschaften | IMSA 2026</title>
+  <meta name="description" content="Partner with Óscar Tunjo in IMSA 2026. Accelerate your brand through passion, performance, and global visibility at every race." />
+
+  <style>
+    /* Base */
+    :root{
+      --bg: #0a0a0a;
+      --panel: #1a1a1a;
+      --panel-2: #222222;
+      --text: #ffffff;
+      --muted: #888888;
+      --line: #333333;
+      --accent: #e31837;
+      --accent-hover: #ff1f41;
+      --shadow: 0 18px 55px rgba(0,0,0,.6);
+      --radius: 18px;
+      --radius-sm: 14px;
+      --max: 1120px;
+    }
+
+    *{ box-sizing: border-box; }
+    html{
+      scroll-behavior: smooth;
+      background-color: #0a0a0a;
+    }
+    body{
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background-color: #0a0a0a;
+      background: #0a0a0a;
+      color: #ffffff;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    a{ color: #ffffff; text-underline-offset: 3px; }
+    a:hover{ color: #e31837; }
+
+    img{ max-width: 100%; height: auto; display: block; border-radius: 14px; }
+
+    .container{ width: min(var(--max), calc(100% - 40px)); margin: 0 auto; }
+
+    /* Language toggle */
+    .lang-en, .lang-es, .lang-de { display: none; }
+    body.show-en .lang-en { display: block; }
+    body.show-es .lang-es { display: block; }
+    body.show-de .lang-de { display: block; }
+    body.show-en .lang-en-inline { display: inline; }
+    body.show-es .lang-es-inline { display: inline; }
+    body.show-de .lang-de-inline { display: inline; }
+    body.show-en .lang-es, body.show-en .lang-es-inline, body.show-en .lang-de, body.show-en .lang-de-inline { display: none !important; }
+    body.show-es .lang-en, body.show-es .lang-en-inline, body.show-es .lang-de, body.show-es .lang-de-inline { display: none !important; }
+    body.show-de .lang-en, body.show-de .lang-en-inline, body.show-de .lang-es, body.show-de .lang-es-inline { display: none !important; }
+
+    .lang-switcher {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      z-index: 100;
+      display: flex;
+      gap: 8px;
+      background: rgba(0,0,0,.9);
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid #333;
+    }
+    .lang-switcher button {
+      background: transparent;
+      border: 1px solid #444;
+      color: #888;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    .lang-switcher button:hover {
+      border-color: #e31837;
+      color: #fff;
+    }
+    .lang-switcher button.active {
+      background: #e31837;
+      border-color: #e31837;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .skip-link{
+      position:absolute; left:-999px; top:auto; width:1px; height:1px; overflow:hidden;
+    }
+    .skip-link:focus{ left: 16px; top: 16px; width:auto; height:auto; padding: 10px 12px; background:#000; border:1px solid #333; border-radius: 10px; z-index: 9999; }
+
+    /* Header / Nav */
+    .site-header{
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(14px);
+      background: rgba(10,10,10,.95);
+      border-bottom: 1px solid #333;
+    }
+    .header-inner{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 14px 0;
+      gap: 18px;
+    }
+    .brand{ display:flex; align-items:center; gap: 12px; min-width: 240px; }
+    .brand-mark{
+      width: 34px; height: 34px; border-radius: 12px;
+      background: linear-gradient(135deg, #e31837, #8b0000);
+      border: 1px solid #e31837;
+    }
+    .brand-title{ letter-spacing:.12em; font-size: 13px; color: #ffffff; }
+    .brand-sub{ display:block; font-size: 12px; color: #888888; }
+
+    .nav{ display:flex; align-items:center; }
+    .nav-menu{
+      display:flex; align-items:center; gap: 16px;
+      list-style:none; padding:0; margin:0;
+    }
+    .nav-menu a{ text-decoration:none; font-size: 13px; color: #888888; }
+    .nav-menu a:hover{ color: #e31837; }
+    .header-buttons{
+      display: flex;
+      align-items: center;
+      margin-left: 12px;
+    }
+    .header-login-btn{
+      background: #e31837;
+      color: #ffffff !important;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      text-decoration: none;
+      transition: background 0.3s;
+      white-space: nowrap;
+    }
+    .header-login-btn:hover{
+      background: #c41530;
+      color: #ffffff !important;
+    }
+    .header-ringlypro-btn{
+      background: #2563eb;
+      color: #ffffff !important;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      text-decoration: none;
+      margin-left: 6px;
+      transition: background 0.3s;
+      white-space: nowrap;
+    }
+    .header-ringlypro-btn:hover{
+      background: #1d4ed8;
+      color: #ffffff !important;
+    }
+
+    .nav-toggle{
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      background: transparent; border: 1px solid #333;
+      border-radius: 12px; padding: 10px 12px; color: #ffffff;
+      cursor: pointer;
+      z-index: 60;
+    }
+    .nav-toggle-lines{
+      width: 18px; height: 14px; display:inline-block; position: relative;
+    }
+    .nav-toggle-lines:before,
+    .nav-toggle-lines:after,
+    .nav-toggle-lines span{
+      content:""; position:absolute; left:0; right:0; height:2px; background: #ffffff; border-radius: 2px;
+      transition: all 0.3s ease;
+    }
+    .nav-toggle-lines:before{ top: 0; }
+    .nav-toggle-lines span{ top: 50%; transform: translateY(-50%); }
+    .nav-toggle-lines:after{ bottom: 0; }
+    .sr-only{ position:absolute; left:-9999px; }
+
+    /* Nav menu - slide-in panel for both desktop and mobile */
+    .nav-menu {
+      position: fixed;
+      top: 0;
+      right: -300px;
+      width: 280px;
+      height: 100vh;
+      display: flex !important;
+      flex-direction: column;
+      align-items: stretch;
+      padding: 80px 20px 30px;
+      background: rgba(10,10,10,0.98);
+      border-left: 1px solid #333;
+      transition: right 0.3s ease;
+      z-index: 55;
+      gap: 8px;
+      list-style: none;
+      margin: 0;
+    }
+    .nav-menu.open {
+      right: 0;
+    }
+    .nav-menu li {
+      border-bottom: 1px solid #222;
+      padding: 12px 0;
+    }
+    .nav-menu li:last-child {
+      border-bottom: none;
+    }
+    .nav-menu a {
+      font-size: 15px;
+      color: #fff;
+      text-decoration: none;
+    }
+    .nav-menu a:hover {
+      color: #e31837;
+    }
+
+    /* Overlay when menu is open */
+    .nav-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 54;
+    }
+    .nav-overlay.open {
+      display: block;
+    }
+
+    /* Buttons */
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding: 12px 20px; border-radius: 999px;
+      border: none;
+      background: #e31837;
+      color: #000000;
+      text-decoration:none;
+      font-weight: 800;
+      box-shadow: 0 14px 34px rgba(227,24,55,.3);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .btn:hover{ background: #ff1f41; transform: translateY(-1px); color: #000000; }
+    .btn:active{ transform: translateY(0px); }
+    .btn-small{ padding: 10px 14px; font-size: 13px; }
+    .btn-ghost{
+      background: transparent;
+      color: #ffffff;
+      border: 2px solid #444;
+      box-shadow: none;
+    }
+    .btn-ghost:hover{ background: transparent; border-color: #e31837; color: #e31837; }
+
+    /* Sections */
+    .section{ padding: 72px 0; }
+    .section-alt{
+      background: #111111;
+      border-top: 1px solid #333;
+      border-bottom: 1px solid #333;
+    }
+    .section-head{ margin-bottom: 24px; }
+    .section-head h2{ margin: 0 0 8px; font-size: clamp(22px, 3vw, 34px); letter-spacing: -0.02em; color: #ffffff; }
+    h2, h3{ color: #ffffff; }
+    p{ color: #888888; }
+    .muted{ color: #777777; }
+    .small-note{ font-size: 13px; }
+
+    .card{
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .media-card{ padding: 14px; }
+    .media-card figcaption{ margin-top: 10px; color: #888888; font-size: 13px; }
+
+    /* Hero */
+    .hero{
+      position: relative;
+      padding: 64px 0 44px;
+      min-height: 85vh;
+      overflow: hidden;
+    }
+    .hero-media{
+      position:absolute; inset: 0;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.3) 0%, rgba(0,0,0,.5) 60%, rgba(0,0,0,.95) 100%),
+        url("https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696cf718439b6bf938457268.png") 95% top/cover no-repeat;
+      filter: saturate(1.05) contrast(1.05);
+    }
+    .hero-inner{ position: relative; padding-top: 18px; }
+    .hero-card{
+      width: min(640px, 100%);
+      padding: 22px;
+      border-radius: 22px;
+      background: rgba(0,0,0,.85);
+      border: 1px solid #333;
+      box-shadow: 0 24px 80px rgba(0,0,0,.7);
+    }
+    .pill{
+      display:inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #e31837;
+      background: rgba(227,24,55,.1);
+      color: #e31837;
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .hero h1{
+      margin: 14px 0 10px;
+      font-size: clamp(30px, 4.2vw, 54px);
+      line-height: 1.06;
+      letter-spacing: -0.03em;
+    }
+    .accent{ color: #e31837; text-decoration: underline; text-underline-offset: 6px; }
+    .lead{ font-size: 16px; color: #666666; margin: 10px 0 16px; }
+
+    .proof{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 10px;
+      margin: 16px 0 16px;
+    }
+    .proof-item{
+      padding: 12px;
+      border-radius: 14px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+    }
+    .proof-kpi{ display:block; font-size: 18px; font-weight: 760; letter-spacing: -0.02em; color: #ffffff; }
+    .proof-label{ display:block; font-size: 12px; color: #888888; margin-top: 2px; }
+
+    .hero-actions{ display:flex; gap: 10px; flex-wrap: wrap; }
+    .fineprint{ margin-top: 12px; font-size: 12px; color: #555555; }
+
+    /* Fan Signup Section */
+    .fan-signup {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid #333;
+    }
+    .fan-signup h3 {
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+    .fan-signup p {
+      color: #888;
+      font-size: 13px;
+      margin: 0 0 12px;
+    }
+    .fan-signup-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .fan-signup-form input[type="email"] {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid #333;
+      background: #1a1a1a;
+      color: #fff;
+      font-size: 14px;
+      margin: 0;
+    }
+    .fan-signup-form input[type="email"]:focus {
+      outline: none;
+      border-color: #e31837;
+    }
+    .fan-signup-form input[type="email"]::placeholder {
+      color: #666;
+    }
+    .fan-benefits {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .fan-benefits li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #888;
+      font-size: 13px;
+    }
+    .fan-benefits li .check {
+      color: #e31837;
+      font-weight: bold;
+    }
+    .fan-signup-success {
+      display: none;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid #22c55e;
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #22c55e;
+      font-size: 14px;
+      text-align: center;
+    }
+    .fan-signup-success.show {
+      display: block;
+    }
+    .fan-signup-form.hidden {
+      display: none;
+    }
+
+    /* Layout helpers */
+    .grid-2{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
+      align-items:start;
+    }
+
+    .cards-3{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 14px;
+    }
+
+    .bullets{ padding-left: 18px; margin: 12px 0 0; }
+    .bullets li{ margin: 8px 0; color: #888888; }
+    .checklist{ list-style: none; padding: 0; margin: 12px 0 0; }
+    .checklist li{
+      margin: 10px 0;
+      padding-left: 26px;
+      position: relative;
+      color: #888888;
+    }
+    .checklist li:before{
+      content: "✓";
+      position:absolute; left: 0; top: 0;
+      color: #e31837;
+    }
+
+    /* CTA band */
+    .cta-band{
+      margin-top: 18px;
+      display:flex; align-items:center; justify-content:space-between; gap: 14px;
+      padding: 18px;
+      border-radius: var(--radius);
+      border: 1px solid #e31837;
+      background: rgba(227,24,55,.05);
+    }
+    .cta-band h3{ color: #ffffff; margin: 0 0 4px; }
+    .cta-band p{ margin: 0; }
+
+    /* Stats */
+    .stats{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 12px;
+      margin: 16px 0 18px;
+    }
+    .stat{
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid #333;
+      background: #1a1a1a;
+    }
+    .stat-num{ font-size: 22px; font-weight: 800; letter-spacing: -0.03em; color: #e31837; }
+    .stat-label{ font-size: 12px; color: #888888; margin-top: 4px; }
+
+    /* Benefits grid */
+    .benefits{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 14px;
+    }
+
+    /* Packages */
+    .tiers{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 14px;
+    }
+    .tier-top{
+      display:flex; align-items:baseline; justify-content:space-between; gap: 10px;
+    }
+    .tier-price{ color: #e31837; font-weight: 600; }
+
+    /* Calendar table */
+    .table-card{ padding: 0; overflow:hidden; }
+    .table{ display:grid; }
+    .row{
+      display:grid;
+      grid-template-columns: 120px 1.2fr 1fr 1fr;
+      gap: 12px;
+      padding: 14px 16px;
+      border-top: 1px solid #333;
+    }
+    .row.head{
+      background: #1a1a1a;
+      border-top: none;
+      color: #e31837;
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    /* Gallery */
+    .gallery{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 18px;
+    }
+    .gallery img{ width: 100%; height: auto; object-fit: contain; }
+
+    /* Partners */
+    .logo-grid{
+      display:grid;
+      grid-template-columns: repeat(6, minmax(0,1fr));
+      gap: 14px;
+      padding: 18px;
+    }
+    .logo-grid img{
+      background: #1a1a1a;
+      border: 1px solid #333;
+      padding: 12px;
+      border-radius: 16px;
+      height: 64px;
+      object-fit: contain;
+    }
+
+    /* Contact */
+    .contact{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 14px;
+      align-items:start;
+    }
+    .contact-cards{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .social{ display:flex; gap: 10px; flex-wrap: wrap; }
+    .form label{ display:block; margin: 10px 0; color: #cccccc; font-size: 13px; }
+    input, textarea{
+      width: 100%;
+      margin-top: 6px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid #333;
+      background: #0a0a0a;
+      color: #ffffff;
+    }
+    input:focus, textarea:focus{ outline: none; border-color: #e31837; }
+    input::placeholder, textarea::placeholder{ color: #666666; }
+    textarea{ resize: vertical; }
+
+    /* Footer */
+    .site-footer{
+      border-top: 1px solid #333;
+      padding: 22px 0;
+      background: #0a0a0a;
+    }
+    .footer-inner{
+      display:flex; align-items:center; justify-content:space-between; gap: 12px;
+      color: #888888;
+      font-size: 13px;
+    }
+    .footer-inner a:hover{ color: #e31837; }
+
+    /* Responsive */
+    @media (max-width: 980px){
+      .grid-2, .contact{ grid-template-columns: 1fr; }
+      .cards-3, .benefits, .tiers{ grid-template-columns: 1fr; }
+      .stats{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .gallery{ grid-template-columns: 1fr; }
+      .logo-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+      .fan-benefits { grid-template-columns: 1fr; }
+
+      /* Smaller nav menu width on mobile */
+      .nav-menu {
+        width: 260px;
+        right: -280px;
+      }
+      .nav-menu.open {
+        right: 0;
+      }
+
+      /* Larger brand logo on mobile to show driver face */
+      .brand-logo{ height: 60px !important; }
+      .brand{ min-width: auto; flex-shrink: 0; }
+      .brand-text{ display: none; }
+
+      /* Push hero card down on mobile to show driver face above */
+      .hero{ min-height: 100vh; padding: 0 0 30px; }
+      .hero-media{ background-position: 70% top !important; }
+      .hero-inner{ padding-top: 280px; }
+      .hero-card{ background: rgba(0,0,0,.8); }
+
+      .lang-switcher {
+        top: auto;
+        bottom: 20px;
+        right: 20px;
+      }
+      .countdown-box {
+        flex-direction: column;
+        padding: 6px 10px;
+      }
+      .header-buttons {
+        flex-direction: column;
+        gap: 4px;
+        margin-left: 8px;
+      }
+      .header-login-btn {
+        padding: 6px 12px;
+        font-size: 11px;
+      }
+      .header-ringlypro-btn {
+        padding: 6px 12px;
+        font-size: 11px;
+        margin-left: 0;
+      }
+      .countdown-box .countdown-location {
+        font-size: 9px;
+      }
+      .countdown-timer {
+        font-size: 11px;
+        gap: 4px;
+      }
+      .countdown-timer .time-unit {
+        min-width: 28px;
+        padding: 2px 4px;
+      }
+      .countdown-timer .time-unit span:first-child {
+        font-size: 12px;
+      }
+      .countdown-timer .time-unit span:last-child {
+        font-size: 7px;
+      }
+    }
+
+    /* Countdown Timer */
+    .countdown-box {
+      background: #e31837;
+      border-radius: 8px;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: 12px;
+    }
+    .countdown-box .countdown-location {
+      color: #000;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      line-height: 1.2;
+    }
+    .countdown-timer {
+      display: flex;
+      gap: 6px;
+    }
+    .countdown-timer .time-unit {
+      background: #000;
+      color: #fff;
+      border-radius: 4px;
+      padding: 4px 6px;
+      text-align: center;
+      min-width: 36px;
+    }
+    .countdown-timer .time-unit span:first-child {
+      display: block;
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .countdown-timer .time-unit span:last-child {
+      display: block;
+      font-size: 8px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+
+<body style="background-color: #0a0a0a; color: #ffffff;" class="show-es">
+
+  <!-- Language Switcher -->
+  <div class="lang-switcher">
+    <button onclick="setLanguage('en')" id="btn-en">EN</button>
+    <button onclick="setLanguage('es')" id="btn-es" class="active">ES</button>
+    <button onclick="setLanguage('de')" id="btn-de">DE</button>
+  </div>
+
+  <a class="skip-link lang-en" href="#main">Skip to content</a>
+  <a class="skip-link lang-es" href="#main">Ir al contenido</a>
+  <a class="skip-link lang-de" href="#main">Zum Inhalt springen</a>
+
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <div class="brand">
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696e4f86ccb051efad7076a6.png" alt="Óscar Tunjo" class="brand-logo" style="width: auto; height: 100px; border-radius: 8px; object-fit: contain; border: 2px solid #e31837;" />
+        <div class="brand-text">
+          <strong class="brand-title">ÓSCAR TUNJO</strong>
+          <span class="brand-sub">Powered by <a href="https://ringlypro.com" target="_blank" rel="noopener" style="color: #e31837; text-decoration: none; font-weight: bold;">RinglyPro</a></span>
+        </div>
+        <!-- Countdown Timer -->
+        <div class="countdown-box">
+          <div class="countdown-location">
+            <span class="lang-en">AUSTIN, TX</span>
+            <span class="lang-es">AUSTIN, TX</span>
+            <span class="lang-de">AUSTIN, TX</span>
+            <br>Feb 27, 2026
+          </div>
+          <div class="countdown-timer" id="countdown">
+            <div class="time-unit"><span id="days">00</span><span class="lang-en">Days</span><span class="lang-es">Días</span><span class="lang-de">Tage</span></div>
+            <div class="time-unit"><span id="hours">00</span><span class="lang-en">Hrs</span><span class="lang-es">Hrs</span><span class="lang-de">Std</span></div>
+            <div class="time-unit"><span id="minutes">00</span><span class="lang-en">Min</span><span class="lang-es">Min</span><span class="lang-de">Min</span></div>
+            <div class="time-unit"><span id="seconds">00</span><span class="lang-en">Sec</span><span class="lang-es">Seg</span><span class="lang-de">Sek</span></div>
+          </div>
+        </div>
+        <!-- Header Buttons Container -->
+        <div class="header-buttons">
+          <!-- Login Button -->
+          <a href="http://aiagent.ringlypro.com" target="_blank" class="header-login-btn">
+            <span class="lang-en">Login</span>
+            <span class="lang-es">Iniciar Sesión</span>
+            <span class="lang-de">Anmelden</span>
+          </a>
+          <!-- RinglyPro Button -->
+          <a href="https://aiagent.ringlypro.com/elevenlabs-webrtc-demo/" target="_blank" class="header-ringlypro-btn">
+            RinglyPro
+          </a>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Primary">
+        <button class="nav-toggle" aria-expanded="false" aria-controls="navMenu" id="navToggle">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="nav-toggle-lines" aria-hidden="true"><span></span></span>
+        </button>
+
+        <!-- Overlay for mobile menu -->
+        <div class="nav-overlay" id="navOverlay"></div>
+
+        <!-- English Nav -->
+        <ul class="nav-menu lang-en" id="navMenuEn">
+          <li><a href="#about">About</a></li>
+          <li><a href="#value">Partnership Value</a></li>
+          <li><a href="#reach">Stats</a></li>
+          <li><a href="#benefits">Benefits</a></li>
+          <li><a href="#packages">Packages</a></li>
+          <li><a href="#calendar">Calendar</a></li>
+          <li><a href="#vip">VIP</a></li>
+          <li><a href="#partners">Partners</a></li>
+        </ul>
+
+        <!-- Spanish Nav -->
+        <ul class="nav-menu lang-es" id="navMenu">
+          <li><a href="#about">Acerca de</a></li>
+          <li><a href="#value">Valor de Alianza</a></li>
+          <li><a href="#reach">Estadísticas</a></li>
+          <li><a href="#benefits">Beneficios</a></li>
+          <li><a href="#packages">Paquetes</a></li>
+          <li><a href="#calendar">Calendario</a></li>
+          <li><a href="#vip">VIP</a></li>
+          <li><a href="#partners">Socios</a></li>
+        </ul>
+
+        <!-- German Nav -->
+        <ul class="nav-menu lang-de" id="navMenuDe">
+          <li><a href="#about">Über uns</a></li>
+          <li><a href="#value">Partnerschaftswert</a></li>
+          <li><a href="#reach">Statistiken</a></li>
+          <li><a href="#benefits">Vorteile</a></li>
+          <li><a href="#packages">Pakete</a></li>
+          <li><a href="#calendar">Kalender</a></li>
+          <li><a href="#vip">VIP</a></li>
+          <li><a href="#partners">Partner</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- HERO -->
+    <section class="hero" aria-label="Hero">
+      <div class="hero-media" role="img" aria-label="Driver racing action photo"></div>
+
+      <div class="container hero-inner">
+        <!-- English Hero -->
+        <div class="hero-card lang-en">
+          <p class="pill">2026 Sponsorship & Partnership Program</p>
+          <h1>Accelerate Your Brand with <span class="accent">ÓSCAR TUNJO</span></h1>
+          <p class="lead">
+            Through passion, performance, and global visibility at every race, your company will connect with motorsport fans worldwide. Let's drive together towards victory!
+          </p>
+
+          <div class="proof">
+            <div class="proof-item">
+              <span class="proof-kpi">50+</span>
+              <span class="proof-label">Career Wins & Podiums</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-kpi">15+</span>
+              <span class="proof-label">Pro Seasons</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-kpi">540M</span>
+              <span class="proof-label">Global Viewers</span>
+            </div>
+          </div>
+
+          <div class="hero-actions">
+            <a class="btn" href="#contact">Become a Partner</a>
+            <a class="btn btn-ghost" href="#packages">View Packages</a>
+          </div>
+
+          <p class="fineprint">
+            Media kit + deliverables available upon request.
+          </p>
+
+          <!-- Fan Signup Section -->
+          <div class="fan-signup">
+            <h3>Join the Fan Community</h3>
+            <p>Get race updates, exclusive content, and shop discounts.</p>
+            <form class="fan-signup-form" id="fanFormEn" onsubmit="handleFanSignup(event, 'en')">
+              <input type="email" id="fanEmailEn" placeholder="Enter your email" required />
+              <button type="submit" class="btn">Subscribe</button>
+            </form>
+            <div class="fan-signup-success" id="fanSuccessEn">
+              Welcome to the fan community! Check your email for updates.
+            </div>
+            <ul class="fan-benefits">
+              <li><span class="check">✓</span> Basic email newsletter</li>
+              <li><span class="check">✓</span> 10% discount on merchandise</li>
+              <li><span class="check">✓</span> Exclusive behind-the-scenes</li>
+              <li><span class="check">✓</span> Direct Q&A with driver</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Spanish Hero -->
+        <div class="hero-card lang-es">
+          <p class="pill">Programa de Patrocinio y Alianzas 2026</p>
+          <h1>Acelera Tu Marca con <span class="accent">ÓSCAR TUNJO</span></h1>
+          <p class="lead">
+            A través de la pasión, el rendimiento y la visibilidad global en cada carrera, tu empresa conectará con fanáticos del automovilismo en todo el mundo. ¡Conduzcamos juntos hacia la victoria!
+          </p>
+
+          <div class="proof">
+            <div class="proof-item">
+              <span class="proof-kpi">50+</span>
+              <span class="proof-label">Victorias y Podios</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-kpi">15+</span>
+              <span class="proof-label">Temporadas Pro</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-kpi">540M</span>
+              <span class="proof-label">Espectadores Globales</span>
+            </div>
+          </div>
+
+          <div class="hero-actions">
+            <a class="btn" href="#contact">Ser Patrocinador</a>
+            <a class="btn btn-ghost" href="#packages">Ver Paquetes</a>
+          </div>
+
+          <p class="fineprint">
+            Media kit + entregables disponibles bajo solicitud.
+          </p>
+
+          <!-- Fan Signup Section -->
+          <div class="fan-signup">
+            <h3>Únete a la Comunidad de Fans</h3>
+            <p>Recibe actualizaciones de carreras, contenido exclusivo y descuentos.</p>
+            <form class="fan-signup-form" id="fanFormEs" onsubmit="handleFanSignup(event, 'es')">
+              <input type="email" id="fanEmailEs" placeholder="Ingresa tu email" required />
+              <button type="submit" class="btn">Suscribirse</button>
+            </form>
+            <div class="fan-signup-success" id="fanSuccessEs">
+              ¡Bienvenido a la comunidad de fans! Revisa tu email para actualizaciones.
+            </div>
+            <ul class="fan-benefits">
+              <li><span class="check">✓</span> Newsletter por email</li>
+              <li><span class="check">✓</span> 10% descuento en mercancía</li>
+              <li><span class="check">✓</span> Contenido exclusivo detrás de cámaras</li>
+              <li><span class="check">✓</span> Q&A directo con el piloto</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- German Hero -->
+        <div class="hero-card lang-de">
+          <p class="pill">Sponsoring & Partnerschaftsprogramm 2026</p>
+          <h1>Beschleunigen Sie Ihre Marke mit <span class="accent">ÓSCAR TUNJO</span></h1>
+          <p class="lead">
+            Durch Leidenschaft, Leistung und globale Sichtbarkeit bei jedem Rennen verbindet Ihr Unternehmen Motorsportfans weltweit. Lassen Sie uns gemeinsam zum Sieg fahren!
+          </p>
+
+          <div class="proof">
+            <div class="proof-item">
+              <span class="proof-kpi">50+</span>
+              <span class="proof-label">Siege & Podiumsplätze</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-kpi">15+</span>
+              <span class="proof-label">Profisaisons</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-kpi">540M</span>
+              <span class="proof-label">Weltweite Zuschauer</span>
+            </div>
+          </div>
+
+          <div class="hero-actions">
+            <a class="btn" href="#contact">Partner werden</a>
+            <a class="btn btn-ghost" href="#packages">Pakete ansehen</a>
+          </div>
+
+          <p class="fineprint">
+            Media Kit + Leistungen auf Anfrage verfügbar.
+          </p>
+
+          <!-- Fan Signup Section -->
+          <div class="fan-signup">
+            <h3>Werde Teil der Fan-Community</h3>
+            <p>Erhalte Renn-Updates, exklusive Inhalte und Shop-Rabatte.</p>
+            <form class="fan-signup-form" id="fanFormDe" onsubmit="handleFanSignup(event, 'de')">
+              <input type="email" id="fanEmailDe" placeholder="E-Mail eingeben" required />
+              <button type="submit" class="btn">Abonnieren</button>
+            </form>
+            <div class="fan-signup-success" id="fanSuccessDe">
+              Willkommen in der Fan-Community! Prüfe deine E-Mails für Updates.
+            </div>
+            <ul class="fan-benefits">
+              <li><span class="check">✓</span> E-Mail-Newsletter</li>
+              <li><span class="check">✓</span> 10% Rabatt auf Merchandise</li>
+              <li><span class="check">✓</span> Exklusive Einblicke hinter die Kulissen</li>
+              <li><span class="check">✓</span> Direktes Q&A mit dem Fahrer</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="section" id="about">
+      <div class="container grid-2">
+        <!-- English About -->
+        <div class="lang-en">
+          <h2>About Óscar Tunjo</h2>
+          <p>
+            Óscar Andrés Tunjo is a Colombian professional racing driver with over 15 years of international motorsport experience. From multiple Karting Championships across Colombia, Latin America, Spain, USA, and Italy to competing at the highest levels of European and American prototype racing.
+          </p>
+          <p>
+            At the heart of his career are three core values: <strong>performance, dedication, and passion</strong>. These values are the driving force behind every race, every lap, and every victory achieved with Gebhardt Motorsport.
+          </p>
+
+          <ul class="bullets">
+            <li><strong>2025:</strong> IMSA VP Winner Mid-Ohio, Norisring Winner, Lap Record Spa-Francorchamps LMP3</li>
+            <li><strong>2021:</strong> GT World Challenge Winner England, 2nd 24 Hours of Spa-Francorchamps</li>
+            <li><strong>2015-2016:</strong> GP3 Series Winner Austria, 2nd Place Barcelona</li>
+            <li><strong>Team:</strong> Gebhardt Motorsport</li>
+            <li><strong>Car:</strong> LMP3 Prototype</li>
+            <li><strong>Nationality:</strong> Colombian</li>
+          </ul>
+
+          <div style="margin-top: 24px;">
+            <a href="https://ringlypro.com" target="_blank" rel="noopener">
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696ff18deb392b463913fcb4.png" alt="RinglyPro - Powered by AI" style="width: 100%; height: auto; border: 4px solid #e31837; border-radius: 14px;" loading="lazy" />
+            </a>
+          </div>
+        </div>
+
+        <!-- Spanish About -->
+        <div class="lang-es">
+          <h2>Acerca de Óscar Tunjo</h2>
+          <p>
+            Óscar Andrés Tunjo es un piloto profesional colombiano con más de 15 años de experiencia en el automovilismo internacional. Desde múltiples Campeonatos de Karting en Colombia, Latinoamérica, España, EE.UU. e Italia hasta competir en los más altos niveles de las carreras de prototipos europeos y americanos.
+          </p>
+          <p>
+            En el corazón de su carrera hay tres valores fundamentales: <strong>rendimiento, dedicación y pasión</strong>. Estos valores son la fuerza impulsora detrás de cada carrera, cada vuelta y cada victoria lograda con Gebhardt Motorsport.
+          </p>
+
+          <ul class="bullets">
+            <li><strong>2025:</strong> Ganador IMSA VP Mid-Ohio, Ganador Norisring, Récord de vuelta Spa-Francorchamps LMP3</li>
+            <li><strong>2021:</strong> Ganador GT World Challenge Inglaterra, 2do 24 Horas de Spa-Francorchamps</li>
+            <li><strong>2015-2016:</strong> Ganador GP3 Series Austria, 2do Lugar Barcelona</li>
+            <li><strong>Equipo:</strong> Gebhardt Motorsport</li>
+            <li><strong>Auto:</strong> Prototipo LMP3</li>
+            <li><strong>Nacionalidad:</strong> Colombiano</li>
+          </ul>
+
+          <div style="margin-top: 24px;">
+            <a href="https://ringlypro.com" target="_blank" rel="noopener">
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696ff18deb392b463913fcb4.png" alt="RinglyPro - Powered by AI" style="width: 100%; height: auto; border: 4px solid #e31837; border-radius: 14px;" loading="lazy" />
+            </a>
+          </div>
+        </div>
+
+        <!-- German About -->
+        <div class="lang-de">
+          <h2>Über Óscar Tunjo</h2>
+          <p>
+            Óscar Andrés Tunjo ist ein kolumbianischer Profi-Rennfahrer mit über 15 Jahren internationaler Motorsport-Erfahrung. Von mehreren Karting-Meisterschaften in Kolumbien, Lateinamerika, Spanien, den USA und Italien bis hin zu Wettbewerben auf höchstem Niveau im europäischen und amerikanischen Prototypen-Rennsport.
+          </p>
+          <p>
+            Im Herzen seiner Karriere stehen drei Kernwerte: <strong>Leistung, Hingabe und Leidenschaft</strong>. Diese Werte sind die treibende Kraft hinter jedem Rennen, jeder Runde und jedem Sieg mit Gebhardt Motorsport.
+          </p>
+
+          <ul class="bullets">
+            <li><strong>2025:</strong> IMSA VP Sieger Mid-Ohio, Norisring-Sieger, Rundenrekord Spa-Francorchamps LMP3</li>
+            <li><strong>2021:</strong> GT World Challenge Sieger England, 2. Platz 24 Stunden von Spa-Francorchamps</li>
+            <li><strong>2015-2016:</strong> GP3 Series Sieger Österreich, 2. Platz Barcelona</li>
+            <li><strong>Team:</strong> Gebhardt Motorsport</li>
+            <li><strong>Fahrzeug:</strong> LMP3 Prototyp</li>
+            <li><strong>Nationalität:</strong> Kolumbianer</li>
+          </ul>
+
+          <div style="margin-top: 24px;">
+            <a href="https://ringlypro.com" target="_blank" rel="noopener">
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696ff18deb392b463913fcb4.png" alt="RinglyPro - Powered by AI" style="width: 100%; height: auto; border: 4px solid #e31837; border-radius: 14px;" loading="lazy" />
+            </a>
+          </div>
+        </div>
+
+        <figure class="card media-card">
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696c12cc439b6bb3782f8255.png" alt="Óscar Tunjo portrait" loading="lazy" />
+          <figcaption class="lang-en">Óscar Tunjo • IMSA & Le Mans Cup Driver • Born January 5, 1996</figcaption>
+          <figcaption class="lang-es">Óscar Tunjo • Piloto IMSA & Le Mans Cup • Nacido el 5 de enero de 1996</figcaption>
+          <figcaption class="lang-de">Óscar Tunjo • IMSA & Le Mans Cup Fahrer • Geboren am 5. Januar 1996</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="section section-alt" id="contact">
+      <div class="container contact">
+        <!-- English Contact -->
+        <div class="lang-en">
+          <h2>Become a Partner</h2>
+          <p>Join the TunjoRacing family and connect your brand with the excitement of professional motorsport racing in IMSA and Le Mans Cup.</p>
+
+          <div class="contact-cards">
+            <div class="card">
+              <h3>Email</h3>
+              <p><a href="mailto:sponsors@oscartunjo.com">sponsors@oscartunjo.com</a></p>
+            </div>
+            <div class="card">
+              <h3>Phone</h3>
+              <p>Contact via form</p>
+            </div>
+          </div>
+
+          <div class="social" style="margin-top: 16px;">
+            <a class="btn btn-ghost btn-small" href="https://instagram.com/oscartunjo" target="_blank" rel="noopener">Instagram</a>
+            <a class="btn btn-ghost btn-small" href="https://facebook.com/oscartunjo" target="_blank" rel="noopener">Facebook</a>
+            <a class="btn btn-ghost btn-small" href="https://linkedin.com/in/oscartunjo" target="_blank" rel="noopener">LinkedIn</a>
+          </div>
+        </div>
+
+        <!-- Spanish Contact -->
+        <div class="lang-es">
+          <h2>Ser Patrocinador</h2>
+          <p>Únete a la familia TunjoRacing y conecta tu marca con la emoción del automovilismo profesional en IMSA y Le Mans Cup.</p>
+
+          <div class="contact-cards">
+            <div class="card">
+              <h3>Email</h3>
+              <p><a href="mailto:sponsors@oscartunjo.com">sponsors@oscartunjo.com</a></p>
+            </div>
+            <div class="card">
+              <h3>Teléfono</h3>
+              <p>Contactar via formulario</p>
+            </div>
+          </div>
+
+          <div class="social" style="margin-top: 16px;">
+            <a class="btn btn-ghost btn-small" href="https://instagram.com/oscartunjo" target="_blank" rel="noopener">Instagram</a>
+            <a class="btn btn-ghost btn-small" href="https://facebook.com/oscartunjo" target="_blank" rel="noopener">Facebook</a>
+            <a class="btn btn-ghost btn-small" href="https://linkedin.com/in/oscartunjo" target="_blank" rel="noopener">LinkedIn</a>
+          </div>
+        </div>
+
+        <!-- German Contact -->
+        <div class="lang-de">
+          <h2>Partner werden</h2>
+          <p>Werden Sie Teil der TunjoRacing-Familie und verbinden Sie Ihre Marke mit der Begeisterung des professionellen Motorsports in IMSA und Le Mans Cup.</p>
+
+          <div class="contact-cards">
+            <div class="card">
+              <h3>E-Mail</h3>
+              <p><a href="mailto:sponsors@oscartunjo.com">sponsors@oscartunjo.com</a></p>
+            </div>
+            <div class="card">
+              <h3>Telefon</h3>
+              <p>Kontakt über Formular</p>
+            </div>
+          </div>
+
+          <div class="social" style="margin-top: 16px;">
+            <a class="btn btn-ghost btn-small" href="https://instagram.com/oscartunjo" target="_blank" rel="noopener">Instagram</a>
+            <a class="btn btn-ghost btn-small" href="https://facebook.com/oscartunjo" target="_blank" rel="noopener">Facebook</a>
+            <a class="btn btn-ghost btn-small" href="https://linkedin.com/in/oscartunjo" target="_blank" rel="noopener">LinkedIn</a>
+          </div>
+        </div>
+
+        <div class="card form">
+          <h3 class="lang-en">Contact Us</h3>
+          <h3 class="lang-es">Contáctanos</h3>
+          <h3 class="lang-de">Kontaktieren Sie uns</h3>
+
+          <form id="contactForm" onsubmit="handleContactSubmit(event)">
+            <label class="lang-en">Name *<input type="text" name="name" placeholder="Your name" required /></label>
+            <label class="lang-es">Nombre *<input type="text" name="name" placeholder="Tu nombre" required /></label>
+            <label class="lang-de">Name *<input type="text" name="name" placeholder="Ihr Name" required /></label>
+
+            <label class="lang-en">Email *<input type="email" name="email" placeholder="your@email.com" required /></label>
+            <label class="lang-es">Email *<input type="email" name="email" placeholder="tu@email.com" required /></label>
+            <label class="lang-de">E-Mail *<input type="email" name="email" placeholder="ihre@email.com" required /></label>
+
+            <label class="lang-en">Company<input type="text" name="company" placeholder="Your company" /></label>
+            <label class="lang-es">Empresa<input type="text" name="company" placeholder="Tu empresa" /></label>
+            <label class="lang-de">Unternehmen<input type="text" name="company" placeholder="Ihr Unternehmen" /></label>
+
+            <label class="lang-en">Message *<textarea name="message" rows="4" placeholder="Tell us about your partnership interests..." required></textarea></label>
+            <label class="lang-es">Mensaje *<textarea name="message" rows="4" placeholder="Cuéntanos sobre tus intereses de patrocinio..." required></textarea></label>
+            <label class="lang-de">Nachricht *<textarea name="message" rows="4" placeholder="Erzählen Sie uns von Ihren Partnerschaftsinteressen..." required></textarea></label>
+
+            <button type="submit" class="btn" style="width: 100%; margin-top: 12px;">
+              <span class="lang-en">Send Message</span>
+              <span class="lang-es">Enviar Mensaje</span>
+              <span class="lang-de">Nachricht senden</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span class="lang-en">© 2026 Óscar Tunjo Racing. All rights reserved.</span>
+      <span class="lang-es">© 2026 Óscar Tunjo Racing. Todos los derechos reservados.</span>
+      <span class="lang-de">© 2026 Óscar Tunjo Racing. Alle Rechte vorbehalten.</span>
+      <a href="#top">↑ <span class="lang-en">Top</span><span class="lang-es">Arriba</span><span class="lang-de">Oben</span></a>
+    </div>
+  </footer>
+
+  <script>
+    // Language Switcher
+    function setLanguage(lang) {
+      document.body.className = 'show-' + lang;
+      document.querySelectorAll('.lang-switcher button').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('btn-' + lang).classList.add('active');
+      localStorage.setItem('preferred-lang', lang);
+    }
+
+    // Load preferred language
+    const savedLang = localStorage.getItem('preferred-lang');
+    if (savedLang) {
+      setLanguage(savedLang);
+    }
+
+    // Navigation Toggle
+    const navToggle = document.getElementById('navToggle');
+    const navOverlay = document.getElementById('navOverlay');
+    const navMenus = document.querySelectorAll('.nav-menu');
+
+    navToggle.addEventListener('click', function() {
+      const isOpen = navToggle.getAttribute('aria-expanded') === 'true';
+      navToggle.setAttribute('aria-expanded', !isOpen);
+      navMenus.forEach(menu => menu.classList.toggle('open'));
+      navOverlay.classList.toggle('open');
+    });
+
+    navOverlay.addEventListener('click', function() {
+      navToggle.setAttribute('aria-expanded', 'false');
+      navMenus.forEach(menu => menu.classList.remove('open'));
+      navOverlay.classList.remove('open');
+    });
+
+    // Close menu when clicking a link
+    navMenus.forEach(menu => {
+      menu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          navToggle.setAttribute('aria-expanded', 'false');
+          navMenus.forEach(m => m.classList.remove('open'));
+          navOverlay.classList.remove('open');
+        });
+      });
+    });
+
+    // Countdown Timer
+    function updateCountdown() {
+      const targetDate = new Date('2026-02-27T00:00:00').getTime();
+      const now = new Date().getTime();
+      const diff = targetDate - now;
+
+      if (diff > 0) {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        document.getElementById('days').textContent = String(days).padStart(2, '0');
+        document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+        document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+        document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+      }
+    }
+
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+
+    // Fan Signup Handler
+    async function handleFanSignup(event, lang) {
+      event.preventDefault();
+
+      const emailInput = document.getElementById('fanEmail' + lang.charAt(0).toUpperCase() + lang.slice(1));
+      const form = document.getElementById('fanForm' + lang.charAt(0).toUpperCase() + lang.slice(1));
+      const successMsg = document.getElementById('fanSuccess' + lang.charAt(0).toUpperCase() + lang.slice(1));
+
+      const email = emailInput.value;
+
+      try {
+        const response = await fetch('/tunjoracing/api/v1/fans/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: email,
+            source: 'oscar-tunjo-landing'
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          form.classList.add('hidden');
+          successMsg.classList.add('show');
+          emailInput.value = '';
+        } else {
+          const messages = {
+            en: 'Something went wrong. Please try again.',
+            es: 'Algo salió mal. Por favor intenta de nuevo.',
+            de: 'Etwas ist schief gelaufen. Bitte versuchen Sie es erneut.'
+          };
+          alert(data.error || messages[lang]);
+        }
+      } catch (error) {
+        console.error('Fan signup error:', error);
+        const messages = {
+          en: 'Connection error. Please try again.',
+          es: 'Error de conexión. Por favor intenta de nuevo.',
+          de: 'Verbindungsfehler. Bitte versuchen Sie es erneut.'
+        };
+        alert(messages[lang]);
+      }
+    }
+
+    // Contact Form Handler
+    async function handleContactSubmit(event) {
+      event.preventDefault();
+
+      const form = event.target;
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch('/tunjoracing/api/v1/inquiries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contact_name: formData.get('name'),
+            email: formData.get('email'),
+            company_name: formData.get('company') || '',
+            message: formData.get('message')
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success || response.ok) {
+          const lang = document.body.className.replace('show-', '');
+          const messages = {
+            en: 'Thank you! Our team will contact you soon.',
+            es: '¡Gracias! Nuestro equipo te contactará pronto.',
+            de: 'Vielen Dank! Unser Team wird sich bald bei Ihnen melden.'
+          };
+          alert(messages[lang] || messages.en);
+          form.reset();
+        } else {
+          throw new Error(data.error || 'Failed to submit');
+        }
+      } catch (error) {
+        console.error('Contact form error:', error);
+        const lang = document.body.className.replace('show-', '');
+        const messages = {
+          en: 'Something went wrong. Please try again or email us directly.',
+          es: 'Algo salió mal. Por favor intenta de nuevo o envíanos un email.',
+          de: 'Etwas ist schief gelaufen. Bitte versuchen Sie es erneut oder senden Sie uns eine E-Mail.'
+        };
+        alert(messages[lang] || messages.en);
+      }
+    }
+  </script>
+</body>
+</html>
