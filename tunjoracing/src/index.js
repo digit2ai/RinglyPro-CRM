@@ -66,7 +66,7 @@ app.use((req, res, next) => {
 
 // Import routes - wrapped in try-catch for resilience
 let healthRoutes, sponsorRoutes, fanRoutes, productRoutes, cartRoutes, checkoutRoutes,
-    orderRoutes, mediaRoutes, raceRoutes, inquiryRoutes, adminRoutes;
+    orderRoutes, mediaRoutes, raceRoutes, inquiryRoutes, adminRoutes, dealRoutes;
 let routesLoaded = false;
 
 try {
@@ -81,6 +81,7 @@ try {
   raceRoutes = require('./routes/races');
   inquiryRoutes = require('./routes/inquiries');
   adminRoutes = require('./routes/admin');
+  dealRoutes = require('./routes/deals');
   routesLoaded = true;
   console.log('✅ TunjoRacing routes loaded successfully');
 
@@ -129,6 +130,7 @@ if (routesLoaded) {
   app.use(`${BASE_PATH}/api/v1/media`, mediaRoutes);
   app.use(`${BASE_PATH}/api/v1/races`, raceRoutes);
   app.use(`${BASE_PATH}/api/v1/inquiries`, inquiryRoutes);
+  app.use(`${BASE_PATH}/api/v1/deals`, dealRoutes);
 
   console.log('🏎️ TunjoRacing API routes mounted:');
   console.log('   - /health');
@@ -142,6 +144,7 @@ if (routesLoaded) {
   console.log('   - /api/v1/media');
   console.log('   - /api/v1/races');
   console.log('   - /api/v1/inquiries');
+  console.log('   - /api/v1/deals');
 } else {
   // Fallback health endpoint
   app.get(`${BASE_PATH}/health`, (req, res) => {
