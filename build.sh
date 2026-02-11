@@ -132,18 +132,30 @@ if [ -d "tunjoracing/dashboard" ]; then
     echo "TunjoRacing Dashboard directory: $(pwd)"
 
     echo "📦 Installing TunjoRacing dashboard dependencies..."
-    NODE_ENV=development npm ci --include=dev || NODE_ENV=development npm install --include=dev
+    echo "Node version: $(node --version)"
+    echo "NPM version: $(npm --version)"
+
+    # Install dependencies
+    npm install --include=dev 2>&1 || {
+        echo "⚠️ npm install failed, trying again..."
+        rm -rf node_modules
+        npm install --include=dev 2>&1
+    }
+
+    echo ""
+    echo "📁 Installed packages:"
+    ls node_modules/ 2>/dev/null | head -10 || echo "No node_modules found"
 
     echo ""
     echo "🔨 Building TunjoRacing dashboard with Vite..."
-    export NODE_ENV=production
     set +e  # Don't exit on error for this command
-    npm run build 2>&1 | tee build.log
+    NODE_ENV=production npm run build 2>&1
     BUILD_EXIT_CODE=$?
     set -e  # Re-enable exit on error
+
     if [ $BUILD_EXIT_CODE -ne 0 ]; then
-      echo "⚠️ TunjoRacing build warning with exit code $BUILD_EXIT_CODE"
-      echo "Continuing anyway..."
+      echo "⚠️ TunjoRacing build failed with exit code $BUILD_EXIT_CODE"
+      echo "Build output above should show the error"
     fi
 
     if [ -d "dist" ]; then
@@ -151,6 +163,9 @@ if [ -d "tunjoracing/dashboard" ]; then
         ls -lh dist/
     else
         echo "⚠️ TunjoRacing dist folder not created, will use fallback landing page"
+        echo "Checking for common issues..."
+        ls -la
+        cat package.json
     fi
 
     cd ../..
