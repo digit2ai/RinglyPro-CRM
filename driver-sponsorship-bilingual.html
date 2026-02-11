@@ -346,6 +346,65 @@
     .hero-actions{ display:flex; gap: 10px; flex-wrap: wrap; }
     .fineprint{ margin-top: 12px; font-size: 12px; color: #555555; }
 
+    /* Fan Signup */
+    .fan-signup {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid #333;
+    }
+    .fan-signup h3 {
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+    .fan-signup > p {
+      color: #888;
+      font-size: 13px;
+      margin: 0 0 12px;
+    }
+    .fan-signup-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .fan-signup-form input[type="email"] {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid #333;
+      background: #1a1a1a;
+      color: #fff;
+      font-size: 14px;
+      margin: 0;
+    }
+    .fan-signup-form input[type="email"]:focus {
+      outline: none;
+      border-color: #e31837;
+    }
+    .fan-benefits {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .fan-benefits li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #888;
+      font-size: 13px;
+    }
+    .fan-benefits li .check {
+      color: #e31837;
+      font-weight: bold;
+    }
+    @media (max-width: 980px) {
+      .fan-benefits { grid-template-columns: 1fr; }
+    }
+
     /* Layout helpers */
     .grid-2{
       display:grid;
@@ -757,6 +816,22 @@
           <p class="fineprint">
             Media kit + deliverables available upon request.
           </p>
+
+          <!-- Fan Signup -->
+          <div class="fan-signup">
+            <h3>Join the Fan Community</h3>
+            <p>Get race updates, exclusive content, and shop discounts.</p>
+            <form class="fan-signup-form" onsubmit="handleFanSignup(event, 'en')">
+              <input type="email" id="fanEmailEn" placeholder="Enter your email" required />
+              <button type="submit" class="btn">Subscribe</button>
+            </form>
+            <ul class="fan-benefits">
+              <li><span class="check">✓</span> Basic email newsletter</li>
+              <li><span class="check">✓</span> 10% discount on merchandise</li>
+              <li><span class="check">✓</span> Exclusive behind-the-scenes</li>
+              <li><span class="check">✓</span> Direct Q&A with driver</li>
+            </ul>
+          </div>
         </div>
 
         <!-- Spanish Hero -->
@@ -790,6 +865,22 @@
           <p class="fineprint">
             Media kit + entregables disponibles bajo solicitud.
           </p>
+
+          <!-- Fan Signup -->
+          <div class="fan-signup">
+            <h3>Únete a la Comunidad de Fans</h3>
+            <p>Recibe actualizaciones de carreras, contenido exclusivo y descuentos.</p>
+            <form class="fan-signup-form" onsubmit="handleFanSignup(event, 'es')">
+              <input type="email" id="fanEmailEs" placeholder="Ingresa tu email" required />
+              <button type="submit" class="btn">Suscribirse</button>
+            </form>
+            <ul class="fan-benefits">
+              <li><span class="check">✓</span> Newsletter por email</li>
+              <li><span class="check">✓</span> 10% descuento en mercancía</li>
+              <li><span class="check">✓</span> Contenido exclusivo detrás de cámaras</li>
+              <li><span class="check">✓</span> Q&A directo con el piloto</li>
+            </ul>
+          </div>
         </div>
 
         <!-- German Hero -->
@@ -823,6 +914,22 @@
           <p class="fineprint">
             Media Kit + Leistungen auf Anfrage verfügbar.
           </p>
+
+          <!-- Fan Signup -->
+          <div class="fan-signup">
+            <h3>Werde Teil der Fan-Community</h3>
+            <p>Erhalte Renn-Updates, exklusive Inhalte und Shop-Rabatte.</p>
+            <form class="fan-signup-form" onsubmit="handleFanSignup(event, 'de')">
+              <input type="email" id="fanEmailDe" placeholder="E-Mail eingeben" required />
+              <button type="submit" class="btn">Abonnieren</button>
+            </form>
+            <ul class="fan-benefits">
+              <li><span class="check">✓</span> E-Mail-Newsletter</li>
+              <li><span class="check">✓</span> 10% Rabatt auf Merchandise</li>
+              <li><span class="check">✓</span> Exklusive Einblicke hinter die Kulissen</li>
+              <li><span class="check">✓</span> Direktes Q&A mit dem Fahrer</li>
+            </ul>
+          </div>
         </div>
       </div>
     </section>
@@ -2227,6 +2334,48 @@
     // Update countdown every second
     updateCountdown();
     setInterval(updateCountdown, 1000);
+
+    // Fan Signup Handler
+    async function handleFanSignup(event, lang) {
+      event.preventDefault();
+      const emailId = 'fanEmail' + lang.charAt(0).toUpperCase() + lang.slice(1);
+      const emailInput = document.getElementById(emailId);
+      const email = emailInput.value;
+
+      try {
+        const response = await fetch('/tunjoracing/api/v1/fans/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, source: 'oscar-tunjo-landing' })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          const messages = {
+            en: 'Welcome to the fan community!',
+            es: '¡Bienvenido a la comunidad de fans!',
+            de: 'Willkommen in der Fan-Community!'
+          };
+          alert(messages[lang]);
+          emailInput.value = '';
+        } else {
+          const errors = {
+            en: 'Something went wrong. Please try again.',
+            es: 'Algo salió mal. Por favor intenta de nuevo.',
+            de: 'Etwas ist schief gelaufen. Bitte versuchen Sie es erneut.'
+          };
+          alert(data.error || errors[lang]);
+        }
+      } catch (error) {
+        console.error('Fan signup error:', error);
+        const errors = {
+          en: 'Connection error. Please try again.',
+          es: 'Error de conexión. Por favor intenta de nuevo.',
+          de: 'Verbindungsfehler. Bitte versuchen Sie es erneut.'
+        };
+        alert(errors[lang]);
+      }
+    }
   </script>
 </body>
 </html>
