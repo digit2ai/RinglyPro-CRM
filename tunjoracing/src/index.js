@@ -332,34 +332,29 @@ if (fs.existsSync(dashboardDistPath)) {
 
   <script>
     fetch('/tunjoracing/api/v1/products?limit=6')
-      .then(r => r.json())
-      .then(data => {
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
         if (data.success && data.data.length > 0) {
-          const container = document.getElementById('products-container');
-          container.innerHTML = data.data.map(p => {
-            let img = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400';
-            try { const imgs = typeof p.images === 'string' ? JSON.parse(p.images) : p.images; if(imgs && imgs[0]) img = imgs[0]; } catch(e) {}
-            return \`<a href="/tunjoracing/api/v1/products/\${p.slug}" class="product-card">
-              <img src="\${img}" alt="\${p.name}" class="product-img">
-              <div class="product-info">
-                <div class="product-cat">\${p.category}</div>
-                <div class="product-name">\${p.name}</div>
-                <div class="product-price">$\${parseFloat(p.price).toFixed(2)}</div>
-              </div>
-            </a>\`;
+          var container = document.getElementById('products-container');
+          container.innerHTML = data.data.map(function(p) {
+            var img = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400';
+            try { var imgs = typeof p.images === 'string' ? JSON.parse(p.images) : p.images; if(imgs && imgs[0]) img = imgs[0]; } catch(e) {}
+            return '<a href="/tunjoracing/api/v1/products/' + p.slug + '" class="product-card">' +
+              '<img src="' + img + '" alt="' + p.name + '" class="product-img">' +
+              '<div class="product-info">' +
+              '<div class="product-cat">' + p.category + '</div>' +
+              '<div class="product-name">' + p.name + '</div>' +
+              '<div class="product-price">$' + parseFloat(p.price).toFixed(2) + '</div>' +
+              '</div></a>';
           }).join('');
         }
       })
-      .catch(() => {
+      .catch(function() {
         document.getElementById('products-container').innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--muted);">Products coming soon!</div>';
       });
   </script>
 </body>
 </html>`);
-  });
-      </body>
-      </html>
-    `);
   });
 }
 
