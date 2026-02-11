@@ -219,6 +219,11 @@ router.get('/model-debug', async (req, res) => {
   try {
     const TunjoFan = models.TunjoFan;
 
+    // Get database connection info
+    const dbUrl = process.env.DATABASE_URL || '';
+    const dbHost = dbUrl.includes('@') ? dbUrl.split('@')[1]?.split('/')[0]?.split(':')[0] : 'unknown';
+    const dbName = dbUrl.split('/').pop()?.split('?')[0] || 'unknown';
+
     // Get model attributes
     const modelAttributes = Object.keys(TunjoFan.rawAttributes);
 
@@ -228,15 +233,43 @@ router.get('/model-debug', async (req, res) => {
       WHERE table_name = 'tunjo_fans' ORDER BY ordinal_position
     `);
 
+    // Try to add the column directly if missing
+    if (!dbColumns.some(c => c.column_name === 'password_hash')) {
+      try {
+        await models.sequelize.query('ALTER TABLE tunjo_fans ADD COLUMN password_hash VARCHAR(255)');
+        // Re-query after adding
+        const [afterColumns] = await models.sequelize.query(`
+          SELECT column_name FROM information_schema.columns
+          WHERE table_name = 'tunjo_fans' ORDER BY ordinal_position
+        `);
+        return res.json({
+          status: 'FIXED',
+          message: 'Added password_hash column',
+          database_host: dbHost,
+          database_name: dbName,
+          columns_after_fix: afterColumns.map(c => c.column_name)
+        });
+      } catch (addError) {
+        return res.json({
+          status: 'FIX_FAILED',
+          add_column_error: addError.message,
+          database_host: dbHost,
+          database_name: dbName
+        });
+      }
+    }
+
     res.json({
       status: 'OK',
       model_name: TunjoFan.name,
       table_name: TunjoFan.tableName,
+      database_host: dbHost,
+      database_name: dbName,
       model_attributes: modelAttributes,
       has_password_hash_in_model: modelAttributes.includes('password_hash'),
       database_columns: dbColumns.map(c => c.column_name),
       has_password_hash_in_db: dbColumns.some(c => c.column_name === 'password_hash'),
-      deployment_timestamp: '2026-02-11-debug'
+      deployment_timestamp: '2026-02-11-v2'
     });
   } catch (error) {
     res.status(500).json({
