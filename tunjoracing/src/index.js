@@ -178,55 +178,185 @@ if (fs.existsSync(dashboardDistPath)) {
 } else {
   console.log('⚠️ TunjoRacing dashboard not built yet');
 
-  // Serve a simple landing page instead
+  // Serve a professional landing page
   app.get(`${BASE_PATH}/`, (req, res) => {
-    res.send(`
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>TunjoRacing Platform</title>
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-          .container { text-align: center; padding: 40px; }
-          h1 { font-size: 3rem; margin-bottom: 1rem; }
-          .tagline { font-size: 1.2rem; opacity: 0.8; margin-bottom: 2rem; }
-          .status {
-            background: rgba(255,255,255,0.1);
-            padding: 20px 40px;
-            border-radius: 10px;
-            display: inline-block;
-          }
-          .status h3 { color: #00ff88; margin-bottom: 10px; }
-          .endpoints { text-align: left; margin-top: 20px; }
-          .endpoints a { color: #4fc3f7; text-decoration: none; display: block; margin: 5px 0; }
-          .endpoints a:hover { text-decoration: underline; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h1>🏎️ TunjoRacing</h1>
-          <p class="tagline">Sponsorship Intelligence & Fan Engagement Platform</p>
-          <div class="status">
-            <h3>✅ Platform Active</h3>
-            <p>API Server Running</p>
-            <div class="endpoints">
-              <a href="/tunjoracing/health">Health Check</a>
-              <a href="/tunjoracing/api/v1/races">Race Calendar API</a>
-              <a href="/tunjoracing/api/v1/products">Store Products API</a>
-            </div>
-          </div>
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TunjoRacing - Professional Motorsport</title>
+  <meta name="description" content="TunjoRacing - Professional International Motorsport. Shop merchandise, follow the race calendar, and become a sponsor.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #0a0a0a; --panel: #1a1a1a; --accent: #e31837; --text: #fff; --muted: #888; --line: #333; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    .container { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+    /* Header */
+    header { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(10,10,10,.95); border-bottom: 1px solid var(--line); backdrop-filter: blur(10px); }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
+    .brand-mark { width: 34px; height: 34px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), #8b0000); border: 1px solid var(--accent); }
+    .brand-title { font-weight: 700; letter-spacing: .1em; font-size: 14px; }
+    nav { display: flex; gap: 24px; }
+    nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+    nav a:hover { color: var(--accent); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; border-radius: 999px; background: var(--accent); color: #000; text-decoration: none; font-weight: 700; font-size: 14px; transition: background .2s; }
+    .btn:hover { background: #ff1f41; }
+    .btn-ghost { background: transparent; color: var(--text); border: 2px solid #444; }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Hero */
+    .hero { min-height: 100vh; display: flex; align-items: center; padding-top: 80px; background: linear-gradient(180deg, rgba(0,0,0,.4), rgba(0,0,0,.9)), url('https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=1600') center/cover; }
+    .hero-content { max-width: 600px; }
+    .pill { display: inline-block; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--accent); background: rgba(227,24,55,.1); color: var(--accent); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 16px; }
+    .hero h1 { font-size: clamp(32px, 5vw, 48px); font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
+    .hero h1 span { color: var(--accent); text-decoration: underline; text-underline-offset: 6px; }
+    .hero p { color: #666; font-size: 18px; margin-bottom: 24px; }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* Stats */
+    .stats-section { padding: 64px 0; background: #111; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; text-align: center; }
+    .stat-num { font-size: 28px; font-weight: 800; color: var(--accent); }
+    .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* Sections */
+    .section { padding: 64px 0; }
+    .section-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .section-sub { color: var(--muted); margin-bottom: 32px; }
+
+    /* Products */
+    .products-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .product-card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; transition: transform .2s, border-color .2s; text-decoration: none; color: var(--text); }
+    .product-card:hover { transform: translateY(-4px); border-color: var(--accent); }
+    .product-img { width: 100%; height: 200px; object-fit: cover; }
+    .product-info { padding: 16px; }
+    .product-cat { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .product-name { font-weight: 600; margin: 4px 0; }
+    .product-price { color: var(--accent); font-weight: 700; }
+
+    /* CTA */
+    .cta-band { display: flex; align-items: center; justify-content: space-between; padding: 24px; border-radius: 18px; border: 1px solid var(--accent); background: rgba(227,24,55,.05); margin-top: 32px; }
+    .cta-band h3 { font-weight: 700; }
+    .cta-band p { color: var(--muted); font-size: 14px; }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--line); padding: 24px 0; text-align: center; color: var(--muted); font-size: 13px; }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .products-grid { grid-template-columns: 1fr; }
+      nav { display: none; }
+      .cta-band { flex-direction: column; text-align: center; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container header-inner">
+      <a href="/tunjoracing/" class="brand">
+        <div class="brand-mark"></div>
+        <span class="brand-title">TUNJO RACING</span>
+      </a>
+      <nav>
+        <a href="#about">About</a>
+        <a href="#products">Shop</a>
+        <a href="/tunjoracing/api/v1/races">Calendar</a>
+        <a href="#contact">Sponsorship</a>
+      </nav>
+      <a href="#contact" class="btn">Become a Partner</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <span class="pill">2025 Partnership Program</span>
+        <h1>Accelerate Your Brand with <span>TUNJO RACING</span></h1>
+        <p>Through passion, performance, and global visibility at every race, your company will connect with motorsport fans worldwide.</p>
+        <div class="hero-actions">
+          <a href="#contact" class="btn">Become a Partner</a>
+          <a href="#products" class="btn btn-ghost">Shop Merchandise</a>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-section">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-num">50+</div><div class="stat-label">Wins & Podiums</div></div>
+        <div class="stat"><div class="stat-num">15+</div><div class="stat-label">Pro Seasons</div></div>
+        <div class="stat"><div class="stat-num">540M</div><div class="stat-label">Global Viewers</div></div>
+        <div class="stat"><div class="stat-num">156</div><div class="stat-label">Countries</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="products">
+    <div class="container">
+      <h2 class="section-title">Official Merchandise</h2>
+      <p class="section-sub">Gear up with official TunjoRacing apparel and collectibles</p>
+      <div class="products-grid" id="products-container">
+        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--muted);">Loading products...</div>
+      </div>
+      <div class="cta-band">
+        <div>
+          <h3>Ready to check out?</h3>
+          <p>Free shipping on orders over $100</p>
+        </div>
+        <a href="/tunjoracing/api/v1/products" class="btn">View All Products</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="contact" style="background: #111; border-top: 1px solid var(--line);">
+    <div class="container" style="text-align: center;">
+      <h2 class="section-title">Become a Partner</h2>
+      <p class="section-sub">Join the TunjoRacing family and accelerate your brand</p>
+      <p style="color: var(--muted); margin-bottom: 24px;">Contact us at <a href="mailto:sponsors@tunjoracing.com" style="color: var(--accent);">sponsors@tunjoracing.com</a></p>
+      <a href="mailto:sponsors@tunjoracing.com" class="btn">Request Media Kit</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      &copy; ${new Date().getFullYear()} TunjoRacing. All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+    fetch('/tunjoracing/api/v1/products?limit=6')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.data.length > 0) {
+          const container = document.getElementById('products-container');
+          container.innerHTML = data.data.map(p => {
+            let img = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400';
+            try { const imgs = typeof p.images === 'string' ? JSON.parse(p.images) : p.images; if(imgs && imgs[0]) img = imgs[0]; } catch(e) {}
+            return \`<a href="/tunjoracing/api/v1/products/\${p.slug}" class="product-card">
+              <img src="\${img}" alt="\${p.name}" class="product-img">
+              <div class="product-info">
+                <div class="product-cat">\${p.category}</div>
+                <div class="product-name">\${p.name}</div>
+                <div class="product-price">$\${parseFloat(p.price).toFixed(2)}</div>
+              </div>
+            </a>\`;
+          }).join('');
+        }
+      })
+      .catch(() => {
+        document.getElementById('products-container').innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--muted);">Products coming soon!</div>';
+      });
+  </script>
+</body>
+</html>`);
+  });
       </body>
       </html>
     `);
