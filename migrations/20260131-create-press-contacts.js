@@ -3,10 +3,10 @@
 /**
  * Press Contacts Table
  *
- * Stores press contacts for Client IDs 15 and 43 (TunjoRacing) ONLY.
+ * Stores press contacts for Client IDs 15 and 40 (TunjoRacing) ONLY.
  * Supports multi-language segmentation, consent management, and suppression enforcement.
  *
- * Multi-tenant: client_id CHECK constraint enforces scope to clients 15 and 43.
+ * Multi-tenant: client_id CHECK constraint enforces scope to clients 15 and 40.
  * Uniqueness: email must be unique per client_id.
  */
 
@@ -29,7 +29,7 @@ module.exports = {
         },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
-        comment: 'Foreign key to clients table - ONLY 15 or 43 allowed (enforced by CHECK constraint)'
+        comment: 'Foreign key to clients table - ONLY 15 or 40 allowed (enforced by CHECK constraint)'
       },
 
       // Contact Identity
@@ -149,7 +149,7 @@ module.exports = {
     await queryInterface.sequelize.query(`
       ALTER TABLE press_contacts
       ADD CONSTRAINT press_contacts_client_id_check
-      CHECK (client_id IN (15, 43))
+      CHECK (client_id IN (15, 40))
     `);
 
     // Add CHECK constraint for valid consent_status values
@@ -197,7 +197,7 @@ module.exports = {
       unique: true
     });
 
-    console.log('✅ Press Contacts table created successfully (clients 15 & 43 only)');
+    console.log('✅ Press Contacts table created successfully (clients 15 & 40 only)');
   },
 
   down: async (queryInterface, Sequelize) => {

@@ -8,7 +8,7 @@
  *
  * Events: delivered, open, click, bounce, dropped, spamreport, unsubscribe
  *
- * Multi-tenant: client_id CHECK constraint enforces scope to clients 15 and 43.
+ * Multi-tenant: client_id CHECK constraint enforces scope to clients 15 and 40.
  * Idempotency: sendgrid_event_id is unique to prevent duplicate event processing.
  */
 
@@ -31,7 +31,7 @@ module.exports = {
         },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
-        comment: 'Foreign key to clients table - ONLY 15 or 43 allowed (enforced by CHECK constraint)'
+        comment: 'Foreign key to clients table - ONLY 15 or 40 allowed (enforced by CHECK constraint)'
       },
 
       // SendGrid Event Data
@@ -135,7 +135,7 @@ module.exports = {
     await queryInterface.sequelize.query(`
       ALTER TABLE press_email_events
       ADD CONSTRAINT press_email_events_client_id_check
-      CHECK (client_id IN (15, 43))
+      CHECK (client_id IN (15, 40))
     `);
 
     // Create indexes for performance
@@ -170,7 +170,7 @@ module.exports = {
       WHERE processed = false
     `);
 
-    console.log('✅ Press Email Events table created successfully (clients 15 & 43 only)');
+    console.log('✅ Press Email Events table created successfully (clients 15 & 40 only)');
   },
 
   down: async (queryInterface, Sequelize) => {

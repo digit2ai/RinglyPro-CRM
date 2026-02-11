@@ -6,7 +6,7 @@
  * Audit trail for all contact upload operations (CSV, manual, API).
  * Tracks success/failure counts and errors for debugging and compliance.
  *
- * Multi-tenant: client_id CHECK constraint enforces scope to clients 15 and 43.
+ * Multi-tenant: client_id CHECK constraint enforces scope to clients 15 and 40.
  */
 
 module.exports = {
@@ -28,7 +28,7 @@ module.exports = {
         },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
-        comment: 'Foreign key to clients table - ONLY 15 or 43 allowed (enforced by CHECK constraint)'
+        comment: 'Foreign key to clients table - ONLY 15 or 40 allowed (enforced by CHECK constraint)'
       },
 
       // Upload Metadata
@@ -109,7 +109,7 @@ module.exports = {
     await queryInterface.sequelize.query(`
       ALTER TABLE press_contact_uploads
       ADD CONSTRAINT press_contact_uploads_client_id_check
-      CHECK (client_id IN (15, 43))
+      CHECK (client_id IN (15, 40))
     `);
 
     // Create indexes
@@ -125,7 +125,7 @@ module.exports = {
       name: 'idx_press_uploads_created'
     });
 
-    console.log('✅ Press Contact Uploads table created successfully (clients 15 & 43 only)');
+    console.log('✅ Press Contact Uploads table created successfully (clients 15 & 40 only)');
   },
 
   down: async (queryInterface, Sequelize) => {
