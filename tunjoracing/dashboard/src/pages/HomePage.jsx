@@ -116,7 +116,7 @@ export default function HomePage() {
               <div className="mt-6 pt-6" style={{ borderTop: '1px solid #333' }}>
                 <h3 className="text-white font-bold mb-2">Join the Fan Community</h3>
                 <p style={{ color: '#888' }} className="text-sm mb-3">Get race updates, exclusive content, and shop discounts.</p>
-                <form onSubmit={handleFanSignup} className="flex gap-2">
+                <form onSubmit={handleFanSignup} className="flex gap-2 mb-4">
                   <input
                     type="email"
                     required
@@ -128,6 +128,20 @@ export default function HomePage() {
                   />
                   <button type="submit" className="btn">Subscribe</button>
                 </form>
+                <ul className="grid grid-cols-2 gap-2 text-sm" style={{ color: '#888' }}>
+                  <li className="flex items-center gap-2">
+                    <span style={{ color: '#e31837' }}>✓</span> Basic email newsletter
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span style={{ color: '#e31837' }}>✓</span> 10% discount on merchandise
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span style={{ color: '#e31837' }}>✓</span> Exclusive behind-the-scenes
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span style={{ color: '#e31837' }}>✓</span> Direct Q&A with driver
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
