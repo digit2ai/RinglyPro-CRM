@@ -468,7 +468,7 @@
                 <div>Prospect Manager</div>
             </button>
 
-            <!-- Press Release Manager - ONLY for clients 15 & 43 -->
+            <!-- Press Release Manager - ONLY for clients 15 & 40 (TunjoRacing) -->
             <button class="action-btn btn-press" id="pressReleaseBtn" onclick="openPressReleaseManager()" style="display: none;">
                 <div class="action-icon">📰</div>
                 <div>Press Release Manager</div>
@@ -558,13 +558,13 @@
 
     <!-- Press Release Manager - Clients 15 & 43 Only -->
     <script>
-        // Show Press Release Manager button ONLY for clients 15 and 43 (TunjoRacing)
+        // Show Press Release Manager button ONLY for clients 15 and 40 (TunjoRacing)
         (function() {
             const urlParams = new URLSearchParams(window.location.search);
             const clientId = parseInt(urlParams.get('client_id'));
 
-            // Only show for clients 15 and 43
-            if (clientId === 15 || clientId === 43) {
+            // Only show for clients 15 and 40 (TunjoRacing)
+            if (clientId === 15 || clientId === 40) {
                 const pressBtn = document.getElementById('pressReleaseBtn');
                 if (pressBtn) {
                     pressBtn.style.display = 'flex';
