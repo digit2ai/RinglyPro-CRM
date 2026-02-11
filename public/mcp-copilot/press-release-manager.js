@@ -10,9 +10,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     currentClientId = parseInt(urlParams.get('client_id'));
 
-    // Verify client_id is 15 or 43
-    if (currentClientId !== 15 && currentClientId !== 43) {
-        alert('Access Denied: Press Release Manager is only available for TunjoRacing (Clients 15 & 43)');
+    // Verify client_id is 15 or 40 (TunjoRacing)
+    if (currentClientId !== 15 && currentClientId !== 40) {
+        alert('Access Denied: Press Release Manager is only available for TunjoRacing (Clients 15 & 40)');
         window.location.href = '/';
         return;
     }

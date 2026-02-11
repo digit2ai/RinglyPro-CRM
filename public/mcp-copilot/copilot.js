@@ -121,10 +121,11 @@ function downloadCSVFromPopup(csvData, filename) {
 function disableAllButtons() {
     const buttons = document.querySelectorAll('.action-btn');
     buttons.forEach(button => {
-        // Skip Business Collector, Prospect Manager, and Outbound Call - they work without GHL
+        // Skip Business Collector, Prospect Manager, Outbound Call, and Press Release Manager - they work without GHL
         if (button.classList.contains('btn-business') ||
             button.classList.contains('btn-prospects') ||
-            button.classList.contains('btn-call')) {
+            button.classList.contains('btn-call') ||
+            button.classList.contains('btn-press')) {
             return; // Skip these buttons
         }
 
@@ -173,10 +174,11 @@ function disableAllButtons() {
 function enableTokenBasedFeatures() {
     const buttons = document.querySelectorAll('.action-btn');
     buttons.forEach(button => {
-        // Enable Business Collector, Prospect Manager, and Outbound Call
+        // Enable Business Collector, Prospect Manager, Outbound Call, and Press Release Manager
         if (button.classList.contains('btn-business') ||
             button.classList.contains('btn-prospects') ||
-            button.classList.contains('btn-call')) {
+            button.classList.contains('btn-call') ||
+            button.classList.contains('btn-press')) {
             button.disabled = false;
             button.classList.remove('disabled', 'requires-ghl', 'requires-crm');
             button.style.opacity = '';
