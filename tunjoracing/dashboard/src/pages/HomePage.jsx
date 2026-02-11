@@ -82,11 +82,11 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center pt-16">
         <div className="absolute inset-0" style={{
-          background: 'linear-gradient(180deg, rgba(0,0,0,.3) 0%, rgba(0,0,0,.5) 60%, rgba(0,0,0,.95) 100%), url("https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=1600") center/cover no-repeat'
+          background: 'linear-gradient(90deg, rgba(0,0,0,.9) 0%, rgba(0,0,0,.7) 40%, rgba(0,0,0,.3) 100%), url("https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696cf718439b6bf938457268.png") center/cover no-repeat'
         }} />
 
-        <div className="container mx-auto relative z-10 py-16">
-          <div className="max-w-2xl">
+        <div className="container mx-auto relative z-10 py-16 px-4 md:px-8">
+          <div className="max-w-2xl ml-0">
             <div className="p-6 rounded-2xl" style={{ backgroundColor: 'rgba(0,0,0,.85)', border: '1px solid #333', boxShadow: '0 24px 80px rgba(0,0,0,.7)' }}>
               <span className="pill">2025 Sponsorship & Partnership Program</span>
 
