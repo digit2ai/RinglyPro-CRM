@@ -528,6 +528,39 @@ app.get('/debug/spark-error', (req, res) => {
   });
 });
 
+// =====================================================
+// TUNJORACING - Motorsport Sponsorship & Commerce Platform
+// =====================================================
+
+// Mount TunjoRacing platform at /tunjoracing
+let tunjoApp = null;
+let tunjoError = null;
+try {
+  tunjoApp = require('../tunjoracing/src/index');
+  app.use('/tunjoracing', tunjoApp);
+  console.log('🏎️ TunjoRacing Platform mounted at /tunjoracing');
+  console.log('   - Dashboard UI: /tunjoracing/');
+  console.log('   - Health Check: /tunjoracing/health');
+  console.log('   - API: /tunjoracing/api/v1/*');
+  console.log('   - Store: /tunjoracing/store');
+} catch (error) {
+  tunjoError = error;
+  console.log('⚠️ TunjoRacing not available:', error.message);
+}
+
+// Debug endpoint to see TunjoRacing error
+app.get('/debug/tunjoracing-error', (req, res) => {
+  res.json({
+    service: 'TunjoRacing Platform',
+    available: !tunjoError,
+    error: tunjoError ? { message: tunjoError.message, stack: tunjoError.stack } : null,
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      hasDbUrl: !!process.env.DATABASE_URL
+    }
+  });
+});
+
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 
