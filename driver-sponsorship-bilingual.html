@@ -2343,7 +2343,7 @@
       const email = emailInput.value;
 
       try {
-        const response = await fetch('/tunjoracing/api/v1/fans/signup', {
+        const response = await fetch('https://aiagent.ringlypro.com/tunjoracing/api/v1/fans/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: email, source: 'oscar-tunjo-landing' })
