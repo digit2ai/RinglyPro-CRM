@@ -131,44 +131,52 @@ if [ -d "tunjoracing/dashboard" ]; then
     cd tunjoracing/dashboard
     echo "TunjoRacing Dashboard directory: $(pwd)"
 
-    echo "📦 Installing TunjoRacing dashboard dependencies..."
-    echo "Node version: $(node --version)"
-    echo "NPM version: $(npm --version)"
-
-    # Install dependencies
-    npm install --include=dev 2>&1 || {
-        echo "⚠️ npm install failed, trying again..."
-        rm -rf node_modules
-        npm install --include=dev 2>&1
-    }
-
-    echo ""
-    echo "📁 Installed packages:"
-    ls node_modules/ 2>/dev/null | head -10 || echo "No node_modules found"
-
-    echo ""
-    echo "🔨 Building TunjoRacing dashboard with Vite..."
-    set +e  # Don't exit on error for this command
-    NODE_ENV=production npm run build 2>&1
-    BUILD_EXIT_CODE=$?
-    set -e  # Re-enable exit on error
-
-    if [ $BUILD_EXIT_CODE -ne 0 ]; then
-      echo "⚠️ TunjoRacing build failed with exit code $BUILD_EXIT_CODE"
-      echo "Build output above should show the error"
-    fi
-
-    if [ -d "dist" ]; then
-        echo "✅ TunjoRacing dist folder created!"
+    # Check if pre-built dist already exists (committed to repo)
+    if [ -d "dist" ] && [ -f "dist/index.html" ]; then
+        echo "✅ TunjoRacing dist folder already exists (pre-built), skipping build"
+        echo "Contents:"
         ls -lh dist/
+        cd ../..
     else
-        echo "⚠️ TunjoRacing dist folder not created, will use fallback landing page"
-        echo "Checking for common issues..."
-        ls -la
-        cat package.json
-    fi
+        echo "📦 Installing TunjoRacing dashboard dependencies..."
+        echo "Node version: $(node --version)"
+        echo "NPM version: $(npm --version)"
 
-    cd ../..
+        # Install dependencies
+        npm install --include=dev 2>&1 || {
+            echo "⚠️ npm install failed, trying again..."
+            rm -rf node_modules
+            npm install --include=dev 2>&1
+        }
+
+        echo ""
+        echo "📁 Installed packages:"
+        ls node_modules/ 2>/dev/null | head -10 || echo "No node_modules found"
+
+        echo ""
+        echo "🔨 Building TunjoRacing dashboard with Vite..."
+        set +e  # Don't exit on error for this command
+        NODE_ENV=production npm run build 2>&1
+        BUILD_EXIT_CODE=$?
+        set -e  # Re-enable exit on error
+
+        if [ $BUILD_EXIT_CODE -ne 0 ]; then
+          echo "⚠️ TunjoRacing build failed with exit code $BUILD_EXIT_CODE"
+          echo "Build output above should show the error"
+        fi
+
+        if [ -d "dist" ]; then
+            echo "✅ TunjoRacing dist folder created!"
+            ls -lh dist/
+        else
+            echo "⚠️ TunjoRacing dist folder not created, will use fallback landing page"
+            echo "Checking for common issues..."
+            ls -la
+            cat package.json
+        fi
+
+        cd ../..
+    fi
 else
     echo "⚠️ TunjoRacing dashboard directory not found, skipping..."
 fi
