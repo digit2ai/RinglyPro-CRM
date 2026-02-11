@@ -3,6 +3,7 @@
 
 const express = require('express');
 const router = express.Router();
+const sparkVoiceCallService = require('../../services/spark-voice-call-service');
 
 module.exports = (models) => {
   const { SparkSchool, SparkLead, SparkStudent, SparkAiCall, SparkClass } = models;
@@ -806,23 +807,79 @@ module.exports = (models) => {
         return res.status(400).json({ error: 'No phone number available for this target' });
       }
 
-      // TODO: Integrate with ElevenLabs/Twilio to initiate call
-      // For now, log the trigger request
-      console.log(`Triggering ${agent} call to ${targetPhone} for ${call_type}`);
+      // Check if Twilio is configured
+      if (!sparkVoiceCallService.isReady()) {
+        return res.status(503).json({
+          error: 'Voice calling service not configured',
+          message: 'Please configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER'
+        });
+      }
 
-      res.json({
-        success: true,
-        message: 'Call trigger queued',
-        data: {
-          school_id,
-          agent,
-          call_type,
-          phone_number: targetPhone,
+      // Create SparkAiCall record before initiating call
+      const aiCall = await SparkAiCall.create({
+        school_id,
+        agent,
+        call_type,
+        direction: 'outbound',
+        phone_number: targetPhone,
+        lead_id: lead_id || null,
+        student_id: student_id || null,
+        status: 'queued',
+        metadata: {
           target_name: targetName,
-          lead_id,
-          student_id
+          triggered_at: new Date().toISOString()
         }
       });
+
+      try {
+        // Initiate outbound call via Twilio
+        const callResult = await sparkVoiceCallService.initiateOutboundCall({
+          school_id,
+          phone: targetPhone,
+          agent,
+          call_type,
+          lead_id,
+          student_id,
+          context: req.body.context
+        });
+
+        // Update SparkAiCall with Twilio SID
+        await aiCall.update({
+          external_call_id: callResult.twilio_sid,
+          status: 'initiated'
+        });
+
+        console.log(`[SparkVoice] Outbound call initiated: ${callResult.twilio_sid} to ${targetPhone} for ${call_type}`);
+
+        res.json({
+          success: true,
+          message: 'Call initiated successfully',
+          data: {
+            call_id: aiCall.id,
+            twilio_sid: callResult.twilio_sid,
+            school_id,
+            agent,
+            call_type,
+            phone_number: targetPhone,
+            target_name: targetName,
+            lead_id,
+            student_id,
+            status: 'initiated'
+          }
+        });
+      } catch (callError) {
+        // Update call record with failure
+        await aiCall.update({
+          status: 'failed',
+          metadata: {
+            ...aiCall.metadata,
+            error: callError.message,
+            failed_at: new Date().toISOString()
+          }
+        });
+
+        throw callError;
+      }
     } catch (error) {
       console.error('Error triggering voice call:', error);
       res.status(500).json({ error: error.message });
@@ -830,13 +887,274 @@ module.exports = (models) => {
   });
 
   // =====================================================
-  // WEBRTC TOKEN ENDPOINT - For browser-based voice chat
+  // TWILIO WEBHOOK ENDPOINTS - For outbound call handling
   // =====================================================
 
   // Spark Agent Configuration
   const SPARK_AGENT_ID = 'agent_5601kh453hqqfz59nfemkwk02vax';
   const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
   const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io/v1';
+
+  // POST /api/v1/voice/twiml - Return TwiML for connecting to ElevenLabs
+  // This is called by Twilio when an outbound call is answered
+  router.post('/twiml', async (req, res) => {
+    try {
+      const { school_id, agent, call_type, lead_id, student_id, context } = req.query;
+      const { CallSid, To, From, CallStatus } = req.body;
+
+      console.log(`[SparkVoice] TwiML request: CallSid=${CallSid}, Status=${CallStatus}`);
+
+      // Get school info for personalization
+      let schoolName = 'the martial arts school';
+      let targetName = '';
+
+      if (school_id) {
+        const school = await SparkSchool.findByPk(school_id);
+        if (school) {
+          schoolName = school.name;
+        }
+      }
+
+      // Get target name
+      if (lead_id) {
+        const lead = await SparkLead.findByPk(lead_id);
+        if (lead) {
+          targetName = lead.first_name || '';
+        }
+      } else if (student_id) {
+        const student = await SparkStudent.findByPk(student_id);
+        if (student) {
+          targetName = student.first_name || '';
+        }
+      }
+
+      // Build the initial message based on call type
+      let initialMessage = '';
+      const agentName = agent === 'maestro' ? 'Maestro' : 'Sensei';
+
+      switch (call_type) {
+        case 'lead_followup':
+          initialMessage = `Hello${targetName ? ' ' + targetName : ''}! This is ${agentName} calling from ${schoolName}. I noticed you recently expressed interest in our martial arts programs, and I wanted to personally reach out to answer any questions you might have. Is this a good time to chat?`;
+          break;
+        case 'retention':
+          initialMessage = `Hi${targetName ? ' ' + targetName : ''}! This is ${agentName} from ${schoolName}. I'm just calling to check in and see how your training is going. We value you as a member and want to make sure you're getting the most out of your experience. How have things been?`;
+          break;
+        case 'no_show':
+          initialMessage = `Hi${targetName ? ' ' + targetName : ''}! This is ${agentName} from ${schoolName}. I noticed we missed you at your scheduled class, and I wanted to make sure everything is okay. Would you like to reschedule for another time?`;
+          break;
+        case 'payment_reminder':
+          initialMessage = `Hello${targetName ? ' ' + targetName : ''}! This is ${agentName} from ${schoolName}. I'm calling about your membership account. I wanted to help you sort out any payment concerns so we can keep you training without interruption. Do you have a moment?`;
+          break;
+        case 'winback':
+          initialMessage = `Hi${targetName ? ' ' + targetName : ''}! This is ${agentName} from ${schoolName}. It's been a while since we've seen you at the dojo, and we miss having you train with us. I'm calling because we have some exciting new programs and I thought of you. Would you be interested in hearing about what's new?`;
+          break;
+        case 'appointment_confirmation':
+          initialMessage = `Hi${targetName ? ' ' + targetName : ''}! This is ${agentName} from ${schoolName}. I'm just calling to confirm your upcoming trial class. Are you all set and ready to join us?`;
+          break;
+        default:
+          initialMessage = `Hello${targetName ? ' ' + targetName : ''}! This is ${agentName} from ${schoolName}. How can I help you today?`;
+      }
+
+      // Return TwiML that connects to ElevenLabs via WebSocket
+      // Using <Connect><Stream> for real-time audio streaming
+      const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+
+      const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Connect>
+    <Stream url="wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${SPARK_AGENT_ID}">
+      <Parameter name="school_id" value="${school_id || ''}"/>
+      <Parameter name="agent" value="${agent || 'sensei'}"/>
+      <Parameter name="call_type" value="${call_type || ''}"/>
+      <Parameter name="lead_id" value="${lead_id || ''}"/>
+      <Parameter name="student_id" value="${student_id || ''}"/>
+      <Parameter name="initial_message" value="${initialMessage.replace(/"/g, '&quot;')}"/>
+      <Parameter name="first_message" value="${initialMessage.replace(/"/g, '&quot;')}"/>
+    </Stream>
+  </Connect>
+</Response>`;
+
+      res.type('text/xml');
+      res.send(twiml);
+    } catch (error) {
+      console.error('[SparkVoice] TwiML error:', error);
+      // Return a fallback TwiML that says something went wrong
+      const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say voice="alice">I apologize, but we're experiencing technical difficulties. Please call us back or visit our website. Goodbye.</Say>
+  <Hangup/>
+</Response>`;
+      res.type('text/xml');
+      res.send(twiml);
+    }
+  });
+
+  // POST /api/v1/voice/twilio-status - Receive call status updates from Twilio
+  router.post('/twilio-status', async (req, res) => {
+    try {
+      const {
+        CallSid,
+        CallStatus,
+        CallDuration,
+        From,
+        To,
+        Direction,
+        AnsweredBy,
+        Timestamp
+      } = req.body;
+
+      console.log(`[SparkVoice] Status update: CallSid=${CallSid}, Status=${CallStatus}, Duration=${CallDuration || 0}s`);
+
+      // Find the SparkAiCall record by external_call_id
+      const aiCall = await SparkAiCall.findOne({
+        where: { external_call_id: CallSid }
+      });
+
+      if (aiCall) {
+        const updates = {
+          status: sparkVoiceCallService.mapTwilioStatus(CallStatus)
+        };
+
+        // Add duration if call completed
+        if (CallDuration) {
+          updates.duration_seconds = parseInt(CallDuration, 10);
+        }
+
+        // Add answered_by info to metadata
+        if (AnsweredBy) {
+          updates.metadata = {
+            ...aiCall.metadata,
+            answered_by: AnsweredBy,
+            completed_at: new Date().toISOString()
+          };
+        }
+
+        // Map call status to outcome for certain statuses
+        if (CallStatus === 'completed') {
+          updates.outcome = 'completed';
+        } else if (CallStatus === 'no-answer') {
+          updates.status = 'no_answer';
+          updates.outcome = 'no_answer';
+        } else if (CallStatus === 'busy') {
+          updates.status = 'busy';
+          updates.outcome = 'busy';
+        } else if (CallStatus === 'failed' || CallStatus === 'canceled') {
+          updates.status = 'failed';
+          updates.outcome = 'failed';
+        }
+
+        await aiCall.update(updates);
+        console.log(`[SparkVoice] Updated call record ${aiCall.id} with status: ${updates.status}`);
+      } else {
+        console.warn(`[SparkVoice] No call record found for CallSid: ${CallSid}`);
+      }
+
+      // Twilio expects a 200 response
+      res.status(200).send('OK');
+    } catch (error) {
+      console.error('[SparkVoice] Status callback error:', error);
+      res.status(200).send('OK'); // Still return 200 to avoid Twilio retries
+    }
+  });
+
+  // POST /api/v1/voice/recording-status - Receive recording status from Twilio
+  router.post('/recording-status', async (req, res) => {
+    try {
+      const {
+        CallSid,
+        RecordingSid,
+        RecordingUrl,
+        RecordingStatus,
+        RecordingDuration
+      } = req.body;
+
+      console.log(`[SparkVoice] Recording status: CallSid=${CallSid}, RecordingSid=${RecordingSid}, Status=${RecordingStatus}`);
+
+      if (RecordingStatus === 'completed' && RecordingUrl) {
+        // Find the SparkAiCall record and update with recording URL
+        const aiCall = await SparkAiCall.findOne({
+          where: { external_call_id: CallSid }
+        });
+
+        if (aiCall) {
+          await aiCall.update({
+            recording_url: RecordingUrl + '.mp3',
+            metadata: {
+              ...aiCall.metadata,
+              recording_sid: RecordingSid,
+              recording_duration: RecordingDuration
+            }
+          });
+          console.log(`[SparkVoice] Recording URL saved for call ${aiCall.id}`);
+        }
+      }
+
+      res.status(200).send('OK');
+    } catch (error) {
+      console.error('[SparkVoice] Recording callback error:', error);
+      res.status(200).send('OK');
+    }
+  });
+
+  // GET /api/v1/voice/call/:call_id - Get call details
+  router.get('/call/:call_id', async (req, res) => {
+    try {
+      const call_id = parseInt(req.params.call_id, 10);
+
+      const aiCall = await SparkAiCall.findByPk(call_id, {
+        include: [
+          { model: SparkSchool, as: 'school', attributes: ['id', 'name'] },
+          { model: SparkLead, as: 'lead', attributes: ['id', 'first_name', 'last_name', 'phone'] },
+          { model: SparkStudent, as: 'student', attributes: ['id', 'first_name', 'last_name', 'phone'] }
+        ]
+      });
+
+      if (!aiCall) {
+        return res.status(404).json({ error: 'Call not found' });
+      }
+
+      res.json({ success: true, data: aiCall });
+    } catch (error) {
+      console.error('[SparkVoice] Get call error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // POST /api/v1/voice/call/:call_id/end - End an active call
+  router.post('/call/:call_id/end', async (req, res) => {
+    try {
+      const call_id = parseInt(req.params.call_id, 10);
+
+      const aiCall = await SparkAiCall.findByPk(call_id);
+      if (!aiCall) {
+        return res.status(404).json({ error: 'Call not found' });
+      }
+
+      if (!aiCall.external_call_id) {
+        return res.status(400).json({ error: 'No active Twilio call found' });
+      }
+
+      await sparkVoiceCallService.endCall(aiCall.external_call_id);
+
+      await aiCall.update({
+        status: 'completed',
+        outcome: 'manually_ended',
+        metadata: {
+          ...aiCall.metadata,
+          manually_ended_at: new Date().toISOString()
+        }
+      });
+
+      res.json({ success: true, message: 'Call ended' });
+    } catch (error) {
+      console.error('[SparkVoice] End call error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // =====================================================
+  // WEBRTC TOKEN ENDPOINT - For browser-based voice chat
+  // =====================================================
 
   // POST /api/v1/voice/webrtc-token - Get WebRTC token for Spark voice chat
   router.post('/webrtc-token', async (req, res) => {
