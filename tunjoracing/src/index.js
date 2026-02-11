@@ -6,6 +6,8 @@
  * Sponsorship Intelligence, Fan Engagement, Analytics & E-Commerce Platform
  *
  * Mounted at: /tunjoracing
+ *
+ * Updated: 2026-02-11 - Fan Portal with password authentication
  */
 
 require('dotenv').config();

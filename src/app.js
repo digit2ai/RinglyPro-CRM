@@ -1,4 +1,5 @@
 // src/app.js - Enhanced with Call History Integration, Multi-Client Support, Credit System, User Authentication, and Rachel Voice AI
+// Updated: 2026-02-11 - TunjoRacing Fan Portal with password authentication
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
