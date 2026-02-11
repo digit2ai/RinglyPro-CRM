@@ -210,6 +210,54 @@ router.get('/auth-test', async (req, res) => {
   }
 });
 
+// POST /health/seed-2025-races - Seed 2025 race calendar
+router.post('/seed-2025-races', async (req, res) => {
+  if (!models || !models.sequelize) {
+    return res.status(500).json({ status: 'error', message: 'Models not loaded' });
+  }
+
+  try {
+    // Delete existing 2025 races
+    await models.sequelize.query("DELETE FROM tunjo_race_events WHERE start_date >= '2025-01-01'");
+
+    // 2025 IMSA & Le Mans Cup Calendar
+    const races = [
+      { name: 'Daytona IMSA Sprint', series: 'IMSA Sprint', track_name: 'Daytona International Speedway', country: 'USA', city: 'Daytona Beach', start_date: '2025-01-16', end_date: '2025-01-19' },
+      { name: 'COTA IMSA Sprint', series: 'IMSA Sprint', track_name: 'Circuit of the Americas', country: 'USA', city: 'Austin', start_date: '2025-02-27', end_date: '2025-02-28' },
+      { name: 'Sebring IMSA Endurance', series: 'IMSA Endurance', track_name: 'Sebring International Raceway', country: 'USA', city: 'Sebring', start_date: '2025-03-06', end_date: '2025-03-08' },
+      { name: 'Barcelona Collective Test', series: 'Le Mans Cup Test', track_name: 'Circuit de Barcelona-Catalunya', country: 'Spain', city: 'Barcelona', start_date: '2025-04-08', end_date: '2025-04-08' },
+      { name: 'Barcelona Le Mans Cup', series: 'Le Mans Cup', track_name: 'Circuit de Barcelona-Catalunya', country: 'Spain', city: 'Barcelona', start_date: '2025-04-11', end_date: '2025-04-11' },
+      { name: 'Le Castellet Le Mans Cup', series: 'Le Mans Cup', track_name: 'Circuit Paul Ricard', country: 'France', city: 'Le Castellet', start_date: '2025-05-01', end_date: '2025-05-02' },
+      { name: 'COTA IMSA Endurance', series: 'IMSA Endurance', track_name: 'Circuit of the Americas', country: 'USA', city: 'Austin', start_date: '2025-05-07', end_date: '2025-05-09' },
+      { name: 'Mid-Ohio IMSA Sprint', series: 'IMSA Sprint', track_name: 'Mid-Ohio Sports Car Course', country: 'USA', city: 'Lexington', start_date: '2025-06-05', end_date: '2025-06-07' },
+      { name: 'Road to Le Mans', series: 'Le Mans Cup', track_name: 'Circuit de la Sarthe', country: 'France', city: 'Le Mans', start_date: '2025-06-12', end_date: '2025-06-12' },
+      { name: 'VIR IMSA Endurance', series: 'IMSA Endurance', track_name: 'Virginia International Raceway', country: 'USA', city: 'Alton', start_date: '2025-06-19', end_date: '2025-06-21' },
+      { name: 'CTMP IMSA Sprint', series: 'IMSA Sprint', track_name: 'Canadian Tire Motorsport Park', country: 'Canada', city: 'Bowmanville', start_date: '2025-07-10', end_date: '2025-07-12' },
+      { name: 'Road America IMSA Endurance', series: 'IMSA Endurance', track_name: 'Road America', country: 'USA', city: 'Elkhart Lake', start_date: '2025-08-14', end_date: '2025-08-16' },
+      { name: 'VIR IMSA Sprint', series: 'IMSA Sprint', track_name: 'Virginia International Raceway', country: 'USA', city: 'Alton', start_date: '2025-08-21', end_date: '2025-08-22' },
+      { name: 'Spa Le Mans Cup', series: 'Le Mans Cup', track_name: 'Circuit de Spa-Francorchamps', country: 'Belgium', city: 'Stavelot', start_date: '2025-08-21', end_date: '2025-08-22' },
+      { name: 'Silverstone Le Mans Cup', series: 'Le Mans Cup', track_name: 'Silverstone Circuit', country: 'UK', city: 'Silverstone', start_date: '2025-09-12', end_date: '2025-09-12' },
+      { name: 'Road Atlanta IMSA Sprint', series: 'IMSA Sprint', track_name: 'Michelin Raceway Road Atlanta', country: 'USA', city: 'Braselton', start_date: '2025-10-01', end_date: '2025-10-03' },
+      { name: 'Portimão Le Mans Cup', series: 'Le Mans Cup', track_name: 'Autódromo Internacional do Algarve', country: 'Portugal', city: 'Portimão', start_date: '2025-10-10', end_date: '2025-10-10' }
+    ];
+
+    for (const race of races) {
+      await models.sequelize.query(`
+        INSERT INTO tunjo_race_events (tenant_id, name, series, track_name, country, city, start_date, end_date, status, created_at, updated_at)
+        VALUES (1, '${race.name}', '${race.series}', '${race.track_name}', '${race.country}', '${race.city}', '${race.start_date}', '${race.end_date}', 'upcoming', NOW(), NOW())
+      `);
+    }
+
+    res.json({
+      status: 'seeded',
+      message: '2025 race calendar updated',
+      races_added: races.length
+    });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+});
+
 // GET /health/model-debug - Debug model fields
 router.get('/model-debug', async (req, res) => {
   if (!models || !models.TunjoFan) {
