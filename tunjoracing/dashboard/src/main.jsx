@@ -14,6 +14,7 @@ import SponsorsPage from './pages/SponsorsPage';
 import SponsorshipPage from './pages/SponsorshipPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboard from './pages/AdminDashboard';
+import FansPage from './pages/FansPage';
 import SponsorLoginPage from './pages/SponsorLoginPage';
 import SponsorDashboard from './pages/SponsorDashboard';
 
@@ -40,6 +41,7 @@ function App() {
         {/* Admin Portal */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/fans" element={<FansPage />} />
       </Routes>
     </BrowserRouter>
   );
