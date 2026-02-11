@@ -2,282 +2,254 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Trophy, Users, Globe, ChevronRight, Calendar, Zap, Target } from 'lucide-react';
+import { Calendar, Mail, Phone } from 'lucide-react';
 
 export default function HomePage() {
   const [upcomingRaces, setUpcomingRaces] = useState([]);
+  const [email, setEmail] = useState('');
+  const [formData, setFormData] = useState({ name: '', email: '', company: '', message: '' });
 
   useEffect(() => {
-    fetch('/tunjoracing/api/v1/races/upcoming?limit=3')
+    fetch('/tunjoracing/api/v1/races?limit=5')
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          setUpcomingRaces(data.data);
-        }
+        if (data.success) setUpcomingRaces(data.data);
       })
       .catch(console.error);
   }, []);
 
+  const handleFanSignup = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/tunjoracing/api/v1/fans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      if (res.ok) {
+        alert('Welcome to the TunjoRacing fan community!');
+        setEmail('');
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/tunjoracing/api/v1/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          company_name: formData.company,
+          contact_name: formData.name,
+          email: formData.email,
+          message: formData.message
+        })
+      });
+      if (res.ok) {
+        alert('Thank you! Our team will contact you soon.');
+        setFormData({ name: '', email: '', company: '', message: '' });
+      }
+    } catch (err) { console.error(err); }
+  };
+
   const stats = [
-    { icon: Trophy, value: '15+', label: 'Podium Finishes' },
-    { icon: Globe, value: '8', label: 'Countries Raced' },
-    { icon: Users, value: '50K+', label: 'Social Followers' },
-    { icon: Target, value: '3M+', label: 'Media Impressions' },
+    { num: '50+', label: 'Career Wins & Podiums' },
+    { num: '15+', label: 'Pro Seasons' },
+    { num: '540M', label: 'Global Viewers' },
+    { num: '156', label: 'Countries Reached' },
+  ];
+
+  const benefits = [
+    {
+      title: 'International Brand Visibility',
+      items: ['Logo on racing suit and helmet', 'Logo on team apparel', 'Digital content and media assets', 'Exposure at major racing circuits']
+    },
+    {
+      title: 'Digital & Social Media Exposure',
+      items: ['Branded content on Instagram, Facebook, LinkedIn', 'Race-week training and preparation content', 'Behind-the-scenes access', 'Bilingual reach (English & Spanish)']
+    },
+    {
+      title: 'Content for Marketing',
+      items: ['Professional photo & video assets', 'Training sessions and race footage', 'Brand integration in posts & stories', 'VIP hospitality opportunities']
+    }
   ];
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-900/95 to-slate-900"></div>
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/20 via-transparent to-transparent"></div>
-        </div>
+      <section className="relative min-h-screen flex items-center pt-16">
+        <div className="absolute inset-0" style={{
+          background: 'linear-gradient(180deg, rgba(0,0,0,.3) 0%, rgba(0,0,0,.5) 60%, rgba(0,0,0,.95) 100%), url("https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=1600") center/cover no-repeat'
+        }} />
 
-        <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-racing font-bold mb-6">
-            <span className="gradient-text">TUNJO</span>
-            <span className="text-white">RACING</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-slate-300 mb-8 max-w-3xl mx-auto">
-            Professional International Motorsport. Pushing limits on tracks around the world.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/sponsorship" className="btn-gold inline-flex items-center justify-center">
-              Become a Partner
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Link>
-            <Link to="/store" className="btn-primary inline-flex items-center justify-center">
-              Shop Merchandise
-            </Link>
-          </div>
-        </div>
+        <div className="container mx-auto relative z-10 py-16">
+          <div className="max-w-2xl">
+            <div className="p-6 rounded-2xl" style={{ backgroundColor: 'rgba(0,0,0,.85)', border: '1px solid #333', boxShadow: '0 24px 80px rgba(0,0,0,.7)' }}>
+              <span className="pill">2025 Sponsorship & Partnership Program</span>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <div className="w-6 h-10 border-2 border-slate-400 rounded-full flex items-start justify-center p-1">
-            <div className="w-1.5 h-3 bg-amber-400 rounded-full"></div>
+              <h1 className="text-4xl md:text-5xl font-bold mt-4 mb-4 leading-tight">
+                Accelerate Your Brand with{' '}
+                <span style={{ color: '#e31837', textDecoration: 'underline', textUnderlineOffset: '6px' }}>TUNJO RACING</span>
+              </h1>
+
+              <p style={{ color: '#666' }} className="text-lg mb-6">
+                Through passion, performance, and global visibility at every race, your company will connect with motorsport fans worldwide.
+              </p>
+
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                <div className="proof-item"><span className="proof-kpi">50+</span><span className="proof-label">Wins & Podiums</span></div>
+                <div className="proof-item"><span className="proof-kpi">15+</span><span className="proof-label">Pro Seasons</span></div>
+                <div className="proof-item"><span className="proof-kpi">540M</span><span className="proof-label">Global Viewers</span></div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <a href="#contact" className="btn">Become a Partner</a>
+                <Link to="/store" className="btn btn-ghost">Shop Merchandise</Link>
+              </div>
+
+              <p className="text-xs mt-4" style={{ color: '#555' }}>Media kit + deliverables available upon request.</p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-slate-950">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+      <section className="section" style={{ backgroundColor: '#111', borderTop: '1px solid #333', borderBottom: '1px solid #333' }}>
+        <div className="container mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-2">Live Race Broadcast Metrics</h2>
+            <p style={{ color: '#888' }}>Global reach across 156 countries through TV, broadcast, and streaming platforms.</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {stats.map((stat, i) => (
-              <div key={i} className="text-center">
-                <stat.icon className="h-8 w-8 text-amber-400 mx-auto mb-4" />
-                <div className="text-3xl md:text-4xl font-racing font-bold text-white mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-slate-400 text-sm">{stat.label}</div>
-              </div>
+              <div key={i} className="stat"><div className="stat-num">{stat.num}</div><div className="stat-label">{stat.label}</div></div>
             ))}
           </div>
         </div>
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-20 bg-slate-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+      <section id="about" className="section">
+        <div className="container mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 items-start">
             <div>
-              <h2 className="text-3xl md:text-4xl font-racing font-bold text-white mb-6">
-                Racing Toward <span className="gradient-text">Excellence</span>
-              </h2>
-              <p className="text-slate-300 mb-6 leading-relaxed">
-                TunjoRacing represents the pinnacle of determination and skill in international motorsport.
-                With a proven track record of success across multiple racing series and countries,
-                we bring passion, precision, and performance to every race.
-              </p>
-              <p className="text-slate-300 mb-8 leading-relaxed">
-                Our mission is to compete at the highest level while building meaningful partnerships
-                that deliver exceptional value and visibility for our sponsors.
-              </p>
-              <Link to="/sponsorship" className="text-amber-400 hover:text-amber-300 font-medium inline-flex items-center">
-                Learn About Sponsorship
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Link>
+              <h2 className="text-3xl font-bold mb-4">About TunjoRacing</h2>
+              <p style={{ color: '#888' }} className="mb-4">TunjoRacing represents professional international motorsport at the highest level. With years of experience competing across multiple racing series and countries, we bring passion, precision, and performance to every race.</p>
+              <p style={{ color: '#888' }} className="mb-6">At the heart of our racing program are three core values: <strong className="text-white">performance, dedication, and passion</strong>.</p>
+              <ul className="space-y-2 mb-6" style={{ color: '#888' }}>
+                <li className="flex items-start gap-2"><span style={{ color: '#e31837' }}>•</span><span><strong className="text-white">2024:</strong> Multiple podium finishes across European circuits</span></li>
+                <li className="flex items-start gap-2"><span style={{ color: '#e31837' }}>•</span><span><strong className="text-white">Series:</strong> Formula 4 Spain Championship</span></li>
+                <li className="flex items-start gap-2"><span style={{ color: '#e31837' }}>•</span><span><strong className="text-white">Car:</strong> Formula 4 Single-Seater</span></li>
+              </ul>
             </div>
-            <div className="relative">
-              <div className="aspect-video bg-slate-800 rounded-lg overflow-hidden">
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="text-center">
-                    <Zap className="h-16 w-16 text-amber-400 mx-auto mb-4" />
-                    <p className="text-slate-400">Racing Highlights</p>
-                  </div>
-                </div>
-              </div>
+            <div className="card">
+              <img src="https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800" alt="Racing" className="rounded-xl mb-4" style={{ width: '100%', height: '300px', objectFit: 'cover' }} />
+              <p style={{ color: '#888' }} className="text-sm">TunjoRacing • Professional Motorsport • Excellence in Racing</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Upcoming Races */}
-      <section className="py-20 bg-slate-950">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-12">
+      {/* Benefits Section */}
+      <section id="benefits" className="section" style={{ backgroundColor: '#111', borderTop: '1px solid #333', borderBottom: '1px solid #333' }}>
+        <div className="container mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-2">Partner Benefits</h2>
+            <p style={{ color: '#888' }}>Comprehensive sponsorship deliverables across visibility, content, and experiences.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-4">
+            {benefits.map((benefit, i) => (
+              <div key={i} className="card">
+                <h3 className="text-lg font-bold mb-3">{benefit.title}</h3>
+                <ul className="checklist">{benefit.items.map((item, j) => <li key={j}>{item}</li>)}</ul>
+              </div>
+            ))}
+          </div>
+          <div className="cta-band mt-8">
             <div>
-              <h2 className="text-3xl md:text-4xl font-racing font-bold text-white mb-2">
-                Upcoming <span className="gradient-text">Races</span>
-              </h2>
-              <p className="text-slate-400">Follow our journey around the world</p>
+              <h3 className="font-bold mb-1">Ready to Accelerate Your Brand?</h3>
+              <p style={{ color: '#888' }} className="text-sm">Custom sponsorship packages available. Contact us today.</p>
             </div>
-            <Link to="/schedule" className="text-amber-400 hover:text-amber-300 font-medium inline-flex items-center">
-              View Full Schedule
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Link>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {upcomingRaces.length > 0 ? upcomingRaces.map((race, i) => (
-              <div key={race.id} className="bg-slate-800/50 rounded-lg p-6 border border-slate-700 card-hover">
-                <div className="flex items-center space-x-2 text-amber-400 text-sm mb-4">
-                  <Calendar className="h-4 w-4" />
-                  <span>{new Date(race.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">{race.name}</h3>
-                <p className="text-slate-400">{race.track_name}</p>
-                <p className="text-slate-500 text-sm">{race.city}, {race.country}</p>
-              </div>
-            )) : (
-              <>
-                <div className="bg-slate-800/50 rounded-lg p-6 border border-slate-700">
-                  <div className="flex items-center space-x-2 text-amber-400 text-sm mb-4">
-                    <Calendar className="h-4 w-4" />
-                    <span>Mar 15, 2024</span>
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Imola F4 Round 1</h3>
-                  <p className="text-slate-400">Autodromo Enzo e Dino Ferrari</p>
-                  <p className="text-slate-500 text-sm">Imola, Italy</p>
-                </div>
-                <div className="bg-slate-800/50 rounded-lg p-6 border border-slate-700">
-                  <div className="flex items-center space-x-2 text-amber-400 text-sm mb-4">
-                    <Calendar className="h-4 w-4" />
-                    <span>Apr 5, 2024</span>
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Spa F4 Championship</h3>
-                  <p className="text-slate-400">Circuit de Spa-Francorchamps</p>
-                  <p className="text-slate-500 text-sm">Stavelot, Belgium</p>
-                </div>
-                <div className="bg-slate-800/50 rounded-lg p-6 border border-slate-700">
-                  <div className="flex items-center space-x-2 text-amber-400 text-sm mb-4">
-                    <Calendar className="h-4 w-4" />
-                    <span>May 10, 2024</span>
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Monaco Historic</h3>
-                  <p className="text-slate-400">Circuit de Monaco</p>
-                  <p className="text-slate-500 text-sm">Monte Carlo, Monaco</p>
-                </div>
-              </>
-            )}
+            <a href="#contact" className="btn">Request Media Kit</a>
           </div>
         </div>
       </section>
 
-      {/* Fan Signup CTA */}
-      <section className="py-20 bg-gradient-to-r from-red-900 to-amber-900">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-racing font-bold text-white mb-4">
-            Join the TunjoRacing Community
-          </h2>
-          <p className="text-xl text-white/80 mb-8">
-            Get exclusive content, race updates, and special offers delivered to your inbox.
-          </p>
-          <FanSignupForm />
+      {/* Race Calendar */}
+      <section id="calendar" className="section">
+        <div className="container mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-2">2025 Race Calendar</h2>
+            <p style={{ color: '#888' }}>Follow our championship journey across premier racing circuits.</p>
+          </div>
+          {upcomingRaces.length > 0 ? (
+            <div className="card overflow-hidden p-0">
+              <div className="grid grid-cols-4 gap-3 p-4 text-sm font-bold" style={{ background: '#1a1a1a', color: '#e31837', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <span>Date</span><span>Event</span><span>Track</span><span>Location</span>
+              </div>
+              {upcomingRaces.map((race, i) => (
+                <div key={i} className="grid grid-cols-4 gap-3 p-4 border-t border-[#333]" style={{ color: '#888' }}>
+                  <span className="text-white font-medium">{new Date(race.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  <span>{race.name}</span><span>{race.track_name}</span><span>{race.city}, {race.country}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="card text-center py-12">
+              <Calendar className="h-12 w-12 mx-auto mb-4" style={{ color: '#888' }} />
+              <p style={{ color: '#888' }}>Race calendar coming soon</p>
+            </div>
+          )}
+          <div className="text-center mt-6"><Link to="/schedule" className="btn btn-ghost">View Full Schedule</Link></div>
         </div>
       </section>
 
-      {/* Sponsorship CTA */}
-      <section className="py-20 bg-slate-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-r from-slate-800 to-slate-800/50 rounded-2xl p-8 md:p-12 border border-slate-700">
-            <div className="md:flex items-center justify-between">
-              <div className="mb-6 md:mb-0">
-                <h2 className="text-2xl md:text-3xl font-racing font-bold text-white mb-2">
-                  Partner With <span className="gradient-text">TunjoRacing</span>
-                </h2>
-                <p className="text-slate-300">
-                  Reach millions of motorsport fans worldwide. Get measurable ROI.
-                </p>
+      {/* Contact Section */}
+      <section id="contact" className="section" style={{ backgroundColor: '#111', borderTop: '1px solid #333', borderBottom: '1px solid #333' }}>
+        <div className="container mx-auto">
+          <div className="grid md:grid-cols-2 gap-8">
+            <div>
+              <h2 className="text-3xl font-bold mb-4">Become a Partner</h2>
+              <p style={{ color: '#888' }} className="mb-6">Join the TunjoRacing family and connect your brand with the excitement of professional motorsport.</p>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="card"><Mail className="h-6 w-6 mb-2" style={{ color: '#e31837' }} /><p className="text-sm font-bold">Email</p><p style={{ color: '#888' }} className="text-sm">sponsors@tunjoracing.com</p></div>
+                <div className="card"><Phone className="h-6 w-6 mb-2" style={{ color: '#e31837' }} /><p className="text-sm font-bold">Phone</p><p style={{ color: '#888' }} className="text-sm">Contact via form</p></div>
               </div>
-              <Link to="/sponsorship" className="btn-gold inline-flex items-center whitespace-nowrap">
-                Explore Sponsorship
-                <ChevronRight className="ml-2 h-5 w-5" />
-              </Link>
+              <div className="flex gap-3">
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="btn btn-ghost text-sm">Instagram</a>
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="btn btn-ghost text-sm">Facebook</a>
+              </div>
+            </div>
+            <div className="card">
+              <h3 className="font-bold mb-4">Contact Us</h3>
+              <form onSubmit={handleContactSubmit}>
+                <div className="mb-4"><label className="block text-sm mb-2" style={{ color: '#ccc' }}>Name *</label><input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Your name" /></div>
+                <div className="mb-4"><label className="block text-sm mb-2" style={{ color: '#ccc' }}>Email *</label><input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="your@email.com" /></div>
+                <div className="mb-4"><label className="block text-sm mb-2" style={{ color: '#ccc' }}>Company</label><input type="text" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} placeholder="Your company" /></div>
+                <div className="mb-4"><label className="block text-sm mb-2" style={{ color: '#ccc' }}>Message *</label><textarea required rows="4" value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} placeholder="Tell us about your partnership interests..." /></div>
+                <button type="submit" className="btn w-full">Send Message</button>
+              </form>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Fan Signup */}
+      <section className="section">
+        <div className="container mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-2">Join the Fan Community</h2>
+          <p style={{ color: '#888' }} className="mb-6">Get race updates, exclusive content, and shop discounts.</p>
+          <form onSubmit={handleFanSignup} className="max-w-md mx-auto flex gap-3">
+            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" className="flex-1" />
+            <button type="submit" className="btn">Subscribe</button>
+          </form>
         </div>
       </section>
 
       <Footer />
     </div>
-  );
-}
-
-function FanSignupForm() {
-  const [email, setEmail] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const res = await fetch('/tunjoracing/api/v1/fans/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, first_name: firstName, source: 'homepage' })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSubmitted(true);
-      }
-    } catch (error) {
-      console.error('Signup error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (submitted) {
-    return (
-      <div className="bg-white/10 rounded-lg p-6 max-w-md mx-auto">
-        <p className="text-white font-semibold">Welcome to the team! 🏎️</p>
-        <p className="text-white/80 text-sm mt-2">Check your inbox for a welcome message.</p>
-      </div>
-    );
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
-      <input
-        type="text"
-        placeholder="First Name"
-        value={firstName}
-        onChange={(e) => setFirstName(e.target.value)}
-        className="flex-1 px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-amber-400"
-      />
-      <input
-        type="email"
-        placeholder="Email Address"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        className="flex-1 px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-amber-400"
-      />
-      <button
-        type="submit"
-        disabled={loading}
-        className="px-6 py-3 bg-white text-slate-900 font-semibold rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-50"
-      >
-        {loading ? 'Joining...' : 'Join Now'}
-      </button>
-    </form>
   );
 }

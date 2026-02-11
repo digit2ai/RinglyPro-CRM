@@ -4,16 +4,16 @@ import { Instagram, Twitter, Youtube, Mail } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-950 border-t border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="site-footer">
+      <div className="container mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 py-8">
           {/* Brand */}
-          <div className="col-span-1">
-            <Link to="/" className="flex items-center space-x-2 mb-4">
-              <span className="text-xl font-racing font-bold gradient-text">TUNJO</span>
-              <span className="text-xl font-racing font-bold text-white">RACING</span>
+          <div>
+            <Link to="/" className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#e31837] to-[#8b0000] border border-[#e31837]" />
+              <span className="font-bold text-white tracking-wider">TUNJO RACING</span>
             </Link>
-            <p className="text-slate-400 text-sm">
+            <p style={{ color: '#888' }} className="text-sm">
               Professional international motorsport racing. Pushing limits, chasing dreams.
             </p>
           </div>
@@ -22,10 +22,10 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-white mb-4">Quick Links</h4>
             <ul className="space-y-2">
-              <li><Link to="/schedule" className="text-slate-400 hover:text-white text-sm">Race Calendar</Link></li>
-              <li><Link to="/partners" className="text-slate-400 hover:text-white text-sm">Our Partners</Link></li>
-              <li><Link to="/sponsorship" className="text-slate-400 hover:text-white text-sm">Become a Sponsor</Link></li>
-              <li><Link to="/store" className="text-slate-400 hover:text-white text-sm">Shop Merchandise</Link></li>
+              <li><Link to="/schedule" style={{ color: '#888' }} className="text-sm hover:text-[#e31837]">Race Calendar</Link></li>
+              <li><Link to="/partners" style={{ color: '#888' }} className="text-sm hover:text-[#e31837]">Our Partners</Link></li>
+              <li><Link to="/sponsorship" style={{ color: '#888' }} className="text-sm hover:text-[#e31837]">Become a Sponsor</Link></li>
+              <li><Link to="/store" style={{ color: '#888' }} className="text-sm hover:text-[#e31837]">Shop Merchandise</Link></li>
             </ul>
           </div>
 
@@ -33,42 +33,40 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-white mb-4">For Partners</h4>
             <ul className="space-y-2">
-              <li><Link to="/sponsor/login" className="text-slate-400 hover:text-white text-sm">Sponsor Portal</Link></li>
-              <li><Link to="/sponsorship" className="text-slate-400 hover:text-white text-sm">Sponsorship Packages</Link></li>
-              <li><a href="mailto:sponsors@tunjoracing.com" className="text-slate-400 hover:text-white text-sm">Contact Sales</a></li>
+              <li><Link to="/sponsor/login" style={{ color: '#888' }} className="text-sm hover:text-[#e31837]">Sponsor Portal</Link></li>
+              <li><Link to="/sponsorship" style={{ color: '#888' }} className="text-sm hover:text-[#e31837]">Sponsorship Packages</Link></li>
+              <li><a href="mailto:sponsors@tunjoracing.com" style={{ color: '#888' }} className="text-sm hover:text-[#e31837]">Contact Sales</a></li>
             </ul>
           </div>
 
           {/* Social & Contact */}
           <div>
             <h4 className="font-semibold text-white mb-4">Connect</h4>
-            <div className="flex space-x-4 mb-4">
-              <a href="https://instagram.com/tunjoracing" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-pink-500 transition-colors">
+            <div className="flex gap-4 mb-4">
+              <a href="https://instagram.com/tunjoracing" target="_blank" rel="noopener noreferrer" style={{ color: '#888' }} className="hover:text-[#e31837] transition-colors">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="https://twitter.com/tunjoracing" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-blue-400 transition-colors">
+              <a href="https://twitter.com/tunjoracing" target="_blank" rel="noopener noreferrer" style={{ color: '#888' }} className="hover:text-[#e31837] transition-colors">
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="https://youtube.com/@tunjoracing" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-red-500 transition-colors">
+              <a href="https://youtube.com/@tunjoracing" target="_blank" rel="noopener noreferrer" style={{ color: '#888' }} className="hover:text-[#e31837] transition-colors">
                 <Youtube className="h-5 w-5" />
               </a>
-              <a href="mailto:info@tunjoracing.com" className="text-slate-400 hover:text-amber-400 transition-colors">
+              <a href="mailto:info@tunjoracing.com" style={{ color: '#888' }} className="hover:text-[#e31837] transition-colors">
                 <Mail className="h-5 w-5" />
               </a>
             </div>
-            <p className="text-slate-500 text-xs">
-              info@tunjoracing.com
-            </p>
+            <p style={{ color: '#666' }} className="text-xs">info@tunjoracing.com</p>
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-slate-500 text-sm">
+        <div className="py-4 border-t border-[#333] flex flex-col md:flex-row justify-between items-center">
+          <p style={{ color: '#666' }} className="text-sm">
             &copy; {new Date().getFullYear()} TunjoRacing. All rights reserved.
           </p>
-          <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" className="text-slate-500 hover:text-white text-xs">Privacy Policy</a>
-            <a href="#" className="text-slate-500 hover:text-white text-xs">Terms of Service</a>
+          <div className="flex gap-6 mt-4 md:mt-0">
+            <a href="#" style={{ color: '#666' }} className="text-xs hover:text-[#e31837]">Privacy Policy</a>
+            <a href="#" style={{ color: '#666' }} className="text-xs hover:text-[#e31837]">Terms of Service</a>
           </div>
         </div>
       </div>

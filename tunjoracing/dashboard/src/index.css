@@ -3,74 +3,264 @@
 @tailwind utilities;
 
 :root {
-  --racing-red: #dc2626;
-  --racing-gold: #fbbf24;
-  --racing-dark: #0f172a;
+  --bg: #0a0a0a;
+  --panel: #1a1a1a;
+  --panel-2: #222222;
+  --text: #ffffff;
+  --muted: #888888;
+  --line: #333333;
+  --accent: #e31837;
+  --accent-hover: #ff1f41;
+  --shadow: 0 18px 55px rgba(0,0,0,.6);
+  --radius: 18px;
+  --radius-sm: 14px;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--bg);
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: #0f172a;
-  color: white;
   margin: 0;
-  padding: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.55;
+  min-height: 100vh;
 }
 
 .font-racing {
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Orbitron', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #1a1a1a; }
+::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #666; }
+
+a { color: var(--text); text-underline-offset: 3px; }
+a:hover { color: var(--accent); }
+
+img { max-width: 100%; height: auto; display: block; }
+
+.container {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
 }
 
-::-webkit-scrollbar-track {
-  background: #1e293b;
+/* Section styles */
+.section { padding: 72px 0; }
+.section-alt {
+  background: #111111;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
-::-webkit-scrollbar-thumb {
-  background: #475569;
-  border-radius: 4px;
+/* Cards */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+.card-hover {
+  transition: all 0.3s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border-color: var(--accent);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: #000000;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 14px;
+  box-shadow: 0 14px 34px rgba(227,24,55,.3);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  color: #000000;
 }
 
-/* Racing stripe animation */
-@keyframes raceStripe {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border: 2px solid #444;
+  box-shadow: none;
+}
+.btn-ghost:hover {
+  background: transparent;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
-.race-stripe {
-  animation: raceStripe 3s linear infinite;
+.btn-primary {
+  @apply bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300;
+}
+
+.btn-gold {
+  @apply bg-amber-500 hover:bg-amber-600 text-black font-semibold py-3 px-6 rounded-lg transition-all duration-300;
+}
+
+/* Pill/Badge */
+.pill {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: rgba(227,24,55,.1);
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* Stats */
+.stat {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  text-align: center;
+}
+.stat-num {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--accent);
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* Proof items */
+.proof-item {
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.proof-kpi {
+  display: block;
+  font-size: 20px;
+  font-weight: 760;
+  color: var(--text);
+}
+.proof-label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* CTA Band */
+.cta-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--accent);
+  background: rgba(227,24,55,.05);
+}
+
+/* Checklist */
+.checklist {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+}
+.checklist li {
+  margin: 10px 0;
+  padding-left: 26px;
+  position: relative;
+  color: var(--muted);
+}
+.checklist li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+/* Form elements */
+input, textarea, select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #fbbf24 0%, #dc2626 100%);
+  background: linear-gradient(135deg, #e31837 0%, #ff4d6a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Card hover effect */
-.card-hover {
+/* Product card */
+.product-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
   transition: all 0.3s ease;
 }
-
-.card-hover:hover {
+.product-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border-color: var(--accent);
 }
 
-/* Button styles */
-.btn-primary {
-  @apply bg-gradient-to-r from-racing-600 to-racing-700 hover:from-racing-700 hover:to-racing-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl;
+/* Navigation */
+.nav-link {
+  text-decoration: none;
+  font-size: 13px;
+  color: var(--muted);
+  transition: color 0.2s;
+}
+.nav-link:hover { color: var(--accent); }
+
+/* Footer */
+.site-footer {
+  border-top: 1px solid var(--line);
+  padding: 22px 0;
+  background: var(--bg);
 }
 
-.btn-gold {
-  @apply bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl;
+/* Responsive */
+@media (max-width: 768px) {
+  .section { padding: 48px 0; }
+  .cta-band {
+    flex-direction: column;
+    text-align: center;
+  }
 }

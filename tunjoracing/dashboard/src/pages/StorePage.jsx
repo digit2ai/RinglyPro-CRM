@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { ShoppingCart, Filter } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 
 export default function StorePage() {
   const [products, setProducts] = useState([]);
@@ -11,13 +11,10 @@ export default function StorePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch products
     fetch(`/tunjoracing/api/v1/products?status=active${selectedCategory ? `&category=${selectedCategory}` : ''}`)
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          setProducts(data.data);
-        }
+        if (data.success) setProducts(data.data);
         setLoading(false);
       })
       .catch(err => {
@@ -27,69 +24,61 @@ export default function StorePage() {
   }, [selectedCategory]);
 
   useEffect(() => {
-    // Fetch categories
     fetch('/tunjoracing/api/v1/products/categories')
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          setCategories(data.data);
-        }
+        if (data.success) setCategories(data.data);
       })
       .catch(console.error);
   }, []);
 
-  // Demo products if API doesn't return any
-  const demoProducts = [
-    { id: 1, name: 'TunjoRacing Team Hoodie', slug: 'team-hoodie', price: 79.99, images: [], category: 'apparel', featured: true },
-    { id: 2, name: 'Racing Cap - Black', slug: 'racing-cap-black', price: 34.99, images: [], category: 'apparel', featured: true },
-    { id: 3, name: 'Pit Crew T-Shirt', slug: 'pit-crew-tshirt', price: 44.99, images: [], category: 'apparel', featured: false },
-    { id: 4, name: 'Signed Mini Helmet', slug: 'signed-mini-helmet', price: 149.99, images: [], category: 'collectibles', featured: true },
-    { id: 5, name: 'Lanyard & Badge', slug: 'lanyard-badge', price: 14.99, images: [], category: 'accessories', featured: false },
-    { id: 6, name: 'Racing Gloves', slug: 'racing-gloves', price: 89.99, images: [], category: 'accessories', featured: false },
-  ];
-
-  const displayProducts = products.length > 0 ? products : demoProducts;
+  const getImageUrl = (product) => {
+    if (product.images) {
+      try {
+        const images = typeof product.images === 'string' ? JSON.parse(product.images) : product.images;
+        if (images && images.length > 0) return images[0];
+      } catch (e) {}
+    }
+    return 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400';
+  };
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
       <Navbar />
 
       <main className="pt-24 pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto">
           {/* Header */}
           <div className="mb-12">
-            <h1 className="text-4xl font-racing font-bold text-white mb-4">
-              Official <span className="gradient-text">Merchandise</span>
+            <span className="pill mb-4">Official Store</span>
+            <h1 className="text-4xl font-bold text-white mb-4">
+              TunjoRacing <span style={{ color: '#e31837' }}>Merchandise</span>
             </h1>
-            <p className="text-slate-400 text-lg">
-              Gear up with official TunjoRacing merchandise
+            <p style={{ color: '#888' }} className="text-lg">
+              Gear up with official TunjoRacing apparel and collectibles
             </p>
           </div>
 
           {/* Filters */}
-          <div className="flex items-center gap-4 mb-8 overflow-x-auto pb-2">
+          <div className="flex flex-wrap items-center gap-3 mb-8">
             <button
               onClick={() => setSelectedCategory('')}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 selectedCategory === ''
-                  ? 'bg-amber-500 text-black'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-[#e31837] text-white'
+                  : 'bg-[#1a1a1a] text-[#888] border border-[#333] hover:border-[#e31837]'
               }`}
             >
               All Products
             </button>
-            {(categories.length > 0 ? categories : [
-              { category: 'apparel', count: 3 },
-              { category: 'collectibles', count: 1 },
-              { category: 'accessories', count: 2 },
-            ]).map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.category}
                 onClick={() => setSelectedCategory(cat.category)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors capitalize ${
+                className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-colors ${
                   selectedCategory === cat.category
-                    ? 'bg-amber-500 text-black'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    ? 'bg-[#e31837] text-white'
+                    : 'bg-[#1a1a1a] text-[#888] border border-[#333] hover:border-[#e31837]'
                 }`}
               >
                 {cat.category} ({cat.count})
@@ -99,70 +88,72 @@ export default function StorePage() {
 
           {/* Products Grid */}
           {loading ? (
-            <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="bg-slate-800 rounded-lg p-4 animate-pulse">
-                  <div className="aspect-square bg-slate-700 rounded-lg mb-4"></div>
-                  <div className="h-4 bg-slate-700 rounded mb-2"></div>
-                  <div className="h-4 bg-slate-700 rounded w-1/2"></div>
-                </div>
+            <div className="text-center py-20">
+              <div className="animate-spin w-8 h-8 border-2 border-[#e31837] border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p style={{ color: '#888' }}>Loading products...</p>
+            </div>
+          ) : products.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.map((product) => (
+                <Link
+                  key={product.id}
+                  to={`/store/product/${product.slug}`}
+                  className="product-card group"
+                >
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={getImageUrl(product)}
+                      alt={product.name}
+                      className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    {product.compare_at_price && (
+                      <span className="absolute top-3 left-3 bg-[#e31837] text-white text-xs font-bold px-2 py-1 rounded">
+                        SALE
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <p style={{ color: '#888' }} className="text-xs uppercase tracking-wider mb-1">
+                      {product.category}
+                    </p>
+                    <h3 className="text-white font-medium mb-2">{product.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold" style={{ color: '#e31837' }}>
+                        ${parseFloat(product.price).toFixed(2)}
+                      </span>
+                      {product.compare_at_price && (
+                        <span style={{ color: '#666' }} className="text-sm line-through">
+                          ${parseFloat(product.compare_at_price).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
               ))}
             </div>
           ) : (
-            <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {displayProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+            <div className="card text-center py-20">
+              <ShoppingCart className="h-16 w-16 mx-auto mb-4" style={{ color: '#888' }} />
+              <h3 className="text-xl font-bold mb-2">No products available</h3>
+              <p style={{ color: '#888' }}>Check back soon for new merchandise!</p>
             </div>
           )}
+
+          {/* Cart Banner */}
+          <div className="cta-band mt-12">
+            <div>
+              <h3 className="font-bold mb-1">Ready to check out?</h3>
+              <p style={{ color: '#888' }} className="text-sm">Free shipping on orders over $100</p>
+            </div>
+            <Link to="/store/cart" className="btn">
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              View Cart
+            </Link>
+          </div>
         </div>
       </main>
 
       <Footer />
     </div>
-  );
-}
-
-function ProductCard({ product }) {
-  return (
-    <Link
-      to={`/store/product/${product.slug}`}
-      className="group bg-slate-800/50 rounded-lg overflow-hidden border border-slate-700 card-hover"
-    >
-      <div className="aspect-square bg-slate-700 relative overflow-hidden">
-        {product.images && product.images[0] ? (
-          <img
-            src={product.images[0]}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <ShoppingCart className="h-12 w-12 text-slate-600" />
-          </div>
-        )}
-        {product.featured && (
-          <span className="absolute top-2 right-2 bg-amber-500 text-black text-xs font-semibold px-2 py-1 rounded">
-            Featured
-          </span>
-        )}
-        {product.compare_at_price && product.compare_at_price > product.price && (
-          <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded">
-            Sale
-          </span>
-        )}
-      </div>
-      <div className="p-4">
-        <h3 className="text-white font-medium mb-2 group-hover:text-amber-400 transition-colors">
-          {product.name}
-        </h3>
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-white">${product.price}</span>
-          {product.compare_at_price && product.compare_at_price > product.price && (
-            <span className="text-sm text-slate-500 line-through">${product.compare_at_price}</span>
-          )}
-        </div>
-      </div>
-    </Link>
   );
 }
