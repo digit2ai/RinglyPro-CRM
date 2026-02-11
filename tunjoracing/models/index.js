@@ -1,5 +1,6 @@
 'use strict';
 
+// Force redeploy: 2026-02-11 - Fan password_hash column support
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
