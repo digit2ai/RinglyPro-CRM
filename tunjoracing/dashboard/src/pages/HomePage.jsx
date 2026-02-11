@@ -21,14 +21,17 @@ export default function HomePage() {
   const handleFanSignup = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('/tunjoracing/api/v1/fans', {
+      const res = await fetch('/tunjoracing/api/v1/fans/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
-      if (res.ok) {
-        alert('Welcome to the TunjoRacing fan community!');
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message || 'Welcome to the TunjoRacing fan community!');
         setEmail('');
+      } else {
+        alert(data.error || 'Something went wrong. Please try again.');
       }
     } catch (err) { console.error(err); }
   };
