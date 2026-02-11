@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ShoppingCart, User } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -46,12 +46,14 @@ export default function Navbar() {
 
           {/* Right side buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              to="/store/cart"
-              className="p-2 text-[#888] hover:text-white transition-colors"
+            <a
+              href="https://tunjoracing.com/press"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-amber-500 text-black px-4 py-2 rounded-lg font-bold text-sm hover:bg-amber-400 transition-colors"
             >
-              <ShoppingCart className="h-5 w-5" />
-            </Link>
+              Press Release
+            </a>
             <Link
               to="/sponsor/login"
               className="bg-[#e31837] text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-[#c41530] transition-colors"
@@ -94,14 +96,15 @@ export default function Navbar() {
             </Link>
           ))}
           <hr className="border-[#333] my-4" />
-          <Link
-            to="/store/cart"
+          <a
+            href="https://tunjoracing.com/press"
+            target="_blank"
+            rel="noopener noreferrer"
             onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 text-white py-3 hover:text-[#e31837]"
+            className="flex items-center gap-3 text-amber-500 py-3 hover:text-amber-400"
           >
-            <ShoppingCart className="h-5 w-5" />
-            <span>Cart</span>
-          </Link>
+            <span>Press Release</span>
+          </a>
           <Link
             to="/sponsor/login"
             onClick={() => setIsOpen(false)}
