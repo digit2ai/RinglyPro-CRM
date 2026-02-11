@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, ChevronLeft, User } from 'lucide-react';
 
 export default function FanLoginPage() {
@@ -47,10 +47,10 @@ export default function FanLoginPage() {
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <Link to="/" className="flex items-center gap-1 text-slate-400 hover:text-white mb-8 transition-colors">
+        <a href="https://tunjoracing.com" className="flex items-center gap-1 text-slate-400 hover:text-white mb-8 transition-colors">
           <ChevronLeft className="h-4 w-4" />
           Back to TunjoRacing
-        </Link>
+        </a>
 
         <div className="text-center mb-8">
           <h1 className="text-3xl font-racing font-bold">

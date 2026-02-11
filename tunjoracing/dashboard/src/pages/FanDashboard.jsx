@@ -64,10 +64,10 @@ export default function FanDashboard() {
       <header className="bg-slate-950 border-b border-slate-800 px-6 py-4">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-4">
-            <Link to="/" className="font-racing font-bold text-xl">
+            <a href="https://tunjoracing.com" className="font-racing font-bold text-xl">
               <span className="gradient-text">TUNJO</span>
               <span className="text-white">RACING</span>
-            </Link>
+            </a>
             <span className="text-slate-500">|</span>
             <span className="text-slate-300">Fan Community</span>
           </div>

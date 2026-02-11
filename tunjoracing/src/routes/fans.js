@@ -234,7 +234,7 @@ router.get('/dashboard', authenticateToken, requireFan, asyncHandler(async (req,
   let featuredProducts = [];
   if (TunjoProduct) {
     featuredProducts = await TunjoProduct.findAll({
-      where: { tenant_id: 1, is_active: true },
+      where: { tenant_id: 1, status: 'active' },
       order: [['created_at', 'DESC']],
       limit: 4
     });
