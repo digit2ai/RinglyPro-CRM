@@ -1403,10 +1403,12 @@ app.get('/api/dashboard', async (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server Error:', err.stack);
+  // Show details for tunjoracing routes to help with debugging
+  const showDetails = process.env.NODE_ENV === 'development' || req.path.startsWith('/tunjoracing');
   res.status(500).json({
     success: false,
-    error: 'Something went wrong!',
-    ...(process.env.NODE_ENV === 'development' && { details: err.message })
+    error: showDetails ? err.message : 'Something went wrong!',
+    ...(showDetails && { stack: err.stack?.split('\n').slice(0, 3) })
   });
 });
 
