@@ -128,22 +128,8 @@
     .header-buttons{
       display: flex;
       align-items: center;
+      gap: 10px;
       margin-left: 12px;
-    }
-    .header-press-btn{
-      background: #f59e0b;
-      color: #000000 !important;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 14px;
-      text-decoration: none;
-      transition: background 0.3s;
-      white-space: nowrap;
-    }
-    .header-press-btn:hover{
-      background: #d97706;
-      color: #000000 !important;
     }
     .header-fan-btn{
       background: #2563eb;
@@ -168,13 +154,27 @@
       font-weight: bold;
       font-size: 14px;
       text-decoration: none;
-      margin-left: 6px;
       transition: background 0.3s;
       white-space: nowrap;
     }
     .header-login-btn:hover{
       background: #c41530;
       color: #ffffff !important;
+    }
+    .header-press-btn{
+      background: #f59e0b;
+      color: #000000 !important;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      text-decoration: none;
+      transition: background 0.3s;
+      white-space: nowrap;
+    }
+    .header-press-btn:hover{
+      background: #d97706;
+      color: #000000 !important;
     }
     .header-ringlypro-btn{
       background: #2563eb;
@@ -628,90 +628,20 @@
         bottom: 20px;
         right: 20px;
       }
-      .countdown-box {
-        flex-direction: column;
-        padding: 6px 10px;
-      }
       .header-buttons {
-        flex-direction: column;
-        gap: 4px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
         margin-left: 8px;
+        justify-content: flex-end;
       }
-      .header-fan-btn {
-        padding: 6px 12px;
-        font-size: 11px;
+      .header-fan-btn,
+      .header-login-btn,
+      .header-press-btn {
+        padding: 6px 10px;
+        font-size: 10px;
+        border-radius: 6px;
       }
-      .header-login-btn {
-        padding: 6px 12px;
-        font-size: 11px;
-        margin-left: 0;
-      }
-      .header-ringlypro-btn {
-        padding: 6px 12px;
-        font-size: 11px;
-        margin-left: 0;
-      }
-      .countdown-box .countdown-location {
-        font-size: 9px;
-      }
-      .countdown-timer {
-        font-size: 11px;
-        gap: 4px;
-      }
-      .countdown-timer .time-unit {
-        min-width: 28px;
-        padding: 2px 4px;
-      }
-      .countdown-timer .time-unit span:first-child {
-        font-size: 12px;
-      }
-      .countdown-timer .time-unit span:last-child {
-        font-size: 7px;
-      }
-    }
-
-    /* Countdown Timer */
-    .countdown-box {
-      background: #e31837;
-      border-radius: 8px;
-      padding: 8px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-left: 12px;
-    }
-    .countdown-box .countdown-location {
-      color: #000;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      line-height: 1.2;
-    }
-    .countdown-timer {
-      display: flex;
-      gap: 6px;
-    }
-    .countdown-timer .time-unit {
-      background: #000;
-      color: #fff;
-      border-radius: 4px;
-      padding: 4px 6px;
-      text-align: center;
-      min-width: 36px;
-    }
-    .countdown-timer .time-unit span:first-child {
-      display: block;
-      font-size: 14px;
-      font-weight: 800;
-      line-height: 1;
-    }
-    .countdown-timer .time-unit span:last-child {
-      display: block;
-      font-size: 8px;
-      font-weight: 600;
-      text-transform: uppercase;
-      margin-top: 2px;
     }
   </style>
 </head>
@@ -739,12 +669,6 @@
         </div>
         <!-- Header Buttons Container -->
         <div class="header-buttons">
-          <!-- Press Release Button -->
-          <a href="https://tunjoracing.com/press" target="_blank" class="header-press-btn">
-            <span class="lang-en">Press Release</span>
-            <span class="lang-es">Comunicado de Prensa</span>
-            <span class="lang-de">Pressemitteilung</span>
-          </a>
           <!-- Fans Login Button -->
           <a href="https://aiagent.ringlypro.com/tunjoracing/fan/login" target="_blank" class="header-fan-btn">
             <span class="lang-en">Fans Login</span>
@@ -756,6 +680,12 @@
             <span class="lang-en">Sponsors Login</span>
             <span class="lang-es">Acceso Patrocinadores</span>
             <span class="lang-de">Sponsoren Login</span>
+          </a>
+          <!-- Press Release Button -->
+          <a href="https://tunjoracing.com/press" target="_blank" class="header-press-btn">
+            <span class="lang-en">Press Release</span>
+            <span class="lang-es">Comunicado de Prensa</span>
+            <span class="lang-de">Pressemitteilung</span>
           </a>
         </div>
       </div>
