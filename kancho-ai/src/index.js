@@ -528,8 +528,8 @@ app.get('*', (req, res) => {
     <!-- Welcome Section -->
     <div id="welcomeSection" class="py-16">
       <div class="text-center mb-16">
-        <div class="w-56 h-56 rounded-3xl flex items-center justify-center mx-auto mb-8 glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border">
-          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-40 h-40 object-contain">
+        <div class="w-80 h-80 md:w-96 md:h-96 rounded-3xl flex items-center justify-center mx-auto mb-8 glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border">
+          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-64 h-64 md:w-80 md:h-80 object-contain">
         </div>
         <h2 class="text-4xl font-bold mb-4">Meet <span class="text-kancho">Kancho AI</span></h2>
         <p class="text-xl text-gray-300 mb-2">Your AI Business Intelligence Officer</p>
