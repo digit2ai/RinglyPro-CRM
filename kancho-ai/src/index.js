@@ -45,6 +45,121 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Dashboard Metrics Guide - Styled HTML page
+app.get('/metrics-guide', (req, res) => {
+  const fs = require('fs');
+  const guidePath = path.join(__dirname, '../docs/DASHBOARD_METRICS_GUIDE.md');
+
+  let markdownContent = '';
+  try {
+    markdownContent = fs.readFileSync(guidePath, 'utf8');
+  } catch (error) {
+    return res.status(404).send('Guide not found');
+  }
+
+  // Simple markdown to HTML conversion
+  const htmlContent = markdownContent
+    // Headers
+    .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold mt-8 mb-4 text-kancho">$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold mt-10 mb-6 text-white border-b border-kancho-dark-border pb-2">$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1 class="text-4xl font-bold mb-8 text-white">$1</h1>')
+    // Bold and italic
+    .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    // Code blocks
+    .replace(/```([a-z]*)\n([\s\S]*?)```/g, '<pre class="bg-kancho-dark-card border border-kancho-dark-border rounded-lg p-4 my-4 overflow-x-auto text-sm"><code class="text-green-400">$2</code></pre>')
+    // Inline code
+    .replace(/`([^`]+)`/g, '<code class="bg-kancho-dark-card px-2 py-1 rounded text-kancho text-sm">$1</code>')
+    // Tables
+    .replace(/\|(.+)\|/g, (match) => {
+      const cells = match.split('|').filter(c => c.trim());
+      if (cells.every(c => /^[-:]+$/.test(c.trim()))) {
+        return ''; // Skip separator row
+      }
+      const isHeader = cells.some(c => c.includes('**'));
+      const tag = isHeader ? 'th' : 'td';
+      const cellClass = isHeader ? 'px-4 py-3 text-left text-xs font-bold text-kancho uppercase bg-kancho-dark-card' : 'px-4 py-3 text-sm text-gray-300 border-t border-kancho-dark-border';
+      return '<tr>' + cells.map(c => \`<\${tag} class="\${cellClass}">\${c.trim().replace(/\*\*/g, '')}</\${tag}>\`).join('') + '</tr>';
+    })
+    // Wrap tables
+    .replace(/(<tr>.*?<\/tr>\n?)+/gs, '<div class="overflow-x-auto my-6"><table class="w-full border border-kancho-dark-border rounded-lg overflow-hidden">$&</table></div>')
+    // Lists
+    .replace(/^\- (.*$)/gim, '<li class="flex items-start gap-2 mb-2"><span class="text-kancho">•</span><span>$1</span></li>')
+    .replace(/^(\d+)\. (.*$)/gim, '<li class="flex items-start gap-2 mb-2"><span class="text-kancho font-bold">$1.</span><span>$2</span></li>')
+    // Horizontal rules
+    .replace(/^---$/gim, '<hr class="border-kancho-dark-border my-8">')
+    // Paragraphs
+    .replace(/\n\n/g, '</p><p class="text-gray-300 mb-4 leading-relaxed">')
+    // Line breaks
+    .replace(/\n/g, '<br>');
+
+  res.send(\`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Metrics Guide - Kancho AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'kancho': '#E85A4F',
+            'kancho-coral': '#E85A4F',
+            'kancho-dark': '#0D0D0D',
+            'kancho-dark-card': '#1A1A1A',
+            'kancho-dark-border': '#2A2A2A'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: linear-gradient(180deg, #0D0D0D 0%, #1A1A1A 100%); }
+  </style>
+</head>
+<body class="min-h-screen text-gray-300">
+  <!-- Header -->
+  <header class="border-b border-kancho-dark-border sticky top-0 z-50 bg-kancho-dark/95 backdrop-blur-xl">
+    <div class="max-w-4xl mx-auto flex items-center justify-between px-6 py-4">
+      <a href="/kanchoai" class="flex items-center gap-3 hover:opacity-80 transition">
+        <img src="\${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-10 h-10 rounded-lg object-contain">
+        <div>
+          <h1 class="text-xl font-bold text-white tracking-tight">KANCHO AI</h1>
+          <p class="text-xs text-gray-500">Dashboard Metrics Guide</p>
+        </div>
+      </a>
+      <a href="/kanchoai" class="px-4 py-2 bg-kancho-dark-card border border-kancho-dark-border rounded-lg text-sm hover:bg-kancho-coral/20 hover:border-kancho-coral transition flex items-center gap-2">
+        <i class="fas fa-arrow-left"></i>
+        Back to Dashboard
+      </a>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="max-w-4xl mx-auto px-6 py-12">
+    <div class="prose prose-invert max-w-none">
+      <p class="text-gray-300 mb-4 leading-relaxed">
+      \${htmlContent}
+      </p>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-kancho-dark-border mt-16">
+    <div class="max-w-4xl mx-auto px-6 py-8 text-center">
+      <p class="text-gray-500 text-sm">&copy; \${new Date().getFullYear()} Kancho AI. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>
+  \`);
+});
+
 // API Routes
 if (models && !modelsError) {
   // Mount API routes
@@ -883,7 +998,10 @@ app.get('*', (req, res) => {
 
       <!-- Stats Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-        <div class="card rounded-2xl p-6 text-center">
+        <div class="card rounded-2xl p-6 text-center relative">
+          <a href="/kanchoai/metrics-guide" target="_blank" class="absolute top-4 right-4 text-gray-500 hover:text-kancho transition" title="Learn about metrics">
+            <i class="fas fa-question-circle"></i>
+          </a>
           <p class="text-xs text-gray-400 uppercase mb-4">Business Health</p>
           <div class="relative w-36 h-36 mx-auto mb-4">
             <svg class="w-36 h-36 transform -rotate-90">
@@ -942,9 +1060,15 @@ app.get('*', (req, res) => {
 
       <!-- KPI Metrics Section -->
       <div class="mb-8">
-        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-          <i class="fas fa-chart-line text-kancho"></i>
-          Key Performance Indicators
+        <h3 class="text-lg font-bold mb-4 flex items-center justify-between">
+          <span class="flex items-center gap-2">
+            <i class="fas fa-chart-line text-kancho"></i>
+            Key Performance Indicators
+          </span>
+          <a href="/kanchoai/metrics-guide" target="_blank" class="text-sm text-gray-400 hover:text-kancho transition flex items-center gap-1 font-normal">
+            <i class="fas fa-question-circle"></i>
+            <span class="hidden sm:inline">What do these mean?</span>
+          </a>
         </h3>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <!-- Active Students -->
@@ -1022,7 +1146,7 @@ app.get('*', (req, res) => {
             <li><a href="#" class="text-gray-400 hover:text-kancho transition">Features</a></li>
             <li><a href="#" class="text-gray-400 hover:text-kancho transition">Pricing</a></li>
             <li><a href="#" class="text-gray-400 hover:text-kancho transition">Integrations</a></li>
-            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Enterprise</a></li>
+            <li><a href="/kanchoai/metrics-guide" class="text-gray-400 hover:text-kancho transition">Dashboard Guide</a></li>
           </ul>
         </div>
 
@@ -1041,6 +1165,7 @@ app.get('*', (req, res) => {
         <div>
           <h4 class="font-semibold mb-4 text-white">Support</h4>
           <ul class="space-y-2 text-sm">
+            <li><a href="/kanchoai/metrics-guide" class="text-gray-400 hover:text-kancho transition">Metrics Guide</a></li>
             <li><a href="#" class="text-gray-400 hover:text-kancho transition">Help Center</a></li>
             <li><a href="#" class="text-gray-400 hover:text-kancho transition">Privacy Policy</a></li>
             <li><a href="#" class="text-gray-400 hover:text-kancho transition">Terms of Service</a></li>
