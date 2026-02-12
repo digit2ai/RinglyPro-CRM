@@ -58,11 +58,46 @@ app.get('/metrics-guide', (req, res) => {
   }
 
   // Simple markdown to HTML conversion
-  const htmlContent = markdownContent
+  let htmlContent = markdownContent;
+
+  // First, handle tables separately to avoid line break issues
+  // Find all table blocks and convert them
+  htmlContent = htmlContent.replace(/(\|[^\n]+\|\n)+/g, (tableBlock) => {
+    const rows = tableBlock.trim().split('\n');
+    let tableHtml = '<div class="overflow-x-auto my-6"><table class="w-full border border-kancho-dark-border rounded-lg overflow-hidden">';
+    let isFirstDataRow = true;
+
+    rows.forEach((row, index) => {
+      const cells = row.split('|').filter(c => c.trim() !== '');
+      // Skip separator rows (|---|---|)
+      if (cells.every(c => /^[\s-:]+$/.test(c))) {
+        return;
+      }
+      // First row is header
+      if (index === 0) {
+        tableHtml += '<thead><tr>';
+        cells.forEach(c => {
+          tableHtml += `<th class="px-4 py-3 text-left text-xs font-bold text-kancho uppercase bg-kancho-dark-card">${c.trim().replace(/\*\*/g, '')}</th>`;
+        });
+        tableHtml += '</tr></thead><tbody>';
+      } else {
+        tableHtml += '<tr>';
+        cells.forEach(c => {
+          tableHtml += `<td class="px-4 py-3 text-sm text-gray-300 border-t border-kancho-dark-border">${c.trim().replace(/\*\*/g, '')}</td>`;
+        });
+        tableHtml += '</tr>';
+      }
+    });
+    tableHtml += '</tbody></table></div>';
+    return tableHtml;
+  });
+
+  // Now process the rest
+  htmlContent = htmlContent
     // Headers
-    .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold mt-8 mb-4 text-kancho">$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold mt-10 mb-6 text-white border-b border-kancho-dark-border pb-2">$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1 class="text-4xl font-bold mb-8 text-white">$1</h1>')
+    .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold mt-6 mb-3 text-kancho">$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold mt-8 mb-4 text-white border-b border-kancho-dark-border pb-2">$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1 class="text-4xl font-bold mb-6 text-white">$1</h1>')
     // Bold and italic
     .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
     .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>')
@@ -71,28 +106,21 @@ app.get('/metrics-guide', (req, res) => {
     .replace(/```([a-z]*)\n([\s\S]*?)```/g, '<pre class="bg-kancho-dark-card border border-kancho-dark-border rounded-lg p-4 my-4 overflow-x-auto text-sm"><code class="text-green-400">$2</code></pre>')
     // Inline code
     .replace(/`([^`]+)`/g, '<code class="bg-kancho-dark-card px-2 py-1 rounded text-kancho text-sm">$1</code>')
-    // Tables
-    .replace(/\|(.+)\|/g, (match) => {
-      const cells = match.split('|').filter(c => c.trim());
-      if (cells.every(c => /^[-:]+$/.test(c.trim()))) {
-        return ''; // Skip separator row
-      }
-      const isHeader = cells.some(c => c.includes('**'));
-      const tag = isHeader ? 'th' : 'td';
-      const cellClass = isHeader ? 'px-4 py-3 text-left text-xs font-bold text-kancho uppercase bg-kancho-dark-card' : 'px-4 py-3 text-sm text-gray-300 border-t border-kancho-dark-border';
-      return '<tr>' + cells.map(c => `<${tag} class="${cellClass}">${c.trim().replace(/\*\*/g, '')}</${tag}>`).join('') + '</tr>';
-    })
-    // Wrap tables
-    .replace(/(<tr>.*?<\/tr>\n?)+/gs, '<div class="overflow-x-auto my-6"><table class="w-full border border-kancho-dark-border rounded-lg overflow-hidden">$&</table></div>')
-    // Lists
-    .replace(/^\- (.*$)/gim, '<li class="flex items-start gap-2 mb-2"><span class="text-kancho">•</span><span>$1</span></li>')
-    .replace(/^(\d+)\. (.*$)/gim, '<li class="flex items-start gap-2 mb-2"><span class="text-kancho font-bold">$1.</span><span>$2</span></li>')
+    // Lists - wrap in ul/ol
+    .replace(/^- (.*$)/gim, '<li class="ml-4 mb-1 text-gray-300">$1</li>')
+    .replace(/^(\d+)\. (.*$)/gim, '<li class="ml-4 mb-1 text-gray-300"><span class="text-kancho font-bold mr-2">$1.</span>$2</li>')
+    // Wrap consecutive list items
+    .replace(/(<li[^>]*>.*?<\/li>\n?)+/g, '<ul class="my-3 list-disc list-inside">$&</ul>')
     // Horizontal rules
-    .replace(/^---$/gim, '<hr class="border-kancho-dark-border my-8">')
+    .replace(/^---$/gim, '<hr class="border-kancho-dark-border my-6">')
+    // Clean up empty paragraphs and excessive line breaks
+    .replace(/\n{3,}/g, '\n\n')
     // Paragraphs
-    .replace(/\n\n/g, '</p><p class="text-gray-300 mb-4 leading-relaxed">')
-    // Line breaks
-    .replace(/\n/g, '<br>');
+    .replace(/\n\n(?!<)/g, '</p><p class="text-gray-300 mb-3 leading-relaxed">')
+    // Single line breaks (not before HTML tags)
+    .replace(/\n(?!<)/g, ' ')
+    // Remove empty paragraphs
+    .replace(/<p[^>]*>\s*<\/p>/g, '');
 
   res.send(`
 <!DOCTYPE html>
