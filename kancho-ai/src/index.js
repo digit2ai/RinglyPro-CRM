@@ -76,12 +76,6 @@ if (models && !modelsError) {
       price: 497,
       description: 'Intelligence + AI Receptionist for 24/7 automation',
       features: ['Everything in Intelligence', '24/7 AI Receptionist', 'Lead Follow-up Calls', 'Retention Campaigns', 'No-show Recovery', 'Payment Reminders', 'Bilingual (EN/ES)', '500 AI Minutes']
-    },
-    complete: {
-      name: 'Kancho Complete',
-      price: 997,
-      description: 'Pro + Full Martial Arts CRM System',
-      features: ['Everything in Pro', 'Complete MA CRM', 'Student Management', 'Belt Progression', 'Class Scheduling', 'Billing & Payments', '1,000 AI Minutes', 'Dedicated Support']
     }
   };
 
@@ -582,7 +576,7 @@ app.get('*', (req, res) => {
           <p class="text-gray-400 max-w-2xl mx-auto">Power your martial arts school with AI-driven business intelligence, automated receptionist, and complete CRM solutions.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           <!-- Plan 1: Kancho Intelligence -->
           <div class="card rounded-2xl p-8 relative hover:border-kancho-coral/50 transition-all duration-300">
             <div class="text-center mb-6">
@@ -680,54 +674,6 @@ app.get('*', (req, res) => {
             </button>
           </div>
 
-          <!-- Plan 3: Kancho Complete -->
-          <div class="card rounded-2xl p-8 relative hover:border-kancho-coral/50 transition-all duration-300">
-            <div class="text-center mb-6">
-              <h3 class="text-xl font-bold mb-2">Kancho Complete</h3>
-              <p class="text-gray-400 text-sm mb-4">Pro + Full CRM System</p>
-              <div class="flex items-baseline justify-center gap-1">
-                <span class="text-4xl font-bold text-kancho">$997</span>
-                <span class="text-gray-400">/month</span>
-              </div>
-            </div>
-            <ul class="space-y-3 mb-8">
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm"><strong>Everything in Pro</strong></span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">Complete Martial Arts CRM</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">Student management & tracking</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">Belt progression system</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">Class scheduling & attendance</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">Billing & payment processing</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">1,000 AI voice minutes included</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">Dedicated onboarding support</span>
-              </li>
-            </ul>
-            <button onclick="selectPlan('complete')" class="w-full py-3 bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border hover:border-kancho-coral rounded-xl font-medium transition">
-              Get Started
-            </button>
-          </div>
         </div>
 
         <p class="text-center text-gray-500 text-sm mt-8">All plans include a 14-day free trial. No credit card required to start.</p>
