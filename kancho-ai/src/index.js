@@ -845,9 +845,9 @@ app.get('*', (req, res) => {
       </div>
 
       <!-- Booking Modal -->
-      <div id="bookingModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4">
-        <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl">
-          <div class="p-6 border-b border-kancho-dark-border flex items-center justify-between">
+      <div id="bookingModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-3xl shadow-2xl my-4 mx-auto">
+          <div class="p-6 border-b border-kancho-dark-border flex items-center justify-between sticky top-0 bg-kancho-dark-card z-10 rounded-t-3xl">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-kancho-coral/20">
                 <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-10 h-10 object-contain">
@@ -861,8 +861,8 @@ app.get('*', (req, res) => {
               <i class="fas fa-times text-gray-400"></i>
             </button>
           </div>
-          <div class="p-4" style="min-height: 600px;">
-            <iframe src="https://api.leadconnectorhq.com/widget/booking/nhKuDsn2At5csiDYc4d0" style="width: 100%; height: 550px; border: none; overflow: hidden;" scrolling="no" id="nhKuDsn2At5csiDYc4d0_1770871834450"></iframe>
+          <div class="p-4">
+            <iframe src="https://api.leadconnectorhq.com/widget/booking/nhKuDsn2At5csiDYc4d0" style="width: 100%; height: 800px; border: none;" scrolling="yes" id="nhKuDsn2At5csiDYc4d0_1770871834450"></iframe>
           </div>
         </div>
       </div>
