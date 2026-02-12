@@ -782,7 +782,7 @@ app.get('*', (req, res) => {
       <!-- Hero CTA Section -->
       <div class="mt-20 pt-20 border-t border-kancho-dark-border text-center">
         <div class="mb-8">
-          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-24 h-24 mx-auto mb-6">
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696e7672eecbfae3623c1042.png" alt="Kancho AI" class="w-24 h-24 mx-auto mb-6">
         </div>
         <p class="text-kancho text-lg font-medium mb-2">AI Business Intelligence — Voice & Analytics Platform</p>
         <p class="text-gray-400 text-sm mb-8">Churn Detection · Lead Scoring · Revenue Analytics</p>
@@ -926,7 +926,7 @@ app.get('*', (req, res) => {
         <!-- Brand -->
         <div class="md:col-span-1">
           <div class="flex items-center gap-3 mb-4">
-            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696e7672eecbfae3623c1042.png" alt="Kancho AI" class="w-10 h-10 rounded-lg object-contain">
+            <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-10 h-10 rounded-lg object-contain">
             <span class="text-xl font-bold">KANCHO AI</span>
           </div>
           <p class="text-gray-400 text-sm mb-4">AI Business Intelligence Officer for martial arts schools and fitness businesses.</p>
