@@ -189,7 +189,7 @@ app.get('/metrics-guide', (req, res) => {
 });
 
 // Helper function to generate styled static pages
-function generateStaticPage(title, content) {
+function generateStaticPage(title, content, extraContent = '') {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -242,6 +242,7 @@ function generateStaticPage(title, content) {
       <p class="text-gray-500 text-sm">&copy; ${new Date().getFullYear()} Kancho AI. All rights reserved.</p>
     </div>
   </footer>
+  ${extraContent}
 </body>
 </html>
   `;
@@ -379,7 +380,7 @@ app.get('/pricing', (req, res) => {
       <p class="text-gray-400 mb-4">Need a custom enterprise solution?</p>
       <button onclick="document.getElementById('pricingBookingModal').classList.remove('hidden'); document.getElementById('pricingBookingModal').classList.add('flex');" class="text-kancho hover:underline cursor-pointer">Schedule a call for custom pricing</button>
     </div>
-
+  `, `
     <!-- Booking Modal for Pricing Page -->
     <div id="pricingBookingModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4 overflow-y-auto">
       <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-3xl shadow-2xl my-4 mx-auto">
@@ -389,7 +390,7 @@ app.get('/pricing', (req, res) => {
               <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-10 h-10 object-contain">
             </div>
             <div>
-              <h3 class="text-lg font-bold">Schedule Your Demo</h3>
+              <h3 class="text-lg font-bold text-white">Schedule Your Demo</h3>
               <p class="text-sm text-gray-400">Book a personalized session with our team</p>
             </div>
           </div>
