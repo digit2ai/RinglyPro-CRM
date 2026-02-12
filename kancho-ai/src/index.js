@@ -853,8 +853,8 @@ app.get('*', (req, res) => {
                 <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-10 h-10 object-contain">
               </div>
               <div>
-                <h3 class="text-lg font-bold">Schedule a Demo</h3>
-                <p class="text-sm text-gray-400">Book a personalized walkthrough</p>
+                <h3 class="text-lg font-bold">Schedule Onboarding</h3>
+                <p class="text-sm text-gray-400">Book your personalized onboarding session</p>
               </div>
             </div>
             <button onclick="closeBookingModal()" class="p-2 hover:bg-white/10 rounded-lg transition">
