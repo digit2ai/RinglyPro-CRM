@@ -1470,8 +1470,59 @@ app.get('*', (req, res) => {
       }
     }
 
+    // Check for successful subscription and open onboarding calendar
+    function checkSubscriptionSuccess() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const subscribeStatus = urlParams.get('subscribe');
+      const plan = urlParams.get('plan');
+
+      if (subscribeStatus === 'success') {
+        // Show success message
+        const planName = plan === 'pro' ? 'Kancho Pro' : 'Kancho Intelligence';
+
+        // Create success banner
+        const banner = document.createElement('div');
+        banner.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 z-[300] bg-green-500/90 text-white px-8 py-4 rounded-xl shadow-2xl flex items-center gap-4 animate-pulse';
+        banner.innerHTML = \`
+          <i class="fas fa-check-circle text-2xl"></i>
+          <div>
+            <p class="font-bold">Welcome to \${planName}!</p>
+            <p class="text-sm opacity-90">Your 14-day free trial has started. Let's schedule your onboarding call.</p>
+          </div>
+        \`;
+        document.body.appendChild(banner);
+
+        // Open booking modal after a short delay
+        setTimeout(() => {
+          openBookingModal();
+          // Remove banner after modal opens
+          setTimeout(() => banner.remove(), 3000);
+        }, 1500);
+
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (subscribeStatus === 'canceled') {
+        // Show canceled message
+        const banner = document.createElement('div');
+        banner.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 z-[300] bg-amber-500/90 text-white px-8 py-4 rounded-xl shadow-2xl flex items-center gap-4';
+        banner.innerHTML = \`
+          <i class="fas fa-info-circle text-2xl"></i>
+          <div>
+            <p class="font-bold">Checkout Canceled</p>
+            <p class="text-sm opacity-90">No worries! You can try again whenever you're ready.</p>
+          </div>
+        \`;
+        document.body.appendChild(banner);
+        setTimeout(() => banner.remove(), 5000);
+
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+
     // Initialize
     loadSchools();
+    checkSubscriptionSuccess();
   </script>
 </body>
 </html>
