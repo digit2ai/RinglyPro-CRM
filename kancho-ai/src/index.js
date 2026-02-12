@@ -54,6 +54,7 @@ if (models && !modelsError) {
   const dashboardRoutes = require('./routes/dashboard')(models);
   const healthRoutes = require('./routes/health')(models);
   const voiceRoutes = require('./routes/voice')(models);
+  const healthMetricsRoutes = require('./routes/health-metrics')(models);
 
   app.use('/api/v1/schools', schoolsRoutes);
   app.use('/api/v1/students', studentsRoutes);
@@ -61,6 +62,7 @@ if (models && !modelsError) {
   app.use('/api/v1/dashboard', dashboardRoutes);
   app.use('/api/v1/health', healthRoutes);
   app.use('/api/v1/voice', voiceRoutes);
+  app.use('/api/v1/health-metrics', healthMetricsRoutes);
 
   // =====================================================
   // KANCHO SUBSCRIPTION PLANS - Stripe Integration

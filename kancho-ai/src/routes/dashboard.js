@@ -6,7 +6,7 @@ const router = express.Router();
 const { Op } = require('sequelize');
 
 module.exports = (models) => {
-  const { KanchoSchool, KanchoStudent, KanchoLead, KanchoClass, KanchoRevenue, KanchoHealthScore, KanchoAiCall } = models;
+  const { KanchoSchool, KanchoStudent, KanchoLead, KanchoClass, KanchoRevenue, KanchoHealthScore, KanchoAiCall, KanchoBusinessHealthMetrics } = models;
 
   // GET /api/v1/dashboard - Get complete dashboard data for a school
   router.get('/', async (req, res) => {
@@ -30,6 +30,7 @@ module.exports = (models) => {
       const [
         school,
         latestHealthScore,
+        latestKPIMetrics,
         studentStats,
         leadStats,
         revenueThisMonth,
@@ -46,6 +47,12 @@ module.exports = (models) => {
           where: { school_id },
           order: [['date', 'DESC']]
         }),
+
+        // Latest KPI metrics (from BusinessHealthMetrics)
+        KanchoBusinessHealthMetrics ? KanchoBusinessHealthMetrics.findOne({
+          where: { school_id },
+          order: [['report_month', 'DESC']]
+        }) : Promise.resolve(null),
 
         // Student stats
         Promise.all([
@@ -117,6 +124,12 @@ module.exports = (models) => {
         return res.status(404).json({ error: 'School not found' });
       }
 
+      // Calculate revenue at risk and growth potential
+      const avgRevenuePerStudent = 175; // Default ARPS if not calculated
+      const arps = latestKPIMetrics?.arps || avgRevenuePerStudent;
+      const revenueAtRisk = studentStats[2] * arps;
+      const growthPotential = leadStats[1] * arps;
+
       res.json({
         success: true,
         data: {
@@ -124,7 +137,8 @@ module.exports = (models) => {
             id: school.id,
             name: school.name,
             plan_type: school.plan_type,
-            voice_agent: school.voice_agent
+            voice_agent: school.voice_agent,
+            martial_art_type: school.martial_art_type
           },
           health: latestHealthScore ? {
             overall_score: latestHealthScore.overall_score,
@@ -136,6 +150,36 @@ module.exports = (models) => {
             insights: latestHealthScore.insights?.slice(0, 3) || [],
             alerts: latestHealthScore.alerts?.slice(0, 3) || []
           } : null,
+          // KPI Metrics section for dashboard cards
+          kpi: latestKPIMetrics ? {
+            report_month: latestKPIMetrics.report_month,
+            health_score: latestKPIMetrics.health_score,
+            health_grade: latestKPIMetrics.health_grade,
+            active_students: latestKPIMetrics.active_students,
+            net_student_growth: latestKPIMetrics.net_student_growth,
+            churn_rate: latestKPIMetrics.churn_rate,
+            arps: latestKPIMetrics.arps,
+            trial_conversion_rate: latestKPIMetrics.trial_conversion_rate,
+            revenue_at_risk: latestKPIMetrics.revenue_at_risk,
+            students_at_risk: latestKPIMetrics.students_at_risk,
+            growth_potential: latestKPIMetrics.growth_potential,
+            hot_leads: latestKPIMetrics.hot_leads,
+            monthly_revenue: latestKPIMetrics.monthly_revenue,
+            revenue_vs_target_percent: latestKPIMetrics.revenue_vs_target_percent
+          } : {
+            // Fallback calculated values if no KPI record exists
+            health_score: latestHealthScore?.overall_score || 0,
+            health_grade: latestHealthScore?.grade || 'N/A',
+            active_students: studentStats[1],
+            students_at_risk: studentStats[2],
+            revenue_at_risk: revenueAtRisk,
+            hot_leads: leadStats[1],
+            growth_potential: growthPotential,
+            monthly_revenue: revenueThisMonth || 0,
+            revenue_vs_target_percent: school.monthly_revenue_target > 0
+              ? ((revenueThisMonth || 0) / school.monthly_revenue_target * 100)
+              : 0
+          },
           students: {
             total: studentStats[0],
             active: studentStats[1],
@@ -149,7 +193,7 @@ module.exports = (models) => {
           revenue: {
             this_month: revenueThisMonth || 0,
             target: school.monthly_revenue_target || 0,
-            progress: school.monthly_revenue_target > 0
+            percent: school.monthly_revenue_target > 0
               ? ((revenueThisMonth || 0) / school.monthly_revenue_target * 100).toFixed(1)
               : 0
           },
