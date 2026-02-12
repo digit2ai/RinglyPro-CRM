@@ -732,6 +732,57 @@ app.get('*', (req, res) => {
 
         <p class="text-center text-gray-500 text-sm mt-8">All plans include a 14-day free trial. No credit card required to start.</p>
       </div>
+
+      <!-- Onboarding Section -->
+      <div class="mt-20 pt-16 border-t border-kancho-dark-border">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold mb-4">Getting Started With <span class="text-kancho">Kancho AI</span> Is Effortless</h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">Our dedicated team personally guides you through every step of the process.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <!-- Step 1 -->
+          <div class="text-center">
+            <div class="w-16 h-16 bg-kancho-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <span class="text-2xl font-bold text-kancho">1</span>
+            </div>
+            <h3 class="text-xl font-bold mb-3">Free Data Migration</h3>
+            <p class="text-gray-400 text-sm">
+              Export your data from your current system, send it to our team, and we handle everything else. Fast, secure migration at zero cost to you.
+            </p>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="text-center">
+            <div class="w-16 h-16 bg-kancho-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <span class="text-2xl font-bold text-kancho">2</span>
+            </div>
+            <h3 class="text-xl font-bold mb-3">Instant Payment Setup</h3>
+            <p class="text-gray-400 text-sm">
+              Start accepting tuition payments, merchandise sales, and online transactions immediately with our integrated low-rate payment processing.
+            </p>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="text-center">
+            <div class="w-16 h-16 bg-kancho-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <span class="text-2xl font-bold text-kancho">3</span>
+            </div>
+            <h3 class="text-xl font-bold mb-3">White-Glove Onboarding</h3>
+            <p class="text-gray-400 text-sm">
+              Get personalized 1-on-1 training so you feel confident from day one. Our support team is like having your own dedicated IT department.
+            </p>
+          </div>
+        </div>
+
+        <!-- Final CTA -->
+        <div class="text-center mt-12">
+          <button onclick="selectPlan('pro')" class="kancho-btn px-10 py-4 rounded-xl font-medium text-lg transition shadow-lg">
+            <i class="fas fa-rocket mr-2"></i>Start Your Free Trial
+          </button>
+          <p class="text-gray-500 text-sm mt-4">No credit card required • Cancel anytime</p>
+        </div>
+      </div>
     </div>
 
     <!-- Dashboard Section -->
