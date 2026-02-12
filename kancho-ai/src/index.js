@@ -569,6 +569,38 @@ app.get('*', (req, res) => {
         </button>
       </div>
 
+      <!-- Onboarding Section -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold mb-4">Getting Started With <span class="text-kancho">Kancho AI</span> Is Effortless</h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">Our dedicated team personally guides you through every step of the process.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <!-- Step 1 -->
+          <div class="text-center">
+            <div class="w-16 h-16 bg-kancho-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <span class="text-2xl font-bold text-kancho">1</span>
+            </div>
+            <h3 class="text-xl font-bold mb-3">Data Integration</h3>
+            <p class="text-gray-400 text-sm">
+              Connect your existing tools and platforms, and our team handles the setup for you. Fast, secure integration with no hassle.
+            </p>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="text-center">
+            <div class="w-16 h-16 bg-kancho-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <span class="text-2xl font-bold text-kancho">2</span>
+            </div>
+            <h3 class="text-xl font-bold mb-3">White-Glove Onboarding</h3>
+            <p class="text-gray-400 text-sm">
+              Get personalized 1-on-1 training so you feel confident from day one. Our support team is like having your own dedicated IT department.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <!-- Subscription Plans -->
       <div class="mt-16 pt-16 border-t border-kancho-dark-border">
         <div class="text-center mb-12">
@@ -681,38 +713,6 @@ app.get('*', (req, res) => {
         </div>
 
         <p class="text-center text-gray-500 text-sm mt-8">All plans include a 14-day free trial. No credit card required to start.</p>
-      </div>
-
-      <!-- Onboarding Section -->
-      <div class="mt-20 pt-16 border-t border-kancho-dark-border">
-        <div class="text-center mb-12">
-          <h2 class="text-3xl font-bold mb-4">Getting Started With <span class="text-kancho">Kancho AI</span> Is Effortless</h2>
-          <p class="text-gray-400 max-w-2xl mx-auto">Our dedicated team personally guides you through every step of the process.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <!-- Step 1 -->
-          <div class="text-center">
-            <div class="w-16 h-16 bg-kancho-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <span class="text-2xl font-bold text-kancho">1</span>
-            </div>
-            <h3 class="text-xl font-bold mb-3">Data Integration</h3>
-            <p class="text-gray-400 text-sm">
-              Connect your existing tools and platforms, and our team handles the setup for you. Fast, secure integration with no hassle.
-            </p>
-          </div>
-
-          <!-- Step 2 -->
-          <div class="text-center">
-            <div class="w-16 h-16 bg-kancho-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <span class="text-2xl font-bold text-kancho">2</span>
-            </div>
-            <h3 class="text-xl font-bold mb-3">White-Glove Onboarding</h3>
-            <p class="text-gray-400 text-sm">
-              Get personalized 1-on-1 training so you feel confident from day one. Our support team is like having your own dedicated IT department.
-            </p>
-          </div>
-        </div>
 
         <!-- Final CTA -->
         <div class="text-center mt-12">
