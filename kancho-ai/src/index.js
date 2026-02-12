@@ -7,7 +7,7 @@ const path = require('path');
 const app = express();
 
 // Kancho AI Logo URL
-const KANCHO_LOGO_URL = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d245d721397289ba56c7d.png';
+const KANCHO_LOGO_URL = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d318b7f6dcf1134316df1.png';
 
 // Middleware
 app.use(express.json());
