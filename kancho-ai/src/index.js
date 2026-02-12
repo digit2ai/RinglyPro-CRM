@@ -1304,9 +1304,1123 @@ if (models && !modelsError) {
   });
 }
 
+// Spanish Landing Page
+app.get('/es', (req, res) => {
+  res.send(`
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kancho AI - Inteligencia de Negocio para Escuelas de Artes Marciales</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            kancho: {
+              coral: '#E85A4F',
+              'coral-dark': '#D64A3F',
+              dark: '#0D0D0D',
+              'dark-card': '#1A1A1A',
+              'dark-border': '#2A2A2A'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .gradient-bg { background: #0D0D0D; }
+    .card { background: #1A1A1A; border: 1px solid #2A2A2A; }
+    .card-danger { background: linear-gradient(135deg, rgba(232, 90, 79, 0.15) 0%, rgba(232, 90, 79, 0.05) 100%); border-color: rgba(232, 90, 79, 0.3); }
+    .card-success { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%); border-color: rgba(34, 197, 94, 0.2); }
+    .glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
+    @keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 40px rgba(232, 90, 79, 0.3); } 50% { box-shadow: 0 0 60px rgba(232, 90, 79, 0.5); } }
+    .score-ring { stroke-dasharray: 377; stroke-dashoffset: calc(377 - (377 * var(--score)) / 100); transition: stroke-dashoffset 1.5s ease-out; }
+    .fade-in { animation: fadeIn 0.5s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .kancho-btn { background: linear-gradient(135deg, #E85A4F 0%, #D64A3F 100%); }
+    .kancho-btn:hover { background: linear-gradient(135deg, #D64A3F 0%, #C53A2F 100%); }
+    .text-kancho { color: #E85A4F; }
+    @media (max-width: 768px) {
+      .mobile-header { flex-direction: column; gap: 12px; padding: 12px 16px; }
+      .mobile-main { padding: 16px !important; }
+      body { padding-bottom: 70px; }
+    }
+  </style>
+</head>
+<body class="gradient-bg min-h-screen text-white">
+  <!-- Header -->
+  <header class="border-b border-kancho-dark-border sticky top-0 z-50 bg-kancho-dark/95 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-4 mobile-header">
+      <div class="flex items-center gap-3">
+        <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-10 h-10 md:w-12 md:h-12 rounded-lg object-contain">
+        <div>
+          <h1 class="text-xl md:text-2xl font-bold text-white tracking-tight">KANCHO AI</h1>
+          <p class="text-xs text-gray-500">Inteligencia de Negocio con IA</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-gray-400 text-sm font-medium">DEMO</span>
+        <i class="fas fa-chevron-right text-gray-500 text-xs"></i>
+        <select id="schoolSelect" class="bg-kancho-dark-card border border-kancho-dark-border rounded-lg px-4 py-2.5 text-sm focus:border-kancho-coral focus:outline-none transition">
+          <option value="">Selecciona tu Negocio...</option>
+        </select>
+        <button onclick="talkToKancho()" class="kancho-btn px-5 py-2.5 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-lg">
+          <i class="fas fa-microphone"></i>
+          <span>Habla con Kancho</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-6 py-8 mobile-main">
+    <!-- Welcome Section -->
+    <div id="welcomeSection" class="py-16">
+      <div class="text-center mb-16">
+        <div class="w-80 h-80 md:w-96 md:h-96 rounded-3xl flex items-center justify-center mx-auto mb-8 glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border">
+          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-64 h-64 md:w-80 md:h-80 object-contain">
+        </div>
+        <h2 class="text-4xl font-bold mb-4">Conoce a <span class="text-kancho">Kancho AI</span></h2>
+        <p class="text-xl text-gray-300 mb-2">Tu Oficial de Inteligencia de Negocio con IA</p>
+        <p class="text-gray-400 max-w-2xl mx-auto">
+          Se conecta a los datos de tu empresa, entiende cómo funciona realmente tu negocio,
+          y te entrega información clara sobre dónde estás perdiendo dinero, dónde puedes crecer,
+          y qué acciones maximizarán tus ganancias y rendimiento.
+        </p>
+      </div>
+
+      <!-- Value Props -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div class="card card-danger rounded-2xl p-8 text-center">
+          <div class="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-money-bill-wave text-red-400 text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-red-400">Encuentra Fugas de Dinero</h3>
+          <p class="text-gray-400 text-sm">Identifica dónde estás perdiendo ingresos - miembros que abandonan, pagos fallidos, oportunidades perdidas</p>
+        </div>
+
+        <div class="card card-success rounded-2xl p-8 text-center">
+          <div class="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-chart-line text-green-400 text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-green-400">Detecta Crecimiento</h3>
+          <p class="text-gray-400 text-sm">Descubre potencial sin explotar - prospectos calientes, oportunidades de venta adicional, posibilidades de expansión</p>
+        </div>
+
+        <div class="card rounded-2xl p-8 text-center" style="background: linear-gradient(135deg, rgba(232, 90, 79, 0.1) 0%, rgba(232, 90, 79, 0.05) 100%); border-color: rgba(232, 90, 79, 0.2);">
+          <div class="w-16 h-16 bg-kancho-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-bolt text-kancho text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-kancho">Toma Acción</h3>
+          <p class="text-gray-400 text-sm">Obtén recomendaciones priorizadas que maximizan ganancias y rendimiento de inmediato</p>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="text-center mb-16">
+        <p class="text-gray-400 mb-6">Selecciona un negocio arriba para ver a Kancho en acción, o:</p>
+        <button onclick="seedDemoData()" class="kancho-btn px-8 py-4 rounded-xl font-medium transition shadow-lg">
+          <i class="fas fa-rocket mr-2"></i>Cargar Datos de Demostración
+        </button>
+      </div>
+
+      <!-- Onboarding Section -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold mb-4">Comenzar con <span class="text-kancho">Kancho AI</span> es Muy Fácil</h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">Nuestro equipo dedicado te guía personalmente en cada paso del proceso.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <!-- Step 1 -->
+          <div class="text-center">
+            <div class="w-16 h-16 bg-kancho-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <span class="text-2xl font-bold text-kancho">1</span>
+            </div>
+            <h3 class="text-xl font-bold mb-3">Integración de Datos</h3>
+            <p class="text-gray-400 text-sm">
+              Conecta tus herramientas y plataformas existentes, y nuestro equipo se encarga de la configuración por ti. Integración rápida y segura sin complicaciones.
+            </p>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="text-center">
+            <div class="w-16 h-16 bg-kancho-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <span class="text-2xl font-bold text-kancho">2</span>
+            </div>
+            <h3 class="text-xl font-bold mb-3">Onboarding Personalizado</h3>
+            <p class="text-gray-400 text-sm">
+              Recibe entrenamiento personalizado 1-a-1 para que te sientas seguro desde el primer día. Nuestro equipo de soporte es como tener tu propio departamento de TI dedicado.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Automation Workflow Section -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold mb-4">Cómo <span class="text-kancho">Kancho AI</span> Trabaja Para Ti</h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">Un sistema de IA completamente automatizado que monitorea, retiene y hace crecer tu escuela de artes marciales — 24/7, sin mover un dedo.</p>
+        </div>
+
+        <!-- Workflow Steps -->
+        <div class="max-w-5xl mx-auto">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            <!-- Connection Lines (Desktop) -->
+            <div class="hidden md:block absolute top-16 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-kancho-coral via-amber-500 to-green-500"></div>
+
+            <!-- Step 1: Monitor -->
+            <div class="relative">
+              <div class="card rounded-2xl p-6 text-center h-full">
+                <div class="w-20 h-20 bg-kancho-coral/20 rounded-full flex items-center justify-center mx-auto mb-6 relative z-10 border-4 border-kancho-dark">
+                  <i class="fas fa-heartbeat text-kancho text-3xl"></i>
+                </div>
+                <div class="inline-block bg-kancho-coral/20 text-kancho text-xs font-bold px-3 py-1 rounded-full mb-4">PASO 1</div>
+                <h3 class="text-xl font-bold mb-3 text-white">Monitorea la Salud</h3>
+                <p class="text-gray-400 text-sm mb-4">
+                  Kancho AI monitorea continuamente el puntaje de salud de tu escuela, rastreando patrones de asistencia, estado de pagos y niveles de compromiso en tiempo real.
+                </p>
+                <ul class="text-left text-sm space-y-2">
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-kancho text-xs"></i>
+                    Puntaje de salud en tiempo real (0-100)
+                  </li>
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-kancho text-xs"></i>
+                    Detección de estudiantes en riesgo
+                  </li>
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-kancho text-xs"></i>
+                    Seguimiento y pronóstico de ingresos
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Step 2: Retain -->
+            <div class="relative">
+              <div class="card rounded-2xl p-6 text-center h-full border-amber-500/30">
+                <div class="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6 relative z-10 border-4 border-kancho-dark">
+                  <i class="fas fa-phone-alt text-amber-400 text-3xl"></i>
+                </div>
+                <div class="inline-block bg-amber-500/20 text-amber-400 text-xs font-bold px-3 py-1 rounded-full mb-4">PASO 2</div>
+                <h3 class="text-xl font-bold mb-3 text-white">Retiene Miembros</h3>
+                <p class="text-gray-400 text-sm mb-4">
+                  Cuando un estudiante muestra señales de abandono, Kancho AI automáticamente realiza llamadas de retención personalizadas para re-engancharlo antes de que cancele.
+                </p>
+                <ul class="text-left text-sm space-y-2">
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-amber-400 text-xs"></i>
+                    Llamadas de seguimiento automáticas
+                  </li>
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-amber-400 text-xs"></i>
+                    Scripts de retención personalizados
+                  </li>
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-amber-400 text-xs"></i>
+                    Recuperación de citas perdidas y pagos
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Step 3: Convert -->
+            <div class="relative">
+              <div class="card rounded-2xl p-6 text-center h-full border-green-500/30">
+                <div class="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6 relative z-10 border-4 border-kancho-dark">
+                  <i class="fas fa-chart-line text-green-400 text-3xl"></i>
+                </div>
+                <div class="inline-block bg-green-500/20 text-green-400 text-xs font-bold px-3 py-1 rounded-full mb-4">PASO 3</div>
+                <h3 class="text-xl font-bold mb-3 text-white">Convierte Prospectos</h3>
+                <p class="text-gray-400 text-sm mb-4">
+                  Kancho AI se comunica con cada prospecto desde el primer contacto hasta la conversión — haciendo seguimiento, programando pruebas y nutriéndolos hasta que se conviertan en miembros.
+                </p>
+                <ul class="text-left text-sm space-y-2">
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-green-400 text-xs"></i>
+                    Engagement de prospectos de principio a fin
+                  </li>
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-green-400 text-xs"></i>
+                    Programación automática de pruebas
+                  </li>
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-green-400 text-xs"></i>
+                    Priorización de prospectos calientes
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Result Banner -->
+          <div class="mt-12 bg-gradient-to-r from-kancho-coral/10 via-amber-500/10 to-green-500/10 border border-kancho-dark-border rounded-2xl p-8 text-center">
+            <div class="flex flex-col md:flex-row items-center justify-center gap-6">
+              <div class="flex items-center gap-3">
+                <i class="fas fa-robot text-kancho text-2xl"></i>
+                <span class="text-white font-medium">Automatización IA 24/7</span>
+              </div>
+              <div class="hidden md:block w-px h-8 bg-kancho-dark-border"></div>
+              <div class="flex items-center gap-3">
+                <i class="fas fa-hand-holding-usd text-amber-400 text-2xl"></i>
+                <span class="text-white font-medium">Protege Ingresos</span>
+              </div>
+              <div class="hidden md:block w-px h-8 bg-kancho-dark-border"></div>
+              <div class="flex items-center gap-3">
+                <i class="fas fa-users text-green-400 text-2xl"></i>
+                <span class="text-white font-medium">Crece tu Membresía</span>
+              </div>
+            </div>
+            <p class="text-gray-400 text-sm mt-4">Todo funcionando automáticamente mientras tú te enfocas en enseñar y transformar vidas.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Integration Image -->
+      <div class="mt-16 flex justify-center">
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d575dbfe00f98dff7c57d.png" alt="Integraciones Kancho AI" class="max-w-full md:max-w-4xl rounded-2xl">
+      </div>
+
+      <!-- Subscription Plans -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border" id="pricing">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold mb-4">Elige Tu Plan de <span class="text-kancho">Kancho AI</span></h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">Potencia tu escuela de artes marciales con inteligencia de negocio impulsada por IA, recepcionista automatizada y soluciones CRM completas.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <!-- Plan 1: Kancho Intelligence -->
+          <div class="card rounded-2xl p-8 relative hover:border-kancho-coral/50 transition-all duration-300">
+            <div class="text-center mb-6">
+              <h3 class="text-xl font-bold mb-2">Kancho Intelligence</h3>
+              <p class="text-gray-400 text-sm mb-4">Inteligencia de Negocio con IA</p>
+              <div class="flex items-baseline justify-center gap-1">
+                <span class="text-4xl font-bold text-kancho">$197</span>
+                <span class="text-gray-400">/mes</span>
+              </div>
+            </div>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Oficial de Inteligencia de Negocio con IA</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Se integra con tu CRM existente</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Monitoreo de puntaje de salud en tiempo real</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Detección de riesgo de abandono y alertas</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Puntuación y priorización de prospectos</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Análisis y pronóstico de ingresos</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Asesor de negocio por voz con IA</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">100 minutos de voz IA incluidos ($0.50 después)</span>
+              </li>
+            </ul>
+            <a href="https://checkout.stripe.com/c/pay/cs_live_a18grG2h3V8gz0gUChQ3o2R1FfHPo5GCMNtzTW5c0lLLThzQdOPHu0Zyfs#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdkdWxOYHwnPyd1blppbHNgWjA0V012N2RDNlRHaUF3Yn19MUkzQ2R2SFRvQVVAVVJtMVJJNkhcQ1RURGlgQUdgQ2FUfWcwN2JGakJ3VmFWQHBIQEAzSXY2QGg1N310Y31LQHdiNTBBbjw0NTVIVzxdRGlNTCcpJ2N3amhWYHdzYHcnP3F3cGApJ2dkZm5id2pwa2FGamlqdyc%2FJyZjY2NjY2MnKSdpZHxqcHFRfHVgJz8ndmxrYmlgWmxxYGgnKSdga2RnaWBVaWRmYG1qaWFgd3YnP3F3cGB4JSUl" class="block w-full py-3 text-center bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border hover:border-kancho-coral rounded-xl font-medium transition text-white no-underline">
+              Comenzar
+            </a>
+          </div>
+
+          <!-- Plan 2: Kancho Pro (Most Popular) -->
+          <div class="card rounded-2xl p-8 relative border-kancho-coral/50 transform scale-105 shadow-xl shadow-kancho-coral/10">
+            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+              <span class="bg-kancho-coral px-4 py-1 rounded-full text-sm font-bold">MÁS POPULAR</span>
+            </div>
+            <div class="text-center mb-6">
+              <h3 class="text-xl font-bold mb-2">Kancho Pro</h3>
+              <p class="text-gray-400 text-sm mb-4">Intelligence + Recepcionista IA</p>
+              <div class="flex items-baseline justify-center gap-1">
+                <span class="text-4xl font-bold text-kancho">$397</span>
+                <span class="text-gray-400">/mes</span>
+              </div>
+            </div>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm"><strong>Todo lo de Intelligence</strong></span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Recepcionista IA 24/7 (Teléfono y SMS)</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Llamadas automatizadas de seguimiento a prospectos</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Campañas de retención automatizadas</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Llamadas de recuperación de citas perdidas</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Automatización de recordatorios de pago</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Soporte bilingüe (EN/ES)</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">500 minutos de voz IA incluidos ($0.45 después)</span>
+              </li>
+            </ul>
+            <a href="https://checkout.stripe.com/c/pay/cs_live_a18grG2h3V8gz0gUChQ3o2R1FfHPo5GCMNtzTW5c0lLLThzQdOPHu0Zyfs#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdkdWxOYHwnPyd1blppbHNgWjA0V012N2RDNlRHaUF3Yn19MUkzQ2R2SFRvQVVAVVJtMVJJNkhcQ1RURGlgQUdgQ2FUfWcwN2JGakJ3VmFWQHBIQEAzSXY2QGg1N310Y31LQHdiNTBBbjw0NTVIVzxdRGlNTCcpJ2N3amhWYHdzYHcnP3F3cGApJ2dkZm5id2pwa2FGamlqdyc%2FJyZjY2NjY2MnKSdpZHxqcHFRfHVgJz8ndmxrYmlgWmxxYGgnKSdga2RnaWBVaWRmYG1qaWFgd3YnP3F3cGB4JSUl" class="block w-full py-3 text-center kancho-btn rounded-xl font-medium transition shadow-lg text-white no-underline">
+              Comenzar
+            </a>
+          </div>
+
+          <!-- Plan 3: Kancho Enterprise -->
+          <div class="card rounded-2xl p-8 relative hover:border-kancho-coral/50 transition-all duration-300">
+            <div class="text-center mb-6">
+              <h3 class="text-xl font-bold mb-2">Kancho Enterprise</h3>
+              <p class="text-gray-400 text-sm mb-4">Solución SaaS Multi-Tenant</p>
+              <div class="flex items-baseline justify-center gap-1">
+                <span class="text-4xl font-bold text-kancho">Personalizado</span>
+              </div>
+            </div>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm"><strong>Todo lo de Pro</strong></span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Plataforma multi-tenant marca blanca</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Soporte multi-idioma</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Integraciones personalizadas y acceso API</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Gerente de cuenta dedicado</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Soporte prioritario y SLA</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Precios por volumen para proveedores SaaS</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Minutos de voz IA ilimitados</span>
+              </li>
+            </ul>
+            <button onclick="openBookingModal()" class="w-full py-3 bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border hover:border-kancho-coral rounded-xl font-medium transition">
+              Agenda una Llamada
+            </button>
+          </div>
+
+        </div>
+
+        <p class="text-center text-gray-500 text-sm mt-8">Todos los planes incluyen 14 días de prueba gratis. No se requiere tarjeta de crédito para comenzar.</p>
+
+        <!-- Final CTA -->
+        <div class="text-center mt-12">
+          <a href="https://checkout.stripe.com/c/pay/cs_live_a18grG2h3V8gz0gUChQ3o2R1FfHPo5GCMNtzTW5c0lLLThzQdOPHu0Zyfs#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdkdWxOYHwnPyd1blppbHNgWjA0V012N2RDNlRHaUF3Yn19MUkzQ2R2SFRvQVVAVVJtMVJJNkhcQ1RURGlgQUdgQ2FUfWcwN2JGakJ3VmFWQHBIQEAzSXY2QGg1N310Y31LQHdiNTBBbjw0NTVIVzxdRGlNTCcpJ2N3amhWYHdzYHcnP3F3cGApJ2dkZm5id2pwa2FGamlqdyc%2FJyZjY2NjY2MnKSdpZHxqcHFRfHVgJz8ndmxrYmlgWmxxYGgnKSdga2RnaWBVaWRmYG1qaWFgd3YnP3F3cGB4JSUl" class="inline-block kancho-btn px-10 py-4 rounded-xl font-medium text-lg transition shadow-lg text-white no-underline">
+            <i class="fas fa-rocket mr-2"></i>Comienza Tu Prueba Gratis
+          </a>
+          <p class="text-gray-500 text-sm mt-4">No se requiere tarjeta de crédito • Cancela cuando quieras</p>
+        </div>
+      </div>
+
+      <!-- Business Value Section -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold mb-4">Valor de Negocio para <span class="text-kancho">Tu Escuela</span></h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">Métricas reales que generan resultados reales. Así es como Kancho AI entrega valor medible a tu escuela de artes marciales.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <!-- Health Score -->
+          <div class="card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-kancho-coral/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-heartbeat text-kancho"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white">Puntaje de Salud del Negocio</h3>
+            </div>
+            <p class="text-gray-400 text-sm">Obtén un puntaje de salud en tiempo real de 0-100 que combina métricas de retención, ingresos y prospectos en un número accionable.</p>
+          </div>
+
+          <!-- Churn Detection -->
+          <div class="card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-user-minus text-red-400"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white">Reducción de Tasa de Abandono</h3>
+            </div>
+            <p class="text-gray-400 text-sm">Identifica estudiantes en riesgo antes de que cancelen. Escuelas usando Kancho AI ven hasta 40% de reducción en abandono mensual.</p>
+          </div>
+
+          <!-- Revenue at Risk -->
+          <div class="card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-amber-400"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white">Alertas de Ingresos en Riesgo</h3>
+            </div>
+            <p class="text-gray-400 text-sm">Ve exactamente cuántos ingresos están en riesgo por miembros en peligro de abandonar. Toma acción antes de perder $4,000+ mensuales.</p>
+          </div>
+
+          <!-- Lead Scoring -->
+          <div class="card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-fire text-orange-400"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white">Priorización de Prospectos Calientes</h3>
+            </div>
+            <p class="text-gray-400 text-sm">Sabe qué prospectos están listos para convertir con puntuación de prospectos impulsada por IA. Enfócate primero en los de alto valor.</p>
+          </div>
+
+          <!-- ARPS Tracking -->
+          <div class="card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-dollar-sign text-green-400"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white">Ingreso Promedio por Estudiante</h3>
+            </div>
+            <p class="text-gray-400 text-sm">Rastrea el ARPS para entender el valor real de cada miembro y optimizar tus estrategias de precios y ventas adicionales.</p>
+          </div>
+
+          <!-- Trial Conversion -->
+          <div class="card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-user-plus text-blue-400"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white">Tasa de Conversión de Pruebas</h3>
+            </div>
+            <p class="text-gray-400 text-sm">Monitorea cuántos estudiantes de prueba se convierten en miembros de pago. Mejora tu proceso de conversión con insights basados en datos.</p>
+          </div>
+        </div>
+
+        <!-- Stats Banner -->
+        <div class="mt-12 bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-8">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div>
+              <p class="text-3xl font-bold text-kancho">40%</p>
+              <p class="text-gray-400 text-sm">Reducción Promedio de Abandono</p>
+            </div>
+            <div>
+              <p class="text-3xl font-bold text-kancho">2x</p>
+              <p class="text-gray-400 text-sm">Tasa de Conversión de Prospectos</p>
+            </div>
+            <div>
+              <p class="text-3xl font-bold text-kancho">$4,700</p>
+              <p class="text-gray-400 text-sm">Ingresos Salvados Mensualmente</p>
+            </div>
+            <div>
+              <p class="text-3xl font-bold text-kancho">24/7</p>
+              <p class="text-gray-400 text-sm">Monitoreo de Negocio con IA</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero CTA Section -->
+      <div class="mt-20 pt-20 border-t border-kancho-dark-border text-center">
+        <div class="mb-8">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="Kancho AI" class="max-w-2xl w-full mx-auto mb-6">
+        </div>
+        <p class="text-kancho text-lg font-medium mb-2">Inteligencia de Negocio con IA — Plataforma de Voz y Analítica</p>
+        <p class="text-gray-400 text-sm mb-8">Detección de Abandono · Puntuación de Prospectos · Analítica de Ingresos</p>
+
+        <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight max-w-5xl mx-auto mb-12" style="color: #5BA4D4;">
+          Un sistema de IA todo-en-uno que encuentra negocios, los llama automáticamente, recolecta prospectos y agenda citas.
+        </h2>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+          <a href="https://checkout.stripe.com/c/pay/cs_live_a18grG2h3V8gz0gUChQ3o2R1FfHPo5GCMNtzTW5c0lLLThzQdOPHu0Zyfs#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdkdWxOYHwnPyd1blppbHNgWjA0V012N2RDNlRHaUF3Yn19MUkzQ2R2SFRvQVVAVVJtMVJJNkhcQ1RURGlgQUdgQ2FUfWcwN2JGakJ3VmFWQHBIQEAzSXY2QGg1N310Y31LQHdiNTBBbjw0NTVIVzxdRGlNTCcpJ2N3amhWYHdzYHcnP3F3cGApJ2dkZm5id2pwa2FGamlqdyc%2FJyZjY2NjY2MnKSdpZHxqcHFRfHVgJz8ndmxrYmlgWmxxYGgnKSdga2RnaWBVaWRmYG1qaWFgd3YnP3F3cGB4JSUl" class="kancho-btn px-10 py-4 rounded-full font-medium text-lg transition shadow-lg text-white no-underline">
+            Comenzar Gratis
+          </a>
+          <button onclick="openBookingModal()" class="px-10 py-4 rounded-full font-medium text-lg border-2 border-gray-600 hover:border-gray-400 transition">
+            Agenda un Demo
+          </button>
+        </div>
+        <p class="text-gray-500 text-sm">Totalmente gratis — sin tarjeta de crédito, sin costos ocultos</p>
+      </div>
+
+      <!-- Booking Modal -->
+      <div id="bookingModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-3xl shadow-2xl my-4 mx-auto">
+          <div class="p-6 border-b border-kancho-dark-border flex items-center justify-between sticky top-0 bg-kancho-dark-card z-10 rounded-t-3xl">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-kancho-coral/20">
+                <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-10 h-10 object-contain">
+              </div>
+              <div>
+                <h3 class="text-lg font-bold">Agenda tu Onboarding</h3>
+                <p class="text-sm text-gray-400">Reserva tu sesión de onboarding personalizada</p>
+              </div>
+            </div>
+            <button onclick="closeBookingModal()" class="p-2 hover:bg-white/10 rounded-lg transition">
+              <i class="fas fa-times text-gray-400"></i>
+            </button>
+          </div>
+          <div class="p-4">
+            <iframe src="https://api.leadconnectorhq.com/widget/booking/nhKuDsn2At5csiDYc4d0" style="width: 100%; height: 800px; border: none;" scrolling="yes"></iframe>
+          </div>
+        </div>
+      </div>
+      <script src="https://link.msgsndr.com/js/form_embed.js" type="text/javascript"></script>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboardSection" class="hidden fade-in">
+      <div class="card rounded-2xl p-6 mb-8 border-kancho-coral/30" style="border-color: rgba(232, 90, 79, 0.3);">
+        <div class="flex items-start gap-4">
+          <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-12 h-12 rounded-xl object-contain">
+          <div>
+            <p class="text-kancho font-medium mb-1">Kancho dice:</p>
+            <p id="kanchoMessage" class="text-lg text-gray-200">Analizando los datos de tu negocio...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+        <div class="card rounded-2xl p-6 text-center relative">
+          <a href="/kanchoai/metrics-guide" target="_blank" class="absolute top-4 right-4 text-gray-500 hover:text-kancho transition" title="Aprende sobre métricas">
+            <i class="fas fa-question-circle"></i>
+          </a>
+          <p class="text-xs text-gray-400 uppercase mb-4">Salud del Negocio</p>
+          <div class="relative w-36 h-36 mx-auto mb-4">
+            <svg class="w-36 h-36 transform -rotate-90">
+              <circle cx="72" cy="72" r="60" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="10"/>
+              <circle id="scoreRing" cx="72" cy="72" r="60" fill="none" stroke="url(#scoreGradient)" stroke-width="10" stroke-linecap="round" class="score-ring" style="--score: 0"/>
+              <defs>
+                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#F17A70"/>
+                  <stop offset="100%" stop-color="#E85A4F"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div>
+                <span id="healthScore" class="text-4xl font-bold">--</span>
+                <p class="text-xs text-gray-500">/ 100</p>
+              </div>
+            </div>
+          </div>
+          <span id="healthGrade" class="inline-block px-4 py-1.5 bg-kancho-coral/20 text-kancho rounded-full text-sm font-bold">Calificación: --</span>
+        </div>
+
+        <div class="card card-danger rounded-2xl p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+              <i class="fas fa-arrow-trend-down text-red-400"></i>
+            </div>
+            <p class="text-xs text-gray-400 uppercase">Ingresos en Riesgo</p>
+          </div>
+          <p id="revenueAtRisk" class="text-3xl font-bold text-red-400">$--</p>
+          <p id="atRiskStudents" class="text-sm text-gray-400 mt-1">-- estudiantes en riesgo</p>
+        </div>
+
+        <div class="card card-success rounded-2xl p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+              <i class="fas fa-arrow-trend-up text-green-400"></i>
+            </div>
+            <p class="text-xs text-gray-400 uppercase">Potencial de Crecimiento</p>
+          </div>
+          <p id="growthPotential" class="text-3xl font-bold text-green-400">$--</p>
+          <p id="hotLeads" class="text-sm text-gray-400 mt-1">-- prospectos calientes</p>
+        </div>
+
+        <div class="card rounded-2xl p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+              <i class="fas fa-dollar-sign text-blue-400"></i>
+            </div>
+            <p class="text-xs text-gray-400 uppercase">Ingresos Mensuales</p>
+          </div>
+          <p id="monthlyRevenue" class="text-3xl font-bold text-white">$--</p>
+          <p id="revenueProgress" class="text-sm text-gray-400 mt-1">--% de la meta</p>
+        </div>
+      </div>
+
+      <!-- KPI Metrics Section -->
+      <div class="mb-8">
+        <h3 class="text-lg font-bold mb-4 flex items-center justify-between">
+          <span class="flex items-center gap-2">
+            <i class="fas fa-chart-line text-kancho"></i>
+            Indicadores Clave de Rendimiento
+          </span>
+          <a href="/kanchoai/metrics-guide" target="_blank" class="text-sm text-gray-400 hover:text-kancho transition flex items-center gap-1 font-normal">
+            <i class="fas fa-question-circle"></i>
+            <span class="hidden sm:inline">¿Qué significan?</span>
+          </a>
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <!-- Active Students -->
+          <div class="card rounded-xl p-4 text-center">
+            <p class="text-xs text-gray-400 uppercase mb-2">Estudiantes Activos</p>
+            <p id="kpiActiveStudents" class="text-2xl font-bold text-white">--</p>
+            <p id="kpiStudentGrowth" class="text-xs text-gray-400 mt-1">-- crecimiento neto</p>
+          </div>
+          <!-- Churn Rate -->
+          <div class="card rounded-xl p-4 text-center">
+            <p class="text-xs text-gray-400 uppercase mb-2">Tasa de Abandono</p>
+            <p id="kpiChurnRate" class="text-2xl font-bold text-amber-400">--%</p>
+            <p class="text-xs text-gray-400 mt-1">este mes</p>
+          </div>
+          <!-- ARPS -->
+          <div class="card rounded-xl p-4 text-center">
+            <p class="text-xs text-gray-400 uppercase mb-2">Ingreso Prom/Est</p>
+            <p id="kpiARPS" class="text-2xl font-bold text-green-400">$--</p>
+            <p class="text-xs text-gray-400 mt-1">ARPS</p>
+          </div>
+          <!-- Trial Conversion -->
+          <div class="card rounded-xl p-4 text-center">
+            <p class="text-xs text-gray-400 uppercase mb-2">Conversión Pruebas</p>
+            <p id="kpiTrialConversion" class="text-2xl font-bold text-blue-400">--%</p>
+            <p class="text-xs text-gray-400 mt-1">tasa de conversión</p>
+          </div>
+          <!-- Revenue vs Target -->
+          <div class="card rounded-xl p-4 text-center">
+            <p class="text-xs text-gray-400 uppercase mb-2">vs Meta</p>
+            <p id="kpiRevenueTarget" class="text-2xl font-bold text-kancho">--%</p>
+            <p class="text-xs text-gray-400 mt-1">de meta mensual</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Lists -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card rounded-2xl p-6">
+          <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <i class="fas fa-user-minus text-red-400"></i>
+            Miembros en Riesgo
+          </h3>
+          <div id="atRiskList" class="space-y-3"></div>
+        </div>
+
+        <div class="card rounded-2xl p-6">
+          <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <i class="fas fa-fire text-green-400"></i>
+            Prospectos Calientes
+          </h3>
+          <div id="hotLeadsList" class="space-y-3"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-kancho-dark-border bg-kancho-dark/95 mt-20">
+    <div class="max-w-7xl mx-auto px-6 py-16">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+        <!-- Brand -->
+        <div class="md:col-span-1">
+          <div class="flex items-center gap-3 mb-4">
+            <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-10 h-10 rounded-lg object-contain">
+            <span class="text-xl font-bold">KANCHO AI</span>
+          </div>
+          <p class="text-gray-400 text-sm mb-4">Oficial de Inteligencia de Negocio con IA para escuelas de artes marciales y negocios de fitness.</p>
+          <p class="text-gray-500 text-xs">Desarrollado por RinglyPro</p>
+        </div>
+
+        <!-- Product -->
+        <div>
+          <h4 class="font-semibold mb-4 text-white">Producto</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="/kanchoai/features" class="text-gray-400 hover:text-kancho transition">Características</a></li>
+            <li><a href="/kanchoai/es/pricing" class="text-gray-400 hover:text-kancho transition">Precios</a></li>
+            <li><a href="/kanchoai/integrations" class="text-gray-400 hover:text-kancho transition">Integraciones</a></li>
+            <li><a href="/kanchoai/metrics-guide" class="text-gray-400 hover:text-kancho transition">Guía del Dashboard</a></li>
+          </ul>
+        </div>
+
+        <!-- Company -->
+        <div>
+          <h4 class="font-semibold mb-4 text-white">Empresa</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="/kanchoai/about" class="text-gray-400 hover:text-kancho transition">Sobre Nosotros</a></li>
+            <li><a href="/kanchoai/contact" class="text-gray-400 hover:text-kancho transition">Contacto</a></li>
+          </ul>
+        </div>
+
+        <!-- Legal -->
+        <div>
+          <h4 class="font-semibold mb-4 text-white">Legal</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="/kanchoai/privacy" class="text-gray-400 hover:text-kancho transition">Política de Privacidad</a></li>
+            <li><a href="/kanchoai/terms" class="text-gray-400 hover:text-kancho transition">Términos de Servicio</a></li>
+            <li><a href="mailto:support@ringlypro.com" class="text-gray-400 hover:text-kancho transition">support@ringlypro.com</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="border-t border-kancho-dark-border mt-12 pt-8 text-center">
+        <p class="text-gray-500 text-sm">&copy; ${new Date().getFullYear()} Kancho AI. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Language Toggle -->
+  <div class="fixed bottom-4 left-4 flex gap-2">
+    <a href="/kanchoai" class="px-4 py-2 bg-kancho-dark-card border border-kancho-dark-border rounded-lg text-sm hover:bg-kancho-coral/20 transition">EN</a>
+    <a href="/kanchoai/es" class="px-4 py-2 bg-kancho-coral/20 border border-kancho-dark-border rounded-lg text-sm">ES</a>
+  </div>
+
+  <!-- Voice Chat Modal -->
+  <div id="voiceModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4">
+    <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
+      <div class="p-6 border-b border-kancho-dark-border flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-kancho-coral/20">
+            <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-10 h-10 object-contain">
+          </div>
+          <div>
+            <h3 class="text-lg font-bold">Habla con Kancho</h3>
+            <p id="voiceStatus" class="text-sm text-gray-400">Iniciando conversación...</p>
+          </div>
+        </div>
+        <button onclick="closeVoiceModal()" class="p-2 hover:bg-white/10 rounded-lg transition">
+          <i class="fas fa-times text-gray-400"></i>
+        </button>
+      </div>
+
+      <div class="p-8 flex flex-col items-center justify-center min-h-[300px]">
+        <div id="voiceWidgetContainer" class="mb-4"></div>
+        <p id="widgetSchoolName" class="text-lg font-medium text-white mb-2"></p>
+        <p class="text-sm text-gray-400 text-center">
+          Haz clic en el orbe para hablar con Kancho.<br>
+          Pregunta sobre ingresos, miembros, prospectos y más.
+        </p>
+      </div>
+
+      <div class="p-4 border-t border-kancho-dark-border">
+        <button onclick="closeVoiceModal()" class="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-medium transition">
+          Terminar Conversación
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
+
+  <style>
+    #voiceWidgetContainer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 120px;
+    }
+    #voiceWidgetContainer elevenlabs-convai {
+      position: relative !important;
+      bottom: auto !important;
+      right: auto !important;
+    }
+    elevenlabs-convai::part(powered-by) {
+      display: none !important;
+    }
+  </style>
+
+  <script>
+    let currentSchoolId = null;
+    let currentSchoolData = null;
+    let currentLanguage = 'es';
+
+    async function loadSchools() {
+      try {
+        const res = await fetch('/kanchoai/api/v1/schools?tenant_id=1');
+        const data = await res.json();
+        const select = document.getElementById('schoolSelect');
+        select.innerHTML = '<option value="">Selecciona tu Negocio...</option>';
+        if (data.data) {
+          data.data.forEach(school => {
+            select.innerHTML += '<option value="' + school.id + '">' + school.name + '</option>';
+          });
+        }
+      } catch (e) {
+        console.error('Error al cargar escuelas:', e);
+      }
+    }
+
+    document.getElementById('schoolSelect').addEventListener('change', async (e) => {
+      currentSchoolId = e.target.value;
+      if (currentSchoolId) {
+        await loadDashboard(currentSchoolId);
+      } else {
+        document.getElementById('welcomeSection').classList.remove('hidden');
+        document.getElementById('dashboardSection').classList.add('hidden');
+      }
+    });
+
+    async function loadDashboard(schoolId) {
+      document.getElementById('welcomeSection').classList.add('hidden');
+      document.getElementById('dashboardSection').classList.remove('hidden');
+
+      try {
+        const res = await fetch('/kanchoai/api/v1/dashboard?school_id=' + schoolId);
+        const data = await res.json();
+        const d = data.data;
+
+        currentSchoolData = d;
+
+        const score = d.health?.overall_score || 0;
+        document.getElementById('healthScore').textContent = score;
+        document.getElementById('healthGrade').textContent = 'Calificación: ' + (d.health?.grade || '--');
+        document.getElementById('scoreRing').style.setProperty('--score', score);
+
+        const atRiskCount = d.students?.at_risk || 0;
+        const revenueAtRisk = atRiskCount * 175;
+        document.getElementById('revenueAtRisk').textContent = '$' + revenueAtRisk.toLocaleString();
+        document.getElementById('atRiskStudents').textContent = atRiskCount + ' estudiantes en riesgo';
+
+        const hotLeadsCount = d.leads?.hot || 0;
+        const growthPotential = hotLeadsCount * 175;
+        document.getElementById('growthPotential').textContent = '$' + growthPotential.toLocaleString();
+        document.getElementById('hotLeads').textContent = hotLeadsCount + ' prospectos calientes';
+
+        const revenue = d.revenue?.this_month || 0;
+        document.getElementById('monthlyRevenue').textContent = '$' + Math.round(revenue).toLocaleString();
+        document.getElementById('revenueProgress').textContent = (d.revenue?.percent || 0) + '% de la meta';
+
+        const kpi = d.kpi || {};
+        const activeStudents = kpi.active_students || d.students?.active || 0;
+        const netGrowth = kpi.net_student_growth || 0;
+        const churnRate = kpi.churn_rate || 0;
+        const arps = kpi.arps || 175;
+        const trialConversion = kpi.trial_conversion_rate || 0;
+        const revenueVsTarget = kpi.revenue_vs_target_percent || d.revenue?.percent || 0;
+
+        document.getElementById('kpiActiveStudents').textContent = activeStudents;
+        document.getElementById('kpiStudentGrowth').textContent = (netGrowth >= 0 ? '+' : '') + netGrowth + ' crecimiento neto';
+        document.getElementById('kpiChurnRate').textContent = parseFloat(churnRate).toFixed(1) + '%';
+        document.getElementById('kpiARPS').textContent = '$' + Math.round(arps);
+        document.getElementById('kpiTrialConversion').textContent = parseFloat(trialConversion).toFixed(1) + '%';
+        document.getElementById('kpiRevenueTarget').textContent = parseFloat(revenueVsTarget).toFixed(1) + '%';
+
+        const churnEl = document.getElementById('kpiChurnRate');
+        if (churnRate > 10) churnEl.className = 'text-2xl font-bold text-red-400';
+        else if (churnRate > 5) churnEl.className = 'text-2xl font-bold text-amber-400';
+        else churnEl.className = 'text-2xl font-bold text-green-400';
+
+        const targetEl = document.getElementById('kpiRevenueTarget');
+        if (revenueVsTarget >= 100) targetEl.className = 'text-2xl font-bold text-green-400';
+        else if (revenueVsTarget >= 80) targetEl.className = 'text-2xl font-bold text-amber-400';
+        else targetEl.className = 'text-2xl font-bold text-red-400';
+
+        let message = 'El puntaje de salud de tu negocio es ' + score + '. ';
+        if (atRiskCount > 0) message += atRiskCount + ' estudiantes en riesgo ($' + revenueAtRisk.toLocaleString() + '). ';
+        if (hotLeadsCount > 0) message += hotLeadsCount + ' prospectos calientes listos para convertir. ';
+        document.getElementById('kanchoMessage').textContent = message;
+
+        const atRiskList = document.getElementById('atRiskList');
+        atRiskList.innerHTML = '';
+        if (d.lists?.at_risk_students) {
+          d.lists.at_risk_students.forEach(s => {
+            atRiskList.innerHTML += '<div class="flex items-center justify-between p-3 bg-red-500/10 rounded-lg border-l-2 border-red-500">' +
+              '<div><p class="font-medium">' + s.first_name + ' ' + s.last_name + '</p>' +
+              '<p class="text-xs text-gray-400">riesgo ' + s.churn_risk + '</p></div>' +
+              '<button class="px-3 py-1 bg-red-500/20 text-red-400 rounded text-sm">Llamar</button></div>';
+          });
+        }
+
+        const hotLeadsList = document.getElementById('hotLeadsList');
+        hotLeadsList.innerHTML = '';
+        if (d.lists?.hot_leads) {
+          d.lists.hot_leads.forEach(l => {
+            hotLeadsList.innerHTML += '<div class="flex items-center justify-between p-3 bg-green-500/10 rounded-lg border-l-2 border-green-500">' +
+              '<div><p class="font-medium">' + l.first_name + ' ' + (l.last_name || '') + '</p>' +
+              '<p class="text-xs text-gray-400">Puntuación: ' + l.lead_score + '</p></div>' +
+              '<button class="px-3 py-1 bg-green-500/20 text-green-400 rounded text-sm">Llamar</button></div>';
+          });
+        }
+      } catch (e) {
+        console.error('Error al cargar dashboard:', e);
+      }
+    }
+
+    async function seedDemoData() {
+      try {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Cargando...';
+
+        const res = await fetch('/kanchoai/api/v1/seed-demo', { method: 'POST' });
+        const data = await res.json();
+
+        await loadSchools();
+        btn.innerHTML = '<i class="fas fa-check mr-2"></i>¡Datos Cargados!';
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-rocket mr-2"></i>Cargar Datos de Demostración';
+        }, 2000);
+      } catch (e) {
+        console.error('Error al cargar datos demo:', e);
+      }
+    }
+
+    const KANCHO_VOICE_AGENT_ID = 'agent_5601kh453hqqfz59nfemkwk02vax';
+    let widgetElement = null;
+
+    function talkToKancho() {
+      if (!currentSchoolId) {
+        alert('Por favor selecciona un negocio primero para hablar con Kancho');
+        return;
+      }
+      openVoiceModal();
+    }
+
+    function openVoiceModal() {
+      const modal = document.getElementById('voiceModal');
+      const schoolNameEl = document.getElementById('widgetSchoolName');
+      const container = document.getElementById('voiceWidgetContainer');
+      const statusEl = document.getElementById('voiceStatus');
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      statusEl.textContent = 'Iniciando conversación...';
+
+      const schoolSelect = document.getElementById('schoolSelect');
+      const selectedOption = schoolSelect.options[schoolSelect.selectedIndex];
+      schoolNameEl.textContent = selectedOption ? selectedOption.text : '';
+
+      const school = currentSchoolData?.school || {};
+      const health = currentSchoolData?.health || {};
+      const students = currentSchoolData?.students || {};
+      const revenue = currentSchoolData?.revenue || {};
+      const leads = currentSchoolData?.leads || {};
+
+      const atRiskCount = students.at_risk || 0;
+      const hotLeads = leads.hot || 0;
+
+      const schoolId = parseInt(currentSchoolId, 10);
+      const dynamicVars = {
+        dynamic_variable: schoolId,
+        school_id: schoolId,
+        language: 'es',
+        school_name: school.name || 'tu escuela',
+        martial_art: school.martial_art_type || 'artes marciales',
+        health_score: health.overall_score || 0,
+        health_grade: health.grade || 'N/A',
+        active_students: students.active || 0,
+        at_risk_students: atRiskCount,
+        revenue_at_risk: atRiskCount * 175,
+        hot_leads: hotLeads,
+        growth_potential: hotLeads * 175,
+        monthly_revenue: revenue.this_month || 0,
+        revenue_target: revenue.target || 0,
+        revenue_percent: revenue.percent || 0
+      };
+
+      console.log('[Kancho] Creando widget con:', dynamicVars);
+
+      container.innerHTML = '';
+      widgetElement = document.createElement('elevenlabs-convai');
+      widgetElement.setAttribute('agent-id', KANCHO_VOICE_AGENT_ID);
+      widgetElement.setAttribute('dynamic-variables', JSON.stringify(dynamicVars));
+      container.appendChild(widgetElement);
+
+      autoStartWidget();
+    }
+
+    function autoStartWidget() {
+      let attempts = 0;
+      const maxAttempts = 20;
+      const statusEl = document.getElementById('voiceStatus');
+
+      function tryAutoStart() {
+        attempts++;
+        if (!widgetElement) return;
+
+        const shadowRoot = widgetElement.shadowRoot;
+        if (shadowRoot) {
+          const btn = shadowRoot.querySelector('button');
+          if (btn) {
+            console.log('[Kancho] Auto-clic en botón del widget');
+            statusEl.textContent = 'Conectado - Haz clic en el orbe para hablar';
+            btn.click();
+            return;
+          }
+        }
+
+        if (attempts < maxAttempts) {
+          setTimeout(tryAutoStart, 200);
+        } else {
+          console.log('[Kancho] Widget listo - haz clic en el orbe para comenzar');
+          statusEl.textContent = 'Haz clic en el orbe para comenzar a hablar';
+        }
+      }
+
+      setTimeout(tryAutoStart, 500);
+    }
+
+    function closeVoiceModal() {
+      const modal = document.getElementById('voiceModal');
+      const container = document.getElementById('voiceWidgetContainer');
+
+      if (container) container.innerHTML = '';
+      widgetElement = null;
+
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function openBookingModal() {
+      const modal = document.getElementById('bookingModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeBookingModal() {
+      const modal = document.getElementById('bookingModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    loadSchools();
+  </script>
+</body>
+</html>
+  `);
+});
+
 // Serve dashboard for all other routes (SPA fallback)
 app.get('*', (req, res) => {
-  res.send(`
+  res.send(\`
 <!DOCTYPE html>
 <html lang="en">
 <head>
