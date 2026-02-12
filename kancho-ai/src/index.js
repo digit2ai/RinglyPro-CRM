@@ -774,7 +774,7 @@ app.get('*', (req, res) => {
 
         <!-- Final CTA -->
         <div class="text-center mt-12">
-          <button onclick="selectPlan('pro')" class="kancho-btn px-10 py-4 rounded-xl font-medium text-lg transition shadow-lg">
+          <button onclick="selectPlan('intelligence')" class="kancho-btn px-10 py-4 rounded-xl font-medium text-lg transition shadow-lg">
             <i class="fas fa-rocket mr-2"></i>Start Your Free Trial
           </button>
           <p class="text-gray-500 text-sm mt-4">No credit card required • Cancel anytime</p>
@@ -794,7 +794,7 @@ app.get('*', (req, res) => {
         </h2>
 
         <div class="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-          <button onclick="selectPlan('pro')" class="kancho-btn px-10 py-4 rounded-full font-medium text-lg transition shadow-lg">
+          <button onclick="selectPlan('intelligence')" class="kancho-btn px-10 py-4 rounded-full font-medium text-lg transition shadow-lg">
             Start Free
           </button>
           <button onclick="openBookingModal()" class="px-10 py-4 rounded-full font-medium text-lg border-2 border-gray-600 hover:border-gray-400 transition">
