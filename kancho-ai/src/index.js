@@ -348,7 +348,7 @@ app.get('/pricing', (req, res) => {
           <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Voice AI Advisor</li>
           <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> 100 AI Voice Minutes</li>
         </ul>
-        <a href="/kanchoai" class="block w-full py-3 text-center bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border rounded-xl font-medium transition">Get Started</a>
+        <button onclick="document.getElementById('pricingBookingModal').classList.remove('hidden'); document.getElementById('pricingBookingModal').classList.add('flex');" class="block w-full py-3 text-center bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border rounded-xl font-medium transition cursor-pointer">Get Started</button>
       </div>
 
       <div class="bg-kancho-dark-card border-2 border-kancho-coral/50 rounded-2xl p-8 relative">
@@ -371,14 +371,38 @@ app.get('/pricing', (req, res) => {
           <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Bilingual (EN/ES)</li>
           <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> 500 AI Voice Minutes</li>
         </ul>
-        <a href="/kanchoai" class="block w-full py-3 text-center bg-kancho-coral hover:bg-kancho-coral/80 rounded-xl font-medium transition text-white">Get Started</a>
+        <button onclick="document.getElementById('pricingBookingModal').classList.remove('hidden'); document.getElementById('pricingBookingModal').classList.add('flex');" class="block w-full py-3 text-center bg-kancho-coral hover:bg-kancho-coral/80 rounded-xl font-medium transition text-white cursor-pointer">Get Started</button>
       </div>
     </div>
 
     <div class="text-center">
       <p class="text-gray-400 mb-4">Need a custom enterprise solution?</p>
-      <a href="/kanchoai/contact" class="text-kancho hover:underline">Contact us for custom pricing</a>
+      <button onclick="document.getElementById('pricingBookingModal').classList.remove('hidden'); document.getElementById('pricingBookingModal').classList.add('flex');" class="text-kancho hover:underline cursor-pointer">Schedule a call for custom pricing</button>
     </div>
+
+    <!-- Booking Modal for Pricing Page -->
+    <div id="pricingBookingModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4 overflow-y-auto">
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-3xl shadow-2xl my-4 mx-auto">
+        <div class="p-6 border-b border-kancho-dark-border flex items-center justify-between sticky top-0 bg-kancho-dark-card z-10 rounded-t-3xl">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-kancho-coral/20">
+              <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-10 h-10 object-contain">
+            </div>
+            <div>
+              <h3 class="text-lg font-bold">Schedule Your Demo</h3>
+              <p class="text-sm text-gray-400">Book a personalized session with our team</p>
+            </div>
+          </div>
+          <button onclick="document.getElementById('pricingBookingModal').classList.add('hidden'); document.getElementById('pricingBookingModal').classList.remove('flex');" class="p-2 hover:bg-white/10 rounded-lg transition">
+            <i class="fas fa-times text-gray-400"></i>
+          </button>
+        </div>
+        <div class="p-4">
+          <iframe src="https://api.leadconnectorhq.com/widget/booking/nhKuDsn2At5csiDYc4d0" style="width: 100%; height: 700px; border: none;" scrolling="yes"></iframe>
+        </div>
+      </div>
+    </div>
+    <script src="https://link.msgsndr.com/js/form_embed.js" type="text/javascript"></script>
   `));
 });
 
@@ -445,11 +469,35 @@ app.get('/integrations', (req, res) => {
     <div class="mt-12 bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-8 text-center">
       <h3 class="text-2xl font-bold text-white mb-4">White-Glove Setup</h3>
       <p class="text-gray-300 mb-6">Our team handles all integrations for you. No technical knowledge required.</p>
-      <a href="/kanchoai/contact" class="inline-flex items-center gap-2 px-6 py-3 bg-kancho-coral hover:bg-kancho-coral/80 rounded-xl font-medium transition text-white">
+      <button onclick="document.getElementById('integrationsBookingModal').classList.remove('hidden'); document.getElementById('integrationsBookingModal').classList.add('flex');" class="inline-flex items-center gap-2 px-6 py-3 bg-kancho-coral hover:bg-kancho-coral/80 rounded-xl font-medium transition text-white cursor-pointer">
         <i class="fas fa-calendar"></i>
         Schedule Setup Call
-      </a>
+      </button>
     </div>
+
+    <!-- Booking Modal for Integrations Page -->
+    <div id="integrationsBookingModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4 overflow-y-auto">
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-3xl shadow-2xl my-4 mx-auto">
+        <div class="p-6 border-b border-kancho-dark-border flex items-center justify-between sticky top-0 bg-kancho-dark-card z-10 rounded-t-3xl">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-kancho-coral/20">
+              <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-10 h-10 object-contain">
+            </div>
+            <div>
+              <h3 class="text-lg font-bold">Schedule Setup Call</h3>
+              <p class="text-sm text-gray-400">Book your white-glove integration session</p>
+            </div>
+          </div>
+          <button onclick="document.getElementById('integrationsBookingModal').classList.add('hidden'); document.getElementById('integrationsBookingModal').classList.remove('flex');" class="p-2 hover:bg-white/10 rounded-lg transition">
+            <i class="fas fa-times text-gray-400"></i>
+          </button>
+        </div>
+        <div class="p-4">
+          <iframe src="https://api.leadconnectorhq.com/widget/booking/nhKuDsn2At5csiDYc4d0" style="width: 100%; height: 700px; border: none;" scrolling="yes"></iframe>
+        </div>
+      </div>
+    </div>
+    <script src="https://link.msgsndr.com/js/form_embed.js" type="text/javascript"></script>
   `));
 });
 
@@ -512,79 +560,67 @@ app.get('/about', (req, res) => {
 app.get('/contact', (req, res) => {
   res.send(generateStaticPage('Contact', `
     <h1 class="text-4xl font-bold mb-6 text-white">Get in Touch</h1>
-    <p class="text-gray-300 mb-8 text-lg">Have questions? We'd love to hear from you.</p>
+    <p class="text-gray-300 mb-8 text-lg">Have questions? Schedule a call with our team.</p>
 
-    <div class="grid md:grid-cols-2 gap-8">
-      <div>
-        <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6 mb-6">
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center">
-              <i class="fas fa-envelope text-kancho text-xl"></i>
-            </div>
-            <div>
-              <h3 class="text-lg font-bold text-white">Email Support</h3>
-              <a href="mailto:support@ringlypro.com" class="text-kancho hover:underline">support@ringlypro.com</a>
-            </div>
+    <div class="grid md:grid-cols-3 gap-6 mb-12">
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center">
+            <i class="fas fa-envelope text-kancho text-xl"></i>
           </div>
-          <p class="text-gray-400">For general inquiries and support questions. We typically respond within 24 hours.</p>
-        </div>
-
-        <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6 mb-6">
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center">
-              <i class="fas fa-calendar text-kancho text-xl"></i>
-            </div>
-            <div>
-              <h3 class="text-lg font-bold text-white">Schedule a Demo</h3>
-              <p class="text-gray-400 text-sm">See Kancho AI in action</p>
-            </div>
+          <div>
+            <h3 class="text-lg font-bold text-white">Email Support</h3>
+            <a href="mailto:support@ringlypro.com" class="text-kancho hover:underline text-sm">support@ringlypro.com</a>
           </div>
-          <p class="text-gray-400 mb-4">Book a personalized demo with our team to see how Kancho AI can help your school.</p>
-          <a href="/kanchoai" class="inline-flex items-center gap-2 px-4 py-2 bg-kancho-coral hover:bg-kancho-coral/80 rounded-lg font-medium transition text-white text-sm">
-            <i class="fas fa-calendar-check"></i>
-            Book Demo
-          </a>
         </div>
-
-        <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center">
-              <i class="fas fa-headset text-kancho text-xl"></i>
-            </div>
-            <div>
-              <h3 class="text-lg font-bold text-white">Customer Success</h3>
-              <p class="text-gray-400 text-sm">For existing customers</p>
-            </div>
-          </div>
-          <p class="text-gray-400">Current customers can reach their dedicated success manager directly through the dashboard.</p>
-        </div>
+        <p class="text-gray-400 text-sm">For general inquiries. We respond within 24 hours.</p>
       </div>
 
-      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-8">
-        <h3 class="text-xl font-bold text-white mb-6">Send us a Message</h3>
-        <form action="mailto:support@ringlypro.com" method="get" enctype="text/plain">
-          <div class="mb-4">
-            <label class="block text-gray-400 text-sm mb-2">Your Name</label>
-            <input type="text" name="name" class="w-full px-4 py-3 bg-kancho-dark border border-kancho-dark-border rounded-lg text-white focus:border-kancho-coral focus:outline-none transition" placeholder="John Doe">
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center">
+            <i class="fas fa-calendar text-kancho text-xl"></i>
           </div>
-          <div class="mb-4">
-            <label class="block text-gray-400 text-sm mb-2">Email Address</label>
-            <input type="email" name="email" class="w-full px-4 py-3 bg-kancho-dark border border-kancho-dark-border rounded-lg text-white focus:border-kancho-coral focus:outline-none transition" placeholder="john@example.com">
+          <div>
+            <h3 class="text-lg font-bold text-white">Schedule a Demo</h3>
+            <p class="text-gray-400 text-sm">See Kancho AI in action</p>
           </div>
-          <div class="mb-4">
-            <label class="block text-gray-400 text-sm mb-2">School Name</label>
-            <input type="text" name="school" class="w-full px-4 py-3 bg-kancho-dark border border-kancho-dark-border rounded-lg text-white focus:border-kancho-coral focus:outline-none transition" placeholder="Your Martial Arts School">
+        </div>
+        <p class="text-gray-400 text-sm">Book a personalized demo below.</p>
+      </div>
+
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center">
+            <i class="fas fa-headset text-kancho text-xl"></i>
           </div>
-          <div class="mb-6">
-            <label class="block text-gray-400 text-sm mb-2">Message</label>
-            <textarea name="body" rows="4" class="w-full px-4 py-3 bg-kancho-dark border border-kancho-dark-border rounded-lg text-white focus:border-kancho-coral focus:outline-none transition resize-none" placeholder="How can we help you?"></textarea>
+          <div>
+            <h3 class="text-lg font-bold text-white">Customer Success</h3>
+            <p class="text-gray-400 text-sm">For existing customers</p>
           </div>
-          <button type="submit" class="w-full py-3 bg-kancho-coral hover:bg-kancho-coral/80 rounded-xl font-medium transition text-white">
-            Send Message
-          </button>
-        </form>
+        </div>
+        <p class="text-gray-400 text-sm">Reach your success manager via dashboard.</p>
       </div>
     </div>
+
+    <!-- Calendar Booking Section -->
+    <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl overflow-hidden">
+      <div class="p-6 border-b border-kancho-dark-border">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-kancho-coral/20">
+            <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-10 h-10 object-contain">
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-white">Book a Demo</h3>
+            <p class="text-gray-400">Schedule a personalized session with our team</p>
+          </div>
+        </div>
+      </div>
+      <div class="p-4">
+        <iframe src="https://api.leadconnectorhq.com/widget/booking/nhKuDsn2At5csiDYc4d0" style="width: 100%; height: 700px; border: none;" scrolling="yes"></iframe>
+      </div>
+    </div>
+    <script src="https://link.msgsndr.com/js/form_embed.js" type="text/javascript"></script>
   `));
 });
 
