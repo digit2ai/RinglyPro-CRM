@@ -188,6 +188,560 @@ app.get('/metrics-guide', (req, res) => {
   `);
 });
 
+// Helper function to generate styled static pages
+function generateStaticPage(title, content) {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title} - Kancho AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'kancho': '#E85A4F',
+            'kancho-coral': '#E85A4F',
+            'kancho-dark': '#0D0D0D',
+            'kancho-dark-card': '#1A1A1A',
+            'kancho-dark-border': '#2A2A2A'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: linear-gradient(180deg, #0D0D0D 0%, #1A1A1A 100%); }
+  </style>
+</head>
+<body class="min-h-screen text-gray-300">
+  <header class="border-b border-kancho-dark-border sticky top-0 z-50 bg-kancho-dark/95 backdrop-blur-xl">
+    <div class="max-w-4xl mx-auto flex items-center justify-between px-6 py-4">
+      <a href="/kanchoai" class="flex items-center gap-3 hover:opacity-80 transition">
+        <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-10 h-10 rounded-lg object-contain">
+        <div>
+          <h1 class="text-xl font-bold text-white tracking-tight">KANCHO AI</h1>
+          <p class="text-xs text-gray-500">${title}</p>
+        </div>
+      </a>
+      <a href="/kanchoai" class="px-4 py-2 bg-kancho-dark-card border border-kancho-dark-border rounded-lg text-sm hover:bg-kancho-coral/20 hover:border-kancho-coral transition flex items-center gap-2">
+        <i class="fas fa-arrow-left"></i>
+        Back to Dashboard
+      </a>
+    </div>
+  </header>
+  <main class="max-w-4xl mx-auto px-6 py-12">
+    ${content}
+  </main>
+  <footer class="border-t border-kancho-dark-border mt-16">
+    <div class="max-w-4xl mx-auto px-6 py-8 text-center">
+      <p class="text-gray-500 text-sm">&copy; ${new Date().getFullYear()} Kancho AI. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>
+  `;
+}
+
+// Features Page
+app.get('/features', (req, res) => {
+  res.send(generateStaticPage('Features', `
+    <h1 class="text-4xl font-bold mb-6 text-white">Kancho AI Features</h1>
+    <p class="text-gray-300 mb-8 text-lg">Powerful AI-driven tools designed specifically for martial arts schools and fitness businesses.</p>
+
+    <div class="grid gap-8">
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center">
+            <i class="fas fa-brain text-kancho text-xl"></i>
+          </div>
+          <h2 class="text-2xl font-bold text-white">AI Business Intelligence</h2>
+        </div>
+        <p class="text-gray-400 mb-4">Get real-time insights into your business performance with our AI-powered analytics dashboard.</p>
+        <ul class="space-y-2 text-gray-300">
+          <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i> Health Score monitoring (0-100)</li>
+          <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i> Revenue tracking and forecasting</li>
+          <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i> Trend analysis and insights</li>
+        </ul>
+      </div>
+
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center">
+            <i class="fas fa-user-shield text-kancho text-xl"></i>
+          </div>
+          <h2 class="text-2xl font-bold text-white">Churn Detection & Prevention</h2>
+        </div>
+        <p class="text-gray-400 mb-4">Identify at-risk members before they leave and take action to retain them.</p>
+        <ul class="space-y-2 text-gray-300">
+          <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i> Predictive churn risk scoring</li>
+          <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i> Attendance pattern monitoring</li>
+          <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i> Automated retention alerts</li>
+        </ul>
+      </div>
+
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center">
+            <i class="fas fa-fire text-kancho text-xl"></i>
+          </div>
+          <h2 class="text-2xl font-bold text-white">Lead Scoring & Prioritization</h2>
+        </div>
+        <p class="text-gray-400 mb-4">Focus your time on the leads most likely to convert with AI-powered lead scoring.</p>
+        <ul class="space-y-2 text-gray-300">
+          <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i> Hot, warm, cold lead classification</li>
+          <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i> Conversion probability scoring</li>
+          <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i> Follow-up reminders</li>
+        </ul>
+      </div>
+
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center">
+            <i class="fas fa-microphone text-kancho text-xl"></i>
+          </div>
+          <h2 class="text-2xl font-bold text-white">Voice AI Assistant</h2>
+        </div>
+        <p class="text-gray-400 mb-4">Talk to Kancho anytime to get instant business insights and recommendations.</p>
+        <ul class="space-y-2 text-gray-300">
+          <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i> Natural voice conversations</li>
+          <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i> Bilingual support (English/Spanish)</li>
+          <li class="flex items-center gap-2"><i class="fas fa-check text-green-400"></i> 24/7 AI receptionist (Pro plan)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-12 text-center">
+      <a href="/kanchoai#pricing" class="inline-flex items-center gap-2 px-8 py-4 bg-kancho-coral hover:bg-kancho-coral/80 rounded-xl font-medium transition">
+        <i class="fas fa-rocket"></i>
+        Start Free Trial
+      </a>
+    </div>
+  `));
+});
+
+// Pricing Page
+app.get('/pricing', (req, res) => {
+  res.send(generateStaticPage('Pricing', `
+    <h1 class="text-4xl font-bold mb-6 text-white">Simple, Transparent Pricing</h1>
+    <p class="text-gray-300 mb-8 text-lg">Choose the plan that fits your martial arts school. All plans include a 14-day free trial.</p>
+
+    <div class="grid md:grid-cols-2 gap-8 mb-12">
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-8">
+        <h2 class="text-2xl font-bold text-white mb-2">Kancho Intelligence</h2>
+        <p class="text-gray-400 mb-4">AI Business Intelligence</p>
+        <div class="flex items-baseline gap-1 mb-6">
+          <span class="text-4xl font-bold text-kancho">$197</span>
+          <span class="text-gray-400">/month</span>
+        </div>
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> AI Business Intelligence Officer</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> CRM Integration</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Health Score Monitoring</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Churn Detection & Alerts</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Lead Scoring</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Revenue Analytics</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Voice AI Advisor</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> 100 AI Voice Minutes</li>
+        </ul>
+        <a href="/kanchoai" class="block w-full py-3 text-center bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border rounded-xl font-medium transition">Get Started</a>
+      </div>
+
+      <div class="bg-kancho-dark-card border-2 border-kancho-coral/50 rounded-2xl p-8 relative">
+        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+          <span class="bg-kancho-coral px-4 py-1 rounded-full text-sm font-bold text-white">MOST POPULAR</span>
+        </div>
+        <h2 class="text-2xl font-bold text-white mb-2">Kancho Pro</h2>
+        <p class="text-gray-400 mb-4">Intelligence + AI Receptionist</p>
+        <div class="flex items-baseline gap-1 mb-6">
+          <span class="text-4xl font-bold text-kancho">$397</span>
+          <span class="text-gray-400">/month</span>
+        </div>
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> <strong>Everything in Intelligence</strong></li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> 24/7 AI Receptionist</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Automated Lead Follow-up</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Retention Campaigns</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> No-show Recovery</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Payment Reminders</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Bilingual (EN/ES)</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> 500 AI Voice Minutes</li>
+        </ul>
+        <a href="/kanchoai" class="block w-full py-3 text-center bg-kancho-coral hover:bg-kancho-coral/80 rounded-xl font-medium transition text-white">Get Started</a>
+      </div>
+    </div>
+
+    <div class="text-center">
+      <p class="text-gray-400 mb-4">Need a custom enterprise solution?</p>
+      <a href="/kanchoai/contact" class="text-kancho hover:underline">Contact us for custom pricing</a>
+    </div>
+  `));
+});
+
+// Integrations Page
+app.get('/integrations', (req, res) => {
+  res.send(generateStaticPage('Integrations', `
+    <h1 class="text-4xl font-bold mb-6 text-white">Seamless Integrations</h1>
+    <p class="text-gray-300 mb-8 text-lg">Kancho AI connects with the tools you already use to manage your martial arts school.</p>
+
+    <div class="grid gap-6">
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+            <i class="fas fa-database text-blue-400 text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">CRM Systems</h2>
+            <p class="text-gray-400 text-sm">Connect your existing CRM</p>
+          </div>
+        </div>
+        <p class="text-gray-300">Integrates with GoHighLevel, Salesforce, HubSpot, and other popular CRM platforms. Your data syncs automatically.</p>
+      </div>
+
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+            <i class="fas fa-credit-card text-green-400 text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Payment Processors</h2>
+            <p class="text-gray-400 text-sm">Track revenue automatically</p>
+          </div>
+        </div>
+        <p class="text-gray-300">Connect Stripe, Square, or other payment processors to automatically track revenue and identify payment issues.</p>
+      </div>
+
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+            <i class="fas fa-calendar text-purple-400 text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Scheduling Systems</h2>
+            <p class="text-gray-400 text-sm">Sync attendance data</p>
+          </div>
+        </div>
+        <p class="text-gray-300">Works with Mindbody, Zen Planner, PushPress, and other martial arts school management software.</p>
+      </div>
+
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center">
+            <i class="fas fa-phone text-kancho text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Phone & SMS</h2>
+            <p class="text-gray-400 text-sm">Voice AI & messaging</p>
+          </div>
+        </div>
+        <p class="text-gray-300">Powered by ElevenLabs for natural voice AI and Twilio for reliable SMS and phone capabilities.</p>
+      </div>
+    </div>
+
+    <div class="mt-12 bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-8 text-center">
+      <h3 class="text-2xl font-bold text-white mb-4">White-Glove Setup</h3>
+      <p class="text-gray-300 mb-6">Our team handles all integrations for you. No technical knowledge required.</p>
+      <a href="/kanchoai/contact" class="inline-flex items-center gap-2 px-6 py-3 bg-kancho-coral hover:bg-kancho-coral/80 rounded-xl font-medium transition text-white">
+        <i class="fas fa-calendar"></i>
+        Schedule Setup Call
+      </a>
+    </div>
+  `));
+});
+
+// About Us Page
+app.get('/about', (req, res) => {
+  res.send(generateStaticPage('About Us', `
+    <h1 class="text-4xl font-bold mb-6 text-white">About Kancho AI</h1>
+
+    <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-8 mb-8">
+      <h2 class="text-2xl font-bold text-kancho mb-4">Our Mission</h2>
+      <p class="text-gray-300 text-lg leading-relaxed">
+        Kancho AI was built to help martial arts school owners focus on what they do best — teaching and transforming lives —
+        while AI handles the business intelligence, member retention, and lead conversion that keeps their school thriving.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+        <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center mb-4">
+          <i class="fas fa-heart text-kancho text-xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Built by Martial Artists</h3>
+        <p class="text-gray-400">We understand the unique challenges of running a martial arts school because we've lived them.</p>
+      </div>
+
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+        <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center mb-4">
+          <i class="fas fa-robot text-kancho text-xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Powered by AI</h3>
+        <p class="text-gray-400">Cutting-edge artificial intelligence that gets smarter and more valuable every day.</p>
+      </div>
+
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+        <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center mb-4">
+          <i class="fas fa-users text-kancho text-xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Human Support</h3>
+        <p class="text-gray-400">Real people ready to help you succeed, not just bots and ticket systems.</p>
+      </div>
+
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+        <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center mb-4">
+          <i class="fas fa-chart-line text-kancho text-xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Results Focused</h3>
+        <p class="text-gray-400">Every feature is designed to directly impact your revenue and retention.</p>
+      </div>
+    </div>
+
+    <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-8 text-center">
+      <h3 class="text-2xl font-bold text-white mb-4">Part of the RinglyPro Family</h3>
+      <p class="text-gray-300 mb-4">Kancho AI is proudly developed by RinglyPro, pioneers in AI-powered business solutions.</p>
+      <p class="text-gray-500 text-sm">Trusted by martial arts schools across the United States and beyond.</p>
+    </div>
+  `));
+});
+
+// Contact Page
+app.get('/contact', (req, res) => {
+  res.send(generateStaticPage('Contact', `
+    <h1 class="text-4xl font-bold mb-6 text-white">Get in Touch</h1>
+    <p class="text-gray-300 mb-8 text-lg">Have questions? We'd love to hear from you.</p>
+
+    <div class="grid md:grid-cols-2 gap-8">
+      <div>
+        <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6 mb-6">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center">
+              <i class="fas fa-envelope text-kancho text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white">Email Support</h3>
+              <a href="mailto:support@ringlypro.com" class="text-kancho hover:underline">support@ringlypro.com</a>
+            </div>
+          </div>
+          <p class="text-gray-400">For general inquiries and support questions. We typically respond within 24 hours.</p>
+        </div>
+
+        <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6 mb-6">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center">
+              <i class="fas fa-calendar text-kancho text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white">Schedule a Demo</h3>
+              <p class="text-gray-400 text-sm">See Kancho AI in action</p>
+            </div>
+          </div>
+          <p class="text-gray-400 mb-4">Book a personalized demo with our team to see how Kancho AI can help your school.</p>
+          <a href="/kanchoai" class="inline-flex items-center gap-2 px-4 py-2 bg-kancho-coral hover:bg-kancho-coral/80 rounded-lg font-medium transition text-white text-sm">
+            <i class="fas fa-calendar-check"></i>
+            Book Demo
+          </a>
+        </div>
+
+        <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 bg-kancho-coral/20 rounded-xl flex items-center justify-center">
+              <i class="fas fa-headset text-kancho text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white">Customer Success</h3>
+              <p class="text-gray-400 text-sm">For existing customers</p>
+            </div>
+          </div>
+          <p class="text-gray-400">Current customers can reach their dedicated success manager directly through the dashboard.</p>
+        </div>
+      </div>
+
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-8">
+        <h3 class="text-xl font-bold text-white mb-6">Send us a Message</h3>
+        <form action="mailto:support@ringlypro.com" method="get" enctype="text/plain">
+          <div class="mb-4">
+            <label class="block text-gray-400 text-sm mb-2">Your Name</label>
+            <input type="text" name="name" class="w-full px-4 py-3 bg-kancho-dark border border-kancho-dark-border rounded-lg text-white focus:border-kancho-coral focus:outline-none transition" placeholder="John Doe">
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-400 text-sm mb-2">Email Address</label>
+            <input type="email" name="email" class="w-full px-4 py-3 bg-kancho-dark border border-kancho-dark-border rounded-lg text-white focus:border-kancho-coral focus:outline-none transition" placeholder="john@example.com">
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-400 text-sm mb-2">School Name</label>
+            <input type="text" name="school" class="w-full px-4 py-3 bg-kancho-dark border border-kancho-dark-border rounded-lg text-white focus:border-kancho-coral focus:outline-none transition" placeholder="Your Martial Arts School">
+          </div>
+          <div class="mb-6">
+            <label class="block text-gray-400 text-sm mb-2">Message</label>
+            <textarea name="body" rows="4" class="w-full px-4 py-3 bg-kancho-dark border border-kancho-dark-border rounded-lg text-white focus:border-kancho-coral focus:outline-none transition resize-none" placeholder="How can we help you?"></textarea>
+          </div>
+          <button type="submit" class="w-full py-3 bg-kancho-coral hover:bg-kancho-coral/80 rounded-xl font-medium transition text-white">
+            Send Message
+          </button>
+        </form>
+      </div>
+    </div>
+  `));
+});
+
+// Privacy Policy Page
+app.get('/privacy', (req, res) => {
+  res.send(generateStaticPage('Privacy Policy', `
+    <h1 class="text-4xl font-bold mb-6 text-white">Privacy Policy</h1>
+    <p class="text-gray-400 mb-8">Last updated: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+
+    <div class="prose prose-invert max-w-none space-y-8">
+      <section>
+        <h2 class="text-2xl font-bold text-white mb-4">1. Information We Collect</h2>
+        <p class="text-gray-300 mb-4">We collect information you provide directly to us, including:</p>
+        <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+          <li>Account information (name, email, phone number)</li>
+          <li>Business information (school name, location, student data)</li>
+          <li>Payment information (processed securely via Stripe)</li>
+          <li>Communications you send to us</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-bold text-white mb-4">2. How We Use Your Information</h2>
+        <p class="text-gray-300 mb-4">We use the information we collect to:</p>
+        <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+          <li>Provide, maintain, and improve our services</li>
+          <li>Process transactions and send related information</li>
+          <li>Send technical notices, updates, and support messages</li>
+          <li>Generate business intelligence insights for your school</li>
+          <li>Power AI voice interactions and recommendations</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-bold text-white mb-4">3. Data Security</h2>
+        <p class="text-gray-300">
+          We implement industry-standard security measures to protect your data. All data is encrypted in transit and at rest.
+          We use secure cloud infrastructure and regularly audit our security practices. Your student data is kept strictly confidential
+          and is never shared with third parties for marketing purposes.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-bold text-white mb-4">4. Data Retention</h2>
+        <p class="text-gray-300">
+          We retain your data for as long as your account is active or as needed to provide you services.
+          If you close your account, we will delete your data within 90 days, unless we are required to retain it for legal purposes.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-bold text-white mb-4">5. Your Rights</h2>
+        <p class="text-gray-300 mb-4">You have the right to:</p>
+        <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+          <li>Access your personal data</li>
+          <li>Correct inaccurate data</li>
+          <li>Request deletion of your data</li>
+          <li>Export your data in a portable format</li>
+          <li>Opt out of marketing communications</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-bold text-white mb-4">6. Contact Us</h2>
+        <p class="text-gray-300">
+          If you have questions about this Privacy Policy, please contact us at
+          <a href="mailto:support@ringlypro.com" class="text-kancho hover:underline">support@ringlypro.com</a>.
+        </p>
+      </section>
+    </div>
+  `));
+});
+
+// Terms of Service Page
+app.get('/terms', (req, res) => {
+  res.send(generateStaticPage('Terms of Service', `
+    <h1 class="text-4xl font-bold mb-6 text-white">Terms of Service</h1>
+    <p class="text-gray-400 mb-8">Last updated: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+
+    <div class="prose prose-invert max-w-none space-y-8">
+      <section>
+        <h2 class="text-2xl font-bold text-white mb-4">1. Acceptance of Terms</h2>
+        <p class="text-gray-300">
+          By accessing or using Kancho AI services, you agree to be bound by these Terms of Service.
+          If you do not agree to these terms, you may not use our services.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-bold text-white mb-4">2. Description of Service</h2>
+        <p class="text-gray-300">
+          Kancho AI provides AI-powered business intelligence, voice AI capabilities, and analytics tools
+          designed for martial arts schools and fitness businesses. Our services include dashboard analytics,
+          churn detection, lead scoring, and voice AI interactions.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-bold text-white mb-4">3. Subscription and Payment</h2>
+        <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+          <li>Subscription fees are billed monthly in advance</li>
+          <li>All plans include a 14-day free trial</li>
+          <li>You may cancel your subscription at any time</li>
+          <li>Refunds are provided on a case-by-case basis</li>
+          <li>Prices are subject to change with 30 days notice</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-bold text-white mb-4">4. User Responsibilities</h2>
+        <p class="text-gray-300 mb-4">You agree to:</p>
+        <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+          <li>Provide accurate and complete information</li>
+          <li>Maintain the security of your account credentials</li>
+          <li>Use the service only for lawful purposes</li>
+          <li>Not share your account with unauthorized users</li>
+          <li>Comply with all applicable laws and regulations</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-bold text-white mb-4">5. Intellectual Property</h2>
+        <p class="text-gray-300">
+          All content, features, and functionality of Kancho AI are owned by RinglyPro and are protected
+          by international copyright, trademark, and other intellectual property laws. You retain ownership
+          of your business data that you input into our system.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-bold text-white mb-4">6. Limitation of Liability</h2>
+        <p class="text-gray-300">
+          Kancho AI is provided "as is" without warranties of any kind. We are not liable for any indirect,
+          incidental, special, consequential, or punitive damages resulting from your use of or inability
+          to use the service.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-bold text-white mb-4">7. Termination</h2>
+        <p class="text-gray-300">
+          We may terminate or suspend your account at any time for violation of these terms.
+          Upon termination, your right to use the service will immediately cease.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-bold text-white mb-4">8. Contact</h2>
+        <p class="text-gray-300">
+          For questions about these Terms of Service, please contact us at
+          <a href="mailto:support@ringlypro.com" class="text-kancho hover:underline">support@ringlypro.com</a>.
+        </p>
+      </section>
+    </div>
+  `));
+});
+
 // API Routes
 if (models && !modelsError) {
   // Mount API routes
@@ -1171,9 +1725,9 @@ app.get('*', (req, res) => {
         <div>
           <h4 class="font-semibold mb-4 text-white">Product</h4>
           <ul class="space-y-2 text-sm">
-            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Features</a></li>
-            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Pricing</a></li>
-            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Integrations</a></li>
+            <li><a href="/kanchoai/features" class="text-gray-400 hover:text-kancho transition">Features</a></li>
+            <li><a href="/kanchoai/pricing" class="text-gray-400 hover:text-kancho transition">Pricing</a></li>
+            <li><a href="/kanchoai/integrations" class="text-gray-400 hover:text-kancho transition">Integrations</a></li>
             <li><a href="/kanchoai/metrics-guide" class="text-gray-400 hover:text-kancho transition">Dashboard Guide</a></li>
           </ul>
         </div>
@@ -1182,43 +1736,25 @@ app.get('*', (req, res) => {
         <div>
           <h4 class="font-semibold mb-4 text-white">Company</h4>
           <ul class="space-y-2 text-sm">
-            <li><a href="#" class="text-gray-400 hover:text-kancho transition">About Us</a></li>
-            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Careers</a></li>
-            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Blog</a></li>
-            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Contact</a></li>
+            <li><a href="/kanchoai/about" class="text-gray-400 hover:text-kancho transition">About Us</a></li>
+            <li><a href="/kanchoai/contact" class="text-gray-400 hover:text-kancho transition">Contact</a></li>
           </ul>
         </div>
 
-        <!-- Support -->
+        <!-- Legal -->
         <div>
-          <h4 class="font-semibold mb-4 text-white">Support</h4>
+          <h4 class="font-semibold mb-4 text-white">Legal</h4>
           <ul class="space-y-2 text-sm">
-            <li><a href="/kanchoai/metrics-guide" class="text-gray-400 hover:text-kancho transition">Metrics Guide</a></li>
-            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Help Center</a></li>
-            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Privacy Policy</a></li>
-            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Terms of Service</a></li>
+            <li><a href="/kanchoai/privacy" class="text-gray-400 hover:text-kancho transition">Privacy Policy</a></li>
+            <li><a href="/kanchoai/terms" class="text-gray-400 hover:text-kancho transition">Terms of Service</a></li>
             <li><a href="mailto:support@ringlypro.com" class="text-gray-400 hover:text-kancho transition">support@ringlypro.com</a></li>
           </ul>
         </div>
       </div>
 
       <!-- Bottom Bar -->
-      <div class="border-t border-kancho-dark-border mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="border-t border-kancho-dark-border mt-12 pt-8 text-center">
         <p class="text-gray-500 text-sm">&copy; ${new Date().getFullYear()} Kancho AI. All rights reserved.</p>
-        <div class="flex items-center gap-6">
-          <a href="https://facebook.com/ringlypro" target="_blank" class="text-gray-400 hover:text-kancho transition">
-            <i class="fab fa-facebook text-lg"></i>
-          </a>
-          <a href="https://instagram.com/ringlypro" target="_blank" class="text-gray-400 hover:text-kancho transition">
-            <i class="fab fa-instagram text-lg"></i>
-          </a>
-          <a href="https://linkedin.com/company/ringlypro" target="_blank" class="text-gray-400 hover:text-kancho transition">
-            <i class="fab fa-linkedin text-lg"></i>
-          </a>
-          <a href="https://youtube.com/@ringlypro" target="_blank" class="text-gray-400 hover:text-kancho transition">
-            <i class="fab fa-youtube text-lg"></i>
-          </a>
-        </div>
       </div>
     </div>
   </footer>
