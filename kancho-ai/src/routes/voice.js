@@ -888,8 +888,8 @@ module.exports = (models) => {
   // TWILIO WEBHOOK ENDPOINTS - For outbound call handling
   // =====================================================
 
-  // Kancho Agent Configuration - Will need to create a new agent in ElevenLabs
-  const KANCHO_AGENT_ID = process.env.KANCHO_AGENT_ID || 'agent_kancho_placeholder';
+  // Kancho Agent Configuration - Using shared ElevenLabs agent
+  const KANCHO_AGENT_ID = process.env.ELEVENLABS_AGENT_ID || 'agent_3701kgg7d7v3e1vbjsxv0p5pn48e';
   const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
   const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io/v1';
 
