@@ -1144,14 +1144,12 @@ app.get('*', (req, res) => {
     async function selectPlan(plan) {
       const planNames = {
         intelligence: 'Kancho Intelligence',
-        pro: 'Kancho Pro',
-        complete: 'Kancho Complete'
+        pro: 'Kancho Pro'
       };
 
       const planPrices = {
         intelligence: 197,
-        pro: 497,
-        complete: 997
+        pro: 497
       };
 
       try {
