@@ -696,9 +696,9 @@ app.get('*', (req, res) => {
             <div class="w-16 h-16 bg-kancho-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
               <span class="text-2xl font-bold text-kancho">1</span>
             </div>
-            <h3 class="text-xl font-bold mb-3">Free Data Migration</h3>
+            <h3 class="text-xl font-bold mb-3">Data Integration</h3>
             <p class="text-gray-400 text-sm">
-              Export your data from your current system, send it to our team, and we handle everything else. Fast, secure migration at zero cost to you.
+              Connect your existing tools and platforms, and our team handles the setup for you. Fast, secure integration with no hassle.
             </p>
           </div>
 
