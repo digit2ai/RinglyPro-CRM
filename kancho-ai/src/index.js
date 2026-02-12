@@ -604,6 +604,11 @@ app.get('*', (req, res) => {
         </div>
       </div>
 
+      <!-- Integration Image -->
+      <div class="mt-16 flex justify-center">
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d575dbfe00f98dff7c57d.png" alt="Kancho AI Integrations" class="max-w-full md:max-w-4xl rounded-2xl">
+      </div>
+
       <!-- Subscription Plans -->
       <div class="mt-16 pt-16 border-t border-kancho-dark-border">
         <div class="text-center mb-12">
