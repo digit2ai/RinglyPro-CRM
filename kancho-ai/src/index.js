@@ -730,6 +730,29 @@ app.get('*', (req, res) => {
           <p class="text-gray-500 text-sm mt-4">No credit card required • Cancel anytime</p>
         </div>
       </div>
+
+      <!-- Hero CTA Section -->
+      <div class="mt-20 pt-20 border-t border-kancho-dark-border text-center">
+        <div class="mb-8">
+          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-24 h-24 mx-auto mb-6">
+        </div>
+        <p class="text-kancho text-lg font-medium mb-2">AI Business Intelligence — Voice & Analytics Platform</p>
+        <p class="text-gray-400 text-sm mb-8">Churn Detection · Lead Scoring · Revenue Analytics</p>
+
+        <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight max-w-5xl mx-auto mb-12" style="color: #5BA4D4;">
+          An all-in-one AI system that monitors your business, identifies at-risk members, scores leads, and maximizes your revenue.
+        </h2>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+          <button onclick="selectPlan('pro')" class="kancho-btn px-10 py-4 rounded-full font-medium text-lg transition shadow-lg">
+            Start Free
+          </button>
+          <a href="https://calendly.com/ringlypro/kancho-demo" target="_blank" class="px-10 py-4 rounded-full font-medium text-lg border-2 border-gray-600 hover:border-gray-400 transition">
+            Book a Demo
+          </a>
+        </div>
+        <p class="text-gray-500 text-sm">Absolutely free — no credit card, no hidden fees</p>
+      </div>
     </div>
 
     <!-- Dashboard Section -->
