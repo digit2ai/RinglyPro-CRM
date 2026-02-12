@@ -413,7 +413,7 @@ app.get('*', (req, res) => {
         <!-- Kancho Logo -->
         <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-10 h-10 md:w-12 md:h-12 rounded-lg object-contain">
         <div>
-          <h1 class="text-xl md:text-2xl font-bold text-white tracking-tight">KANCHO</h1>
+          <h1 class="text-xl md:text-2xl font-bold text-white tracking-tight">KANCHO AI</h1>
           <p class="text-xs text-gray-500">AI Business Intelligence</p>
         </div>
       </div>
