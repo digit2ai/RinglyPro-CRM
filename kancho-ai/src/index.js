@@ -61,6 +61,100 @@ if (models && !modelsError) {
   app.use('/api/v1/health', healthRoutes);
   app.use('/api/v1/voice', voiceRoutes);
 
+  // =====================================================
+  // KANCHO SUBSCRIPTION PLANS - Stripe Integration
+  // =====================================================
+  const KANCHO_PLANS = {
+    intelligence: {
+      name: 'Kancho Intelligence',
+      price: 197,
+      description: 'AI Business Intelligence Officer integrated with your CRM',
+      features: ['AI Business Intelligence', 'CRM Integration', 'Health Scoring', 'Churn Detection', 'Lead Scoring', 'Revenue Analytics', 'Voice AI Advisor']
+    },
+    pro: {
+      name: 'Kancho Pro',
+      price: 497,
+      description: 'Intelligence + AI Receptionist for 24/7 automation',
+      features: ['Everything in Intelligence', '24/7 AI Receptionist', 'Lead Follow-up Calls', 'Retention Campaigns', 'No-show Recovery', 'Payment Reminders', 'Bilingual (EN/ES)', '500 AI Minutes']
+    },
+    complete: {
+      name: 'Kancho Complete',
+      price: 997,
+      description: 'Pro + Full Martial Arts CRM System',
+      features: ['Everything in Pro', 'Complete MA CRM', 'Student Management', 'Belt Progression', 'Class Scheduling', 'Billing & Payments', '1,000 AI Minutes', 'Dedicated Support']
+    }
+  };
+
+  // POST /api/v1/subscribe - Create Stripe checkout session
+  app.post('/api/v1/subscribe', async (req, res) => {
+    try {
+      const { plan, email } = req.body;
+
+      // Validate plan
+      if (!plan || !KANCHO_PLANS[plan]) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid plan selected. Choose intelligence, pro, or complete.'
+        });
+      }
+
+      const planDetails = KANCHO_PLANS[plan];
+      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+
+      // Create Stripe Checkout Session
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: planDetails.name,
+              description: planDetails.description,
+              images: [KANCHO_LOGO_URL]
+            },
+            unit_amount: planDetails.price * 100,
+            recurring: {
+              interval: 'month',
+              interval_count: 1
+            }
+          },
+          quantity: 1
+        }],
+        mode: 'subscription',
+        subscription_data: {
+          trial_period_days: 14,
+          metadata: {
+            plan: plan,
+            product: 'kancho_ai',
+            features: planDetails.features.join(', ')
+          }
+        },
+        success_url: \`\${webhookBaseUrl}/kanchoai?subscribe=success&plan=\${plan}\`,
+        cancel_url: \`\${webhookBaseUrl}/kanchoai?subscribe=canceled\`,
+        metadata: {
+          plan: plan,
+          product: 'kancho_ai'
+        }
+      });
+
+      console.log(\`[Kancho] Checkout session created: \${session.id} for \${planDetails.name}\`);
+
+      res.json({
+        success: true,
+        url: session.url,
+        sessionId: session.id
+      });
+
+    } catch (error) {
+      console.error('[Kancho] Subscription error:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to create checkout session'
+      });
+    }
+  });
+
   // Comprehensive demo data seed endpoint
   app.post('/api/v1/seed-demo', async (req, res) => {
     try {
@@ -474,11 +568,169 @@ app.get('*', (req, res) => {
       </div>
 
       <!-- CTA -->
-      <div class="text-center">
+      <div class="text-center mb-16">
         <p class="text-gray-400 mb-6">Select a business above to see Kancho in action, or:</p>
         <button onclick="seedDemoData()" class="kancho-btn px-8 py-4 rounded-xl font-medium transition shadow-lg">
           <i class="fas fa-rocket mr-2"></i>Load Demo Data
         </button>
+      </div>
+
+      <!-- Subscription Plans -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold mb-4">Choose Your <span class="text-kancho">Kancho AI</span> Plan</h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">Power your martial arts school with AI-driven business intelligence, automated receptionist, and complete CRM solutions.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <!-- Plan 1: Kancho Intelligence -->
+          <div class="card rounded-2xl p-8 relative hover:border-kancho-coral/50 transition-all duration-300">
+            <div class="text-center mb-6">
+              <h3 class="text-xl font-bold mb-2">Kancho Intelligence</h3>
+              <p class="text-gray-400 text-sm mb-4">AI Business Intelligence</p>
+              <div class="flex items-baseline justify-center gap-1">
+                <span class="text-4xl font-bold text-kancho">$197</span>
+                <span class="text-gray-400">/month</span>
+              </div>
+            </div>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">AI Business Intelligence Officer</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Integrates with your existing CRM</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Real-time health score monitoring</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Churn risk detection & alerts</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Lead scoring & prioritization</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Revenue analytics & forecasting</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Voice AI business advisor</span>
+              </li>
+            </ul>
+            <button onclick="selectPlan('intelligence')" class="w-full py-3 bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border hover:border-kancho-coral rounded-xl font-medium transition">
+              Get Started
+            </button>
+          </div>
+
+          <!-- Plan 2: Kancho Pro (Most Popular) -->
+          <div class="card rounded-2xl p-8 relative border-kancho-coral/50 transform scale-105 shadow-xl shadow-kancho-coral/10">
+            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+              <span class="bg-kancho-coral px-4 py-1 rounded-full text-sm font-bold">MOST POPULAR</span>
+            </div>
+            <div class="text-center mb-6">
+              <h3 class="text-xl font-bold mb-2">Kancho Pro</h3>
+              <p class="text-gray-400 text-sm mb-4">Intelligence + AI Receptionist</p>
+              <div class="flex items-baseline justify-center gap-1">
+                <span class="text-4xl font-bold text-kancho">$497</span>
+                <span class="text-gray-400">/month</span>
+              </div>
+            </div>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm"><strong>Everything in Intelligence</strong></span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">24/7 AI Receptionist (Phone & SMS)</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Automated lead follow-up calls</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Retention outreach campaigns</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">No-show recovery calls</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Payment reminder automation</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Bilingual support (EN/ES)</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">500 AI voice minutes included</span>
+              </li>
+            </ul>
+            <button onclick="selectPlan('pro')" class="w-full py-3 kancho-btn rounded-xl font-medium transition shadow-lg">
+              Get Started
+            </button>
+          </div>
+
+          <!-- Plan 3: Kancho Complete -->
+          <div class="card rounded-2xl p-8 relative hover:border-kancho-coral/50 transition-all duration-300">
+            <div class="text-center mb-6">
+              <h3 class="text-xl font-bold mb-2">Kancho Complete</h3>
+              <p class="text-gray-400 text-sm mb-4">Pro + Full CRM System</p>
+              <div class="flex items-baseline justify-center gap-1">
+                <span class="text-4xl font-bold text-kancho">$997</span>
+                <span class="text-gray-400">/month</span>
+              </div>
+            </div>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm"><strong>Everything in Pro</strong></span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Complete Martial Arts CRM</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Student management & tracking</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Belt progression system</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Class scheduling & attendance</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Billing & payment processing</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">1,000 AI voice minutes included</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Dedicated onboarding support</span>
+              </li>
+            </ul>
+            <button onclick="selectPlan('complete')" class="w-full py-3 bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border hover:border-kancho-coral rounded-xl font-medium transition">
+              Get Started
+            </button>
+          </div>
+        </div>
+
+        <p class="text-center text-gray-500 text-sm mt-8">All plans include a 14-day free trial. No credit card required to start.</p>
       </div>
     </div>
 
@@ -889,6 +1141,51 @@ app.get('*', (req, res) => {
       currentLanguage = lang;
       document.getElementById('langEn').classList.toggle('bg-kancho-coral/20', lang === 'en');
       document.getElementById('langEs').classList.toggle('bg-kancho-coral/20', lang === 'es');
+    }
+
+    // Plan selection and Stripe checkout
+    async function selectPlan(plan) {
+      const planNames = {
+        intelligence: 'Kancho Intelligence',
+        pro: 'Kancho Pro',
+        complete: 'Kancho Complete'
+      };
+
+      const planPrices = {
+        intelligence: 197,
+        pro: 497,
+        complete: 997
+      };
+
+      try {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+
+        // Create Stripe checkout session
+        const response = await fetch('/kanchoai/api/v1/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plan })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.url) {
+          // Redirect to Stripe Checkout
+          window.location.href = data.url;
+        } else {
+          alert(data.error || 'Failed to create checkout session. Please try again.');
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      } catch (error) {
+        console.error('Checkout error:', error);
+        alert('Something went wrong. Please try again.');
+        event.target.disabled = false;
+        event.target.innerHTML = 'Get Started';
+      }
     }
 
     // Initialize
