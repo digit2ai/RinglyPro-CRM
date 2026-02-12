@@ -900,6 +900,46 @@ app.get('*', (req, res) => {
         </div>
       </div>
 
+      <!-- KPI Metrics Section -->
+      <div class="mb-8">
+        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+          <i class="fas fa-chart-line text-kancho"></i>
+          Key Performance Indicators
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <!-- Active Students -->
+          <div class="card rounded-xl p-4 text-center">
+            <p class="text-xs text-gray-400 uppercase mb-2">Active Students</p>
+            <p id="kpiActiveStudents" class="text-2xl font-bold text-white">--</p>
+            <p id="kpiStudentGrowth" class="text-xs text-gray-400 mt-1">-- net growth</p>
+          </div>
+          <!-- Churn Rate -->
+          <div class="card rounded-xl p-4 text-center">
+            <p class="text-xs text-gray-400 uppercase mb-2">Churn Rate</p>
+            <p id="kpiChurnRate" class="text-2xl font-bold text-amber-400">--%</p>
+            <p class="text-xs text-gray-400 mt-1">this month</p>
+          </div>
+          <!-- ARPS -->
+          <div class="card rounded-xl p-4 text-center">
+            <p class="text-xs text-gray-400 uppercase mb-2">Avg Rev/Student</p>
+            <p id="kpiARPS" class="text-2xl font-bold text-green-400">$--</p>
+            <p class="text-xs text-gray-400 mt-1">ARPS</p>
+          </div>
+          <!-- Trial Conversion -->
+          <div class="card rounded-xl p-4 text-center">
+            <p class="text-xs text-gray-400 uppercase mb-2">Trial Conversion</p>
+            <p id="kpiTrialConversion" class="text-2xl font-bold text-blue-400">--%</p>
+            <p class="text-xs text-gray-400 mt-1">conversion rate</p>
+          </div>
+          <!-- Revenue vs Target -->
+          <div class="card rounded-xl p-4 text-center">
+            <p class="text-xs text-gray-400 uppercase mb-2">vs Target</p>
+            <p id="kpiRevenueTarget" class="text-2xl font-bold text-kancho">--%</p>
+            <p class="text-xs text-gray-400 mt-1">of monthly goal</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Action Lists -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="card rounded-2xl p-6">
@@ -1123,7 +1163,35 @@ app.get('*', (req, res) => {
         // Revenue
         const revenue = d.revenue?.this_month || 0;
         document.getElementById('monthlyRevenue').textContent = '$' + Math.round(revenue).toLocaleString();
-        document.getElementById('revenueProgress').textContent = d.revenue?.progress + '% of target';
+        document.getElementById('revenueProgress').textContent = (d.revenue?.percent || 0) + '% of target';
+
+        // KPI Metrics (from the new kpi object or fallback)
+        const kpi = d.kpi || {};
+        const activeStudents = kpi.active_students || d.students?.active || 0;
+        const netGrowth = kpi.net_student_growth || 0;
+        const churnRate = kpi.churn_rate || 0;
+        const arps = kpi.arps || 175;
+        const trialConversion = kpi.trial_conversion_rate || 0;
+        const revenueVsTarget = kpi.revenue_vs_target_percent || d.revenue?.percent || 0;
+
+        document.getElementById('kpiActiveStudents').textContent = activeStudents;
+        document.getElementById('kpiStudentGrowth').textContent = (netGrowth >= 0 ? '+' : '') + netGrowth + ' net growth';
+        document.getElementById('kpiChurnRate').textContent = parseFloat(churnRate).toFixed(1) + '%';
+        document.getElementById('kpiARPS').textContent = '$' + Math.round(arps);
+        document.getElementById('kpiTrialConversion').textContent = parseFloat(trialConversion).toFixed(1) + '%';
+        document.getElementById('kpiRevenueTarget').textContent = parseFloat(revenueVsTarget).toFixed(1) + '%';
+
+        // Color code churn rate
+        const churnEl = document.getElementById('kpiChurnRate');
+        if (churnRate > 10) churnEl.className = 'text-2xl font-bold text-red-400';
+        else if (churnRate > 5) churnEl.className = 'text-2xl font-bold text-amber-400';
+        else churnEl.className = 'text-2xl font-bold text-green-400';
+
+        // Color code revenue vs target
+        const targetEl = document.getElementById('kpiRevenueTarget');
+        if (revenueVsTarget >= 100) targetEl.className = 'text-2xl font-bold text-green-400';
+        else if (revenueVsTarget >= 80) targetEl.className = 'text-2xl font-bold text-amber-400';
+        else targetEl.className = 'text-2xl font-bold text-red-400';
 
         // Kancho message
         let message = 'Your business health score is ' + score + '. ';
