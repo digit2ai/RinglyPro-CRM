@@ -8,6 +8,7 @@ const app = express();
 
 // Kancho AI Logo URL
 const KANCHO_LOGO_URL = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d318b7f6dcf1134316df1.png';
+const KANCHO_STRIPE_LOGO_URL = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d245d721397289ba56c7d.png';
 
 // Middleware
 app.use(express.json());
@@ -105,7 +106,7 @@ if (models && !modelsError) {
             product_data: {
               name: planDetails.name,
               description: planDetails.description,
-              images: [KANCHO_LOGO_URL]
+              images: [KANCHO_STRIPE_LOGO_URL]
             },
             unit_amount: planDetails.price * 100,
             recurring: {
