@@ -155,7 +155,7 @@ if (models && !modelsError) {
   // Comprehensive demo data seed endpoint
   app.post('/api/v1/seed-demo', async (req, res) => {
     try {
-      const { KanchoSchool, KanchoStudent, KanchoLead, KanchoRevenue, KanchoAiCall, KanchoHealthScore } = models;
+      const { KanchoSchool, KanchoStudent, KanchoLead, KanchoRevenue, KanchoAiCall, KanchoHealthScore, KanchoBusinessHealthMetrics } = models;
       const today = new Date();
       const results = { schools: [], totalStudents: 0, totalLeads: 0, totalRevenue: 0, totalCalls: 0 };
 
@@ -403,6 +403,46 @@ if (models && !modelsError) {
             ]
           }
         });
+
+        // Create Business Health Metrics with KPIs including trial conversion and churn rate
+        const currentMonth = today.toISOString().slice(0, 7); // YYYY-MM format
+        const trialsStarted = randBetween(8, 20);
+        const trialsConverted = Math.floor(trialsStarted * (randBetween(45, 75) / 100)); // 45-75% conversion
+        const trialConversionRate = ((trialsConverted / trialsStarted) * 100).toFixed(2);
+        const cancelledStudents = randBetween(1, 5);
+        const startingStudents = activeCount + cancelledStudents;
+        const churnRate = ((cancelledStudents / startingStudents) * 100).toFixed(2);
+        const arps = (schoolRevenue / activeCount).toFixed(2);
+        const revenueAtRisk = (atRisk * parseFloat(arps)).toFixed(2);
+        const growthPotential = (hotLeads * parseFloat(arps)).toFixed(2);
+        const revenueTarget = schoolData.info.monthly_revenue_target;
+        const revenueVsTargetPercent = ((schoolRevenue / revenueTarget) * 100).toFixed(2);
+
+        if (KanchoBusinessHealthMetrics) {
+          await KanchoBusinessHealthMetrics.findOrCreate({
+            where: { school_id: schoolId, report_month: currentMonth },
+            defaults: {
+              school_id: schoolId,
+              report_month: currentMonth,
+              active_students: activeCount,
+              net_student_growth: trialsConverted - cancelledStudents,
+              churn_rate: parseFloat(churnRate),
+              arps: parseFloat(arps),
+              trial_conversion_rate: parseFloat(trialConversionRate),
+              trials_started: trialsStarted,
+              trials_converted: trialsConverted,
+              cancelled_students: cancelledStudents,
+              health_score: overallScore,
+              health_grade: grade,
+              revenue_at_risk: parseFloat(revenueAtRisk),
+              students_at_risk: atRisk,
+              growth_potential: parseFloat(growthPotential),
+              hot_leads: hotLeads,
+              monthly_revenue: schoolRevenue,
+              revenue_vs_target_percent: parseFloat(revenueVsTargetPercent)
+            }
+          });
+        }
 
         results.schools.push({
           id: schoolId,
