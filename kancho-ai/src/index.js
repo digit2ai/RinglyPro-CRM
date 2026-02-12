@@ -788,7 +788,7 @@ app.get('*', (req, res) => {
         <p class="text-gray-400 text-sm mb-8">Churn Detection · Lead Scoring · Revenue Analytics</p>
 
         <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight max-w-5xl mx-auto mb-12" style="color: #5BA4D4;">
-          An all-in-one AI system that monitors your business, identifies at-risk members, scores leads, and maximizes your revenue.
+          An all-in-one AI system that finds businesses, calls them automatically, collects leads, and schedules appointments.
         </h2>
 
         <div class="flex flex-col sm:flex-row gap-4 justify-center mb-6">
