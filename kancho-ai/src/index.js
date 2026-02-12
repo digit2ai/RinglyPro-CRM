@@ -130,15 +130,15 @@ if (models && !modelsError) {
             features: planDetails.features.join(', ')
           }
         },
-        success_url: \`\${webhookBaseUrl}/kanchoai?subscribe=success&plan=\${plan}\`,
-        cancel_url: \`\${webhookBaseUrl}/kanchoai?subscribe=canceled\`,
+        success_url: webhookBaseUrl + '/kanchoai?subscribe=success&plan=' + plan,
+        cancel_url: webhookBaseUrl + '/kanchoai?subscribe=canceled',
         metadata: {
           plan: plan,
           product: 'kancho_ai'
         }
       });
 
-      console.log(\`[Kancho] Checkout session created: \${session.id} for \${planDetails.name}\`);
+      console.log('[Kancho] Checkout session created: ' + session.id + ' for ' + planDetails.name);
 
       res.json({
         success: true,
