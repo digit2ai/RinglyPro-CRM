@@ -80,7 +80,7 @@ app.get('/metrics-guide', (req, res) => {
       const isHeader = cells.some(c => c.includes('**'));
       const tag = isHeader ? 'th' : 'td';
       const cellClass = isHeader ? 'px-4 py-3 text-left text-xs font-bold text-kancho uppercase bg-kancho-dark-card' : 'px-4 py-3 text-sm text-gray-300 border-t border-kancho-dark-border';
-      return '<tr>' + cells.map(c => \`<\${tag} class="\${cellClass}">\${c.trim().replace(/\*\*/g, '')}</\${tag}>\`).join('') + '</tr>';
+      return '<tr>' + cells.map(c => `<${tag} class="${cellClass}">${c.trim().replace(/\*\*/g, '')}</${tag}>`).join('') + '</tr>';
     })
     // Wrap tables
     .replace(/(<tr>.*?<\/tr>\n?)+/gs, '<div class="overflow-x-auto my-6"><table class="w-full border border-kancho-dark-border rounded-lg overflow-hidden">$&</table></div>')
@@ -94,7 +94,7 @@ app.get('/metrics-guide', (req, res) => {
     // Line breaks
     .replace(/\n/g, '<br>');
 
-  res.send(\`
+  res.send(`
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -127,7 +127,7 @@ app.get('/metrics-guide', (req, res) => {
   <header class="border-b border-kancho-dark-border sticky top-0 z-50 bg-kancho-dark/95 backdrop-blur-xl">
     <div class="max-w-4xl mx-auto flex items-center justify-between px-6 py-4">
       <a href="/kanchoai" class="flex items-center gap-3 hover:opacity-80 transition">
-        <img src="\${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-10 h-10 rounded-lg object-contain">
+        <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-10 h-10 rounded-lg object-contain">
         <div>
           <h1 class="text-xl font-bold text-white tracking-tight">KANCHO AI</h1>
           <p class="text-xs text-gray-500">Dashboard Metrics Guide</p>
@@ -144,7 +144,7 @@ app.get('/metrics-guide', (req, res) => {
   <main class="max-w-4xl mx-auto px-6 py-12">
     <div class="prose prose-invert max-w-none">
       <p class="text-gray-300 mb-4 leading-relaxed">
-      \${htmlContent}
+      ${htmlContent}
       </p>
     </div>
   </main>
@@ -152,12 +152,12 @@ app.get('/metrics-guide', (req, res) => {
   <!-- Footer -->
   <footer class="border-t border-kancho-dark-border mt-16">
     <div class="max-w-4xl mx-auto px-6 py-8 text-center">
-      <p class="text-gray-500 text-sm">&copy; \${new Date().getFullYear()} Kancho AI. All rights reserved.</p>
+      <p class="text-gray-500 text-sm">&copy; ${new Date().getFullYear()} Kancho AI. All rights reserved.</p>
     </div>
   </footer>
 </body>
 </html>
-  \`);
+  `);
 });
 
 // API Routes
