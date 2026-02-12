@@ -407,6 +407,88 @@ app.get('/pricing', (req, res) => {
   `));
 });
 
+// Pricing Page (Spanish)
+app.get('/es/pricing', (req, res) => {
+  res.send(generateStaticPage('Precios', `
+    <h1 class="text-4xl font-bold mb-6 text-white">Precios Simples y Transparentes</h1>
+    <p class="text-gray-300 mb-8 text-lg">Elige el plan que mejor se adapte a tu escuela de artes marciales. Todos los planes incluyen 14 días de prueba gratis.</p>
+
+    <div class="grid md:grid-cols-2 gap-8 mb-12">
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-8">
+        <h2 class="text-2xl font-bold text-white mb-2">Kancho Intelligence</h2>
+        <p class="text-gray-400 mb-4">Inteligencia de Negocio con IA</p>
+        <div class="flex items-baseline gap-1 mb-6">
+          <span class="text-4xl font-bold text-kancho">$197</span>
+          <span class="text-gray-400">/mes</span>
+        </div>
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Oficial de Inteligencia de Negocio con IA</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Integración con CRM</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Monitoreo de Puntaje de Salud</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Detección de Abandono y Alertas</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Puntuación de Prospectos</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Análisis de Ingresos</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Asesor de Voz con IA</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> 100 Minutos de Voz IA</li>
+        </ul>
+        <a href="https://checkout.stripe.com/c/pay/cs_live_a18grG2h3V8gz0gUChQ3o2R1FfHPo5GCMNtzTW5c0lLLThzQdOPHu0Zyfs#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdkdWxOYHwnPyd1blppbHNgWjA0V012N2RDNlRHaUF3Yn19MUkzQ2R2SFRvQVVAVVJtMVJJNkhcQ1RURGlgQUdgQ2FUfWcwN2JGakJ3VmFWQHBIQEAzSXY2QGg1N310Y31LQHdiNTBBbjw0NTVIVzxdRGlNTCcpJ2N3amhWYHdzYHcnP3F3cGApJ2dkZm5id2pwa2FGamlqdyc%2FJyZjY2NjY2MnKSdpZHxqcHFRfHVgJz8ndmxrYmlgWmxxYGgnKSdga2RnaWBVaWRmYG1qaWFgd3YnP3F3cGB4JSUl" class="block w-full py-3 text-center bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border rounded-xl font-medium transition text-white no-underline">Comenzar</a>
+      </div>
+
+      <div class="bg-kancho-dark-card border-2 border-kancho-coral/50 rounded-2xl p-8 relative">
+        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+          <span class="bg-kancho-coral px-4 py-1 rounded-full text-sm font-bold text-white">MÁS POPULAR</span>
+        </div>
+        <h2 class="text-2xl font-bold text-white mb-2">Kancho Pro</h2>
+        <p class="text-gray-400 mb-4">Intelligence + Recepcionista IA</p>
+        <div class="flex items-baseline gap-1 mb-6">
+          <span class="text-4xl font-bold text-kancho">$397</span>
+          <span class="text-gray-400">/mes</span>
+        </div>
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> <strong>Todo lo de Intelligence</strong></li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Recepcionista IA 24/7</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Seguimiento Automatizado de Prospectos</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Campañas de Retención</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Recuperación de Citas Perdidas</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Recordatorios de Pago</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Bilingüe (EN/ES)</li>
+          <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> 500 Minutos de Voz IA</li>
+        </ul>
+        <a href="https://checkout.stripe.com/c/pay/cs_live_a18grG2h3V8gz0gUChQ3o2R1FfHPo5GCMNtzTW5c0lLLThzQdOPHu0Zyfs#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdkdWxOYHwnPyd1blppbHNgWjA0V012N2RDNlRHaUF3Yn19MUkzQ2R2SFRvQVVAVVJtMVJJNkhcQ1RURGlgQUdgQ2FUfWcwN2JGakJ3VmFWQHBIQEAzSXY2QGg1N310Y31LQHdiNTBBbjw0NTVIVzxdRGlNTCcpJ2N3amhWYHdzYHcnP3F3cGApJ2dkZm5id2pwa2FGamlqdyc%2FJyZjY2NjY2MnKSdpZHxqcHFRfHVgJz8ndmxrYmlgWmxxYGgnKSdga2RnaWBVaWRmYG1qaWFgd3YnP3F3cGB4JSUl" class="block w-full py-3 text-center bg-kancho-coral hover:bg-kancho-coral/80 rounded-xl font-medium transition text-white no-underline">Comenzar</a>
+      </div>
+    </div>
+
+    <div class="text-center">
+      <p class="text-gray-400 mb-4">¿Necesitas una solución empresarial personalizada?</p>
+      <button onclick="document.getElementById('pricingBookingModalEs').classList.remove('hidden'); document.getElementById('pricingBookingModalEs').classList.add('flex');" class="text-kancho hover:underline cursor-pointer">Agenda una llamada para precios personalizados</button>
+    </div>
+  `, `
+    <!-- Booking Modal for Pricing Page (Spanish - Custom Enterprise) -->
+    <div id="pricingBookingModalEs" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4 overflow-y-auto">
+      <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-3xl shadow-2xl my-4 mx-auto">
+        <div class="p-6 border-b border-kancho-dark-border flex items-center justify-between sticky top-0 bg-kancho-dark-card z-10 rounded-t-3xl">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-kancho-coral/20">
+              <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-10 h-10 object-contain">
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white">Agenda Tu Demo</h3>
+              <p class="text-sm text-gray-400">Reserva una sesión personalizada con nuestro equipo</p>
+            </div>
+          </div>
+          <button onclick="document.getElementById('pricingBookingModalEs').classList.add('hidden'); document.getElementById('pricingBookingModalEs').classList.remove('flex');" class="p-2 hover:bg-white/10 rounded-lg transition">
+            <i class="fas fa-times text-gray-400"></i>
+          </button>
+        </div>
+        <div class="p-4">
+          <iframe src="https://api.leadconnectorhq.com/widget/booking/nhKuDsn2At5csiDYc4d0" style="width: 100%; height: 700px; border: none;" scrolling="yes"></iframe>
+        </div>
+      </div>
+    </div>
+    <script src="https://link.msgsndr.com/js/form_embed.js" type="text/javascript"></script>
+  `));
+});
+
 // Integrations Page
 app.get('/integrations', (req, res) => {
   res.send(generateStaticPage('Integrations', `
