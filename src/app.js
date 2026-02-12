@@ -535,6 +535,39 @@ app.get('/debug/spark-error', (req, res) => {
 });
 
 // =====================================================
+// KANCHO AI - Martial Arts School Intelligence Platform
+// =====================================================
+
+// Mount Kancho AI martial arts management system at /kanchoai
+let kanchoApp = null;
+let kanchoError = null;
+try {
+  kanchoApp = require('../kancho-ai/src/index');
+  app.use('/kanchoai', kanchoApp);
+  console.log('🥋 Kancho Martial Arts AI mounted at /kanchoai');
+  console.log('   - Dashboard UI: /kanchoai/');
+  console.log('   - Health Check: /kanchoai/health');
+  console.log('   - API: /kanchoai/api/v1/*');
+  console.log('   - Voice Agents: Kancho (EN) & Maestro (ES)');
+} catch (error) {
+  kanchoError = error;
+  console.log('⚠️ Kancho AI not available:', error.message);
+}
+
+// Debug endpoint to see Kancho AI error
+app.get('/debug/kancho-error', (req, res) => {
+  res.json({
+    service: 'Kancho Martial Arts AI',
+    available: !kanchoError,
+    error: kanchoError ? { message: kanchoError.message, stack: kanchoError.stack } : null,
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      hasDbUrl: !!process.env.DATABASE_URL
+    }
+  });
+});
+
+// =====================================================
 // TUNJORACING - Motorsport Sponsorship & Commerce Platform
 // =====================================================
 
