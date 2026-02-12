@@ -1518,6 +1518,104 @@ app.get('*', (req, res) => {
         </div>
       </div>
 
+      <!-- Business Value Section -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold mb-4">Business Value to <span class="text-kancho">Your School</span></h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">Real metrics that drive real results. Here's how Kancho AI delivers measurable value to your martial arts school.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <!-- Health Score -->
+          <div class="card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-kancho-coral/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-heartbeat text-kancho"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white">Business Health Score</h3>
+            </div>
+            <p class="text-gray-400 text-sm">Get a real-time 0-100 health score that combines retention, revenue, and lead metrics into one actionable number.</p>
+          </div>
+
+          <!-- Churn Detection -->
+          <div class="card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-user-minus text-red-400"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white">Churn Rate Reduction</h3>
+            </div>
+            <p class="text-gray-400 text-sm">Identify at-risk students before they cancel. Schools using Kancho AI see up to 40% reduction in monthly churn.</p>
+          </div>
+
+          <!-- Revenue at Risk -->
+          <div class="card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-amber-400"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white">Revenue at Risk Alerts</h3>
+            </div>
+            <p class="text-gray-400 text-sm">See exactly how much revenue is at risk from at-risk members. Take action before losing $4,000+ monthly.</p>
+          </div>
+
+          <!-- Lead Scoring -->
+          <div class="card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-fire text-orange-400"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white">Hot Lead Prioritization</h3>
+            </div>
+            <p class="text-gray-400 text-sm">Know which leads are ready to convert with AI-powered lead scoring. Focus on high-value prospects first.</p>
+          </div>
+
+          <!-- ARPS Tracking -->
+          <div class="card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-dollar-sign text-green-400"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white">Average Revenue Per Student</h3>
+            </div>
+            <p class="text-gray-400 text-sm">Track ARPS to understand the true value of each member and optimize your pricing and upselling strategies.</p>
+          </div>
+
+          <!-- Trial Conversion -->
+          <div class="card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-user-plus text-blue-400"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white">Trial Conversion Rate</h3>
+            </div>
+            <p class="text-gray-400 text-sm">Monitor how many trial students become paying members. Improve your conversion process with data-driven insights.</p>
+          </div>
+        </div>
+
+        <!-- Stats Banner -->
+        <div class="mt-12 bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-8">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div>
+              <p class="text-3xl font-bold text-kancho">40%</p>
+              <p class="text-gray-400 text-sm">Average Churn Reduction</p>
+            </div>
+            <div>
+              <p class="text-3xl font-bold text-kancho">2x</p>
+              <p class="text-gray-400 text-sm">Lead Conversion Rate</p>
+            </div>
+            <div>
+              <p class="text-3xl font-bold text-kancho">$4,700</p>
+              <p class="text-gray-400 text-sm">Avg. Revenue Saved Monthly</p>
+            </div>
+            <div>
+              <p class="text-3xl font-bold text-kancho">24/7</p>
+              <p class="text-gray-400 text-sm">AI Business Monitoring</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Hero CTA Section -->
       <div class="mt-20 pt-20 border-t border-kancho-dark-border text-center">
         <div class="mb-8">
