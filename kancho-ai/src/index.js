@@ -434,10 +434,10 @@ app.get('*', (req, res) => {
     <!-- Welcome Section -->
     <div id="welcomeSection" class="py-16">
       <div class="text-center mb-16">
-        <div class="w-28 h-28 rounded-3xl flex items-center justify-center mx-auto mb-8 glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border">
-          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-20 h-20 object-contain">
+        <div class="w-56 h-56 rounded-3xl flex items-center justify-center mx-auto mb-8 glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border">
+          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-40 h-40 object-contain">
         </div>
-        <h2 class="text-4xl font-bold mb-4">Meet <span class="text-kancho">Kancho</span></h2>
+        <h2 class="text-4xl font-bold mb-4">Meet <span class="text-kancho">Kancho AI</span></h2>
         <p class="text-xl text-gray-300 mb-2">Your AI Business Intelligence Officer</p>
         <p class="text-gray-400 max-w-2xl mx-auto">
           Connects to your company data, understands how your business really works,
@@ -580,6 +580,50 @@ app.get('*', (req, res) => {
     <button onclick="setLanguage('es')" id="langEs" class="px-4 py-2 bg-kancho-dark-card border border-kancho-dark-border rounded-lg text-sm hover:bg-kancho-coral/20 transition">ES</button>
   </div>
 
+  <!-- Voice Chat Modal - ElevenLabs Widget -->
+  <div id="voiceModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4">
+    <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6 max-w-md w-full">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-10 h-10 rounded-lg">
+          <div>
+            <h3 class="font-bold text-white">Kancho AI</h3>
+            <p id="voiceStatus" class="text-sm text-gray-400">Starting conversation...</p>
+          </div>
+        </div>
+        <button onclick="closeVoiceModal()" class="p-2 hover:bg-white/10 rounded-lg transition">
+          <i class="fas fa-times text-gray-400"></i>
+        </button>
+      </div>
+      <!-- ElevenLabs Widget Container -->
+      <div class="flex justify-center">
+        <div id="voiceWidgetContainer" class="mb-4">
+        </div>
+      </div>
+      <button onclick="closeVoiceModal()" class="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-medium transition">
+        End Conversation
+      </button>
+    </div>
+  </div>
+
+  <!-- ElevenLabs Widget SDK -->
+  <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
+  <style>
+    /* Style ElevenLabs widget in modal */
+    #voiceWidgetContainer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100px;
+    }
+    #voiceWidgetContainer elevenlabs-convai {
+      margin: 0 auto;
+    }
+    elevenlabs-convai::part(powered-by) {
+      display: none !important;
+    }
+  </style>
+
   <script>
     let currentSchoolId = null;
     let currentLanguage = 'en';
@@ -696,8 +740,60 @@ app.get('*', (req, res) => {
       }
     }
 
+    // KANCHO VOICE INTEGRATION - ElevenLabs Widget
+    const KANCHO_VOICE_AGENT_ID = 'agent_5601kh453hqqfz59nfemkwk02vax';
+    let widgetElement = null;
+
     async function talkToKancho() {
-      alert('Voice chat coming soon! Kancho will be available to answer questions about your business.');
+      openVoiceModal();
+    }
+
+    function openVoiceModal() {
+      const modal = document.getElementById('voiceModal');
+      const container = document.getElementById('voiceWidgetContainer');
+      const statusEl = document.getElementById('voiceStatus');
+
+      statusEl.textContent = 'Starting conversation...';
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      // Remove any existing widget
+      container.innerHTML = '';
+
+      // Create the ElevenLabs widget
+      widgetElement = document.createElement('elevenlabs-convai');
+      widgetElement.setAttribute('agent-id', KANCHO_VOICE_AGENT_ID);
+
+      // Pass school context if available
+      if (currentSchoolId) {
+        widgetElement.setAttribute('dynamic-variables', JSON.stringify({ school_id: currentSchoolId }));
+      }
+
+      container.appendChild(widgetElement);
+
+      // Auto-click the widget to start conversation
+      setTimeout(() => {
+        const widget = container.querySelector('elevenlabs-convai');
+        if (widget && widget.shadowRoot) {
+          const btn = widget.shadowRoot.querySelector('button');
+          if (btn) btn.click();
+        }
+        statusEl.textContent = 'Connected - Speak now';
+      }, 1000);
+    }
+
+    function closeVoiceModal() {
+      const modal = document.getElementById('voiceModal');
+      const container = document.getElementById('voiceWidgetContainer');
+      const statusEl = document.getElementById('voiceStatus');
+
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+
+      // Clean up widget
+      container.innerHTML = '';
+      widgetElement = null;
+      statusEl.textContent = 'Starting conversation...';
     }
 
     function setLanguage(lang) {
