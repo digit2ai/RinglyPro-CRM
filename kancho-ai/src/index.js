@@ -580,14 +580,17 @@ app.get('*', (req, res) => {
     <button onclick="setLanguage('es')" id="langEs" class="px-4 py-2 bg-kancho-dark-card border border-kancho-dark-border rounded-lg text-sm hover:bg-kancho-coral/20 transition">ES</button>
   </div>
 
-  <!-- Voice Chat Modal - ElevenLabs Widget -->
+  <!-- Voice Chat Modal - ElevenLabs Widget Auto-Start -->
   <div id="voiceModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4">
-    <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-6 max-w-md w-full">
-      <div class="flex items-center justify-between mb-6">
+    <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
+      <!-- Modal Header -->
+      <div class="p-6 border-b border-kancho-dark-border flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-10 h-10 rounded-lg">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-kancho-coral/20">
+            <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-10 h-10 object-contain">
+          </div>
           <div>
-            <h3 class="font-bold text-white">Kancho AI</h3>
+            <h3 class="text-lg font-bold">Talk to Kancho</h3>
             <p id="voiceStatus" class="text-sm text-gray-400">Starting conversation...</p>
           </div>
         </div>
@@ -595,30 +598,46 @@ app.get('*', (req, res) => {
           <i class="fas fa-times text-gray-400"></i>
         </button>
       </div>
+
       <!-- ElevenLabs Widget Container -->
-      <div class="flex justify-center">
+      <div class="p-8 flex flex-col items-center justify-center min-h-[300px]">
         <div id="voiceWidgetContainer" class="mb-4">
+          <!-- Widget inserted here by JS and auto-started -->
         </div>
+
+        <p id="widgetSchoolName" class="text-lg font-medium text-white mb-2"></p>
+        <p class="text-sm text-gray-400 text-center">
+          Click the orb to talk to Kancho.<br>
+          Ask about revenue, members, leads, and more.
+        </p>
       </div>
-      <button onclick="closeVoiceModal()" class="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-medium transition">
-        End Conversation
-      </button>
+
+      <!-- Close Button -->
+      <div class="p-4 border-t border-kancho-dark-border">
+        <button onclick="closeVoiceModal()" class="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-medium transition">
+          End Conversation
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- ElevenLabs Widget SDK -->
   <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
+
   <style>
-    /* Style ElevenLabs widget in modal */
+    /* Style ElevenLabs widget in modal - center it */
     #voiceWidgetContainer {
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100px;
+      min-height: 120px;
     }
     #voiceWidgetContainer elevenlabs-convai {
-      margin: 0 auto;
+      position: relative !important;
+      bottom: auto !important;
+      right: auto !important;
     }
+    /* Hide the powered-by branding */
     elevenlabs-convai::part(powered-by) {
       display: none !important;
     }
@@ -626,6 +645,7 @@ app.get('*', (req, res) => {
 
   <script>
     let currentSchoolId = null;
+    let currentSchoolData = null;
     let currentLanguage = 'en';
 
     async function loadSchools() {
@@ -662,6 +682,9 @@ app.get('*', (req, res) => {
         const res = await fetch('/kanchoai/api/v1/dashboard?school_id=' + schoolId);
         const data = await res.json();
         const d = data.data;
+
+        // Store data for voice widget
+        currentSchoolData = d;
 
         // Update health score
         const score = d.health?.overall_score || 0;
@@ -740,60 +763,126 @@ app.get('*', (req, res) => {
       }
     }
 
-    // KANCHO VOICE INTEGRATION - ElevenLabs Widget
+    // =====================================================
+    // KANCHO VOICE INTEGRATION - Hidden ElevenLabs Widget
+    // Uses the official widget but hides it visually
+    // Custom orb triggers the hidden widget
+    // =====================================================
+
     const KANCHO_VOICE_AGENT_ID = 'agent_5601kh453hqqfz59nfemkwk02vax';
     let widgetElement = null;
 
-    async function talkToKancho() {
+    function talkToKancho() {
+      if (!currentSchoolId) {
+        alert('Please select a business first to talk to Kancho');
+        return;
+      }
       openVoiceModal();
     }
 
     function openVoiceModal() {
       const modal = document.getElementById('voiceModal');
+      const schoolNameEl = document.getElementById('widgetSchoolName');
       const container = document.getElementById('voiceWidgetContainer');
       const statusEl = document.getElementById('voiceStatus');
 
-      statusEl.textContent = 'Starting conversation...';
+      // Show modal
       modal.classList.remove('hidden');
       modal.classList.add('flex');
+      statusEl.textContent = 'Starting conversation...';
 
-      // Remove any existing widget
+      // Update school name
+      const schoolSelect = document.getElementById('schoolSelect');
+      const selectedOption = schoolSelect.options[schoolSelect.selectedIndex];
+      schoolNameEl.textContent = selectedOption ? selectedOption.text : '';
+
+      // Create widget with comprehensive dynamic variables
+      const school = currentSchoolData?.school || {};
+      const health = currentSchoolData?.health || {};
+      const students = currentSchoolData?.students || {};
+      const revenue = currentSchoolData?.revenue || {};
+      const leads = currentSchoolData?.leads || {};
+
+      const atRiskCount = students.at_risk || 0;
+      const hotLeads = leads.hot || 0;
+
+      const schoolId = parseInt(currentSchoolId, 10);
+      const dynamicVars = {
+        // ElevenLabs tool placeholder - maps to school_id
+        dynamic_variable: schoolId,
+        school_id: schoolId,
+        language: currentLanguage || 'en',
+        school_name: school.name || 'your school',
+        martial_art: school.martial_art_type || 'martial arts',
+        health_score: health.overall_score || 0,
+        health_grade: health.grade || 'N/A',
+        active_students: students.active || 0,
+        at_risk_students: atRiskCount,
+        revenue_at_risk: atRiskCount * 175,
+        hot_leads: hotLeads,
+        growth_potential: hotLeads * 175,
+        monthly_revenue: revenue.this_month || 0,
+        revenue_target: revenue.target || 0,
+        revenue_percent: revenue.percent || 0
+      };
+
+      console.log('[Kancho] Creating widget with:', dynamicVars);
+
+      // Clear any existing widget
       container.innerHTML = '';
 
       // Create the ElevenLabs widget
       widgetElement = document.createElement('elevenlabs-convai');
       widgetElement.setAttribute('agent-id', KANCHO_VOICE_AGENT_ID);
-
-      // Pass school context if available
-      if (currentSchoolId) {
-        widgetElement.setAttribute('dynamic-variables', JSON.stringify({ school_id: currentSchoolId }));
-      }
-
+      widgetElement.setAttribute('dynamic-variables', JSON.stringify(dynamicVars));
       container.appendChild(widgetElement);
 
       // Auto-click the widget to start conversation
-      setTimeout(() => {
-        const widget = container.querySelector('elevenlabs-convai');
-        if (widget && widget.shadowRoot) {
-          const btn = widget.shadowRoot.querySelector('button');
-          if (btn) btn.click();
+      autoStartWidget();
+    }
+
+    function autoStartWidget() {
+      let attempts = 0;
+      const maxAttempts = 20;
+      const statusEl = document.getElementById('voiceStatus');
+
+      function tryAutoStart() {
+        attempts++;
+        if (!widgetElement) return;
+
+        const shadowRoot = widgetElement.shadowRoot;
+        if (shadowRoot) {
+          const btn = shadowRoot.querySelector('button');
+          if (btn) {
+            console.log('[Kancho] Auto-clicking widget button');
+            statusEl.textContent = 'Connected - Click orb to talk';
+            btn.click();
+            return;
+          }
         }
-        statusEl.textContent = 'Connected - Speak now';
-      }, 1000);
+
+        if (attempts < maxAttempts) {
+          setTimeout(tryAutoStart, 200);
+        } else {
+          console.log('[Kancho] Widget ready - click orb to start');
+          statusEl.textContent = 'Click the orb to start talking';
+        }
+      }
+
+      setTimeout(tryAutoStart, 500);
     }
 
     function closeVoiceModal() {
       const modal = document.getElementById('voiceModal');
       const container = document.getElementById('voiceWidgetContainer');
-      const statusEl = document.getElementById('voiceStatus');
 
+      // Remove widget to end conversation
+      if (container) container.innerHTML = '';
+      widgetElement = null;
+
+      // Hide modal
       modal.classList.add('hidden');
       modal.classList.remove('flex');
-
-      // Clean up widget
-      container.innerHTML = '';
-      widgetElement = null;
-      statusEl.textContent = 'Starting conversation...';
     }
 
     function setLanguage(lang) {
