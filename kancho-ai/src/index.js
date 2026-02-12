@@ -1343,6 +1343,127 @@ app.get('*', (req, res) => {
         </div>
       </div>
 
+      <!-- AI Automation Workflow Section -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold mb-4">How <span class="text-kancho">Kancho AI</span> Works For You</h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">A fully automated AI system that monitors, retains, and grows your martial arts school — 24/7, without lifting a finger.</p>
+        </div>
+
+        <!-- Workflow Steps -->
+        <div class="max-w-5xl mx-auto">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            <!-- Connection Lines (Desktop) -->
+            <div class="hidden md:block absolute top-16 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-kancho-coral via-amber-500 to-green-500"></div>
+
+            <!-- Step 1: Monitor -->
+            <div class="relative">
+              <div class="card rounded-2xl p-6 text-center h-full">
+                <div class="w-20 h-20 bg-kancho-coral/20 rounded-full flex items-center justify-center mx-auto mb-6 relative z-10 border-4 border-kancho-dark">
+                  <i class="fas fa-heartbeat text-kancho text-3xl"></i>
+                </div>
+                <div class="inline-block bg-kancho-coral/20 text-kancho text-xs font-bold px-3 py-1 rounded-full mb-4">STEP 1</div>
+                <h3 class="text-xl font-bold mb-3 text-white">Monitor Health</h3>
+                <p class="text-gray-400 text-sm mb-4">
+                  Kancho AI continuously monitors your school's health score, tracking attendance patterns, payment status, and engagement levels in real-time.
+                </p>
+                <ul class="text-left text-sm space-y-2">
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-kancho text-xs"></i>
+                    Real-time health score (0-100)
+                  </li>
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-kancho text-xs"></i>
+                    At-risk student detection
+                  </li>
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-kancho text-xs"></i>
+                    Revenue tracking & forecasting
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Step 2: Retain -->
+            <div class="relative">
+              <div class="card rounded-2xl p-6 text-center h-full border-amber-500/30">
+                <div class="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6 relative z-10 border-4 border-kancho-dark">
+                  <i class="fas fa-phone-alt text-amber-400 text-3xl"></i>
+                </div>
+                <div class="inline-block bg-amber-500/20 text-amber-400 text-xs font-bold px-3 py-1 rounded-full mb-4">STEP 2</div>
+                <h3 class="text-xl font-bold mb-3 text-white">Retain Members</h3>
+                <p class="text-gray-400 text-sm mb-4">
+                  When a student shows churn signals, Kancho AI automatically places personalized retention calls to re-engage them before they cancel.
+                </p>
+                <ul class="text-left text-sm space-y-2">
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-amber-400 text-xs"></i>
+                    Automatic outreach calls
+                  </li>
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-amber-400 text-xs"></i>
+                    Personalized retention scripts
+                  </li>
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-amber-400 text-xs"></i>
+                    No-show & payment recovery
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Step 3: Convert -->
+            <div class="relative">
+              <div class="card rounded-2xl p-6 text-center h-full border-green-500/30">
+                <div class="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6 relative z-10 border-4 border-kancho-dark">
+                  <i class="fas fa-chart-line text-green-400 text-3xl"></i>
+                </div>
+                <div class="inline-block bg-green-500/20 text-green-400 text-xs font-bold px-3 py-1 rounded-full mb-4">STEP 3</div>
+                <h3 class="text-xl font-bold mb-3 text-white">Convert Leads</h3>
+                <p class="text-gray-400 text-sm mb-4">
+                  Kancho AI engages with every lead from first contact to conversion — following up, scheduling trials, and nurturing until they become paying members.
+                </p>
+                <ul class="text-left text-sm space-y-2">
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-green-400 text-xs"></i>
+                    End-to-end lead engagement
+                  </li>
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-green-400 text-xs"></i>
+                    Automated trial scheduling
+                  </li>
+                  <li class="flex items-center gap-2 text-gray-300">
+                    <i class="fas fa-check-circle text-green-400 text-xs"></i>
+                    Hot lead prioritization
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Result Banner -->
+          <div class="mt-12 bg-gradient-to-r from-kancho-coral/10 via-amber-500/10 to-green-500/10 border border-kancho-dark-border rounded-2xl p-8 text-center">
+            <div class="flex flex-col md:flex-row items-center justify-center gap-6">
+              <div class="flex items-center gap-3">
+                <i class="fas fa-robot text-kancho text-2xl"></i>
+                <span class="text-white font-medium">24/7 AI Automation</span>
+              </div>
+              <div class="hidden md:block w-px h-8 bg-kancho-dark-border"></div>
+              <div class="flex items-center gap-3">
+                <i class="fas fa-hand-holding-usd text-amber-400 text-2xl"></i>
+                <span class="text-white font-medium">Protect Revenue</span>
+              </div>
+              <div class="hidden md:block w-px h-8 bg-kancho-dark-border"></div>
+              <div class="flex items-center gap-3">
+                <i class="fas fa-users text-green-400 text-2xl"></i>
+                <span class="text-white font-medium">Grow Membership</span>
+              </div>
+            </div>
+            <p class="text-gray-400 text-sm mt-4">All working automatically while you focus on teaching and transforming lives.</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Integration Image -->
       <div class="mt-16 flex justify-center">
         <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d575dbfe00f98dff7c57d.png" alt="Kancho AI Integrations" class="max-w-full md:max-w-4xl rounded-2xl">
