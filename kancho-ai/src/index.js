@@ -506,6 +506,8 @@ app.get('*', (req, res) => {
         </div>
       </div>
       <div class="flex items-center gap-4">
+        <span class="text-gray-400 text-sm font-medium">DEMO</span>
+        <i class="fas fa-chevron-right text-gray-500 text-xs"></i>
         <select id="schoolSelect" class="bg-kancho-dark-card border border-kancho-dark-border rounded-lg px-4 py-2.5 text-sm focus:border-kancho-coral focus:outline-none transition">
           <option value="">Select Your Business...</option>
         </select>
