@@ -73,7 +73,7 @@ if (models && !modelsError) {
     },
     pro: {
       name: 'Kancho Pro',
-      price: 497,
+      price: 397,
       description: 'Intelligence + AI Receptionist for 24/7 automation',
       features: ['Everything in Intelligence', '24/7 AI Receptionist', 'Lead Follow-up Calls', 'Retention Campaigns', 'No-show Recovery', 'Payment Reminders', 'Bilingual (EN/ES)', '500 AI Voice Minutes ($0.45 thereafter)']
     }
@@ -669,7 +669,7 @@ app.get('*', (req, res) => {
               <h3 class="text-xl font-bold mb-2">Kancho Pro</h3>
               <p class="text-gray-400 text-sm mb-4">Intelligence + AI Receptionist</p>
               <div class="flex items-baseline justify-center gap-1">
-                <span class="text-4xl font-bold text-kancho">$497</span>
+                <span class="text-4xl font-bold text-kancho">$397</span>
                 <span class="text-gray-400">/month</span>
               </div>
             </div>
@@ -1144,7 +1144,7 @@ app.get('*', (req, res) => {
 
       const planPrices = {
         intelligence: 197,
-        pro: 497
+        pro: 397
       };
 
       try {
