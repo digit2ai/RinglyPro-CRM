@@ -782,7 +782,7 @@ app.get('*', (req, res) => {
       <!-- Hero CTA Section -->
       <div class="mt-20 pt-20 border-t border-kancho-dark-border text-center">
         <div class="mb-8">
-          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696f9543fc6c325ca2ba20d8.png" alt="Kancho AI" class="max-w-2xl w-full mx-auto mb-6">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="Kancho AI" class="max-w-2xl w-full mx-auto mb-6">
         </div>
         <p class="text-kancho text-lg font-medium mb-2">AI Business Intelligence — Voice & Analytics Platform</p>
         <p class="text-gray-400 text-sm mb-8">Churn Detection · Lead Scoring · Revenue Analytics</p>
