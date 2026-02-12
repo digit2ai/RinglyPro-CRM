@@ -69,7 +69,7 @@ if (models && !modelsError) {
       name: 'Kancho Intelligence',
       price: 197,
       description: 'AI Business Intelligence Officer integrated with your CRM',
-      features: ['AI Business Intelligence', 'CRM Integration', 'Health Scoring', 'Churn Detection', 'Lead Scoring', 'Revenue Analytics', 'Voice AI Advisor']
+      features: ['AI Business Intelligence', 'CRM Integration', 'Health Scoring', 'Churn Detection', 'Lead Scoring', 'Revenue Analytics', 'Voice AI Advisor', '100 AI Voice Minutes ($0.50 thereafter)']
     },
     pro: {
       name: 'Kancho Pro',
@@ -615,6 +615,10 @@ app.get('*', (req, res) => {
               <li class="flex items-start gap-3">
                 <i class="fas fa-check text-green-400 mt-1"></i>
                 <span class="text-gray-300 text-sm">Voice AI business advisor</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">100 AI voice minutes included ($0.50 thereafter)</span>
               </li>
             </ul>
             <button onclick="selectPlan('intelligence')" class="w-full py-3 bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border hover:border-kancho-coral rounded-xl font-medium transition">
