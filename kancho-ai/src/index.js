@@ -1557,7 +1557,7 @@ app.get('*', (req, res) => {
                 <span class="text-gray-300 text-sm">100 AI voice minutes included ($0.50 thereafter)</span>
               </li>
             </ul>
-            <button onclick="selectPlan('intelligence')" class="w-full py-3 bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border hover:border-kancho-coral rounded-xl font-medium transition">
+            <button onclick="selectPlan('intelligence', this)" class="w-full py-3 bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border hover:border-kancho-coral rounded-xl font-medium transition">
               Get Started
             </button>
           </div>
@@ -1609,7 +1609,7 @@ app.get('*', (req, res) => {
                 <span class="text-gray-300 text-sm">500 AI voice minutes included ($0.45 thereafter)</span>
               </li>
             </ul>
-            <button onclick="selectPlan('pro')" class="w-full py-3 kancho-btn rounded-xl font-medium transition shadow-lg">
+            <button onclick="selectPlan('pro', this)" class="w-full py-3 kancho-btn rounded-xl font-medium transition shadow-lg">
               Get Started
             </button>
           </div>
@@ -1668,7 +1668,7 @@ app.get('*', (req, res) => {
 
         <!-- Final CTA -->
         <div class="text-center mt-12">
-          <button onclick="selectPlan('intelligence')" class="kancho-btn px-10 py-4 rounded-xl font-medium text-lg transition shadow-lg">
+          <button onclick="selectPlan('intelligence', this)" class="kancho-btn px-10 py-4 rounded-xl font-medium text-lg transition shadow-lg">
             <i class="fas fa-rocket mr-2"></i>Start Your Free Trial
           </button>
           <p class="text-gray-500 text-sm mt-4">No credit card required • Cancel anytime</p>
@@ -1786,7 +1786,7 @@ app.get('*', (req, res) => {
         </h2>
 
         <div class="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-          <button onclick="selectPlan('intelligence')" class="kancho-btn px-10 py-4 rounded-full font-medium text-lg transition shadow-lg">
+          <button onclick="selectPlan('intelligence', this)" class="kancho-btn px-10 py-4 rounded-full font-medium text-lg transition shadow-lg">
             Start Free
           </button>
           <button onclick="openBookingModal()" class="px-10 py-4 rounded-full font-medium text-lg border-2 border-gray-600 hover:border-gray-400 transition">
@@ -2372,7 +2372,7 @@ app.get('*', (req, res) => {
     }
 
     // Plan selection and Stripe checkout
-    async function selectPlan(plan) {
+    async function selectPlan(plan, btn) {
       const planNames = {
         intelligence: 'Kancho Intelligence',
         pro: 'Kancho Pro'
@@ -2384,7 +2384,6 @@ app.get('*', (req, res) => {
       };
 
       try {
-        const btn = event.target;
         const originalText = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
@@ -2409,8 +2408,8 @@ app.get('*', (req, res) => {
       } catch (error) {
         console.error('Checkout error:', error);
         alert('Something went wrong. Please try again.');
-        event.target.disabled = false;
-        event.target.innerHTML = 'Get Started';
+        btn.disabled = false;
+        btn.innerHTML = 'Get Started';
       }
     }
 
