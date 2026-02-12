@@ -75,7 +75,7 @@ if (models && !modelsError) {
       name: 'Kancho Pro',
       price: 497,
       description: 'Intelligence + AI Receptionist for 24/7 automation',
-      features: ['Everything in Intelligence', '24/7 AI Receptionist', 'Lead Follow-up Calls', 'Retention Campaigns', 'No-show Recovery', 'Payment Reminders', 'Bilingual (EN/ES)', '500 AI Minutes']
+      features: ['Everything in Intelligence', '24/7 AI Receptionist', 'Lead Follow-up Calls', 'Retention Campaigns', 'No-show Recovery', 'Payment Reminders', 'Bilingual (EN/ES)', '500 AI Voice Minutes ($0.45 thereafter)']
     }
   };
 
@@ -704,7 +704,7 @@ app.get('*', (req, res) => {
               </li>
               <li class="flex items-start gap-3">
                 <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">500 AI voice minutes included</span>
+                <span class="text-gray-300 text-sm">500 AI voice minutes included ($0.45 thereafter)</span>
               </li>
             </ul>
             <button onclick="selectPlan('pro')" class="w-full py-3 kancho-btn rounded-xl font-medium transition shadow-lg">
