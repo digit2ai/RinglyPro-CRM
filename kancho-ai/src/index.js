@@ -2420,7 +2420,7 @@ app.get('/es', (req, res) => {
 
 // Serve dashboard for all other routes (SPA fallback)
 app.get('*', (req, res) => {
-  res.send(\`
+  res.send(`
 <!DOCTYPE html>
 <html lang="en">
 <head>
