@@ -616,7 +616,7 @@ app.get('*', (req, res) => {
           <p class="text-gray-400 max-w-2xl mx-auto">Power your martial arts school with AI-driven business intelligence, automated receptionist, and complete CRM solutions.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           <!-- Plan 1: Kancho Intelligence -->
           <div class="card rounded-2xl p-8 relative hover:border-kancho-coral/50 transition-all duration-300">
             <div class="text-center mb-6">
@@ -715,6 +715,54 @@ app.get('*', (req, res) => {
             </ul>
             <button onclick="selectPlan('pro')" class="w-full py-3 kancho-btn rounded-xl font-medium transition shadow-lg">
               Get Started
+            </button>
+          </div>
+
+          <!-- Plan 3: Kancho Enterprise -->
+          <div class="card rounded-2xl p-8 relative hover:border-kancho-coral/50 transition-all duration-300">
+            <div class="text-center mb-6">
+              <h3 class="text-xl font-bold mb-2">Kancho Enterprise</h3>
+              <p class="text-gray-400 text-sm mb-4">Multi-Tenant SaaS Solution</p>
+              <div class="flex items-baseline justify-center gap-1">
+                <span class="text-4xl font-bold text-kancho">Custom</span>
+              </div>
+            </div>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm"><strong>Everything in Pro</strong></span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">White-label multi-tenant platform</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Multi-language support</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Custom integrations & API access</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Dedicated account manager</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Priority support & SLA</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Volume pricing for SaaS providers</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Unlimited AI voice minutes</span>
+              </li>
+            </ul>
+            <button onclick="openBookingModal()" class="w-full py-3 bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border hover:border-kancho-coral rounded-xl font-medium transition">
+              Schedule a Call
             </button>
           </div>
 
