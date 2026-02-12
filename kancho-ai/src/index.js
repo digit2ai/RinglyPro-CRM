@@ -919,6 +919,75 @@ app.get('*', (req, res) => {
     </div>
   </main>
 
+  <!-- Footer -->
+  <footer class="border-t border-kancho-dark-border bg-kancho-dark/95 mt-20">
+    <div class="max-w-7xl mx-auto px-6 py-16">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+        <!-- Brand -->
+        <div class="md:col-span-1">
+          <div class="flex items-center gap-3 mb-4">
+            <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-10 h-10 rounded-lg object-contain">
+            <span class="text-xl font-bold">KANCHO AI</span>
+          </div>
+          <p class="text-gray-400 text-sm mb-4">AI Business Intelligence Officer for martial arts schools and fitness businesses.</p>
+          <p class="text-gray-500 text-xs">Powered by RinglyPro</p>
+        </div>
+
+        <!-- Product -->
+        <div>
+          <h4 class="font-semibold mb-4 text-white">Product</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Features</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Pricing</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Integrations</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Enterprise</a></li>
+          </ul>
+        </div>
+
+        <!-- Company -->
+        <div>
+          <h4 class="font-semibold mb-4 text-white">Company</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="#" class="text-gray-400 hover:text-kancho transition">About Us</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Careers</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Blog</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Contact</a></li>
+          </ul>
+        </div>
+
+        <!-- Support -->
+        <div>
+          <h4 class="font-semibold mb-4 text-white">Support</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Help Center</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Privacy Policy</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-kancho transition">Terms of Service</a></li>
+            <li><a href="mailto:support@ringlypro.com" class="text-gray-400 hover:text-kancho transition">support@ringlypro.com</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="border-t border-kancho-dark-border mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-gray-500 text-sm">&copy; ${new Date().getFullYear()} Kancho AI. All rights reserved.</p>
+        <div class="flex items-center gap-6">
+          <a href="https://facebook.com/ringlypro" target="_blank" class="text-gray-400 hover:text-kancho transition">
+            <i class="fab fa-facebook text-lg"></i>
+          </a>
+          <a href="https://instagram.com/ringlypro" target="_blank" class="text-gray-400 hover:text-kancho transition">
+            <i class="fab fa-instagram text-lg"></i>
+          </a>
+          <a href="https://linkedin.com/company/ringlypro" target="_blank" class="text-gray-400 hover:text-kancho transition">
+            <i class="fab fa-linkedin text-lg"></i>
+          </a>
+          <a href="https://youtube.com/@ringlypro" target="_blank" class="text-gray-400 hover:text-kancho transition">
+            <i class="fab fa-youtube text-lg"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
   <!-- Language Toggle -->
   <div class="fixed bottom-4 left-4 flex gap-2">
     <button onclick="setLanguage('en')" id="langEn" class="px-4 py-2 bg-kancho-dark-card border border-kancho-dark-border rounded-lg text-sm hover:bg-kancho-coral/20 transition">EN</button>
