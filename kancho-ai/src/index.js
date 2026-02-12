@@ -747,12 +747,36 @@ app.get('*', (req, res) => {
           <button onclick="selectPlan('pro')" class="kancho-btn px-10 py-4 rounded-full font-medium text-lg transition shadow-lg">
             Start Free
           </button>
-          <a href="https://calendly.com/ringlypro/kancho-demo" target="_blank" class="px-10 py-4 rounded-full font-medium text-lg border-2 border-gray-600 hover:border-gray-400 transition">
-            Book a Demo
-          </a>
+          <button onclick="openBookingModal()" class="px-10 py-4 rounded-full font-medium text-lg border-2 border-gray-600 hover:border-gray-400 transition">
+            Schedule a Demo
+          </button>
         </div>
         <p class="text-gray-500 text-sm">Absolutely free — no credit card, no hidden fees</p>
       </div>
+
+      <!-- Booking Modal -->
+      <div id="bookingModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4">
+        <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl">
+          <div class="p-6 border-b border-kancho-dark-border flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-kancho-coral/20">
+                <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-10 h-10 object-contain">
+              </div>
+              <div>
+                <h3 class="text-lg font-bold">Schedule a Demo</h3>
+                <p class="text-sm text-gray-400">Book a personalized walkthrough</p>
+              </div>
+            </div>
+            <button onclick="closeBookingModal()" class="p-2 hover:bg-white/10 rounded-lg transition">
+              <i class="fas fa-times text-gray-400"></i>
+            </button>
+          </div>
+          <div class="p-4" style="min-height: 600px;">
+            <iframe src="https://api.leadconnectorhq.com/widget/booking/nhKuDsn2At5csiDYc4d0" style="width: 100%; height: 550px; border: none; overflow: hidden;" scrolling="no" id="nhKuDsn2At5csiDYc4d0_1770871834450"></iframe>
+          </div>
+        </div>
+      </div>
+      <script src="https://link.msgsndr.com/js/form_embed.js" type="text/javascript"></script>
     </div>
 
     <!-- Dashboard Section -->
@@ -1154,6 +1178,18 @@ app.get('*', (req, res) => {
       widgetElement = null;
 
       // Hide modal
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function openBookingModal() {
+      const modal = document.getElementById('bookingModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeBookingModal() {
+      const modal = document.getElementById('bookingModal');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
     }
