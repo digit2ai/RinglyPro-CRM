@@ -46,14 +46,12 @@ export default function Navbar() {
 
           {/* Right side buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <a
-              href="https://tunjoracing.com/press"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to="/press/login"
               className="bg-amber-500 text-black px-4 py-2 rounded-lg font-bold text-sm hover:bg-amber-400 transition-colors"
             >
               Press Release
-            </a>
+            </Link>
             <Link
               to="/sponsor/login"
               className="bg-[#e31837] text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-[#c41530] transition-colors"
@@ -96,15 +94,13 @@ export default function Navbar() {
             </Link>
           ))}
           <hr className="border-[#333] my-4" />
-          <a
-            href="https://tunjoracing.com/press"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/press/login"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 text-amber-500 py-3 hover:text-amber-400"
           >
             <span>Press Release</span>
-          </a>
+          </Link>
           <Link
             to="/sponsor/login"
             onClick={() => setIsOpen(false)}
