@@ -2246,6 +2246,22 @@ app.get('/es', (req, res) => {
         document.getElementById('healthGrade').textContent = 'Calificación: ' + (d.health?.grade || '--');
         document.getElementById('scoreRing').style.setProperty('--score', score);
 
+        // Update ring color based on health score
+        const gradient = document.getElementById('scoreGradient');
+        if (gradient) {
+          const stops = gradient.querySelectorAll('stop');
+          let color1, color2;
+          if (score >= 80) {
+            color1 = '#22C55E'; color2 = '#16A34A'; // Green
+          } else if (score >= 60) {
+            color1 = '#FBBF24'; color2 = '#F59E0B'; // Yellow/Amber
+          } else {
+            color1 = '#F87171'; color2 = '#EF4444'; // Red
+          }
+          if (stops[0]) stops[0].setAttribute('stop-color', color1);
+          if (stops[1]) stops[1].setAttribute('stop-color', color2);
+        }
+
         const atRiskCount = d.students?.at_risk || 0;
         const revenueAtRisk = atRiskCount * 175;
         document.getElementById('revenueAtRisk').textContent = '$' + revenueAtRisk.toLocaleString();
@@ -3520,6 +3536,22 @@ app.get('*', (req, res) => {
         document.getElementById('healthScore').textContent = score;
         document.getElementById('healthGrade').textContent = 'Grade: ' + (d.health?.grade || '--');
         document.getElementById('scoreRing').style.setProperty('--score', score);
+
+        // Update ring color based on health score
+        const gradient = document.getElementById('scoreGradient');
+        if (gradient) {
+          const stops = gradient.querySelectorAll('stop');
+          let color1, color2;
+          if (score >= 80) {
+            color1 = '#22C55E'; color2 = '#16A34A'; // Green
+          } else if (score >= 60) {
+            color1 = '#FBBF24'; color2 = '#F59E0B'; // Yellow/Amber
+          } else {
+            color1 = '#F87171'; color2 = '#EF4444'; // Red
+          }
+          if (stops[0]) stops[0].setAttribute('stop-color', color1);
+          if (stops[1]) stops[1].setAttribute('stop-color', color2);
+        }
 
         // Revenue at risk
         const atRiskCount = d.students?.at_risk || 0;
