@@ -361,7 +361,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
   });
 }));
 
-// POST /api/v1/fans/forgot-password - Send password reset email
+// POST /api/v1/fans/forgot-password - Generate instant password reset link
 router.post('/forgot-password', asyncHandler(async (req, res) => {
   const { email } = req.body;
 
@@ -376,50 +376,26 @@ router.post('/forgot-password', asyncHandler(async (req, res) => {
 
   const fan = await TunjoFan.findOne({ where: { email: email.toLowerCase(), tenant_id: 1 } });
 
-  // Always return success to avoid email enumeration
   if (!fan) {
-    return res.json({ success: true, message: 'If an account exists with that email, a reset link has been sent.' });
+    return res.json({ success: false, error: 'No account found with this email address' });
   }
 
-  // Generate a reset token (JWT valid for 15 minutes)
+  // Generate a reset token (JWT valid for 1 hour)
   const resetToken = jwt.sign(
     { id: fan.id, email: fan.email, purpose: 'password_reset' },
     RESET_SECRET,
-    { expiresIn: '15m' }
+    { expiresIn: '1h' }
   );
 
-  const resetUrl = `${APP_URL}/tunjoracing/fan/reset-password?token=${resetToken}`;
+  const resetLink = `${APP_URL}/tunjoracing/fan/reset-password?token=${resetToken}`;
+  console.log(`🔑 Password reset link generated for: ${fan.email}`);
 
-  // Send reset email via SendGrid
-  try {
-    const sgMail = require('@sendgrid/mail');
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
-    await sgMail.send({
-      to: fan.email,
-      from: process.env.SENDGRID_FROM_EMAIL || 'noreply@ringlypro.com',
-      subject: 'TunjoRacing - Reset Your Password',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; background: #0f172a; color: #e2e8f0; padding: 32px; border-radius: 12px;">
-          <h1 style="color: #ef4444; text-align: center; margin-bottom: 8px;">TUNJO<span style="color: #ffffff;">RACING</span></h1>
-          <p style="text-align: center; color: #94a3b8; margin-bottom: 24px;">Fan Community</p>
-          <h2 style="color: #ffffff; margin-bottom: 16px;">Password Reset</h2>
-          <p>Hi ${fan.first_name || 'Fan'},</p>
-          <p>We received a request to reset your password. Click the button below to set a new password:</p>
-          <div style="text-align: center; margin: 24px 0;">
-            <a href="${resetUrl}" style="display: inline-block; padding: 12px 32px; background: #ef4444; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold;">Reset Password</a>
-          </div>
-          <p style="color: #94a3b8; font-size: 14px;">This link expires in 15 minutes. If you didn't request this, you can safely ignore this email.</p>
-        </div>
-      `
-    });
-    console.log(`📧 Password reset email sent to ${fan.email}`);
-  } catch (emailErr) {
-    console.error('Failed to send reset email:', emailErr.message);
-    return res.status(500).json({ success: false, error: 'Failed to send reset email. Please try again.' });
-  }
-
-  res.json({ success: true, message: 'If an account exists with that email, a reset link has been sent.' });
+  res.json({
+    success: true,
+    message: 'Password reset link generated successfully',
+    resetLink,
+    expiresIn: '1 hour'
+  });
 }));
 
 // POST /api/v1/fans/reset-password-token - Reset password using token from email
