@@ -1424,30 +1424,129 @@ app.get('/es', (req, res) => {
         flex-direction: column;
         gap: 12px;
         padding: 12px 16px;
-        padding-top: max(12px, env(safe-area-inset-top));
+        align-items: stretch;
       }
-      .mobile-main {
-        padding: 16px !important;
-        padding-bottom: calc(80px + env(safe-area-inset-bottom));
+      .mobile-header > div:first-child {
+        justify-content: center;
       }
-      body {
-        padding-bottom: calc(70px + env(safe-area-inset-bottom));
+      .mobile-header .header-actions {
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
       }
-      /* Touch-friendly buttons */
-      button, .kancho-btn, a.kancho-btn {
-        min-height: 44px;
-        padding-left: 16px;
-        padding-right: 16px;
+      .mobile-header .header-actions > * {
+        width: 100%;
+        justify-content: center;
       }
-      select {
-        min-height: 44px;
+      .mobile-header .demo-label {
+        display: none;
+      }
+      .mobile-header select {
+        width: 100%;
+        padding: 12px 16px;
         font-size: 16px; /* Prevents iOS zoom */
       }
-      /* Language toggle positioning for safe area */
-      .fixed.bottom-4.left-4 {
-        bottom: max(16px, env(safe-area-inset-bottom));
-        left: max(16px, env(safe-area-inset-left));
+      .mobile-header button {
+        width: 100%;
+        padding: 14px 20px;
+        font-size: 16px;
       }
+      .mobile-main {
+        padding: 12px !important;
+      }
+      body {
+        padding-bottom: 80px;
+      }
+      .mobile-hero-logo {
+        width: 200px !important;
+        height: 200px !important;
+      }
+      .mobile-hero-logo img {
+        width: 160px !important;
+        height: 160px !important;
+      }
+      h2.mobile-title {
+        font-size: 1.75rem !important;
+        line-height: 1.2 !important;
+      }
+      .mobile-value-props {
+        gap: 16px !important;
+      }
+      .mobile-value-props .card {
+        padding: 20px !important;
+      }
+      .mobile-pricing-grid {
+        gap: 20px !important;
+      }
+      .mobile-pricing-grid > div {
+        transform: none !important;
+      }
+      .mobile-stats-banner {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px !important;
+      }
+      .mobile-workflow {
+        gap: 24px !important;
+      }
+      .mobile-cta-buttons {
+        flex-direction: column !important;
+        gap: 12px !important;
+      }
+      .mobile-cta-buttons > * {
+        width: 100% !important;
+        text-align: center;
+      }
+      .mobile-footer-grid {
+        grid-template-columns: 1fr !important;
+        gap: 32px !important;
+        text-align: center;
+      }
+      .mobile-kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+      .language-toggle {
+        bottom: 16px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .mobile-hero-logo {
+        width: 160px !important;
+        height: 160px !important;
+      }
+      .mobile-hero-logo img {
+        width: 120px !important;
+        height: 120px !important;
+      }
+      h2.mobile-title {
+        font-size: 1.5rem !important;
+      }
+      .mobile-stats-banner p.text-3xl {
+        font-size: 1.5rem !important;
+      }
+    }
+
+    /* Safe area for notched phones */
+    @supports (padding: max(0px)) {
+      body {
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
+        padding-bottom: max(80px, env(safe-area-inset-bottom));
+      }
+    }
+
+    /* Touch-friendly buttons */
+    button, a, select {
+      min-height: 44px;
+      cursor: pointer;
+    }
+
+    /* Smooth scrolling for modals */
+    .modal-scroll {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
 
     /* Standalone PWA mode adjustments */
@@ -1463,40 +1562,41 @@ app.get('/es', (req, res) => {
 </head>
 <body class="gradient-bg min-h-screen text-white">
   <!-- Header -->
-  <header class="border-b border-kancho-dark-border sticky top-0 z-50 bg-kancho-dark/95 backdrop-blur-xl">
-    <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-4 mobile-header">
+  <header class="border-b border-kancho-dark-border sticky top-0 z-50 bg-kancho-dark/95 backdrop-blur-xl safe-area-top">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 md:px-6 py-3 md:py-4 mobile-header">
       <div class="flex items-center gap-3">
         <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-10 h-10 md:w-12 md:h-12 rounded-lg object-contain">
         <div>
-          <h1 class="text-xl md:text-2xl font-bold text-white tracking-tight">KANCHO AI</h1>
-          <p class="text-xs text-gray-500">Inteligencia de Negocio con IA</p>
+          <h1 class="text-lg md:text-2xl font-bold text-white tracking-tight">KANCHO AI</h1>
+          <p class="text-xs text-gray-500 hidden sm:block">Inteligencia de Negocio con IA</p>
         </div>
       </div>
-      <div class="flex items-center gap-4">
-        <span class="text-gray-400 text-sm font-medium">DEMO</span>
-        <i class="fas fa-chevron-right text-gray-500 text-xs"></i>
-        <select id="schoolSelect" class="bg-kancho-dark-card border border-kancho-dark-border rounded-lg px-4 py-2.5 text-sm focus:border-kancho-coral focus:outline-none transition">
+      <div class="flex items-center gap-2 md:gap-4 header-actions">
+        <span class="text-gray-400 text-sm font-medium demo-label hidden md:inline">DEMO</span>
+        <i class="fas fa-chevron-right text-gray-500 text-xs demo-label hidden md:inline"></i>
+        <select id="schoolSelect" class="bg-kancho-dark-card border border-kancho-dark-border rounded-lg px-3 md:px-4 py-2.5 text-sm focus:border-kancho-coral focus:outline-none transition">
           <option value="">Selecciona tu Negocio...</option>
         </select>
-        <button onclick="talkToKancho()" class="kancho-btn px-5 py-2.5 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-lg">
+        <button onclick="talkToKancho()" class="kancho-btn px-4 md:px-5 py-2.5 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-lg">
           <i class="fas fa-microphone"></i>
-          <span>Habla con Kancho</span>
+          <span class="hidden sm:inline">Habla con Kancho</span>
+          <span class="sm:hidden">Hablar</span>
         </button>
       </div>
     </div>
   </header>
 
   <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-6 py-8 mobile-main">
+  <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8 mobile-main">
     <!-- Welcome Section -->
-    <div id="welcomeSection" class="py-16">
-      <div class="text-center mb-16">
-        <div class="w-80 h-80 md:w-96 md:h-96 rounded-3xl flex items-center justify-center mx-auto mb-8 glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border">
-          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-64 h-64 md:w-80 md:h-80 object-contain">
+    <div id="welcomeSection" class="py-8 md:py-16">
+      <div class="text-center mb-10 md:mb-16">
+        <div class="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-3xl flex items-center justify-center mx-auto mb-6 md:mb-8 glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border mobile-hero-logo">
+          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-36 h-36 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 object-contain">
         </div>
-        <h2 class="text-4xl font-bold mb-4">Conoce a <span class="text-kancho">Kancho AI</span></h2>
-        <p class="text-xl text-gray-300 mb-2">Tu Oficial de Inteligencia de Negocio con IA</p>
-        <p class="text-gray-400 max-w-2xl mx-auto">
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 mobile-title">Conoce a <span class="text-kancho">Kancho AI</span></h2>
+        <p class="text-lg md:text-xl text-gray-300 mb-2">Tu Oficial de Inteligencia de Negocio con IA</p>
+        <p class="text-gray-400 max-w-2xl mx-auto text-sm md:text-base px-2">
           Se conecta a los datos de tu empresa, entiende cómo funciona realmente tu negocio,
           y te entrega información clara sobre dónde estás perdiendo dinero, dónde puedes crecer,
           y qué acciones maximizarán tus ganancias y rendimiento.
@@ -1504,7 +1604,7 @@ app.get('/es', (req, res) => {
       </div>
 
       <!-- Value Props -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-10 md:mb-16 mobile-value-props">
         <div class="card card-danger rounded-2xl p-8 text-center">
           <div class="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <i class="fas fa-money-bill-wave text-red-400 text-2xl"></i>
@@ -1541,7 +1641,7 @@ app.get('/es', (req, res) => {
       <!-- Sección de Reserva de Clase de Prueba -->
       <div class="mt-16 pt-16 border-t border-kancho-dark-border">
         <div class="text-center mb-12">
-          <h2 class="text-3xl font-bold mb-4">¿Listo Para Comenzar Tu <span class="text-kancho">Viaje en Artes Marciales?</span></h2>
+          <h2 class="text-2xl sm:text-3xl font-bold mb-3 md:mb-4 mobile-title">¿Listo Para Comenzar Tu <span class="text-kancho">Viaje en Artes Marciales?</span></h2>
           <p class="text-gray-400 max-w-2xl mx-auto">Reserva tu clase de prueba gratuita hoy. No se requiere experiencia. Sin compromiso.</p>
         </div>
         <div class="max-w-4xl mx-auto">
@@ -1565,10 +1665,10 @@ app.get('/es', (req, res) => {
       <!-- Nuestros Programas -->
       <div class="mt-16 pt-16 border-t border-kancho-dark-border">
         <div class="text-center mb-12">
-          <h2 class="text-3xl font-bold mb-4">Explora Nuestros <span class="text-kancho">Programas</span></h2>
+          <h2 class="text-2xl sm:text-3xl font-bold mb-3 md:mb-4 mobile-title">Explora Nuestros <span class="text-kancho">Programas</span></h2>
           <p class="text-gray-400 max-w-2xl mx-auto">Entrenamiento de artes marciales de clase mundial para todas las edades y niveles.</p>
         </div>
-        <div id="classesGridEs" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div id="classesGridEs" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto mobile-value-props">
           <div class="text-center col-span-full py-8">
             <i class="fas fa-spinner fa-spin text-kancho text-3xl mb-4 block"></i>
             <p class="text-gray-400">Cargando clases...</p>
@@ -1579,11 +1679,11 @@ app.get('/es', (req, res) => {
       <!-- Onboarding Section -->
       <div class="mt-16 pt-16 border-t border-kancho-dark-border">
         <div class="text-center mb-12">
-          <h2 class="text-3xl font-bold mb-4">Comenzar con <span class="text-kancho">Kancho AI</span> es Muy Fácil</h2>
-          <p class="text-gray-400 max-w-2xl mx-auto">Nuestro equipo dedicado te guía personalmente en cada paso del proceso.</p>
+          <h2 class="text-2xl sm:text-3xl font-bold mb-3 md:mb-4 mobile-title">Comenzar con <span class="text-kancho">Kancho AI</span> es Muy Fácil</h2>
+          <p class="text-gray-400 max-w-2xl mx-auto text-sm md:text-base px-2">Nuestro equipo dedicado te guía personalmente en cada paso del proceso.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 max-w-4xl mx-auto mobile-workflow">
           <!-- Step 1 -->
           <div class="text-center">
             <div class="w-16 h-16 bg-kancho-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
@@ -1616,13 +1716,13 @@ app.get('/es', (req, res) => {
       <!-- AI Automation Workflow Section -->
       <div class="mt-16 pt-16 border-t border-kancho-dark-border">
         <div class="text-center mb-12">
-          <h2 class="text-3xl font-bold mb-4">Cómo <span class="text-kancho">Kancho AI</span> Trabaja Para Ti</h2>
-          <p class="text-gray-400 max-w-2xl mx-auto">Un sistema de IA completamente automatizado que monitorea, retiene y hace crecer tu escuela de artes marciales — 24/7, sin mover un dedo.</p>
+          <h2 class="text-2xl sm:text-3xl font-bold mb-3 md:mb-4 mobile-title">Cómo <span class="text-kancho">Kancho AI</span> Trabaja Para Ti</h2>
+          <p class="text-gray-400 max-w-2xl mx-auto text-sm md:text-base px-2">Un sistema de IA completamente automatizado que monitorea, retiene y hace crecer tu escuela de artes marciales — 24/7, sin mover un dedo.</p>
         </div>
 
         <!-- Workflow Steps -->
         <div class="max-w-5xl mx-auto">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 relative mobile-workflow">
             <!-- Connection Lines (Desktop) -->
             <div class="hidden md:block absolute top-16 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-kancho-coral via-amber-500 to-green-500"></div>
 
@@ -1742,11 +1842,11 @@ app.get('/es', (req, res) => {
       <!-- Subscription Plans -->
       <div class="mt-16 pt-16 border-t border-kancho-dark-border" id="pricing">
         <div class="text-center mb-12">
-          <h2 class="text-3xl font-bold mb-4">Elige Tu Plan de <span class="text-kancho">Kancho AI</span></h2>
-          <p class="text-gray-400 max-w-2xl mx-auto">Potencia tu escuela de artes marciales con inteligencia de negocio impulsada por IA, recepcionista automatizada y soluciones CRM completas.</p>
+          <h2 class="text-2xl sm:text-3xl font-bold mb-3 md:mb-4 mobile-title">Elige Tu Plan de <span class="text-kancho">Kancho AI</span></h2>
+          <p class="text-gray-400 max-w-2xl mx-auto text-sm md:text-base px-2">Potencia tu escuela de artes marciales con inteligencia de negocio impulsada por IA, recepcionista automatizada y soluciones CRM completas.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto mobile-pricing-grid">
           <!-- Plan 1: Kancho Intelligence -->
           <div class="card rounded-2xl p-8 relative hover:border-kancho-coral/50 transition-all duration-300">
             <div class="text-center mb-6">
@@ -1912,11 +2012,11 @@ app.get('/es', (req, res) => {
       <!-- Business Value Section -->
       <div class="mt-16 pt-16 border-t border-kancho-dark-border">
         <div class="text-center mb-12">
-          <h2 class="text-3xl font-bold mb-4">Valor de Negocio para <span class="text-kancho">Tu Escuela</span></h2>
-          <p class="text-gray-400 max-w-2xl mx-auto">Métricas reales que generan resultados reales. Así es como Kancho AI entrega valor medible a tu escuela de artes marciales.</p>
+          <h2 class="text-2xl sm:text-3xl font-bold mb-3 md:mb-4 mobile-title">Valor de Negocio para <span class="text-kancho">Tu Escuela</span></h2>
+          <p class="text-gray-400 max-w-2xl mx-auto text-sm md:text-base px-2">Métricas reales que generan resultados reales. Así es como Kancho AI entrega valor medible a tu escuela de artes marciales.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto mobile-kpi-grid">
           <!-- Health Score -->
           <div class="card rounded-2xl p-6">
             <div class="flex items-center gap-3 mb-4">
@@ -1985,11 +2085,11 @@ app.get('/es', (req, res) => {
         </div>
 
         <!-- Stats Banner -->
-        <div class="mt-12 bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-8">
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+        <div class="mt-12 bg-kancho-dark-card border border-kancho-dark-border rounded-2xl p-4 md:p-8">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-center mobile-stats-banner">
             <div>
-              <p class="text-3xl font-bold text-kancho">40%</p>
-              <p class="text-gray-400 text-sm">Reducción Promedio de Abandono</p>
+              <p class="text-2xl md:text-3xl font-bold text-kancho">40%</p>
+              <p class="text-gray-400 text-xs md:text-sm">Reducción Promedio de Abandono</p>
             </div>
             <div>
               <p class="text-3xl font-bold text-kancho">2x</p>
@@ -2016,11 +2116,11 @@ app.get('/es', (req, res) => {
         <p class="text-kancho text-lg font-medium mb-2">Inteligencia de Negocio con IA — Plataforma de Voz y Analítica</p>
         <p class="text-gray-400 text-sm mb-8">Detección de Abandono · Puntuación de Prospectos · Analítica de Ingresos</p>
 
-        <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight max-w-5xl mx-auto mb-12" style="color: #5BA4D4;">
+        <h2 class="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-white leading-tight max-w-5xl mx-auto mb-8 md:mb-12 mobile-title px-2" style="color: #5BA4D4;">
           Un sistema de IA todo-en-uno que encuentra negocios, los llama automáticamente, recolecta prospectos y agenda citas.
         </h2>
 
-        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-6 mobile-cta-buttons">
           <a href="https://checkout.stripe.com/c/pay/cs_live_a18grG2h3V8gz0gUChQ3o2R1FfHPo5GCMNtzTW5c0lLLThzQdOPHu0Zyfs#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdkdWxOYHwnPyd1blppbHNgWjA0V012N2RDNlRHaUF3Yn19MUkzQ2R2SFRvQVVAVVJtMVJJNkhcQ1RURGlgQUdgQ2FUfWcwN2JGakJ3VmFWQHBIQEAzSXY2QGg1N310Y31LQHdiNTBBbjw0NTVIVzxdRGlNTCcpJ2N3amhWYHdzYHcnP3F3cGApJ2dkZm5id2pwa2FGamlqdyc%2FJyZjY2NjY2MnKSdpZHxqcHFRfHVgJz8ndmxrYmlgWmxxYGgnKSdga2RnaWBVaWRmYG1qaWFgd3YnP3F3cGB4JSUl" class="kancho-btn px-10 py-4 rounded-full font-medium text-lg transition shadow-lg text-white no-underline">
             Comenzar Gratis
           </a>
@@ -2221,9 +2321,9 @@ app.get('/es', (req, res) => {
   </main>
 
   <!-- Footer -->
-  <footer class="border-t border-kancho-dark-border bg-kancho-dark/95 mt-20">
-    <div class="max-w-7xl mx-auto px-6 py-16">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+  <footer class="border-t border-kancho-dark-border bg-kancho-dark/95 mt-12 md:mt-20">
+    <div class="max-w-7xl mx-auto px-4 md:px-6 py-10 md:py-16">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12 mobile-footer-grid">
         <!-- Brand -->
         <div class="md:col-span-1">
           <div class="flex items-center gap-3 mb-4">
