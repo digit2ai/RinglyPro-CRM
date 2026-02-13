@@ -2791,7 +2791,8 @@ app.get('/es', (req, res) => {
   </script>
 
   <!-- Kancho AI Text Chatbot -->
-  <elevenlabs-convai agent-id="agent_5601kh453hqqfz59nfemkwk02vax" style="position: fixed; bottom: 20px; right: 20px; z-index: 100;"></elevenlabs-convai>
+  <elevenlabs-convai agent-id="agent_9201khc1vq3wfk1as9qyrt5fhrmw"></elevenlabs-convai>
+  <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
 </body>
 </html>
   `);
@@ -4452,7 +4453,8 @@ app.get('*', (req, res) => {
   </script>
 
   <!-- Kancho AI Text Chatbot -->
-  <elevenlabs-convai agent-id="agent_5601kh453hqqfz59nfemkwk02vax" style="position: fixed; bottom: 20px; right: 20px; z-index: 100;"></elevenlabs-convai>
+  <elevenlabs-convai agent-id="agent_9201khc1vq3wfk1as9qyrt5fhrmw"></elevenlabs-convai>
+  <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
 </body>
 </html>
   `);
