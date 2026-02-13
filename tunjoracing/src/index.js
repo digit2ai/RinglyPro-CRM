@@ -90,8 +90,20 @@ try {
 
   // Auto-sync database tables on startup
   const models = require('../models');
-  models.sequelize.sync({ alter: false }).then(() => {
+  models.sequelize.sync({ alter: false }).then(async () => {
     console.log('✅ TunjoRacing database tables synced');
+    // Auto-migrate: Add password_hash column to press access requests table
+    try {
+      const [cols] = await models.sequelize.query(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'tunjo_press_access_requests' AND column_name = 'password_hash'"
+      );
+      if (cols.length === 0) {
+        await models.sequelize.query('ALTER TABLE tunjo_press_access_requests ADD COLUMN password_hash VARCHAR(255)');
+        console.log('✅ Added password_hash column to tunjo_press_access_requests');
+      }
+    } catch (migErr) {
+      console.log('⚠️ Press access requests migration note:', migErr.message);
+    }
   }).catch(err => {
     console.log('⚠️ TunjoRacing database sync warning:', err.message);
   });

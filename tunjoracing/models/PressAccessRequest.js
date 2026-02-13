@@ -6,6 +6,7 @@
  */
 
 const { DataTypes } = require('sequelize');
+const bcrypt = require('bcryptjs');
 
 module.exports = (sequelize) => {
   const PressAccessRequest = sequelize.define('TunjoPressAccessRequest', {
@@ -56,6 +57,11 @@ module.exports = (sequelize) => {
       allowNull: true,
       comment: 'Additional info about why they need access'
     },
+    password_hash: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: 'Hashed password set during request - transferred to PressUser on approval'
+    },
     status: {
       type: DataTypes.ENUM('pending', 'approved', 'rejected'),
       allowNull: false,
@@ -92,6 +98,11 @@ module.exports = (sequelize) => {
       { fields: ['created_at'] }
     ],
     hooks: {
+      beforeCreate: async (request) => {
+        if (request.password_hash && !request.password_hash.startsWith('$2')) {
+          request.password_hash = await bcrypt.hash(request.password_hash, 12);
+        }
+      },
       beforeUpdate: async (request) => {
         request.updated_at = new Date();
       }

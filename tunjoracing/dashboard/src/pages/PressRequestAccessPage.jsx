@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, Newspaper, CheckCircle, User, Building, Globe, Mail, Phone, FileText } from 'lucide-react';
+import { ChevronLeft, Newspaper, CheckCircle, User, Building, Globe, Mail, Phone, FileText, Lock } from 'lucide-react';
 
 export default function PressRequestAccessPage() {
   const [form, setForm] = useState({
@@ -11,7 +11,9 @@ export default function PressRequestAccessPage() {
     country: '',
     website: '',
     phone: '',
-    message: ''
+    message: '',
+    password: '',
+    confirm_password: ''
   });
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -24,6 +26,17 @@ export default function PressRequestAccessPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!form.password || form.password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+
+    if (form.password !== form.confirm_password) {
+      setError('Passwords do not match.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -74,7 +87,7 @@ export default function PressRequestAccessPage() {
                 Thank you for your interest in TunjoRacing media content.
               </p>
               <p className="text-slate-400 mb-6">
-                Our team will review your request and send you login credentials once approved.
+                Our team will review your request. Once approved, you can sign in with the email and password you provided.
               </p>
               <Link
                 to="/press/login"
@@ -197,6 +210,38 @@ export default function PressRequestAccessPage() {
                         onChange={handleChange('phone')}
                         className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
                         placeholder="+1 555-0123"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Password *</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                      <input
+                        type="password"
+                        value={form.password}
+                        onChange={handleChange('password')}
+                        required
+                        minLength={6}
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        placeholder="Min 6 characters"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Confirm Password *</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                      <input
+                        type="password"
+                        value={form.confirm_password}
+                        onChange={handleChange('confirm_password')}
+                        required
+                        minLength={6}
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        placeholder="Re-enter password"
                       />
                     </div>
                   </div>

@@ -156,12 +156,33 @@ router.post('/reset-password-token', asyncHandler(async (req, res) => {
 
 // POST /api/v1/press/request-access
 router.post('/request-access', asyncHandler(async (req, res) => {
-  const { full_name, media_outlet, role, email, country, website, phone, message } = req.body;
+  const { full_name, media_outlet, role, email, country, website, phone, message, password, confirm_password } = req.body;
 
   if (!full_name || !media_outlet || !email) {
     return res.status(400).json({
       success: false,
       error: 'Full name, media outlet, and email are required'
+    });
+  }
+
+  if (!password || !confirm_password) {
+    return res.status(400).json({
+      success: false,
+      error: 'Password and password confirmation are required'
+    });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({
+      success: false,
+      error: 'Password must be at least 6 characters'
+    });
+  }
+
+  if (password !== confirm_password) {
+    return res.status(400).json({
+      success: false,
+      error: 'Passwords do not match'
     });
   }
 
@@ -205,7 +226,8 @@ router.post('/request-access', asyncHandler(async (req, res) => {
     country: country || null,
     website: website || null,
     phone: phone || null,
-    message: message || null
+    message: message || null,
+    password_hash: password
   });
 
   res.status(201).json({
@@ -375,7 +397,7 @@ router.post('/admin/requests/:id/approve', authenticateToken, requireAdmin, asyn
     return res.status(400).json({ success: false, error: 'Request has already been reviewed' });
   }
 
-  // Create press user account (no password yet - will use setup link)
+  // Create press user account with the password they set during request
   const pressUser = await TunjoPressUser.create({
     tenant_id: 1,
     email: request.email,
@@ -385,18 +407,13 @@ router.post('/admin/requests/:id/approve', authenticateToken, requireAdmin, asyn
     country: request.country,
     website: request.website,
     phone: request.phone,
+    password_hash: request.password_hash || null,
     status: 'active',
     approved_at: new Date()
   });
 
-  // Generate password setup token (24h for first-time setup)
-  const setupToken = jwt.sign(
-    { id: pressUser.id, email: pressUser.email, purpose: 'password_reset' },
-    RESET_SECRET,
-    { expiresIn: '24h' }
-  );
-
-  const setupLink = `${APP_URL}/tunjoracing/press/reset-password?token=${setupToken}`;
+  // Skip the beforeCreate hook hashing since password_hash is already hashed
+  // The password was hashed in the PressAccessRequest beforeCreate hook
 
   await request.update({
     status: 'approved',
@@ -404,9 +421,22 @@ router.post('/admin/requests/:id/approve', authenticateToken, requireAdmin, asyn
     press_user_id: pressUser.id
   });
 
+  // Generate a setup link only if no password was set during request
+  let setupLink = null;
+  if (!request.password_hash) {
+    const setupToken = jwt.sign(
+      { id: pressUser.id, email: pressUser.email, purpose: 'password_reset' },
+      RESET_SECRET,
+      { expiresIn: '24h' }
+    );
+    setupLink = `${APP_URL}/tunjoracing/press/reset-password?token=${setupToken}`;
+  }
+
   res.json({
     success: true,
-    message: 'Request approved. Share the setup link with the journalist.',
+    message: request.password_hash
+      ? 'Request approved. The journalist can now sign in with their email and password.'
+      : 'Request approved. Share the setup link with the journalist.',
     press_user: {
       id: pressUser.id,
       email: pressUser.email,
