@@ -1478,8 +1478,10 @@ app.get('/es', (req, res) => {
         <select id="schoolSelect" class="bg-kancho-dark-card border border-kancho-dark-border rounded-lg px-4 py-2.5 text-sm focus:border-kancho-coral focus:outline-none transition">
           <option value="">Selecciona tu Negocio...</option>
         </select>
-        <elevenlabs-convai agent-id="agent_9201khc1vq3wfk1as9qyrt5fhrmw"></elevenlabs-convai>
-        <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+        <button onclick="talkToKancho()" class="kancho-btn px-5 py-2.5 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-lg">
+          <i class="fas fa-microphone"></i>
+          <span>Habla con Kancho</span>
+        </button>
       </div>
     </div>
   </header>
@@ -2008,7 +2010,6 @@ app.get('/es', (req, res) => {
       <!-- Hero CTA Section -->
       <div class="mt-20 pt-20 border-t border-kancho-dark-border text-center">
         <div class="mb-8">
-          <p class="text-xs font-medium mb-2" style="color: #E85A4F;">Powered by:</p>
           <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="Kancho AI" class="max-w-2xl w-full mx-auto mb-6">
         </div>
         <p class="text-kancho text-lg font-medium mb-2">Inteligencia de Negocio con IA — Plataforma de Voz y Analítica</p>
@@ -3011,8 +3012,11 @@ app.get('*', (req, res) => {
         <select id="schoolSelect" class="bg-kancho-dark-card border border-kancho-dark-border rounded-lg px-3 md:px-4 py-2 md:py-2.5 text-sm focus:border-kancho-coral focus:outline-none transition">
           <option value="">Select Business...</option>
         </select>
-        <elevenlabs-convai agent-id="agent_9201khc1vq3wfk1as9qyrt5fhrmw"></elevenlabs-convai>
-        <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+        <button onclick="talkToKancho()" class="kancho-btn px-4 md:px-5 py-2 md:py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 shadow-lg whitespace-nowrap">
+          <i class="fas fa-microphone"></i>
+          <span class="hidden sm:inline">Talk to Kancho</span>
+          <span class="sm:hidden">Talk</span>
+        </button>
       </div>
     </div>
   </header>
@@ -3541,7 +3545,6 @@ app.get('*', (req, res) => {
       <!-- Hero CTA Section -->
       <div class="mt-20 pt-20 border-t border-kancho-dark-border text-center">
         <div class="mb-8">
-          <p class="text-xs font-medium mb-2" style="color: #E85A4F;">Powered by:</p>
           <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="Kancho AI" class="max-w-2xl w-full mx-auto mb-6">
         </div>
         <p class="text-kancho text-lg font-medium mb-2">AI Business Intelligence — Voice & Analytics Platform</p>
