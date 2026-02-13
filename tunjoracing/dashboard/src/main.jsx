@@ -18,6 +18,8 @@ import FansPage from './pages/FansPage';
 import SponsorLoginPage from './pages/SponsorLoginPage';
 import SponsorDashboard from './pages/SponsorDashboard';
 import FanLoginPage from './pages/FanLoginPage';
+import FanForgotPasswordPage from './pages/FanForgotPasswordPage';
+import FanResetPasswordPage from './pages/FanResetPasswordPage';
 import FanDashboard from './pages/FanDashboard';
 
 function App() {
@@ -42,6 +44,8 @@ function App() {
 
         {/* Fan Portal */}
         <Route path="/fan/login" element={<FanLoginPage />} />
+        <Route path="/fan/forgot-password" element={<FanForgotPasswordPage />} />
+        <Route path="/fan/reset-password" element={<FanResetPasswordPage />} />
         <Route path="/fan/dashboard" element={<FanDashboard />} />
 
         {/* Admin Portal */}

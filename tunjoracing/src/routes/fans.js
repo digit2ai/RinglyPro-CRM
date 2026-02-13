@@ -7,8 +7,12 @@
 
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
 const asyncHandler = require('../middleware/async-handler');
 const { authenticateToken, requireAdmin, requireFan, optionalAuth, generateToken } = require('../middleware/auth');
+
+const RESET_SECRET = process.env.JWT_SECRET || 'tunjo-reset-secret-key';
+const APP_URL = process.env.APP_URL || 'https://aiagent.ringlypro.com';
 
 let models;
 try {
@@ -355,6 +359,104 @@ router.post('/signup', asyncHandler(async (req, res) => {
       membership_tier: fan.membership_tier
     }
   });
+}));
+
+// POST /api/v1/fans/forgot-password - Send password reset email
+router.post('/forgot-password', asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ success: false, error: 'Email is required' });
+  }
+
+  const TunjoFan = models.TunjoFan;
+  if (!TunjoFan) {
+    return res.status(500).json({ success: false, error: 'Database not initialized' });
+  }
+
+  const fan = await TunjoFan.findOne({ where: { email: email.toLowerCase(), tenant_id: 1 } });
+
+  // Always return success to avoid email enumeration
+  if (!fan) {
+    return res.json({ success: true, message: 'If an account exists with that email, a reset link has been sent.' });
+  }
+
+  // Generate a reset token (JWT valid for 15 minutes)
+  const resetToken = jwt.sign(
+    { id: fan.id, email: fan.email, purpose: 'password_reset' },
+    RESET_SECRET,
+    { expiresIn: '15m' }
+  );
+
+  const resetUrl = `${APP_URL}/tunjoracing/fan/reset-password?token=${resetToken}`;
+
+  // Send reset email via SendGrid
+  try {
+    const sgMail = require('@sendgrid/mail');
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+    await sgMail.send({
+      to: fan.email,
+      from: process.env.SENDGRID_FROM_EMAIL || 'noreply@ringlypro.com',
+      subject: 'TunjoRacing - Reset Your Password',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; background: #0f172a; color: #e2e8f0; padding: 32px; border-radius: 12px;">
+          <h1 style="color: #ef4444; text-align: center; margin-bottom: 8px;">TUNJO<span style="color: #ffffff;">RACING</span></h1>
+          <p style="text-align: center; color: #94a3b8; margin-bottom: 24px;">Fan Community</p>
+          <h2 style="color: #ffffff; margin-bottom: 16px;">Password Reset</h2>
+          <p>Hi ${fan.first_name || 'Fan'},</p>
+          <p>We received a request to reset your password. Click the button below to set a new password:</p>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${resetUrl}" style="display: inline-block; padding: 12px 32px; background: #ef4444; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold;">Reset Password</a>
+          </div>
+          <p style="color: #94a3b8; font-size: 14px;">This link expires in 15 minutes. If you didn't request this, you can safely ignore this email.</p>
+        </div>
+      `
+    });
+    console.log(`📧 Password reset email sent to ${fan.email}`);
+  } catch (emailErr) {
+    console.error('Failed to send reset email:', emailErr.message);
+    return res.status(500).json({ success: false, error: 'Failed to send reset email. Please try again.' });
+  }
+
+  res.json({ success: true, message: 'If an account exists with that email, a reset link has been sent.' });
+}));
+
+// POST /api/v1/fans/reset-password-token - Reset password using token from email
+router.post('/reset-password-token', asyncHandler(async (req, res) => {
+  const { token, new_password } = req.body;
+
+  if (!token || !new_password) {
+    return res.status(400).json({ success: false, error: 'Token and new password are required' });
+  }
+
+  if (new_password.length < 6) {
+    return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+  }
+
+  // Verify token
+  let decoded;
+  try {
+    decoded = jwt.verify(token, RESET_SECRET);
+  } catch (err) {
+    return res.status(400).json({ success: false, error: 'Invalid or expired reset link. Please request a new one.' });
+  }
+
+  if (decoded.purpose !== 'password_reset') {
+    return res.status(400).json({ success: false, error: 'Invalid reset token' });
+  }
+
+  const TunjoFan = models.TunjoFan;
+  const fan = await TunjoFan.findByPk(decoded.id);
+
+  if (!fan) {
+    return res.status(404).json({ success: false, error: 'Account not found' });
+  }
+
+  // Update password (model hook will hash it)
+  await fan.update({ password_hash: new_password });
+
+  res.json({ success: true, message: 'Password has been reset successfully. You can now log in.' });
 }));
 
 // POST /api/v1/fans/reset-password - Reset fan password (temporary admin endpoint)

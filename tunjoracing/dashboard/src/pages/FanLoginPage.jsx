@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, ChevronLeft, User } from 'lucide-react';
 
 export default function FanLoginPage() {
@@ -131,6 +131,13 @@ export default function FanLoginPage() {
               </div>
               {isRegister && (
                 <p className="text-slate-500 text-xs mt-1">Minimum 6 characters</p>
+              )}
+              {!isRegister && (
+                <div className="text-right mt-1">
+                  <Link to="/fan/forgot-password" className="text-red-400 text-xs hover:text-red-300 transition-colors">
+                    Forgot password?
+                  </Link>
+                </div>
               )}
             </div>
 
