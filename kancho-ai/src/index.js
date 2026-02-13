@@ -1668,7 +1668,7 @@ app.get('/es', (req, res) => {
           <h2 class="text-2xl sm:text-3xl font-bold mb-3 md:mb-4 mobile-title">Explora Nuestros <span class="text-kancho">Programas</span></h2>
           <p class="text-gray-400 max-w-2xl mx-auto">Entrenamiento de artes marciales de clase mundial para todas las edades y niveles.</p>
         </div>
-        <div id="classesGridEs" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto mobile-value-props">
+        <div id="classesGridEs" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5 max-w-7xl mx-auto mobile-value-props">
           <div class="text-center col-span-full py-8">
             <i class="fas fa-spinner fa-spin text-kancho text-3xl mb-4 block"></i>
             <p class="text-gray-400">Cargando clases...</p>
@@ -2821,22 +2821,25 @@ app.get('/es', (req, res) => {
 
     // Carga de Clases
     const martialArtIcons = {
-      'BJJ': 'fa-hand-rock', 'Muay Thai': 'fa-fire', 'MMA': 'fa-fist-raised',
-      'Karate': 'fa-hand-paper', 'Taekwondo': 'fa-running', 'Judo': 'fa-user-ninja',
-      'Boxing': 'fa-mitten', 'Kickboxing': 'fa-fire-alt', 'Mixed': 'fa-shapes'
+      'Karate': 'fa-hand-paper', 'Taekwondo': 'fa-running', 'BJJ': 'fa-hand-rock',
+      'Muay Thai': 'fa-fire', 'MMA': 'fa-fist-raised', 'Kickboxing': 'fa-fire-alt',
+      'Judo': 'fa-user-ninja', 'Krav Maga': 'fa-shield-alt', 'Boxing': 'fa-mitten',
+      'Kung Fu': 'fa-yin-yang', 'Aikido': 'fa-circle-notch', 'Capoeira': 'fa-music',
+      'Wrestling': 'fa-people-arrows', 'Hapkido': 'fa-bolt', 'Jeet Kune Do': 'fa-dragon'
     };
     const martialArtColors = {
-      'BJJ': '#8B5CF6', 'Muay Thai': '#F59E0B', 'MMA': '#EF4444',
-      'Karate': '#3B82F6', 'Taekwondo': '#10B981', 'Judo': '#6366F1',
-      'Boxing': '#DC2626', 'Kickboxing': '#F97316', 'Mixed': '#8B5CF6'
+      'Karate': '#3B82F6', 'Taekwondo': '#10B981', 'BJJ': '#8B5CF6',
+      'Muay Thai': '#F59E0B', 'MMA': '#EF4444', 'Kickboxing': '#F97316',
+      'Judo': '#6366F1', 'Krav Maga': '#64748B', 'Boxing': '#DC2626',
+      'Kung Fu': '#E11D48', 'Aikido': '#0EA5E9', 'Capoeira': '#22C55E',
+      'Wrestling': '#A855F7', 'Hapkido': '#14B8A6', 'Jeet Kune Do': '#FBBF24'
     };
     const classNamesEs = {
-      'Brazilian Jiu-Jitsu Fundamentals': 'Jiu-Jitsu Brasileño Fundamentales',
-      'Muay Thai Kickboxing': 'Muay Thai Kickboxing',
-      'Kids Martial Arts': 'Artes Marciales para Niños',
-      'Advanced MMA': 'MMA Avanzado',
-      'Boxing Fundamentals': 'Boxeo Fundamentales',
-      "Women's Self-Defense": 'Defensa Personal para Mujeres'
+      'Karate': 'Karate', 'Taekwondo': 'Taekwondo', 'Brazilian Jiu-Jitsu': 'Jiu-Jitsu Brasileño',
+      'Muay Thai': 'Muay Thai', 'Mixed Martial Arts': 'Artes Marciales Mixtas', 'Kickboxing': 'Kickboxing',
+      'Judo': 'Judo', 'Krav Maga': 'Krav Maga', 'Boxing': 'Boxeo',
+      'Kung Fu': 'Kung Fu', 'Aikido': 'Aikido', 'Capoeira': 'Capoeira',
+      'Wrestling': 'Lucha Libre', 'Hapkido': 'Hapkido', 'Jeet Kune Do': 'Jeet Kune Do'
     };
 
     async function loadClassesEs() {
@@ -2860,24 +2863,15 @@ app.get('/es', (req, res) => {
         const icon = martialArtIcons[cls.martial_art] || 'fa-trophy';
         const color = martialArtColors[cls.martial_art] || '#E85A4F';
         const name = classNamesEs[cls.name] || cls.name;
-        const schedule = cls.schedule && typeof cls.schedule === 'object'
-          ? Object.entries(cls.schedule).map(([d, t]) => d.charAt(0).toUpperCase() + d.slice(1, 3) + ': ' + t).join(' · ')
-          : 'Horario por confirmar';
         return '<div class="card rounded-2xl p-6 hover:border-kancho-coral/50 transition-all duration-300 fade-in">' +
           '<div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background: ' + color + '20;">' +
             '<i class="fas ' + icon + '" style="color: ' + color + '; font-size: 1.5rem;"></i></div>' +
           '<div class="flex items-center gap-2 mb-2">' +
-            '<span class="text-xs font-bold px-2 py-1 rounded-full" style="background: ' + color + '20; color: ' + color + ';">' + cls.level + '</span>' +
-            '<span class="text-xs text-gray-500">' + (cls.duration_minutes || 60) + ' min</span></div>' +
+            '<span class="text-xs font-bold px-2 py-1 rounded-full" style="background: ' + color + '20; color: ' + color + ';">' + (cls.level || 'Todos los Niveles') + '</span></div>' +
           '<h3 class="text-lg font-bold text-white mb-2">' + name + '</h3>' +
-          '<p class="text-gray-400 text-sm mb-3">' + (cls.description || '') + '</p>' +
-          '<div class="flex items-center gap-2 mb-2 text-sm"><i class="fas fa-user-circle text-kancho"></i>' +
-            '<span class="text-gray-300">' + (cls.instructor || 'Por confirmar') + '</span></div>' +
-          '<div class="flex items-center gap-2 mb-4 text-sm"><i class="fas fa-clock text-kancho"></i>' +
-            '<span class="text-gray-400 text-xs">' + schedule + '</span></div>' +
-          '<div class="flex items-center justify-between pt-4 border-t border-kancho-dark-border">' +
-            '<div><p class="text-xl font-bold text-kancho">$' + (cls.price || 0) + '</p><p class="text-xs text-gray-500">por mes</p></div>' +
-            '<button onclick="openTrialBookingModal()" class="px-4 py-2 kancho-btn rounded-lg text-sm font-medium transition">Reservar Prueba</button></div></div>';
+          '<p class="text-gray-400 text-sm mb-4">' + (cls.description || '') + '</p>' +
+          '<div class="pt-4 border-t border-kancho-dark-border text-center">' +
+            '<button onclick="openTrialBookingModal()" class="w-full px-4 py-2 kancho-btn rounded-lg text-sm font-medium transition">Reservar Prueba Gratis</button></div></div>';
       }).join('');
     }
 
@@ -3210,7 +3204,7 @@ app.get('*', (req, res) => {
           <h2 class="text-3xl font-bold mb-4">Explore Our <span class="text-kancho">Programs</span></h2>
           <p class="text-gray-400 max-w-2xl mx-auto">World-class martial arts training for all ages and skill levels.</p>
         </div>
-        <div id="classesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div id="classesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5 max-w-7xl mx-auto">
           <div class="text-center col-span-full py-8">
             <i class="fas fa-spinner fa-spin text-kancho text-3xl mb-4 block"></i>
             <p class="text-gray-400">Loading classes...</p>
@@ -4399,14 +4393,18 @@ app.get('*', (req, res) => {
 
     // Class Schedule Loading
     const martialArtIcons = {
-      'BJJ': 'fa-hand-rock', 'Muay Thai': 'fa-fire', 'MMA': 'fa-fist-raised',
-      'Karate': 'fa-hand-paper', 'Taekwondo': 'fa-running', 'Judo': 'fa-user-ninja',
-      'Boxing': 'fa-mitten', 'Kickboxing': 'fa-fire-alt', 'Mixed': 'fa-shapes'
+      'Karate': 'fa-hand-paper', 'Taekwondo': 'fa-running', 'BJJ': 'fa-hand-rock',
+      'Muay Thai': 'fa-fire', 'MMA': 'fa-fist-raised', 'Kickboxing': 'fa-fire-alt',
+      'Judo': 'fa-user-ninja', 'Krav Maga': 'fa-shield-alt', 'Boxing': 'fa-mitten',
+      'Kung Fu': 'fa-yin-yang', 'Aikido': 'fa-circle-notch', 'Capoeira': 'fa-music',
+      'Wrestling': 'fa-people-arrows', 'Hapkido': 'fa-bolt', 'Jeet Kune Do': 'fa-dragon'
     };
     const martialArtColors = {
-      'BJJ': '#8B5CF6', 'Muay Thai': '#F59E0B', 'MMA': '#EF4444',
-      'Karate': '#3B82F6', 'Taekwondo': '#10B981', 'Judo': '#6366F1',
-      'Boxing': '#DC2626', 'Kickboxing': '#F97316', 'Mixed': '#8B5CF6'
+      'Karate': '#3B82F6', 'Taekwondo': '#10B981', 'BJJ': '#8B5CF6',
+      'Muay Thai': '#F59E0B', 'MMA': '#EF4444', 'Kickboxing': '#F97316',
+      'Judo': '#6366F1', 'Krav Maga': '#64748B', 'Boxing': '#DC2626',
+      'Kung Fu': '#E11D48', 'Aikido': '#0EA5E9', 'Capoeira': '#22C55E',
+      'Wrestling': '#A855F7', 'Hapkido': '#14B8A6', 'Jeet Kune Do': '#FBBF24'
     };
 
     async function loadClasses() {
@@ -4429,24 +4427,15 @@ app.get('*', (req, res) => {
       grid.innerHTML = classes.map(cls => {
         const icon = martialArtIcons[cls.martial_art] || 'fa-trophy';
         const color = martialArtColors[cls.martial_art] || '#E85A4F';
-        const schedule = cls.schedule && typeof cls.schedule === 'object'
-          ? Object.entries(cls.schedule).map(([d, t]) => d.charAt(0).toUpperCase() + d.slice(1, 3) + ': ' + t).join(' · ')
-          : 'Schedule TBA';
         return '<div class="card rounded-2xl p-6 hover:border-kancho-coral/50 transition-all duration-300 fade-in">' +
           '<div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background: ' + color + '20;">' +
             '<i class="fas ' + icon + '" style="color: ' + color + '; font-size: 1.5rem;"></i></div>' +
           '<div class="flex items-center gap-2 mb-2">' +
-            '<span class="text-xs font-bold px-2 py-1 rounded-full" style="background: ' + color + '20; color: ' + color + ';">' + cls.level + '</span>' +
-            '<span class="text-xs text-gray-500">' + (cls.duration_minutes || 60) + ' min</span></div>' +
+            '<span class="text-xs font-bold px-2 py-1 rounded-full" style="background: ' + color + '20; color: ' + color + ';">' + (cls.level || 'All Levels') + '</span></div>' +
           '<h3 class="text-lg font-bold text-white mb-2">' + cls.name + '</h3>' +
-          '<p class="text-gray-400 text-sm mb-3">' + (cls.description || '') + '</p>' +
-          '<div class="flex items-center gap-2 mb-2 text-sm"><i class="fas fa-user-circle text-kancho"></i>' +
-            '<span class="text-gray-300">' + (cls.instructor || 'TBA') + '</span></div>' +
-          '<div class="flex items-center gap-2 mb-4 text-sm"><i class="fas fa-clock text-kancho"></i>' +
-            '<span class="text-gray-400 text-xs">' + schedule + '</span></div>' +
-          '<div class="flex items-center justify-between pt-4 border-t border-kancho-dark-border">' +
-            '<div><p class="text-xl font-bold text-kancho">$' + (cls.price || 0) + '</p><p class="text-xs text-gray-500">per month</p></div>' +
-            '<button onclick="openTrialBookingModal()" class="px-4 py-2 kancho-btn rounded-lg text-sm font-medium transition">Book Trial</button></div></div>';
+          '<p class="text-gray-400 text-sm mb-4">' + (cls.description || '') + '</p>' +
+          '<div class="pt-4 border-t border-kancho-dark-border text-center">' +
+            '<button onclick="openTrialBookingModal()" class="w-full px-4 py-2 kancho-btn rounded-lg text-sm font-medium transition">Book Free Trial</button></div></div>';
       }).join('');
     }
 

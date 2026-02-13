@@ -47,75 +47,123 @@ function getSampleClasses() {
   return [
     {
       id: 'demo-1',
-      name: 'Brazilian Jiu-Jitsu Fundamentals',
-      martial_art: 'BJJ',
-      level: 'Beginner',
-      description: 'Learn the fundamentals of Brazilian Jiu-Jitsu including takedowns, guard work, and submissions.',
-      schedule: { monday: '6:00 PM', wednesday: '6:00 PM', friday: '6:00 PM' },
-      duration_minutes: 60,
-      instructor: 'Professor Silva',
-      price: 149.00,
-      popularity_score: 95
+      name: 'Karate',
+      martial_art: 'Karate',
+      level: 'All Levels',
+      description: 'Traditional striking art focused on powerful punches, kicks, and blocks. Builds discipline, respect, and sharp reflexes through kata and sparring.',
+      popularity_score: 98
     },
     {
       id: 'demo-2',
-      name: 'Muay Thai Kickboxing',
-      martial_art: 'Muay Thai',
+      name: 'Taekwondo',
+      martial_art: 'Taekwondo',
       level: 'All Levels',
-      description: 'High-energy Muay Thai training combining strikes, clinch work, and conditioning.',
-      schedule: { tuesday: '7:00 PM', thursday: '7:00 PM', saturday: '10:00 AM' },
-      duration_minutes: 60,
-      instructor: 'Coach Rodriguez',
-      price: 139.00,
-      popularity_score: 90
+      description: 'Olympic combat sport known for dynamic high kicks and fast footwork. Develops flexibility, balance, and explosive power.',
+      popularity_score: 96
     },
     {
       id: 'demo-3',
-      name: 'Kids Martial Arts',
-      martial_art: 'Mixed',
-      level: 'Kids (5-12)',
-      description: 'Fun, engaging martial arts classes that build discipline, confidence, and fitness.',
-      schedule: { monday: '4:30 PM', wednesday: '4:30 PM', friday: '4:30 PM' },
-      duration_minutes: 45,
-      instructor: 'Sensei Martinez',
-      price: 99.00,
-      popularity_score: 88
+      name: 'Brazilian Jiu-Jitsu',
+      martial_art: 'BJJ',
+      level: 'All Levels',
+      description: 'Ground-based grappling art where technique overcomes size. Master takedowns, positional control, and submissions.',
+      popularity_score: 95
     },
     {
       id: 'demo-4',
-      name: 'Advanced MMA',
-      martial_art: 'MMA',
-      level: 'Advanced',
-      description: 'Competitive MMA training combining striking, grappling, and cage work.',
-      schedule: { tuesday: '8:00 PM', thursday: '8:00 PM', saturday: '9:00 AM' },
-      duration_minutes: 90,
-      instructor: 'Coach Thompson',
-      price: 199.00,
-      popularity_score: 85
+      name: 'Muay Thai',
+      martial_art: 'Muay Thai',
+      level: 'All Levels',
+      description: 'The "Art of Eight Limbs" using punches, kicks, elbows, and knees. Elite striking and clinch work from Thailand.',
+      popularity_score: 94
     },
     {
       id: 'demo-5',
-      name: 'Boxing Fundamentals',
-      martial_art: 'Boxing',
-      level: 'Beginner',
-      description: 'Learn proper boxing technique, footwork, and combinations in a supportive environment.',
-      schedule: { monday: '7:00 PM', wednesday: '7:00 PM', saturday: '11:00 AM' },
-      duration_minutes: 60,
-      instructor: 'Coach Williams',
-      price: 129.00,
-      popularity_score: 82
+      name: 'Mixed Martial Arts',
+      martial_art: 'MMA',
+      level: 'All Levels',
+      description: 'Complete combat system combining striking, wrestling, and submissions. Train like the pros across all ranges of fighting.',
+      popularity_score: 93
     },
     {
       id: 'demo-6',
-      name: 'Women\'s Self-Defense',
-      martial_art: 'Mixed',
+      name: 'Kickboxing',
+      martial_art: 'Kickboxing',
       level: 'All Levels',
-      description: 'Practical self-defense techniques from multiple martial arts, designed for real-world situations.',
-      schedule: { tuesday: '6:00 PM', saturday: '12:00 PM' },
-      duration_minutes: 60,
-      instructor: 'Instructor Park',
-      price: 119.00,
-      popularity_score: 80
+      description: 'High-energy stand-up fighting combining punches and kicks. Great for fitness, self-defense, and competitive fighting.',
+      popularity_score: 92
+    },
+    {
+      id: 'demo-7',
+      name: 'Judo',
+      martial_art: 'Judo',
+      level: 'All Levels',
+      description: 'Olympic throwing art that uses leverage and timing to control opponents. The "gentle way" that builds unshakable balance.',
+      popularity_score: 91
+    },
+    {
+      id: 'demo-8',
+      name: 'Krav Maga',
+      martial_art: 'Krav Maga',
+      level: 'All Levels',
+      description: 'Reality-based self-defense system from the Israeli military. Practical techniques for real-world threat scenarios.',
+      popularity_score: 90
+    },
+    {
+      id: 'demo-9',
+      name: 'Boxing',
+      martial_art: 'Boxing',
+      level: 'All Levels',
+      description: 'The sweet science of punching. Develop hand speed, head movement, footwork, and knockout power in the ring.',
+      popularity_score: 89
+    },
+    {
+      id: 'demo-10',
+      name: 'Kung Fu',
+      martial_art: 'Kung Fu',
+      level: 'All Levels',
+      description: 'Ancient Chinese martial art with diverse styles and fluid movements. Combines striking, grappling, and weapons training.',
+      popularity_score: 88
+    },
+    {
+      id: 'demo-11',
+      name: 'Aikido',
+      martial_art: 'Aikido',
+      level: 'All Levels',
+      description: 'Harmonious martial art that redirects an attacker\'s energy through joint locks and throws. Defense without aggression.',
+      popularity_score: 87
+    },
+    {
+      id: 'demo-12',
+      name: 'Capoeira',
+      martial_art: 'Capoeira',
+      level: 'All Levels',
+      description: 'Brazilian art blending acrobatic kicks, sweeps, and music. Equal parts martial art, dance, and cultural expression.',
+      popularity_score: 86
+    },
+    {
+      id: 'demo-13',
+      name: 'Wrestling',
+      martial_art: 'Wrestling',
+      level: 'All Levels',
+      description: 'Foundational grappling art focused on takedowns, pins, and control. The base of every great MMA fighter.',
+      popularity_score: 85
+    },
+    {
+      id: 'demo-14',
+      name: 'Hapkido',
+      martial_art: 'Hapkido',
+      level: 'All Levels',
+      description: 'Korean self-defense art combining joint locks, throws, and dynamic kicks. Effective techniques for all body types.',
+      popularity_score: 84
+    },
+    {
+      id: 'demo-15',
+      name: 'Jeet Kune Do',
+      martial_art: 'Jeet Kune Do',
+      level: 'All Levels',
+      description: 'Bruce Lee\'s philosophy of combat — absorb what is useful, reject what is useless. Adaptive, formless fighting.',
+      popularity_score: 83
     }
   ];
 }
