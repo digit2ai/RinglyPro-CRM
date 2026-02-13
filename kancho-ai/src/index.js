@@ -1549,12 +1549,10 @@ app.get('/es', (req, res) => {
             <div class="w-20 h-20 bg-kancho-coral/20 rounded-full flex items-center justify-center mx-auto mb-6">
               <i class="fas fa-calendar-check text-kancho text-3xl"></i>
             </div>
-            <h3 class="text-2xl font-bold mb-4">Reserva Tu Clase de Prueba Gratis</h3>
-            <p class="text-gray-400 mb-6">Experimenta una clase real. Conoce a nuestros instructores. Descubre si somos la opción ideal para ti.</p>
+            <h3 class="text-2xl font-bold mb-4">Reserva Tu Prueba Gratis</h3>
+            <p class="text-gray-400 mb-6">Conoce a nuestro Especialista KanchoAI. Descubre si somos la opción ideal para ti.</p>
             <ul class="text-left max-w-md mx-auto space-y-3 mb-8">
               <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> No se requiere experiencia</li>
-              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> Todo el equipo incluido</li>
-              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> Conoce a nuestros instructores expertos</li>
               <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> Cero compromiso o presión</li>
             </ul>
             <button onclick="openTrialBookingModal()" class="kancho-btn px-8 py-4 rounded-xl font-medium transition shadow-lg text-lg">
@@ -2065,8 +2063,8 @@ app.get('/es', (req, res) => {
                 <i class="fas fa-calendar-check text-green-400 text-2xl"></i>
               </div>
               <div>
-                <h3 class="text-lg font-bold text-white">Reserva Tu Clase de Prueba Gratis</h3>
-                <p class="text-sm text-gray-400">Comienza tu viaje en artes marciales hoy</p>
+                <h3 class="text-lg font-bold text-white">Reserva Tu Prueba Gratis</h3>
+                <p class="text-sm text-gray-400">Conoce a nuestro Especialista KanchoAI</p>
               </div>
             </div>
             <button onclick="closeTrialBookingModal()" class="p-2 hover:bg-white/10 rounded-lg transition">
@@ -3085,12 +3083,10 @@ app.get('*', (req, res) => {
             <div class="w-20 h-20 bg-kancho-coral/20 rounded-full flex items-center justify-center mx-auto mb-6">
               <i class="fas fa-calendar-check text-kancho text-3xl"></i>
             </div>
-            <h3 class="text-2xl font-bold mb-4">Book Your Free Trial Class</h3>
-            <p class="text-gray-400 mb-6">Experience a real class. Meet our instructors. See if we're the right fit for you.</p>
+            <h3 class="text-2xl font-bold mb-4">Book Your Free Trial</h3>
+            <p class="text-gray-400 mb-6">Meet our KanchoAI Specialist. See if we're the right fit for you.</p>
             <ul class="text-left max-w-md mx-auto space-y-3 mb-8">
               <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> No experience required</li>
-              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> All equipment provided</li>
-              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> Meet our expert instructors</li>
               <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> Zero commitment or pressure</li>
             </ul>
             <button onclick="openTrialBookingModal()" class="kancho-btn px-8 py-4 rounded-xl font-medium transition shadow-lg text-lg">
@@ -3601,8 +3597,8 @@ app.get('*', (req, res) => {
                 <i class="fas fa-calendar-check text-green-400 text-2xl"></i>
               </div>
               <div>
-                <h3 class="text-lg font-bold text-white">Book Your Free Trial Class</h3>
-                <p class="text-sm text-gray-400">Start your martial arts journey today</p>
+                <h3 class="text-lg font-bold text-white">Book Your Free Trial</h3>
+                <p class="text-sm text-gray-400">Meet our KanchoAI Specialist</p>
               </div>
             </div>
             <button onclick="closeTrialBookingModal()" class="p-2 hover:bg-white/10 rounded-lg transition">
