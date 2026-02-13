@@ -1567,6 +1567,11 @@ app.get('/es', (req, res) => {
         </div>
       </div>
 
+      <!-- App Preview Image -->
+      <div class="mt-16 flex justify-center">
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698f40f5772de9dc86d48339.png" alt="Kancho AI App Preview" class="max-w-full md:max-w-4xl rounded-2xl shadow-2xl shadow-kancho-coral/10">
+      </div>
+
       <!-- AI Automation Workflow Section -->
       <div class="mt-16 pt-16 border-t border-kancho-dark-border">
         <div class="text-center mb-12">
@@ -2952,6 +2957,11 @@ app.get('*', (req, res) => {
             </p>
           </div>
         </div>
+      </div>
+
+      <!-- App Preview Image -->
+      <div class="mt-16 flex justify-center">
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698f40f5772de9dc86d48339.png" alt="Kancho AI App Preview" class="max-w-full md:max-w-4xl rounded-2xl shadow-2xl shadow-kancho-coral/10">
       </div>
 
       <!-- AI Automation Workflow Section -->
