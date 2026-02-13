@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Users, DollarSign, Package, MessageSquare, LogOut, BarChart3, Calendar, ShoppingBag, Settings } from 'lucide-react';
+import { Users, DollarSign, Package, MessageSquare, LogOut, BarChart3, Calendar, ShoppingBag, Settings, Newspaper } from 'lucide-react';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -104,6 +104,9 @@ export default function AdminDashboard() {
           <QuickAction icon={Package} title="Manage Sponsors" description="Add and edit sponsors" />
           <QuickAction icon={ShoppingBag} title="View Orders" description="Process and fulfill orders" />
           <QuickAction icon={Calendar} title="Manage Races" description="Update race calendar" />
+          <Link to="/admin/press" className="contents">
+            <QuickAction icon={Newspaper} title="Press Portal" description="Manage press users & media" />
+          </Link>
         </div>
 
         {/* New Inquiries Alert */}

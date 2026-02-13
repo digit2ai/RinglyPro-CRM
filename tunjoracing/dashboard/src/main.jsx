@@ -23,6 +23,13 @@ import FanLoginPage from './pages/FanLoginPage';
 import FanForgotPasswordPage from './pages/FanForgotPasswordPage';
 import FanResetPasswordPage from './pages/FanResetPasswordPage';
 import FanDashboard from './pages/FanDashboard';
+import PressLoginPage from './pages/PressLoginPage';
+import PressRequestAccessPage from './pages/PressRequestAccessPage';
+import PressForgotPasswordPage from './pages/PressForgotPasswordPage';
+import PressResetPasswordPage from './pages/PressResetPasswordPage';
+import PressPortalPage from './pages/PressPortalPage';
+import PressMediaPostPage from './pages/PressMediaPostPage';
+import PressAdminPage from './pages/PressAdminPage';
 
 function App() {
   return (
@@ -52,10 +59,19 @@ function App() {
         <Route path="/fan/reset-password" element={<FanResetPasswordPage />} />
         <Route path="/fan/dashboard" element={<FanDashboard />} />
 
+        {/* Press & Media Portal */}
+        <Route path="/press/login" element={<PressLoginPage />} />
+        <Route path="/press/request-access" element={<PressRequestAccessPage />} />
+        <Route path="/press/forgot-password" element={<PressForgotPasswordPage />} />
+        <Route path="/press/reset-password" element={<PressResetPasswordPage />} />
+        <Route path="/press/portal" element={<PressPortalPage />} />
+        <Route path="/press/media/:slug" element={<PressMediaPostPage />} />
+
         {/* Admin Portal */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/fans" element={<FansPage />} />
+        <Route path="/admin/press" element={<PressAdminPage />} />
       </Routes>
     </BrowserRouter>
   );
