@@ -1,10 +1,16 @@
 // Kancho AI Service Worker
-const CACHE_NAME = 'kancho-ai-v1';
+// Supports both /kanchoai (on aiagent.ringlypro.com) and root (on kanchoai.com)
+const CACHE_NAME = 'kancho-ai-v2';
+
+// Determine base path based on origin
+const isKanchoDomain = self.location.hostname.includes('kanchoai.com');
+const basePath = isKanchoDomain ? '' : '/kanchoai';
+
 const urlsToCache = [
-  '/kanchoai/',
-  '/kanchoai/es',
-  '/kanchoai/pricing',
-  '/kanchoai/es/pricing'
+  `${basePath}/`,
+  `${basePath}/es`,
+  `${basePath}/pricing`,
+  `${basePath}/es/pricing`
 ];
 
 // Install event

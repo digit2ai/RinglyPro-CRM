@@ -538,17 +538,38 @@ app.get('/debug/spark-error', (req, res) => {
 // KANCHO AI - Martial Arts School Intelligence Platform
 // =====================================================
 
-// Mount Kancho AI martial arts management system at /kanchoai
+// Mount Kancho AI martial arts management system
+// Supports both /kanchoai path AND kanchoai.com custom domain
 let kanchoApp = null;
 let kanchoError = null;
 try {
   kanchoApp = require('../kancho-ai/src/index');
+
+  // Mount at /kanchoai for aiagent.ringlypro.com
   app.use('/kanchoai', kanchoApp);
+
+  // Mount at root for kanchoai.com custom domain
+  // This middleware checks the host header and routes kanchoai.com traffic to the Kancho AI app
+  app.use((req, res, next) => {
+    const host = req.get('host') || '';
+
+    // Check if request is from kanchoai.com domain
+    if (host.includes('kanchoai.com')) {
+      // For kanchoai.com, serve the Kancho AI app at root
+      // Pass the request to the Kancho AI router
+      return kanchoApp(req, res, next);
+    }
+
+    // For other domains, continue to next middleware
+    next();
+  });
+
   console.log('🥋 Kancho Martial Arts AI mounted at /kanchoai');
-  console.log('   - Dashboard UI: /kanchoai/');
+  console.log('   - Dashboard UI: /kanchoai/ (or kanchoai.com/)');
   console.log('   - Health Check: /kanchoai/health');
   console.log('   - API: /kanchoai/api/v1/*');
   console.log('   - Voice Agents: Kancho (EN) & Maestro (ES)');
+  console.log('   - Custom Domain: kanchoai.com (when configured)');
 } catch (error) {
   kanchoError = error;
   console.log('⚠️ Kancho AI not available:', error.message);

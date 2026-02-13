@@ -17,8 +17,48 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static dashboard files
 app.use(express.static(path.join(__dirname, '../dashboard/dist')));
 
-// Serve PWA static files (manifest, service worker)
-app.use(express.static(path.join(__dirname, '../public')));
+// Serve PWA static files (service worker - manifest is dynamic)
+app.use('/sw.js', express.static(path.join(__dirname, '../public/sw.js')));
+
+// Dynamic manifest.json that adapts to the domain
+app.get('/manifest.json', (req, res) => {
+  const host = req.get('host') || '';
+  const isKanchoDomain = host.includes('kanchoai.com');
+
+  // Use root paths for kanchoai.com, /kanchoai paths for other domains
+  const basePath = isKanchoDomain ? '/' : '/kanchoai/';
+
+  const manifest = {
+    name: 'Kancho AI - Business Intelligence',
+    short_name: 'Kancho AI',
+    description: 'AI Business Intelligence Officer for martial arts schools',
+    start_url: basePath,
+    display: 'standalone',
+    background_color: '#0D0D0D',
+    theme_color: '#E85A4F',
+    orientation: 'portrait-primary',
+    icons: [
+      {
+        src: 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d318b7f6dcf1134316df1.png',
+        sizes: '192x192',
+        type: 'image/png',
+        purpose: 'any maskable'
+      },
+      {
+        src: 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d318b7f6dcf1134316df1.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'any maskable'
+      }
+    ],
+    categories: ['business', 'productivity'],
+    lang: 'en',
+    dir: 'ltr'
+  };
+
+  res.setHeader('Content-Type', 'application/manifest+json');
+  res.json(manifest);
+});
 
 // Import models
 let models;
