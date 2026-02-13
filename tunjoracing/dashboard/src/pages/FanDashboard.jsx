@@ -257,11 +257,6 @@ export default function FanDashboard() {
                 </li>
               </ul>
 
-              {fan.membership_tier === 'free' && (
-                <button className="w-full mt-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-semibold rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-colors">
-                  Upgrade to Premium
-                </button>
-              )}
             </div>
 
             {/* Upcoming Races */}
