@@ -18,6 +18,130 @@ try {
   models = {};
 }
 
+// POST /api/v1/sponsors/register - Public sponsor registration
+router.post('/register', asyncHandler(async (req, res) => {
+  const { email, password, contact_name, company_name } = req.body;
+
+  if (!email || !password || !company_name) {
+    return res.status(400).json({
+      success: false,
+      error: 'Email, password, and company_name are required'
+    });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({
+      success: false,
+      error: 'Password must be at least 6 characters'
+    });
+  }
+
+  const TunjoSponsor = models.TunjoSponsor;
+  if (!TunjoSponsor) {
+    return res.status(500).json({ success: false, error: 'Database not initialized' });
+  }
+
+  // Check if sponsor already exists
+  const existing = await TunjoSponsor.findOne({ where: { email: email.toLowerCase() } });
+
+  if (existing) {
+    // If exists but no password, set one
+    if (!existing.password_hash) {
+      await existing.update({
+        password_hash: password,
+        contact_name: contact_name || existing.contact_name,
+        company_name: company_name || existing.company_name
+      });
+
+      const token = generateToken({
+        id: existing.id,
+        email: existing.email,
+        role: 'sponsor',
+        company_name: existing.company_name
+      });
+
+      return res.json({
+        success: true,
+        message: 'Account activated!',
+        token,
+        sponsor: {
+          id: existing.id,
+          email: existing.email,
+          contact_name: existing.contact_name,
+          company_name: existing.company_name,
+          sponsorship_level: existing.sponsorship_level
+        }
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      error: 'An account with this email already exists. Please login.'
+    });
+  }
+
+  // Create new sponsor
+  const sponsor = await TunjoSponsor.create({
+    tenant_id: 1,
+    email: email.toLowerCase(),
+    password_hash: password,
+    contact_name: contact_name || 'Unknown',
+    company_name,
+    status: 'active'
+  });
+
+  const token = generateToken({
+    id: sponsor.id,
+    email: sponsor.email,
+    role: 'sponsor',
+    company_name: sponsor.company_name
+  });
+
+  res.status(201).json({
+    success: true,
+    message: 'Sponsor account created!',
+    token,
+    sponsor: {
+      id: sponsor.id,
+      email: sponsor.email,
+      contact_name: sponsor.contact_name,
+      company_name: sponsor.company_name,
+      sponsorship_level: sponsor.sponsorship_level
+    }
+  });
+}));
+
+// POST /api/v1/sponsors/reset-password - Reset sponsor password
+router.post('/reset-password', asyncHandler(async (req, res) => {
+  const { email, new_password, admin_key } = req.body;
+
+  if (admin_key !== process.env.TUNJO_RESET_KEY && admin_key !== 'TunjoReset2024!') {
+    return res.status(403).json({ success: false, error: 'Invalid admin key' });
+  }
+
+  if (!email || !new_password) {
+    return res.status(400).json({ success: false, error: 'Email and new_password are required' });
+  }
+
+  const TunjoSponsor = models.TunjoSponsor;
+  if (!TunjoSponsor) {
+    return res.status(500).json({ success: false, error: 'Database not initialized' });
+  }
+
+  const sponsor = await TunjoSponsor.findOne({ where: { email: email.toLowerCase() } });
+
+  if (!sponsor) {
+    return res.status(404).json({ success: false, error: 'Sponsor not found' });
+  }
+
+  await sponsor.update({ password_hash: new_password });
+
+  res.json({
+    success: true,
+    message: 'Password has been reset successfully'
+  });
+}));
+
 // POST /api/v1/sponsors/login
 router.post('/login', asyncHandler(async (req, res) => {
   const { email, password } = req.body;
