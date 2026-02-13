@@ -357,6 +357,43 @@ router.post('/signup', asyncHandler(async (req, res) => {
   });
 }));
 
+// POST /api/v1/fans/reset-password - Reset fan password (temporary admin endpoint)
+router.post('/reset-password', asyncHandler(async (req, res) => {
+  const { email, new_password, admin_key } = req.body;
+
+  // Simple admin key check for security
+  if (admin_key !== process.env.TUNJO_RESET_KEY && admin_key !== 'TunjoReset2024!') {
+    return res.status(403).json({ success: false, error: 'Invalid admin key' });
+  }
+
+  if (!email || !new_password) {
+    return res.status(400).json({ success: false, error: 'Email and new_password are required' });
+  }
+
+  if (new_password.length < 6) {
+    return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+  }
+
+  const TunjoFan = models.TunjoFan;
+  if (!TunjoFan) {
+    return res.status(500).json({ success: false, error: 'Database not initialized' });
+  }
+
+  const fan = await TunjoFan.findOne({ where: { email: email.toLowerCase(), tenant_id: 1 } });
+
+  if (!fan) {
+    return res.status(404).json({ success: false, error: 'Fan not found' });
+  }
+
+  // Update password (model hook will hash it)
+  await fan.update({ password_hash: new_password });
+
+  res.json({
+    success: true,
+    message: 'Password has been reset successfully'
+  });
+}));
+
 // POST /api/v1/fans/unsubscribe - Unsubscribe from emails
 router.post('/unsubscribe', asyncHandler(async (req, res) => {
   const { email } = req.body;
