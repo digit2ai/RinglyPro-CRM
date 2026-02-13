@@ -915,6 +915,7 @@ if (models && !modelsError) {
   const voiceRoutes = require('./routes/voice')(models);
   const healthMetricsRoutes = require('./routes/health-metrics')(models);
   const outboundRoutes = require('./routes/outbound')(models);
+  const classesRoutes = require('./routes/classes')(models);
 
   app.use('/api/v1/schools', schoolsRoutes);
   app.use('/api/v1/students', studentsRoutes);
@@ -924,7 +925,9 @@ if (models && !modelsError) {
   app.use('/api/v1/voice', voiceRoutes);
   app.use('/api/v1/health-metrics', healthMetricsRoutes);
   app.use('/api/v1/outbound', outboundRoutes);
+  app.use('/api/v1/classes', classesRoutes);
   console.log('📞 Kancho Outbound Calling routes mounted at /api/v1/outbound');
+  console.log('📅 Kancho Classes routes mounted at /api/v1/classes');
 
   // =====================================================
   // KANCHO SUBSCRIPTION PLANS - Stripe Integration
@@ -1535,6 +1538,46 @@ app.get('/es', (req, res) => {
         </button>
       </div>
 
+      <!-- Sección de Reserva de Clase de Prueba -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold mb-4">¿Listo Para Comenzar Tu <span class="text-kancho">Viaje en Artes Marciales?</span></h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">Reserva tu clase de prueba gratuita hoy. No se requiere experiencia. Sin compromiso.</p>
+        </div>
+        <div class="max-w-4xl mx-auto">
+          <div class="card rounded-2xl p-8 text-center border-kancho-coral/30" style="border-color: rgba(232, 90, 79, 0.3);">
+            <div class="w-20 h-20 bg-kancho-coral/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <i class="fas fa-calendar-check text-kancho text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-4">Reserva Tu Clase de Prueba Gratis</h3>
+            <p class="text-gray-400 mb-6">Experimenta una clase real. Conoce a nuestros instructores. Descubre si somos la opción ideal para ti.</p>
+            <ul class="text-left max-w-md mx-auto space-y-3 mb-8">
+              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> No se requiere experiencia</li>
+              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> Todo el equipo incluido</li>
+              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> Conoce a nuestros instructores expertos</li>
+              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> Cero compromiso o presión</li>
+            </ul>
+            <button onclick="openTrialBookingModal()" class="kancho-btn px-8 py-4 rounded-xl font-medium transition shadow-lg text-lg">
+              <i class="fas fa-calendar-plus mr-2"></i>Reservar Prueba Gratis
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nuestros Programas -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold mb-4">Explora Nuestros <span class="text-kancho">Programas</span></h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">Entrenamiento de artes marciales de clase mundial para todas las edades y niveles.</p>
+        </div>
+        <div id="classesGridEs" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div class="text-center col-span-full py-8">
+            <i class="fas fa-spinner fa-spin text-kancho text-3xl mb-4 block"></i>
+            <p class="text-gray-400">Cargando clases...</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Onboarding Section -->
       <div class="mt-16 pt-16 border-t border-kancho-dark-border">
         <div class="text-center mb-12">
@@ -2012,6 +2055,29 @@ app.get('/es', (req, res) => {
         </div>
       </div>
       <script src="https://link.msgsndr.com/js/form_embed.js" type="text/javascript"></script>
+
+      <!-- Modal de Reserva de Prueba -->
+      <div id="trialBookingModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-3xl shadow-2xl my-4 mx-auto">
+          <div class="p-6 border-b border-kancho-dark-border flex items-center justify-between sticky top-0 bg-kancho-dark-card z-10 rounded-t-3xl">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-green-500/20">
+                <i class="fas fa-calendar-check text-green-400 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-white">Reserva Tu Clase de Prueba Gratis</h3>
+                <p class="text-sm text-gray-400">Comienza tu viaje en artes marciales hoy</p>
+              </div>
+            </div>
+            <button onclick="closeTrialBookingModal()" class="p-2 hover:bg-white/10 rounded-lg transition">
+              <i class="fas fa-times text-gray-400"></i>
+            </button>
+          </div>
+          <div class="p-4">
+            <iframe src="https://api.leadconnectorhq.com/widget/booking/nhKuDsn2At5csiDYc4d0" style="width: 100%; height: 700px; border: none;" scrolling="yes"></iframe>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Dashboard Section -->
@@ -2389,9 +2455,11 @@ app.get('/es', (req, res) => {
       currentSchoolId = e.target.value;
       if (currentSchoolId) {
         await loadDashboard(currentSchoolId);
+        loadClassesEs();
       } else {
         document.getElementById('welcomeSection').classList.remove('hidden');
         document.getElementById('dashboardSection').classList.add('hidden');
+        loadClassesEs();
       }
     });
 
@@ -2635,7 +2703,83 @@ app.get('/es', (req, res) => {
       modal.classList.remove('flex');
     }
 
+    // Modal de Reserva de Prueba
+    function openTrialBookingModal() {
+      const modal = document.getElementById('trialBookingModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeTrialBookingModal() {
+      const modal = document.getElementById('trialBookingModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // Carga de Clases
+    const martialArtIcons = {
+      'BJJ': 'fa-hand-rock', 'Muay Thai': 'fa-fire', 'MMA': 'fa-fist-raised',
+      'Karate': 'fa-hand-paper', 'Taekwondo': 'fa-running', 'Judo': 'fa-user-ninja',
+      'Boxing': 'fa-mitten', 'Kickboxing': 'fa-fire-alt', 'Mixed': 'fa-shapes'
+    };
+    const martialArtColors = {
+      'BJJ': '#8B5CF6', 'Muay Thai': '#F59E0B', 'MMA': '#EF4444',
+      'Karate': '#3B82F6', 'Taekwondo': '#10B981', 'Judo': '#6366F1',
+      'Boxing': '#DC2626', 'Kickboxing': '#F97316', 'Mixed': '#8B5CF6'
+    };
+    const classNamesEs = {
+      'Brazilian Jiu-Jitsu Fundamentals': 'Jiu-Jitsu Brasileño Fundamentales',
+      'Muay Thai Kickboxing': 'Muay Thai Kickboxing',
+      'Kids Martial Arts': 'Artes Marciales para Niños',
+      'Advanced MMA': 'MMA Avanzado',
+      'Boxing Fundamentals': 'Boxeo Fundamentales',
+      "Women's Self-Defense": 'Defensa Personal para Mujeres'
+    };
+
+    async function loadClassesEs() {
+      try {
+        const schoolId = currentSchoolId || '';
+        const res = await fetch('/kanchoai/api/v1/classes/public?school_id=' + schoolId);
+        const result = await res.json();
+        if (result.success) renderClassesEs(result.data);
+      } catch (e) {
+        console.error('Error cargando clases:', e);
+      }
+    }
+
+    function renderClassesEs(classes) {
+      const grid = document.getElementById('classesGridEs');
+      if (!classes || classes.length === 0) {
+        grid.innerHTML = '<div class="text-center col-span-full py-8"><p class="text-gray-400">No hay clases disponibles.</p></div>';
+        return;
+      }
+      grid.innerHTML = classes.map(cls => {
+        const icon = martialArtIcons[cls.martial_art] || 'fa-trophy';
+        const color = martialArtColors[cls.martial_art] || '#E85A4F';
+        const name = classNamesEs[cls.name] || cls.name;
+        const schedule = cls.schedule && typeof cls.schedule === 'object'
+          ? Object.entries(cls.schedule).map(([d, t]) => d.charAt(0).toUpperCase() + d.slice(1, 3) + ': ' + t).join(' · ')
+          : 'Horario por confirmar';
+        return '<div class="card rounded-2xl p-6 hover:border-kancho-coral/50 transition-all duration-300 fade-in">' +
+          '<div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background: ' + color + '20;">' +
+            '<i class="fas ' + icon + '" style="color: ' + color + '; font-size: 1.5rem;"></i></div>' +
+          '<div class="flex items-center gap-2 mb-2">' +
+            '<span class="text-xs font-bold px-2 py-1 rounded-full" style="background: ' + color + '20; color: ' + color + ';">' + cls.level + '</span>' +
+            '<span class="text-xs text-gray-500">' + (cls.duration_minutes || 60) + ' min</span></div>' +
+          '<h3 class="text-lg font-bold text-white mb-2">' + name + '</h3>' +
+          '<p class="text-gray-400 text-sm mb-3">' + (cls.description || '') + '</p>' +
+          '<div class="flex items-center gap-2 mb-2 text-sm"><i class="fas fa-user-circle text-kancho"></i>' +
+            '<span class="text-gray-300">' + (cls.instructor || 'Por confirmar') + '</span></div>' +
+          '<div class="flex items-center gap-2 mb-4 text-sm"><i class="fas fa-clock text-kancho"></i>' +
+            '<span class="text-gray-400 text-xs">' + schedule + '</span></div>' +
+          '<div class="flex items-center justify-between pt-4 border-t border-kancho-dark-border">' +
+            '<div><p class="text-xl font-bold text-kancho">$' + (cls.price || 0) + '</p><p class="text-xs text-gray-500">por mes</p></div>' +
+            '<button onclick="openTrialBookingModal()" class="px-4 py-2 kancho-btn rounded-lg text-sm font-medium transition">Reservar Prueba</button></div></div>';
+      }).join('');
+    }
+
     loadSchools();
+    loadClassesEs();
 
     // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {
@@ -2647,6 +2791,9 @@ app.get('/es', (req, res) => {
       });
     }
   </script>
+
+  <!-- Kancho AI Text Chatbot -->
+  <elevenlabs-convai agent-id="agent_5601kh453hqqfz59nfemkwk02vax" style="position: fixed; bottom: 20px; right: 20px; z-index: 100;"></elevenlabs-convai>
 </body>
 </html>
   `);
@@ -2925,6 +3072,46 @@ app.get('*', (req, res) => {
         <button onclick="seedDemoData()" class="kancho-btn px-8 py-4 rounded-xl font-medium transition shadow-lg">
           <i class="fas fa-rocket mr-2"></i>Load Demo Data
         </button>
+      </div>
+
+      <!-- Trial Class Booking Section -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold mb-4">Ready to Start Your <span class="text-kancho">Martial Arts Journey?</span></h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">Book your free trial class today. No experience necessary. No commitment required.</p>
+        </div>
+        <div class="max-w-4xl mx-auto">
+          <div class="card rounded-2xl p-8 text-center border-kancho-coral/30" style="border-color: rgba(232, 90, 79, 0.3);">
+            <div class="w-20 h-20 bg-kancho-coral/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <i class="fas fa-calendar-check text-kancho text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-4">Book Your Free Trial Class</h3>
+            <p class="text-gray-400 mb-6">Experience a real class. Meet our instructors. See if we're the right fit for you.</p>
+            <ul class="text-left max-w-md mx-auto space-y-3 mb-8">
+              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> No experience required</li>
+              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> All equipment provided</li>
+              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> Meet our expert instructors</li>
+              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> Zero commitment or pressure</li>
+            </ul>
+            <button onclick="openTrialBookingModal()" class="kancho-btn px-8 py-4 rounded-xl font-medium transition shadow-lg text-lg">
+              <i class="fas fa-calendar-plus mr-2"></i>Book Free Trial Now
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Our Programs Section -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold mb-4">Explore Our <span class="text-kancho">Programs</span></h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">World-class martial arts training for all ages and skill levels.</p>
+        </div>
+        <div id="classesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div class="text-center col-span-full py-8">
+            <i class="fas fa-spinner fa-spin text-kancho text-3xl mb-4 block"></i>
+            <p class="text-gray-400">Loading classes...</p>
+          </div>
+        </div>
       </div>
 
       <!-- Onboarding Section -->
@@ -3404,6 +3591,29 @@ app.get('*', (req, res) => {
         </div>
       </div>
       <script src="https://link.msgsndr.com/js/form_embed.js" type="text/javascript"></script>
+
+      <!-- Trial Booking Modal -->
+      <div id="trialBookingModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-3xl shadow-2xl my-4 mx-auto">
+          <div class="p-6 border-b border-kancho-dark-border flex items-center justify-between sticky top-0 bg-kancho-dark-card z-10 rounded-t-3xl">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-green-500/20">
+                <i class="fas fa-calendar-check text-green-400 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-white">Book Your Free Trial Class</h3>
+                <p class="text-sm text-gray-400">Start your martial arts journey today</p>
+              </div>
+            </div>
+            <button onclick="closeTrialBookingModal()" class="p-2 hover:bg-white/10 rounded-lg transition">
+              <i class="fas fa-times text-gray-400"></i>
+            </button>
+          </div>
+          <div class="p-4">
+            <iframe src="https://api.leadconnectorhq.com/widget/booking/nhKuDsn2At5csiDYc4d0" style="width: 100%; height: 700px; border: none;" scrolling="yes"></iframe>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Dashboard Section -->
@@ -3790,9 +4000,11 @@ app.get('*', (req, res) => {
       currentSchoolId = e.target.value;
       if (currentSchoolId) {
         await loadDashboard(currentSchoolId);
+        loadClasses();
       } else {
         document.getElementById('welcomeSection').classList.remove('hidden');
         document.getElementById('dashboardSection').classList.add('hidden');
+        loadClasses();
       }
     });
 
@@ -4063,6 +4275,72 @@ app.get('*', (req, res) => {
       modal.classList.remove('flex');
     }
 
+    // Trial Booking Modal
+    function openTrialBookingModal() {
+      const modal = document.getElementById('trialBookingModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeTrialBookingModal() {
+      const modal = document.getElementById('trialBookingModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // Class Schedule Loading
+    const martialArtIcons = {
+      'BJJ': 'fa-hand-rock', 'Muay Thai': 'fa-fire', 'MMA': 'fa-fist-raised',
+      'Karate': 'fa-hand-paper', 'Taekwondo': 'fa-running', 'Judo': 'fa-user-ninja',
+      'Boxing': 'fa-mitten', 'Kickboxing': 'fa-fire-alt', 'Mixed': 'fa-shapes'
+    };
+    const martialArtColors = {
+      'BJJ': '#8B5CF6', 'Muay Thai': '#F59E0B', 'MMA': '#EF4444',
+      'Karate': '#3B82F6', 'Taekwondo': '#10B981', 'Judo': '#6366F1',
+      'Boxing': '#DC2626', 'Kickboxing': '#F97316', 'Mixed': '#8B5CF6'
+    };
+
+    async function loadClasses() {
+      try {
+        const schoolId = currentSchoolId || '';
+        const res = await fetch('/kanchoai/api/v1/classes/public?school_id=' + schoolId);
+        const result = await res.json();
+        if (result.success) renderClasses(result.data);
+      } catch (e) {
+        console.error('Error loading classes:', e);
+      }
+    }
+
+    function renderClasses(classes) {
+      const grid = document.getElementById('classesGrid');
+      if (!classes || classes.length === 0) {
+        grid.innerHTML = '<div class="text-center col-span-full py-8"><p class="text-gray-400">No classes available.</p></div>';
+        return;
+      }
+      grid.innerHTML = classes.map(cls => {
+        const icon = martialArtIcons[cls.martial_art] || 'fa-trophy';
+        const color = martialArtColors[cls.martial_art] || '#E85A4F';
+        const schedule = cls.schedule && typeof cls.schedule === 'object'
+          ? Object.entries(cls.schedule).map(([d, t]) => d.charAt(0).toUpperCase() + d.slice(1, 3) + ': ' + t).join(' · ')
+          : 'Schedule TBA';
+        return '<div class="card rounded-2xl p-6 hover:border-kancho-coral/50 transition-all duration-300 fade-in">' +
+          '<div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background: ' + color + '20;">' +
+            '<i class="fas ' + icon + '" style="color: ' + color + '; font-size: 1.5rem;"></i></div>' +
+          '<div class="flex items-center gap-2 mb-2">' +
+            '<span class="text-xs font-bold px-2 py-1 rounded-full" style="background: ' + color + '20; color: ' + color + ';">' + cls.level + '</span>' +
+            '<span class="text-xs text-gray-500">' + (cls.duration_minutes || 60) + ' min</span></div>' +
+          '<h3 class="text-lg font-bold text-white mb-2">' + cls.name + '</h3>' +
+          '<p class="text-gray-400 text-sm mb-3">' + (cls.description || '') + '</p>' +
+          '<div class="flex items-center gap-2 mb-2 text-sm"><i class="fas fa-user-circle text-kancho"></i>' +
+            '<span class="text-gray-300">' + (cls.instructor || 'TBA') + '</span></div>' +
+          '<div class="flex items-center gap-2 mb-4 text-sm"><i class="fas fa-clock text-kancho"></i>' +
+            '<span class="text-gray-400 text-xs">' + schedule + '</span></div>' +
+          '<div class="flex items-center justify-between pt-4 border-t border-kancho-dark-border">' +
+            '<div><p class="text-xl font-bold text-kancho">$' + (cls.price || 0) + '</p><p class="text-xs text-gray-500">per month</p></div>' +
+            '<button onclick="openTrialBookingModal()" class="px-4 py-2 kancho-btn rounded-lg text-sm font-medium transition">Book Trial</button></div></div>';
+      }).join('');
+    }
+
     function setLanguage(lang) {
       currentLanguage = lang;
       document.getElementById('langEn').classList.toggle('bg-kancho-coral/20', lang === 'en');
@@ -4163,17 +4441,22 @@ app.get('*', (req, res) => {
 
     // Initialize
     loadSchools();
+    loadClasses();
     checkSubscriptionSuccess();
 
     // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/kanchoai/sw.js')
+        const swPath = window.location.hostname.includes('kanchoai.com') ? '/sw.js' : '/kanchoai/sw.js';
+        navigator.serviceWorker.register(swPath)
           .then(reg => console.log('Kancho AI SW registered'))
           .catch(err => console.log('SW registration failed:', err));
       });
     }
   </script>
+
+  <!-- Kancho AI Text Chatbot -->
+  <elevenlabs-convai agent-id="agent_5601kh453hqqfz59nfemkwk02vax" style="position: fixed; bottom: 20px; right: 20px; z-index: 100;"></elevenlabs-convai>
 </body>
 </html>
   `);

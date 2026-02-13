@@ -204,6 +204,42 @@ module.exports = (models) => {
     }
   });
 
+  // POST /api/v1/leads/trial-booking - Create lead from trial class booking
+  router.post('/trial-booking', async (req, res) => {
+    try {
+      const { school_id, first_name, last_name, email, phone, trial_date, interest_area, source } = req.body;
+
+      if (!school_id || !first_name) {
+        return res.status(400).json({ success: false, error: 'school_id and first_name required' });
+      }
+
+      const lead = await KanchoLead.create({
+        school_id,
+        first_name,
+        last_name: last_name || '',
+        email: email || null,
+        phone: phone || null,
+        trial_date: trial_date ? new Date(trial_date) : null,
+        interest_area: interest_area || null,
+        status: 'trial_scheduled',
+        temperature: 'hot',
+        lead_score: 75,
+        source: source || 'website_trial_booking',
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Trial class booked successfully',
+        data: lead
+      });
+    } catch (error) {
+      console.error('Error creating trial booking:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   // DELETE /api/v1/leads/:id - Delete lead
   router.delete('/:id', async (req, res) => {
     try {
