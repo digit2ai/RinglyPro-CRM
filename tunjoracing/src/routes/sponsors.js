@@ -7,8 +7,12 @@
 
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
 const asyncHandler = require('../middleware/async-handler');
 const { authenticateToken, requireSponsor, requireAdmin, generateToken } = require('../middleware/auth');
+
+const RESET_SECRET = process.env.JWT_SECRET || 'tunjo-reset-secret-key';
+const APP_URL = process.env.APP_URL || 'https://aiagent.ringlypro.com';
 
 let models;
 try {
@@ -109,6 +113,77 @@ router.post('/register', asyncHandler(async (req, res) => {
       sponsorship_level: sponsor.sponsorship_level
     }
   });
+}));
+
+// POST /api/v1/sponsors/forgot-password - Generate instant password reset link
+router.post('/forgot-password', asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ success: false, error: 'Email is required' });
+  }
+
+  const TunjoSponsor = models.TunjoSponsor;
+  if (!TunjoSponsor) {
+    return res.status(500).json({ success: false, error: 'Database not initialized' });
+  }
+
+  const sponsor = await TunjoSponsor.findOne({ where: { email: email.toLowerCase() } });
+
+  if (!sponsor) {
+    return res.json({ success: false, error: 'No account found with this email address' });
+  }
+
+  const resetToken = jwt.sign(
+    { id: sponsor.id, email: sponsor.email, purpose: 'password_reset' },
+    RESET_SECRET,
+    { expiresIn: '1h' }
+  );
+
+  const resetLink = `${APP_URL}/tunjoracing/sponsor/reset-password?token=${resetToken}`;
+  console.log(`🔑 Sponsor password reset link generated for: ${sponsor.email}`);
+
+  res.json({
+    success: true,
+    message: 'Password reset link generated successfully',
+    resetLink,
+    expiresIn: '1 hour'
+  });
+}));
+
+// POST /api/v1/sponsors/reset-password-token - Reset password using token
+router.post('/reset-password-token', asyncHandler(async (req, res) => {
+  const { token, new_password } = req.body;
+
+  if (!token || !new_password) {
+    return res.status(400).json({ success: false, error: 'Token and new password are required' });
+  }
+
+  if (new_password.length < 6) {
+    return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, RESET_SECRET);
+  } catch (err) {
+    return res.status(400).json({ success: false, error: 'Invalid or expired reset link. Please request a new one.' });
+  }
+
+  if (decoded.purpose !== 'password_reset') {
+    return res.status(400).json({ success: false, error: 'Invalid reset token' });
+  }
+
+  const TunjoSponsor = models.TunjoSponsor;
+  const sponsor = await TunjoSponsor.findByPk(decoded.id);
+
+  if (!sponsor) {
+    return res.status(404).json({ success: false, error: 'Account not found' });
+  }
+
+  await sponsor.update({ password_hash: new_password });
+
+  res.json({ success: true, message: 'Password has been reset successfully. You can now log in.' });
 }));
 
 // POST /api/v1/sponsors/reset-password - Reset sponsor password

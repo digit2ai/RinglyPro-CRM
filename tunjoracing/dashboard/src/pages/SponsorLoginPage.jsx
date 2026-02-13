@@ -90,6 +90,11 @@ export default function SponsorLoginPage() {
                   placeholder="••••••••"
                 />
               </div>
+              <div className="text-right mt-1">
+                <Link to="/sponsor/forgot-password" className="text-amber-400 text-xs hover:text-amber-300 transition-colors">
+                  Forgot password?
+                </Link>
+              </div>
             </div>
 
             <button

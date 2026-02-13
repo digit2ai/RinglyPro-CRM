@@ -16,6 +16,8 @@ import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboard from './pages/AdminDashboard';
 import FansPage from './pages/FansPage';
 import SponsorLoginPage from './pages/SponsorLoginPage';
+import SponsorForgotPasswordPage from './pages/SponsorForgotPasswordPage';
+import SponsorResetPasswordPage from './pages/SponsorResetPasswordPage';
 import SponsorDashboard from './pages/SponsorDashboard';
 import FanLoginPage from './pages/FanLoginPage';
 import FanForgotPasswordPage from './pages/FanForgotPasswordPage';
@@ -40,6 +42,8 @@ function App() {
 
         {/* Sponsor Portal */}
         <Route path="/sponsor/login" element={<SponsorLoginPage />} />
+        <Route path="/sponsor/forgot-password" element={<SponsorForgotPasswordPage />} />
+        <Route path="/sponsor/reset-password" element={<SponsorResetPasswordPage />} />
         <Route path="/sponsor/dashboard" element={<SponsorDashboard />} />
 
         {/* Fan Portal */}
