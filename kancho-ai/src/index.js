@@ -1357,8 +1357,24 @@ app.get('/es', (req, res) => {
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Kancho AI - Inteligencia de Negocio para Escuelas de Artes Marciales</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#E85A4F">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Kancho AI">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Kancho AI">
+  <meta name="msapplication-TileColor" content="#E85A4F">
+  <meta name="description" content="Oficial de Inteligencia de Negocio con IA para escuelas de artes marciales. Monitorea la salud, retiene miembros, convierte prospectos.">
+
+  <!-- PWA Manifest & Icons -->
+  <link rel="manifest" href="/kanchoai/manifest.json">
+  <link rel="apple-touch-icon" href="${KANCHO_LOGO_URL}">
+  <link rel="icon" type="image/png" href="${KANCHO_LOGO_URL}">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -1379,6 +1395,13 @@ app.get('/es', (req, res) => {
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    html { scroll-behavior: smooth; }
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overscroll-behavior: none;
+    }
     .gradient-bg { background: #0D0D0D; }
     .card { background: #1A1A1A; border: 1px solid #2A2A2A; }
     .card-danger { background: linear-gradient(135deg, rgba(232, 90, 79, 0.15) 0%, rgba(232, 90, 79, 0.05) 100%); border-color: rgba(232, 90, 79, 0.3); }
@@ -1388,13 +1411,50 @@ app.get('/es', (req, res) => {
     .score-ring { stroke-dasharray: 377; stroke-dashoffset: calc(377 - (377 * var(--score)) / 100); transition: stroke-dashoffset 1.5s ease-out; }
     .fade-in { animation: fadeIn 0.5s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .kancho-btn { background: linear-gradient(135deg, #E85A4F 0%, #D64A3F 100%); }
-    .kancho-btn:hover { background: linear-gradient(135deg, #D64A3F 0%, #C53A2F 100%); }
+    .kancho-btn { background: linear-gradient(135deg, #E85A4F 0%, #D64A3F 100%); -webkit-tap-highlight-color: transparent; }
+    .kancho-btn:hover, .kancho-btn:active { background: linear-gradient(135deg, #D64A3F 0%, #C53A2F 100%); }
     .text-kancho { color: #E85A4F; }
+
+    /* Mobile-first responsive styles */
     @media (max-width: 768px) {
-      .mobile-header { flex-direction: column; gap: 12px; padding: 12px 16px; }
-      .mobile-main { padding: 16px !important; }
-      body { padding-bottom: 70px; }
+      .mobile-header {
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px 16px;
+        padding-top: max(12px, env(safe-area-inset-top));
+      }
+      .mobile-main {
+        padding: 16px !important;
+        padding-bottom: calc(80px + env(safe-area-inset-bottom));
+      }
+      body {
+        padding-bottom: calc(70px + env(safe-area-inset-bottom));
+      }
+      /* Touch-friendly buttons */
+      button, .kancho-btn, a.kancho-btn {
+        min-height: 44px;
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+      select {
+        min-height: 44px;
+        font-size: 16px; /* Prevents iOS zoom */
+      }
+      /* Language toggle positioning for safe area */
+      .fixed.bottom-4.left-4 {
+        bottom: max(16px, env(safe-area-inset-bottom));
+        left: max(16px, env(safe-area-inset-left));
+      }
+    }
+
+    /* Standalone PWA mode adjustments */
+    @media all and (display-mode: standalone) {
+      body {
+        padding-top: env(safe-area-inset-top);
+      }
+      header {
+        padding-top: env(safe-area-inset-top);
+      }
     }
   </style>
 </head>
@@ -2571,6 +2631,16 @@ app.get('/es', (req, res) => {
     }
 
     loadSchools();
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        const swPath = window.location.hostname.includes('kanchoai.com') ? '/sw.js' : '/kanchoai/sw.js';
+        navigator.serviceWorker.register(swPath)
+          .then(reg => console.log('[Kancho] SW registrado:', reg.scope))
+          .catch(err => console.log('[Kancho] SW error:', err));
+      });
+    }
   </script>
 </body>
 </html>
