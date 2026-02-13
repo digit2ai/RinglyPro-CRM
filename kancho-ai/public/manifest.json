@@ -1,0 +1,27 @@
+{
+  "name": "Kancho AI - Business Intelligence",
+  "short_name": "Kancho AI",
+  "description": "AI Business Intelligence Officer for martial arts schools",
+  "start_url": "/kanchoai/",
+  "display": "standalone",
+  "background_color": "#0D0D0D",
+  "theme_color": "#E85A4F",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d318b7f6dcf1134316df1.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d318b7f6dcf1134316df1.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "en",
+  "dir": "ltr"
+}

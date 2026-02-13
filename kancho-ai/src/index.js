@@ -17,6 +17,9 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static dashboard files
 app.use(express.static(path.join(__dirname, '../dashboard/dist')));
 
+// Serve PWA static files (manifest, service worker)
+app.use(express.static(path.join(__dirname, '../public')));
+
 // Import models
 let models;
 let modelsError = null;
@@ -2425,8 +2428,24 @@ app.get('*', (req, res) => {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Kancho AI - Business Intelligence for Martial Arts Schools</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#E85A4F">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Kancho AI">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Kancho AI">
+  <meta name="msapplication-TileColor" content="#E85A4F">
+  <meta name="description" content="AI Business Intelligence Officer for martial arts schools. Monitor health, retain members, convert leads.">
+
+  <!-- PWA Manifest & Icons -->
+  <link rel="manifest" href="/kanchoai/manifest.json">
+  <link rel="apple-touch-icon" href="${KANCHO_LOGO_URL}">
+  <link rel="icon" type="image/png" href="${KANCHO_LOGO_URL}">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -2447,6 +2466,13 @@ app.get('*', (req, res) => {
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    html { scroll-behavior: smooth; }
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overscroll-behavior: none;
+    }
     .gradient-bg { background: #0D0D0D; }
     .card { background: #1A1A1A; border: 1px solid #2A2A2A; }
     .card-danger { background: linear-gradient(135deg, rgba(232, 90, 79, 0.15) 0%, rgba(232, 90, 79, 0.05) 100%); border-color: rgba(232, 90, 79, 0.3); }
@@ -2456,53 +2482,179 @@ app.get('*', (req, res) => {
     .score-ring { stroke-dasharray: 377; stroke-dashoffset: calc(377 - (377 * var(--score)) / 100); transition: stroke-dashoffset 1.5s ease-out; }
     .fade-in { animation: fadeIn 0.5s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .kancho-btn { background: linear-gradient(135deg, #E85A4F 0%, #D64A3F 100%); }
-    .kancho-btn:hover { background: linear-gradient(135deg, #D64A3F 0%, #C53A2F 100%); }
+    .kancho-btn { background: linear-gradient(135deg, #E85A4F 0%, #D64A3F 100%); -webkit-tap-highlight-color: transparent; }
+    .kancho-btn:hover, .kancho-btn:active { background: linear-gradient(135deg, #D64A3F 0%, #C53A2F 100%); }
     .text-kancho { color: #E85A4F; }
+
+    /* Mobile-first responsive styles */
     @media (max-width: 768px) {
-      .mobile-header { flex-direction: column; gap: 12px; padding: 12px 16px; }
-      .mobile-main { padding: 16px !important; }
-      body { padding-bottom: 70px; }
+      .mobile-header {
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px 16px;
+        align-items: stretch;
+      }
+      .mobile-header > div:first-child {
+        justify-content: center;
+      }
+      .mobile-header .header-actions {
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+      }
+      .mobile-header .header-actions > * {
+        width: 100%;
+        justify-content: center;
+      }
+      .mobile-header .demo-label {
+        display: none;
+      }
+      .mobile-header select {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 16px; /* Prevents iOS zoom */
+      }
+      .mobile-header button {
+        width: 100%;
+        padding: 14px 20px;
+        font-size: 16px;
+      }
+      .mobile-main {
+        padding: 12px !important;
+      }
+      body {
+        padding-bottom: 80px;
+      }
+      .mobile-hero-logo {
+        width: 200px !important;
+        height: 200px !important;
+      }
+      .mobile-hero-logo img {
+        width: 160px !important;
+        height: 160px !important;
+      }
+      h2.mobile-title {
+        font-size: 1.75rem !important;
+        line-height: 1.2 !important;
+      }
+      .mobile-value-props {
+        gap: 16px !important;
+      }
+      .mobile-value-props .card {
+        padding: 20px !important;
+      }
+      .mobile-pricing-grid {
+        gap: 20px !important;
+      }
+      .mobile-pricing-grid > div {
+        transform: none !important;
+      }
+      .mobile-stats-banner {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px !important;
+      }
+      .mobile-workflow {
+        gap: 24px !important;
+      }
+      .mobile-cta-buttons {
+        flex-direction: column !important;
+        gap: 12px !important;
+      }
+      .mobile-cta-buttons > * {
+        width: 100% !important;
+        text-align: center;
+      }
+      .mobile-footer-grid {
+        grid-template-columns: 1fr !important;
+        gap: 32px !important;
+        text-align: center;
+      }
+      .mobile-kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+      .language-toggle {
+        bottom: 16px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .mobile-hero-logo {
+        width: 160px !important;
+        height: 160px !important;
+      }
+      .mobile-hero-logo img {
+        width: 120px !important;
+        height: 120px !important;
+      }
+      h2.mobile-title {
+        font-size: 1.5rem !important;
+      }
+      .mobile-stats-banner p.text-3xl {
+        font-size: 1.5rem !important;
+      }
+    }
+
+    /* Safe area for notched phones */
+    @supports (padding: max(0px)) {
+      body {
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
+        padding-bottom: max(80px, env(safe-area-inset-bottom));
+      }
+    }
+
+    /* Touch-friendly buttons */
+    button, a, select {
+      min-height: 44px;
+      cursor: pointer;
+    }
+
+    /* Smooth scrolling for modals */
+    .modal-scroll {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
   </style>
 </head>
 <body class="gradient-bg min-h-screen text-white">
   <!-- Header -->
-  <header class="border-b border-kancho-dark-border sticky top-0 z-50 bg-kancho-dark/95 backdrop-blur-xl">
-    <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-4 mobile-header">
+  <header class="border-b border-kancho-dark-border sticky top-0 z-50 bg-kancho-dark/95 backdrop-blur-xl safe-area-top">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 md:px-6 py-3 md:py-4 mobile-header">
       <div class="flex items-center gap-3">
-        <!-- Kancho Logo -->
         <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-10 h-10 md:w-12 md:h-12 rounded-lg object-contain">
         <div>
-          <h1 class="text-xl md:text-2xl font-bold text-white tracking-tight">KANCHO AI</h1>
-          <p class="text-xs text-gray-500">AI Business Intelligence</p>
+          <h1 class="text-lg md:text-2xl font-bold text-white tracking-tight">KANCHO AI</h1>
+          <p class="text-xs text-gray-500 hidden sm:block">AI Business Intelligence</p>
         </div>
       </div>
-      <div class="flex items-center gap-4">
-        <span class="text-gray-400 text-sm font-medium">DEMO</span>
-        <i class="fas fa-chevron-right text-gray-500 text-xs"></i>
-        <select id="schoolSelect" class="bg-kancho-dark-card border border-kancho-dark-border rounded-lg px-4 py-2.5 text-sm focus:border-kancho-coral focus:outline-none transition">
-          <option value="">Select Your Business...</option>
+      <div class="flex items-center gap-2 md:gap-4 header-actions">
+        <span class="text-gray-400 text-sm font-medium demo-label hidden md:inline">DEMO</span>
+        <i class="fas fa-chevron-right text-gray-500 text-xs demo-label hidden md:inline"></i>
+        <select id="schoolSelect" class="bg-kancho-dark-card border border-kancho-dark-border rounded-lg px-3 md:px-4 py-2 md:py-2.5 text-sm focus:border-kancho-coral focus:outline-none transition">
+          <option value="">Select Business...</option>
         </select>
-        <button onclick="talkToKancho()" class="kancho-btn px-5 py-2.5 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-lg">
+        <button onclick="talkToKancho()" class="kancho-btn px-4 md:px-5 py-2 md:py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 shadow-lg whitespace-nowrap">
           <i class="fas fa-microphone"></i>
-          <span>Talk to Kancho</span>
+          <span class="hidden sm:inline">Talk to Kancho</span>
+          <span class="sm:hidden">Talk</span>
         </button>
       </div>
     </div>
   </header>
 
   <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-6 py-8 mobile-main">
+  <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8 mobile-main">
     <!-- Welcome Section -->
-    <div id="welcomeSection" class="py-16">
-      <div class="text-center mb-16">
-        <div class="w-80 h-80 md:w-96 md:h-96 rounded-3xl flex items-center justify-center mx-auto mb-8 glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border">
-          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-64 h-64 md:w-80 md:h-80 object-contain">
+    <div id="welcomeSection" class="py-8 md:py-16">
+      <div class="text-center mb-10 md:mb-16">
+        <div class="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-3xl flex items-center justify-center mx-auto mb-6 md:mb-8 glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border mobile-hero-logo">
+          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-36 h-36 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 object-contain">
         </div>
-        <h2 class="text-4xl font-bold mb-4">Meet <span class="text-kancho">Kancho AI</span></h2>
-        <p class="text-xl text-gray-300 mb-2">Your AI Business Intelligence Officer</p>
-        <p class="text-gray-400 max-w-2xl mx-auto">
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 mobile-title">Meet <span class="text-kancho">Kancho AI</span></h2>
+        <p class="text-lg md:text-xl text-gray-300 mb-2">Your AI Business Intelligence Officer</p>
+        <p class="text-gray-400 max-w-2xl mx-auto text-sm md:text-base px-2">
           Connects to your company data, understands how your business really works,
           and delivers clear insights on where you're losing money, where you can grow,
           and what actions will maximize your profit and performance.
@@ -2510,29 +2662,29 @@ app.get('*', (req, res) => {
       </div>
 
       <!-- Value Props -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-        <div class="card card-danger rounded-2xl p-8 text-center">
-          <div class="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <i class="fas fa-money-bill-wave text-red-400 text-2xl"></i>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-10 md:mb-16 mobile-value-props">
+        <div class="card card-danger rounded-2xl p-5 md:p-8 text-center">
+          <div class="w-12 h-12 md:w-16 md:h-16 bg-red-500/20 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4">
+            <i class="fas fa-money-bill-wave text-red-400 text-xl md:text-2xl"></i>
           </div>
-          <h3 class="text-xl font-bold mb-2 text-red-400">Find Money Leaks</h3>
-          <p class="text-gray-400 text-sm">Identify where you're losing revenue - churning members, failed payments, missed opportunities</p>
+          <h3 class="text-lg md:text-xl font-bold mb-2 text-red-400">Find Money Leaks</h3>
+          <p class="text-gray-400 text-xs md:text-sm">Identify where you're losing revenue - churning members, failed payments, missed opportunities</p>
         </div>
 
-        <div class="card card-success rounded-2xl p-8 text-center">
-          <div class="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <i class="fas fa-chart-line text-green-400 text-2xl"></i>
+        <div class="card card-success rounded-2xl p-5 md:p-8 text-center">
+          <div class="w-12 h-12 md:w-16 md:h-16 bg-green-500/20 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4">
+            <i class="fas fa-chart-line text-green-400 text-xl md:text-2xl"></i>
           </div>
-          <h3 class="text-xl font-bold mb-2 text-green-400">Spot Growth</h3>
-          <p class="text-gray-400 text-sm">Discover untapped potential - hot leads, upsell opportunities, expansion possibilities</p>
+          <h3 class="text-lg md:text-xl font-bold mb-2 text-green-400">Spot Growth</h3>
+          <p class="text-gray-400 text-xs md:text-sm">Discover untapped potential - hot leads, upsell opportunities, expansion possibilities</p>
         </div>
 
-        <div class="card rounded-2xl p-8 text-center" style="background: linear-gradient(135deg, rgba(232, 90, 79, 0.1) 0%, rgba(232, 90, 79, 0.05) 100%); border-color: rgba(232, 90, 79, 0.2);">
-          <div class="w-16 h-16 bg-kancho-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <i class="fas fa-bolt text-kancho text-2xl"></i>
+        <div class="card rounded-2xl p-5 md:p-8 text-center" style="background: linear-gradient(135deg, rgba(232, 90, 79, 0.1) 0%, rgba(232, 90, 79, 0.05) 100%); border-color: rgba(232, 90, 79, 0.2);">
+          <div class="w-12 h-12 md:w-16 md:h-16 bg-kancho-coral/20 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4">
+            <i class="fas fa-bolt text-kancho text-xl md:text-2xl"></i>
           </div>
-          <h3 class="text-xl font-bold mb-2 text-kancho">Take Action</h3>
-          <p class="text-gray-400 text-sm">Get prioritized recommendations that maximize profit and performance immediately</p>
+          <h3 class="text-lg md:text-xl font-bold mb-2 text-kancho">Take Action</h3>
+          <p class="text-gray-400 text-xs md:text-sm">Get prioritized recommendations that maximize profit and performance immediately</p>
         </div>
       </div>
 
@@ -2703,15 +2855,15 @@ app.get('*', (req, res) => {
       </div>
 
       <!-- Subscription Plans -->
-      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
-        <div class="text-center mb-12">
-          <h2 class="text-3xl font-bold mb-4">Choose Your <span class="text-kancho">Kancho AI</span> Plan</h2>
-          <p class="text-gray-400 max-w-2xl mx-auto">Power your martial arts school with AI-driven business intelligence, automated receptionist, and complete CRM solutions.</p>
+      <div class="mt-10 md:mt-16 pt-10 md:pt-16 border-t border-kancho-dark-border" id="pricing">
+        <div class="text-center mb-8 md:mb-12 px-2">
+          <h2 class="text-2xl md:text-3xl font-bold mb-3 md:mb-4 mobile-title">Choose Your <span class="text-kancho">Kancho AI</span> Plan</h2>
+          <p class="text-gray-400 max-w-2xl mx-auto text-sm md:text-base">Power your martial arts school with AI-driven business intelligence, automated receptionist, and complete CRM solutions.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto mobile-pricing-grid">
           <!-- Plan 1: Kancho Intelligence -->
-          <div class="card rounded-2xl p-8 relative hover:border-kancho-coral/50 transition-all duration-300">
+          <div class="card rounded-2xl p-5 md:p-8 relative hover:border-kancho-coral/50 transition-all duration-300">
             <div class="text-center mb-6">
               <h3 class="text-xl font-bold mb-2">Kancho Intelligence</h3>
               <p class="text-gray-400 text-sm mb-4">AI Business Intelligence</p>
@@ -3160,12 +3312,12 @@ app.get('*', (req, res) => {
   </main>
 
   <!-- Footer -->
-  <footer class="border-t border-kancho-dark-border bg-kancho-dark/95 mt-20">
-    <div class="max-w-7xl mx-auto px-6 py-16">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+  <footer class="border-t border-kancho-dark-border bg-kancho-dark/95 mt-12 md:mt-20">
+    <div class="max-w-7xl mx-auto px-4 md:px-6 py-10 md:py-16">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mobile-footer-grid">
         <!-- Brand -->
-        <div class="md:col-span-1">
-          <div class="flex items-center gap-3 mb-4">
+        <div class="col-span-2 md:col-span-1">
+          <div class="flex items-center gap-3 mb-4 justify-center md:justify-start">
             <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-10 h-10 rounded-lg object-contain">
             <span class="text-xl font-bold">KANCHO AI</span>
           </div>
@@ -3175,8 +3327,8 @@ app.get('*', (req, res) => {
 
         <!-- Product -->
         <div>
-          <h4 class="font-semibold mb-4 text-white">Product</h4>
-          <ul class="space-y-2 text-sm">
+          <h4 class="font-semibold mb-3 md:mb-4 text-white text-sm md:text-base">Product</h4>
+          <ul class="space-y-2 text-xs md:text-sm">
             <li><a href="/kanchoai/features" class="text-gray-400 hover:text-kancho transition">Features</a></li>
             <li><a href="/kanchoai/pricing" class="text-gray-400 hover:text-kancho transition">Pricing</a></li>
             <li><a href="/kanchoai/integrations" class="text-gray-400 hover:text-kancho transition">Integrations</a></li>
@@ -3186,17 +3338,17 @@ app.get('*', (req, res) => {
 
         <!-- Company -->
         <div>
-          <h4 class="font-semibold mb-4 text-white">Company</h4>
-          <ul class="space-y-2 text-sm">
+          <h4 class="font-semibold mb-3 md:mb-4 text-white text-sm md:text-base">Company</h4>
+          <ul class="space-y-2 text-xs md:text-sm">
             <li><a href="/kanchoai/about" class="text-gray-400 hover:text-kancho transition">About Us</a></li>
             <li><a href="/kanchoai/contact" class="text-gray-400 hover:text-kancho transition">Contact</a></li>
           </ul>
         </div>
 
         <!-- Legal -->
-        <div>
-          <h4 class="font-semibold mb-4 text-white">Legal</h4>
-          <ul class="space-y-2 text-sm">
+        <div class="col-span-2 md:col-span-1">
+          <h4 class="font-semibold mb-3 md:mb-4 text-white text-sm md:text-base">Legal</h4>
+          <ul class="space-y-2 text-xs md:text-sm">
             <li><a href="/kanchoai/privacy" class="text-gray-400 hover:text-kancho transition">Privacy Policy</a></li>
             <li><a href="/kanchoai/terms" class="text-gray-400 hover:text-kancho transition">Terms of Service</a></li>
             <li><a href="mailto:support@ringlypro.com" class="text-gray-400 hover:text-kancho transition">support@ringlypro.com</a></li>
@@ -3212,9 +3364,9 @@ app.get('*', (req, res) => {
   </footer>
 
   <!-- Language Toggle -->
-  <div class="fixed bottom-4 left-4 flex gap-2">
-    <button onclick="setLanguage('en')" id="langEn" class="px-4 py-2 bg-kancho-dark-card border border-kancho-dark-border rounded-lg text-sm hover:bg-kancho-coral/20 transition">EN</button>
-    <button onclick="setLanguage('es')" id="langEs" class="px-4 py-2 bg-kancho-dark-card border border-kancho-dark-border rounded-lg text-sm hover:bg-kancho-coral/20 transition">ES</button>
+  <div class="fixed bottom-4 left-4 md:left-4 flex gap-2 language-toggle z-50">
+    <a href="/kanchoai" class="px-4 py-2 bg-kancho-coral/20 border border-kancho-dark-border rounded-lg text-sm transition font-medium">EN</a>
+    <a href="/kanchoai/es" class="px-4 py-2 bg-kancho-dark-card border border-kancho-dark-border rounded-lg text-sm hover:bg-kancho-coral/20 transition">ES</a>
   </div>
 
   <!-- Voice Chat Modal - ElevenLabs Widget Auto-Start -->
@@ -3663,6 +3815,15 @@ app.get('*', (req, res) => {
     // Initialize
     loadSchools();
     checkSubscriptionSuccess();
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/kanchoai/sw.js')
+          .then(reg => console.log('Kancho AI SW registered'))
+          .catch(err => console.log('SW registration failed:', err));
+      });
+    }
   </script>
 </body>
 </html>
