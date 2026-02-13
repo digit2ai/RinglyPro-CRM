@@ -914,6 +914,7 @@ if (models && !modelsError) {
   const healthRoutes = require('./routes/health')(models);
   const voiceRoutes = require('./routes/voice')(models);
   const healthMetricsRoutes = require('./routes/health-metrics')(models);
+  const outboundRoutes = require('./routes/outbound')(models);
 
   app.use('/api/v1/schools', schoolsRoutes);
   app.use('/api/v1/students', studentsRoutes);
@@ -922,6 +923,8 @@ if (models && !modelsError) {
   app.use('/api/v1/health', healthRoutes);
   app.use('/api/v1/voice', voiceRoutes);
   app.use('/api/v1/health-metrics', healthMetricsRoutes);
+  app.use('/api/v1/outbound', outboundRoutes);
+  console.log('📞 Kancho Outbound Calling routes mounted at /api/v1/outbound');
 
   // =====================================================
   // KANCHO SUBSCRIPTION PLANS - Stripe Integration
@@ -2220,6 +2223,103 @@ app.get('/es', (req, res) => {
       }
     }
 
+    // Outbound Calling Functions
+    async function callMember(studentId, phone, btn) {
+      if (!currentSchoolId) {
+        alert('Por favor selecciona una escuela primero');
+        return;
+      }
+      if (!phone) {
+        alert('Este miembro no tiene número de teléfono registrado');
+        return;
+      }
+
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+      try {
+        const res = await fetch('/kanchoai/api/v1/outbound/call-member', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            student_id: studentId,
+            school_id: currentSchoolId,
+            phone: phone
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          btn.innerHTML = '<i class="fas fa-check"></i>';
+          btn.className = btn.className.replace('bg-red-500/20 text-red-400', 'bg-green-500/20 text-green-400');
+          setTimeout(() => {
+            btn.textContent = originalText;
+            btn.disabled = false;
+            btn.className = btn.className.replace('bg-green-500/20 text-green-400', 'bg-red-500/20 text-red-400');
+          }, 3000);
+        } else {
+          alert('Error: ' + (data.error || 'No se pudo iniciar la llamada'));
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      } catch (e) {
+        console.error('Error al llamar:', e);
+        alert('Error al iniciar la llamada');
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    async function callLead(leadId, phone, btn) {
+      if (!currentSchoolId) {
+        alert('Por favor selecciona una escuela primero');
+        return;
+      }
+      if (!phone) {
+        alert('Este prospecto no tiene número de teléfono registrado');
+        return;
+      }
+
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+      try {
+        const res = await fetch('/kanchoai/api/v1/outbound/call-lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            lead_id: leadId,
+            school_id: currentSchoolId,
+            phone: phone
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          btn.innerHTML = '<i class="fas fa-check"></i>';
+          btn.className = btn.className.replace('bg-green-500/20 text-green-400', 'bg-blue-500/20 text-blue-400');
+          setTimeout(() => {
+            btn.textContent = originalText;
+            btn.disabled = false;
+            btn.className = btn.className.replace('bg-blue-500/20 text-blue-400', 'bg-green-500/20 text-green-400');
+          }, 3000);
+        } else {
+          alert('Error: ' + (data.error || 'No se pudo iniciar la llamada'));
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      } catch (e) {
+        console.error('Error al llamar:', e);
+        alert('Error al iniciar la llamada');
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    }
+
     document.getElementById('schoolSelect').addEventListener('change', async (e) => {
       currentSchoolId = e.target.value;
       if (currentSchoolId) {
@@ -2313,7 +2413,7 @@ app.get('/es', (req, res) => {
             atRiskList.innerHTML += '<div class="flex items-center justify-between p-3 bg-red-500/10 rounded-lg border-l-2 border-red-500">' +
               '<div><p class="font-medium">' + s.first_name + ' ' + s.last_name + '</p>' +
               '<p class="text-xs text-gray-400">riesgo ' + s.churn_risk + '</p></div>' +
-              '<button class="px-3 py-1 bg-red-500/20 text-red-400 rounded text-sm">Llamar</button></div>';
+              '<button onclick="callMember(' + s.id + ', \\'' + (s.phone || '').replace(/'/g, "\\'") + '\\', this)" class="px-3 py-1 bg-red-500/20 text-red-400 rounded text-sm hover:bg-red-500/40 transition">Llamar</button></div>';
           });
         }
 
@@ -2324,7 +2424,7 @@ app.get('/es', (req, res) => {
             hotLeadsList.innerHTML += '<div class="flex items-center justify-between p-3 bg-green-500/10 rounded-lg border-l-2 border-green-500">' +
               '<div><p class="font-medium">' + l.first_name + ' ' + (l.last_name || '') + '</p>' +
               '<p class="text-xs text-gray-400">Puntuación: ' + l.lead_score + '</p></div>' +
-              '<button class="px-3 py-1 bg-green-500/20 text-green-400 rounded text-sm">Llamar</button></div>';
+              '<button onclick="callLead(' + l.id + ', \\'' + (l.phone || '').replace(/'/g, "\\'") + '\\', this)" class="px-3 py-1 bg-green-500/20 text-green-400 rounded text-sm hover:bg-green-500/40 transition">Llamar</button></div>';
           });
         }
       } catch (e) {
@@ -3509,6 +3609,103 @@ app.get('*', (req, res) => {
       }
     }
 
+    // Outbound Calling Functions
+    async function callMember(studentId, phone, btn) {
+      if (!currentSchoolId) {
+        alert('Please select a school first');
+        return;
+      }
+      if (!phone) {
+        alert('This member does not have a phone number on file');
+        return;
+      }
+
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+      try {
+        const res = await fetch('/kanchoai/api/v1/outbound/call-member', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            student_id: studentId,
+            school_id: currentSchoolId,
+            phone: phone
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          btn.innerHTML = '<i class="fas fa-check"></i>';
+          btn.className = btn.className.replace('bg-red-500/20 text-red-400', 'bg-green-500/20 text-green-400');
+          setTimeout(() => {
+            btn.textContent = originalText;
+            btn.disabled = false;
+            btn.className = btn.className.replace('bg-green-500/20 text-green-400', 'bg-red-500/20 text-red-400');
+          }, 3000);
+        } else {
+          alert('Error: ' + (data.error || 'Failed to initiate call'));
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      } catch (e) {
+        console.error('Error calling:', e);
+        alert('Failed to initiate call');
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    async function callLead(leadId, phone, btn) {
+      if (!currentSchoolId) {
+        alert('Please select a school first');
+        return;
+      }
+      if (!phone) {
+        alert('This lead does not have a phone number on file');
+        return;
+      }
+
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+      try {
+        const res = await fetch('/kanchoai/api/v1/outbound/call-lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            lead_id: leadId,
+            school_id: currentSchoolId,
+            phone: phone
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          btn.innerHTML = '<i class="fas fa-check"></i>';
+          btn.className = btn.className.replace('bg-green-500/20 text-green-400', 'bg-blue-500/20 text-blue-400');
+          setTimeout(() => {
+            btn.textContent = originalText;
+            btn.disabled = false;
+            btn.className = btn.className.replace('bg-blue-500/20 text-blue-400', 'bg-green-500/20 text-green-400');
+          }, 3000);
+        } else {
+          alert('Error: ' + (data.error || 'Failed to initiate call'));
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      } catch (e) {
+        console.error('Error calling:', e);
+        alert('Failed to initiate call');
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    }
+
     document.getElementById('schoolSelect').addEventListener('change', async (e) => {
       currentSchoolId = e.target.value;
       if (currentSchoolId) {
@@ -3612,7 +3809,7 @@ app.get('*', (req, res) => {
             atRiskList.innerHTML += '<div class="flex items-center justify-between p-3 bg-red-500/10 rounded-lg border-l-2 border-red-500">' +
               '<div><p class="font-medium">' + s.first_name + ' ' + s.last_name + '</p>' +
               '<p class="text-xs text-gray-400">' + s.churn_risk + ' risk</p></div>' +
-              '<button class="px-3 py-1 bg-red-500/20 text-red-400 rounded text-sm">Call</button></div>';
+              '<button onclick="callMember(' + s.id + ', \\'' + (s.phone || '').replace(/'/g, "\\'") + '\\', this)" class="px-3 py-1 bg-red-500/20 text-red-400 rounded text-sm hover:bg-red-500/40 transition">Call</button></div>';
           });
         }
 
@@ -3624,7 +3821,7 @@ app.get('*', (req, res) => {
             hotLeadsList.innerHTML += '<div class="flex items-center justify-between p-3 bg-green-500/10 rounded-lg border-l-2 border-green-500">' +
               '<div><p class="font-medium">' + l.first_name + ' ' + (l.last_name || '') + '</p>' +
               '<p class="text-xs text-gray-400">Score: ' + l.lead_score + '</p></div>' +
-              '<button class="px-3 py-1 bg-green-500/20 text-green-400 rounded text-sm">Call</button></div>';
+              '<button onclick="callLead(' + l.id + ', \\'' + (l.phone || '').replace(/'/g, "\\'") + '\\', this)" class="px-3 py-1 bg-green-500/20 text-green-400 rounded text-sm hover:bg-green-500/40 transition">Call</button></div>';
           });
         }
       } catch (e) {
