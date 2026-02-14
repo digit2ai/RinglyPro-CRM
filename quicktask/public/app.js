@@ -381,23 +381,20 @@ function initSpeechRecognition() {
   recognition = new SpeechRecognition();
   recognition.lang = speechLang;
   recognition.interimResults = true;
-  recognition.continuous = false;
+  recognition.continuous = true;
 
   recognition.onresult = (event) => {
     let transcript = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
+    for (let i = 0; i < event.results.length; i++) {
       transcript += event.results[i][0].transcript;
     }
     taskInput.value = transcript;
   };
 
   recognition.onend = () => {
+    // If still recording, restart (browser may stop after silence)
     if (isRecording) {
-      isRecording = false;
-      micBtn.classList.remove('recording');
-      if (taskInput.value.trim()) {
-        createTask(taskInput.value.trim(), 'voice');
-      }
+      try { recognition.start(); } catch (e) {}
     }
   };
 
@@ -434,6 +431,9 @@ micBtn.addEventListener('click', () => {
     isRecording = false;
     micBtn.classList.remove('recording');
     recognition.stop();
+    if (taskInput.value.trim()) {
+      createTask(taskInput.value.trim(), 'voice');
+    }
   } else {
     isRecording = true;
     micBtn.classList.add('recording');
