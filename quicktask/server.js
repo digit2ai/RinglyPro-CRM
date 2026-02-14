@@ -60,11 +60,12 @@ async function initDB() {
   }
 }
 
-// Detect name in message — defaults to manuel if no name mentioned
-function detectAssignee(message) {
+// Detect name in message — uses geo-based default if no name mentioned
+function detectAssignee(message, defaultAssignee = 'manuel') {
   const lower = message.toLowerCase();
   if (lower.includes('gonzalo')) return 'gonzalo';
-  return 'manuel';
+  if (lower.includes('manuel') || lower.includes('manny')) return 'manuel';
+  return defaultAssignee;
 }
 
 // Parse date/time and clean title from message (English + Spanish)
@@ -164,12 +165,12 @@ app.get('/api/calendar', async (req, res) => {
 // POST /api/tasks — Create a new task (with optional calendar event)
 app.post('/api/tasks', async (req, res) => {
   try {
-    const { message, source } = req.body;
+    const { message, source, default_assignee } = req.body;
     if (!message || !message.trim()) {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    const assigned_to = detectAssignee(message);
+    const assigned_to = detectAssignee(message, default_assignee || 'manuel');
     const { eventDate, eventTitle } = parseEventFromMessage(message.trim());
     const result = await pool.query(
       `INSERT INTO follow_up_items (message, assigned_to, source, event_date, event_title)

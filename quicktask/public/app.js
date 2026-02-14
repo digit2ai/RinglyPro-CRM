@@ -17,6 +17,21 @@ let currentView = 'tasks';
 let calendarEvents = [];
 let calendarWeekStart = getWeekStart(new Date());
 let speechLang = localStorage.getItem('speechLang') || 'es-US';
+let defaultAssignee = 'manuel';
+
+// Detect country via IP geolocation
+async function detectCountry() {
+  try {
+    const res = await fetch('https://ipapi.co/country_code/', { signal: AbortSignal.timeout(3000) });
+    const code = (await res.text()).trim();
+    defaultAssignee = code === 'US' ? 'manuel' : 'gonzalo';
+  } catch (e) {
+    // Fallback: use timezone — US timezones start with "America/" and are in US zones
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    const usZones = ['America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Anchorage', 'America/Adak', 'Pacific/Honolulu', 'America/Phoenix', 'America/Boise', 'America/Detroit', 'America/Indiana', 'America/Kentucky'];
+    defaultAssignee = usZones.some(z => tz.startsWith(z)) ? 'manuel' : 'gonzalo';
+  }
+}
 
 // === API Calls ===
 async function fetchTasks() {
@@ -55,7 +70,7 @@ async function createTask(message, source = 'text') {
     const res = await fetch(`${BASE}/api/tasks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, source })
+      body: JSON.stringify({ message, source, default_assignee: defaultAssignee })
     });
     const json = await res.json();
     if (json.success) {
@@ -516,4 +531,5 @@ if ('serviceWorker' in navigator) {
 
 // === Init ===
 initSpeechRecognition();
+detectCountry();
 fetchTasks();
