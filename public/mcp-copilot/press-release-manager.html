@@ -38,6 +38,9 @@
             <button class="tab-btn" data-tab="analytics" onclick="switchTab('analytics')">
                 📈 Analytics
             </button>
+            <button class="tab-btn" data-tab="portal" onclick="switchTab('portal')">
+                🌐 Media Portal
+            </button>
         </div>
 
         <!-- Tab Content -->
@@ -79,6 +82,12 @@
                         <h3>Upload Contacts</h3>
                         <p>Import press contacts from CSV or add manually</p>
                         <button class="btn btn-secondary" onclick="switchTab('contacts')">Manage Contacts</button>
+                    </div>
+                    <div class="action-card">
+                        <div class="action-card-icon">🌐</div>
+                        <h3>Media Portal</h3>
+                        <p>Create media posts with photos and videos for press users</p>
+                        <button class="btn btn-portal" onclick="switchTab('portal')">Open Portal</button>
                     </div>
                 </div>
 
@@ -189,6 +198,43 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Media Portal Tab -->
+            <div class="tab-pane" id="portal-tab">
+                <div class="section-header">
+                    <h2>Media Portal Posts</h2>
+                    <button class="btn btn-primary" onclick="showPortalPostModal()">+ New Media Post</button>
+                </div>
+
+                <div class="portal-stats-bar">
+                    <div class="portal-stat">
+                        <span class="portal-stat-value" id="portalPublished">0</span>
+                        <span class="portal-stat-label">Published</span>
+                    </div>
+                    <div class="portal-stat">
+                        <span class="portal-stat-value" id="portalDrafts">0</span>
+                        <span class="portal-stat-label">Drafts</span>
+                    </div>
+                    <div class="portal-stat">
+                        <span class="portal-stat-value" id="portalAssets">0</span>
+                        <span class="portal-stat-label">Assets</span>
+                    </div>
+                    <div class="portal-stat">
+                        <span class="portal-stat-value" id="portalViews">0</span>
+                        <span class="portal-stat-label">Views</span>
+                    </div>
+                    <div class="portal-stat">
+                        <span class="portal-stat-value" id="portalDownloads">0</span>
+                        <span class="portal-stat-label">Downloads</span>
+                    </div>
+                </div>
+
+                <div id="portalPostsList" class="releases-list">
+                    <div class="empty-state">
+                        <p>No media posts yet. Create your first one to share with press users.</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -278,6 +324,144 @@
                         <button type="submit" class="btn btn-success">Create & Send</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Media Post Modal -->
+    <div id="portalPostModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="portalModalTitle">Create Media Post</h2>
+                <button class="modal-close" onclick="closePortalPostModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="portalPostId" value="">
+
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" id="portalTitle" required placeholder="Race Weekend Media Package - Event Name">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Race Location</label>
+                        <input type="text" id="portalRaceLocation" placeholder="Circuit of the Americas, Austin TX">
+                    </div>
+                    <div class="form-group">
+                        <label>Race Date</label>
+                        <input type="date" id="portalRaceDate">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Season</label>
+                        <input type="text" id="portalSeason" placeholder="2026">
+                    </div>
+                    <div class="form-group">
+                        <label>Series</label>
+                        <input type="text" id="portalSeries" placeholder="Formula 4, GT3, etc.">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Summary</label>
+                    <textarea id="portalSummary" rows="3" placeholder="Brief summary for the media post listing..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Cover Image URL</label>
+                    <input type="url" id="portalCoverImage" placeholder="https://..." oninput="previewCoverImage()">
+                    <div id="coverImagePreview" style="margin-top:0.5rem;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Press Release Text</label>
+                    <textarea id="portalPressRelease" rows="8" placeholder="Full press release text..."></textarea>
+                    <div style="margin-top:0.5rem;">
+                        <button type="button" class="btn btn-small btn-secondary" onclick="showImportReleaseModal()">Import from Press Release</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Driver Quotes</label>
+                    <div id="driverQuotesList"></div>
+                    <button type="button" class="btn btn-small btn-secondary" onclick="addDriverQuote()">+ Add Quote</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Championship Highlights</label>
+                    <textarea id="portalChampionship" rows="3" placeholder="Championship standings, key results..."></textarea>
+                </div>
+
+                <!-- Assets Section -->
+                <div id="assetsSection" style="display:none;">
+                    <h3 style="margin-bottom:1rem; padding-top:1rem; border-top:2px solid #e5e7eb;">Media Assets</h3>
+                    <div id="assetsList"></div>
+                    <div id="addAssetForm" style="display:none; margin-top:1rem; padding:1rem; background:#f9fafb; border-radius:0.5rem; border:1px solid #e5e7eb;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Type *</label>
+                                <select id="assetType">
+                                    <option value="photo">Photo</option>
+                                    <option value="video">Video</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>URL *</label>
+                                <input type="url" id="assetUrl" placeholder="https://...">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Caption</label>
+                                <input type="text" id="assetCaption" placeholder="Photo caption...">
+                            </div>
+                            <div class="form-group">
+                                <label>Credit</label>
+                                <input type="text" id="assetCredit" placeholder="Photographer name">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Filename</label>
+                                <input type="text" id="assetFilename" placeholder="photo-001.jpg">
+                            </div>
+                            <div class="form-group">
+                                <label>Thumbnail URL</label>
+                                <input type="url" id="assetThumbnail" placeholder="https://... (optional)">
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-small btn-secondary" onclick="hideAddAssetForm()">Cancel</button>
+                            <button type="button" class="btn btn-small btn-primary" onclick="saveAsset()">Add Asset</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-small btn-secondary" id="showAddAssetBtn" onclick="showAddAssetForm()" style="margin-top:0.5rem;">+ Add Photo/Video</button>
+                </div>
+
+                <div class="form-actions" style="margin-top:1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closePortalPostModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="savePortalPost('draft')">Save as Draft</button>
+                    <button type="button" class="btn btn-success" onclick="savePortalPost('published')">Publish to Portal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import from Press Release Modal -->
+    <div id="importReleaseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Import from Press Release</h2>
+                <button class="modal-close" onclick="closeImportReleaseModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom:1rem; color:#6b7280;">Select a press release to import its content into the media post.</p>
+                <div id="importReleaseList" class="releases-list">
+                    <div class="empty-state"><p>No press releases available.</p></div>
+                </div>
             </div>
         </div>
     </div>

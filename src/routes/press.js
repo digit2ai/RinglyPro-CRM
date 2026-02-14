@@ -568,6 +568,282 @@ router.get('/stats', async (req, res) => {
 });
 
 // =====================================================
+// MEDIA PORTAL BRIDGE ENDPOINTS
+// =====================================================
+
+// GET /api/press/portal/posts - List all media posts
+router.get('/portal/posts', async (req, res) => {
+  try {
+    const [posts] = await sequelize.query(`
+      SELECT
+        p.id, p.title, p.slug, p.race_date, p.race_location,
+        p.season, p.series, p.summary, p.press_release_text,
+        p.driver_quotes, p.championship_highlights,
+        p.cover_image_url, p.status, p.published_at,
+        p.total_downloads, p.total_views,
+        p.created_at, p.updated_at,
+        (SELECT COUNT(*) FROM tunjo_media_post_assets a WHERE a.media_post_id = p.id) as asset_count
+      FROM tunjo_media_posts p
+      WHERE p.tenant_id = 1
+      ORDER BY p.created_at DESC
+    `);
+    res.json({ success: true, posts, total: posts.length });
+  } catch (error) {
+    console.error('Error loading portal posts:', error);
+    res.status(500).json({ success: false, error: 'Failed to load portal posts' });
+  }
+});
+
+// GET /api/press/portal/posts/:id - Get single post with assets
+router.get('/portal/posts/:id', async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id);
+    const [[post]] = await sequelize.query(
+      `SELECT * FROM tunjo_media_posts WHERE id = :id AND tenant_id = 1`,
+      { replacements: { id: postId } }
+    );
+    if (!post) {
+      return res.status(404).json({ success: false, error: 'Post not found' });
+    }
+    const [assets] = await sequelize.query(
+      `SELECT * FROM tunjo_media_post_assets WHERE media_post_id = :id AND tenant_id = 1 ORDER BY sort_order ASC`,
+      { replacements: { id: postId } }
+    );
+    post.assets = assets;
+    res.json({ success: true, post });
+  } catch (error) {
+    console.error('Error loading portal post:', error);
+    res.status(500).json({ success: false, error: 'Failed to load portal post' });
+  }
+});
+
+// POST /api/press/portal/posts - Create media post
+router.post('/portal/posts', async (req, res) => {
+  try {
+    const {
+      title, race_date, race_location, season, series,
+      summary, press_release_text, driver_quotes,
+      championship_highlights, cover_image_url, status
+    } = req.body;
+
+    if (!title) {
+      return res.status(400).json({ success: false, error: 'Title is required' });
+    }
+
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const finalStatus = status || 'draft';
+
+    const [result] = await sequelize.query(`
+      INSERT INTO tunjo_media_posts (
+        tenant_id, title, slug, race_date, race_location,
+        season, series, summary, press_release_text,
+        driver_quotes, championship_highlights,
+        cover_image_url, status, published_at,
+        total_downloads, total_views, created_at, updated_at
+      ) VALUES (
+        1, :title, :slug, :race_date, :race_location,
+        :season, :series, :summary, :press_release_text,
+        :driver_quotes::jsonb, :championship_highlights,
+        :cover_image_url, :status,
+        ${finalStatus === 'published' ? 'NOW()' : 'NULL'},
+        0, 0, NOW(), NOW()
+      )
+      RETURNING *
+    `, {
+      replacements: {
+        title, slug,
+        race_date: race_date || null,
+        race_location: race_location || null,
+        season: season || null,
+        series: series || null,
+        summary: summary || null,
+        press_release_text: press_release_text || null,
+        driver_quotes: JSON.stringify(driver_quotes || []),
+        championship_highlights: championship_highlights || null,
+        cover_image_url: cover_image_url || null,
+        status: finalStatus
+      }
+    });
+
+    res.status(201).json({ success: true, post: result[0] });
+  } catch (error) {
+    console.error('Error creating portal post:', error);
+    res.status(500).json({ success: false, error: 'Failed to create portal post: ' + error.message });
+  }
+});
+
+// PUT /api/press/portal/posts/:id - Update media post
+router.put('/portal/posts/:id', async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id);
+    const {
+      title, race_date, race_location, season, series,
+      summary, press_release_text, driver_quotes,
+      championship_highlights, cover_image_url, status
+    } = req.body;
+
+    // Build dynamic SET clause
+    const sets = [];
+    const replacements = { id: postId };
+
+    if (title !== undefined) {
+      sets.push('title = :title');
+      sets.push("slug = :slug");
+      replacements.title = title;
+      replacements.slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    }
+    if (race_date !== undefined) { sets.push('race_date = :race_date'); replacements.race_date = race_date || null; }
+    if (race_location !== undefined) { sets.push('race_location = :race_location'); replacements.race_location = race_location || null; }
+    if (season !== undefined) { sets.push('season = :season'); replacements.season = season || null; }
+    if (series !== undefined) { sets.push('series = :series'); replacements.series = series || null; }
+    if (summary !== undefined) { sets.push('summary = :summary'); replacements.summary = summary || null; }
+    if (press_release_text !== undefined) { sets.push('press_release_text = :press_release_text'); replacements.press_release_text = press_release_text || null; }
+    if (driver_quotes !== undefined) { sets.push('driver_quotes = :driver_quotes::jsonb'); replacements.driver_quotes = JSON.stringify(driver_quotes || []); }
+    if (championship_highlights !== undefined) { sets.push('championship_highlights = :championship_highlights'); replacements.championship_highlights = championship_highlights || null; }
+    if (cover_image_url !== undefined) { sets.push('cover_image_url = :cover_image_url'); replacements.cover_image_url = cover_image_url || null; }
+    if (status !== undefined) {
+      sets.push('status = :status');
+      replacements.status = status;
+      if (status === 'published') {
+        sets.push("published_at = COALESCE(published_at, NOW())");
+      }
+    }
+
+    if (sets.length === 0) {
+      return res.status(400).json({ success: false, error: 'No fields to update' });
+    }
+
+    sets.push('updated_at = NOW()');
+
+    const [result] = await sequelize.query(
+      `UPDATE tunjo_media_posts SET ${sets.join(', ')} WHERE id = :id AND tenant_id = 1 RETURNING *`,
+      { replacements }
+    );
+
+    if (result.length === 0) {
+      return res.status(404).json({ success: false, error: 'Post not found' });
+    }
+
+    res.json({ success: true, post: result[0] });
+  } catch (error) {
+    console.error('Error updating portal post:', error);
+    res.status(500).json({ success: false, error: 'Failed to update portal post' });
+  }
+});
+
+// DELETE /api/press/portal/posts/:id - Delete media post and assets
+router.delete('/portal/posts/:id', async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id);
+    await sequelize.query(`DELETE FROM tunjo_media_post_assets WHERE media_post_id = :id`, { replacements: { id: postId } });
+    const [result] = await sequelize.query(
+      `DELETE FROM tunjo_media_posts WHERE id = :id AND tenant_id = 1 RETURNING id`,
+      { replacements: { id: postId } }
+    );
+    if (result.length === 0) {
+      return res.status(404).json({ success: false, error: 'Post not found' });
+    }
+    res.json({ success: true, message: 'Post and assets deleted' });
+  } catch (error) {
+    console.error('Error deleting portal post:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete portal post' });
+  }
+});
+
+// POST /api/press/portal/posts/:id/assets - Add asset to post
+router.post('/portal/posts/:id/assets', async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id);
+    const { asset_type, url, thumbnail_url, filename, file_size, caption, credit, sort_order } = req.body;
+
+    if (!asset_type || !url) {
+      return res.status(400).json({ success: false, error: 'asset_type and url are required' });
+    }
+
+    const [[post]] = await sequelize.query(
+      `SELECT id FROM tunjo_media_posts WHERE id = :id AND tenant_id = 1`,
+      { replacements: { id: postId } }
+    );
+    if (!post) {
+      return res.status(404).json({ success: false, error: 'Post not found' });
+    }
+
+    const [result] = await sequelize.query(`
+      INSERT INTO tunjo_media_post_assets (
+        tenant_id, media_post_id, asset_type, url, thumbnail_url,
+        filename, file_size, caption, credit, sort_order,
+        download_count, created_at
+      ) VALUES (
+        1, :media_post_id, :asset_type, :url, :thumbnail_url,
+        :filename, :file_size, :caption, :credit, :sort_order,
+        0, NOW()
+      )
+      RETURNING *
+    `, {
+      replacements: {
+        media_post_id: postId,
+        asset_type,
+        url,
+        thumbnail_url: thumbnail_url || null,
+        filename: filename || null,
+        file_size: file_size || null,
+        caption: caption || null,
+        credit: credit || null,
+        sort_order: sort_order || 0
+      }
+    });
+
+    res.status(201).json({ success: true, asset: result[0] });
+  } catch (error) {
+    console.error('Error adding asset:', error);
+    res.status(500).json({ success: false, error: 'Failed to add asset' });
+  }
+});
+
+// DELETE /api/press/portal/assets/:id - Delete asset
+router.delete('/portal/assets/:id', async (req, res) => {
+  try {
+    const assetId = parseInt(req.params.id);
+    const [result] = await sequelize.query(
+      `DELETE FROM tunjo_media_post_assets WHERE id = :id AND tenant_id = 1 RETURNING id`,
+      { replacements: { id: assetId } }
+    );
+    if (result.length === 0) {
+      return res.status(404).json({ success: false, error: 'Asset not found' });
+    }
+    res.json({ success: true, message: 'Asset deleted' });
+  } catch (error) {
+    console.error('Error deleting asset:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete asset' });
+  }
+});
+
+// GET /api/press/portal/stats - Portal statistics
+router.get('/portal/stats', async (req, res) => {
+  try {
+    const [[stats]] = await sequelize.query(`
+      SELECT
+        COUNT(*) as total_posts,
+        COUNT(*) FILTER (WHERE status = 'published') as published_posts,
+        COUNT(*) FILTER (WHERE status = 'draft') as draft_posts,
+        COALESCE(SUM(total_views), 0) as total_views,
+        COALESCE(SUM(total_downloads), 0) as total_downloads
+      FROM tunjo_media_posts WHERE tenant_id = 1
+    `);
+    const [[assetStats]] = await sequelize.query(
+      `SELECT COUNT(*) as total_assets FROM tunjo_media_post_assets WHERE tenant_id = 1`
+    );
+    res.json({
+      success: true,
+      stats: { ...stats, total_assets: parseInt(assetStats.total_assets) || 0 }
+    });
+  } catch (error) {
+    console.error('Error loading portal stats:', error);
+    res.status(500).json({ success: false, error: 'Failed to load portal stats' });
+  }
+});
+
+// =====================================================
 // UTILITY FUNCTIONS
 // =====================================================
 

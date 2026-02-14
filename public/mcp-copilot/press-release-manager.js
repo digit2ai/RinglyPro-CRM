@@ -29,6 +29,11 @@ document.addEventListener('DOMContentLoaded', function() {
 // API Base URL
 const API_BASE = window.location.origin + '/api/press';
 
+// Portal state
+let portalPosts = [];
+let driverQuotes = [];
+let editingPostId = null;
+
 // Tab switching
 function switchTab(tabName) {
     // Remove active class from all tabs and panes
@@ -48,6 +53,9 @@ function switchTab(tabName) {
         loadAnalytics();
     } else if (tabName === 'dashboard') {
         loadDashboardStats();
+    } else if (tabName === 'portal') {
+        loadPortalPosts();
+        loadPortalStats();
     }
 }
 
@@ -211,6 +219,7 @@ function renderPressReleases(releasesList) {
                     <button class="btn btn-small" onclick="editRelease(${release.id})">Edit</button>
                     <button class="btn btn-small btn-primary" onclick="sendRelease(${release.id})">Send Now</button>
                 ` : ''}
+                <button class="btn btn-small btn-portal" onclick="pushToPortal(${release.id})">Push to Portal</button>
                 <button class="btn btn-small btn-danger" onclick="deleteRelease(${release.id})">Delete</button>
             </div>
         </div>
@@ -534,6 +543,513 @@ function showSuccess(message) {
     alert('✅ ' + message);
 }
 
+// =====================================================
+// MEDIA PORTAL FUNCTIONS
+// =====================================================
+
+// Load Portal Posts
+async function loadPortalPosts() {
+    try {
+        const response = await fetch(`${API_BASE}/portal/posts?client_id=${currentClientId}`);
+        const data = await response.json();
+        if (data.success) {
+            portalPosts = data.posts;
+            renderPortalPosts(portalPosts);
+        }
+    } catch (error) {
+        console.error('Error loading portal posts:', error);
+        document.getElementById('portalPostsList').innerHTML =
+            '<div class="empty-state"><p>Error loading media posts. Please try again.</p></div>';
+    }
+}
+
+// Load Portal Stats
+async function loadPortalStats() {
+    try {
+        const response = await fetch(`${API_BASE}/portal/stats?client_id=${currentClientId}`);
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById('portalPublished').textContent = data.stats.published_posts || 0;
+            document.getElementById('portalDrafts').textContent = data.stats.draft_posts || 0;
+            document.getElementById('portalAssets').textContent = data.stats.total_assets || 0;
+            document.getElementById('portalViews').textContent = data.stats.total_views || 0;
+            document.getElementById('portalDownloads').textContent = data.stats.total_downloads || 0;
+        }
+    } catch (error) {
+        console.error('Error loading portal stats:', error);
+    }
+}
+
+// Render Portal Posts
+function renderPortalPosts(posts) {
+    const list = document.getElementById('portalPostsList');
+
+    if (!posts || posts.length === 0) {
+        list.innerHTML = '<div class="empty-state"><p>No media posts yet. Create your first one to share with press users.</p></div>';
+        return;
+    }
+
+    list.innerHTML = posts.map(post => `
+        <div class="release-card portal-card ${post.status === 'published' ? 'portal-published' : ''}">
+            <div class="release-header">
+                <h3>${escapeHtml(post.title)}</h3>
+                <span class="status-badge status-portal-${post.status}">${post.status}</span>
+            </div>
+            <div class="release-meta">
+                ${post.race_location ? `<span>📍 ${escapeHtml(post.race_location)}</span>` : ''}
+                ${post.race_date ? `<span>📅 ${new Date(post.race_date).toLocaleDateString()}</span>` : ''}
+                ${post.season ? `<span>🏆 ${escapeHtml(post.season)}</span>` : ''}
+                ${post.series ? `<span>🏎️ ${escapeHtml(post.series)}</span>` : ''}
+                <span>📎 ${post.asset_count || 0} assets</span>
+                <span>👁️ ${post.total_views || 0} views</span>
+                <span>⬇️ ${post.total_downloads || 0} downloads</span>
+            </div>
+            ${post.summary ? `<div class="release-content"><p>${escapeHtml(post.summary)}</p></div>` : ''}
+            ${post.cover_image_url ? `<div class="portal-cover-preview"><img src="${escapeHtml(post.cover_image_url)}" alt="Cover" onerror="this.style.display='none'"></div>` : ''}
+            <div class="release-actions">
+                <button class="btn btn-small btn-primary" onclick="editPortalPost(${post.id})">Edit</button>
+                ${post.status === 'draft'
+                    ? `<button class="btn btn-small btn-success" onclick="togglePublish(${post.id}, 'published')">Publish</button>`
+                    : `<button class="btn btn-small btn-secondary" onclick="togglePublish(${post.id}, 'draft')">Unpublish</button>`
+                }
+                <button class="btn btn-small btn-danger" onclick="deletePortalPost(${post.id})">Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Show Portal Post Modal (create mode)
+function showPortalPostModal() {
+    editingPostId = null;
+    document.getElementById('portalModalTitle').textContent = 'Create Media Post';
+    document.getElementById('portalPostId').value = '';
+    document.getElementById('portalTitle').value = '';
+    document.getElementById('portalRaceLocation').value = '';
+    document.getElementById('portalRaceDate').value = '';
+    document.getElementById('portalSeason').value = '';
+    document.getElementById('portalSeries').value = '';
+    document.getElementById('portalSummary').value = '';
+    document.getElementById('portalCoverImage').value = '';
+    document.getElementById('coverImagePreview').innerHTML = '';
+    document.getElementById('portalPressRelease').value = '';
+    document.getElementById('portalChampionship').value = '';
+    driverQuotes = [];
+    renderDriverQuotes();
+    document.getElementById('assetsSection').style.display = 'none';
+    document.getElementById('portalPostModal').classList.add('active');
+}
+
+// Close Portal Post Modal
+function closePortalPostModal() {
+    document.getElementById('portalPostModal').classList.remove('active');
+    editingPostId = null;
+}
+
+// Edit Portal Post
+async function editPortalPost(postId) {
+    try {
+        const response = await fetch(`${API_BASE}/portal/posts/${postId}?client_id=${currentClientId}`);
+        const data = await response.json();
+
+        if (!data.success) {
+            showError('Failed to load post');
+            return;
+        }
+
+        const post = data.post;
+        editingPostId = post.id;
+        document.getElementById('portalModalTitle').textContent = 'Edit Media Post';
+        document.getElementById('portalPostId').value = post.id;
+        document.getElementById('portalTitle').value = post.title || '';
+        document.getElementById('portalRaceLocation').value = post.race_location || '';
+        document.getElementById('portalRaceDate').value = post.race_date ? post.race_date.substring(0, 10) : '';
+        document.getElementById('portalSeason').value = post.season || '';
+        document.getElementById('portalSeries').value = post.series || '';
+        document.getElementById('portalSummary').value = post.summary || '';
+        document.getElementById('portalCoverImage').value = post.cover_image_url || '';
+        previewCoverImage();
+        document.getElementById('portalPressRelease').value = post.press_release_text || '';
+        document.getElementById('portalChampionship').value = post.championship_highlights || '';
+
+        // Parse driver quotes
+        driverQuotes = [];
+        if (post.driver_quotes) {
+            const quotes = typeof post.driver_quotes === 'string' ? JSON.parse(post.driver_quotes) : post.driver_quotes;
+            if (Array.isArray(quotes)) {
+                driverQuotes = quotes;
+            }
+        }
+        renderDriverQuotes();
+
+        // Show assets section
+        document.getElementById('assetsSection').style.display = 'block';
+        renderAssets(post.assets || []);
+
+        document.getElementById('portalPostModal').classList.add('active');
+    } catch (error) {
+        console.error('Error loading post for edit:', error);
+        showError('Failed to load post');
+    }
+}
+
+// Save Portal Post
+async function savePortalPost(status) {
+    const title = document.getElementById('portalTitle').value.trim();
+    if (!title) {
+        showError('Title is required');
+        return;
+    }
+
+    const postData = {
+        client_id: currentClientId,
+        title,
+        race_location: document.getElementById('portalRaceLocation').value.trim() || null,
+        race_date: document.getElementById('portalRaceDate').value || null,
+        season: document.getElementById('portalSeason').value.trim() || null,
+        series: document.getElementById('portalSeries').value.trim() || null,
+        summary: document.getElementById('portalSummary').value.trim() || null,
+        cover_image_url: document.getElementById('portalCoverImage').value.trim() || null,
+        press_release_text: document.getElementById('portalPressRelease').value.trim() || null,
+        championship_highlights: document.getElementById('portalChampionship').value.trim() || null,
+        driver_quotes: driverQuotes.filter(q => q.name || q.quote),
+        status
+    };
+
+    try {
+        let url, method;
+        if (editingPostId) {
+            url = `${API_BASE}/portal/posts/${editingPostId}?client_id=${currentClientId}`;
+            method = 'PUT';
+        } else {
+            url = `${API_BASE}/portal/posts?client_id=${currentClientId}`;
+            method = 'POST';
+        }
+
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(postData)
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            const action = editingPostId ? 'updated' : 'created';
+            const statusMsg = status === 'published' ? ' and published' : '';
+            showSuccess(`Media post ${action}${statusMsg}!`);
+            closePortalPostModal();
+            loadPortalPosts();
+            loadPortalStats();
+        } else {
+            showError(data.error || 'Failed to save post');
+        }
+    } catch (error) {
+        console.error('Error saving portal post:', error);
+        showError('Failed to save post');
+    }
+}
+
+// Toggle Publish
+async function togglePublish(postId, newStatus) {
+    const msg = newStatus === 'published'
+        ? 'Publish this post? Press users will be able to see it.'
+        : 'Unpublish this post? Press users will no longer see it.';
+
+    if (!confirm(msg)) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/portal/posts/${postId}/publish?client_id=${currentClientId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            showSuccess(`Post ${newStatus === 'published' ? 'published' : 'unpublished'}!`);
+            loadPortalPosts();
+            loadPortalStats();
+        } else {
+            showError(data.error || 'Failed to update status');
+        }
+    } catch (error) {
+        console.error('Error toggling publish:', error);
+        showError('Failed to update status');
+    }
+}
+
+// Delete Portal Post
+async function deletePortalPost(postId) {
+    if (!confirm('Delete this media post and all its assets? This cannot be undone.')) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/portal/posts/${postId}?client_id=${currentClientId}`, {
+            method: 'DELETE'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            showSuccess('Media post deleted');
+            loadPortalPosts();
+            loadPortalStats();
+        } else {
+            showError(data.error || 'Failed to delete post');
+        }
+    } catch (error) {
+        console.error('Error deleting portal post:', error);
+        showError('Failed to delete post');
+    }
+}
+
+// Push to Portal (from press releases tab)
+function pushToPortal(releaseId) {
+    const release = pressReleases.find(r => r.id === releaseId);
+    if (!release) {
+        showError('Release not found');
+        return;
+    }
+
+    showPortalPostModal();
+
+    // Pre-fill from press release
+    document.getElementById('portalTitle').value = release.title || '';
+    document.getElementById('portalRaceDate').value = release.race_date || '';
+    document.getElementById('portalRaceLocation').value = release.race_event || '';
+
+    // Combine bilingual content for press release text
+    let pressText = '';
+    if (release.body_en) {
+        pressText += release.body_en;
+    }
+    if (release.body_es) {
+        if (pressText) pressText += '\n\n---\n\n[ESPANOL]\n\n';
+        pressText += release.body_es;
+    }
+    document.getElementById('portalPressRelease').value = pressText;
+
+    // Use EN subject as summary
+    document.getElementById('portalSummary').value = release.subject_en || release.subject_es || '';
+}
+
+// Import from Press Release modal
+function showImportReleaseModal() {
+    const list = document.getElementById('importReleaseList');
+    if (!pressReleases || pressReleases.length === 0) {
+        list.innerHTML = '<div class="empty-state"><p>No press releases available. Create one first.</p></div>';
+    } else {
+        list.innerHTML = pressReleases.map(r => `
+            <div class="release-card" style="cursor:pointer;" onclick="importRelease(${r.id})">
+                <div class="release-header">
+                    <h3>${escapeHtml(r.title)}</h3>
+                    <span class="status-badge status-${r.status}">${r.status}</span>
+                </div>
+                <div class="release-meta">
+                    ${r.race_event ? `<span>🏎️ ${escapeHtml(r.race_event)}</span>` : ''}
+                    ${r.race_date ? `<span>📅 ${new Date(r.race_date).toLocaleDateString()}</span>` : ''}
+                </div>
+                ${r.subject_en ? `<p style="color:#6b7280;font-size:0.875rem;">${escapeHtml(r.subject_en)}</p>` : ''}
+            </div>
+        `).join('');
+    }
+    document.getElementById('importReleaseModal').classList.add('active');
+}
+
+function closeImportReleaseModal() {
+    document.getElementById('importReleaseModal').classList.remove('active');
+}
+
+function importRelease(releaseId) {
+    const release = pressReleases.find(r => r.id === releaseId);
+    if (!release) return;
+
+    let pressText = '';
+    if (release.body_en) pressText += release.body_en;
+    if (release.body_es) {
+        if (pressText) pressText += '\n\n---\n\n[ESPANOL]\n\n';
+        pressText += release.body_es;
+    }
+    document.getElementById('portalPressRelease').value = pressText;
+
+    if (!document.getElementById('portalSummary').value) {
+        document.getElementById('portalSummary').value = release.subject_en || release.subject_es || '';
+    }
+    if (!document.getElementById('portalRaceDate').value && release.race_date) {
+        document.getElementById('portalRaceDate').value = release.race_date;
+    }
+    if (!document.getElementById('portalRaceLocation').value && release.race_event) {
+        document.getElementById('portalRaceLocation').value = release.race_event;
+    }
+
+    closeImportReleaseModal();
+    showSuccess('Press release content imported!');
+}
+
+// Driver Quotes Management
+function addDriverQuote() {
+    driverQuotes.push({ name: '', quote: '' });
+    renderDriverQuotes();
+}
+
+function removeDriverQuote(index) {
+    driverQuotes.splice(index, 1);
+    renderDriverQuotes();
+}
+
+function updateDriverQuote(index, field, value) {
+    driverQuotes[index][field] = value;
+}
+
+function renderDriverQuotes() {
+    const container = document.getElementById('driverQuotesList');
+    if (driverQuotes.length === 0) {
+        container.innerHTML = '<p style="color:#9ca3af;font-size:0.875rem;">No driver quotes added yet.</p>';
+        return;
+    }
+
+    container.innerHTML = driverQuotes.map((q, i) => `
+        <div class="driver-quote-item">
+            <div class="form-row">
+                <div class="form-group" style="margin-bottom:0.5rem;">
+                    <input type="text" value="${escapeHtml(q.name)}" placeholder="Driver name"
+                        oninput="updateDriverQuote(${i}, 'name', this.value)">
+                </div>
+                <div style="display:flex;align-items:start;">
+                    <button type="button" class="btn-icon" onclick="removeDriverQuote(${i})" title="Remove">🗑️</button>
+                </div>
+            </div>
+            <textarea rows="2" placeholder="Quote text..." style="width:100%;padding:0.5rem;border:2px solid #e5e7eb;border-radius:0.5rem;font-family:inherit;font-size:0.95rem;"
+                oninput="updateDriverQuote(${i}, 'quote', this.value)">${escapeHtml(q.quote)}</textarea>
+        </div>
+    `).join('');
+}
+
+// Cover Image Preview
+function previewCoverImage() {
+    const url = document.getElementById('portalCoverImage').value;
+    const preview = document.getElementById('coverImagePreview');
+    if (url) {
+        preview.innerHTML = `<img src="${escapeHtml(url)}" alt="Cover Preview"
+            style="max-width:200px;max-height:120px;border-radius:0.5rem;border:1px solid #e5e7eb;"
+            onerror="this.parentElement.innerHTML='<span style=color:#ef4444;font-size:0.875rem>Failed to load image</span>'">`;
+    } else {
+        preview.innerHTML = '';
+    }
+}
+
+// Asset Management
+function renderAssets(assets) {
+    const container = document.getElementById('assetsList');
+    if (!assets || assets.length === 0) {
+        container.innerHTML = '<p style="color:#9ca3af;font-size:0.875rem;margin-bottom:0.5rem;">No assets added yet.</p>';
+        return;
+    }
+
+    container.innerHTML = assets.map(asset => `
+        <div class="asset-item">
+            <div class="asset-info">
+                <span class="asset-type-badge asset-type-${asset.asset_type}">${asset.asset_type === 'photo' ? '📷' : '🎬'} ${asset.asset_type}</span>
+                <span class="asset-filename">${escapeHtml(asset.filename || asset.caption || asset.url.substring(asset.url.lastIndexOf('/') + 1))}</span>
+                ${asset.caption ? `<span class="asset-caption">${escapeHtml(asset.caption)}</span>` : ''}
+                ${asset.credit ? `<span class="asset-credit">Credit: ${escapeHtml(asset.credit)}</span>` : ''}
+            </div>
+            ${asset.asset_type === 'photo' ? `
+                <img src="${escapeHtml(asset.thumbnail_url || asset.url)}" alt="" class="asset-thumbnail"
+                    onerror="this.style.display='none'">
+            ` : ''}
+            <button class="btn-icon" onclick="deleteAsset(${asset.id})" title="Delete Asset">🗑️</button>
+        </div>
+    `).join('');
+}
+
+function showAddAssetForm() {
+    document.getElementById('addAssetForm').style.display = 'block';
+    document.getElementById('showAddAssetBtn').style.display = 'none';
+    document.getElementById('assetType').value = 'photo';
+    document.getElementById('assetUrl').value = '';
+    document.getElementById('assetCaption').value = '';
+    document.getElementById('assetCredit').value = '';
+    document.getElementById('assetFilename').value = '';
+    document.getElementById('assetThumbnail').value = '';
+}
+
+function hideAddAssetForm() {
+    document.getElementById('addAssetForm').style.display = 'none';
+    document.getElementById('showAddAssetBtn').style.display = 'inline-block';
+}
+
+async function saveAsset() {
+    const url = document.getElementById('assetUrl').value.trim();
+    const assetType = document.getElementById('assetType').value;
+
+    if (!url) {
+        showError('Asset URL is required');
+        return;
+    }
+
+    if (!editingPostId) {
+        showError('Save the post first, then add assets');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/portal/posts/${editingPostId}/assets?client_id=${currentClientId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                asset_type: assetType,
+                url,
+                thumbnail_url: document.getElementById('assetThumbnail').value.trim() || null,
+                caption: document.getElementById('assetCaption').value.trim() || null,
+                credit: document.getElementById('assetCredit').value.trim() || null,
+                filename: document.getElementById('assetFilename').value.trim() || null
+            })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            showSuccess('Asset added!');
+            hideAddAssetForm();
+            // Reload post to refresh assets
+            const postResponse = await fetch(`${API_BASE}/portal/posts/${editingPostId}?client_id=${currentClientId}`);
+            const postData = await postResponse.json();
+            if (postData.success) {
+                renderAssets(postData.post.assets || []);
+            }
+        } else {
+            showError(data.error || 'Failed to add asset');
+        }
+    } catch (error) {
+        console.error('Error saving asset:', error);
+        showError('Failed to add asset');
+    }
+}
+
+async function deleteAsset(assetId) {
+    if (!confirm('Delete this asset?')) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/portal/assets/${assetId}?client_id=${currentClientId}`, {
+            method: 'DELETE'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            // Reload post to refresh assets
+            if (editingPostId) {
+                const postResponse = await fetch(`${API_BASE}/portal/posts/${editingPostId}?client_id=${currentClientId}`);
+                const postData = await postResponse.json();
+                if (postData.success) {
+                    renderAssets(postData.post.assets || []);
+                }
+            }
+        } else {
+            showError(data.error || 'Failed to delete asset');
+        }
+    } catch (error) {
+        console.error('Error deleting asset:', error);
+        showError('Failed to delete asset');
+    }
+}
+
 // Console welcome message
 console.log('%c📰 Press Release Manager', 'font-size: 20px; font-weight: bold; color: #0891b2;');
 console.log(`Client ID: ${currentClientId}`);
@@ -542,5 +1058,6 @@ console.log('\nFeatures:');
 console.log('1. ✅ Contact management (CRUD, CSV upload)');
 console.log('2. ✅ Press release management (Create, Edit, Delete)');
 console.log('3. ✅ Dashboard statistics');
-console.log('4. ⏳ SendGrid email sending (Phase 3)');
-console.log('5. ⏳ AI content generation (Phase 4)');
+console.log('4. ✅ Media Portal bridge (Create, Publish, Assets)');
+console.log('5. ⏳ SendGrid email sending (Phase 3)');
+console.log('6. ⏳ AI content generation (Phase 4)');

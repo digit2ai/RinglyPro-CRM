@@ -611,6 +611,230 @@ body {
     padding: 1rem;
 }
 
+/* Button: Portal */
+.btn-portal {
+    background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+    color: white;
+}
+
+.btn-portal:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.btn-small {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+.btn-danger {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.btn-danger:hover {
+    background: #fecaca;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.25rem;
+}
+
+/* Portal Stats Bar */
+.portal-stats-bar {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+    border: 1px solid #ddd6fe;
+    border-radius: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.portal-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.portal-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #7c3aed;
+}
+
+.portal-stat-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+/* Portal Post Card */
+.portal-card {
+    border-left: 4px solid #7c3aed;
+}
+
+.portal-card.portal-published {
+    border-left-color: #059669;
+}
+
+.status-portal-published {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-portal-draft {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-draft {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-sent {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.portal-cover-preview {
+    margin: 0.5rem 0;
+}
+
+.portal-cover-preview img {
+    max-width: 200px;
+    max-height: 100px;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+    object-fit: cover;
+}
+
+/* Release meta */
+.release-meta span {
+    margin-right: 1rem;
+    display: inline-block;
+}
+
+.release-content {
+    margin-bottom: 0.75rem;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.release-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+}
+
+.release-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+/* Driver Quote Item */
+.driver-quote-item {
+    padding: 0.75rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Asset Item */
+.asset-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.asset-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.asset-type-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.25rem;
+    width: fit-content;
+}
+
+.asset-type-photo {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.asset-type-video {
+    background: #fce7f3;
+    color: #be185d;
+}
+
+.asset-filename {
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #374151;
+    word-break: break-all;
+}
+
+.asset-caption {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.asset-credit {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.asset-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+}
+
+/* Chart container */
+.chart-container {
+    background: #f9fafb;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+}
+
+.chart-container h3 {
+    margin-bottom: 1rem;
+    color: #374151;
+}
+
+.chart-placeholder {
+    text-align: center;
+    padding: 2rem;
+    color: #9ca3af;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .header {
