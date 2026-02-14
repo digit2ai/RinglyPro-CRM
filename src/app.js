@@ -621,6 +621,33 @@ app.get('/debug/tunjoracing-error', (req, res) => {
   });
 });
 
+// =====================================================
+// QUICKTASK - Voice-Powered To-Do PWA
+// =====================================================
+
+let quicktaskApp = null;
+let quicktaskError = null;
+try {
+  quicktaskApp = require('../quicktask/server');
+  // Redirect /quicktask to /quicktask/ for proper relative path resolution
+  app.get('/quicktask', (req, res) => res.redirect('/quicktask/'));
+  app.use('/quicktask', quicktaskApp);
+  console.log('✅ QuickTask mounted at /quicktask');
+  console.log('   - Dashboard UI: /quicktask/');
+  console.log('   - API: /quicktask/api/tasks');
+} catch (error) {
+  quicktaskError = error;
+  console.log('⚠️ QuickTask not available:', error.message);
+}
+
+app.get('/debug/quicktask-error', (req, res) => {
+  res.json({
+    service: 'QuickTask',
+    available: !quicktaskError,
+    error: quicktaskError ? { message: quicktaskError.message, stack: quicktaskError.stack } : null
+  });
+});
+
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="76" fill="#0f172a"/>
+  <polyline points="166,230 230,294 346,178" fill="none" stroke="#22d3ee" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="256" y="404" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="100" fill="#f8fafc">TT</text>
+  <rect x="128" y="448" width="256" height="16" rx="8" fill="#6366f1"/>
+</svg>
