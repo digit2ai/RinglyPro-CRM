@@ -5,20 +5,8 @@ const micBtn = document.getElementById('micBtn');
 const taskList = document.getElementById('taskList');
 const toast = document.getElementById('toast');
 
-// === Base path detection (works standalone or mounted at /quicktask/) ===
-// Detect from script src path: if loaded from /quicktask/app.js, base is /quicktask
-const BASE = (() => {
-  const scripts = document.getElementsByTagName('script');
-  for (const s of scripts) {
-    const src = s.getAttribute('src') || '';
-    if (src.endsWith('app.js')) {
-      const idx = src.lastIndexOf('app.js');
-      const base = src.substring(0, idx).replace(/\/$/, '');
-      return base || '';
-    }
-  }
-  return '';
-})();
+// === Base path detection (works standalone at / or mounted at /quicktask/) ===
+const BASE = window.location.pathname.replace(/\/$/, '') || '';
 
 // === State ===
 let tasks = [];
