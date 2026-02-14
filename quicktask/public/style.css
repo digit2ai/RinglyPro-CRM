@@ -37,20 +37,20 @@ body {
 
 /* === Header === */
 .header {
-  padding: 8px 0 8px;
+  padding: 0;
   text-align: center;
 }
 
 .header-logo {
-  max-width: 320px;
+  max-width: 200px;
   height: auto;
 }
 
 /* === Input Row === */
 .input-row {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 #taskInput {
