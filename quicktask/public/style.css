@@ -501,6 +501,39 @@ body {
   color: var(--accent);
 }
 
+.cal-event-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cal-event-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.cal-event-edit, .cal-event-delete {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 0 4px;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.cal-event-edit:hover {
+  opacity: 1;
+  color: var(--cyan);
+}
+
+.cal-event-delete:hover {
+  opacity: 1;
+  color: var(--danger);
+}
+
 .cal-event-title {
   font-size: 13px;
   color: var(--text-primary);
@@ -511,6 +544,76 @@ body {
   font-size: 11px;
   color: var(--text-secondary);
   margin-top: 2px;
+}
+
+.cal-event-edit-form {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cal-event-edit-form.hidden {
+  display: none;
+}
+
+.cal-edit-title, .cal-edit-date {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+}
+
+.cal-edit-title:focus, .cal-edit-date:focus {
+  border-color: var(--accent);
+}
+
+.cal-edit-date::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+.cal-edit-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.cal-edit-save, .cal-edit-cancel {
+  flex: 1;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cal-edit-save {
+  background: var(--accent);
+  color: white;
+}
+
+.cal-edit-save:hover {
+  background: var(--accent-hover);
+}
+
+.cal-edit-cancel {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.cal-edit-cancel:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
 }
 
 .cal-empty {

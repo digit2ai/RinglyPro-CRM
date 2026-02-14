@@ -259,11 +259,27 @@ function renderCalendar() {
       const assignee = event.assigned_to || 'manuel';
       const title = event.event_title || event.message;
 
+      const isoLocal = toLocalISOString(new Date(event.event_date));
+
       html += `
-        <div class="cal-event ${assignee}">
-          <div class="cal-event-time">${day.dayName} ${day.dayNum} &middot; ${time}</div>
+        <div class="cal-event ${assignee}" data-id="${event.id}">
+          <div class="cal-event-header">
+            <div class="cal-event-time">${day.dayName} ${day.dayNum} &middot; ${time}</div>
+            <div class="cal-event-actions">
+              <button class="cal-event-edit" data-id="${event.id}" aria-label="Edit">&#9998;</button>
+              <button class="cal-event-delete" data-id="${event.id}" aria-label="Delete">&times;</button>
+            </div>
+          </div>
           <div class="cal-event-title">${escapeHtml(title)}</div>
           <div class="cal-event-assignee">${capitalize(assignee)}</div>
+          <div class="cal-event-edit-form hidden" data-id="${event.id}">
+            <input type="text" class="cal-edit-title" value="${escapeHtml(title)}" placeholder="Event title">
+            <input type="datetime-local" class="cal-edit-date" value="${isoLocal}">
+            <div class="cal-edit-buttons">
+              <button class="cal-edit-save" data-id="${event.id}">Save</button>
+              <button class="cal-edit-cancel" data-id="${event.id}">Cancel</button>
+            </div>
+          </div>
         </div>
       `;
     }
@@ -284,9 +300,60 @@ function renderCalendar() {
     calendarWeekStart.setDate(calendarWeekStart.getDate() + 7);
     fetchCalendarEvents();
   });
+
+  // Delete event
+  document.querySelectorAll('.cal-event-delete').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      deleteTask(id);
+      fetchCalendarEvents();
+    });
+  });
+
+  // Edit event — show inline form
+  document.querySelectorAll('.cal-event-edit').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      const form = document.querySelector(`.cal-event-edit-form[data-id="${id}"]`);
+      form.classList.toggle('hidden');
+    });
+  });
+
+  // Save edit
+  document.querySelectorAll('.cal-edit-save').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const form = document.querySelector(`.cal-event-edit-form[data-id="${id}"]`);
+      const title = form.querySelector('.cal-edit-title').value.trim();
+      const dateVal = form.querySelector('.cal-edit-date').value;
+      if (!title && !dateVal) return;
+
+      const data = {};
+      if (title) data.event_title = title;
+      if (dateVal) data.event_date = new Date(dateVal).toISOString();
+      await updateTask(id, data);
+      fetchCalendarEvents();
+    });
+  });
+
+  // Cancel edit
+  document.querySelectorAll('.cal-edit-cancel').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const form = document.querySelector(`.cal-event-edit-form[data-id="${id}"]`);
+      form.classList.add('hidden');
+    });
+  });
 }
 
 // === Helpers ===
+function toLocalISOString(date) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
