@@ -16,6 +16,7 @@ let isRecording = false;
 let currentView = 'tasks';
 let calendarEvents = [];
 let calendarWeekStart = getWeekStart(new Date());
+let speechLang = localStorage.getItem('speechLang') || 'es-US';
 
 // === API Calls ===
 async function fetchTasks() {
@@ -367,15 +368,18 @@ document.querySelectorAll('.view-tab').forEach(tab => {
 });
 
 // === Speech Recognition ===
+const langBtn = document.getElementById('langBtn');
+
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
     micBtn.style.display = 'none';
+    if (langBtn) langBtn.style.display = 'none';
     return;
   }
 
   recognition = new SpeechRecognition();
-  recognition.lang = 'en-US';
+  recognition.lang = speechLang;
   recognition.interimResults = true;
   recognition.continuous = false;
 
@@ -404,6 +408,20 @@ function initSpeechRecognition() {
       showToast('Speech recognition error', true);
     }
   };
+}
+
+function updateLangLabel() {
+  if (langBtn) langBtn.textContent = speechLang === 'es-US' ? 'ES' : 'EN';
+}
+
+if (langBtn) {
+  updateLangLabel();
+  langBtn.addEventListener('click', () => {
+    speechLang = speechLang === 'es-US' ? 'en-US' : 'es-US';
+    localStorage.setItem('speechLang', speechLang);
+    if (recognition) recognition.lang = speechLang;
+    updateLangLabel();
+  });
 }
 
 micBtn.addEventListener('click', () => {

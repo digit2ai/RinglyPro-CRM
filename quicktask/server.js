@@ -67,9 +67,13 @@ function detectAssignee(message) {
   return 'manuel';
 }
 
-// Parse date/time and clean title from message using chrono-node
+// Parse date/time and clean title from message (English + Spanish)
 function parseEventFromMessage(message) {
-  const results = chrono.parse(message, new Date(), { forwardDate: true });
+  // Try English first, then Spanish
+  let results = chrono.parse(message, new Date(), { forwardDate: true });
+  if (results.length === 0) {
+    results = chrono.es.parse(message, new Date(), { forwardDate: true });
+  }
   if (results.length === 0) {
     return { eventDate: null, eventTitle: null };
   }
