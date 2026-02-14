@@ -140,12 +140,12 @@ function renderTasks() {
 
   let html = '';
 
-  if (manuel.length > 0) {
-    html += renderSection('Manuel', manuel, manuel.length);
-  }
-
   if (gonzalo.length > 0) {
     html += renderSection('Gonzalo', gonzalo, gonzalo.length);
+  }
+
+  if (manuel.length > 0) {
+    html += renderSection('Manuel', manuel, manuel.length);
   }
 
   if (completed.length > 0) {
