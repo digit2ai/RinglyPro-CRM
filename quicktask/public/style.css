@@ -37,7 +37,7 @@ body {
 
 /* === Header === */
 .header {
-  padding: 20px 0 16px;
+  padding: 8px 0 8px;
   text-align: center;
 }
 
@@ -50,7 +50,7 @@ body {
 .input-row {
   display: flex;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 #taskInput {
