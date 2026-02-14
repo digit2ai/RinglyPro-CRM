@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const { Pool } = require('pg');
+const chrono = require('chrono-node');
 require('dotenv').config();
 
 const app = express();
@@ -29,7 +30,7 @@ app.get('/', (req, res) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Create table if it doesn't exist
+// Create table and run migrations
 async function initDB() {
   const client = await pool.connect();
   try {
@@ -44,7 +45,14 @@ async function initDB() {
         completed_at TIMESTAMP
       )
     `);
-    console.log('✅ follow_up_items table ready');
+    // Calendar columns (idempotent)
+    await client.query(`ALTER TABLE follow_up_items ADD COLUMN IF NOT EXISTS event_date TIMESTAMPTZ`);
+    await client.query(`ALTER TABLE follow_up_items ADD COLUMN IF NOT EXISTS event_title VARCHAR(255)`);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_follow_up_event_date
+      ON follow_up_items (event_date) WHERE event_date IS NOT NULL
+    `);
+    console.log('✅ follow_up_items table ready (with calendar columns)');
   } catch (err) {
     console.error('❌ DB init error:', err.message);
   } finally {
@@ -57,6 +65,36 @@ function detectAssignee(message) {
   const lower = message.toLowerCase();
   if (lower.includes('gonzalo')) return 'gonzalo';
   return 'manuel';
+}
+
+// Parse date/time and clean title from message using chrono-node
+function parseEventFromMessage(message) {
+  const results = chrono.parse(message, new Date(), { forwardDate: true });
+  if (results.length === 0) {
+    return { eventDate: null, eventTitle: null };
+  }
+
+  const result = results[0];
+  // Default ambiguous times (1-6) to PM for business context
+  if (result.start.isCertain('hour') && !result.start.isCertain('meridiem')) {
+    const hour = result.start.get('hour');
+    if (hour >= 1 && hour <= 6) {
+      result.start.assign('hour', hour + 12);
+      result.start.assign('meridiem', 1);
+    }
+  }
+  const eventDate = result.start.date();
+
+  // Build clean title: remove date text and assignee prefix
+  let title = message;
+  title = title.replace(result.text, '').trim();
+  title = title.replace(/^(gonzalo|manuel)\s*[,:]?\s*/i, '').trim();
+  title = title.replace(/^[,.\s]+|[,.\s]+$/g, '').trim();
+  if (title.length > 0) {
+    title = title.charAt(0).toUpperCase() + title.slice(1);
+  }
+
+  return { eventDate, eventTitle: title || null };
 }
 
 // Health check
@@ -86,7 +124,40 @@ app.get('/api/tasks', async (req, res) => {
   }
 });
 
-// POST /api/tasks — Create a new task
+// GET /api/calendar — Fetch tasks with events in a date range
+app.get('/api/calendar', async (req, res) => {
+  try {
+    const { start, end } = req.query;
+    let query, params;
+
+    if (start && end) {
+      query = `
+        SELECT * FROM follow_up_items
+        WHERE event_date IS NOT NULL
+          AND event_date >= $1::timestamptz
+          AND event_date < $2::timestamptz + interval '1 day'
+        ORDER BY event_date ASC
+      `;
+      params = [start, end];
+    } else {
+      query = `
+        SELECT * FROM follow_up_items
+        WHERE event_date IS NOT NULL
+          AND event_date >= NOW() - interval '7 days'
+        ORDER BY event_date ASC
+      `;
+      params = [];
+    }
+
+    const result = await pool.query(query, params);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    console.error('GET /api/calendar error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/tasks — Create a new task (with optional calendar event)
 app.post('/api/tasks', async (req, res) => {
   try {
     const { message, source } = req.body;
@@ -95,10 +166,11 @@ app.post('/api/tasks', async (req, res) => {
     }
 
     const assigned_to = detectAssignee(message);
+    const { eventDate, eventTitle } = parseEventFromMessage(message.trim());
     const result = await pool.query(
-      `INSERT INTO follow_up_items (message, assigned_to, source)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [message.trim(), assigned_to, source || 'text']
+      `INSERT INTO follow_up_items (message, assigned_to, source, event_date, event_title)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [message.trim(), assigned_to, source || 'text', eventDate, eventTitle]
     );
 
     res.status(201).json({ success: true, data: result.rows[0] });
@@ -108,7 +180,7 @@ app.post('/api/tasks', async (req, res) => {
   }
 });
 
-// PATCH /api/tasks/:id — Update task status or assignment
+// PATCH /api/tasks/:id — Update task status, assignment, or event fields
 app.patch('/api/tasks/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -139,7 +211,24 @@ app.patch('/api/tasks/:id', async (req, res) => {
       return res.json({ success: true, data: result.rows[0] });
     }
 
-    res.status(400).json({ error: 'Provide status or assigned_to' });
+    if (req.body.event_date !== undefined || req.body.event_title !== undefined) {
+      const updates = [];
+      const values = [];
+      let p = 1;
+      if (req.body.event_date !== undefined) { updates.push(`event_date = $${p++}`); values.push(req.body.event_date); }
+      if (req.body.event_title !== undefined) { updates.push(`event_title = $${p++}`); values.push(req.body.event_title); }
+      values.push(id);
+      const result = await pool.query(
+        `UPDATE follow_up_items SET ${updates.join(', ')} WHERE id = $${p} RETURNING *`,
+        values
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+      return res.json({ success: true, data: result.rows[0] });
+    }
+
+    res.status(400).json({ error: 'Provide status, assigned_to, event_date, or event_title' });
   } catch (err) {
     console.error('PATCH /api/tasks/:id error:', err.message);
     res.status(500).json({ error: err.message });
