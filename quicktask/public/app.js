@@ -18,6 +18,7 @@ let calendarEvents = [];
 let calendarWeekStart = getWeekStart(new Date());
 let speechLang = localStorage.getItem('speechLang') || 'es-US';
 let defaultAssignee = 'manuel';
+let micTimeout = null;
 
 // Detect country via IP geolocation
 async function detectCountry() {
@@ -471,6 +472,7 @@ function initSpeechRecognition() {
       transcript += event.results[i][0].transcript;
     }
     taskInput.value = transcript;
+    resetMicTimeout();
   };
 
   recognition.onend = () => {
@@ -503,6 +505,24 @@ if (langBtn) {
   });
 }
 
+function stopMic() {
+  if (!isRecording) return;
+  isRecording = false;
+  micBtn.classList.remove('recording');
+  clearTimeout(micTimeout);
+  recognition.stop();
+  if (taskInput.value.trim()) {
+    createTask(taskInput.value.trim(), 'voice');
+  }
+}
+
+function resetMicTimeout() {
+  clearTimeout(micTimeout);
+  if (isRecording) {
+    micTimeout = setTimeout(stopMic, 60000);
+  }
+}
+
 micBtn.addEventListener('click', () => {
   if (!recognition) {
     showToast('Voz no soportada en este navegador', true);
@@ -510,17 +530,13 @@ micBtn.addEventListener('click', () => {
   }
 
   if (isRecording) {
-    isRecording = false;
-    micBtn.classList.remove('recording');
-    recognition.stop();
-    if (taskInput.value.trim()) {
-      createTask(taskInput.value.trim(), 'voice');
-    }
+    stopMic();
   } else {
     isRecording = true;
     micBtn.classList.add('recording');
     taskInput.value = '';
     recognition.start();
+    resetMicTimeout();
   }
 });
 
