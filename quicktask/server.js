@@ -52,12 +52,11 @@ async function initDB() {
   }
 }
 
-// Detect name in message
+// Detect name in message — defaults to manuel if no name mentioned
 function detectAssignee(message) {
   const lower = message.toLowerCase();
-  if (lower.includes('manuel')) return 'manuel';
   if (lower.includes('gonzalo')) return 'gonzalo';
-  return null;
+  return 'manuel';
 }
 
 // Health check

@@ -83,8 +83,7 @@ function renderTasks() {
   const pending = tasks.filter(t => t.status === 'pending');
   const completed = tasks.filter(t => t.status === 'completed');
 
-  const unassigned = pending.filter(t => !t.assigned_to);
-  const manuel = pending.filter(t => t.assigned_to === 'manuel');
+  const manuel = pending.filter(t => t.assigned_to === 'manuel' || !t.assigned_to);
   const gonzalo = pending.filter(t => t.assigned_to === 'gonzalo');
 
   if (tasks.length === 0) {
@@ -98,10 +97,6 @@ function renderTasks() {
   }
 
   let html = '';
-
-  if (unassigned.length > 0) {
-    html += renderSection('Unassigned', unassigned, unassigned.length);
-  }
 
   if (manuel.length > 0) {
     html += renderSection('Manuel', manuel, manuel.length);
@@ -145,16 +140,6 @@ function renderTaskItem(task, isCompleted) {
   const sourceIcon = task.source === 'voice' ? '&#127908;' : '';
   const timeAgo = getTimeAgo(task.created_at);
 
-  let assignBtns = '';
-  if (!isCompleted && !task.assigned_to) {
-    assignBtns = `
-      <div class="assign-btns">
-        <button class="assign-btn manuel" data-id="${task.id}" data-assign="manuel">Manuel</button>
-        <button class="assign-btn gonzalo" data-id="${task.id}" data-assign="gonzalo">Gonzalo</button>
-      </div>
-    `;
-  }
-
   return `
     <div class="task-item ${isCompleted ? 'completed' : ''}">
       <div class="task-checkbox ${isCompleted ? 'checked' : ''}" data-id="${task.id}" data-status="${task.status}"></div>
@@ -164,7 +149,6 @@ function renderTaskItem(task, isCompleted) {
           ${sourceIcon ? `<span class="task-source">${sourceIcon}</span>` : ''}
           <span class="task-time">${timeAgo}</span>
         </div>
-        ${assignBtns}
       </div>
       <button class="task-delete" data-id="${task.id}" aria-label="Delete">&times;</button>
     </div>
@@ -178,15 +162,6 @@ function attachEventListeners() {
       const id = el.dataset.id;
       const newStatus = el.dataset.status === 'pending' ? 'completed' : 'pending';
       updateTask(id, { status: newStatus });
-    });
-  });
-
-  // Assign buttons
-  document.querySelectorAll('.assign-btn').forEach(el => {
-    el.addEventListener('click', () => {
-      const id = el.dataset.id;
-      const assigned_to = el.dataset.assign;
-      updateTask(id, { assigned_to });
     });
   });
 

@@ -41,10 +41,9 @@ body {
   text-align: center;
 }
 
-.header h1 {
-  font-size: 1.4rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+.header-logo {
+  max-width: 220px;
+  height: auto;
 }
 
 /* === Input Row === */
