@@ -14,6 +14,12 @@ const pool = new Pool({
 
 // Middleware
 app.use(express.json());
+
+// Serve index.html explicitly at root (avoids redirect issues when mounted as sub-app)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Create table if it doesn't exist

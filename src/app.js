@@ -629,8 +629,11 @@ let quicktaskApp = null;
 let quicktaskError = null;
 try {
   quicktaskApp = require('../quicktask/server');
-  // Redirect /quicktask to /quicktask/ for proper relative path resolution
-  app.get('/quicktask', (req, res) => res.redirect('/quicktask/'));
+  // Redirect /quicktask to /quicktask/ only if no trailing slash
+  app.get('/quicktask', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/quicktask/');
+    next();
+  });
   app.use('/quicktask', quicktaskApp);
   console.log('✅ QuickTask mounted at /quicktask');
   console.log('   - Dashboard UI: /quicktask/');
