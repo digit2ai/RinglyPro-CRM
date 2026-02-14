@@ -13,8 +13,16 @@ const express = require('express');
 const router = express.Router();
 const { Sequelize, Op } = require('sequelize');
 
-// Database connection
+// Database connection (main CRM - uses CRM_DATABASE_URL)
 const sequelize = require('../models').sequelize;
+
+// TunjoRacing database connection (uses DATABASE_URL - where tunjo_* tables live)
+const { Sequelize: SeqClass } = require('sequelize');
+const tunjoSequelize = new SeqClass(process.env.DATABASE_URL, {
+  dialect: 'postgres',
+  dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
+  logging: false
+});
 
 // Middleware to validate client_id (only 15 and 40 allowed)
 const validatePressClient = (req, res, next) => {
@@ -569,12 +577,13 @@ router.get('/stats', async (req, res) => {
 
 // =====================================================
 // MEDIA PORTAL BRIDGE ENDPOINTS
+// Uses tunjoSequelize (DATABASE_URL) to access tunjo_* tables
 // =====================================================
 
 // GET /api/press/portal/posts - List all media posts
 router.get('/portal/posts', async (req, res) => {
   try {
-    const [posts] = await sequelize.query(`
+    const [posts] = await tunjoSequelize.query(`
       SELECT
         p.id, p.title, p.slug, p.race_date, p.race_location,
         p.season, p.series, p.summary, p.press_release_text,
@@ -598,14 +607,14 @@ router.get('/portal/posts', async (req, res) => {
 router.get('/portal/posts/:id', async (req, res) => {
   try {
     const postId = parseInt(req.params.id);
-    const [[post]] = await sequelize.query(
+    const [[post]] = await tunjoSequelize.query(
       `SELECT * FROM tunjo_media_posts WHERE id = :id AND tenant_id = 1`,
       { replacements: { id: postId } }
     );
     if (!post) {
       return res.status(404).json({ success: false, error: 'Post not found' });
     }
-    const [assets] = await sequelize.query(
+    const [assets] = await tunjoSequelize.query(
       `SELECT * FROM tunjo_media_post_assets WHERE media_post_id = :id AND tenant_id = 1 ORDER BY sort_order ASC`,
       { replacements: { id: postId } }
     );
@@ -633,7 +642,7 @@ router.post('/portal/posts', async (req, res) => {
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const finalStatus = status || 'draft';
 
-    const [result] = await sequelize.query(`
+    const [result] = await tunjoSequelize.query(`
       INSERT INTO tunjo_media_posts (
         tenant_id, title, slug, race_date, race_location,
         season, series, summary, press_release_text,
@@ -715,7 +724,7 @@ router.put('/portal/posts/:id', async (req, res) => {
 
     sets.push('updated_at = NOW()');
 
-    const [result] = await sequelize.query(
+    const [result] = await tunjoSequelize.query(
       `UPDATE tunjo_media_posts SET ${sets.join(', ')} WHERE id = :id AND tenant_id = 1 RETURNING *`,
       { replacements }
     );
@@ -735,8 +744,8 @@ router.put('/portal/posts/:id', async (req, res) => {
 router.delete('/portal/posts/:id', async (req, res) => {
   try {
     const postId = parseInt(req.params.id);
-    await sequelize.query(`DELETE FROM tunjo_media_post_assets WHERE media_post_id = :id`, { replacements: { id: postId } });
-    const [result] = await sequelize.query(
+    await tunjoSequelize.query(`DELETE FROM tunjo_media_post_assets WHERE media_post_id = :id`, { replacements: { id: postId } });
+    const [result] = await tunjoSequelize.query(
       `DELETE FROM tunjo_media_posts WHERE id = :id AND tenant_id = 1 RETURNING id`,
       { replacements: { id: postId } }
     );
@@ -760,7 +769,7 @@ router.post('/portal/posts/:id/assets', async (req, res) => {
       return res.status(400).json({ success: false, error: 'asset_type and url are required' });
     }
 
-    const [[post]] = await sequelize.query(
+    const [[post]] = await tunjoSequelize.query(
       `SELECT id FROM tunjo_media_posts WHERE id = :id AND tenant_id = 1`,
       { replacements: { id: postId } }
     );
@@ -768,7 +777,7 @@ router.post('/portal/posts/:id/assets', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Post not found' });
     }
 
-    const [result] = await sequelize.query(`
+    const [result] = await tunjoSequelize.query(`
       INSERT INTO tunjo_media_post_assets (
         tenant_id, media_post_id, asset_type, url, thumbnail_url,
         filename, file_size, caption, credit, sort_order,
@@ -804,7 +813,7 @@ router.post('/portal/posts/:id/assets', async (req, res) => {
 router.delete('/portal/assets/:id', async (req, res) => {
   try {
     const assetId = parseInt(req.params.id);
-    const [result] = await sequelize.query(
+    const [result] = await tunjoSequelize.query(
       `DELETE FROM tunjo_media_post_assets WHERE id = :id AND tenant_id = 1 RETURNING id`,
       { replacements: { id: assetId } }
     );
@@ -821,7 +830,7 @@ router.delete('/portal/assets/:id', async (req, res) => {
 // GET /api/press/portal/stats - Portal statistics
 router.get('/portal/stats', async (req, res) => {
   try {
-    const [[stats]] = await sequelize.query(`
+    const [[stats]] = await tunjoSequelize.query(`
       SELECT
         COUNT(*) as total_posts,
         COUNT(*) FILTER (WHERE status = 'published') as published_posts,
@@ -830,7 +839,7 @@ router.get('/portal/stats', async (req, res) => {
         COALESCE(SUM(total_downloads), 0) as total_downloads
       FROM tunjo_media_posts WHERE tenant_id = 1
     `);
-    const [[assetStats]] = await sequelize.query(
+    const [[assetStats]] = await tunjoSequelize.query(
       `SELECT COUNT(*) as total_assets FROM tunjo_media_post_assets WHERE tenant_id = 1`
     );
     res.json({
