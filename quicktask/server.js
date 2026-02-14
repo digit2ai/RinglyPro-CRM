@@ -15,8 +15,15 @@ const pool = new Pool({
 // Middleware
 app.use(express.json());
 
+// No-cache for SW and HTML so browsers always get fresh versions
+app.get('/sw.js', (req, res) => {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.sendFile(path.join(__dirname, 'public', 'sw.js'));
+});
+
 // Serve index.html explicitly at root (avoids redirect issues when mounted as sub-app)
 app.get('/', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
