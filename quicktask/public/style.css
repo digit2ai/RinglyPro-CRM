@@ -1,6 +1,6 @@
 /* === Variables === */
 :root {
-  --bg-primary: #0f172a;
+  --bg-primary: #000000;
   --bg-surface: #1e293b;
   --accent: #6366f1;
   --accent-hover: #818cf8;
@@ -42,7 +42,7 @@ body {
 }
 
 .header-logo {
-  max-width: 220px;
+  max-width: 320px;
   height: auto;
 }
 

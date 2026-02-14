@@ -28,7 +28,7 @@ async function fetchTasks() {
       renderTasks();
     }
   } catch (err) {
-    showToast('Failed to load tasks', true);
+    showToast('Error al cargar tareas', true);
   }
 }
 
@@ -46,7 +46,7 @@ async function fetchCalendarEvents() {
       renderCalendar();
     }
   } catch (err) {
-    showToast('Failed to load calendar', true);
+    showToast('Error al cargar calendario', true);
   }
 }
 
@@ -65,10 +65,10 @@ async function createTask(message, source = 'text') {
         fetchCalendarEvents();
       }
     } else {
-      showToast(json.error || 'Failed to create task', true);
+      showToast(json.error || 'Error al crear tarea', true);
     }
   } catch (err) {
-    showToast('Failed to create task', true);
+    showToast('Error al crear tarea', true);
   }
 }
 
@@ -83,10 +83,10 @@ async function updateTask(id, data) {
     if (json.success) {
       fetchTasks();
     } else {
-      showToast(json.error || 'Failed to update task', true);
+      showToast(json.error || 'Error al actualizar tarea', true);
     }
   } catch (err) {
-    showToast('Failed to update task', true);
+    showToast('Error al actualizar tarea', true);
   }
 }
 
@@ -98,10 +98,10 @@ async function deleteTask(id) {
       fetchTasks();
       if (currentView === 'calendar') fetchCalendarEvents();
     } else {
-      showToast(json.error || 'Failed to delete task', true);
+      showToast(json.error || 'Error al eliminar tarea', true);
     }
   } catch (err) {
-    showToast('Failed to delete task', true);
+    showToast('Error al eliminar tarea', true);
   }
 }
 
@@ -117,7 +117,7 @@ function renderTasks() {
     taskList.innerHTML = `
       <div class="empty-state">
         <div class="emoji">&#127937;</div>
-        <p>No tasks yet.<br>Type or speak to add one!</p>
+        <p>No hay tareas.<br>Escribe o habla para agregar una!</p>
       </div>
     `;
     return;
@@ -156,7 +156,7 @@ function renderCompletedSection(items) {
   return `
     <div class="section">
       <div class="section-header completed-header">
-        Completed <span class="count">${items.length}</span>
+        Completadas <span class="count">${items.length}</span>
       </div>
       ${items.map(t => renderTaskItem(t, true)).join('')}
     </div>
@@ -168,7 +168,7 @@ function renderTaskItem(task, isCompleted) {
   const timeAgo = getTimeAgo(task.created_at);
 
   const eventBadge = task.event_date
-    ? `<span class="task-event-badge">&#128197; ${new Date(task.event_date).toLocaleString('en-US', {
+    ? `<span class="task-event-badge">&#128197; ${new Date(task.event_date).toLocaleString('es', {
         month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true
       })}</span>`
     : '';
@@ -216,7 +216,7 @@ function renderCalendar() {
     d.setDate(d.getDate() + i);
     days.push({
       date: d,
-      dayName: d.toLocaleDateString('en-US', { weekday: 'short' }),
+      dayName: d.toLocaleDateString('es', { weekday: 'short' }),
       dayNum: d.getDate(),
       isToday: d.getTime() === today.getTime(),
       events: calendarEvents.filter(e => {
@@ -253,7 +253,7 @@ function renderCalendar() {
   for (const day of days) {
     for (const event of day.events) {
       hasEvents = true;
-      const time = new Date(event.event_date).toLocaleTimeString('en-US', {
+      const time = new Date(event.event_date).toLocaleTimeString('es', {
         hour: 'numeric', minute: '2-digit', hour12: true
       });
       const assignee = event.assigned_to || 'manuel';
@@ -273,11 +273,11 @@ function renderCalendar() {
           <div class="cal-event-title">${escapeHtml(title)}</div>
           <div class="cal-event-assignee">${capitalize(assignee)}</div>
           <div class="cal-event-edit-form hidden" data-id="${event.id}">
-            <input type="text" class="cal-edit-title" value="${escapeHtml(title)}" placeholder="Event title">
+            <input type="text" class="cal-edit-title" value="${escapeHtml(title)}" placeholder="Titulo del evento">
             <input type="datetime-local" class="cal-edit-date" value="${isoLocal}">
             <div class="cal-edit-buttons">
-              <button class="cal-edit-save" data-id="${event.id}">Save</button>
-              <button class="cal-edit-cancel" data-id="${event.id}">Cancel</button>
+              <button class="cal-edit-save" data-id="${event.id}">Guardar</button>
+              <button class="cal-edit-cancel" data-id="${event.id}">Cancelar</button>
             </div>
           </div>
         </div>
@@ -286,7 +286,7 @@ function renderCalendar() {
   }
 
   if (!hasEvents) {
-    html += `<div class="cal-empty">No events this week</div>`;
+    html += `<div class="cal-empty">No hay eventos esta semana</div>`;
   }
 
   html += `</div>`;
@@ -382,7 +382,7 @@ function getWeekStart(date) {
 }
 
 function formatShortDate(d) {
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString('es', { month: 'short', day: 'numeric' });
 }
 
 function capitalize(str) {
@@ -469,7 +469,7 @@ function initSpeechRecognition() {
     isRecording = false;
     micBtn.classList.remove('recording');
     if (event.error !== 'no-speech' && event.error !== 'aborted') {
-      showToast('Speech recognition error', true);
+      showToast('Error de reconocimiento de voz', true);
     }
   };
 }
@@ -490,7 +490,7 @@ if (langBtn) {
 
 micBtn.addEventListener('click', () => {
   if (!recognition) {
-    showToast('Speech not supported in this browser', true);
+    showToast('Voz no soportada en este navegador', true);
     return;
   }
 
