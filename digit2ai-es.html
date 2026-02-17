@@ -93,7 +93,7 @@
         .d2a-grid3, .d2a-grid4 { grid-template-columns: 1fr !important; }
         .d2a-grid2 { grid-template-columns: 1fr !important; }
         .d2a-wrap { padding: 0 16px !important; }
-        .d2a-hdr-inner img { height: 70px !important; }
+        .d2a-hdr-inner img { height: 45px !important; }
         .d2a-hero { padding: 50px 0 40px !important; }
         .d2a-hero h1 { font-size: 1.8rem !important; line-height: 1.2 !important; margin-bottom: 1rem !important; }
         .d2a-hero-sub { font-size: 0.95rem !important; margin-bottom: 1.5rem !important; }
@@ -126,6 +126,17 @@
         .d2a-flinks a { font-size: 0.8rem !important; }
         .d2a-ctas { flex-direction: column !important; align-items: center !important; }
     }
+    .d2a-faq-item { border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 0.75rem; overflow: hidden; background: #ffffff; }
+    .d2a-faq-item summary { padding: 1.25rem 1.5rem; font-size: 1.05rem; font-weight: 600; color: #0f172a; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 1rem; transition: background 0.2s; }
+    .d2a-faq-item summary::-webkit-details-marker { display: none; }
+    .d2a-faq-item summary::after { content: '+'; font-size: 1.4rem; font-weight: 700; color: #3b82f6; flex-shrink: 0; transition: transform 0.2s; }
+    .d2a-faq-item[open] summary::after { content: '-'; }
+    .d2a-faq-item summary:hover { background: #f8fafc; }
+    .d2a-faq-item .d2a-faq-answer { padding: 0 1.5rem 1.25rem; color: #64748b; font-size: 0.95rem; line-height: 1.7; }
+    @media (max-width: 600px) {
+        .d2a-faq-item summary { padding: 1rem 1.25rem !important; font-size: 0.95rem !important; }
+        .d2a-faq-item .d2a-faq-answer { padding: 0 1.25rem 1rem !important; font-size: 0.88rem !important; }
+    }
 </style>
 
 <div class="d2a" style="display:block;visibility:visible;opacity:1;background:#ffffff;color:#1e293b;width:100%;">
@@ -134,7 +145,7 @@
     <div class="d2a-hdr" style="display:block;background:#ffffff;padding:1rem 0;border-bottom:1px solid #e2e8f0;">
         <div class="d2a-wrap">
             <div class="d2a-hdr-inner" style="display:flex;justify-content:space-between;align-items:center;position:relative;">
-                <div><img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69949e0555ebaf56e0120e7d.png" alt="digit2ai" style="height:120px;width:auto;"></div>
+                <div><img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69949e0555ebaf56e0120e7d.png" alt="digit2ai" style="height:60px;width:auto;"></div>
                 <nav>
                     <button class="d2a-menubtn" style="display:none;background:none;border:none;cursor:pointer;padding:8px;width:40px;height:40px;align-items:center;justify-content:center;" onclick="this.nextElementSibling.classList.toggle('d2a-open')"><span class="d2a-hamburger" style="display:block;width:22px;height:2px;background:#475569;position:relative;border-radius:1px;"></span></button>
                     <ul class="d2a-nav" style="list-style:none;gap:2rem;">
@@ -658,6 +669,69 @@
                     <p style="color:#dbeafe;font-size:0.85rem;">Legal, cumplimiento, contabilidad y reservas operativas para soportar el crecimiento</p>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- PREGUNTAS FRECUENTES -->
+    <div class="d2a-sec d2a-sec-gray" style="display:block;visibility:visible;padding:80px 0;background:#f8fafc;">
+        <div class="d2a-wrap" style="max-width:800px;">
+            <h2 class="d2a-sec-title" style="display:block;color:#0f172a;text-align:center;">Preguntas Frecuentes</h2>
+            <div class="d2a-divider" style="width:60px;height:4px;background:#3b82f6;border-radius:2px;margin:0 auto 2rem;"></div>
+
+            <details class="d2a-faq-item">
+                <summary>Que es Digit2AI?</summary>
+                <div class="d2a-faq-answer">Digit2AI es una empresa holding de tecnologia que construye plataformas completas con inteligencia artificial para pequenas y medianas empresas. Actualmente operamos 12 plataformas en produccion en 11 verticales industriales, cada una impulsada por infraestructura compartida de IA que incluye agentes de voz, CRM y operaciones automatizadas.</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>Que problema resuelve Digit2AI?</summary>
+                <div class="d2a-faq-answer">33 millones de pequenas empresas en EE.UU. todavia operan con llamadas telefonicas, hojas de calculo y procesos manuales. La adopcion de IA entre PYMEs es menor al 15% -- la mayoria de las soluciones son demasiado caras, complejas o estan disenadas para grandes empresas. Digit2AI construye plataformas de IA asequibles y especificas por industria que brindan a las pequenas empresas las mismas capacidades de automatizacion que las grandes corporaciones.</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>Cual es el modelo de negocio de Digit2AI?</summary>
+                <div class="d2a-faq-answer">Generamos ingresos a traves de tres canales: suscripciones SaaS (ingresos recurrentes mensuales de cada plataforma), tarifas basadas en uso (cargos por llamada y por mensaje en agentes de voz IA), y licenciamiento vertical (marca blanca de plataformas especificas por industria en diferentes regiones).</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>Por que Digit2AI tiene tantos productos diferentes?</summary>
+                <div class="d2a-faq-answer">Cada industria tiene flujos de trabajo, terminologia y requisitos regulatorios unicos. Una herramienta de IA generica no puede servir a una planta lechera de la misma manera que a una escuela de artes marciales. Al construir plataformas especificas por vertical sobre infraestructura compartida, lanzamos nuevos productos con un 60% ya construido -- mas rapido que cualquier competidor -- mientras creamos altos costos de cambio en cada mercado.</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>Que industrias atiende Digit2AI?</summary>
+                <div class="d2a-faq-answer">Atendemos 11 industrias en 12 plataformas: servicios profesionales (RinglyPro), medios deportivos (TunjoRacing), lacteos y agritech (Lactotec), artes marciales (KanchoAI), jardineria (LawnCopilot), bienestar y recuperacion (Recovery + Nutrition), pedidos de restaurantes (OrderGoPro), distribucion de alimentos y bebidas (Doctor Picante), servicios creativos (PixlyPro), tecnologia automotriz (Enruta), monitoreo de retail con IA (AIA Store) y reclutamiento hotelero (AIHotelTalent).</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>Por que es ahora el momento adecuado para invertir?</summary>
+                <div class="d2a-faq-answer">Cuatro fuerzas convergentes crean una ventana unica: los costos de inferencia de IA cayeron mas del 90% en 18 meses haciendo viable economicamente la IA para PYMEs; la adopcion de IA en PYMEs salto de menos del 5% a mas del 15% y esta acelerandose; la IA de voz se ha masificado con consumidores que esperan respuesta 24/7; y somos los primeros en verticales donde nadie mas esta construyendo.</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>Cuales son las ventajas competitivas de Digit2AI?</summary>
+                <div class="d2a-faq-answer">Velocidad al mercado (nuevas verticales se lanzan en semanas, no meses, gracias a la infraestructura compartida), bilingue desde el primer dia (ingles + espanol desbloqueando 62M+ de hispanos en EE.UU. y toda LATAM), profundo bloqueo vertical (plataformas especificas por industria crean altos costos de cambio), y operaciones eficientes (12 plataformas construidas por un equipo pequeno potenciado por IA con bajo costo y alta produccion).</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>Cual es el estado actual de la empresa?</summary>
+                <div class="d2a-faq-answer">Digit2AI tiene 12 plataformas en produccion funcionando y sirviendo a clientes reales en 11 industrias. Contamos con 3 agentes de voz IA (Rachel, Ana y Lina) atendiendo llamadas 24/7 en ingles y espanol. Las nuevas plataformas se despliegan rapidamente a traves de nuestro pipeline de CI/CD completamente automatizado, y el soporte multilingue esta integrado desde el primer dia.</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>Que hace diferente a Digit2AI de otras empresas de IA?</summary>
+                <div class="d2a-faq-answer">La mayoria de las startups de IA apuntan a clientes empresariales con productos horizontales. Nosotros nos enfocamos exclusivamente en PYMEs desatendidas con plataformas completas y especificas por industria. Nuestra infraestructura compartida nos permite entrar a nuevas verticales con un 60% de avance, nuestra capacidad bilingue abre todo el mercado LATAM, y nuestra ejecucion comprobada -- 12 plataformas en produccion -- demuestra que entregamos producto, no presentaciones.</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>Como se utilizaran los fondos de inversion?</summary>
+                <div class="d2a-faq-answer">40% para ventas y marketing (equipo de ventas, adquisicion pagada y alianzas industriales), 30% para ingenieria (expandir el equipo de desarrollo para lanzar 3-4 nuevas verticales por ano), 20% para IA e infraestructura (entrenamiento de IA de voz, ajuste de modelos y escalamiento en la nube), y 10% para operaciones (legal, cumplimiento, contabilidad y reservas).</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>Cual es la vision a largo plazo?</summary>
+                <div class="d2a-faq-answer">Digit2AI aspira a convertirse en la empresa definitiva de plataformas de IA para pequenas empresas -- construyendo y escalando docenas de plataformas especificas por industria sobre infraestructura compartida. Cada vertical es una linea de producto independiente, y juntas forman un portafolio diversificado con efectos de red compuestos a traves de industrias y geografias.</div>
+            </details>
         </div>
     </div>
 

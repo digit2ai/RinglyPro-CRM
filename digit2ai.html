@@ -93,7 +93,7 @@
         .d2a-grid3, .d2a-grid4 { grid-template-columns: 1fr !important; }
         .d2a-grid2 { grid-template-columns: 1fr !important; }
         .d2a-wrap { padding: 0 16px !important; }
-        .d2a-hdr-inner img { height: 70px !important; }
+        .d2a-hdr-inner img { height: 45px !important; }
         .d2a-hero { padding: 50px 0 40px !important; }
         .d2a-hero h1 { font-size: 1.8rem !important; line-height: 1.2 !important; margin-bottom: 1rem !important; }
         .d2a-hero-sub { font-size: 0.95rem !important; margin-bottom: 1.5rem !important; }
@@ -126,6 +126,17 @@
         .d2a-flinks a { font-size: 0.8rem !important; }
         .d2a-ctas { flex-direction: column !important; align-items: center !important; }
     }
+    .d2a-faq-item { border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 0.75rem; overflow: hidden; background: #ffffff; }
+    .d2a-faq-item summary { padding: 1.25rem 1.5rem; font-size: 1.05rem; font-weight: 600; color: #0f172a; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 1rem; transition: background 0.2s; }
+    .d2a-faq-item summary::-webkit-details-marker { display: none; }
+    .d2a-faq-item summary::after { content: '+'; font-size: 1.4rem; font-weight: 700; color: #3b82f6; flex-shrink: 0; transition: transform 0.2s; }
+    .d2a-faq-item[open] summary::after { content: '-'; }
+    .d2a-faq-item summary:hover { background: #f8fafc; }
+    .d2a-faq-item .d2a-faq-answer { padding: 0 1.5rem 1.25rem; color: #64748b; font-size: 0.95rem; line-height: 1.7; }
+    @media (max-width: 600px) {
+        .d2a-faq-item summary { padding: 1rem 1.25rem !important; font-size: 0.95rem !important; }
+        .d2a-faq-item .d2a-faq-answer { padding: 0 1.25rem 1rem !important; font-size: 0.88rem !important; }
+    }
 </style>
 
 <div class="d2a" style="display:block;visibility:visible;opacity:1;background:#ffffff;color:#1e293b;width:100%;">
@@ -134,7 +145,7 @@
     <div class="d2a-hdr" style="display:block;background:#ffffff;padding:1rem 0;border-bottom:1px solid #e2e8f0;">
         <div class="d2a-wrap">
             <div class="d2a-hdr-inner" style="display:flex;justify-content:space-between;align-items:center;position:relative;">
-                <div><img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69949e0555ebaf56e0120e7d.png" alt="digit2ai" style="height:120px;width:auto;"></div>
+                <div><img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69949e0555ebaf56e0120e7d.png" alt="digit2ai" style="height:60px;width:auto;"></div>
                 <nav>
                     <button class="d2a-menubtn" style="display:none;background:none;border:none;cursor:pointer;padding:8px;width:40px;height:40px;align-items:center;justify-content:center;" onclick="this.nextElementSibling.classList.toggle('d2a-open')"><span class="d2a-hamburger" style="display:block;width:22px;height:2px;background:#475569;position:relative;border-radius:1px;"></span></button>
                     <ul class="d2a-nav" style="list-style:none;gap:2rem;">
@@ -658,6 +669,69 @@
                     <p style="color:#dbeafe;font-size:0.85rem;">Legal, compliance, accounting, and operational reserves to support growth</p>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="d2a-sec d2a-sec-gray" style="display:block;visibility:visible;padding:80px 0;background:#f8fafc;">
+        <div class="d2a-wrap" style="max-width:800px;">
+            <h2 class="d2a-sec-title" style="display:block;color:#0f172a;text-align:center;">Frequently Asked Questions</h2>
+            <div class="d2a-divider" style="width:60px;height:4px;background:#3b82f6;border-radius:2px;margin:0 auto 2rem;"></div>
+
+            <details class="d2a-faq-item">
+                <summary>What is Digit2AI?</summary>
+                <div class="d2a-faq-answer">Digit2AI is a technology holding company that builds full-stack, AI-native platforms for small and medium businesses. We currently operate 12 live platforms across 11 industry verticals, each powered by shared AI infrastructure including voice agents, CRM, and automated operations.</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>What problem does Digit2AI solve?</summary>
+                <div class="d2a-faq-answer">33 million U.S. small businesses still run on phone calls, spreadsheets, and manual processes. AI adoption among SMBs is under 15% -- most solutions are too expensive, too complex, or built for enterprises. Digit2AI builds affordable, industry-specific AI platforms that give small businesses the same automation capabilities as large corporations.</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>What is Digit2AI's business model?</summary>
+                <div class="d2a-faq-answer">We generate revenue through three channels: SaaS subscriptions (monthly recurring revenue from each platform), usage-based fees (per-call and per-message charges on AI voice agents), and vertical licensing (white-labeling industry-specific platforms across regions).</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>Why does Digit2AI have so many different products?</summary>
+                <div class="d2a-faq-answer">Each industry has unique workflows, terminology, and regulatory requirements. A generic AI tool cannot serve a dairy plant the same way it serves a martial arts school. By building vertical-specific platforms on shared infrastructure, we launch new products 60% pre-built -- faster than anyone else -- while creating deep switching costs in each market.</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>What industries does Digit2AI serve?</summary>
+                <div class="d2a-faq-answer">We serve 11 industries across 12 platforms: professional services (RinglyPro), motorsports media (TunjoRacing), dairy and agritech (Lactotec), martial arts (KanchoAI), lawn care (LawnCopilot), wellness and recovery (Recovery + Nutrition), restaurant ordering (OrderGoPro), food and beverage wholesale (Doctor Picante), creative services (PixlyPro), automotive tech (Enruta), AI retail monitoring (AIA Store), and hospitality recruitment (AIHotelTalent).</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>Why is now the right time to invest?</summary>
+                <div class="d2a-faq-answer">Four converging forces create a unique window: AI inference costs dropped over 90% in 18 months making SMB AI economically viable; SMB AI adoption jumped from under 5% to 15%+ and is accelerating; voice AI has gone mainstream with consumers expecting 24/7 AI response; and we are first-movers in verticals where no one else is building.</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>What are Digit2AI's competitive advantages?</summary>
+                <div class="d2a-faq-answer">Speed to market (new verticals launch in weeks, not months thanks to shared infrastructure), bilingual from day one (English + Spanish unlocking 62M+ Hispanic Americans and all of LATAM), deep vertical lock-in (industry-specific platforms create high switching costs), and lean operations (12 platforms built by a small AI-augmented team with low burn and high output).</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>What is the company's current status?</summary>
+                <div class="d2a-faq-answer">Digit2AI has 12 production platforms live and serving real customers across 11 industries. We have 3 AI voice agents (Rachel, Ana, and Lina) handling calls 24/7 in English and Spanish. New platforms deploy rapidly through our fully automated CI/CD pipeline, and our multi-language support is built in from day one.</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>What makes Digit2AI different from other AI companies?</summary>
+                <div class="d2a-faq-answer">Most AI startups target enterprise clients with horizontal products. We focus exclusively on underserved SMBs with industry-specific, full-stack platforms. Our shared infrastructure lets us enter new verticals at 60% completion, our bilingual capability opens the entire LATAM market, and our proven execution -- 12 live platforms -- demonstrates we ship product, not pitch decks.</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>How will the investment funds be used?</summary>
+                <div class="d2a-faq-answer">40% for sales and marketing (outbound team, paid acquisition, and industry partnerships), 30% for engineering (expanding the dev team to launch 3-4 new verticals per year), 20% for AI and infrastructure (voice AI training, model fine-tuning, and cloud scaling), and 10% for operations (legal, compliance, accounting, and reserves).</div>
+            </details>
+
+            <details class="d2a-faq-item">
+                <summary>What is the long-term vision?</summary>
+                <div class="d2a-faq-answer">Digit2AI aims to become the definitive AI platform company for small businesses -- building and scaling dozens of industry-specific platforms on shared infrastructure. Each vertical is a standalone product line, and together they form a diversified portfolio with compounding network effects across industries and geographies.</div>
+            </details>
         </div>
     </div>
 
