@@ -126,6 +126,23 @@
         .d2a-flinks a { font-size: 0.8rem !important; }
         .d2a-ctas { flex-direction: column !important; align-items: center !important; }
     }
+    @media print {
+        @page { margin: 12mm 10mm; }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .d2a { width: 100% !important; }
+        .d2a-wrap { max-width: 100% !important; padding: 0 10px !important; }
+        .d2a-hdr-inner nav, .d2a-menubtn { display: none !important; }
+        .d2a-hdr-inner > div:last-child { display: none !important; }
+        elevenlabs-convai, a[href*="wa.me"] { display: none !important; }
+        .d2a-hero { padding: 60px 0 50px !important; page-break-after: always; }
+        .d2a-sec { padding: 50px 0 !important; page-break-before: always; }
+        .d2a-pcard, .d2a-pcard-rev { page-break-inside: avoid; margin-bottom: 1rem; }
+        .d2a-card, .d2a-bluecard, .d2a-bcard, .d2a-ccard { page-break-inside: avoid; }
+        .d2a-highlight { page-break-inside: avoid; }
+        .d2a-timeline { page-break-inside: avoid; }
+        .d2a-grid4 { grid-template-columns: repeat(2, 1fr) !important; }
+        .d2a-ftr { page-break-before: auto; padding: 20px 0 !important; }
+    }
 </style>
 
 <div class="d2a" style="display:block;visibility:visible;opacity:1;background:#ffffff;color:#1e293b;width:100%;">
@@ -711,52 +728,9 @@
         </div>
     </div>
 
-    <!-- PDF DOWNLOAD -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+    <!-- PDF DOWNLOAD (browser print-to-PDF) -->
     <script>
-    function d2aDownloadPDF(){
-        var el=document.querySelector('.d2a');
-        if(!el||typeof html2pdf==='undefined')return;
-        var btn=document.querySelector('[onclick*="d2aDownloadPDF"]');
-        if(btn){btn.textContent='Generando...';btn.style.pointerEvents='none';}
-        html2pdf().set({
-            margin:[10,5,10,5],
-            filename:'DIGIT2AI-Investor-Deck-ES.pdf',
-            image:{type:'jpeg',quality:0.95},
-            html2canvas:{
-                scale:2,
-                useCORS:true,
-                windowWidth:980,
-                scrollX:0,
-                scrollY:0,
-                x:0,
-                y:0,
-                onclone:function(clonedDoc){
-                    clonedDoc.querySelectorAll('elevenlabs-convai,a[href*="wa.me"],script,iframe,[onclick*="d2aDownloadPDF"]').forEach(function(w){w.remove();});
-                    var navEl=clonedDoc.querySelector('.d2a-hdr-inner nav');if(navEl)navEl.remove();
-                    clonedDoc.querySelectorAll('a').forEach(function(a){var t=a.textContent.trim();if(t==='ES'||t==='EN')a.remove();});
-                    clonedDoc.querySelectorAll('style').forEach(function(s){if(s.textContent.indexOf('.d2a')<0)s.remove();});
-                    clonedDoc.documentElement.style.cssText='margin:0;padding:0;';
-                    clonedDoc.body.style.cssText='margin:0;padding:0;width:980px;background:#fff;overflow:visible;';
-                    var d=clonedDoc.querySelector('.d2a');
-                    if(d) d.style.cssText='display:block;visibility:visible;opacity:1;background:#fff;color:#1e293b;width:980px;max-width:980px;margin:0;padding:0;';
-                    clonedDoc.querySelectorAll('.d2a-wrap').forEach(function(w){
-                        w.style.cssText='max-width:940px;width:auto;margin:0 20px;padding:0;';
-                    });
-                    clonedDoc.querySelectorAll('.d2a-grid4').forEach(function(g){
-                        g.style.gridTemplateColumns='repeat(2,1fr)';
-                    });
-                    clonedDoc.querySelectorAll('.d2a-sec').forEach(function(sec){
-                        sec.style.pageBreakBefore='always';
-                    });
-                }
-            },
-            jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-            pagebreak:{mode:['avoid-all','css','legacy']}
-        }).from(el).save().then(function(){
-            if(btn){btn.textContent='\u2B07 PDF';btn.style.pointerEvents='';}
-        });
-    }
+    function d2aDownloadPDF(){ window.print(); }
     </script>
 
     <!-- ELEVENLABS VOICE AGENT (branding removed) -->
