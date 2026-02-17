@@ -126,23 +126,6 @@
         .d2a-flinks a { font-size: 0.8rem !important; }
         .d2a-ctas { flex-direction: column !important; align-items: center !important; }
     }
-    @media print {
-        @page { margin: 12mm 10mm; }
-        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        .d2a { width: 100% !important; }
-        .d2a-wrap { max-width: 100% !important; padding: 0 10px !important; }
-        .d2a-hdr-inner nav, .d2a-menubtn { display: none !important; }
-        .d2a-hdr-inner > div:last-child { display: none !important; }
-        elevenlabs-convai, a[href*="wa.me"] { display: none !important; }
-        .d2a-hero { padding: 60px 0 50px !important; page-break-after: always; }
-        .d2a-sec { padding: 50px 0 !important; page-break-before: always; }
-        .d2a-pcard, .d2a-pcard-rev { page-break-inside: avoid; margin-bottom: 1rem; }
-        .d2a-card, .d2a-bluecard, .d2a-bcard, .d2a-ccard { page-break-inside: avoid; }
-        .d2a-highlight { page-break-inside: avoid; }
-        .d2a-timeline { page-break-inside: avoid; }
-        .d2a-grid4 { grid-template-columns: repeat(2, 1fr) !important; }
-        .d2a-ftr { page-break-before: auto; padding: 20px 0 !important; }
-    }
 </style>
 
 <div class="d2a" style="display:block;visibility:visible;opacity:1;background:#ffffff;color:#1e293b;width:100%;">
@@ -728,9 +711,121 @@
         </div>
     </div>
 
-    <!-- PDF DOWNLOAD (browser print-to-PDF) -->
+    <!-- PDF DOWNLOAD (jsPDF investor deck) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
     <script>
-    function d2aDownloadPDF(){ window.print(); }
+    function d2aDownloadPDF(){
+      var jsPDF=window.jspdf.jsPDF,doc=new jsPDF('p','mm','a4');
+      var W=210,H=297,M=18,CW=W-2*M;
+      var BL=[37,99,235],DK=[15,23,42],GR=[100,116,139],WH=[255,255,255],LB=[219,234,254],BG=[239,246,255],LG=[248,250,252];
+      var y,i;
+      function sc(c){doc.setTextColor(c[0],c[1],c[2]);}
+      function sf(c){doc.setFillColor(c[0],c[1],c[2]);}
+      function band(yy,h,c){sf(c);doc.rect(0,yy,W,h,'F');}
+      function pn(n){doc.setFontSize(8);sc(GR);doc.text(String(n),W/2,H-10,{align:'center'});}
+      function wr(t,x,yy,mw,lh){var l=doc.splitTextToSize(t,mw);doc.text(l,x,yy);return yy+l.length*lh;}
+      function wrc(t,x,yy,mw,lh){var l=doc.splitTextToSize(t,mw);doc.text(l,x,yy,{align:'center'});return yy+l.length*lh;}
+
+      // === PAGE 1: COVER ===
+      band(0,H,BL);
+      doc.setFont('helvetica','bold');doc.setFontSize(42);sc(WH);
+      doc.text('DIGIT2AI',W/2,60,{align:'center'});
+      doc.setFontSize(14);doc.setFont('helvetica','normal');
+      doc.text('Investor Summary',W/2,75,{align:'center'});
+      sf(WH);doc.rect(W/2-30,82,60,0.5,'F');
+      doc.setFont('helvetica','bold');doc.setFontSize(22);sc(WH);
+      var hl=doc.splitTextToSize('Do You Want to Own Your Own AI High-Tech Company?',CW-20);
+      doc.text(hl,W/2,100,{align:'center'});
+      doc.setFont('helvetica','normal');doc.setFontSize(11);sc(LB);
+      var sl=doc.splitTextToSize("We've already built 12 live platforms across 11 industries. Whatever you can dream, we can build it -- and you own half.",CW-30);
+      doc.text(sl,W/2,120,{align:'center'});
+      var stats=[{n:'12',l:'Live Platforms'},{n:'11',l:'Industry Verticals'},{n:'3',l:'AI Voice Agents'},{n:'24/7',l:'Autonomous Ops'}];
+      var bW=38,bH=30,gap=4,sx=(W-(stats.length*bW+(stats.length-1)*gap))/2;
+      for(i=0;i<stats.length;i++){var bx=sx+i*(bW+gap);sf(WH);doc.roundedRect(bx,150,bW,bH,3,3,'F');doc.setFont('helvetica','bold');doc.setFontSize(18);sc(BL);doc.text(stats[i].n,bx+bW/2,165,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(7);sc(GR);doc.text(stats[i].l,bx+bW/2,173,{align:'center'});}
+      doc.setFontSize(9);sc(LB);doc.text('info@digit2ai.com  |  888-610-3810  |  digit2ai.com',W/2,H-25,{align:'center'});
+      doc.setFontSize(7);doc.text('Confidential - For Investor Use Only',W/2,H-18,{align:'center'});
+
+      // === PAGE 2: MARKET OPPORTUNITY ===
+      doc.addPage();band(0,28,BL);doc.setFont('helvetica','bold');doc.setFontSize(18);sc(WH);doc.text('The Market Opportunity',M,18);pn(2);
+      y=38;doc.setFont('helvetica','normal');doc.setFontSize(10);sc(GR);
+      y=wr('33 million small businesses in the U.S. still run on phone calls, spreadsheets, and manual processes. AI adoption in SMBs is under 15%. The gap is massive.',M,y,CW,4.5);y+=6;
+      var mk=[{n:'$300B+',t:'Total Addressable Market',d:'SMB AI automation, voice AI, and vertical SaaS combined market opportunity by 2028'},{n:'85%',t:'Underserved SMBs',d:'Small businesses without AI solutions -- too expensive, too complex, or not built for their industry'},{n:'40%+ CAGR',t:'Voice AI Growth',d:'AI voice agent market growing at 40%+ annually as businesses replace call centers with automation'}];
+      var cW=(CW-8)/3;
+      for(i=0;i<mk.length;i++){var cx=M+i*(cW+4);sf(BL);doc.roundedRect(cx,y,cW,44,2,2,'F');doc.setFont('helvetica','bold');doc.setFontSize(16);sc(WH);doc.text(mk[i].n,cx+cW/2,y+12,{align:'center'});doc.setFontSize(8);doc.text(mk[i].t,cx+cW/2,y+20,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(7);sc(LB);var cl=doc.splitTextToSize(mk[i].d,cW-8);doc.text(cl,cx+cW/2,y+27,{align:'center'});}
+      y+=54;sf(BG);doc.roundedRect(M,y,CW,28,3,3,'F');doc.setFont('helvetica','bold');doc.setFontSize(12);sc(DK);doc.text('Our Thesis',W/2,y+9,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(9);sc(GR);var th=doc.splitTextToSize('Enterprise AI is saturated. SMBs are ignored. We build full-stack, industry-specific AI platforms for businesses that still answer their own phones, track inventory on paper, and lose leads every night. Each vertical we enter becomes a repeatable, scalable product line.',CW-16);doc.text(th,W/2,y+16,{align:'center'});
+      y+=36;doc.setFont('helvetica','bold');doc.setFontSize(13);sc(DK);doc.text('Why Now?',M,y);y+=5;doc.setFont('helvetica','normal');doc.setFontSize(8.5);sc(GR);y=wr('Four converging forces have created a once-in-a-generation window for SMB AI platforms.',M,y,CW,4);y+=5;
+      var wn=[{t:'AI Costs Dropped 90%+',d:'LLM inference costs fell over 90% in 18 months. Voice AI that cost $1/min in 2023 now costs pennies. Full-stack AI is now viable for $500/mo SMB subscriptions.'},{t:'SMB AI Adoption Inflection',d:'SMB AI adoption jumped from under 5% to 15%+ in 2025. Early adopters see ROI, word-of-mouth pulls industries forward. Bottom of the S-curve.'},{t:'Voice AI Went Mainstream',d:'Consumers expect AI on the phone. Businesses without 24/7 AI response lose leads. The behavior shift happened -- SMBs need tools to keep up.'},{t:'First-Mover in Verticals',d:'No one builds AI-native platforms for dairy plants, martial arts schools, or lawn care. Big tech targets enterprise. We own these verticals first.'}];
+      var wW=(CW-4)/2;
+      for(i=0;i<4;i++){var r=Math.floor(i/2),c2=i%2,wx=M+c2*(wW+4),wy=y+r*32;sf(LG);doc.roundedRect(wx,wy,wW,28,2,2,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);sc(DK);doc.text(wn[i].t,wx+4,wy+8);doc.setFont('helvetica','normal');doc.setFontSize(7.5);sc(GR);var wl=doc.splitTextToSize(wn[i].d,wW-8);doc.text(wl,wx+4,wy+14);}
+
+      // === PAGE 3: TRACTION + GROWTH + TIMELINE ===
+      doc.addPage();band(0,28,BL);doc.setFont('helvetica','bold');doc.setFontSize(18);sc(WH);doc.text('Proven Traction',M,18);pn(3);
+      y=38;doc.setFont('helvetica','normal');doc.setFontSize(10);sc(GR);
+      y=wr('Not a pitch deck with mockups. Every platform is live, deployed, and serving real businesses in production today.',M,y,CW,4.5);y+=6;
+      var tr=[{n:'12',t:'Production Platforms',d:'Live, revenue-generating products across 11 distinct industries'},{n:'3',t:'AI Voice Agents',d:'Rachel (EN), Ana (ES), Lina (EN) handling calls, bookings 24/7'},{n:'Rapid',t:'Integration Speed',d:'New integrations deployed fast with 100% automated CI/CD'},{n:'Global',t:'Multi-Language',d:'Voice, UI, and support in any language -- built in from day one'}];
+      var tW=(CW-12)/4;
+      for(i=0;i<tr.length;i++){var tx=M+i*(tW+4);sf(LG);doc.roundedRect(tx,y,tW,34,2,2,'F');doc.setFont('helvetica','bold');doc.setFontSize(14);sc(BL);doc.text(tr[i].n,tx+tW/2,y+11,{align:'center'});doc.setFontSize(7.5);sc(DK);doc.text(tr[i].t,tx+tW/2,y+18,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(6.5);sc(GR);var tl=doc.splitTextToSize(tr[i].d,tW-6);doc.text(tl,tx+tW/2,y+24,{align:'center'});}
+      y+=42;doc.setFont('helvetica','bold');doc.setFontSize(13);sc(DK);doc.text('The Growth Opportunity',M,y);y+=6;
+      var gr=[{n:'12',t:'Platforms Ready to Scale',d:'Each is live and proven -- capital accelerates customer acquisition'},{n:'33M',t:'U.S. SMBs Underserved',d:'Millions still run on calls and spreadsheets -- each vertical is massive'},{n:'11',t:'Verticals, Zero Competition',d:'No one builds AI-native for dairy, martial arts, lawn care, or recovery'},{n:'60%',t:'Head Start New Verticals',d:'Shared infra means each new vertical launches 60% pre-built'}];
+      for(i=0;i<gr.length;i++){var gx=M+i*(tW+4);sf(BL);doc.roundedRect(gx,y,tW,34,2,2,'F');doc.setFont('helvetica','bold');doc.setFontSize(14);sc(WH);doc.text(gr[i].n,gx+tW/2,y+11,{align:'center'});doc.setFontSize(7);doc.text(gr[i].t,gx+tW/2,y+18,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(6.5);sc(LB);var gl=doc.splitTextToSize(gr[i].d,tW-6);doc.text(gl,gx+tW/2,y+24,{align:'center'});}
+      y+=44;doc.setFont('helvetica','bold');doc.setFontSize(13);sc(DK);doc.text('Key Milestones',M,y);y+=8;
+      var ms=[{q:'Q1 2025',t:'RinglyPro CRM launched with 3 AI voice agents',d:'Multi-tenant architecture, MCP server, GoHighLevel sync'},{q:'Q2 2025',t:'TunjoRacing platform for IMSA motorsport',d:'Press portal, e-commerce, sponsorship management, React admin'},{q:'Q3 2025',t:'KanchoAI, Lactotec + LawnCopilot launched',d:'Martial arts AI, dairy plant management, lawn care -- 3 verticals'},{q:'Q4 2025',t:'Recovery+Nutrition, OrderGoPro, DoctorPicante, PixlyPro',d:'4 new platforms -- wellness, restaurants, F&B wholesale, creative'},{q:'Q1 2026',t:'Enruta, AIA Store + AIHotelTalent launched',d:'AutoTech, AI store monitoring, hospitality recruitment'}];
+      for(i=0;i<ms.length;i++){sf(BL);doc.circle(M+3,y+2,2,'F');if(i<ms.length-1){doc.setDrawColor(226,232,240);doc.setLineWidth(0.5);doc.line(M+3,y+4,M+3,y+16);}doc.setFont('helvetica','bold');doc.setFontSize(8);sc(BL);doc.text(ms[i].q,M+10,y+3);doc.setFontSize(9);sc(DK);doc.text(ms[i].t,M+32,y+3);doc.setFont('helvetica','normal');doc.setFontSize(7.5);sc(GR);doc.text(ms[i].d,M+32,y+8);y+=18;}
+
+      // === PAGE 4: PORTFOLIO (1/2) ===
+      doc.addPage();band(0,28,BL);doc.setFont('helvetica','bold');doc.setFontSize(18);sc(WH);doc.text('Live Portfolio (1/2)',M,18);pn(4);
+      y=36;doc.setFont('helvetica','normal');doc.setFontSize(9);sc(GR);doc.text('Every platform is live in production, serving real customers.',M,y);y+=8;
+      var p1=[
+        {nm:'RinglyPro',tg:'FLAGSHIP',dm:'ringlypro.com',ds:'Multi-tenant AI CRM with 3 voice agents (Rachel, Ana, Lina). Handles calls, appointments, SMS, email in EN + ES. Integrated MCP Server, GoHighLevel CRM, and mobile apps. Our core revenue driver.',tk:'Voice AI | Multi-Tenant | Bilingual | SaaS Revenue'},
+        {nm:'TunjoRacing',tg:'SPORTS + MEDIA',dm:'tunjoracing.com',ds:'Full digital platform for IMSA driver Oscar Tunjo. Press portal with auth, e-commerce, race schedule, live results, sponsorship management, and React admin dashboard.',tk:'React | E-Commerce | Press Portal | IMSA Racing'},
+        {nm:'Lactotec',tg:'AGRITECH',dm:'lactotec.com',ds:'Smart dairy plant management. Milk reception, real-time quality control, automated payroll, water fraud detection, AI cognitive agent, and predictive analytics. Deployed in Colombia.',tk:'Quality AI | Predictive Analytics | LATAM | Spanish-First'},
+        {nm:'LawnCopilot',tg:'LAWN CARE',dm:'lawncopilot.com',ds:'AI copilot for lawn care businesses. Automates scheduling, route optimization, customer communication, and billing. Newest vertical -- validates our repeatable playbook for entering new industries.',tk:'Scheduling | Route AI | Billing | Newest Vertical'},
+        {nm:'AIA Store',tg:'AI MONITORING',dm:'aiagent.ringlypro.com/aiastore',ds:'AI-powered store health monitoring. Real-time business intelligence, predictive analytics, automated health scoring, and proactive alerts for brick-and-mortar businesses.',tk:'Health Scoring | Predictive AI | Real-Time Alerts | Business Intel'},
+        {nm:'Enruta',tg:'AUTOTECH',dm:'aiagent.ringlypro.com/enruta',ds:'Vehicle document management with AI voice agent "Laura." Tracks license, SOAT, inspections for Colombian diagnostic centers. Automated reminder campaigns reduce expired docs.',tk:'Voice AI | Doc Management | LATAM | Auto Campaigns'}
+      ];
+      var pH=38;
+      for(i=0;i<p1.length;i++){sf(LG);doc.roundedRect(M,y,CW,pH,2,2,'F');doc.setFont('helvetica','bold');doc.setFontSize(6);sc(BL);doc.text(p1[i].tg,M+4,y+6);doc.setFontSize(12);sc(DK);doc.text(p1[i].nm,M+4,y+13);doc.setFont('helvetica','normal');doc.setFontSize(7);sc(BL);doc.text(p1[i].dm,M+CW-4,y+6,{align:'right'});doc.setFontSize(8);sc(GR);var pl=doc.splitTextToSize(p1[i].ds,CW-8);doc.text(pl,M+4,y+19);doc.setFontSize(7);sc(BL);doc.text(p1[i].tk,M+4,y+pH-4);y+=pH+3;}
+
+      // === PAGE 5: PORTFOLIO (2/2) ===
+      doc.addPage();band(0,28,BL);doc.setFont('helvetica','bold');doc.setFontSize(18);sc(WH);doc.text('Live Portfolio (2/2)',M,18);pn(5);
+      y=36;
+      var p2=[
+        {nm:'KanchoAI',tg:'MARTIAL ARTS',dm:'kanchoai.com',ds:'AI voice agent for martial arts schools. Automates retention calls, payment recovery, lead follow-up, and win-back campaigns across 15+ disciplines. Business health scores and predictive analytics.',tk:'Voice AI | Health Score | Retention AI | 15+ Disciplines'},
+        {nm:'AIHotelTalent',tg:'HOSPITALITY',dm:'aihoteltalent.com',ds:'AI-powered recruitment for the hospitality industry. Intelligent candidate matching, 24/7 applicant engagement via AI chatbots, automated onboarding. Reduces time-to-hire by up to 85%.',tk:'AI Recruiting | Chatbot | Auto Onboarding | Hospitality'},
+        {nm:'Recovery + Nutrition',tg:'WELLNESS',dm:'Eastern US',ds:'AI voice booking for recovery and nutrition. ElevenLabs AI + Twilio handles inbound calls 24/7 -- checks availability, books sessions, sends SMS confirmations. Syncs with GoHighLevel CRM.',tk:'Voice AI | ElevenLabs | GHL Sync | SMS Booking'},
+        {nm:'OrderGoPro',tg:'RESTAURANT TECH',dm:'ordergopro.com',ds:'AI-powered online ordering for restaurants, cafes, and retail. Auto-extracts menus and pricing. Stripe payments, analytics, marketing automation. 500+ businesses, 50K+ orders processed.',tk:'AI Menu Import | Online Ordering | Stripe | Marketing AI'},
+        {nm:'Doctor Picante',tg:'F&B WHOLESALE',dm:'doctorpicante.com',ds:'Wholesale hot sauce supplier for restaurants. 6 signature varieties with volume pricing. AI-powered catalog, automated ordering, and delivery logistics. 500+ restaurant clients nationwide.',tk:'Wholesale Platform | AI Catalog | Volume Pricing'},
+        {nm:'PixlyPro',tg:'CREATIVE SERVICES',dm:'pixlypro.com',ds:'AI-enhanced photo studio. Transforms smartphone photos into professional images. Tiered volume pricing, 48-72 hour turnaround, $1 demo trial. Built for restaurants and SMBs.',tk:'Photo AI | Volume Pricing | 48hr Turnaround | SMB Focus'}
+      ];
+      for(i=0;i<p2.length;i++){sf(LG);doc.roundedRect(M,y,CW,pH,2,2,'F');doc.setFont('helvetica','bold');doc.setFontSize(6);sc(BL);doc.text(p2[i].tg,M+4,y+6);doc.setFontSize(12);sc(DK);doc.text(p2[i].nm,M+4,y+13);doc.setFont('helvetica','normal');doc.setFontSize(7);sc(BL);doc.text(p2[i].dm,M+CW-4,y+6,{align:'right'});doc.setFontSize(8);sc(GR);var pl2=doc.splitTextToSize(p2[i].ds,CW-8);doc.text(pl2,M+4,y+19);doc.setFontSize(7);sc(BL);doc.text(p2[i].tk,M+4,y+pH-4);y+=pH+3;}
+
+      // === PAGE 6: BUSINESS MODEL ===
+      doc.addPage();band(0,28,BL);doc.setFont('helvetica','bold');doc.setFontSize(18);sc(WH);doc.text('Business Model',M,18);pn(6);
+      y=38;doc.setFont('helvetica','normal');doc.setFontSize(10);sc(GR);
+      y=wr('Multiple recurring revenue streams with high margins and low churn in sticky vertical markets.',M,y,CW,4.5);y+=6;
+      var bz=[{n:'1',t:'SaaS Subscriptions',d:'Monthly recurring revenue from each deployed platform. Businesses pay for AI voice agents, CRM access, dashboards, and automation tools.'},{n:'2',t:'Usage-Based Revenue',d:'Per-call and per-message fees on AI voice agents. As clients grow, usage grows. Built-in revenue expansion without upselling.'},{n:'3',t:'Vertical Licensing',d:'Each industry platform is a standalone product that can be white-labeled and licensed across regions.'}];
+      var bzW=(CW-8)/3;
+      for(i=0;i<bz.length;i++){var bx2=M+i*(bzW+4);sf(LG);doc.roundedRect(bx2,y,bzW,44,2,2,'F');sf(BL);doc.circle(bx2+bzW/2,y+10,6,'F');doc.setFont('helvetica','bold');doc.setFontSize(12);sc(WH);doc.text(bz[i].n,bx2+bzW/2,y+13,{align:'center'});doc.setFontSize(9);sc(DK);doc.text(bz[i].t,bx2+bzW/2,y+23,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(7);sc(GR);var bl=doc.splitTextToSize(bz[i].d,bzW-8);doc.text(bl,bx2+bzW/2,y+29,{align:'center'});}
+      y+=54;doc.setFont('helvetica','bold');doc.setFontSize(13);sc(DK);doc.text('Competitive Advantages',M,y);y+=6;
+      var ad=[{t:'Speed to Market',d:'We launch new verticals in weeks, not months. Shared infrastructure means each new platform starts at 60% complete.'},{t:'Bilingual from Day One',d:'Full English + Spanish across voice, UI, and operations. Unlocks 62M+ Hispanic Americans and all of LATAM.'},{t:'Vertical Lock-In',d:'Industry-specific platforms create deep switching costs. A dairy plant using Lactotec cannot simply swap to a generic CRM.'},{t:'Lean Operation',d:'12 live platforms built by a lean team using AI-augmented development. Low burn, high output. Capital goes to growth.'}];
+      var aW=(CW-4)/2;
+      for(i=0;i<4;i++){var ar=Math.floor(i/2),ac=i%2,ax=M+ac*(aW+4),ay=y+ar*34;sf(BL);doc.roundedRect(ax,ay,aW,30,2,2,'F');doc.setFont('helvetica','bold');doc.setFontSize(10);sc(WH);doc.text(ad[i].t,ax+4,ay+9);doc.setFont('helvetica','normal');doc.setFontSize(8);sc(LB);var al=doc.splitTextToSize(ad[i].d,aW-8);doc.text(al,ax+4,ay+15);}
+
+      // === PAGE 7: USE OF FUNDS + CONTACT ===
+      doc.addPage();band(0,28,BL);doc.setFont('helvetica','bold');doc.setFontSize(18);sc(WH);doc.text('Use of Funds',M,18);pn(7);
+      y=38;doc.setFont('helvetica','normal');doc.setFontSize(10);sc(GR);
+      y=wr('Capital will accelerate what already works -- scaling proven platforms and entering new verticals faster.',M,y,CW,4.5);y+=6;
+      var fn=[{p:'40%',t:'Sales + Marketing',d:'Outbound sales team, paid acquisition, and industry partnerships to fill the pipeline'},{p:'30%',t:'Engineering',d:'Expand dev team to launch 3-4 new verticals per year and harden infrastructure'},{p:'20%',t:'AI + Infrastructure',d:'Voice AI training, model fine-tuning, scaling cloud for growing call volume'},{p:'10%',t:'Operations',d:'Legal, compliance, accounting, and operational reserves for growth'}];
+      var fW=(CW-12)/4;
+      for(i=0;i<fn.length;i++){var fx=M+i*(fW+4);sf(BL);doc.roundedRect(fx,y,fW,40,2,2,'F');doc.setFont('helvetica','bold');doc.setFontSize(18);sc(WH);doc.text(fn[i].p,fx+fW/2,y+14,{align:'center'});doc.setFontSize(8);doc.text(fn[i].t,fx+fW/2,y+22,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(6.5);sc(LB);var fl=doc.splitTextToSize(fn[i].d,fW-6);doc.text(fl,fx+fW/2,y+28,{align:'center'});}
+      y+=56;sf(BG);doc.roundedRect(M,y,CW,58,3,3,'F');doc.setFont('helvetica','bold');doc.setFontSize(16);sc(DK);doc.text("Let's Talk",W/2,y+12,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(9);sc(GR);wrc('Interested in the Digit2ai opportunity? Reach out to receive our full deck, financials, and schedule a call with our founder.',W/2,y+20,CW-20,4);
+      var cy=y+34;var cc=[{ic:'P',lb:'Call Us',vl:'888-610-3810'},{ic:'@',lb:'Email',vl:'info@digit2ai.com'},{ic:'D',lb:'Company Deck',vl:'Request Access'}];
+      var ccW=(CW-24)/3;
+      for(i=0;i<cc.length;i++){var ccx=M+4+i*(ccW+8);sf(BL);doc.circle(ccx+ccW/2,cy+3,5,'F');doc.setFont('helvetica','bold');doc.setFontSize(8);sc(WH);doc.text(cc[i].ic,ccx+ccW/2,cy+5,{align:'center'});doc.setFontSize(8);sc(DK);doc.text(cc[i].lb,ccx+ccW/2,cy+13,{align:'center'});doc.setFontSize(9);sc(BL);doc.text(cc[i].vl,ccx+ccW/2,cy+19,{align:'center'});}
+      doc.setFontSize(7);sc(GR);doc.text('(c) 2026 DIGIT2AI LLC. All rights reserved. Confidential.',W/2,H-12,{align:'center'});
+
+      doc.save('DIGIT2AI-Investor-Deck.pdf');
+    }
     </script>
 
     <!-- ELEVENLABS VOICE AGENT (branding removed) -->
