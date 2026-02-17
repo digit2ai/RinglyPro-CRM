@@ -1,0 +1,781 @@
+<style>
+    .d2a *, .d2a *::before, .d2a *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    .d2a { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1e293b !important; background: #ffffff !important; width: 100%; display: block !important; visibility: visible !important; opacity: 1 !important; }
+    .d2a-wrap { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+    .d2a-hdr { background: #ffffff; padding: 1rem 0; border-bottom: 1px solid #e2e8f0; display: block !important; }
+    .d2a-hdr-inner { display: flex !important; justify-content: space-between; align-items: center; position: relative; }
+    .d2a-logo { font-size: 1.8rem; font-weight: 700; color: #3b82f6 !important; letter-spacing: -0.5px; }
+    .d2a-nav { display: flex; list-style: none; gap: 2rem; }
+    .d2a-nav a { text-decoration: none; color: #475569 !important; font-weight: 500; font-size: 0.95rem; }
+    .d2a-nav a:hover { color: #3b82f6 !important; }
+    .d2a-menubtn { display: none !important; background: none; border: none; cursor: pointer; padding: 8px; width: 40px; height: 40px; align-items: center; justify-content: center; }
+    .d2a-hamburger { display: block; width: 22px; height: 2px; background: #475569; position: relative; border-radius: 1px; }
+    .d2a-hamburger::before, .d2a-hamburger::after { content: ''; display: block; width: 22px; height: 2px; background: #475569; position: absolute; left: 0; border-radius: 1px; }
+    .d2a-hamburger::before { top: -7px; }
+    .d2a-hamburger::after { top: 7px; }
+    @media (max-width: 768px) {
+        .d2a-menubtn { display: flex !important; }
+        .d2a-nav { display: none !important; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; flex-direction: column; gap: 0; padding: 1rem 0; border-bottom: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; }
+        .d2a-nav.d2a-open { display: flex !important; }
+        .d2a-nav li { padding: 0.5rem 2rem; list-style: none; }
+        .d2a-nav a { display: block; padding: 0.5rem 0; font-size: 1rem; }
+    }
+    .d2a-hero { padding: 100px 0 80px; text-align: center; background: linear-gradient(135deg, #3b82f6, #2563eb, #4f46e5) !important; display: block !important; visibility: visible !important; }
+    .d2a-hero h1 { font-size: 3.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 1.5rem; color: #ffffff !important; display: block !important; }
+    .d2a-hero-sub { font-size: 1.15rem; color: #dbeafe !important; margin-bottom: 2.5rem; max-width: 750px; margin-left: auto; margin-right: auto; display: block !important; }
+    .d2a-ctas { display: flex !important; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .d2a-btn { display: inline-block !important; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 1rem; }
+    .d2a-btn-pri { background: #ffffff !important; color: #2563eb !important; }
+    .d2a-btn-sec { background: transparent; color: #ffffff !important; border: 2px solid rgba(255,255,255,0.5); }
+    .d2a-stats { display: flex !important; justify-content: center; gap: 3rem; margin-top: 3rem; flex-wrap: wrap; }
+    .d2a-stat { text-align: center; }
+    .d2a-stat-num { font-size: 2.5rem; font-weight: 800; color: #ffffff !important; display: block; }
+    .d2a-stat-lbl { color: #bfdbfe !important; font-size: 0.9rem; font-weight: 500; }
+    .d2a-sec { padding: 80px 0; display: block !important; visibility: visible !important; opacity: 1 !important; height: auto !important; overflow: visible !important; }
+    .d2a-sec-lt { background: #ffffff !important; }
+    .d2a-sec-gray { background: #f8fafc !important; }
+    .d2a-sec-title { font-size: 2.2rem; font-weight: 800; text-align: center; margin-bottom: 1rem; color: #0f172a !important; display: block !important; }
+    .d2a-sec-sub { font-size: 1.05rem; text-align: center; margin-bottom: 3.5rem; color: #64748b !important; max-width: 750px; margin-left: auto; margin-right: auto; display: block !important; }
+    .d2a-grid3 { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .d2a-grid4 { display: grid !important; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+    .d2a-grid2 { display: grid !important; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+    .d2a-card { background: #ffffff !important; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .d2a-card h3 { color: #0f172a !important; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .d2a-card p { color: #64748b !important; font-size: 0.9rem; line-height: 1.6; }
+    .d2a-bluecard { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; border: none; border-radius: 20px; padding: 2rem; text-align: center; }
+    .d2a-bluecard h3 { color: #ffffff !important; font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .d2a-bluecard p { color: #dbeafe !important; font-size: 0.85rem; line-height: 1.5; }
+    .d2a-bluecard-num { font-size: 1.8rem; font-weight: 800; color: #ffffff !important; display: block; margin-bottom: 0.25rem; }
+    .d2a-bcard { background: #ffffff !important; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .d2a-bcard h3 { color: #0f172a !important; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .d2a-bcard p { color: #64748b !important; font-size: 0.85rem; line-height: 1.5; }
+    .d2a-bcard-num { font-size: 1.8rem; font-weight: 800; color: #2563eb !important; display: block; margin-bottom: 0.25rem; }
+    .d2a-pgrid { display: flex !important; flex-direction: column; gap: 3rem; }
+    .d2a-pcard { display: grid !important; grid-template-columns: 1fr 1.2fr; background: #ffffff !important; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .d2a-pcard-rev { grid-template-columns: 1.2fr 1fr !important; }
+    .d2a-pprev { min-height: 300px; display: flex !important; align-items: center; justify-content: center; }
+    .d2a-pinfo { padding: 2.5rem; display: flex !important; flex-direction: column; justify-content: center; }
+    .d2a-pcard-rev .d2a-pinfo { order: -1; }
+    .d2a-ptag { display: inline-block; padding: 4px 14px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem; width: fit-content; }
+    .d2a-pinfo h3 { font-size: 1.6rem; font-weight: 700; color: #0f172a !important; margin-bottom: 0.25rem; }
+    .d2a-pdom { color: #64748b !important; font-size: 0.85rem; margin-bottom: 0.75rem; font-weight: 500; }
+    .d2a-pinfo p { color: #64748b !important; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.25rem; }
+    .d2a-pills { list-style: none !important; display: flex !important; flex-wrap: wrap; gap: 6px; margin-bottom: 1.25rem; padding: 0 !important; }
+    .d2a-pills li { background: #eff6ff; color: #2563eb !important; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; border: 1px solid #bfdbfe; }
+    .d2a-plink { display: inline-block !important; color: #2563eb !important; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    .d2a-plink:hover { text-decoration: underline; }
+    .d2a-ccard { background: #ffffff !important; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .d2a-ccard h3 { color: #0f172a !important; font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .d2a-ccard p { color: #64748b !important; font-size: 0.85rem; }
+    .d2a-ccard a { color: #2563eb !important; text-decoration: none; font-weight: 600; font-size: 1.05rem; }
+    .d2a-ftr { background: #f8fafc !important; padding: 30px 0; text-align: center; border-top: 1px solid #e2e8f0; }
+    .d2a-flinks { display: flex !important; justify-content: center; gap: 2rem; margin-bottom: 1rem; flex-wrap: wrap; list-style: none; padding: 0; }
+    .d2a-flinks a { color: #64748b !important; text-decoration: none; font-size: 0.85rem; }
+    .d2a-fcopy { color: #94a3b8 !important; font-size: 0.8rem; }
+    .d2a-divider { width: 60px; height: 4px; background: #3b82f6; border-radius: 2px; margin: 0 auto 2rem; }
+    .d2a-highlight { background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 1px solid #bfdbfe; border-radius: 20px; padding: 3rem; margin-top: 3rem; }
+    .d2a-timeline { position: relative; padding-left: 30px; }
+    .d2a-timeline-item { position: relative; padding-bottom: 2rem; padding-left: 20px; border-left: 2px solid #e2e8f0; }
+    .d2a-timeline-item:last-child { border-left: 2px solid transparent; padding-bottom: 0; }
+    .d2a-timeline-dot { position: absolute; left: -28px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: #3b82f6; border: 2px solid #ffffff; }
+    @media (max-width: 900px) {
+        .d2a-grid3, .d2a-grid4 { grid-template-columns: repeat(2, 1fr) !important; }
+        .d2a-grid2 { grid-template-columns: 1fr !important; }
+        .d2a-pcard, .d2a-pcard-rev { grid-template-columns: 1fr !important; }
+        .d2a-pcard-rev .d2a-pinfo { order: 0; }
+        .d2a-pprev { min-height: 200px; }
+        .d2a-hero { padding: 70px 0 60px !important; }
+        .d2a-hero h1 { font-size: 2.5rem; }
+        .d2a-sec { padding: 60px 0 !important; }
+        .d2a-highlight { padding: 2rem !important; }
+    }
+    @media (max-width: 600px) {
+        .d2a-grid3, .d2a-grid4 { grid-template-columns: 1fr !important; }
+        .d2a-grid2 { grid-template-columns: 1fr !important; }
+        .d2a-wrap { padding: 0 16px !important; }
+        .d2a-hdr-inner img { height: 70px !important; }
+        .d2a-hero { padding: 50px 0 40px !important; }
+        .d2a-hero h1 { font-size: 1.8rem !important; line-height: 1.2 !important; margin-bottom: 1rem !important; }
+        .d2a-hero-sub { font-size: 0.95rem !important; margin-bottom: 1.5rem !important; }
+        .d2a-btn { padding: 12px 24px !important; font-size: 0.9rem !important; }
+        .d2a-stats { gap: 1rem !important; margin-top: 2rem !important; }
+        .d2a-stat-num { font-size: 1.8rem !important; }
+        .d2a-stat-lbl { font-size: 0.75rem !important; }
+        .d2a-sec { padding: 50px 0 !important; }
+        .d2a-sec-title { font-size: 1.5rem !important; margin-bottom: 0.75rem !important; }
+        .d2a-sec-sub { font-size: 0.9rem !important; margin-bottom: 2.5rem !important; }
+        .d2a-bluecard, .d2a-bcard, .d2a-card, .d2a-ccard { padding: 1.5rem !important; }
+        .d2a-bluecard-num, .d2a-bcard-num { font-size: 1.5rem !important; }
+        .d2a-highlight { padding: 1.5rem !important; margin-top: 2rem !important; }
+        .d2a-highlight h3 { font-size: 1.2rem !important; }
+        .d2a-highlight p { font-size: 0.9rem !important; }
+        .d2a-pcard, .d2a-pcard-rev { grid-template-columns: 1fr !important; }
+        .d2a-pcard-rev .d2a-pinfo { order: 0; }
+        .d2a-pprev { min-height: 180px !important; }
+        .d2a-pinfo { padding: 1.25rem !important; }
+        .d2a-pinfo h3 { font-size: 1.25rem !important; }
+        .d2a-pinfo p { font-size: 0.85rem !important; }
+        .d2a-ptag { font-size: 0.7rem !important; padding: 3px 10px !important; }
+        .d2a-pills { gap: 4px !important; }
+        .d2a-pills li { font-size: 0.7rem !important; padding: 3px 8px !important; }
+        .d2a-pgrid { gap: 2rem !important; }
+        .d2a-timeline { padding-left: 20px !important; }
+        .d2a-timeline-item { padding-left: 14px !important; }
+        .d2a-timeline-dot { left: -20px !important; width: 10px !important; height: 10px !important; }
+        .d2a-flinks { gap: 1rem !important; }
+        .d2a-flinks a { font-size: 0.8rem !important; }
+        .d2a-ctas { flex-direction: column !important; align-items: center !important; }
+    }
+</style>
+
+<div class="d2a" style="display:block;visibility:visible;opacity:1;background:#ffffff;color:#1e293b;width:100%;">
+
+    <!-- HEADER -->
+    <div class="d2a-hdr" style="display:block;background:#ffffff;padding:1rem 0;border-bottom:1px solid #e2e8f0;">
+        <div class="d2a-wrap">
+            <div class="d2a-hdr-inner" style="display:flex;justify-content:space-between;align-items:center;position:relative;">
+                <div><img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/699276b81d5e047a3d3721a2.png" alt="digit2ai" style="height:120px;width:auto;"></div>
+                <nav>
+                    <button class="d2a-menubtn" style="display:none;background:none;border:none;cursor:pointer;padding:8px;width:40px;height:40px;align-items:center;justify-content:center;" onclick="this.nextElementSibling.classList.toggle('d2a-open')"><span class="d2a-hamburger" style="display:block;width:22px;height:2px;background:#475569;position:relative;border-radius:1px;"></span></button>
+                    <ul class="d2a-nav" style="list-style:none;gap:2rem;">
+                        <li style="list-style:none;"><a href="#d2a-opportunity" style="color:#475569;text-decoration:none;">Oportunidad</a></li>
+                        <li style="list-style:none;"><a href="#d2a-traction" style="color:#475569;text-decoration:none;">Traccion</a></li>
+                        <li style="list-style:none;"><a href="#d2a-portfolio" style="color:#475569;text-decoration:none;">Portafolio</a></li>
+                        <li style="list-style:none;"><a href="#d2a-model" style="color:#475569;text-decoration:none;">Modelo</a></li>
+                        <li style="list-style:none;"><a href="#d2a-contact" style="color:#475569;text-decoration:none;">Contacto</a></li>
+                    </ul>
+                </nav>
+                <div style="display:flex;align-items:center;gap:8px;margin-left:1rem;">
+                    <a href="javascript:void(0)" onclick="d2aDownloadPDF()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:50px;border:1px solid #3b82f6;color:#ffffff;text-decoration:none;font-size:0.8rem;font-weight:600;background:#3b82f6;white-space:nowrap;cursor:pointer;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF</a>
+                    <a href="https://aiagent.ringlypro.com/digit2ai" style="display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:50px;border:1px solid #e2e8f0;color:#475569;text-decoration:none;font-size:0.8rem;font-weight:600;background:#ffffff;white-space:nowrap;">EN</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HERO -->
+    <div class="d2a-hero" style="display:block;visibility:visible;opacity:1;padding:100px 0 80px;text-align:center;background:linear-gradient(135deg,#3b82f6,#2563eb,#4f46e5);">
+        <div class="d2a-wrap">
+            <h1 style="display:block;visibility:visible;color:#ffffff;font-size:3.5rem;font-weight:800;line-height:1.1;margin-bottom:1.5rem;">Quieres Ser Dueno de Tu Propia Empresa de Tecnologia AI?</h1>
+            <p class="d2a-hero-sub" style="display:block;visibility:visible;color:#dbeafe;font-size:1.15rem;margin-bottom:2.5rem;">Ya construimos 12 plataformas en produccion en 11 industrias. Lo que tu puedas sonar, nosotros lo construimos -- y tu eres dueno de la mitad.</p>
+            <div class="d2a-ctas" style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+                <a href="#d2a-portfolio" class="d2a-btn d2a-btn-pri" style="display:inline-block;background:#ffffff;color:#2563eb;padding:14px 32px;border-radius:50px;text-decoration:none;font-weight:600;">Ver Portafolio en Vivo</a>
+                <a href="#d2a-contact" class="d2a-btn d2a-btn-sec" style="display:inline-block;color:#ffffff;padding:14px 32px;border-radius:50px;text-decoration:none;font-weight:600;border:2px solid rgba(255,255,255,0.5);">Contactanos</a>
+            </div>
+            <div class="d2a-stats" style="display:flex;justify-content:center;gap:3rem;margin-top:3rem;flex-wrap:wrap;">
+                <div class="d2a-stat"><span class="d2a-stat-num" style="color:#ffffff;font-size:2.5rem;font-weight:800;">12</span><span class="d2a-stat-lbl" style="color:#bfdbfe;">Plataformas en Vivo</span></div>
+                <div class="d2a-stat"><span class="d2a-stat-num" style="color:#ffffff;font-size:2.5rem;font-weight:800;">11</span><span class="d2a-stat-lbl" style="color:#bfdbfe;">Verticales Industriales</span></div>
+                <div class="d2a-stat"><span class="d2a-stat-num" style="color:#ffffff;font-size:2.5rem;font-weight:800;">3</span><span class="d2a-stat-lbl" style="color:#bfdbfe;">Agentes de Voz AI</span></div>
+                <div class="d2a-stat"><span class="d2a-stat-num" style="color:#ffffff;font-size:2.5rem;font-weight:800;">24/7</span><span class="d2a-stat-lbl" style="color:#bfdbfe;">Operaciones Autonomas</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OPORTUNIDAD DE MERCADO -->
+    <div id="d2a-opportunity" class="d2a-sec d2a-sec-lt" style="display:block;visibility:visible;padding:80px 0;background:#ffffff;">
+        <div class="d2a-wrap">
+            <h2 class="d2a-sec-title" style="display:block;color:#0f172a;text-align:center;">La Oportunidad de Mercado</h2>
+            <div class="d2a-divider" style="width:60px;height:4px;background:#3b82f6;border-radius:2px;margin:0 auto 1.5rem;"></div>
+            <p class="d2a-sec-sub" style="display:block;color:#64748b;text-align:center;margin-bottom:3.5rem;">33 millones de pequenas empresas en EE.UU. aun operan con llamadas telefonicas, hojas de calculo y procesos manuales. La adopcion de AI en PYMEs es menor al 15%. La brecha es enorme.</p>
+            <div class="d2a-grid3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;">
+                <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                    <span class="d2a-bluecard-num" style="color:#ffffff;font-size:1.8rem;font-weight:800;">$300B+</span>
+                    <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Mercado Total Direccionable</h3>
+                    <p style="color:#dbeafe;font-size:0.85rem;">Automatizacion AI para PYMEs, voz AI y SaaS vertical -- oportunidad de mercado combinada para 2028</p>
+                </div>
+                <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                    <span class="d2a-bluecard-num" style="color:#ffffff;font-size:1.8rem;font-weight:800;">85%</span>
+                    <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">PYMEs Desatendidas</h3>
+                    <p style="color:#dbeafe;font-size:0.85rem;">Pequenas empresas sin soluciones AI -- demasiado caras, demasiado complejas, o no construidas para su industria</p>
+                </div>
+                <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                    <span class="d2a-bluecard-num" style="color:#ffffff;font-size:1.8rem;font-weight:800;">40%+ CAGR</span>
+                    <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Crecimiento de Voz AI</h3>
+                    <p style="color:#dbeafe;font-size:0.85rem;">El mercado de agentes de voz AI crece a mas del 40% anual mientras las empresas reemplazan call centers con automatizacion inteligente</p>
+                </div>
+            </div>
+            <div class="d2a-highlight" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:20px;padding:3rem;margin-top:3rem;">
+                <h3 style="color:#0f172a;font-size:1.4rem;font-weight:700;margin-bottom:1rem;text-align:center;">Nuestra Tesis</h3>
+                <p style="color:#475569;font-size:1rem;line-height:1.8;text-align:center;max-width:800px;margin:0 auto;">La AI empresarial esta saturada. Las PYMEs son ignoradas. Construimos <span style="color:#2563eb;font-weight:700;">plataformas AI full-stack especificas por industria</span> para negocios que aun contestan sus propios telefonos, llevan inventario en papel y pierden leads cada noche. Cada vertical que entramos se convierte en una linea de producto repetible y escalable.</p>
+            </div>
+
+            <!-- Por que Ahora -->
+            <div style="margin-top:4rem;">
+                <h3 style="color:#0f172a;font-size:1.4rem;font-weight:700;margin-bottom:0.75rem;text-align:center;">Por que Ahora?</h3>
+                <p style="color:#64748b;font-size:0.95rem;text-align:center;margin-bottom:2.5rem;max-width:700px;margin-left:auto;margin-right:auto;">Cuatro fuerzas convergentes han creado una ventana unica en una generacion para plataformas AI dirigidas a PYMEs.</p>
+                <div class="d2a-grid2" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;">
+                    <div class="d2a-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                        <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;margin-bottom:1rem;">$</div>
+                        <h3 style="color:#0f172a;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">Costos de AI Bajaron 90%+</h3>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;">Los costos de inferencia LLM cayeron mas del 90% en los ultimos 18 meses. La voz AI que costaba $1/min en 2023 ahora cuesta centavos. Por primera vez, la AI full-stack es economicamente viable para una suscripcion PYME de $500/mes.</p>
+                    </div>
+                    <div class="d2a-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                        <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;margin-bottom:1rem;">^</div>
+                        <h3 style="color:#0f172a;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">Punto de Inflexion en Adopcion AI</h3>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;">La adopcion de AI en PYMEs salto de menos del 5% a mas del 15% en 2025 y se acelera. Los primeros adoptantes ven ROI, y el boca a boca esta impulsando industrias enteras. Estamos al inicio de la curva S.</p>
+                    </div>
+                    <div class="d2a-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                        <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;margin-bottom:1rem;">V</div>
+                        <h3 style="color:#0f172a;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">La Voz AI se Volvio Mainstream</h3>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;">Los consumidores ahora esperan AI al telefono. Los negocios que no ofrecen respuesta AI 24/7 pierden leads ante competidores que si. El cambio de comportamiento ya ocurrio -- ahora las PYMEs necesitan las herramientas para mantenerse al dia.</p>
+                    </div>
+                    <div class="d2a-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                        <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;margin-bottom:1rem;">1</div>
+                        <h3 style="color:#0f172a;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">Primeros en las Verticales</h3>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;">Nadie esta construyendo plataformas AI nativas para plantas lacteas, escuelas de artes marciales u operadores de jardineria. Big tech apunta a empresas grandes. Nosotros dominamos estas verticales antes de que alguien mas aparezca.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRACCION -->
+    <div id="d2a-traction" class="d2a-sec d2a-sec-gray" style="display:block;visibility:visible;padding:80px 0;background:#f8fafc;">
+        <div class="d2a-wrap">
+            <h2 class="d2a-sec-title" style="display:block;color:#0f172a;text-align:center;">Traccion Comprobada</h2>
+            <div class="d2a-divider" style="width:60px;height:4px;background:#3b82f6;border-radius:2px;margin:0 auto 1.5rem;"></div>
+            <p class="d2a-sec-sub" style="display:block;color:#64748b;text-align:center;margin-bottom:3.5rem;">No es un pitch deck con maquetas. Cada plataforma esta en vivo, desplegada y sirviendo a negocios reales en produccion hoy.</p>
+            <div class="d2a-grid4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;">
+                <div class="d2a-bcard" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <span class="d2a-bcard-num" style="color:#2563eb;font-size:1.8rem;font-weight:800;">12</span>
+                    <h3 style="color:#0f172a;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Plataformas en Produccion</h3>
+                    <p style="color:#64748b;font-size:0.85rem;">Productos en vivo generando ingresos en 11 industrias distintas</p>
+                </div>
+                <div class="d2a-bcard" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <span class="d2a-bcard-num" style="color:#2563eb;font-size:1.8rem;font-weight:800;">3</span>
+                    <h3 style="color:#0f172a;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Agentes de Voz AI</h3>
+                    <p style="color:#64748b;font-size:0.85rem;">Rachel (EN), Ana (ES) y Lina (EN) gestionando llamadas, reservas y seguimiento 24/7</p>
+                </div>
+                <div class="d2a-bcard" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <span class="d2a-bcard-num" style="color:#2563eb;font-size:1.8rem;font-weight:800;">Rapida</span>
+                    <h3 style="color:#0f172a;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Velocidad de Integracion</h3>
+                    <p style="color:#64748b;font-size:0.85rem;">Nuevas integraciones desplegadas rapidamente con CI/CD 100% automatizado -- de onboarding a produccion en tiempo record</p>
+                </div>
+                <div class="d2a-bcard" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <span class="d2a-bcard-num" style="color:#2563eb;font-size:1.8rem;font-weight:800;">🌐</span>
+                    <h3 style="color:#0f172a;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Multi-Idioma</h3>
+                    <p style="color:#64748b;font-size:0.85rem;">Voz, interfaz y soporte en cualquier idioma -- integrado desde el dia uno, listo para escalar globalmente</p>
+                </div>
+            </div>
+
+            <!-- Oportunidad de Crecimiento -->
+            <div style="margin-top:3rem;">
+                <h3 style="color:#0f172a;font-size:1.4rem;font-weight:700;margin-bottom:2rem;text-align:center;">La Oportunidad de Crecimiento</h3>
+                <div class="d2a-grid4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;">
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                        <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">12</span>
+                        <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Plataformas Listas para Escalar</h3>
+                        <p style="color:#dbeafe;font-size:0.85rem;">Cada plataforma esta en vivo y probada -- el capital acelera la adquisicion de clientes en cada vertical</p>
+                    </div>
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                        <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">33M</span>
+                        <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">PYMEs Desatendidas en EE.UU.</h3>
+                        <p style="color:#dbeafe;font-size:0.85rem;">Millones de pequenas empresas aun operan con llamadas y hojas de calculo -- cada vertical es un mercado direccionable masivo</p>
+                    </div>
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                        <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">11</span>
+                        <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Verticales, Cero Competencia</h3>
+                        <p style="color:#dbeafe;font-size:0.85rem;">Nadie mas esta construyendo plataformas AI nativas para plantas lacteas, escuelas de artes marciales, jardineria o clinicas de recuperacion</p>
+                    </div>
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                        <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">60%</span>
+                        <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Ventaja en Nuevas Verticales</h3>
+                        <p style="color:#dbeafe;font-size:0.85rem;">La infraestructura compartida permite que cada nueva vertical se lance con el 60% pre-construido -- mas rapido al mercado que cualquier competidor</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Linea de Tiempo de Hitos -->
+            <div style="margin-top:4rem;max-width:700px;margin-left:auto;margin-right:auto;">
+                <h3 style="color:#0f172a;font-size:1.4rem;font-weight:700;margin-bottom:2rem;text-align:center;">Hitos Clave</h3>
+                <div class="d2a-timeline" style="position:relative;padding-left:30px;">
+                    <div class="d2a-timeline-item" style="position:relative;padding-bottom:2rem;padding-left:20px;border-left:2px solid #e2e8f0;">
+                        <div class="d2a-timeline-dot" style="position:absolute;left:-28px;top:4px;width:12px;height:12px;border-radius:50%;background:#3b82f6;border:2px solid #f8fafc;"></div>
+                        <div style="color:#2563eb;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Q1 2025</div>
+                        <div style="color:#0f172a;font-weight:600;font-size:1rem;">RinglyPro CRM lanzado con 3 agentes de voz AI</div>
+                        <div style="color:#64748b;font-size:0.85rem;">Arquitectura multi-tenant, integracion MCP server, sincronizacion GoHighLevel</div>
+                    </div>
+                    <div class="d2a-timeline-item" style="position:relative;padding-bottom:2rem;padding-left:20px;border-left:2px solid #e2e8f0;">
+                        <div class="d2a-timeline-dot" style="position:absolute;left:-28px;top:4px;width:12px;height:12px;border-radius:50%;background:#3b82f6;border:2px solid #f8fafc;"></div>
+                        <div style="color:#2563eb;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Q2 2025</div>
+                        <div style="color:#0f172a;font-weight:600;font-size:1rem;">Plataforma TunjoRacing para IMSA motorsport</div>
+                        <div style="color:#64748b;font-size:0.85rem;">Portal de prensa, e-commerce, gestion de patrocinios, admin React</div>
+                    </div>
+                    <div class="d2a-timeline-item" style="position:relative;padding-bottom:2rem;padding-left:20px;border-left:2px solid #e2e8f0;">
+                        <div class="d2a-timeline-dot" style="position:absolute;left:-28px;top:4px;width:12px;height:12px;border-radius:50%;background:#3b82f6;border:2px solid #f8fafc;"></div>
+                        <div style="color:#2563eb;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Q3 2025</div>
+                        <div style="color:#0f172a;font-weight:600;font-size:1rem;">KanchoAI, Lactotec + LawnCopilot lanzados</div>
+                        <div style="color:#64748b;font-size:0.85rem;">AI para artes marciales, gestion de plantas lacteas y jardineria -- 3 nuevas verticales en un trimestre.</div>
+                    </div>
+                    <div class="d2a-timeline-item" style="position:relative;padding-bottom:2rem;padding-left:20px;border-left:2px solid #e2e8f0;">
+                        <div class="d2a-timeline-dot" style="position:absolute;left:-28px;top:4px;width:12px;height:12px;border-radius:50%;background:#4f46e5;border:2px solid #f8fafc;"></div>
+                        <div style="color:#4f46e5;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Q4 2025</div>
+                        <div style="color:#0f172a;font-weight:600;font-size:1rem;">Recovery + Nutrition, OrderGoPro, Doctor Picante, PixlyPro</div>
+                        <div style="color:#64748b;font-size:0.85rem;">4 nuevas plataformas desplegadas -- bienestar, pedidos de restaurantes, mayorista de alimentos y servicios creativos. 12 plataformas en vivo.</div>
+                    </div>
+                    <div class="d2a-timeline-item" style="position:relative;padding-bottom:0;padding-left:20px;border-left:2px solid transparent;">
+                        <div class="d2a-timeline-dot" style="position:absolute;left:-28px;top:4px;width:12px;height:12px;border-radius:50%;background:#4f46e5;border:2px solid #f8fafc;"></div>
+                        <div style="color:#4f46e5;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Q1 2026</div>
+                        <div style="color:#0f172a;font-weight:600;font-size:1rem;">Enruta, AIA Store + AIHotelTalent lanzados</div>
+                        <div style="color:#64748b;font-size:0.85rem;">AutoTech, monitoreo AI de tiendas y reclutamiento hotelero -- 3 nuevas verticales en un trimestre.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PORTAFOLIO EN VIVO -->
+    <div id="d2a-portfolio" class="d2a-sec d2a-sec-lt" style="display:block;visibility:visible;padding:80px 0;background:#ffffff;">
+        <div class="d2a-wrap">
+            <h2 class="d2a-sec-title" style="display:block;color:#0f172a;text-align:center;">Portafolio en Vivo</h2>
+            <div class="d2a-divider" style="width:60px;height:4px;background:#3b82f6;border-radius:2px;margin:0 auto 1.5rem;"></div>
+            <p class="d2a-sec-sub" style="display:block;color:#64748b;text-align:center;margin-bottom:3.5rem;">Cada plataforma esta en produccion, sirviendo a clientes reales. Haz clic para verlo tu mismo.</p>
+
+            <div class="d2a-pgrid" style="display:flex;flex-direction:column;gap:3rem;">
+
+                <!-- RinglyPro -->
+                <div class="d2a-pcard" style="display:grid;grid-template-columns:1fr 1.2fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eff6ff,#dbeafe);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/691758aeac7fade66e3cc403.png" alt="RinglyPro" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;">
+                        <div class="d2a-ptag" style="background:#eff6ff;color:#2563eb;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Producto Insignia</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">RinglyPro</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">ringlypro.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">CRM AI multi-tenant con 3 agentes de voz (Rachel, Ana, Lina). Gestiona llamadas, citas, SMS, email en EN + ES. MCP Server integrado, GoHighLevel CRM y apps moviles. Nuestro motor principal de ingresos.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Voz AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Multi-Tenant</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Bilingue</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Ingresos SaaS</li>
+                        </ul>
+                        <a href="https://ringlypro.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Ver Plataforma en Vivo --></a>
+                    </div>
+                </div>
+
+                <!-- TunjoRacing -->
+                <div class="d2a-pcard d2a-pcard-rev" style="display:grid;grid-template-columns:1.2fr 1fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fef2f2,#fecaca);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696cf718439b6bf938457268.png" alt="TunjoRacing" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;order:-1;">
+                        <div class="d2a-ptag" style="background:#fef2f2;color:#dc2626;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Deportes + Medios</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">TunjoRacing</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">tunjoracing.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Plataforma digital completa para el piloto IMSA Oscar Tunjo. Portal de prensa con autenticacion, e-commerce, calendario de carreras, resultados en vivo, gestion de patrocinios y dashboard admin React. Demuestra nuestra capacidad mas alla de AI/CRM.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">React</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">E-Commerce</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Portal de Prensa</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">IMSA Racing</li>
+                        </ul>
+                        <a href="https://tunjoracing.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Ver Plataforma en Vivo --></a>
+                    </div>
+                </div>
+
+                <!-- Lactotec -->
+                <div class="d2a-pcard" style="display:grid;grid-template-columns:1fr 1.2fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ecfdf5,#a7f3d0);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6992015c6bac248c13982bcf.png" alt="Lactotec" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;">
+                        <div class="d2a-ptag" style="background:#ecfdf5;color:#059669;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Vertical AgriTech</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">Lactotec</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">lactotec.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Gestion inteligente de plantas lacteas. Recepcion de leche, control de calidad en tiempo real, nomina automatizada, deteccion de adulteracion, agente cognitivo AI y analitica predictiva por zona y productor. Desplegado en Colombia.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">AI de Calidad</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Analitica Predictiva</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Mercado LATAM</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Espanol Nativo</li>
+                        </ul>
+                        <a href="https://lactotec.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Ver Plataforma en Vivo --></a>
+                    </div>
+                </div>
+
+                <!-- LawnCopilot -->
+                <div class="d2a-pcard d2a-pcard-rev" style="display:grid;grid-template-columns:1.2fr 1fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f0fdf4,#bbf7d0);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69933b0ea9efde9430a78201.png" alt="LawnCopilot" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;order:-1;">
+                        <div class="d2a-ptag" style="background:#f0fdf4;color:#16a34a;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Vertical Jardineria</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">LawnCopilot</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">lawncopilot.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Copiloto AI para negocios de jardineria. Automatiza programacion, optimizacion de rutas, comunicacion con clientes y facturacion. Vertical mas reciente -- valida nuestro modelo repetible para entrar en nuevas industrias.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Programacion</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Rutas AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Facturacion</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Vertical Reciente</li>
+                        </ul>
+                        <a href="https://lawncopilot.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Ver Plataforma en Vivo --></a>
+                    </div>
+                </div>
+
+                <!-- AIA Store -->
+                <div class="d2a-pcard" style="display:grid;grid-template-columns:1fr 1.2fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f5f3ff,#ddd6fe);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/699338d328abf916a6c9d33d.png" alt="AIA Store" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;">
+                        <div class="d2a-ptag" style="background:#f5f3ff;color:#7c3aed;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Monitoreo AI</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">AIA Store</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">aiagent.ringlypro.com/aiastore</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Plataforma de monitoreo de salud de tiendas con AI. Inteligencia de negocios en tiempo real, analitica predictiva, scoring de salud automatizado y alertas proactivas. Ayuda a negocios fisicos a detectar problemas antes de que impacten los ingresos.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Scoring de Salud</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">AI Predictiva</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Alertas en Tiempo Real</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Inteligencia de Negocios</li>
+                        </ul>
+                        <a href="https://aiagent.ringlypro.com/aiastore/" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Ver Plataforma en Vivo --></a>
+                    </div>
+                </div>
+
+                <!-- Enruta -->
+                <div class="d2a-pcard d2a-pcard-rev" style="display:grid;grid-template-columns:1.2fr 1fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fff7ed,#fed7aa);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993390167cb8452109837f1.png" alt="Enruta" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;order:-1;">
+                        <div class="d2a-ptag" style="background:#fff7ed;color:#ea580c;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Vertical AutoTech</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">Enruta</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">aiagent.ringlypro.com/enruta</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Sistema de gestion documental vehicular con agente de voz AI "Laura". Rastrea licencia, SOAT, revision tecnico-mecanica y matricula para centros de diagnostico colombianos. Campanas de recordatorio automatizadas reducen documentos vencidos e impulsan la recompra.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Voz AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Gestion Documental</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Mercado LATAM</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Campanas Auto</li>
+                        </ul>
+                        <a href="https://aiagent.ringlypro.com/enruta" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Ver Plataforma en Vivo --></a>
+                    </div>
+                </div>
+
+                <!-- KanchoAI -->
+                <div class="d2a-pcard" style="display:grid;grid-template-columns:1fr 1.2fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fffbeb,#fde68a);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993395128abf92af7c9e672.png" alt="KanchoAI" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;">
+                        <div class="d2a-ptag" style="background:#fffbeb;color:#d97706;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Vertical Artes Marciales</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">KanchoAI</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">kanchoai.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Agente de voz AI para escuelas de artes marciales. Automatiza llamadas de retencion, recuperacion de pagos, seguimiento de leads y campanas de reactivacion en mas de 15 disciplinas. Scoring de salud del negocio y analitica predictiva.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Voz AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Scoring de Salud</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">AI de Retencion</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">15+ Disciplinas</li>
+                        </ul>
+                        <a href="https://kanchoai.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Ver Plataforma en Vivo --></a>
+                    </div>
+                </div>
+
+                <!-- AIHotelTalent -->
+                <div class="d2a-pcard d2a-pcard-rev" style="display:grid;grid-template-columns:1.2fr 1fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ecfeff,#a5f3fc);overflow:hidden;">
+                        <div style="text-align:center;padding:2rem;">
+                            <div style="font-size:2.5rem;font-weight:800;color:#0891b2;letter-spacing:-1px;line-height:1.1;">AIHotel</div>
+                            <div style="font-size:2.5rem;font-weight:800;color:#0e7490;letter-spacing:-1px;line-height:1.1;">Talent</div>
+                            <div style="font-size:0.8rem;color:#0891b2;margin-top:0.5rem;font-weight:600;">Reclutamiento Hotelero con AI</div>
+                        </div>
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;order:-1;">
+                        <div class="d2a-ptag" style="background:#ecfeff;color:#0891b2;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Vertical Hotelera</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">AIHotelTalent</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">aihoteltalent.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Plataforma de reclutamiento con AI para la industria hotelera. Matching inteligente de candidatos, engagement 24/7 con aplicantes via chatbots AI, onboarding automatizado y analitica de contratacion basada en datos. Reduce el tiempo de contratacion hasta un 85%.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Reclutamiento AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Chatbot</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Onboarding Auto</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Hoteleria</li>
+                        </ul>
+                        <a href="https://aihoteltalent.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Ver Plataforma en Vivo --></a>
+                    </div>
+                </div>
+
+                <!-- Recovery + Nutrition -->
+                <div class="d2a-pcard" style="display:grid;grid-template-columns:1fr 1.2fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fff1f2,#fecdd3);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69935db36bac249b23d2d5c4.png" alt="Recovery + Nutrition" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;">
+                        <div class="d2a-ptag" style="background:#fff1f2;color:#e11d48;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Vertical Bienestar</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">Recovery + Nutrition</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">Este de EE.UU.</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Sistema de reservas por voz AI para un negocio de recuperacion y nutricion. ElevenLabs AI + Twilio gestiona llamadas entrantes 24/7 -- verifica disponibilidad, agenda sesiones de recuperacion y envia confirmaciones por SMS. Sincroniza con GoHighLevel CRM y calendario.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Voz AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">ElevenLabs</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Sync GHL</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Reservas SMS</li>
+                        </ul>
+                        <a href="tel:+18048120489" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Llamar Agente AI: (804) 812-0489 --></a>
+                    </div>
+                </div>
+
+                <!-- OrderGoPro -->
+                <div class="d2a-pcard d2a-pcard-rev" style="display:grid;grid-template-columns:1.2fr 1fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eef2ff,#c7d2fe);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6935f87381eaa1f4da169f8e.png" alt="OrderGoPro" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;order:-1;">
+                        <div class="d2a-ptag" style="background:#eef2ff;color:#4338ca;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Tech Restaurantes</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">OrderGoPro</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">ordergopro.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Plataforma de pedidos online con AI para restaurantes, cafes y retail. Extrae automaticamente menus, branding y precios de cualquier sitio web. Pagos Stripe, analitica en tiempo real, automatizacion de marketing y gestion de entregas. 500+ negocios activos, 50K+ pedidos procesados.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Import Menu AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Pedidos Online</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Pagos Stripe</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Marketing AI</li>
+                        </ul>
+                        <a href="https://ordergopro.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Ver Plataforma en Vivo --></a>
+                    </div>
+                </div>
+
+                <!-- Doctor Picante -->
+                <div class="d2a-pcard" style="display:grid;grid-template-columns:1fr 1.2fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fef2f2,#fecaca);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6937beaae03e9d93c66837ef.png" alt="Doctor Picante" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;">
+                        <div class="d2a-ptag" style="background:#fef2f2;color:#dc2626;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Mayorista Alimentos</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">Doctor Picante</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">doctorpicante.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Proveedor mayorista de salsas picantes para restaurantes y negocios de alimentos. 6 variedades de salsas exclusivas con precios por volumen. Catalogo con AI, pedidos automatizados y logistica de entregas para la industria de servicios alimentarios. 500+ clientes restaurantes a nivel nacional.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Plataforma Mayorista</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Catalogo AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Precios Volumen</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Suministro Restaurantes</li>
+                        </ul>
+                        <a href="https://doctorpicante.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Ver Plataforma en Vivo --></a>
+                    </div>
+                </div>
+
+                <!-- PixlyPro -->
+                <div class="d2a-pcard d2a-pcard-rev" style="display:grid;grid-template-columns:1.2fr 1fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fffbeb,#fde68a);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69308e428da9675b37a8180a.png" alt="PixlyPro" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;order:-1;">
+                        <div class="d2a-ptag" style="background:#fffbeb;color:#b45309;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Servicios Creativos</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">PixlyPro</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">pixlypro.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Estudio fotografico mejorado con AI que transforma fotos de celular en imagenes de calidad profesional. Precios por volumen escalonados, entrega en 48-72 horas y demo por $1. Construido para restaurantes, e-commerce y pequenos negocios que necesitan visuales profesionales sin sesion fotografica.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Foto AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Precios Volumen</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Entrega 48hrs</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Enfoque PYMEs</li>
+                        </ul>
+                        <a href="https://pixlypro.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Ver Plataforma en Vivo --></a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODELO DE NEGOCIO -->
+    <div id="d2a-model" class="d2a-sec d2a-sec-gray" style="display:block;visibility:visible;padding:80px 0;background:#f8fafc;">
+        <div class="d2a-wrap">
+            <h2 class="d2a-sec-title" style="display:block;color:#0f172a;text-align:center;">Modelo de Negocio</h2>
+            <div class="d2a-divider" style="width:60px;height:4px;background:#3b82f6;border-radius:2px;margin:0 auto 1.5rem;"></div>
+            <p class="d2a-sec-sub" style="display:block;color:#64748b;text-align:center;margin-bottom:3.5rem;">Multiples flujos de ingresos recurrentes con altos margenes y baja rotacion en mercados verticales adherentes.</p>
+            <div class="d2a-grid3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;">
+                <div class="d2a-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.4rem;font-weight:800;margin-bottom:1rem;">1</div>
+                    <h3 style="color:#0f172a;font-size:1.2rem;font-weight:700;margin-bottom:0.5rem;">Suscripciones SaaS</h3>
+                    <p style="color:#64748b;font-size:0.9rem;line-height:1.6;">Ingresos recurrentes mensuales de cada plataforma desplegada. Los negocios pagan por agentes de voz AI, acceso CRM, dashboards y herramientas de automatizacion.</p>
+                </div>
+                <div class="d2a-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.4rem;font-weight:800;margin-bottom:1rem;">2</div>
+                    <h3 style="color:#0f172a;font-size:1.2rem;font-weight:700;margin-bottom:0.5rem;">Ingresos por Uso</h3>
+                    <p style="color:#64748b;font-size:0.9rem;line-height:1.6;">Tarifas por llamada y por mensaje en agentes de voz AI. A medida que los clientes crecen, el uso crece. Expansion de ingresos integrada sin necesidad de upselling.</p>
+                </div>
+                <div class="d2a-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.4rem;font-weight:800;margin-bottom:1rem;">3</div>
+                    <h3 style="color:#0f172a;font-size:1.2rem;font-weight:700;margin-bottom:0.5rem;">Licenciamiento Vertical</h3>
+                    <p style="color:#64748b;font-size:0.9rem;line-height:1.6;">Cada plataforma industrial (KanchoAI, Lactotec, LawnCopilot) es un producto independiente que puede ser marca blanca y licenciado en diferentes regiones.</p>
+                </div>
+            </div>
+
+            <!-- Ventajas Competitivas -->
+            <div style="margin-top:4rem;">
+                <h3 style="color:#0f172a;font-size:1.4rem;font-weight:700;margin-bottom:2rem;text-align:center;">Ventajas Competitivas</h3>
+                <div class="d2a-grid2" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;">
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:left;">
+                        <h3 style="color:#ffffff;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">Velocidad al Mercado</h3>
+                        <p style="color:#dbeafe;font-size:0.9rem;line-height:1.6;">Lanzamos nuevas verticales en semanas, no meses. Nuestra infraestructura compartida (voz AI, CRM, CI/CD, auth) permite que cada nueva plataforma inicie al 60% completa.</p>
+                    </div>
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:left;">
+                        <h3 style="color:#ffffff;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">Bilingue desde el Dia Uno</h3>
+                        <p style="color:#dbeafe;font-size:0.9rem;line-height:1.6;">Soporte completo Ingles + Espanol en voz, interfaz y operaciones. Desbloquea 62M+ hispanoamericanos y toda LATAM -- un mercado que la mayoria de startups AI ignoran.</p>
+                    </div>
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:left;">
+                        <h3 style="color:#ffffff;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">Lock-In Vertical</h3>
+                        <p style="color:#dbeafe;font-size:0.9rem;line-height:1.6;">Las plataformas especificas por industria crean altos costos de cambio. Una planta lactea usando Lactotec o un dojo usando KanchoAI no puede simplemente cambiar a un CRM generico.</p>
+                    </div>
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:left;">
+                        <h3 style="color:#ffffff;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">Operacion Lean</h3>
+                        <p style="color:#dbeafe;font-size:0.9rem;line-height:1.6;">12 plataformas en vivo construidas y mantenidas por un equipo lean usando desarrollo aumentado con AI. Bajo gasto, alta produccion. El capital va directo al crecimiento, no a gastos generales.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- USO DE FONDOS -->
+    <div class="d2a-sec d2a-sec-lt" style="display:block;visibility:visible;padding:80px 0;background:#ffffff;">
+        <div class="d2a-wrap">
+            <h2 class="d2a-sec-title" style="display:block;color:#0f172a;text-align:center;">Uso de Fondos</h2>
+            <div class="d2a-divider" style="width:60px;height:4px;background:#3b82f6;border-radius:2px;margin:0 auto 1.5rem;"></div>
+            <p class="d2a-sec-sub" style="display:block;color:#64748b;text-align:center;margin-bottom:3.5rem;">El capital acelerara lo que ya funciona -- escalando plataformas probadas y entrando en nuevas verticales mas rapido.</p>
+            <div class="d2a-grid4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;">
+                <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                    <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">40%</span>
+                    <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Ventas + Marketing</h3>
+                    <p style="color:#dbeafe;font-size:0.85rem;">Equipo de ventas outbound, adquisicion pagada y alianzas industriales para llenar el pipeline</p>
+                </div>
+                <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                    <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">30%</span>
+                    <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Ingenieria</h3>
+                    <p style="color:#dbeafe;font-size:0.85rem;">Expandir el equipo de desarrollo para lanzar 3-4 nuevas verticales por ano y fortalecer la infraestructura</p>
+                </div>
+                <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                    <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">20%</span>
+                    <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">AI + Infraestructura</h3>
+                    <p style="color:#dbeafe;font-size:0.85rem;">Entrenamiento de voz AI, ajuste fino de modelos y escalamiento de infraestructura cloud para el creciente volumen de llamadas</p>
+                </div>
+                <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                    <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">10%</span>
+                    <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Operaciones</h3>
+                    <p style="color:#dbeafe;font-size:0.85rem;">Legal, cumplimiento, contabilidad y reservas operativas para soportar el crecimiento</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA / CONTACTO -->
+    <div id="d2a-contact" class="d2a-sec d2a-sec-gray" style="display:block;visibility:visible;padding:80px 0;background:#f8fafc;">
+        <div class="d2a-wrap">
+            <h2 class="d2a-sec-title" style="display:block;color:#0f172a;text-align:center;">Hablemos</h2>
+            <div class="d2a-divider" style="width:60px;height:4px;background:#3b82f6;border-radius:2px;margin:0 auto 1.5rem;"></div>
+            <p class="d2a-sec-sub" style="display:block;color:#64748b;text-align:center;margin-bottom:3.5rem;">Interesado en la oportunidad Digit2ai? Contactanos para recibir nuestro deck completo, financieros y agendar una llamada con nuestro fundador.</p>
+            <div class="d2a-grid3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;">
+                <div class="d2a-ccard" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;margin:0 auto 1rem;">P</div>
+                    <h3 style="color:#0f172a;">Llamanos</h3>
+                    <a href="tel:8886103810" style="color:#2563eb;text-decoration:none;font-weight:600;font-size:1.05rem;">888-610-3810</a>
+                    <p style="color:#64748b;font-size:0.85rem;">Habla directamente con nuestro fundador</p>
+                </div>
+                <div class="d2a-ccard" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;margin:0 auto 1rem;">@</div>
+                    <h3 style="color:#0f172a;">Email</h3>
+                    <a href="mailto:info@digit2ai.com" style="color:#2563eb;text-decoration:none;font-weight:600;font-size:1.05rem;">info@digit2ai.com</a>
+                    <p style="color:#64748b;font-size:0.85rem;">Solicita el deck completo</p>
+                </div>
+                <div class="d2a-ccard" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;margin:0 auto 1rem;">D</div>
+                    <h3 style="color:#0f172a;">Deck de la Empresa</h3>
+                    <a href="https://ringlypro.com/demo" target="_blank" style="color:#2563eb;text-decoration:none;font-weight:600;font-size:1.05rem;">Solicitar Acceso</a>
+                    <p style="color:#64748b;font-size:0.85rem;">Financieros, proyecciones, terminos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="d2a-ftr" style="display:block;background:#f8fafc;padding:30px 0;text-align:center;border-top:1px solid #e2e8f0;">
+        <div class="d2a-wrap">
+            <div class="d2a-flinks" style="display:flex;justify-content:center;gap:2rem;margin-bottom:1rem;flex-wrap:wrap;">
+                <a href="https://ringlypro.com" target="_blank" style="color:#64748b;text-decoration:none;">RinglyPro</a>
+                <a href="https://tunjoracing.com" target="_blank" style="color:#64748b;text-decoration:none;">TunjoRacing</a>
+                <a href="https://kanchoai.com" target="_blank" style="color:#64748b;text-decoration:none;">KanchoAI</a>
+                <a href="https://lactotec.com" target="_blank" style="color:#64748b;text-decoration:none;">Lactotec</a>
+                <a href="https://lawncopilot.com" target="_blank" style="color:#64748b;text-decoration:none;">LawnCopilot</a>
+                <a href="https://aiagent.ringlypro.com/aiastore/" target="_blank" style="color:#64748b;text-decoration:none;">AIA Store</a>
+                <a href="https://aiagent.ringlypro.com/enruta" target="_blank" style="color:#64748b;text-decoration:none;">Enruta</a>
+                <a href="https://aihoteltalent.com" target="_blank" style="color:#64748b;text-decoration:none;">AIHotelTalent</a>
+                <a href="tel:+18048120489" style="color:#64748b;text-decoration:none;">Recovery + Nutrition</a>
+                <a href="https://ordergopro.com" target="_blank" style="color:#64748b;text-decoration:none;">OrderGoPro</a>
+                <a href="https://doctorpicante.com" target="_blank" style="color:#64748b;text-decoration:none;">Doctor Picante</a>
+                <a href="https://pixlypro.com" target="_blank" style="color:#64748b;text-decoration:none;">PixlyPro</a>
+            </div>
+            <p class="d2a-fcopy" style="color:#94a3b8;font-size:0.8rem;">(c) 2026 DIGIT2AI LLC. Todos los derechos reservados.</p>
+        </div>
+    </div>
+
+    <!-- PDF DOWNLOAD -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+    <script>
+    function d2aDownloadPDF(){
+        var el=document.querySelector('.d2a');
+        if(!el||typeof html2pdf==='undefined')return;
+        var btn=document.querySelector('[onclick*="d2aDownloadPDF"]');
+        if(btn){btn.textContent='Generando...';btn.style.pointerEvents='none';}
+        html2pdf().set({
+            margin:[5,5,5,5],
+            filename:'DIGIT2AI-Investor-Deck-ES.pdf',
+            image:{type:'jpeg',quality:0.92},
+            html2canvas:{
+                scale:2,
+                useCORS:true,
+                windowWidth:1100,
+                scrollX:0,
+                scrollY:0,
+                onclone:function(clonedDoc){
+                    clonedDoc.querySelectorAll('elevenlabs-convai,a[href*="wa.me"],script,iframe,[onclick*="d2aDownloadPDF"]').forEach(function(w){w.remove();});
+                    var b=clonedDoc.body;
+                    b.style.cssText='margin:0;padding:0;width:1100px;background:#fff;overflow:visible;';
+                    var allStyles=clonedDoc.querySelectorAll('style');
+                    allStyles.forEach(function(s){if(s.textContent.indexOf('.d2a')<0)s.remove();});
+                    var d=clonedDoc.querySelector('.d2a');
+                    if(d){
+                        d.style.cssText='display:block;visibility:visible;opacity:1;background:#fff;color:#1e293b;width:1060px;max-width:1060px;margin:0 auto;padding:20px;position:relative;left:auto;right:auto;';
+                    }
+                    var w=clonedDoc.querySelector('.d2a-wrap');
+                    if(w){w.style.cssText='max-width:1060px;width:100%;margin:0 auto;padding:0 20px;';}
+                }
+            },
+            jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+            pagebreak:{mode:['avoid-all','css','legacy']}
+        }).from(el).save().then(function(){
+            if(btn){btn.textContent='\u2B07 PDF';btn.style.pointerEvents='';}
+        });
+    }
+    </script>
+
+    <!-- ELEVENLABS VOICE AGENT (branding removed) -->
+    <script src="https://unpkg.com/@elevenlabs/convai-widget-embed@latest/dist/index.js" async type="text/javascript"></script>
+    <elevenlabs-convai agent-id="agent_2101kfxcrez6fzsahc73wbhqfay8"></elevenlabs-convai>
+    <script>
+    (function stripBranding(){
+        var el=document.querySelector('elevenlabs-convai');
+        if(!el){setTimeout(stripBranding,500);return;}
+        var inject=function(sr){
+            if(sr.querySelector('style[data-d2a]'))return;
+            var s=document.createElement('style');s.setAttribute('data-d2a','1');
+            s.textContent='a[href*="elevenlabs"]{display:none!important;height:0!important;margin:0!important;padding:0!important;line-height:0!important;font-size:0!important;overflow:hidden!important;}div:has(>a[href*="elevenlabs"]){display:none!important;height:0!important;}span:has(>a[href*="elevenlabs"]){display:none!important;}p:has(>a[href*="elevenlabs"]){display:none!important;}[class*="powered"],[class*="Powered"]{display:none!important;height:0!important;}';
+            sr.appendChild(s);
+        };
+        var check=setInterval(function(){
+            var sr=el.shadowRoot;if(!sr)return;
+            inject(sr);
+            new MutationObserver(function(){inject(sr);}).observe(sr,{childList:true,subtree:true});
+            clearInterval(check);
+        },200);
+    })();
+    </script>
+
+    <!-- WHATSAPP WIDGET -->
+    <a href="https://wa.me/18136414177" target="_blank" style="position:fixed;bottom:24px;right:24px;width:60px;height:60px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.25);z-index:9999;text-decoration:none;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    </a>
+
+</div>

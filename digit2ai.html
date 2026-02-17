@@ -1,0 +1,781 @@
+<style>
+    .d2a *, .d2a *::before, .d2a *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    .d2a { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1e293b !important; background: #ffffff !important; width: 100%; display: block !important; visibility: visible !important; opacity: 1 !important; }
+    .d2a-wrap { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+    .d2a-hdr { background: #ffffff; padding: 1rem 0; border-bottom: 1px solid #e2e8f0; display: block !important; }
+    .d2a-hdr-inner { display: flex !important; justify-content: space-between; align-items: center; position: relative; }
+    .d2a-logo { font-size: 1.8rem; font-weight: 700; color: #3b82f6 !important; letter-spacing: -0.5px; }
+    .d2a-nav { display: flex; list-style: none; gap: 2rem; }
+    .d2a-nav a { text-decoration: none; color: #475569 !important; font-weight: 500; font-size: 0.95rem; }
+    .d2a-nav a:hover { color: #3b82f6 !important; }
+    .d2a-menubtn { display: none !important; background: none; border: none; cursor: pointer; padding: 8px; width: 40px; height: 40px; align-items: center; justify-content: center; }
+    .d2a-hamburger { display: block; width: 22px; height: 2px; background: #475569; position: relative; border-radius: 1px; }
+    .d2a-hamburger::before, .d2a-hamburger::after { content: ''; display: block; width: 22px; height: 2px; background: #475569; position: absolute; left: 0; border-radius: 1px; }
+    .d2a-hamburger::before { top: -7px; }
+    .d2a-hamburger::after { top: 7px; }
+    @media (max-width: 768px) {
+        .d2a-menubtn { display: flex !important; }
+        .d2a-nav { display: none !important; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; flex-direction: column; gap: 0; padding: 1rem 0; border-bottom: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; }
+        .d2a-nav.d2a-open { display: flex !important; }
+        .d2a-nav li { padding: 0.5rem 2rem; list-style: none; }
+        .d2a-nav a { display: block; padding: 0.5rem 0; font-size: 1rem; }
+    }
+    .d2a-hero { padding: 100px 0 80px; text-align: center; background: linear-gradient(135deg, #3b82f6, #2563eb, #4f46e5) !important; display: block !important; visibility: visible !important; }
+    .d2a-hero h1 { font-size: 3.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 1.5rem; color: #ffffff !important; display: block !important; }
+    .d2a-hero-sub { font-size: 1.15rem; color: #dbeafe !important; margin-bottom: 2.5rem; max-width: 750px; margin-left: auto; margin-right: auto; display: block !important; }
+    .d2a-ctas { display: flex !important; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .d2a-btn { display: inline-block !important; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 1rem; }
+    .d2a-btn-pri { background: #ffffff !important; color: #2563eb !important; }
+    .d2a-btn-sec { background: transparent; color: #ffffff !important; border: 2px solid rgba(255,255,255,0.5); }
+    .d2a-stats { display: flex !important; justify-content: center; gap: 3rem; margin-top: 3rem; flex-wrap: wrap; }
+    .d2a-stat { text-align: center; }
+    .d2a-stat-num { font-size: 2.5rem; font-weight: 800; color: #ffffff !important; display: block; }
+    .d2a-stat-lbl { color: #bfdbfe !important; font-size: 0.9rem; font-weight: 500; }
+    .d2a-sec { padding: 80px 0; display: block !important; visibility: visible !important; opacity: 1 !important; height: auto !important; overflow: visible !important; }
+    .d2a-sec-lt { background: #ffffff !important; }
+    .d2a-sec-gray { background: #f8fafc !important; }
+    .d2a-sec-title { font-size: 2.2rem; font-weight: 800; text-align: center; margin-bottom: 1rem; color: #0f172a !important; display: block !important; }
+    .d2a-sec-sub { font-size: 1.05rem; text-align: center; margin-bottom: 3.5rem; color: #64748b !important; max-width: 750px; margin-left: auto; margin-right: auto; display: block !important; }
+    .d2a-grid3 { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .d2a-grid4 { display: grid !important; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+    .d2a-grid2 { display: grid !important; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+    .d2a-card { background: #ffffff !important; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .d2a-card h3 { color: #0f172a !important; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .d2a-card p { color: #64748b !important; font-size: 0.9rem; line-height: 1.6; }
+    .d2a-bluecard { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; border: none; border-radius: 20px; padding: 2rem; text-align: center; }
+    .d2a-bluecard h3 { color: #ffffff !important; font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .d2a-bluecard p { color: #dbeafe !important; font-size: 0.85rem; line-height: 1.5; }
+    .d2a-bluecard-num { font-size: 1.8rem; font-weight: 800; color: #ffffff !important; display: block; margin-bottom: 0.25rem; }
+    .d2a-bcard { background: #ffffff !important; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .d2a-bcard h3 { color: #0f172a !important; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .d2a-bcard p { color: #64748b !important; font-size: 0.85rem; line-height: 1.5; }
+    .d2a-bcard-num { font-size: 1.8rem; font-weight: 800; color: #2563eb !important; display: block; margin-bottom: 0.25rem; }
+    .d2a-pgrid { display: flex !important; flex-direction: column; gap: 3rem; }
+    .d2a-pcard { display: grid !important; grid-template-columns: 1fr 1.2fr; background: #ffffff !important; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .d2a-pcard-rev { grid-template-columns: 1.2fr 1fr !important; }
+    .d2a-pprev { min-height: 300px; display: flex !important; align-items: center; justify-content: center; }
+    .d2a-pinfo { padding: 2.5rem; display: flex !important; flex-direction: column; justify-content: center; }
+    .d2a-pcard-rev .d2a-pinfo { order: -1; }
+    .d2a-ptag { display: inline-block; padding: 4px 14px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem; width: fit-content; }
+    .d2a-pinfo h3 { font-size: 1.6rem; font-weight: 700; color: #0f172a !important; margin-bottom: 0.25rem; }
+    .d2a-pdom { color: #64748b !important; font-size: 0.85rem; margin-bottom: 0.75rem; font-weight: 500; }
+    .d2a-pinfo p { color: #64748b !important; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.25rem; }
+    .d2a-pills { list-style: none !important; display: flex !important; flex-wrap: wrap; gap: 6px; margin-bottom: 1.25rem; padding: 0 !important; }
+    .d2a-pills li { background: #eff6ff; color: #2563eb !important; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; border: 1px solid #bfdbfe; }
+    .d2a-plink { display: inline-block !important; color: #2563eb !important; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    .d2a-plink:hover { text-decoration: underline; }
+    .d2a-ccard { background: #ffffff !important; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .d2a-ccard h3 { color: #0f172a !important; font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .d2a-ccard p { color: #64748b !important; font-size: 0.85rem; }
+    .d2a-ccard a { color: #2563eb !important; text-decoration: none; font-weight: 600; font-size: 1.05rem; }
+    .d2a-ftr { background: #f8fafc !important; padding: 30px 0; text-align: center; border-top: 1px solid #e2e8f0; }
+    .d2a-flinks { display: flex !important; justify-content: center; gap: 2rem; margin-bottom: 1rem; flex-wrap: wrap; list-style: none; padding: 0; }
+    .d2a-flinks a { color: #64748b !important; text-decoration: none; font-size: 0.85rem; }
+    .d2a-fcopy { color: #94a3b8 !important; font-size: 0.8rem; }
+    .d2a-divider { width: 60px; height: 4px; background: #3b82f6; border-radius: 2px; margin: 0 auto 2rem; }
+    .d2a-highlight { background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 1px solid #bfdbfe; border-radius: 20px; padding: 3rem; margin-top: 3rem; }
+    .d2a-timeline { position: relative; padding-left: 30px; }
+    .d2a-timeline-item { position: relative; padding-bottom: 2rem; padding-left: 20px; border-left: 2px solid #e2e8f0; }
+    .d2a-timeline-item:last-child { border-left: 2px solid transparent; padding-bottom: 0; }
+    .d2a-timeline-dot { position: absolute; left: -28px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: #3b82f6; border: 2px solid #ffffff; }
+    @media (max-width: 900px) {
+        .d2a-grid3, .d2a-grid4 { grid-template-columns: repeat(2, 1fr) !important; }
+        .d2a-grid2 { grid-template-columns: 1fr !important; }
+        .d2a-pcard, .d2a-pcard-rev { grid-template-columns: 1fr !important; }
+        .d2a-pcard-rev .d2a-pinfo { order: 0; }
+        .d2a-pprev { min-height: 200px; }
+        .d2a-hero { padding: 70px 0 60px !important; }
+        .d2a-hero h1 { font-size: 2.5rem; }
+        .d2a-sec { padding: 60px 0 !important; }
+        .d2a-highlight { padding: 2rem !important; }
+    }
+    @media (max-width: 600px) {
+        .d2a-grid3, .d2a-grid4 { grid-template-columns: 1fr !important; }
+        .d2a-grid2 { grid-template-columns: 1fr !important; }
+        .d2a-wrap { padding: 0 16px !important; }
+        .d2a-hdr-inner img { height: 70px !important; }
+        .d2a-hero { padding: 50px 0 40px !important; }
+        .d2a-hero h1 { font-size: 1.8rem !important; line-height: 1.2 !important; margin-bottom: 1rem !important; }
+        .d2a-hero-sub { font-size: 0.95rem !important; margin-bottom: 1.5rem !important; }
+        .d2a-btn { padding: 12px 24px !important; font-size: 0.9rem !important; }
+        .d2a-stats { gap: 1rem !important; margin-top: 2rem !important; }
+        .d2a-stat-num { font-size: 1.8rem !important; }
+        .d2a-stat-lbl { font-size: 0.75rem !important; }
+        .d2a-sec { padding: 50px 0 !important; }
+        .d2a-sec-title { font-size: 1.5rem !important; margin-bottom: 0.75rem !important; }
+        .d2a-sec-sub { font-size: 0.9rem !important; margin-bottom: 2.5rem !important; }
+        .d2a-bluecard, .d2a-bcard, .d2a-card, .d2a-ccard { padding: 1.5rem !important; }
+        .d2a-bluecard-num, .d2a-bcard-num { font-size: 1.5rem !important; }
+        .d2a-highlight { padding: 1.5rem !important; margin-top: 2rem !important; }
+        .d2a-highlight h3 { font-size: 1.2rem !important; }
+        .d2a-highlight p { font-size: 0.9rem !important; }
+        .d2a-pcard, .d2a-pcard-rev { grid-template-columns: 1fr !important; }
+        .d2a-pcard-rev .d2a-pinfo { order: 0; }
+        .d2a-pprev { min-height: 180px !important; }
+        .d2a-pinfo { padding: 1.25rem !important; }
+        .d2a-pinfo h3 { font-size: 1.25rem !important; }
+        .d2a-pinfo p { font-size: 0.85rem !important; }
+        .d2a-ptag { font-size: 0.7rem !important; padding: 3px 10px !important; }
+        .d2a-pills { gap: 4px !important; }
+        .d2a-pills li { font-size: 0.7rem !important; padding: 3px 8px !important; }
+        .d2a-pgrid { gap: 2rem !important; }
+        .d2a-timeline { padding-left: 20px !important; }
+        .d2a-timeline-item { padding-left: 14px !important; }
+        .d2a-timeline-dot { left: -20px !important; width: 10px !important; height: 10px !important; }
+        .d2a-flinks { gap: 1rem !important; }
+        .d2a-flinks a { font-size: 0.8rem !important; }
+        .d2a-ctas { flex-direction: column !important; align-items: center !important; }
+    }
+</style>
+
+<div class="d2a" style="display:block;visibility:visible;opacity:1;background:#ffffff;color:#1e293b;width:100%;">
+
+    <!-- HEADER -->
+    <div class="d2a-hdr" style="display:block;background:#ffffff;padding:1rem 0;border-bottom:1px solid #e2e8f0;">
+        <div class="d2a-wrap">
+            <div class="d2a-hdr-inner" style="display:flex;justify-content:space-between;align-items:center;position:relative;">
+                <div><img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/699276b81d5e047a3d3721a2.png" alt="digit2ai" style="height:120px;width:auto;"></div>
+                <nav>
+                    <button class="d2a-menubtn" style="display:none;background:none;border:none;cursor:pointer;padding:8px;width:40px;height:40px;align-items:center;justify-content:center;" onclick="this.nextElementSibling.classList.toggle('d2a-open')"><span class="d2a-hamburger" style="display:block;width:22px;height:2px;background:#475569;position:relative;border-radius:1px;"></span></button>
+                    <ul class="d2a-nav" style="list-style:none;gap:2rem;">
+                        <li style="list-style:none;"><a href="#d2a-opportunity" style="color:#475569;text-decoration:none;">Opportunity</a></li>
+                        <li style="list-style:none;"><a href="#d2a-traction" style="color:#475569;text-decoration:none;">Traction</a></li>
+                        <li style="list-style:none;"><a href="#d2a-portfolio" style="color:#475569;text-decoration:none;">Portfolio</a></li>
+                        <li style="list-style:none;"><a href="#d2a-model" style="color:#475569;text-decoration:none;">Model</a></li>
+                        <li style="list-style:none;"><a href="#d2a-contact" style="color:#475569;text-decoration:none;">Connect</a></li>
+                    </ul>
+                </nav>
+                <div style="display:flex;align-items:center;gap:8px;margin-left:1rem;">
+                    <a href="javascript:void(0)" onclick="d2aDownloadPDF()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:50px;border:1px solid #3b82f6;color:#ffffff;text-decoration:none;font-size:0.8rem;font-weight:600;background:#3b82f6;white-space:nowrap;cursor:pointer;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF</a>
+                    <a href="https://aiagent.ringlypro.com/digit2ai-es" style="display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:50px;border:1px solid #e2e8f0;color:#475569;text-decoration:none;font-size:0.8rem;font-weight:600;background:#ffffff;white-space:nowrap;">ES</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HERO -->
+    <div class="d2a-hero" style="display:block;visibility:visible;opacity:1;padding:100px 0 80px;text-align:center;background:linear-gradient(135deg,#3b82f6,#2563eb,#4f46e5);">
+        <div class="d2a-wrap">
+            <h1 style="display:block;visibility:visible;color:#ffffff;font-size:3.5rem;font-weight:800;line-height:1.1;margin-bottom:1.5rem;">Do You Want to Own Your Own AI High-Tech Company?</h1>
+            <p class="d2a-hero-sub" style="display:block;visibility:visible;color:#dbeafe;font-size:1.15rem;margin-bottom:2.5rem;">We've already built 12 live platforms across 11 industries. Whatever you can dream, we can build it -- and you own half.</p>
+            <div class="d2a-ctas" style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+                <a href="#d2a-portfolio" class="d2a-btn d2a-btn-pri" style="display:inline-block;background:#ffffff;color:#2563eb;padding:14px 32px;border-radius:50px;text-decoration:none;font-weight:600;">View Live Portfolio</a>
+                <a href="#d2a-contact" class="d2a-btn d2a-btn-sec" style="display:inline-block;color:#ffffff;padding:14px 32px;border-radius:50px;text-decoration:none;font-weight:600;border:2px solid rgba(255,255,255,0.5);">Get in Touch</a>
+            </div>
+            <div class="d2a-stats" style="display:flex;justify-content:center;gap:3rem;margin-top:3rem;flex-wrap:wrap;">
+                <div class="d2a-stat"><span class="d2a-stat-num" style="color:#ffffff;font-size:2.5rem;font-weight:800;">12</span><span class="d2a-stat-lbl" style="color:#bfdbfe;">Live Platforms</span></div>
+                <div class="d2a-stat"><span class="d2a-stat-num" style="color:#ffffff;font-size:2.5rem;font-weight:800;">11</span><span class="d2a-stat-lbl" style="color:#bfdbfe;">Industry Verticals</span></div>
+                <div class="d2a-stat"><span class="d2a-stat-num" style="color:#ffffff;font-size:2.5rem;font-weight:800;">3</span><span class="d2a-stat-lbl" style="color:#bfdbfe;">AI Voice Agents</span></div>
+                <div class="d2a-stat"><span class="d2a-stat-num" style="color:#ffffff;font-size:2.5rem;font-weight:800;">24/7</span><span class="d2a-stat-lbl" style="color:#bfdbfe;">Autonomous Ops</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MARKET OPPORTUNITY -->
+    <div id="d2a-opportunity" class="d2a-sec d2a-sec-lt" style="display:block;visibility:visible;padding:80px 0;background:#ffffff;">
+        <div class="d2a-wrap">
+            <h2 class="d2a-sec-title" style="display:block;color:#0f172a;text-align:center;">The Market Opportunity</h2>
+            <div class="d2a-divider" style="width:60px;height:4px;background:#3b82f6;border-radius:2px;margin:0 auto 1.5rem;"></div>
+            <p class="d2a-sec-sub" style="display:block;color:#64748b;text-align:center;margin-bottom:3.5rem;">33 million small businesses in the U.S. still run on phone calls, spreadsheets, and manual processes. AI adoption in SMBs is under 15%. The gap is massive.</p>
+            <div class="d2a-grid3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;">
+                <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                    <span class="d2a-bluecard-num" style="color:#ffffff;font-size:1.8rem;font-weight:800;">$300B+</span>
+                    <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Total Addressable Market</h3>
+                    <p style="color:#dbeafe;font-size:0.85rem;">SMB AI automation, voice AI, and vertical SaaS combined market opportunity by 2028</p>
+                </div>
+                <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                    <span class="d2a-bluecard-num" style="color:#ffffff;font-size:1.8rem;font-weight:800;">85%</span>
+                    <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Underserved SMBs</h3>
+                    <p style="color:#dbeafe;font-size:0.85rem;">Small businesses without AI solutions -- too expensive, too complex, or not built for their industry</p>
+                </div>
+                <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                    <span class="d2a-bluecard-num" style="color:#ffffff;font-size:1.8rem;font-weight:800;">40%+ CAGR</span>
+                    <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Voice AI Growth</h3>
+                    <p style="color:#dbeafe;font-size:0.85rem;">AI voice agent market growing at 40%+ annually as businesses replace call centers with intelligent automation</p>
+                </div>
+            </div>
+            <div class="d2a-highlight" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:20px;padding:3rem;margin-top:3rem;">
+                <h3 style="color:#0f172a;font-size:1.4rem;font-weight:700;margin-bottom:1rem;text-align:center;">Our Thesis</h3>
+                <p style="color:#475569;font-size:1rem;line-height:1.8;text-align:center;max-width:800px;margin:0 auto;">Enterprise AI is saturated. SMBs are ignored. We build <span style="color:#2563eb;font-weight:700;">full-stack, industry-specific AI platforms</span> for businesses that still answer their own phones, track inventory on paper, and lose leads every night. Each vertical we enter becomes a repeatable, scalable product line.</p>
+            </div>
+
+            <!-- Why Now -->
+            <div style="margin-top:4rem;">
+                <h3 style="color:#0f172a;font-size:1.4rem;font-weight:700;margin-bottom:0.75rem;text-align:center;">Why Now?</h3>
+                <p style="color:#64748b;font-size:0.95rem;text-align:center;margin-bottom:2.5rem;max-width:700px;margin-left:auto;margin-right:auto;">Four converging forces have created a once-in-a-generation window for SMB AI platforms.</p>
+                <div class="d2a-grid2" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;">
+                    <div class="d2a-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                        <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;margin-bottom:1rem;">$</div>
+                        <h3 style="color:#0f172a;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">AI Costs Dropped 90%+</h3>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;">LLM inference costs fell over 90% in the last 18 months. Voice AI that cost $1/min in 2023 now costs pennies. For the first time, full-stack AI is economically viable for a $500/mo SMB subscription.</p>
+                    </div>
+                    <div class="d2a-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                        <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;margin-bottom:1rem;">^</div>
+                        <h3 style="color:#0f172a;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">SMB AI Adoption Inflection</h3>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;">SMB AI adoption jumped from under 5% to 15%+ in 2025 and is accelerating. Early adopters are seeing ROI, and word-of-mouth is pulling entire industries forward. We are at the bottom of the S-curve.</p>
+                    </div>
+                    <div class="d2a-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                        <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;margin-bottom:1rem;">V</div>
+                        <h3 style="color:#0f172a;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">Voice AI Went Mainstream</h3>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;">Consumers now expect AI on the phone. Businesses that don't offer 24/7 AI response lose leads to competitors that do. The behavior shift happened -- now SMBs need the tools to keep up.</p>
+                    </div>
+                    <div class="d2a-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                        <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;margin-bottom:1rem;">1</div>
+                        <h3 style="color:#0f172a;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">First-Mover in Verticals</h3>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;">No one is building AI-native platforms for dairy plants, martial arts schools, or lawn care operators. Big tech targets enterprise. We own these verticals before anyone else shows up.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRACTION -->
+    <div id="d2a-traction" class="d2a-sec d2a-sec-gray" style="display:block;visibility:visible;padding:80px 0;background:#f8fafc;">
+        <div class="d2a-wrap">
+            <h2 class="d2a-sec-title" style="display:block;color:#0f172a;text-align:center;">Proven Traction</h2>
+            <div class="d2a-divider" style="width:60px;height:4px;background:#3b82f6;border-radius:2px;margin:0 auto 1.5rem;"></div>
+            <p class="d2a-sec-sub" style="display:block;color:#64748b;text-align:center;margin-bottom:3.5rem;">Not a pitch deck with mockups. Every platform below is live, deployed, and serving real businesses in production today.</p>
+            <div class="d2a-grid4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;">
+                <div class="d2a-bcard" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <span class="d2a-bcard-num" style="color:#2563eb;font-size:1.8rem;font-weight:800;">12</span>
+                    <h3 style="color:#0f172a;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Production Platforms</h3>
+                    <p style="color:#64748b;font-size:0.85rem;">Live, revenue-generating products across 11 distinct industries</p>
+                </div>
+                <div class="d2a-bcard" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <span class="d2a-bcard-num" style="color:#2563eb;font-size:1.8rem;font-weight:800;">3</span>
+                    <h3 style="color:#0f172a;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">AI Voice Agents</h3>
+                    <p style="color:#64748b;font-size:0.85rem;">Rachel (EN), Ana (ES), and Lina (EN) handling calls, bookings, and follow-up 24/7</p>
+                </div>
+                <div class="d2a-bcard" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <span class="d2a-bcard-num" style="color:#2563eb;font-size:1.8rem;font-weight:800;">Rapid</span>
+                    <h3 style="color:#0f172a;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Integration Speed</h3>
+                    <p style="color:#64748b;font-size:0.85rem;">New client integrations deployed fast with 100% automated CI/CD -- from onboarding to live in record time</p>
+                </div>
+                <div class="d2a-bcard" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <span class="d2a-bcard-num" style="color:#2563eb;font-size:1.8rem;font-weight:800;">🌐</span>
+                    <h3 style="color:#0f172a;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Multi-Language</h3>
+                    <p style="color:#64748b;font-size:0.85rem;">Voice, UI, and support in any language -- built in from day one, ready to scale globally</p>
+                </div>
+            </div>
+
+            <!-- Growth Opportunity -->
+            <div style="margin-top:3rem;">
+                <h3 style="color:#0f172a;font-size:1.4rem;font-weight:700;margin-bottom:2rem;text-align:center;">The Growth Opportunity</h3>
+                <div class="d2a-grid4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;">
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                        <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">12</span>
+                        <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Platforms Ready to Scale</h3>
+                        <p style="color:#dbeafe;font-size:0.85rem;">Each platform is live and proven -- capital accelerates customer acquisition across every vertical</p>
+                    </div>
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                        <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">33M</span>
+                        <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">U.S. SMBs Underserved</h3>
+                        <p style="color:#dbeafe;font-size:0.85rem;">Millions of small businesses still run on phone calls and spreadsheets -- each vertical is a massive addressable market</p>
+                    </div>
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                        <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">11</span>
+                        <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Verticals, Zero Competition</h3>
+                        <p style="color:#dbeafe;font-size:0.85rem;">No one else is building AI-native platforms for dairy plants, martial arts schools, lawn care, or recovery clinics</p>
+                    </div>
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                        <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">60%</span>
+                        <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Head Start on New Verticals</h3>
+                        <p style="color:#dbeafe;font-size:0.85rem;">Shared infrastructure means every new vertical launches 60% pre-built -- faster to market than any competitor</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Milestone Timeline -->
+            <div style="margin-top:4rem;max-width:700px;margin-left:auto;margin-right:auto;">
+                <h3 style="color:#0f172a;font-size:1.4rem;font-weight:700;margin-bottom:2rem;text-align:center;">Key Milestones</h3>
+                <div class="d2a-timeline" style="position:relative;padding-left:30px;">
+                    <div class="d2a-timeline-item" style="position:relative;padding-bottom:2rem;padding-left:20px;border-left:2px solid #e2e8f0;">
+                        <div class="d2a-timeline-dot" style="position:absolute;left:-28px;top:4px;width:12px;height:12px;border-radius:50%;background:#3b82f6;border:2px solid #f8fafc;"></div>
+                        <div style="color:#2563eb;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Q1 2025</div>
+                        <div style="color:#0f172a;font-weight:600;font-size:1rem;">RinglyPro CRM launched with 3 AI voice agents</div>
+                        <div style="color:#64748b;font-size:0.85rem;">Multi-tenant architecture, MCP server integration, GoHighLevel sync</div>
+                    </div>
+                    <div class="d2a-timeline-item" style="position:relative;padding-bottom:2rem;padding-left:20px;border-left:2px solid #e2e8f0;">
+                        <div class="d2a-timeline-dot" style="position:absolute;left:-28px;top:4px;width:12px;height:12px;border-radius:50%;background:#3b82f6;border:2px solid #f8fafc;"></div>
+                        <div style="color:#2563eb;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Q2 2025</div>
+                        <div style="color:#0f172a;font-weight:600;font-size:1rem;">TunjoRacing platform for IMSA motorsport</div>
+                        <div style="color:#64748b;font-size:0.85rem;">Press portal, e-commerce, sponsorship management, React admin</div>
+                    </div>
+                    <div class="d2a-timeline-item" style="position:relative;padding-bottom:2rem;padding-left:20px;border-left:2px solid #e2e8f0;">
+                        <div class="d2a-timeline-dot" style="position:absolute;left:-28px;top:4px;width:12px;height:12px;border-radius:50%;background:#3b82f6;border:2px solid #f8fafc;"></div>
+                        <div style="color:#2563eb;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Q3 2025</div>
+                        <div style="color:#0f172a;font-weight:600;font-size:1rem;">KanchoAI, Lactotec + LawnCopilot launched</div>
+                        <div style="color:#64748b;font-size:0.85rem;">Martial arts AI, dairy plant management, and lawn care -- 3 new verticals in one quarter.</div>
+                    </div>
+                    <div class="d2a-timeline-item" style="position:relative;padding-bottom:2rem;padding-left:20px;border-left:2px solid #e2e8f0;">
+                        <div class="d2a-timeline-dot" style="position:absolute;left:-28px;top:4px;width:12px;height:12px;border-radius:50%;background:#4f46e5;border:2px solid #f8fafc;"></div>
+                        <div style="color:#4f46e5;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Q4 2025</div>
+                        <div style="color:#0f172a;font-weight:600;font-size:1rem;">Recovery + Nutrition, OrderGoPro, Doctor Picante, PixlyPro</div>
+                        <div style="color:#64748b;font-size:0.85rem;">4 new platforms deployed -- wellness, restaurant ordering, F&B wholesale, and creative services. 12 platforms live.</div>
+                    </div>
+                    <div class="d2a-timeline-item" style="position:relative;padding-bottom:0;padding-left:20px;border-left:2px solid transparent;">
+                        <div class="d2a-timeline-dot" style="position:absolute;left:-28px;top:4px;width:12px;height:12px;border-radius:50%;background:#4f46e5;border:2px solid #f8fafc;"></div>
+                        <div style="color:#4f46e5;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Q1 2026</div>
+                        <div style="color:#0f172a;font-weight:600;font-size:1rem;">Enruta, AIA Store + AIHotelTalent launched</div>
+                        <div style="color:#64748b;font-size:0.85rem;">AutoTech, AI store monitoring, and hospitality recruitment -- 3 new verticals in one quarter.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIVE PORTFOLIO -->
+    <div id="d2a-portfolio" class="d2a-sec d2a-sec-lt" style="display:block;visibility:visible;padding:80px 0;background:#ffffff;">
+        <div class="d2a-wrap">
+            <h2 class="d2a-sec-title" style="display:block;color:#0f172a;text-align:center;">Live Portfolio</h2>
+            <div class="d2a-divider" style="width:60px;height:4px;background:#3b82f6;border-radius:2px;margin:0 auto 1.5rem;"></div>
+            <p class="d2a-sec-sub" style="display:block;color:#64748b;text-align:center;margin-bottom:3.5rem;">Every platform is live in production, serving real customers. Click to see for yourself.</p>
+
+            <div class="d2a-pgrid" style="display:flex;flex-direction:column;gap:3rem;">
+
+                <!-- RinglyPro -->
+                <div class="d2a-pcard" style="display:grid;grid-template-columns:1fr 1.2fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eff6ff,#dbeafe);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/691758aeac7fade66e3cc403.png" alt="RinglyPro" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;">
+                        <div class="d2a-ptag" style="background:#eff6ff;color:#2563eb;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Flagship Product</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">RinglyPro</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">ringlypro.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Multi-tenant AI CRM with 3 voice agents (Rachel, Ana, Lina). Handles calls, appointments, SMS, email in EN + ES. Integrated MCP Server, GoHighLevel CRM, and mobile apps. Our core revenue driver.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Voice AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Multi-Tenant</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Bilingual</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">SaaS Revenue</li>
+                        </ul>
+                        <a href="https://ringlypro.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Visit Live Platform --></a>
+                    </div>
+                </div>
+
+                <!-- TunjoRacing -->
+                <div class="d2a-pcard d2a-pcard-rev" style="display:grid;grid-template-columns:1.2fr 1fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fef2f2,#fecaca);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696cf718439b6bf938457268.png" alt="TunjoRacing" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;order:-1;">
+                        <div class="d2a-ptag" style="background:#fef2f2;color:#dc2626;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Sports + Media</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">TunjoRacing</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">tunjoracing.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Full digital platform for IMSA driver Oscar Tunjo. Press portal with auth, e-commerce, race schedule, live results, sponsorship management, and React admin dashboard. Proves our ability to deliver beyond AI/CRM.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">React</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">E-Commerce</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Press Portal</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">IMSA Racing</li>
+                        </ul>
+                        <a href="https://tunjoracing.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Visit Live Platform --></a>
+                    </div>
+                </div>
+
+                <!-- Lactotec -->
+                <div class="d2a-pcard" style="display:grid;grid-template-columns:1fr 1.2fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ecfdf5,#a7f3d0);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6992015c6bac248c13982bcf.png" alt="Lactotec" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;">
+                        <div class="d2a-ptag" style="background:#ecfdf5;color:#059669;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">AgriTech Vertical</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">Lactotec</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">lactotec.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Smart dairy plant management. Milk reception, real-time quality control, automated payroll, water fraud detection, AI cognitive agent, and predictive analytics by zone and producer. Deployed in Colombia.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Quality AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Predictive Analytics</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">LATAM Market</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Spanish-First</li>
+                        </ul>
+                        <a href="https://lactotec.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Visit Live Platform --></a>
+                    </div>
+                </div>
+
+                <!-- LawnCopilot -->
+                <div class="d2a-pcard d2a-pcard-rev" style="display:grid;grid-template-columns:1.2fr 1fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f0fdf4,#bbf7d0);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69933b0ea9efde9430a78201.png" alt="LawnCopilot" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;order:-1;">
+                        <div class="d2a-ptag" style="background:#f0fdf4;color:#16a34a;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Lawn Care Vertical</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">LawnCopilot</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">lawncopilot.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">AI copilot for lawn care businesses. Automates scheduling, route optimization, customer communication, and billing. Newest vertical -- validates our repeatable playbook for entering new industries.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Scheduling</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Route AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Billing</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Newest Vertical</li>
+                        </ul>
+                        <a href="https://lawncopilot.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Visit Live Platform --></a>
+                    </div>
+                </div>
+
+                <!-- AIA Agent -->
+                <div class="d2a-pcard" style="display:grid;grid-template-columns:1fr 1.2fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f5f3ff,#ddd6fe);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/699338d328abf916a6c9d33d.png" alt="AIA Store" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;">
+                        <div class="d2a-ptag" style="background:#f5f3ff;color:#7c3aed;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">AI Monitoring</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">AIA Store</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">aiagent.ringlypro.com/aiastore</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">AI-powered store health monitoring platform. Real-time business intelligence, predictive analytics, automated health scoring, and proactive alerts. Helps brick-and-mortar businesses detect problems before they impact revenue.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Health Scoring</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Predictive AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Real-Time Alerts</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Business Intel</li>
+                        </ul>
+                        <a href="https://aiagent.ringlypro.com/aiastore/" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Visit Live Platform --></a>
+                    </div>
+                </div>
+
+                <!-- Enruta -->
+                <div class="d2a-pcard d2a-pcard-rev" style="display:grid;grid-template-columns:1.2fr 1fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fff7ed,#fed7aa);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993390167cb8452109837f1.png" alt="Enruta" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;order:-1;">
+                        <div class="d2a-ptag" style="background:#fff7ed;color:#ea580c;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">AutoTech Vertical</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">Enruta</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">aiagent.ringlypro.com/enruta</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Vehicle document management system with AI voice agent "Laura." Tracks license, SOAT insurance, inspections, and registration for Colombian diagnostic centers. Automated reminder campaigns reduce expired docs and drive repeat business.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Voice AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Doc Management</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">LATAM Market</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Auto Campaigns</li>
+                        </ul>
+                        <a href="https://aiagent.ringlypro.com/enruta" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Visit Live Platform --></a>
+                    </div>
+                </div>
+
+                <!-- KanchoAI -->
+                <div class="d2a-pcard" style="display:grid;grid-template-columns:1fr 1.2fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fffbeb,#fde68a);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993395128abf92af7c9e672.png" alt="KanchoAI" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;">
+                        <div class="d2a-ptag" style="background:#fffbeb;color:#d97706;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Martial Arts Vertical</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">KanchoAI</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">kanchoai.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">AI voice agent for martial arts schools. Automates retention calls, payment recovery, lead follow-up, and win-back campaigns across 15+ disciplines. Business health scores and predictive analytics.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Voice AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Health Score</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Retention AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">15+ Disciplines</li>
+                        </ul>
+                        <a href="https://kanchoai.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Visit Live Platform --></a>
+                    </div>
+                </div>
+
+                <!-- AIHotelTalent -->
+                <div class="d2a-pcard d2a-pcard-rev" style="display:grid;grid-template-columns:1.2fr 1fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ecfeff,#a5f3fc);overflow:hidden;">
+                        <div style="text-align:center;padding:2rem;">
+                            <div style="font-size:2.5rem;font-weight:800;color:#0891b2;letter-spacing:-1px;line-height:1.1;">AIHotel</div>
+                            <div style="font-size:2.5rem;font-weight:800;color:#0e7490;letter-spacing:-1px;line-height:1.1;">Talent</div>
+                            <div style="font-size:0.8rem;color:#0891b2;margin-top:0.5rem;font-weight:600;">AI-Powered Hospitality Recruitment</div>
+                        </div>
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;order:-1;">
+                        <div class="d2a-ptag" style="background:#ecfeff;color:#0891b2;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Hospitality Vertical</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">AIHotelTalent</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">aihoteltalent.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">AI-powered recruitment platform for the hospitality industry. Intelligent candidate matching, 24/7 applicant engagement via AI chatbots, automated onboarding, and data-driven hiring analytics. Reduces time-to-hire by up to 85%.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">AI Recruiting</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Chatbot</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Auto Onboarding</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Hospitality</li>
+                        </ul>
+                        <a href="https://aihoteltalent.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Visit Live Platform --></a>
+                    </div>
+                </div>
+
+                <!-- Recovery + Nutrition -->
+                <div class="d2a-pcard" style="display:grid;grid-template-columns:1fr 1.2fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fff1f2,#fecdd3);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69935db36bac249b23d2d5c4.png" alt="Recovery + Nutrition" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;">
+                        <div class="d2a-ptag" style="background:#fff1f2;color:#e11d48;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Wellness Vertical</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">Recovery + Nutrition</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">Eastern US</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">AI voice booking system for a recovery and nutrition business. ElevenLabs AI + Twilio handles inbound calls 24/7 -- checks availability, books recovery sessions, and sends SMS confirmations. Syncs with GoHighLevel CRM and calendar.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Voice AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">ElevenLabs</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">GHL Sync</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">SMS Booking</li>
+                        </ul>
+                        <a href="tel:+18048120489" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Call AI Agent: (804) 812-0489 --></a>
+                    </div>
+                </div>
+
+                <!-- OrderGoPro -->
+                <div class="d2a-pcard d2a-pcard-rev" style="display:grid;grid-template-columns:1.2fr 1fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eef2ff,#c7d2fe);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6935f87381eaa1f4da169f8e.png" alt="OrderGoPro" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;order:-1;">
+                        <div class="d2a-ptag" style="background:#eef2ff;color:#4338ca;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Restaurant Tech</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">OrderGoPro</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">ordergopro.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">AI-powered online ordering platform for restaurants, cafes, and retail. Auto-extracts menus, branding, and pricing from any website. Stripe payments, real-time analytics, marketing automation, and delivery management. 500+ active businesses, 50K+ orders processed.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">AI Menu Import</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Online Ordering</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Stripe Payments</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Marketing AI</li>
+                        </ul>
+                        <a href="https://ordergopro.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Visit Live Platform --></a>
+                    </div>
+                </div>
+
+                <!-- Doctor Picante -->
+                <div class="d2a-pcard" style="display:grid;grid-template-columns:1fr 1.2fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fef2f2,#fecaca);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6937beaae03e9d93c66837ef.png" alt="Doctor Picante" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;">
+                        <div class="d2a-ptag" style="background:#fef2f2;color:#dc2626;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">F&B Wholesale</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">Doctor Picante</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">doctorpicante.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">Wholesale hot sauce supplier for restaurants and food businesses. 6 signature sauce varieties with volume-based pricing. AI-powered catalog, automated ordering, and delivery logistics for the food service industry. 500+ restaurant clients nationwide.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Wholesale Platform</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">AI Catalog</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Volume Pricing</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Restaurant Supply</li>
+                        </ul>
+                        <a href="https://doctorpicante.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Visit Live Platform --></a>
+                    </div>
+                </div>
+
+                <!-- PixlyPro -->
+                <div class="d2a-pcard d2a-pcard-rev" style="display:grid;grid-template-columns:1.2fr 1fr;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div class="d2a-pprev" style="min-height:300px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fffbeb,#fde68a);overflow:hidden;">
+                        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69308e428da9675b37a8180a.png" alt="PixlyPro" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="d2a-pinfo" style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;order:-1;">
+                        <div class="d2a-ptag" style="background:#fffbeb;color:#b45309;display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;margin-bottom:0.75rem;width:fit-content;">Creative Services</div>
+                        <h3 style="color:#0f172a;font-size:1.6rem;font-weight:700;margin-bottom:0.25rem;">PixlyPro</h3>
+                        <div class="d2a-pdom" style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">pixlypro.com</div>
+                        <p style="color:#64748b;font-size:0.9rem;line-height:1.6;margin-bottom:1.25rem;">AI-enhanced photo studio that transforms smartphone photos into professional-quality images. Tiered volume pricing, 48-72 hour turnaround, and a $1 demo trial. Built for restaurants, e-commerce, and small businesses that need pro visuals without a photo shoot.</p>
+                        <ul class="d2a-pills" style="list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;padding:0;">
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Photo AI</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">Volume Pricing</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">48hr Turnaround</li>
+                            <li style="background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:6px;font-size:0.75rem;border:1px solid #bfdbfe;">SMB Focus</li>
+                        </ul>
+                        <a href="https://pixlypro.com" target="_blank" class="d2a-plink" style="color:#2563eb;text-decoration:none;font-weight:600;">Visit Live Platform --></a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- BUSINESS MODEL -->
+    <div id="d2a-model" class="d2a-sec d2a-sec-gray" style="display:block;visibility:visible;padding:80px 0;background:#f8fafc;">
+        <div class="d2a-wrap">
+            <h2 class="d2a-sec-title" style="display:block;color:#0f172a;text-align:center;">Business Model</h2>
+            <div class="d2a-divider" style="width:60px;height:4px;background:#3b82f6;border-radius:2px;margin:0 auto 1.5rem;"></div>
+            <p class="d2a-sec-sub" style="display:block;color:#64748b;text-align:center;margin-bottom:3.5rem;">Multiple recurring revenue streams with high margins and low churn in sticky vertical markets.</p>
+            <div class="d2a-grid3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;">
+                <div class="d2a-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.4rem;font-weight:800;margin-bottom:1rem;">1</div>
+                    <h3 style="color:#0f172a;font-size:1.2rem;font-weight:700;margin-bottom:0.5rem;">SaaS Subscriptions</h3>
+                    <p style="color:#64748b;font-size:0.9rem;line-height:1.6;">Monthly recurring revenue from each deployed platform. Businesses pay for AI voice agents, CRM access, dashboards, and automation tools.</p>
+                </div>
+                <div class="d2a-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.4rem;font-weight:800;margin-bottom:1rem;">2</div>
+                    <h3 style="color:#0f172a;font-size:1.2rem;font-weight:700;margin-bottom:0.5rem;">Usage-Based Revenue</h3>
+                    <p style="color:#64748b;font-size:0.9rem;line-height:1.6;">Per-call and per-message fees on AI voice agents. As clients grow, usage grows. Built-in revenue expansion without upselling.</p>
+                </div>
+                <div class="d2a-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.4rem;font-weight:800;margin-bottom:1rem;">3</div>
+                    <h3 style="color:#0f172a;font-size:1.2rem;font-weight:700;margin-bottom:0.5rem;">Vertical Licensing</h3>
+                    <p style="color:#64748b;font-size:0.9rem;line-height:1.6;">Each industry platform (KanchoAI, Lactotec, LawnCopilot) is a standalone product that can be white-labeled and licensed across regions.</p>
+                </div>
+            </div>
+
+            <!-- Competitive Advantages -->
+            <div style="margin-top:4rem;">
+                <h3 style="color:#0f172a;font-size:1.4rem;font-weight:700;margin-bottom:2rem;text-align:center;">Competitive Advantages</h3>
+                <div class="d2a-grid2" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;">
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:left;">
+                        <h3 style="color:#ffffff;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">Speed to Market</h3>
+                        <p style="color:#dbeafe;font-size:0.9rem;line-height:1.6;">We launch new verticals in weeks, not months. Our shared infrastructure (voice AI, CRM, CI/CD, auth) means each new platform starts at 60% complete.</p>
+                    </div>
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:left;">
+                        <h3 style="color:#ffffff;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">Bilingual from Day One</h3>
+                        <p style="color:#dbeafe;font-size:0.9rem;line-height:1.6;">Full English + Spanish support across voice, UI, and operations. Unlocks 62M+ Hispanic Americans and all of LATAM -- a market most AI startups ignore.</p>
+                    </div>
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:left;">
+                        <h3 style="color:#ffffff;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">Vertical Lock-In</h3>
+                        <p style="color:#dbeafe;font-size:0.9rem;line-height:1.6;">Industry-specific platforms create deep switching costs. A dairy plant using Lactotec or a dojo using KanchoAI cannot simply swap to a generic CRM.</p>
+                    </div>
+                    <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:left;">
+                        <h3 style="color:#ffffff;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">Lean Operation</h3>
+                        <p style="color:#dbeafe;font-size:0.9rem;line-height:1.6;">12 live platforms built and maintained by a lean team using AI-augmented development. Low burn, high output. Capital goes directly to growth, not overhead.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- USE OF FUNDS -->
+    <div class="d2a-sec d2a-sec-lt" style="display:block;visibility:visible;padding:80px 0;background:#ffffff;">
+        <div class="d2a-wrap">
+            <h2 class="d2a-sec-title" style="display:block;color:#0f172a;text-align:center;">Use of Funds</h2>
+            <div class="d2a-divider" style="width:60px;height:4px;background:#3b82f6;border-radius:2px;margin:0 auto 1.5rem;"></div>
+            <p class="d2a-sec-sub" style="display:block;color:#64748b;text-align:center;margin-bottom:3.5rem;">Capital will accelerate what already works -- scaling proven platforms and entering new verticals faster.</p>
+            <div class="d2a-grid4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;">
+                <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                    <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">40%</span>
+                    <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Sales + Marketing</h3>
+                    <p style="color:#dbeafe;font-size:0.85rem;">Outbound sales team, paid acquisition, and industry partnerships to fill the pipeline</p>
+                </div>
+                <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                    <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">30%</span>
+                    <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Engineering</h3>
+                    <p style="color:#dbeafe;font-size:0.85rem;">Expand the dev team to launch 3-4 new verticals per year and harden platform infrastructure</p>
+                </div>
+                <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                    <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">20%</span>
+                    <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">AI + Infrastructure</h3>
+                    <p style="color:#dbeafe;font-size:0.85rem;">Voice AI training, model fine-tuning, and scaling cloud infrastructure for growing call volume</p>
+                </div>
+                <div class="d2a-bluecard" style="background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:20px;padding:2rem;text-align:center;">
+                    <span style="color:#ffffff;font-size:1.8rem;font-weight:800;display:block;margin-bottom:0.25rem;">10%</span>
+                    <h3 style="color:#ffffff;font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">Operations</h3>
+                    <p style="color:#dbeafe;font-size:0.85rem;">Legal, compliance, accounting, and operational reserves to support growth</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA / CONNECT -->
+    <div id="d2a-contact" class="d2a-sec d2a-sec-gray" style="display:block;visibility:visible;padding:80px 0;background:#f8fafc;">
+        <div class="d2a-wrap">
+            <h2 class="d2a-sec-title" style="display:block;color:#0f172a;text-align:center;">Let's Talk</h2>
+            <div class="d2a-divider" style="width:60px;height:4px;background:#3b82f6;border-radius:2px;margin:0 auto 1.5rem;"></div>
+            <p class="d2a-sec-sub" style="display:block;color:#64748b;text-align:center;margin-bottom:3.5rem;">Interested in the Digit2ai opportunity? Reach out to receive our full deck, financials, and schedule a call with our founder.</p>
+            <div class="d2a-grid3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;">
+                <div class="d2a-ccard" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;margin:0 auto 1rem;">P</div>
+                    <h3 style="color:#0f172a;">Call Us</h3>
+                    <a href="tel:8886103810" style="color:#2563eb;text-decoration:none;font-weight:600;font-size:1.05rem;">888-610-3810</a>
+                    <p style="color:#64748b;font-size:0.85rem;">Speak directly with our founder</p>
+                </div>
+                <div class="d2a-ccard" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;margin:0 auto 1rem;">@</div>
+                    <h3 style="color:#0f172a;">Email</h3>
+                    <a href="mailto:info@digit2ai.com" style="color:#2563eb;text-decoration:none;font-weight:600;font-size:1.05rem;">info@digit2ai.com</a>
+                    <p style="color:#64748b;font-size:0.85rem;">Request the full deck</p>
+                </div>
+                <div class="d2a-ccard" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;font-weight:800;margin:0 auto 1rem;">D</div>
+                    <h3 style="color:#0f172a;">Company Deck</h3>
+                    <a href="https://ringlypro.com/demo" target="_blank" style="color:#2563eb;text-decoration:none;font-weight:600;font-size:1.05rem;">Request Access</a>
+                    <p style="color:#64748b;font-size:0.85rem;">Financials, projections, terms</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="d2a-ftr" style="display:block;background:#f8fafc;padding:30px 0;text-align:center;border-top:1px solid #e2e8f0;">
+        <div class="d2a-wrap">
+            <div class="d2a-flinks" style="display:flex;justify-content:center;gap:2rem;margin-bottom:1rem;flex-wrap:wrap;">
+                <a href="https://ringlypro.com" target="_blank" style="color:#64748b;text-decoration:none;">RinglyPro</a>
+                <a href="https://tunjoracing.com" target="_blank" style="color:#64748b;text-decoration:none;">TunjoRacing</a>
+                <a href="https://kanchoai.com" target="_blank" style="color:#64748b;text-decoration:none;">KanchoAI</a>
+                <a href="https://lactotec.com" target="_blank" style="color:#64748b;text-decoration:none;">Lactotec</a>
+                <a href="https://lawncopilot.com" target="_blank" style="color:#64748b;text-decoration:none;">LawnCopilot</a>
+                <a href="https://aiagent.ringlypro.com/aiastore/" target="_blank" style="color:#64748b;text-decoration:none;">AIA Store</a>
+                <a href="https://aiagent.ringlypro.com/enruta" target="_blank" style="color:#64748b;text-decoration:none;">Enruta</a>
+                <a href="https://aihoteltalent.com" target="_blank" style="color:#64748b;text-decoration:none;">AIHotelTalent</a>
+                <a href="tel:+18048120489" style="color:#64748b;text-decoration:none;">Recovery + Nutrition</a>
+                <a href="https://ordergopro.com" target="_blank" style="color:#64748b;text-decoration:none;">OrderGoPro</a>
+                <a href="https://doctorpicante.com" target="_blank" style="color:#64748b;text-decoration:none;">Doctor Picante</a>
+                <a href="https://pixlypro.com" target="_blank" style="color:#64748b;text-decoration:none;">PixlyPro</a>
+            </div>
+            <p class="d2a-fcopy" style="color:#94a3b8;font-size:0.8rem;">(c) 2026 DIGIT2AI LLC. All rights reserved.</p>
+        </div>
+    </div>
+
+    <!-- PDF DOWNLOAD -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+    <script>
+    function d2aDownloadPDF(){
+        var el=document.querySelector('.d2a');
+        if(!el||typeof html2pdf==='undefined')return;
+        var btn=document.querySelector('[onclick*="d2aDownloadPDF"]');
+        if(btn){btn.textContent='Generating...';btn.style.pointerEvents='none';}
+        html2pdf().set({
+            margin:[5,5,5,5],
+            filename:'DIGIT2AI-Investor-Deck.pdf',
+            image:{type:'jpeg',quality:0.92},
+            html2canvas:{
+                scale:2,
+                useCORS:true,
+                windowWidth:1100,
+                scrollX:0,
+                scrollY:0,
+                onclone:function(clonedDoc){
+                    clonedDoc.querySelectorAll('elevenlabs-convai,a[href*="wa.me"],script,iframe,[onclick*="d2aDownloadPDF"]').forEach(function(w){w.remove();});
+                    var b=clonedDoc.body;
+                    b.style.cssText='margin:0;padding:0;width:1100px;background:#fff;overflow:visible;';
+                    var allStyles=clonedDoc.querySelectorAll('style');
+                    allStyles.forEach(function(s){if(s.textContent.indexOf('.d2a')<0)s.remove();});
+                    var d=clonedDoc.querySelector('.d2a');
+                    if(d){
+                        d.style.cssText='display:block;visibility:visible;opacity:1;background:#fff;color:#1e293b;width:1060px;max-width:1060px;margin:0 auto;padding:20px;position:relative;left:auto;right:auto;';
+                    }
+                    var w=clonedDoc.querySelector('.d2a-wrap');
+                    if(w){w.style.cssText='max-width:1060px;width:100%;margin:0 auto;padding:0 20px;';}
+                }
+            },
+            jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+            pagebreak:{mode:['avoid-all','css','legacy']}
+        }).from(el).save().then(function(){
+            if(btn){btn.textContent='\u2B07 PDF';btn.style.pointerEvents='';}
+        });
+    }
+    </script>
+
+    <!-- ELEVENLABS VOICE AGENT (branding removed) -->
+    <script src="https://unpkg.com/@elevenlabs/convai-widget-embed@latest/dist/index.js" async type="text/javascript"></script>
+    <elevenlabs-convai agent-id="agent_2101kfxcrez6fzsahc73wbhqfay8"></elevenlabs-convai>
+    <script>
+    (function stripBranding(){
+        var el=document.querySelector('elevenlabs-convai');
+        if(!el){setTimeout(stripBranding,500);return;}
+        var inject=function(sr){
+            if(sr.querySelector('style[data-d2a]'))return;
+            var s=document.createElement('style');s.setAttribute('data-d2a','1');
+            s.textContent='a[href*="elevenlabs"]{display:none!important;height:0!important;margin:0!important;padding:0!important;line-height:0!important;font-size:0!important;overflow:hidden!important;}div:has(>a[href*="elevenlabs"]){display:none!important;height:0!important;}span:has(>a[href*="elevenlabs"]){display:none!important;}p:has(>a[href*="elevenlabs"]){display:none!important;}[class*="powered"],[class*="Powered"]{display:none!important;height:0!important;}';
+            sr.appendChild(s);
+        };
+        var check=setInterval(function(){
+            var sr=el.shadowRoot;if(!sr)return;
+            inject(sr);
+            new MutationObserver(function(){inject(sr);}).observe(sr,{childList:true,subtree:true});
+            clearInterval(check);
+        },200);
+    })();
+    </script>
+
+    <!-- WHATSAPP WIDGET -->
+    <a href="https://wa.me/18136414177" target="_blank" style="position:fixed;bottom:24px;right:24px;width:60px;height:60px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.25);z-index:9999;text-decoration:none;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    </a>
+
+</div>
