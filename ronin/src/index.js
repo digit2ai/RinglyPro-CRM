@@ -384,7 +384,7 @@ if (fs.existsSync(dashboardDistPath)) {
     .kancho-section { padding: 80px 0; background: linear-gradient(180deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%); position: relative; overflow: hidden; }
     .kancho-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); }
     .kancho-header { text-align: center; margin-bottom: 48px; }
-    .kancho-header img { height: 80px; margin-bottom: 20px; }
+    .kancho-header img { height: 160px; margin-bottom: 24px; }
     .kancho-header h2 { font-family: 'Noto Serif', serif; font-size: 28px; color: #fff; margin-bottom: 8px; }
     .kancho-header h2 .ka-accent { color: var(--accent); }
     .kancho-header p { color: var(--muted); font-size: 14px; max-width: 600px; margin: 0 auto; line-height: 1.6; }
@@ -486,7 +486,7 @@ if (fs.existsSync(dashboardDistPath)) {
       /* KanchoAI pricing */
       .kancho-section { padding: 48px 0; }
       .kancho-header h2 { font-size: 22px; }
-      .kancho-header img { height: 56px; }
+      .kancho-header img { height: 110px; }
       .kancho-header p { font-size: 13px; }
 
       /* Cinema video */
@@ -694,7 +694,7 @@ if (fs.existsSync(dashboardDistPath)) {
   <section class="kancho-section" id="kanchoai">
     <div class="container">
       <div class="kancho-header">
-        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698f40f5772de9dc86d48339.png" alt="KanchoAI">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI">
         <h2>Choose Your <span class="ka-accent">Kancho AI</span> Plan</h2>
         <p>Power your martial arts school with AI-driven business intelligence, automated receptionist, and complete CRM solutions.</p>
       </div>
