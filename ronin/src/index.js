@@ -401,11 +401,12 @@ if (fs.existsSync(dashboardDistPath)) {
 
   <section class="photo-strip">
     <div class="photo-strip-inner">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/698d245d721397289ba56c7d.png" alt="KanchoAI">
       <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782773873af78f3ae844f.png" alt="Ronin Brotherhood">
       <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782768d5b5a64b992f22f.png" alt="Ronin Brotherhood">
       <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782761817151e36b61a7f.png" alt="Ronin Brotherhood">
       <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782763873afe6caae843d.jpg" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997827620c035e70c1dce26.png" alt="Ronin Brotherhood">
     </div>
   </section>
 
@@ -455,6 +456,12 @@ if (fs.existsSync(dashboardDistPath)) {
           <div class="group-name">Ronin Mixed Martial Arts International</div>
           <div class="group-desc">Bridging traditional martial arts with modern MMA competition.</div>
           <div class="group-meta"><span>12 countries</span><span>200+ fighters</span></div>
+        </div>
+        <div class="group-card" style="border-color: #c8102e;">
+          <div class="group-code" style="color: #c8102e;">AI</div>
+          <div class="group-name">KanchoAI</div>
+          <div class="group-desc">AI-powered dojo management platform. Automate scheduling, student tracking, belt progressions, and voice-powered customer service for your school.</div>
+          <div class="group-meta"><span><a href="https://kanchoai.com" target="_blank" style="color:#c8102e;">kanchoai.com</a></span><span>Dojo Management</span><span>AI Voice Agents</span></div>
         </div>
       </div>
     </div>
