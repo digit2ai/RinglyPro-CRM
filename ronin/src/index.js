@@ -207,8 +207,9 @@ if (fs.existsSync(dashboardDistPath)) {
 
     header { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(10,10,10,.95); border-bottom: 1px solid var(--line); backdrop-filter: blur(10px); }
     .header-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
-    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
-    .brand-logo { height: 44px; width: auto; object-fit: contain; display: block; }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+    .brand-logo { height: 64px; width: auto; object-fit: contain; display: block; }
+    .brand-sub { font-size: 9px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-top: 2px; }
     nav { display: flex; gap: 20px; }
     nav a { color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 500; }
     nav a:hover { color: var(--accent); }
@@ -422,6 +423,7 @@ if (fs.existsSync(dashboardDistPath)) {
     <div class="container header-inner">
       <a href="/ronin/" class="brand">
         <img class="brand-logo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69978a0f8d5b5a477096667b.png" alt="Ronin Brotherhood">
+        <div class="brand-sub">Martial Arts Federation</div>
       </a>
       <nav>
         <a href="#groups">Organizations</a>
