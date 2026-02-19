@@ -1,0 +1,877 @@
+<style>
+    .ep *, .ep *::before, .ep *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    .ep { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.7; color: #1e293b !important; background: #ffffff !important; width: 100%; display: block !important; }
+
+    /* Header */
+    .ep-hdr { background: #ffffff; padding: 1rem 0; border-bottom: 1px solid #e2e8f0; }
+    .ep-wrap { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+    .ep-hdr-inner { display: flex; justify-content: space-between; align-items: center; }
+    .ep-logo { font-size: 1.6rem; font-weight: 800; color: #3b82f6 !important; letter-spacing: -0.5px; }
+    .ep-logo span { color: #0f172a !important; }
+
+    /* Hero */
+    .ep-hero { padding: 60px 0 50px; text-align: center; background: linear-gradient(135deg, #3b82f6, #2563eb, #4f46e5) !important; }
+    .ep-hero h1 { font-size: 2.8rem; font-weight: 800; color: #ffffff !important; margin-bottom: 0.75rem; line-height: 1.15; }
+    .ep-hero p { font-size: 1.1rem; color: #dbeafe !important; max-width: 650px; margin: 0 auto; }
+
+    /* Brand Tabs */
+    .ep-brand-tabs { display: flex; justify-content: center; gap: 1rem; margin-bottom: 0; padding: 2rem 0 0; }
+    .ep-brand-tab { padding: 12px 28px; border-radius: 50px 50px 0 0; font-weight: 700; font-size: 0.95rem; cursor: pointer; border: 2px solid #e2e8f0; border-bottom: none; background: #f8fafc; color: #64748b !important; transition: all 0.3s; font-family: inherit; }
+    .ep-brand-tab.ep-active { background: #ffffff; color: #2563eb !important; border-color: #3b82f6; position: relative; }
+    .ep-brand-tab.ep-active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background: #ffffff; }
+    .ep-brand-tab:hover { color: #2563eb !important; }
+
+    /* Section */
+    .ep-sec { padding: 0 0 60px; background: #ffffff !important; }
+    .ep-panel { display: none; }
+    .ep-panel.ep-visible { display: block; }
+
+    /* Lang Toggle */
+    .ep-lang-wrap { display: flex; justify-content: center; gap: 0; margin: 2rem auto 2.5rem; background: #f1f5f9; border-radius: 50px; padding: 4px; max-width: 280px; }
+    .ep-lang-btn { flex: 1; padding: 10px 20px; border: none; border-radius: 50px; font-weight: 600; font-size: 0.9rem; cursor: pointer; background: transparent; color: #64748b; transition: all 0.3s; font-family: inherit; }
+    .ep-lang-btn.ep-active { background: #2563eb; color: #ffffff; box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
+
+    /* Content Card */
+    .ep-content { display: none; }
+    .ep-content.ep-visible { display: block; }
+    .ep-pitch-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 3rem; box-shadow: 0 4px 16px rgba(0,0,0,0.06); max-width: 850px; margin: 0 auto; }
+    .ep-pitch-card h2 { font-size: 1.6rem; font-weight: 800; color: #0f172a !important; margin-bottom: 0.5rem; }
+    .ep-pitch-card .ep-subtitle { font-size: 0.85rem; color: #2563eb !important; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem; }
+    .ep-pitch-card p { font-size: 1rem; color: #475569 !important; margin-bottom: 1.25rem; line-height: 1.8; }
+    .ep-pitch-card p:last-child { margin-bottom: 0; }
+    .ep-pitch-card strong { color: #0f172a !important; }
+    .ep-pitch-card .ep-highlight { color: #2563eb !important; font-weight: 700; }
+    .ep-pitch-card .ep-closing { font-size: 1.15rem; font-weight: 700; color: #0f172a !important; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid #e2e8f0; font-style: italic; }
+
+    /* Google Closing Statement */
+    .ep-google-close { margin-top: 2rem; padding: 2rem; border-radius: 16px; text-align: center; }
+    .ep-google-close-d2a { background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 2px solid #93c5fd; }
+    .ep-google-close-rp { background: linear-gradient(135deg, #ecfdf5, #a7f3d0); border: 2px solid #6ee7b7; }
+    .ep-google-close-tr { background: linear-gradient(135deg, #fef2f2, #fecaca); border: 2px solid #fca5a5; }
+    .ep-google-close-ka { background: linear-gradient(135deg, #fffbeb, #fde68a); border: 2px solid #fbbf24; }
+    .ep-google-close-sh { background: linear-gradient(135deg, #f5f3ff, #ddd6fe); border: 2px solid #a78bfa; }
+    .ep-google-close p { font-size: 1.2rem; font-weight: 800; line-height: 1.6; margin-bottom: 0 !important; }
+    .ep-google-close .ep-gc-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.75rem !important; }
+
+    /* Meeting Closing */
+    .ep-meeting-close { padding: 60px 0; background: #0f172a !important; text-align: center; }
+    .ep-meeting-close h2 { font-size: 2rem; font-weight: 800; color: #ffffff !important; margin-bottom: 0.5rem; }
+    .ep-meeting-close .ep-mc-subtitle { font-size: 0.85rem; color: #64748b !important; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 2rem; }
+    .ep-meeting-close .ep-mc-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 2.5rem; max-width: 750px; margin: 0 auto; }
+    .ep-meeting-close .ep-mc-card p { color: #cbd5e1 !important; font-size: 1.05rem; line-height: 1.9; margin-bottom: 1.25rem; }
+    .ep-meeting-close .ep-mc-card p:last-child { margin-bottom: 0; }
+    .ep-meeting-close .ep-mc-card .ep-mc-final { font-size: 1.3rem; font-weight: 800; color: #ffffff !important; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.15); }
+
+    /* Brand Header inside card */
+    .ep-brand-hdr { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 2px solid #f1f5f9; }
+    .ep-brand-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; color: #ffffff; flex-shrink: 0; }
+    .ep-brand-icon-d2a { background: linear-gradient(135deg, #3b82f6, #4f46e5); }
+    .ep-brand-icon-tr { background: linear-gradient(135deg, #dc2626, #991b1b); }
+    .ep-brand-icon-ka { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .ep-brand-icon-sh { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+
+    .ep-stat-pill-purple { background: linear-gradient(135deg, #f5f3ff, #ddd6fe); border: 1px solid #a78bfa; }
+    .ep-stat-pill-purple b { color: #7c3aed !important; }
+
+    .ep-stat-pill-amber { background: linear-gradient(135deg, #fffbeb, #fde68a); border: 1px solid #fbbf24; }
+    .ep-stat-pill-amber b { color: #d97706 !important; }
+
+    .ep-brand-icon-rb { background: linear-gradient(135deg, #d10404, #8b0000); }
+    .ep-stat-pill-rb { background: linear-gradient(135deg, #fef2f2, #fecdd3); border: 1px solid #d10404; }
+    .ep-stat-pill-rb b { color: #d10404 !important; }
+    .ep-google-close-rb { background: linear-gradient(135deg, #fef2f2, #fecdd3); border: 2px solid #d10404; }
+
+    .ep-brand-hdr h2 { margin-bottom: 0 !important; }
+    .ep-brand-hdr .ep-subtitle { margin-bottom: 0 !important; }
+
+    /* Stats Row */
+    .ep-stats { display: flex; gap: 1rem; margin: 1.5rem 0; flex-wrap: wrap; }
+    .ep-stat-pill { background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 1px solid #bfdbfe; border-radius: 12px; padding: 12px 18px; text-align: center; flex: 1; min-width: 120px; }
+    .ep-stat-pill b { display: block; font-size: 1.3rem; font-weight: 800; color: #2563eb !important; }
+    .ep-stat-pill span { font-size: 0.75rem; color: #64748b !important; font-weight: 500; }
+
+    .ep-stat-pill-red { background: linear-gradient(135deg, #fef2f2, #fecaca); border: 1px solid #fca5a5; }
+    .ep-stat-pill-red b { color: #dc2626 !important; }
+
+    /* Divider */
+    .ep-divider { width: 60px; height: 4px; background: #3b82f6; border-radius: 2px; margin: 0 auto 2rem; }
+
+    /* CTA Section */
+    .ep-cta { text-align: center; padding: 50px 0; background: linear-gradient(135deg, #3b82f6, #2563eb, #4f46e5) !important; }
+    .ep-cta h2 { font-size: 1.8rem; font-weight: 800; color: #ffffff !important; margin-bottom: 0.5rem; }
+    .ep-cta p { color: #dbeafe !important; font-size: 1rem; margin-bottom: 1.5rem; max-width: 550px; margin-left: auto; margin-right: auto; }
+    .ep-cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .ep-cta-btn { display: inline-block; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 1rem; }
+    .ep-cta-btn-pri { background: #ffffff !important; color: #2563eb !important; }
+    .ep-cta-btn-sec { background: transparent; color: #ffffff !important; border: 2px solid rgba(255,255,255,0.5); }
+
+    /* Footer */
+    .ep-ftr { background: #f8fafc !important; padding: 24px 0; text-align: center; border-top: 1px solid #e2e8f0; }
+    .ep-ftr-links { display: flex; justify-content: center; gap: 2rem; margin-bottom: 0.75rem; flex-wrap: wrap; list-style: none; padding: 0; }
+    .ep-ftr-links a { color: #64748b !important; text-decoration: none; font-size: 0.85rem; font-weight: 500; }
+    .ep-ftr-links a:hover { color: #2563eb !important; }
+    .ep-ftr p { color: #94a3b8 !important; font-size: 0.78rem; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .ep-hero { padding: 40px 0 35px !important; }
+        .ep-hero h1 { font-size: 1.8rem !important; }
+        .ep-hero p { font-size: 0.95rem !important; }
+        .ep-brand-tabs { flex-direction: column; align-items: center; gap: 0.5rem; padding: 1.5rem 20px 0; }
+        .ep-brand-tab { border-radius: 50px; border-bottom: 2px solid #e2e8f0; width: 100%; max-width: 300px; text-align: center; }
+        .ep-brand-tab.ep-active { border-bottom-color: #3b82f6; }
+        .ep-brand-tab.ep-active::after { display: none; }
+        .ep-pitch-card { padding: 1.5rem !important; border-radius: 16px !important; margin: 0 12px; }
+        .ep-pitch-card p { font-size: 0.92rem !important; }
+        .ep-pitch-card .ep-closing { font-size: 1.05rem !important; }
+        .ep-stats { gap: 0.5rem !important; }
+        .ep-stat-pill { padding: 10px 12px !important; min-width: 100px !important; }
+        .ep-stat-pill b { font-size: 1.1rem !important; }
+        .ep-stat-pill span { font-size: 0.7rem !important; }
+        .ep-brand-hdr { flex-direction: column; text-align: center; gap: 0.75rem; }
+        .ep-google-close { padding: 1.5rem !important; }
+        .ep-google-close p { font-size: 1.05rem !important; }
+        .ep-meeting-close { padding: 40px 0 !important; }
+        .ep-meeting-close h2 { font-size: 1.5rem !important; }
+        .ep-meeting-close .ep-mc-card { padding: 1.5rem !important; margin: 0 12px; }
+        .ep-meeting-close .ep-mc-card p { font-size: 0.95rem !important; }
+        .ep-meeting-close .ep-mc-card .ep-mc-final { font-size: 1.1rem !important; }
+        .ep-cta h2 { font-size: 1.4rem !important; }
+        .ep-cta p { font-size: 0.9rem !important; }
+        .ep-cta-btns { flex-direction: column; align-items: center; }
+        .ep-ftr-links { gap: 1rem !important; }
+        .ep-lang-wrap { max-width: 260px; }
+    }
+</style>
+
+<div class="ep" style="display:block;background:#ffffff;color:#1e293b;width:100%;">
+
+    <!-- HEADER -->
+    <div class="ep-hdr" style="background:#ffffff;padding:1rem 0;border-bottom:1px solid #e2e8f0;">
+        <div class="ep-wrap">
+            <div class="ep-hdr-inner" style="display:flex;justify-content:space-between;align-items:center;">
+                <div class="ep-logo"><img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69949e0555ebaf56e0120e7d.png" alt="digit2ai" style="height:50px;width:auto;"></div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <a href="https://aiagent.ringlypro.com/digit2ai" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:50px;border:1px solid #3b82f6;color:#ffffff;font-size:0.8rem;font-weight:600;background:#3b82f6;white-space:nowrap;text-decoration:none;font-family:inherit;">Full Deck</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HERO -->
+    <div class="ep-hero" style="display:block;padding:60px 0 50px;text-align:center;background:linear-gradient(135deg,#3b82f6,#2563eb,#4f46e5);">
+        <div class="ep-wrap">
+            <h1 style="color:#ffffff;font-size:2.8rem;font-weight:800;line-height:1.15;margin-bottom:0.75rem;">Presentations</h1>
+            <p style="color:#dbeafe;font-size:1.1rem;max-width:650px;margin:0 auto;">Six platforms. One vision. AI-powered solutions built for real businesses.</p>
+        </div>
+    </div>
+
+    <!-- BRAND TABS -->
+    <div class="ep-wrap">
+        <div class="ep-brand-tabs" style="display:flex;justify-content:center;gap:1rem;padding:2rem 0 0;">
+            <button class="ep-brand-tab ep-active" onclick="epSwitchBrand('d2a')" id="ep-tab-d2a" style="padding:12px 28px;border-radius:50px 50px 0 0;font-weight:700;font-size:0.95rem;cursor:pointer;border:2px solid #3b82f6;border-bottom:none;background:#ffffff;color:#2563eb;font-family:inherit;">DIGIT2AI</button>
+            <button class="ep-brand-tab" onclick="epSwitchBrand('rp')" id="ep-tab-rp" style="padding:12px 28px;border-radius:50px 50px 0 0;font-weight:700;font-size:0.95rem;cursor:pointer;border:2px solid #e2e8f0;border-bottom:none;background:#f8fafc;color:#64748b;font-family:inherit;">RINGLYPRO</button>
+            <button class="ep-brand-tab" onclick="epSwitchBrand('sh')" id="ep-tab-sh" style="padding:12px 28px;border-radius:50px 50px 0 0;font-weight:700;font-size:0.95rem;cursor:pointer;border:2px solid #e2e8f0;border-bottom:none;background:#f8fafc;color:#64748b;font-family:inherit;">STORE HEALTH AI</button>
+            <button class="ep-brand-tab" onclick="epSwitchBrand('ka')" id="ep-tab-ka" style="padding:12px 28px;border-radius:50px 50px 0 0;font-weight:700;font-size:0.95rem;cursor:pointer;border:2px solid #e2e8f0;border-bottom:none;background:#f8fafc;color:#64748b;font-family:inherit;">KANCHOAI</button>
+            <button class="ep-brand-tab" onclick="epSwitchBrand('tr')" id="ep-tab-tr" style="padding:12px 28px;border-radius:50px 50px 0 0;font-weight:700;font-size:0.95rem;cursor:pointer;border:2px solid #e2e8f0;border-bottom:none;background:#f8fafc;color:#64748b;font-family:inherit;">TUNJORACING</button>
+            <button class="ep-brand-tab" onclick="epSwitchBrand('rb')" id="ep-tab-rb" style="padding:12px 28px;border-radius:50px 50px 0 0;font-weight:700;font-size:0.95rem;cursor:pointer;border:2px solid #e2e8f0;border-bottom:none;background:#f8fafc;color:#64748b;font-family:inherit;">RONIN</button>
+        </div>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div class="ep-sec" style="padding:0 0 60px;background:#ffffff;">
+        <div class="ep-wrap">
+
+            <!-- ==================== DIGIT2AI PANEL ==================== -->
+            <div class="ep-panel ep-visible" id="ep-panel-d2a">
+                <div class="ep-lang-wrap" style="display:flex;justify-content:center;gap:0;margin:2rem auto 2.5rem;background:#f1f5f9;border-radius:50px;padding:4px;max-width:280px;">
+                    <button class="ep-lang-btn ep-active" onclick="epSwitchLang('d2a','en')" id="ep-lang-d2a-en" style="flex:1;padding:10px 20px;border:none;border-radius:50px;font-weight:600;font-size:0.9rem;cursor:pointer;background:#2563eb;color:#ffffff;font-family:inherit;">English</button>
+                    <button class="ep-lang-btn" onclick="epSwitchLang('d2a','es')" id="ep-lang-d2a-es" style="flex:1;padding:10px 20px;border:none;border-radius:50px;font-weight:600;font-size:0.9rem;cursor:pointer;background:transparent;color:#64748b;font-family:inherit;">Espanol</button>
+                </div>
+
+                <!-- D2A English -->
+                <div class="ep-content ep-visible" id="ep-d2a-en">
+                    <div class="ep-pitch-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;padding:3rem;box-shadow:0 4px 16px rgba(0,0,0,0.06);max-width:850px;margin:0 auto;">
+                        <div class="ep-brand-hdr" style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #f1f5f9;">
+                            <div class="ep-brand-icon ep-brand-icon-d2a" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#ffffff;background:linear-gradient(135deg,#3b82f6,#4f46e5);flex-shrink:0;">D2</div>
+                            <div>
+                                <div class="ep-subtitle" style="font-size:0.85rem;color:#2563eb;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Presentation</div>
+                                <h2 style="font-size:1.6rem;font-weight:800;color:#0f172a;">DIGIT2AI</h2>
+                            </div>
+                        </div>
+
+                        <div class="ep-stats" style="display:flex;gap:1rem;margin:0 0 2rem;flex-wrap:wrap;">
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#2563eb;">12</b><span style="font-size:0.75rem;color:#64748b;">Live Platforms</span></div>
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#2563eb;">11</b><span style="font-size:0.75rem;color:#64748b;">Industries</span></div>
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#2563eb;">$300B+</b><span style="font-size:0.75rem;color:#64748b;">TAM</span></div>
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#2563eb;">50/50</b><span style="font-size:0.75rem;color:#64748b;">Partnership</span></div>
+                        </div>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Digit2AI is a technology company that builds <span class="ep-highlight" style="color:#2563eb;font-weight:700;">AI-powered software for businesses</span>. We create custom platforms for specific industries, designed around how each sector actually works in real life.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Today we have <strong style="color:#0f172a;">12 active platforms across 11 industries</strong>, including dairy plants, martial arts schools, lawn care, restaurants, motorsports, hotels, and automated telecommunications. These are not prototypes or concepts -- they are live and working with real businesses.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">We've also built an <span class="ep-highlight" style="color:#2563eb;font-weight:700;">MCP server</span> that integrates multiple critical services like telephony, business systems, and databases. This allows us to connect AI directly with the real operations of each industry without having to start from scratch on every project.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">The reason we can move fast is our <span class="ep-highlight" style="color:#2563eb;font-weight:700;">shared technology</span>. We build the most complex parts once -- voice AI, customer management, automation, and multilingual support. Every time we enter a new industry, the platform is already 60% ready, allowing us to go from zero to production in days, not weeks or months.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Today we have several types of AI agents, such as <strong style="color:#0f172a;">AI Receptionist</strong>, which answers calls, books appointments, and follows up with customers 24/7 in English, Spanish, or any language needed. We also have <strong style="color:#0f172a;">AI Information Officer</strong>, which reports on business health across areas like sales, inventory, staffing, and conversion -- helping minimize churn and maximize results. Additionally, we have specialized agents, like those developed for the <strong style="color:#0f172a;">Department of Motors and Vehicles in Cali, Colombia</strong>, providing automated services for license renewals and vehicle registration.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Our model is simple: we cover all the technology -- development, AI, infrastructure, and support -- and we work with partners who know an industry, have access to a market, or want to launch their own AI company.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">This is not a traditional service contract. It's a <span class="ep-highlight" style="color:#2563eb;font-weight:700;">strategic alliance</span> where a specific solution is created for a sector and revenue is shared. The partner brings market knowledge, relationships, or audience. We build and operate the entire technology platform.</p>
+
+                        <p class="ep-closing" style="font-size:1.15rem;font-weight:700;color:#0f172a;margin-top:1.5rem;padding-top:1.5rem;border-top:2px solid #e2e8f0;font-style:italic;margin-bottom:0;">The goal is to launch AI companies focused on specific industries -- fast, without building technology from scratch or taking on infrastructure costs.</p>
+
+                        <div class="ep-google-close ep-google-close-d2a" style="margin-top:2rem;padding:2rem;border-radius:16px;text-align:center;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #93c5fd;">
+                            <p class="ep-gc-label" style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#3b82f6;margin-bottom:0.75rem;">Closing Statement</p>
+                            <p style="font-size:1.2rem;font-weight:800;color:#0f172a;line-height:1.6;margin-bottom:0;">12 products live. 11 industries served. One proven model. We're not asking you to believe in an idea -- we're inviting you to own a piece of the future. <span style="color:#2563eb;">Digit2AI -- where AI meets Main Street.</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- D2A Spanish -->
+                <div class="ep-content" id="ep-d2a-es" style="display:none;">
+                    <div class="ep-pitch-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;padding:3rem;box-shadow:0 4px 16px rgba(0,0,0,0.06);max-width:850px;margin:0 auto;">
+                        <div class="ep-brand-hdr" style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #f1f5f9;">
+                            <div class="ep-brand-icon ep-brand-icon-d2a" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#ffffff;background:linear-gradient(135deg,#3b82f6,#4f46e5);flex-shrink:0;">D2</div>
+                            <div>
+                                <div class="ep-subtitle" style="font-size:0.85rem;color:#2563eb;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Presentation</div>
+                                <h2 style="font-size:1.6rem;font-weight:800;color:#0f172a;">DIGIT2AI</h2>
+                            </div>
+                        </div>
+
+                        <div class="ep-stats" style="display:flex;gap:1rem;margin:0 0 2rem;flex-wrap:wrap;">
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#2563eb;">12</b><span style="font-size:0.75rem;color:#64748b;">Plataformas</span></div>
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#2563eb;">11</b><span style="font-size:0.75rem;color:#64748b;">Industrias</span></div>
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#2563eb;">$300B+</b><span style="font-size:0.75rem;color:#64748b;">Mercado</span></div>
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#2563eb;">50/50</b><span style="font-size:0.75rem;color:#64748b;">Sociedad</span></div>
+                        </div>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Digit2AI es una empresa de tecnologia que construye <span class="ep-highlight" style="color:#2563eb;font-weight:700;">software con inteligencia artificial para negocios</span>. Creamos plataformas a la medida para industrias especificas, disenadas segun como funciona cada sector en la vida real.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Hoy tenemos <strong style="color:#0f172a;">12 plataformas activas en 11 industrias</strong>, incluyendo plantas lecheras, escuelas de artes marciales, jardineria, restaurantes, motorsport, hoteles y telecomunicaciones automaticas. No son prototipos ni conceptos: estan funcionando con empresas reales.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Ademas, ya construimos un <span class="ep-highlight" style="color:#2563eb;font-weight:700;">servidor MCP</span> que integra multiples servicios criticos como telefonia, sistemas empresariales y bases de datos. Esto nos permite conectar la inteligencia artificial directamente con las operaciones reales de cada industria sin tener que empezar desde cero en cada proyecto.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">La razon por la que podemos movernos rapido es nuestra <span class="ep-highlight" style="color:#2563eb;font-weight:700;">tecnologia compartida</span>. Construimos lo mas complejo una sola vez: voz con inteligencia artificial, gestion de clientes, automatizacion y soporte multilingue. Cada vez que entramos a una nueva industria, la plataforma ya esta 60% lista, lo que nos permite pasar de cero a produccion en dias, no semanas o meses.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Hoy contamos con varios tipos de agentes con IA, como <strong style="color:#0f172a;">AI Receptionist</strong>, que contestan llamadas, agendan citas y hacen seguimiento a clientes las 24 horas, en ingles, espanol o cualquier idioma necesario. Tambien tenemos <strong style="color:#0f172a;">AI Information Officer</strong>, que reporta la salud del negocio en areas como ventas, inventarios, personal y conversion, ayudando a minimizar el churn y maximizar resultados. Ademas, contamos con agentes especializados, como los desarrollados para el <strong style="color:#0f172a;">Departamento de Motores y Vehiculos de Cali, Colombia</strong>, que prestan servicios automatizados para renovacion de licencias y registro de vehiculos.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Nuestro modelo es simple: nosotros cubrimos toda la tecnologia -- desarrollo, inteligencia artificial, infraestructura y soporte -- y trabajamos con socios que conocen una industria, tienen acceso a un mercado o quieren lanzar su propia compania de inteligencia artificial.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Esto no es un contrato de servicios tradicional. Es una <span class="ep-highlight" style="color:#2563eb;font-weight:700;">alianza estrategica</span> donde se crea una solucion especifica para un sector y se comparten los ingresos. El socio aporta el conocimiento del mercado, las relaciones o la audiencia. Nosotros construimos y operamos toda la plataforma tecnologica.</p>
+
+                        <p class="ep-closing" style="font-size:1.15rem;font-weight:700;color:#0f172a;margin-top:1.5rem;padding-top:1.5rem;border-top:2px solid #e2e8f0;font-style:italic;margin-bottom:0;">El objetivo es lanzar companias de inteligencia artificial enfocadas en industrias especificas, de forma rapida, sin tener que desarrollar tecnologia desde cero ni asumir costos de infraestructura.</p>
+
+                        <div class="ep-google-close ep-google-close-d2a" style="margin-top:2rem;padding:2rem;border-radius:16px;text-align:center;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #93c5fd;">
+                            <p class="ep-gc-label" style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#3b82f6;margin-bottom:0.75rem;">Declaracion de Cierre</p>
+                            <p style="font-size:1.2rem;font-weight:800;color:#0f172a;line-height:1.6;margin-bottom:0;">12 productos en vivo. 11 industrias servidas. Un modelo probado. No te estamos pidiendo que creas en una idea -- te estamos invitando a ser dueno de una parte del futuro. <span style="color:#2563eb;">Digit2AI -- donde la IA llega a la calle principal.</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== RINGLYPRO PANEL ==================== -->
+            <div class="ep-panel" id="ep-panel-rp" style="display:none;">
+                <div class="ep-lang-wrap" style="display:flex;justify-content:center;gap:0;margin:2rem auto 2.5rem;background:#f1f5f9;border-radius:50px;padding:4px;max-width:280px;">
+                    <button class="ep-lang-btn ep-active" onclick="epSwitchLang('rp','en')" id="ep-lang-rp-en" style="flex:1;padding:10px 20px;border:none;border-radius:50px;font-weight:600;font-size:0.9rem;cursor:pointer;background:#2563eb;color:#ffffff;font-family:inherit;">English</button>
+                    <button class="ep-lang-btn" onclick="epSwitchLang('rp','es')" id="ep-lang-rp-es" style="flex:1;padding:10px 20px;border:none;border-radius:50px;font-weight:600;font-size:0.9rem;cursor:pointer;background:transparent;color:#64748b;font-family:inherit;">Espanol</button>
+                </div>
+
+                <!-- RP English -->
+                <div class="ep-content ep-visible" id="ep-rp-en">
+                    <div class="ep-pitch-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;padding:3rem;box-shadow:0 4px 16px rgba(0,0,0,0.06);max-width:850px;margin:0 auto;">
+                        <div class="ep-brand-hdr" style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #f1f5f9;">
+                            <div class="ep-brand-icon" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#ffffff;background:linear-gradient(135deg,#10b981,#059669);flex-shrink:0;">RP</div>
+                            <div>
+                                <div class="ep-subtitle" style="font-size:0.85rem;color:#059669;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Presentation</div>
+                                <h2 style="font-size:1.6rem;font-weight:800;color:#0f172a;">RinglyPro</h2>
+                            </div>
+                        </div>
+
+                        <div class="ep-stats" style="display:flex;gap:1rem;margin:0 0 2rem;flex-wrap:wrap;">
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#ecfdf5,#a7f3d0);border:1px solid #6ee7b7;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#059669;">3</b><span style="font-size:0.75rem;color:#64748b;">AI Voice Agents</span></div>
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#ecfdf5,#a7f3d0);border:1px solid #6ee7b7;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#059669;">24/7</b><span style="font-size:0.75rem;color:#64748b;">Autonomous</span></div>
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#ecfdf5,#a7f3d0);border:1px solid #6ee7b7;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#059669;">EN/ES</b><span style="font-size:0.75rem;color:#64748b;">Bilingual</span></div>
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#ecfdf5,#a7f3d0);border:1px solid #6ee7b7;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#059669;">$45</b><span style="font-size:0.75rem;color:#64748b;">Starting/mo</span></div>
+                        </div>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">RinglyPro is an <span class="ep-highlight" style="color:#059669;font-weight:700;">AI-powered sales force platform</span> that finds businesses, calls them automatically, collects leads, and schedules appointments -- all without a human picking up the phone. It's the all-in-one system that turns missed calls into booked revenue.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Small businesses lose up to <strong style="color:#0f172a;">62% of inbound calls</strong> because no one is available to answer. Every missed call is a missed customer. RinglyPro eliminates that problem with three AI voice agents -- <strong style="color:#0f172a;">Rachel, Ana, and Lina</strong> -- that answer every call, qualify every lead, and book every appointment, 24 hours a day, 7 days a week, in English and Spanish.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">But RinglyPro isn't just a phone answering service. It's a complete sales machine with <strong style="color:#0f172a;">four core capabilities</strong>:</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#059669;font-weight:700;">AI Inbound Receptionist</span> -- Never miss a call again. Rachel, Ana, or Lina answer instantly with a human-like voice, understand the caller's intent, qualify the lead in real time, and book appointments directly into your calendar. No hold music. No voicemail. No lost customers.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#059669;font-weight:700;">AI Outbound Sales Dialer</span> -- RinglyPro doesn't just wait for calls -- it makes them. The outbound AI dialer automatically prospects and contacts businesses or leads from your pipeline, qualifies interest, and books meetings on your behalf. Your sales team grows without adding headcount.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#059669;font-weight:700;">AI CRM Co-Pilot Dashboard</span> -- Every call, every lead, every appointment lives in one intelligent dashboard. Real-time analytics, call transcripts, lead scoring, pipeline management, and automated follow-ups. A mobile app (iOS) lets you manage everything from your pocket.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#059669;font-weight:700;">Zero-Copy Data Architecture</span> -- Powered by Twilio Segment, all customer data lives in a single secure warehouse. No duplication across tools, no sync conflicts, no stale records. One source of truth for every interaction -- from the first call to the final conversion.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Pricing starts at just <strong style="color:#0f172a;">$45/month</strong> for 500 tokens and 100 voice minutes, scaling up to a Professional plan with unlimited capacity. Every plan includes both inbound and outbound AI calling -- making enterprise-grade sales automation affordable for any business.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">The platform is <strong style="color:#0f172a;">fully bilingual from day one</strong>, built on a multi-tenant architecture that serves multiple businesses from a single deployment. It integrates with GoHighLevel CRM, syncs calendars, sends SMS confirmations, and powers the AI backbone behind every Digit2AI vertical product.</p>
+
+                        <p class="ep-closing" style="font-size:1.15rem;font-weight:700;color:#0f172a;margin-top:1.5rem;padding-top:1.5rem;border-top:2px solid #e2e8f0;font-style:italic;margin-bottom:0;">Stop losing customers to voicemail. RinglyPro answers every call, books every appointment, and grows your sales -- all on autopilot.</p>
+
+                        <div class="ep-google-close ep-google-close-rp" style="margin-top:2rem;padding:2rem;border-radius:16px;text-align:center;background:linear-gradient(135deg,#ecfdf5,#a7f3d0);border:2px solid #6ee7b7;">
+                            <p class="ep-gc-label" style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#059669;margin-bottom:0.75rem;">Closing Statement</p>
+                            <p style="font-size:1.2rem;font-weight:800;color:#0f172a;line-height:1.6;margin-bottom:0;">Every missed call is a missed sale. Every unanswered ring is revenue walking away. Three AI agents. 24/7 coverage. Zero missed opportunities. <span style="color:#059669;">RinglyPro -- your sales team never sleeps.</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RP Spanish -->
+                <div class="ep-content" id="ep-rp-es" style="display:none;">
+                    <div class="ep-pitch-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;padding:3rem;box-shadow:0 4px 16px rgba(0,0,0,0.06);max-width:850px;margin:0 auto;">
+                        <div class="ep-brand-hdr" style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #f1f5f9;">
+                            <div class="ep-brand-icon" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#ffffff;background:linear-gradient(135deg,#10b981,#059669);flex-shrink:0;">RP</div>
+                            <div>
+                                <div class="ep-subtitle" style="font-size:0.85rem;color:#059669;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Presentacion</div>
+                                <h2 style="font-size:1.6rem;font-weight:800;color:#0f172a;">RinglyPro</h2>
+                            </div>
+                        </div>
+
+                        <div class="ep-stats" style="display:flex;gap:1rem;margin:0 0 2rem;flex-wrap:wrap;">
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#ecfdf5,#a7f3d0);border:1px solid #6ee7b7;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#059669;">3</b><span style="font-size:0.75rem;color:#64748b;">Agentes de Voz</span></div>
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#ecfdf5,#a7f3d0);border:1px solid #6ee7b7;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#059669;">24/7</b><span style="font-size:0.75rem;color:#64748b;">Autonomo</span></div>
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#ecfdf5,#a7f3d0);border:1px solid #6ee7b7;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#059669;">EN/ES</b><span style="font-size:0.75rem;color:#64748b;">Bilingue</span></div>
+                            <div class="ep-stat-pill" style="background:linear-gradient(135deg,#ecfdf5,#a7f3d0);border:1px solid #6ee7b7;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#059669;">$45</b><span style="font-size:0.75rem;color:#64748b;">Desde/mes</span></div>
+                        </div>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">RinglyPro es una <span class="ep-highlight" style="color:#059669;font-weight:700;">plataforma de fuerza de ventas con IA</span> que encuentra negocios, los llama automaticamente, captura leads y agenda citas -- todo sin que un humano tenga que levantar el telefono. Es el sistema todo-en-uno que convierte llamadas perdidas en ingresos agendados.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Los pequenos negocios pierden hasta el <strong style="color:#0f172a;">62% de las llamadas entrantes</strong> porque nadie esta disponible para contestar. Cada llamada perdida es un cliente perdido. RinglyPro elimina ese problema con tres agentes de voz con IA -- <strong style="color:#0f172a;">Rachel, Ana y Lina</strong> -- que contestan cada llamada, califican cada lead y agendan cada cita, las 24 horas del dia, los 7 dias de la semana, en ingles y espanol.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Pero RinglyPro no es solo un servicio para contestar llamadas. Es una maquina de ventas completa con <strong style="color:#0f172a;">cuatro capacidades principales</strong>:</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#059669;font-weight:700;">Recepcionista IA Entrante</span> -- Nunca pierdas una llamada. Rachel, Ana o Lina contestan al instante con una voz humana, entienden la intencion del llamante, califican el lead en tiempo real y agendan citas directamente en tu calendario. Sin musica de espera. Sin buzon de voz. Sin clientes perdidos.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#059669;font-weight:700;">Marcador de Ventas IA Saliente</span> -- RinglyPro no solo espera llamadas -- las hace. El marcador automatico con IA prospecta y contacta negocios o leads de tu pipeline, califica el interes y agenda reuniones en tu nombre. Tu equipo de ventas crece sin contratar mas personal.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#059669;font-weight:700;">Dashboard CRM Co-Piloto con IA</span> -- Cada llamada, cada lead, cada cita vive en un dashboard inteligente. Analitica en tiempo real, transcripciones de llamadas, puntuacion de leads, gestion de pipeline y seguimientos automatizados. Una app movil (iOS) te permite manejar todo desde tu bolsillo.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#059669;font-weight:700;">Arquitectura de Datos Zero-Copy</span> -- Potenciada por Twilio Segment, todos los datos de clientes viven en un unico almacen seguro. Sin duplicacion entre herramientas, sin conflictos de sincronizacion, sin registros desactualizados. Una sola fuente de verdad para cada interaccion -- desde la primera llamada hasta la conversion final.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Los precios comienzan en solo <strong style="color:#0f172a;">$45/mes</strong> por 500 tokens y 100 minutos de voz, escalando hasta un plan Profesional con capacidad ilimitada. Todos los planes incluyen llamadas IA entrantes y salientes -- haciendo que la automatizacion de ventas de nivel empresarial sea accesible para cualquier negocio.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">La plataforma es <strong style="color:#0f172a;">completamente bilingue desde el primer dia</strong>, construida sobre una arquitectura multi-tenant que sirve a multiples negocios desde una sola implementacion. Se integra con GoHighLevel CRM, sincroniza calendarios, envia confirmaciones por SMS y potencia el motor de IA detras de cada producto vertical de Digit2AI.</p>
+
+                        <p class="ep-closing" style="font-size:1.15rem;font-weight:700;color:#0f172a;margin-top:1.5rem;padding-top:1.5rem;border-top:2px solid #e2e8f0;font-style:italic;margin-bottom:0;">Deja de perder clientes por el buzon de voz. RinglyPro contesta cada llamada, agenda cada cita y hace crecer tus ventas -- todo en piloto automatico.</p>
+
+                        <div class="ep-google-close ep-google-close-rp" style="margin-top:2rem;padding:2rem;border-radius:16px;text-align:center;background:linear-gradient(135deg,#ecfdf5,#a7f3d0);border:2px solid #6ee7b7;">
+                            <p class="ep-gc-label" style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#059669;margin-bottom:0.75rem;">Declaracion de Cierre</p>
+                            <p style="font-size:1.2rem;font-weight:800;color:#0f172a;line-height:1.6;margin-bottom:0;">Cada llamada perdida es una venta perdida. Cada timbre sin contestar es dinero que se va. Tres agentes IA. Cobertura 24/7. Cero oportunidades perdidas. <span style="color:#059669;">RinglyPro -- tu equipo de ventas nunca duerme.</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== KANCHOAI PANEL ==================== -->
+            <div class="ep-panel" id="ep-panel-ka" style="display:none;">
+                <div class="ep-lang-wrap" style="display:flex;justify-content:center;gap:0;margin:2rem auto 2.5rem;background:#f1f5f9;border-radius:50px;padding:4px;max-width:280px;">
+                    <button class="ep-lang-btn ep-active" onclick="epSwitchLang('ka','en')" id="ep-lang-ka-en" style="flex:1;padding:10px 20px;border:none;border-radius:50px;font-weight:600;font-size:0.9rem;cursor:pointer;background:#2563eb;color:#ffffff;font-family:inherit;">English</button>
+                    <button class="ep-lang-btn" onclick="epSwitchLang('ka','es')" id="ep-lang-ka-es" style="flex:1;padding:10px 20px;border:none;border-radius:50px;font-weight:600;font-size:0.9rem;cursor:pointer;background:transparent;color:#64748b;font-family:inherit;">Espanol</button>
+                </div>
+
+                <!-- KA English -->
+                <div class="ep-content ep-visible" id="ep-ka-en">
+                    <div class="ep-pitch-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;padding:3rem;box-shadow:0 4px 16px rgba(0,0,0,0.06);max-width:850px;margin:0 auto;">
+                        <div class="ep-brand-hdr" style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #f1f5f9;">
+                            <div class="ep-brand-icon ep-brand-icon-ka" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#ffffff;background:linear-gradient(135deg,#f59e0b,#d97706);flex-shrink:0;">KA</div>
+                            <div>
+                                <div class="ep-subtitle" style="font-size:0.85rem;color:#d97706;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Presentation</div>
+                                <h2 style="font-size:1.6rem;font-weight:800;color:#0f172a;">KanchoAI</h2>
+                            </div>
+                        </div>
+
+                        <div class="ep-stats" style="display:flex;gap:1rem;margin:0 0 2rem;flex-wrap:wrap;">
+                            <div class="ep-stat-pill ep-stat-pill-amber" style="background:linear-gradient(135deg,#fffbeb,#fde68a);border:1px solid #fbbf24;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d97706;">40%</b><span style="font-size:0.75rem;color:#64748b;">Churn Reduction</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-amber" style="background:linear-gradient(135deg,#fffbeb,#fde68a);border:1px solid #fbbf24;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d97706;">2x</b><span style="font-size:0.75rem;color:#64748b;">Lead Conversion</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-amber" style="background:linear-gradient(135deg,#fffbeb,#fde68a);border:1px solid #fbbf24;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d97706;">$4,700</b><span style="font-size:0.75rem;color:#64748b;">Saved/Month</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-amber" style="background:linear-gradient(135deg,#fffbeb,#fde68a);border:1px solid #fbbf24;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d97706;">24/7</b><span style="font-size:0.75rem;color:#64748b;">AI Automation</span></div>
+                        </div>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">KanchoAI is an <span class="ep-highlight" style="color:#d97706;font-weight:700;">AI-powered business intelligence platform built specifically for martial arts schools and fitness businesses</span>. It's not a generic CRM with a martial arts skin. It's a purpose-built AI business officer that monitors school health, identifies revenue risks, and drives growth through intelligent automation.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Most martial arts school owners are great instructors but struggle with the business side. They lose students without knowing why, miss leads because they're on the mat, and have no real visibility into their school's financial health. <strong style="color:#0f172a;">KanchoAI changes that</strong> by giving every school owner an AI-powered command center that runs the business while they teach.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">The platform delivers <strong style="color:#0f172a;">four core capabilities</strong>:</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d97706;font-weight:700;">Real-Time Health Score Monitoring</span> -- Every school gets a dynamic 0-100 health score that combines retention rates, revenue trends, and lead pipeline metrics into one clear number. At a glance, owners know exactly how their school is performing -- no spreadsheets, no guesswork. The score updates in real time as data flows in.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d97706;font-weight:700;">AI Churn Detection & Retention</span> -- KanchoAI identifies at-risk students before they quit. Using attendance patterns, payment behavior, and engagement signals, the AI flags students likely to leave and automatically triggers retention campaigns -- personalized outreach via voice call, SMS, or email -- to save them before it's too late. Schools using KanchoAI see up to a <strong style="color:#0f172a;">40% reduction in monthly churn</strong>.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d97706;font-weight:700;">AI Lead Management & Conversion</span> -- Every inbound lead is scored, qualified, and followed up automatically. The AI books trial classes, sends reminders, and nurtures prospects through the enrollment funnel. No lead falls through the cracks. Schools report a <strong style="color:#0f172a;">2x improvement in lead conversion rates</strong>.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d97706;font-weight:700;">24/7 AI Receptionist</span> -- Powered by the same voice AI technology as RinglyPro, KanchoAI's receptionist answers every call, qualifies every inquiry, and books every appointment -- in English and Spanish, around the clock. School owners never miss a call again, even when they're teaching class.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Pricing starts at <strong style="color:#0f172a;">$197/month</strong> for the Intelligence tier (analytics and monitoring), scales to <strong style="color:#0f172a;">$397/month</strong> for the Pro tier (adds AI receptionist, retention campaigns, and lead automation), and offers a fully white-labeled Enterprise solution for multi-location operators. Every plan includes a <strong style="color:#0f172a;">14-day free trial</strong>.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">KanchoAI is <strong style="color:#0f172a;">fully bilingual</strong> and built on the Digit2AI shared technology stack -- which means it inherits the same voice AI, CRM integration, and zero-copy data architecture that powers all of our platforms. Schools save an average of <strong style="color:#0f172a;">$4,700 per month</strong> in recovered revenue from reduced churn and increased conversions.</p>
+
+                        <p class="ep-closing" style="font-size:1.15rem;font-weight:700;color:#0f172a;margin-top:1.5rem;padding-top:1.5rem;border-top:2px solid #e2e8f0;font-style:italic;margin-bottom:0;">Your dojo deserves a business brain as sharp as your black belt. KanchoAI -- the AI that runs your school while you run your classes.</p>
+
+                        <div class="ep-google-close ep-google-close-ka" style="margin-top:2rem;padding:2rem;border-radius:16px;text-align:center;background:linear-gradient(135deg,#fffbeb,#fde68a);border:2px solid #fbbf24;">
+                            <p class="ep-gc-label" style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#d97706;margin-bottom:0.75rem;">Closing Statement</p>
+                            <p style="font-size:1.2rem;font-weight:800;color:#0f172a;line-height:1.6;margin-bottom:0;">40% less churn. 2x more conversions. $4,700 saved every month. One AI platform built for the martial arts industry -- and no one else is doing it. <span style="color:#d97706;">KanchoAI -- your school's smartest black belt.</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KA Spanish -->
+                <div class="ep-content" id="ep-ka-es" style="display:none;">
+                    <div class="ep-pitch-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;padding:3rem;box-shadow:0 4px 16px rgba(0,0,0,0.06);max-width:850px;margin:0 auto;">
+                        <div class="ep-brand-hdr" style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #f1f5f9;">
+                            <div class="ep-brand-icon ep-brand-icon-ka" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#ffffff;background:linear-gradient(135deg,#f59e0b,#d97706);flex-shrink:0;">KA</div>
+                            <div>
+                                <div class="ep-subtitle" style="font-size:0.85rem;color:#d97706;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Presentacion</div>
+                                <h2 style="font-size:1.6rem;font-weight:800;color:#0f172a;">KanchoAI</h2>
+                            </div>
+                        </div>
+
+                        <div class="ep-stats" style="display:flex;gap:1rem;margin:0 0 2rem;flex-wrap:wrap;">
+                            <div class="ep-stat-pill ep-stat-pill-amber" style="background:linear-gradient(135deg,#fffbeb,#fde68a);border:1px solid #fbbf24;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d97706;">40%</b><span style="font-size:0.75rem;color:#64748b;">Menos Desercion</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-amber" style="background:linear-gradient(135deg,#fffbeb,#fde68a);border:1px solid #fbbf24;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d97706;">2x</b><span style="font-size:0.75rem;color:#64748b;">Conversion Leads</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-amber" style="background:linear-gradient(135deg,#fffbeb,#fde68a);border:1px solid #fbbf24;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d97706;">$4,700</b><span style="font-size:0.75rem;color:#64748b;">Ahorro/Mes</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-amber" style="background:linear-gradient(135deg,#fffbeb,#fde68a);border:1px solid #fbbf24;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d97706;">24/7</b><span style="font-size:0.75rem;color:#64748b;">Automatizacion IA</span></div>
+                        </div>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">KanchoAI es una <span class="ep-highlight" style="color:#d97706;font-weight:700;">plataforma de inteligencia de negocio con IA construida especificamente para escuelas de artes marciales y negocios fitness</span>. No es un CRM generico con una capa de artes marciales. Es un oficial de negocio con IA disenado a proposito que monitorea la salud de la escuela, identifica riesgos de ingresos y impulsa el crecimiento a traves de automatizacion inteligente.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">La mayoria de duenos de escuelas de artes marciales son excelentes instructores pero luchan con el lado del negocio. Pierden estudiantes sin saber por que, pierden leads porque estan en el tatami, y no tienen visibilidad real sobre la salud financiera de su escuela. <strong style="color:#0f172a;">KanchoAI cambia eso</strong> dandole a cada dueno de escuela un centro de comando con IA que administra el negocio mientras ellos ensenan.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">La plataforma ofrece <strong style="color:#0f172a;">cuatro capacidades principales</strong>:</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d97706;font-weight:700;">Monitoreo de Puntaje de Salud en Tiempo Real</span> -- Cada escuela obtiene un puntaje de salud dinamico de 0-100 que combina tasas de retencion, tendencias de ingresos y metricas del pipeline de leads en un solo numero claro. De un vistazo, los duenos saben exactamente como esta su escuela -- sin hojas de calculo, sin adivinanzas. El puntaje se actualiza en tiempo real.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d97706;font-weight:700;">Deteccion de Desercion y Retencion con IA</span> -- KanchoAI identifica estudiantes en riesgo antes de que se vayan. Usando patrones de asistencia, comportamiento de pago y senales de compromiso, la IA senala estudiantes que probablemente dejaran y automaticamente activa campanas de retencion -- contacto personalizado por llamada de voz, SMS o email -- para salvarlos antes de que sea tarde. Las escuelas que usan KanchoAI ven hasta un <strong style="color:#0f172a;">40% de reduccion en desercion mensual</strong>.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d97706;font-weight:700;">Gestion y Conversion de Leads con IA</span> -- Cada lead entrante es puntuado, calificado y seguido automaticamente. La IA agenda clases de prueba, envia recordatorios y nutre prospectos a traves del embudo de inscripcion. Ningun lead se pierde. Las escuelas reportan una <strong style="color:#0f172a;">mejora de 2x en tasas de conversion de leads</strong>.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d97706;font-weight:700;">Recepcionista IA 24/7</span> -- Potenciada por la misma tecnologia de voz con IA que RinglyPro, la recepcionista de KanchoAI contesta cada llamada, califica cada consulta y agenda cada cita -- en ingles y espanol, las 24 horas. Los duenos de escuela nunca vuelven a perder una llamada, incluso cuando estan dando clase.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Los precios comienzan en <strong style="color:#0f172a;">$197/mes</strong> para el nivel Intelligence (analitica y monitoreo), escalan a <strong style="color:#0f172a;">$397/mes</strong> para el nivel Pro (agrega recepcionista IA, campanas de retencion y automatizacion de leads), y ofrece una solucion Enterprise completamente de marca blanca para operadores multi-ubicacion. Todos los planes incluyen <strong style="color:#0f172a;">14 dias de prueba gratis</strong>.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">KanchoAI es <strong style="color:#0f172a;">completamente bilingue</strong> y esta construido sobre la tecnologia compartida de Digit2AI -- lo que significa que hereda la misma voz con IA, integracion CRM y arquitectura de datos zero-copy que potencia todas nuestras plataformas. Las escuelas ahorran un promedio de <strong style="color:#0f172a;">$4,700 al mes</strong> en ingresos recuperados por menos desercion y mas conversiones.</p>
+
+                        <p class="ep-closing" style="font-size:1.15rem;font-weight:700;color:#0f172a;margin-top:1.5rem;padding-top:1.5rem;border-top:2px solid #e2e8f0;font-style:italic;margin-bottom:0;">Tu dojo merece un cerebro de negocio tan afilado como tu cinturon negro. KanchoAI -- la IA que administra tu escuela mientras tu das las clases.</p>
+
+                        <div class="ep-google-close ep-google-close-ka" style="margin-top:2rem;padding:2rem;border-radius:16px;text-align:center;background:linear-gradient(135deg,#fffbeb,#fde68a);border:2px solid #fbbf24;">
+                            <p class="ep-gc-label" style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#d97706;margin-bottom:0.75rem;">Declaracion de Cierre</p>
+                            <p style="font-size:1.2rem;font-weight:800;color:#0f172a;line-height:1.6;margin-bottom:0;">40% menos desercion. 2x mas conversiones. $4,700 ahorrados cada mes. Una plataforma de IA construida para la industria de artes marciales -- y nadie mas lo esta haciendo. <span style="color:#d97706;">KanchoAI -- el cinturon negro mas inteligente de tu escuela.</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== STORE HEALTH AI PANEL ==================== -->
+            <div class="ep-panel" id="ep-panel-sh" style="display:none;">
+                <div class="ep-lang-wrap" style="display:flex;justify-content:center;gap:0;margin:2rem auto 2.5rem;background:#f1f5f9;border-radius:50px;padding:4px;max-width:280px;">
+                    <button class="ep-lang-btn ep-active" onclick="epSwitchLang('sh','en')" id="ep-lang-sh-en" style="flex:1;padding:10px 20px;border:none;border-radius:50px;font-weight:600;font-size:0.9rem;cursor:pointer;background:#2563eb;color:#ffffff;font-family:inherit;">English</button>
+                    <button class="ep-lang-btn" onclick="epSwitchLang('sh','es')" id="ep-lang-sh-es" style="flex:1;padding:10px 20px;border:none;border-radius:50px;font-weight:600;font-size:0.9rem;cursor:pointer;background:transparent;color:#64748b;font-family:inherit;">Espanol</button>
+                </div>
+
+                <!-- SH English -->
+                <div class="ep-content ep-visible" id="ep-sh-en">
+                    <div class="ep-pitch-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;padding:3rem;box-shadow:0 4px 16px rgba(0,0,0,0.06);max-width:850px;margin:0 auto;">
+                        <div class="ep-brand-hdr" style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #f1f5f9;">
+                            <div class="ep-brand-icon ep-brand-icon-sh" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#ffffff;background:linear-gradient(135deg,#8b5cf6,#7c3aed);flex-shrink:0;">SH</div>
+                            <div>
+                                <div class="ep-subtitle" style="font-size:0.85rem;color:#7c3aed;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Presentation</div>
+                                <h2 style="font-size:1.6rem;font-weight:800;color:#0f172a;">Store Health AI</h2>
+                            </div>
+                        </div>
+
+                        <div class="ep-stats" style="display:flex;gap:1rem;margin:0 0 2rem;flex-wrap:wrap;">
+                            <div class="ep-stat-pill ep-stat-pill-purple" style="background:linear-gradient(135deg,#f5f3ff,#ddd6fe);border:1px solid #a78bfa;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#7c3aed;">24/7</b><span style="font-size:0.75rem;color:#64748b;">Monitoring</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-purple" style="background:linear-gradient(135deg,#f5f3ff,#ddd6fe);border:1px solid #a78bfa;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#7c3aed;">4-Level</b><span style="font-size:0.75rem;color:#64748b;">Escalation</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-purple" style="background:linear-gradient(135deg,#f5f3ff,#ddd6fe);border:1px solid #a78bfa;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#7c3aed;">AI</b><span style="font-size:0.75rem;color:#64748b;">Voice Calls</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-purple" style="background:linear-gradient(135deg,#f5f3ff,#ddd6fe);border:1px solid #a78bfa;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#7c3aed;">Multi</b><span style="font-size:0.75rem;color:#64748b;">Location</span></div>
+                        </div>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Store Health AI is an <span class="ep-highlight" style="color:#7c3aed;font-weight:700;">AI-powered retail operations intelligence platform</span> that monitors every store in your network 24/7, detects operational risks in real time, and automatically escalates critical issues -- including calling store managers by phone when immediate action is required.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Multi-location retail operators lose millions every year to problems they didn't catch in time -- <strong style="color:#0f172a;">staffing gaps, declining sales, inventory shortages, and traffic drops</strong>. By the time a district manager sees the numbers, the damage is done. Store Health AI eliminates that blind spot with continuous monitoring and intelligent escalation.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">The platform delivers <strong style="color:#0f172a;">five core capabilities</strong>:</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#7c3aed;font-weight:700;">Red/Yellow/Green Health System</span> -- Every store gets a dynamic 0-100 health score combining sales performance, labor coverage, inventory levels, and foot traffic into one clear signal. Green means healthy. Yellow means watch closely. Red means act now. District and regional managers see their entire network at a glance -- no more digging through spreadsheets.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#7c3aed;font-weight:700;">KPI Variance Monitoring</span> -- The system tracks dozens of KPIs across sales, labor, inventory, and traffic -- comparing each metric against rolling 4-week baselines, same-period-last-year, or absolute targets. When a KPI crosses a threshold, an alert fires automatically. Every variance is calculated, documented, and visible in real time.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#7c3aed;font-weight:700;">4-Level Automated Escalation Engine</span> -- This is what makes Store Health AI different from a dashboard. When a store goes red, the system doesn't just show a notification -- it acts. <strong style="color:#0f172a;">Level 1-2</strong>: Dashboard + SMS/email alerts to the store manager. <strong style="color:#0f172a;">Level 3</strong>: An AI voice agent calls the store manager's phone, explains the issue, and captures their response. <strong style="color:#0f172a;">Level 4</strong>: The issue escalates to district and regional managers for intervention. SLA timers ensure nothing falls through the cracks.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#7c3aed;font-weight:700;">AI Voice Calling</span> -- Powered by Twilio, the AI calls store managers with customizable scripts based on severity. A green call says "Your store is healthy -- no action needed." A red call says "Your store is at risk. Sales are down 15% against baseline. I've created a priority task." Every call is recorded, transcribed, and logged with sentiment analysis. The manager can acknowledge, request a callback, or escalate further.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#7c3aed;font-weight:700;">Risk Prediction & Executive Intelligence</span> -- Machine learning models predict sales declines, labor shortages, and inventory problems before they happen. The system generates AI-written executive summaries with root cause analysis, business impact assessments, and actionable recommendations -- ready for C-suite briefings.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Built for <strong style="color:#0f172a;">multi-location retail chains</strong> -- dollar stores, convenience stores, QSR restaurants, and regional retailers. The platform supports full organizational hierarchies: organization, region, district, and store. Every threshold, script, and escalation rule is configurable per organization.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">The real-time React dashboard includes <strong style="color:#0f172a;">WebSocket updates</strong>, so alerts, KPI changes, and call completions appear instantly. A complete audit trail tracks every alert, escalation, task, and AI call for compliance and accountability.</p>
+
+                        <p class="ep-closing" style="font-size:1.15rem;font-weight:700;color:#0f172a;margin-top:1.5rem;padding-top:1.5rem;border-top:2px solid #e2e8f0;font-style:italic;margin-bottom:0;">Stop discovering problems after they cost you money. Store Health AI watches every store, every metric, every hour -- and acts before you even know there's a problem.</p>
+
+                        <div class="ep-google-close ep-google-close-sh" style="margin-top:2rem;padding:2rem;border-radius:16px;text-align:center;background:linear-gradient(135deg,#f5f3ff,#ddd6fe);border:2px solid #a78bfa;">
+                            <p class="ep-gc-label" style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#7c3aed;margin-bottom:0.75rem;">Closing Statement</p>
+                            <p style="font-size:1.2rem;font-weight:800;color:#0f172a;line-height:1.6;margin-bottom:0;">24/7 monitoring. Automatic escalation. AI voice calls to your managers. No store goes unwatch. No problem goes unnoticed. <span style="color:#7c3aed;">Store Health AI -- your operations never sleep.</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SH Spanish -->
+                <div class="ep-content" id="ep-sh-es" style="display:none;">
+                    <div class="ep-pitch-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;padding:3rem;box-shadow:0 4px 16px rgba(0,0,0,0.06);max-width:850px;margin:0 auto;">
+                        <div class="ep-brand-hdr" style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #f1f5f9;">
+                            <div class="ep-brand-icon ep-brand-icon-sh" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#ffffff;background:linear-gradient(135deg,#8b5cf6,#7c3aed);flex-shrink:0;">SH</div>
+                            <div>
+                                <div class="ep-subtitle" style="font-size:0.85rem;color:#7c3aed;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Presentacion</div>
+                                <h2 style="font-size:1.6rem;font-weight:800;color:#0f172a;">Store Health AI</h2>
+                            </div>
+                        </div>
+
+                        <div class="ep-stats" style="display:flex;gap:1rem;margin:0 0 2rem;flex-wrap:wrap;">
+                            <div class="ep-stat-pill ep-stat-pill-purple" style="background:linear-gradient(135deg,#f5f3ff,#ddd6fe);border:1px solid #a78bfa;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#7c3aed;">24/7</b><span style="font-size:0.75rem;color:#64748b;">Monitoreo</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-purple" style="background:linear-gradient(135deg,#f5f3ff,#ddd6fe);border:1px solid #a78bfa;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#7c3aed;">4 Niveles</b><span style="font-size:0.75rem;color:#64748b;">Escalamiento</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-purple" style="background:linear-gradient(135deg,#f5f3ff,#ddd6fe);border:1px solid #a78bfa;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#7c3aed;">IA</b><span style="font-size:0.75rem;color:#64748b;">Llamadas Voz</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-purple" style="background:linear-gradient(135deg,#f5f3ff,#ddd6fe);border:1px solid #a78bfa;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#7c3aed;">Multi</b><span style="font-size:0.75rem;color:#64748b;">Ubicacion</span></div>
+                        </div>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Store Health AI es una <span class="ep-highlight" style="color:#7c3aed;font-weight:700;">plataforma de inteligencia operativa para retail potenciada por IA</span> que monitorea cada tienda de tu red las 24 horas, detecta riesgos operativos en tiempo real y automaticamente escala problemas criticos -- incluyendo llamar a los gerentes de tienda por telefono cuando se requiere accion inmediata.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Los operadores de retail multi-ubicacion pierden millones cada ano por problemas que no detectaron a tiempo -- <strong style="color:#0f172a;">brechas de personal, ventas en declive, escasez de inventario y caidas de trafico</strong>. Para cuando un gerente de distrito ve los numeros, el dano ya esta hecho. Store Health AI elimina ese punto ciego con monitoreo continuo y escalamiento inteligente.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">La plataforma ofrece <strong style="color:#0f172a;">cinco capacidades principales</strong>:</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#7c3aed;font-weight:700;">Sistema de Salud Rojo/Amarillo/Verde</span> -- Cada tienda obtiene un puntaje de salud dinamico de 0-100 que combina rendimiento de ventas, cobertura laboral, niveles de inventario y trafico de clientes en una sola senal clara. Verde significa saludable. Amarillo significa vigilar de cerca. Rojo significa actuar ahora. Los gerentes de distrito y region ven toda su red de un vistazo -- sin buscar en hojas de calculo.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#7c3aed;font-weight:700;">Monitoreo de Variacion de KPIs</span> -- El sistema rastrea docenas de KPIs en ventas, personal, inventario y trafico -- comparando cada metrica contra promedios moviles de 4 semanas, mismo periodo del ano anterior o metas absolutas. Cuando un KPI cruza un umbral, una alerta se dispara automaticamente. Cada variacion es calculada, documentada y visible en tiempo real.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#7c3aed;font-weight:700;">Motor de Escalamiento Automatico de 4 Niveles</span> -- Esto es lo que hace diferente a Store Health AI de un dashboard. Cuando una tienda pasa a rojo, el sistema no solo muestra una notificacion -- actua. <strong style="color:#0f172a;">Nivel 1-2</strong>: Dashboard + alertas SMS/email al gerente de tienda. <strong style="color:#0f172a;">Nivel 3</strong>: Un agente de voz con IA llama al telefono del gerente, explica el problema y captura su respuesta. <strong style="color:#0f172a;">Nivel 4</strong>: El problema escala a gerentes de distrito y region para intervencion. Temporizadores SLA aseguran que nada se pierda.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#7c3aed;font-weight:700;">Llamadas de Voz con IA</span> -- Potenciado por Twilio, la IA llama a gerentes de tienda con guiones personalizables segun la severidad. Una llamada verde dice "Tu tienda esta saludable -- no se requiere accion." Una llamada roja dice "Tu tienda esta en riesgo. Las ventas bajaron 15% contra la linea base. He creado una tarea prioritaria." Cada llamada es grabada, transcrita y registrada con analisis de sentimiento.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#7c3aed;font-weight:700;">Prediccion de Riesgos e Inteligencia Ejecutiva</span> -- Modelos de aprendizaje automatico predicen caidas en ventas, escasez de personal y problemas de inventario antes de que ocurran. El sistema genera resumenes ejecutivos escritos por IA con analisis de causa raiz, evaluaciones de impacto al negocio y recomendaciones accionables -- listos para reuniones de directivos.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Construido para <strong style="color:#0f172a;">cadenas de retail multi-ubicacion</strong> -- tiendas de descuento, tiendas de conveniencia, restaurantes QSR y retailers regionales. La plataforma soporta jerarquias organizacionales completas: organizacion, region, distrito y tienda. Cada umbral, guion y regla de escalamiento es configurable por organizacion.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">El dashboard React en tiempo real incluye <strong style="color:#0f172a;">actualizaciones WebSocket</strong>, asi que alertas, cambios de KPI y llamadas completadas aparecen al instante. Un rastro de auditoria completo registra cada alerta, escalamiento, tarea y llamada de IA para cumplimiento y rendicion de cuentas.</p>
+
+                        <p class="ep-closing" style="font-size:1.15rem;font-weight:700;color:#0f172a;margin-top:1.5rem;padding-top:1.5rem;border-top:2px solid #e2e8f0;font-style:italic;margin-bottom:0;">Deja de descubrir problemas despues de que te cuestan dinero. Store Health AI vigila cada tienda, cada metrica, cada hora -- y actua antes de que sepas que hay un problema.</p>
+
+                        <div class="ep-google-close ep-google-close-sh" style="margin-top:2rem;padding:2rem;border-radius:16px;text-align:center;background:linear-gradient(135deg,#f5f3ff,#ddd6fe);border:2px solid #a78bfa;">
+                            <p class="ep-gc-label" style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#7c3aed;margin-bottom:0.75rem;">Declaracion de Cierre</p>
+                            <p style="font-size:1.2rem;font-weight:800;color:#0f172a;line-height:1.6;margin-bottom:0;">Monitoreo 24/7. Escalamiento automatico. Llamadas de voz con IA a tus gerentes. Ninguna tienda queda sin vigilar. Ningun problema pasa desapercibido. <span style="color:#7c3aed;">Store Health AI -- tus operaciones nunca duermen.</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== TUNJORACING PANEL ==================== -->
+            <div class="ep-panel" id="ep-panel-tr" style="display:none;">
+                <div class="ep-lang-wrap" style="display:flex;justify-content:center;gap:0;margin:2rem auto 2.5rem;background:#f1f5f9;border-radius:50px;padding:4px;max-width:280px;">
+                    <button class="ep-lang-btn ep-active" onclick="epSwitchLang('tr','en')" id="ep-lang-tr-en" style="flex:1;padding:10px 20px;border:none;border-radius:50px;font-weight:600;font-size:0.9rem;cursor:pointer;background:#2563eb;color:#ffffff;font-family:inherit;">English</button>
+                    <button class="ep-lang-btn" onclick="epSwitchLang('tr','es')" id="ep-lang-tr-es" style="flex:1;padding:10px 20px;border:none;border-radius:50px;font-weight:600;font-size:0.9rem;cursor:pointer;background:transparent;color:#64748b;font-family:inherit;">Espanol</button>
+                </div>
+
+                <!-- TR English -->
+                <div class="ep-content ep-visible" id="ep-tr-en">
+                    <div class="ep-pitch-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;padding:3rem;box-shadow:0 4px 16px rgba(0,0,0,0.06);max-width:850px;margin:0 auto;">
+                        <div class="ep-brand-hdr" style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #f1f5f9;">
+                            <div class="ep-brand-icon ep-brand-icon-tr" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#ffffff;background:linear-gradient(135deg,#dc2626,#991b1b);flex-shrink:0;">TR</div>
+                            <div>
+                                <div class="ep-subtitle" style="font-size:0.85rem;color:#dc2626;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Presentation</div>
+                                <h2 style="font-size:1.6rem;font-weight:800;color:#0f172a;">TunjoRacing</h2>
+                            </div>
+                        </div>
+
+                        <div class="ep-stats" style="display:flex;gap:1rem;margin:0 0 2rem;flex-wrap:wrap;">
+                            <div class="ep-stat-pill ep-stat-pill-red" style="background:linear-gradient(135deg,#fef2f2,#fecaca);border:1px solid #fca5a5;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#dc2626;">15+</b><span style="font-size:0.75rem;color:#64748b;">Years Experience</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-red" style="background:linear-gradient(135deg,#fef2f2,#fecaca);border:1px solid #fca5a5;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#dc2626;">5-in-1</b><span style="font-size:0.75rem;color:#64748b;">Platform</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-red" style="background:linear-gradient(135deg,#fef2f2,#fecaca);border:1px solid #fca5a5;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#dc2626;">AI</b><span style="font-size:0.75rem;color:#64748b;">Powered</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-red" style="background:linear-gradient(135deg,#fef2f2,#fecaca);border:1px solid #fca5a5;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#dc2626;">EN/ES</b><span style="font-size:0.75rem;color:#64748b;">Bilingual</span></div>
+                        </div>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">TunjoRacing is the <span class="ep-highlight" style="color:#dc2626;font-weight:700;">all-in-one digital platform for professional racing drivers</span>. Built from 15+ years of real-world experience in international motorsport -- from karting circuits to IMSA and Le Mans -- we know exactly what it takes to build a racing career from the ground up. And we've turned that knowledge into a platform that any driver can use.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Most aspiring drivers have the talent but lack the business infrastructure. They don't have a professional website, a fan community, a way to find sponsors, or a press presence. TunjoRacing solves all of that with <strong style="color:#0f172a;">five integrated services</strong> under one roof:</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#dc2626;font-weight:700;">Website Ecosystem</span> -- A complete professional website built for motorsport. Race schedule, results, driver bio, media galleries, team pages, and real-time content updates. Everything a driver needs to look professional and be taken seriously by sponsors, media, and fans.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#dc2626;font-weight:700;">Fan Club</span> -- A dedicated fan community platform to grow, engage, and monetize your audience. Exclusive content, membership tiers, race updates, behind-the-scenes access, and direct engagement tools. We teach drivers how to capture fans and turn followers into a loyal community that sponsors want to reach.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#dc2626;font-weight:700;">Sponsor Program</span> -- This is where TunjoRacing really stands out. We provide an <strong style="color:#0f172a;">AI-powered outbound dialer</strong> that actively prospects and contacts potential sponsors on the driver's behalf. Once a sponsor is onboarded, they get access to a <strong style="color:#0f172a;">real-time sponsor dashboard</strong> where they can track campaign performance, media exposure, social reach, and ROI -- all in one place. No more chasing sponsors with PDFs and spreadsheets.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#dc2626;font-weight:700;">Online Store</span> -- A full e-commerce platform with two storefronts: one for the driver to sell their own merchandise -- helmets, suits, apparel, collectibles -- and a second portal where sponsors can list and sell their own products and services directly to the driver's fan base. Everyone wins.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#dc2626;font-weight:700;">Press Release Manager</span> -- A full end-to-end press release system. Create, approve, publish, and distribute press releases to credentialed media through a secure press portal. Journalists log in with credentials, access embargoed content, and download press kits. It's the same workflow used by major racing teams -- now available to every driver on the platform.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">The entire platform is <strong style="color:#0f172a;">AI-powered and bilingual</strong> in English and Spanish. From AI voice agents that handle sponsor outreach 24/7 to automated fan engagement and intelligent press distribution -- TunjoRacing gives drivers the same digital infrastructure that top-tier racing teams spend millions to build.</p>
+
+                        <p class="ep-closing" style="font-size:1.15rem;font-weight:700;color:#0f172a;margin-top:1.5rem;padding-top:1.5rem;border-top:2px solid #e2e8f0;font-style:italic;margin-bottom:0;">You focus on the track. We handle everything else. TunjoRacing -- the platform that turns talented drivers into professional racing brands.</p>
+
+                        <div class="ep-google-close ep-google-close-tr" style="margin-top:2rem;padding:2rem;border-radius:16px;text-align:center;background:linear-gradient(135deg,#fef2f2,#fecaca);border:2px solid #fca5a5;">
+                            <p class="ep-gc-label" style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#dc2626;margin-bottom:0.75rem;">Closing Statement</p>
+                            <p style="font-size:1.2rem;font-weight:800;color:#0f172a;line-height:1.6;margin-bottom:0;">15 years of racing. Five integrated services. One platform. The next generation of racing champions won't just be fast -- they'll be brands. <span style="color:#dc2626;">TunjoRacing -- where talent meets technology.</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TR Spanish -->
+                <div class="ep-content" id="ep-tr-es" style="display:none;">
+                    <div class="ep-pitch-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;padding:3rem;box-shadow:0 4px 16px rgba(0,0,0,0.06);max-width:850px;margin:0 auto;">
+                        <div class="ep-brand-hdr" style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #f1f5f9;">
+                            <div class="ep-brand-icon ep-brand-icon-tr" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#ffffff;background:linear-gradient(135deg,#dc2626,#991b1b);flex-shrink:0;">TR</div>
+                            <div>
+                                <div class="ep-subtitle" style="font-size:0.85rem;color:#dc2626;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Presentation</div>
+                                <h2 style="font-size:1.6rem;font-weight:800;color:#0f172a;">TunjoRacing</h2>
+                            </div>
+                        </div>
+
+                        <div class="ep-stats" style="display:flex;gap:1rem;margin:0 0 2rem;flex-wrap:wrap;">
+                            <div class="ep-stat-pill ep-stat-pill-red" style="background:linear-gradient(135deg,#fef2f2,#fecaca);border:1px solid #fca5a5;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#dc2626;">15+</b><span style="font-size:0.75rem;color:#64748b;">Anos Experiencia</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-red" style="background:linear-gradient(135deg,#fef2f2,#fecaca);border:1px solid #fca5a5;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#dc2626;">5-en-1</b><span style="font-size:0.75rem;color:#64748b;">Plataforma</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-red" style="background:linear-gradient(135deg,#fef2f2,#fecaca);border:1px solid #fca5a5;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#dc2626;">IA</b><span style="font-size:0.75rem;color:#64748b;">Potenciada</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-red" style="background:linear-gradient(135deg,#fef2f2,#fecaca);border:1px solid #fca5a5;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#dc2626;">EN/ES</b><span style="font-size:0.75rem;color:#64748b;">Bilingue</span></div>
+                        </div>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">TunjoRacing es la <span class="ep-highlight" style="color:#dc2626;font-weight:700;">plataforma digital todo-en-uno para pilotos de carreras profesionales</span>. Construida con mas de 15 anos de experiencia real en motorsport internacional -- desde circuitos de karting hasta IMSA y Le Mans -- sabemos exactamente lo que se necesita para construir una carrera como piloto desde cero. Y convertimos ese conocimiento en una plataforma que cualquier piloto puede usar.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">La mayoria de pilotos aspirantes tienen el talento pero les falta la infraestructura de negocio. No tienen un sitio web profesional, una comunidad de fans, una forma de conseguir patrocinadores, ni presencia en prensa. TunjoRacing resuelve todo eso con <strong style="color:#0f172a;">cinco servicios integrados</strong> bajo un mismo techo:</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#dc2626;font-weight:700;">Ecosistema Web</span> -- Un sitio web profesional completo disenado para motorsport. Calendario de carreras, resultados, biografia del piloto, galerias de medios, paginas del equipo y actualizaciones de contenido en tiempo real. Todo lo que un piloto necesita para verse profesional y ser tomado en serio por patrocinadores, medios y fans.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#dc2626;font-weight:700;">Club de Fans</span> -- Una plataforma dedicada para crecer, conectar y monetizar tu audiencia. Contenido exclusivo, niveles de membresia, actualizaciones de carreras, acceso tras bambalinas y herramientas de interaccion directa. Ensenamos a los pilotos como capturar fans y convertir seguidores en una comunidad leal que los patrocinadores quieren alcanzar.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#dc2626;font-weight:700;">Programa de Patrocinadores</span> -- Aqui es donde TunjoRacing realmente se destaca. Proporcionamos un <strong style="color:#0f172a;">marcador automatico con IA</strong> que activamente busca y contacta patrocinadores potenciales en nombre del piloto. Una vez que un patrocinador se incorpora, obtiene acceso a un <strong style="color:#0f172a;">dashboard de patrocinador en tiempo real</strong> donde puede rastrear rendimiento de campanas, exposicion en medios, alcance social y retorno de inversion -- todo en un solo lugar. No mas perseguir patrocinadores con PDFs y hojas de calculo.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#dc2626;font-weight:700;">Tienda Online</span> -- Una plataforma de e-commerce completa con dos tiendas: una para que el piloto venda su propio merchandising -- cascos, trajes, ropa, coleccionables -- y un segundo portal donde los patrocinadores pueden listar y vender sus propios productos y servicios directamente a la base de fans del piloto. Todos ganan.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#dc2626;font-weight:700;">Gestor de Comunicados de Prensa</span> -- Un sistema completo de comunicados de prensa de principio a fin. Crea, aprueba, publica y distribuye comunicados a medios acreditados a traves de un portal de prensa seguro. Los periodistas inician sesion con credenciales, acceden a contenido embargado y descargan kits de prensa. Es el mismo flujo de trabajo que usan los grandes equipos de carreras -- ahora disponible para cada piloto en la plataforma.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Toda la plataforma esta <strong style="color:#0f172a;">potenciada por IA y es bilingue</strong> en ingles y espanol. Desde agentes de voz con IA que gestionan la busqueda de patrocinadores las 24 horas, hasta interaccion automatizada con fans y distribucion inteligente de prensa -- TunjoRacing le da a los pilotos la misma infraestructura digital que los equipos de primer nivel gastan millones en construir.</p>
+
+                        <p class="ep-closing" style="font-size:1.15rem;font-weight:700;color:#0f172a;margin-top:1.5rem;padding-top:1.5rem;border-top:2px solid #e2e8f0;font-style:italic;margin-bottom:0;">Tu te concentras en la pista. Nosotros nos encargamos de todo lo demas. TunjoRacing -- la plataforma que convierte pilotos con talento en marcas profesionales de carreras.</p>
+
+                        <div class="ep-google-close ep-google-close-tr" style="margin-top:2rem;padding:2rem;border-radius:16px;text-align:center;background:linear-gradient(135deg,#fef2f2,#fecaca);border:2px solid #fca5a5;">
+                            <p class="ep-gc-label" style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#dc2626;margin-bottom:0.75rem;">Declaracion de Cierre</p>
+                            <p style="font-size:1.2rem;font-weight:800;color:#0f172a;line-height:1.6;margin-bottom:0;">15 anos de carreras. Cinco servicios integrados. Una plataforma. La proxima generacion de campeones no solo sera rapida -- seran marcas. <span style="color:#dc2626;">TunjoRacing -- donde el talento se encuentra con la tecnologia.</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== RONIN BROTHERHOOD PANEL ==================== -->
+            <div class="ep-panel" id="ep-panel-rb" style="display:none;">
+                <div class="ep-lang-wrap" style="display:flex;justify-content:center;gap:0;margin:2rem auto 2.5rem;background:#f1f5f9;border-radius:50px;padding:4px;max-width:280px;">
+                    <button class="ep-lang-btn ep-active" onclick="epSwitchLang('rb','en')" id="ep-lang-rb-en" style="flex:1;padding:10px 20px;border:none;border-radius:50px;font-weight:600;font-size:0.9rem;cursor:pointer;background:#2563eb;color:#ffffff;font-family:inherit;">English</button>
+                    <button class="ep-lang-btn" onclick="epSwitchLang('rb','es')" id="ep-lang-rb-es" style="flex:1;padding:10px 20px;border:none;border-radius:50px;font-weight:600;font-size:0.9rem;cursor:pointer;background:transparent;color:#64748b;font-family:inherit;">Espanol</button>
+                </div>
+
+                <!-- RB English -->
+                <div class="ep-content ep-visible" id="ep-rb-en">
+                    <div class="ep-pitch-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;padding:3rem;box-shadow:0 4px 16px rgba(0,0,0,0.06);max-width:850px;margin:0 auto;">
+                        <div class="ep-brand-hdr" style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #f1f5f9;">
+                            <div class="ep-brand-icon ep-brand-icon-rb" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#ffffff;background:linear-gradient(135deg,#d10404,#8b0000);flex-shrink:0;">RB</div>
+                            <div>
+                                <div class="ep-subtitle" style="font-size:0.85rem;color:#d10404;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Presentation</div>
+                                <h2 style="font-size:1.6rem;font-weight:800;color:#0f172a;">Ronin Brotherhood</h2>
+                            </div>
+                        </div>
+
+                        <div class="ep-stats" style="display:flex;gap:1rem;margin:0 0 2rem;flex-wrap:wrap;">
+                            <div class="ep-stat-pill ep-stat-pill-rb" style="background:linear-gradient(135deg,#fef2f2,#fecdd3);border:1px solid #d10404;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d10404;">1,000+</b><span style="font-size:0.75rem;color:#64748b;">Black Belts</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-rb" style="background:linear-gradient(135deg,#fef2f2,#fecdd3);border:1px solid #d10404;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d10404;">28</b><span style="font-size:0.75rem;color:#64748b;">Countries</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-rb" style="background:linear-gradient(135deg,#fef2f2,#fecdd3);border:1px solid #d10404;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d10404;">5</b><span style="font-size:0.75rem;color:#64748b;">Organizations</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-rb" style="background:linear-gradient(135deg,#fef2f2,#fecdd3);border:1px solid #d10404;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d10404;">AI + KanchoAI</b><span style="font-size:0.75rem;color:#64748b;">Integrated</span></div>
+                        </div>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Ronin Brotherhood is a <span class="ep-highlight" style="color:#d10404;font-weight:700;">global martial arts federation and defense ecosystem</span> that unites over 1,000 black belts across 28 countries under five specialized organizations -- each with its own mission, but all connected by the seven warrior virtues: Justice, Respect, Honor, Benevolence, Humility, Courage, and Loyalty.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Founded by <strong style="color:#0f172a;">Hanshi Carlos H. Montalvo</strong>, 10th Dan, the Ronin Brotherhood encompasses traditional karate (RGRK), multi-discipline martial arts (IRMAF), law enforcement tactical training (RPDTA), a masters society (Red Belt Society), and competitive MMA. Until now, this entire operation ran on a static website and manual processes. <strong style="color:#0f172a;">We changed that</strong> by building a complete AI-powered digital ecosystem.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">The platform delivers <strong style="color:#0f172a;">six core capabilities</strong>:</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d10404;font-weight:700;">Black Belt Registry & Membership</span> -- Every practitioner from Shodan to Judan gets a verified digital profile with rank tracking, group affiliations, dan level, dojo association, and training history. Members register, manage their credentials, and connect with fellow practitioners worldwide. Membership tiers range from basic to lifetime brotherhood.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d10404;font-weight:700;">RPDTA Tactical Training</span> -- The Ronin Police Defensive Tactics Association offers elite courses for law enforcement, military, and intelligence professionals -- Vehicle Operations, Structural Entry, Executive Protection, Ground Defense, and Knife/Tactical Shooting. The platform handles enrollment with <strong style="color:#0f172a;">clearance verification</strong>, capacity management, and certification tracking. Only verified personnel can access RPDTA courses.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d10404;font-weight:700;">Online Store</span> -- A full e-commerce platform selling official Ronin Brotherhood gear: 14oz Executive Gis with the founder's signature, training uniforms, belts, patches, tactical apparel, training equipment, and collectibles like limited-edition challenge coins. Some items are member-only or group-exclusive (RPDTA tactical shirts require RPDTA membership).</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d10404;font-weight:700;">Events & Championships</span> -- Seminars, promotion ceremonies, and international championships with registration, fee management, member discounts, and capacity tracking. The federation's events span 28 countries and multiple martial arts disciplines.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d10404;font-weight:700;">Sponsor & Press Management</span> -- A full sponsor management system with tiered partnerships (platinum, gold, silver, bronze) and a press release engine for federation news and announcements. Sponsors get exposure across the entire Ronin Brotherhood network.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d10404;font-weight:700;">KanchoAI Integration</span> -- This is where the ecosystem becomes truly powerful. Every affiliated dojo in the Ronin Brotherhood network gets access to <strong style="color:#0f172a;">KanchoAI</strong> -- the AI business intelligence platform built specifically for martial arts schools. Member dojos get real-time health score monitoring, AI-powered churn detection, automated lead management, and 24/7 AI receptionist service in English and Spanish. The federation gains visibility into the health of its entire network of schools worldwide.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">The entire platform is <strong style="color:#0f172a;">bilingual, AI-powered, and built on the Digit2AI shared technology stack</strong>. From voice agents that handle member inquiries to automated enrollment processing and sponsor outreach -- the Ronin Brotherhood ecosystem gives a martial arts federation the same digital infrastructure that modern tech companies operate on.</p>
+
+                        <p class="ep-closing" style="font-size:1.15rem;font-weight:700;color:#0f172a;margin-top:1.5rem;padding-top:1.5rem;border-top:2px solid #e2e8f0;font-style:italic;margin-bottom:0;">A thousand black belts. Twenty-eight countries. One brotherhood. Now powered by the same AI that runs the future. Ronin Brotherhood -- where the way of the warrior meets the age of intelligence.</p>
+
+                        <div class="ep-google-close ep-google-close-rb" style="margin-top:2rem;padding:2rem;border-radius:16px;text-align:center;background:linear-gradient(135deg,#fef2f2,#fecdd3);border:2px solid #d10404;">
+                            <p class="ep-gc-label" style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#d10404;margin-bottom:0.75rem;">Closing Statement</p>
+                            <p style="font-size:1.2rem;font-weight:800;color:#0f172a;line-height:1.6;margin-bottom:0;">1,000+ black belts. 28 countries. 5 organizations. One AI-powered ecosystem with KanchoAI built in. No other martial arts federation on Earth operates like this. <span style="color:#d10404;">Ronin Brotherhood -- honor meets intelligence.</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RB Spanish -->
+                <div class="ep-content" id="ep-rb-es" style="display:none;">
+                    <div class="ep-pitch-card" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;padding:3rem;box-shadow:0 4px 16px rgba(0,0,0,0.06);max-width:850px;margin:0 auto;">
+                        <div class="ep-brand-hdr" style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #f1f5f9;">
+                            <div class="ep-brand-icon ep-brand-icon-rb" style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#ffffff;background:linear-gradient(135deg,#d10404,#8b0000);flex-shrink:0;">RB</div>
+                            <div>
+                                <div class="ep-subtitle" style="font-size:0.85rem;color:#d10404;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Presentacion</div>
+                                <h2 style="font-size:1.6rem;font-weight:800;color:#0f172a;">Ronin Brotherhood</h2>
+                            </div>
+                        </div>
+
+                        <div class="ep-stats" style="display:flex;gap:1rem;margin:0 0 2rem;flex-wrap:wrap;">
+                            <div class="ep-stat-pill ep-stat-pill-rb" style="background:linear-gradient(135deg,#fef2f2,#fecdd3);border:1px solid #d10404;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d10404;">1,000+</b><span style="font-size:0.75rem;color:#64748b;">Cinturones Negros</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-rb" style="background:linear-gradient(135deg,#fef2f2,#fecdd3);border:1px solid #d10404;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d10404;">28</b><span style="font-size:0.75rem;color:#64748b;">Paises</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-rb" style="background:linear-gradient(135deg,#fef2f2,#fecdd3);border:1px solid #d10404;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d10404;">5</b><span style="font-size:0.75rem;color:#64748b;">Organizaciones</span></div>
+                            <div class="ep-stat-pill ep-stat-pill-rb" style="background:linear-gradient(135deg,#fef2f2,#fecdd3);border:1px solid #d10404;border-radius:12px;padding:12px 18px;text-align:center;flex:1;min-width:120px;"><b style="display:block;font-size:1.3rem;font-weight:800;color:#d10404;">AI + KanchoAI</b><span style="font-size:0.75rem;color:#64748b;">Integrado</span></div>
+                        </div>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Ronin Brotherhood es una <span class="ep-highlight" style="color:#d10404;font-weight:700;">federacion global de artes marciales y ecosistema de defensa</span> que une a mas de 1,000 cinturones negros en 28 paises bajo cinco organizaciones especializadas -- cada una con su propia mision, pero todas conectadas por las siete virtudes del guerrero: Justicia, Respeto, Honor, Benevolencia, Humildad, Coraje y Lealtad.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Fundada por <strong style="color:#0f172a;">Hanshi Carlos H. Montalvo</strong>, 10mo Dan, la Hermandad Ronin abarca karate tradicional (RGRK), artes marciales multidisciplinarias (IRMAF), entrenamiento tactico policial (RPDTA), una sociedad de maestros (Red Belt Society) y MMA competitivo. Hasta ahora, toda esta operacion funcionaba con un sitio web estatico y procesos manuales. <strong style="color:#0f172a;">Eso cambio</strong> al construir un ecosistema digital completo potenciado por IA.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">La plataforma ofrece <strong style="color:#0f172a;">seis capacidades principales</strong>:</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d10404;font-weight:700;">Registro de Cinturones Negros y Membresia</span> -- Cada practicante desde Shodan hasta Judan obtiene un perfil digital verificado con seguimiento de rango, afiliaciones de grupo, nivel de dan, asociacion de dojo e historial de entrenamiento. Los miembros se registran, gestionan sus credenciales y se conectan con companeros practicantes a nivel mundial. Los niveles de membresia van desde basico hasta hermandad de por vida.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d10404;font-weight:700;">Entrenamiento Tactico RPDTA</span> -- La Asociacion Ronin de Tacticas Defensivas Policiales ofrece cursos de elite para fuerzas del orden, militares y profesionales de inteligencia -- Operaciones Vehiculares, Entrada Estructural, Proteccion Ejecutiva, Defensa en Suelo y Cuchillo/Tiro Tactico. La plataforma gestiona inscripciones con <strong style="color:#0f172a;">verificacion de autorizacion</strong>, control de capacidad y seguimiento de certificaciones. Solo personal verificado puede acceder a cursos RPDTA.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d10404;font-weight:700;">Tienda Online</span> -- Una plataforma de comercio electronico completa que vende equipo oficial de Ronin Brotherhood: Gis Ejecutivos de 14oz con la firma del fundador, uniformes de entrenamiento, cinturones, parches, ropa tactica, equipos de entrenamiento y coleccionables como monedas de desafio de edicion limitada. Algunos articulos son exclusivos para miembros o grupos especificos (camisetas tacticas RPDTA requieren membresia RPDTA).</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d10404;font-weight:700;">Eventos y Campeonatos</span> -- Seminarios, ceremonias de promocion y campeonatos internacionales con registro, gestion de tarifas, descuentos para miembros y control de capacidad. Los eventos de la federacion abarcan 28 paises y multiples disciplinas de artes marciales.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d10404;font-weight:700;">Gestion de Patrocinadores y Prensa</span> -- Un sistema completo de gestion de patrocinadores con asociaciones por niveles (platino, oro, plata, bronce) y un motor de comunicados de prensa para noticias y anuncios de la federacion. Los patrocinadores obtienen exposicion en toda la red de Ronin Brotherhood.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;"><span class="ep-highlight" style="color:#d10404;font-weight:700;">Integracion con KanchoAI</span> -- Aqui es donde el ecosistema se vuelve verdaderamente poderoso. Cada dojo afiliado en la red de Ronin Brotherhood obtiene acceso a <strong style="color:#0f172a;">KanchoAI</strong> -- la plataforma de inteligencia de negocio con IA construida especificamente para escuelas de artes marciales. Los dojos miembros obtienen monitoreo de puntaje de salud en tiempo real, deteccion de desercion con IA, gestion automatizada de leads y servicio de recepcionista IA 24/7 en ingles y espanol. La federacion gana visibilidad sobre la salud de toda su red de escuelas a nivel mundial.</p>
+
+                        <p style="color:#475569;font-size:1rem;line-height:1.8;margin-bottom:1.25rem;">Toda la plataforma es <strong style="color:#0f172a;">bilingue, potenciada por IA y construida sobre la tecnologia compartida de Digit2AI</strong>. Desde agentes de voz que gestionan consultas de miembros hasta procesamiento automatizado de inscripciones y busqueda de patrocinadores -- el ecosistema Ronin Brotherhood le da a una federacion de artes marciales la misma infraestructura digital con la que operan las empresas tecnologicas modernas.</p>
+
+                        <p class="ep-closing" style="font-size:1.15rem;font-weight:700;color:#0f172a;margin-top:1.5rem;padding-top:1.5rem;border-top:2px solid #e2e8f0;font-style:italic;margin-bottom:0;">Mil cinturones negros. Veintiocho paises. Una hermandad. Ahora potenciada por la misma IA que construye el futuro. Ronin Brotherhood -- donde el camino del guerrero se encuentra con la era de la inteligencia.</p>
+
+                        <div class="ep-google-close ep-google-close-rb" style="margin-top:2rem;padding:2rem;border-radius:16px;text-align:center;background:linear-gradient(135deg,#fef2f2,#fecdd3);border:2px solid #d10404;">
+                            <p class="ep-gc-label" style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#d10404;margin-bottom:0.75rem;">Declaracion de Cierre</p>
+                            <p style="font-size:1.2rem;font-weight:800;color:#0f172a;line-height:1.6;margin-bottom:0;">1,000+ cinturones negros. 28 paises. 5 organizaciones. Un ecosistema potenciado por IA con KanchoAI integrado. Ninguna otra federacion de artes marciales en el mundo opera asi. <span style="color:#d10404;">Ronin Brotherhood -- el honor se encuentra con la inteligencia.</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MEETING CLOSING -->
+    <div class="ep-meeting-close" style="padding:60px 0;background:#0f172a;text-align:center;">
+        <div class="ep-wrap">
+            <h2 style="font-size:2rem;font-weight:800;color:#ffffff;margin-bottom:1.5rem;">Summary</h2>
+
+            <div class="ep-lang-wrap" style="display:flex;justify-content:center;gap:0;margin:0 auto 2.5rem;background:rgba(255,255,255,0.08);border-radius:50px;padding:4px;max-width:280px;">
+                <button class="ep-lang-btn ep-active" onclick="epSwitchLang('mc','en')" id="ep-lang-mc-en" style="flex:1;padding:10px 20px;border:none;border-radius:50px;font-weight:600;font-size:0.9rem;cursor:pointer;background:#2563eb;color:#ffffff;font-family:inherit;">English</button>
+                <button class="ep-lang-btn" onclick="epSwitchLang('mc','es')" id="ep-lang-mc-es" style="flex:1;padding:10px 20px;border:none;border-radius:50px;font-weight:600;font-size:0.9rem;cursor:pointer;background:transparent;color:#64748b;font-family:inherit;">Espanol</button>
+            </div>
+
+            <!-- Meeting Close EN -->
+            <div class="ep-content ep-visible" id="ep-mc-en">
+                <div class="ep-mc-card" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:2.5rem;max-width:750px;margin:0 auto;">
+                    <p style="color:#cbd5e1;font-size:1.05rem;line-height:1.9;margin-bottom:1.25rem;">Today you've seen six platforms -- each solving a different problem, but all built on the same foundation: <strong style="color:#ffffff;">AI that works for real businesses, not just big corporations.</strong></p>
+                    <p style="color:#cbd5e1;font-size:1.05rem;line-height:1.9;margin-bottom:1.25rem;"><strong style="color:#3b82f6;">Digit2AI</strong> brings custom AI platforms to underserved industries -- 12 products live and growing. <strong style="color:#10b981;">RinglyPro</strong> makes sure no business ever loses a customer to voicemail again -- with three AI agents working 24/7. <strong style="color:#a78bfa;">Store Health AI</strong> monitors every retail location 24/7 and calls managers when stores go red. <strong style="color:#fbbf24;">KanchoAI</strong> gives martial arts schools an AI business officer that cuts churn by 40% and doubles lead conversion. <strong style="color:#ef4444;">TunjoRacing</strong> gives aspiring racing drivers the full business infrastructure to go from talent to brand. <strong style="color:#d10404;">Ronin Brotherhood</strong> transforms a 1,000+ member global martial arts federation into a fully AI-powered ecosystem -- with KanchoAI built in for every affiliated dojo.</p>
+                    <p style="color:#cbd5e1;font-size:1.05rem;line-height:1.9;margin-bottom:1.25rem;">Six platforms. One ecosystem. One team. All bilingual. All AI-powered. All live and generating revenue today.</p>
+                    <p class="ep-mc-final" style="font-size:1.3rem;font-weight:800;color:#ffffff;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,0.15);margin-bottom:0;">The opportunity is here. The technology is built. The only thing missing is you at the table. <span style="color:#3b82f6;">Let's build something extraordinary -- together.</span></p>
+                </div>
+            </div>
+
+            <!-- Meeting Close ES -->
+            <div class="ep-content" id="ep-mc-es" style="display:none;">
+                <div class="ep-mc-card" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:2.5rem;max-width:750px;margin:0 auto;">
+                    <p style="color:#cbd5e1;font-size:1.05rem;line-height:1.9;margin-bottom:1.25rem;">Hoy han visto seis plataformas -- cada una resolviendo un problema diferente, pero todas construidas sobre la misma base: <strong style="color:#ffffff;">inteligencia artificial que funciona para negocios reales, no solo para grandes corporaciones.</strong></p>
+                    <p style="color:#cbd5e1;font-size:1.05rem;line-height:1.9;margin-bottom:1.25rem;"><strong style="color:#3b82f6;">Digit2AI</strong> lleva plataformas de IA personalizadas a industrias desatendidas -- 12 productos en vivo y creciendo. <strong style="color:#10b981;">RinglyPro</strong> se asegura de que ningun negocio pierda un cliente por el buzon de voz -- con tres agentes de IA trabajando 24/7. <strong style="color:#a78bfa;">Store Health AI</strong> monitorea cada ubicacion retail 24/7 y llama a los gerentes cuando las tiendas pasan a rojo. <strong style="color:#fbbf24;">KanchoAI</strong> le da a las escuelas de artes marciales un oficial de negocio con IA que reduce la desercion un 40% y duplica la conversion de leads. <strong style="color:#ef4444;">TunjoRacing</strong> le da a pilotos aspirantes toda la infraestructura de negocio para pasar de talento a marca. <strong style="color:#d10404;">Ronin Brotherhood</strong> transforma una federacion global de artes marciales con mas de 1,000 miembros en un ecosistema completamente potenciado por IA -- con KanchoAI integrado para cada dojo afiliado.</p>
+                    <p style="color:#cbd5e1;font-size:1.05rem;line-height:1.9;margin-bottom:1.25rem;">Seis plataformas. Un ecosistema. Un equipo. Todo bilingue. Todo potenciado por IA. Todo en vivo y generando ingresos hoy.</p>
+                    <p class="ep-mc-final" style="font-size:1.3rem;font-weight:800;color:#ffffff;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,0.15);margin-bottom:0;">La oportunidad esta aqui. La tecnologia esta construida. Lo unico que falta eres tu en la mesa. <span style="color:#3b82f6;">Construyamos algo extraordinario -- juntos.</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="ep-cta" style="text-align:center;padding:50px 0;background:linear-gradient(135deg,#3b82f6,#2563eb,#4f46e5);">
+        <div class="ep-wrap">
+            <h2 style="font-size:1.8rem;font-weight:800;color:#ffffff;margin-bottom:0.5rem;">Ready to Partner?</h2>
+            <p style="color:#dbeafe;font-size:1rem;margin-bottom:1.5rem;max-width:550px;margin-left:auto;margin-right:auto;">Whether it's AI for small businesses or motorsport sponsorship, we're ready to talk.</p>
+            <div class="ep-cta-btns" style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+                <a href="mailto:info@digit2ai.com?subject=Digit2AI%20-%20Partnership%20Inquiry" class="ep-cta-btn ep-cta-btn-pri" style="display:inline-block;padding:14px 32px;border-radius:50px;text-decoration:none;font-weight:600;font-size:1rem;background:#ffffff;color:#2563eb;">Email Us</a>
+                <a href="tel:8886103810" class="ep-cta-btn ep-cta-btn-sec" style="display:inline-block;padding:14px 32px;border-radius:50px;text-decoration:none;font-weight:600;font-size:1rem;color:#ffffff;border:2px solid rgba(255,255,255,0.5);">Call 888-610-3810</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="ep-ftr" style="background:#f8fafc;padding:24px 0;text-align:center;border-top:1px solid #e2e8f0;">
+        <div class="ep-wrap">
+            <ul class="ep-ftr-links" style="display:flex;justify-content:center;gap:2rem;margin-bottom:0.75rem;flex-wrap:wrap;list-style:none;padding:0;">
+                <li style="list-style:none;"><a href="https://aiagent.ringlypro.com/digit2ai" target="_blank" style="color:#64748b;text-decoration:none;font-size:0.85rem;">Digit2AI Deck</a></li>
+                <li style="list-style:none;"><a href="https://tunjoracing.com" target="_blank" style="color:#64748b;text-decoration:none;font-size:0.85rem;">TunjoRacing</a></li>
+                <li style="list-style:none;"><a href="https://ringlypro.com" target="_blank" style="color:#64748b;text-decoration:none;font-size:0.85rem;">RinglyPro</a></li>
+                <li style="list-style:none;"><a href="https://aiagent.ringlypro.com/aiastore" target="_blank" style="color:#64748b;text-decoration:none;font-size:0.85rem;">Store Health AI</a></li>
+                <li style="list-style:none;"><a href="https://kanchoai.com" target="_blank" style="color:#64748b;text-decoration:none;font-size:0.85rem;">KanchoAI</a></li>
+                <li style="list-style:none;"><a href="https://aiagent.ringlypro.com/ronin" target="_blank" style="color:#64748b;text-decoration:none;font-size:0.85rem;">Ronin Brotherhood</a></li>
+                <li style="list-style:none;"><a href="mailto:info@digit2ai.com" style="color:#64748b;text-decoration:none;font-size:0.85rem;">info@digit2ai.com</a></li>
+            </ul>
+            <p style="color:#94a3b8;font-size:0.78rem;">&copy; 2026 DIGIT2AI LLC. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+    function epSwitchBrand(brand) {
+        var brands = ['d2a', 'rp', 'sh', 'ka', 'tr', 'rb'];
+        // Hide all panels and reset tabs
+        for (var i = 0; i < brands.length; i++) {
+            document.getElementById('ep-panel-' + brands[i]).style.display = 'none';
+            document.getElementById('ep-panel-' + brands[i]).classList.remove('ep-visible');
+            document.getElementById('ep-tab-' + brands[i]).style.background = '#f8fafc';
+            document.getElementById('ep-tab-' + brands[i]).style.color = '#64748b';
+            document.getElementById('ep-tab-' + brands[i]).style.borderColor = '#e2e8f0';
+            document.getElementById('ep-tab-' + brands[i]).classList.remove('ep-active');
+        }
+        // Show selected
+        document.getElementById('ep-panel-' + brand).style.display = 'block';
+        document.getElementById('ep-panel-' + brand).classList.add('ep-visible');
+        document.getElementById('ep-tab-' + brand).style.background = '#ffffff';
+        document.getElementById('ep-tab-' + brand).style.color = '#2563eb';
+        document.getElementById('ep-tab-' + brand).style.borderColor = '#3b82f6';
+        document.getElementById('ep-tab-' + brand).classList.add('ep-active');
+    }
+
+    function epSwitchLang(brand, lang) {
+        // Hide both lang contents for this brand
+        document.getElementById('ep-' + brand + '-en').style.display = 'none';
+        document.getElementById('ep-' + brand + '-es').style.display = 'none';
+        document.getElementById('ep-' + brand + '-en').classList.remove('ep-visible');
+        document.getElementById('ep-' + brand + '-es').classList.remove('ep-visible');
+
+        // Reset lang button styles
+        document.getElementById('ep-lang-' + brand + '-en').style.background = 'transparent';
+        document.getElementById('ep-lang-' + brand + '-en').style.color = '#64748b';
+        document.getElementById('ep-lang-' + brand + '-en').classList.remove('ep-active');
+        document.getElementById('ep-lang-' + brand + '-es').style.background = 'transparent';
+        document.getElementById('ep-lang-' + brand + '-es').style.color = '#64748b';
+        document.getElementById('ep-lang-' + brand + '-es').classList.remove('ep-active');
+
+        // Show selected
+        document.getElementById('ep-' + brand + '-' + lang).style.display = 'block';
+        document.getElementById('ep-' + brand + '-' + lang).classList.add('ep-visible');
+        document.getElementById('ep-lang-' + brand + '-' + lang).style.background = '#2563eb';
+        document.getElementById('ep-lang-' + brand + '-' + lang).style.color = '#ffffff';
+        document.getElementById('ep-lang-' + brand + '-' + lang).classList.add('ep-active');
+    }
+    </script>
+
+</div>
