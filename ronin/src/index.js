@@ -415,15 +415,20 @@ if (fs.existsSync(dashboardDistPath)) {
     .cinema-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 80px; background: linear-gradient(to bottom, #0a0a0a, transparent); z-index: 2; pointer-events: none; }
     .cinema-section::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(to top, #0e0e0e, transparent); z-index: 2; pointer-events: none; }
     .cinema-frame { position: relative; max-width: 900px; margin: 0 auto; padding: 0 20px; }
-    .cinema-frame-inner { position: relative; border: 3px solid #1a1a1a; border-radius: 4px; overflow: hidden; box-shadow: 0 0 60px rgba(200,16,46,.15), 0 0 120px rgba(0,0,0,.8), inset 0 0 30px rgba(0,0,0,.5); }
-    .cinema-frame-inner::before { content: ''; position: absolute; inset: 0; border: 1px solid rgba(200,16,46,.12); border-radius: 2px; z-index: 3; pointer-events: none; }
-    .cinema-aspect { position: relative; width: 100%; padding-bottom: 56.25%; background: #000; }
-    .cinema-aspect iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
-    .cinema-corners span { position: absolute; width: 20px; height: 20px; z-index: 4; pointer-events: none; }
-    .cinema-corners .tl { top: -1px; left: -1px; border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
-    .cinema-corners .tr { top: -1px; right: -1px; border-top: 2px solid var(--accent); border-right: 2px solid var(--accent); }
-    .cinema-corners .bl { bottom: -1px; left: -1px; border-bottom: 2px solid var(--accent); border-left: 2px solid var(--accent); }
-    .cinema-corners .br { bottom: -1px; right: -1px; border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+    .cinema-poster { display: block; width: 100%; max-width: 700px; margin: 0 auto 36px; border-radius: 6px; box-shadow: 0 8px 40px rgba(0,0,0,.6); }
+    .tv-shell { position: relative; max-width: 760px; margin: 0 auto; background: linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 30%, #111 60%, #1a1a1a 100%); border-radius: 18px; padding: 28px 28px 48px; box-shadow: 0 10px 60px rgba(0,0,0,.8), 0 0 80px rgba(200,16,46,.08), inset 0 1px 0 rgba(255,255,255,.06); }
+    .tv-shell::before { content: ''; position: absolute; inset: 3px; border-radius: 15px; border: 1px solid rgba(255,255,255,.04); pointer-events: none; }
+    .tv-bezel { position: relative; border-radius: 8px; overflow: hidden; border: 4px solid #0a0a0a; box-shadow: inset 0 0 20px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.05); }
+    .tv-screen { position: relative; width: 100%; padding-bottom: 56.25%; background: #000; }
+    .tv-screen iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+    .tv-screen::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,.03) 0%, transparent 50%); pointer-events: none; z-index: 2; }
+    .tv-bottom { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 14px; }
+    .tv-led { width: 8px; height: 8px; border-radius: 50%; background: #c8102e; box-shadow: 0 0 6px rgba(200,16,46,.6); }
+    .tv-brand { font-size: 11px; color: #444; letter-spacing: .2em; text-transform: uppercase; font-weight: 600; }
+    .tv-dots { display: flex; gap: 6px; }
+    .tv-dots span { width: 5px; height: 5px; border-radius: 50%; background: #333; }
+    .tv-stand { width: 120px; height: 6px; background: linear-gradient(to bottom, #2a2a2a, #1a1a1a); margin: 0 auto; border-radius: 0 0 4px 4px; }
+    .tv-stand-base { width: 180px; height: 3px; background: #222; margin: 0 auto; border-radius: 0 0 6px 6px; }
     .cinema-title { text-align: center; margin-bottom: 32px; position: relative; z-index: 3; }
     .cinema-title h2 { font-family: 'Noto Serif', serif; font-size: 28px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #fff; }
     .cinema-title .kanji { font-size: 16px; color: var(--accent); letter-spacing: .3em; margin-top: 6px; font-weight: 400; }
@@ -431,6 +436,7 @@ if (fs.existsSync(dashboardDistPath)) {
     .cinema-brush { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 200px; color: rgba(200,16,46,.04); font-family: 'Noto Serif', serif; pointer-events: none; z-index: 1; white-space: nowrap; }
     .cinema-caption { text-align: center; margin-top: 24px; position: relative; z-index: 3; }
     .cinema-caption p { font-size: 13px; color: var(--muted); font-style: italic; letter-spacing: .04em; }
+    @media (max-width: 768px) { .tv-shell { padding: 16px 16px 32px; border-radius: 12px; } .tv-bezel { border-width: 3px; border-radius: 6px; } .cinema-poster { max-width: 90%; } }
 
     @media (max-width: 768px) {
       /* Header */
@@ -634,14 +640,21 @@ if (fs.existsSync(dashboardDistPath)) {
         <div class="kanji">武 士 道</div>
         <span class="cinema-line"></span>
       </div>
-      <div class="cinema-frame-inner">
-        <div class="cinema-corners">
-          <span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span>
+      <img class="cinema-poster" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997807d8523c514badec0d4.webp" alt="Ronin Brotherhood">
+      <div class="tv-shell">
+        <div class="tv-bezel">
+          <div class="tv-screen">
+            <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/HByRigYk8Hg?si=1&rel=0&modestbranding=1" title="Ronin Brotherhood" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+          </div>
         </div>
-        <div class="cinema-aspect">
-          <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/HByRigYk8Hg?si=1&rel=0&modestbranding=1" title="Ronin Brotherhood" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        <div class="tv-bottom">
+          <div class="tv-led"></div>
+          <div class="tv-brand">Ronin TV</div>
+          <div class="tv-dots"><span></span><span></span><span></span></div>
         </div>
       </div>
+      <div class="tv-stand"></div>
+      <div class="tv-stand-base"></div>
       <div class="cinema-caption">
         <p>"The way is in training." — Miyamoto Musashi</p>
       </div>
