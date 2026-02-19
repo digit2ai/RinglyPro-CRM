@@ -392,8 +392,8 @@ if (fs.existsSync(dashboardDistPath)) {
           <a href="#training" class="btn btn-gold">RPDTA Training</a>
         </div>
         <div class="hero-quote">
-          <p>"A journey of a thousand miles begins with a single step."</p>
-          <cite>- Lao Tzu</cite>
+          <p>"A journey of a thousand miles begins with a single step"<br><span style="font-size:14px;color:#888;">(千里之行，始於足下)</span></p>
+          <cite>– Lao Tzu</cite>
         </div>
       </div>
     </div>
